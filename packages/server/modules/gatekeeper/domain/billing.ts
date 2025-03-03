@@ -192,4 +192,4 @@ export type GetRecurringPrices = () => Promise<
   }[]
 >
 
-export type GetWorkspacePlanPrices = () => Promise<WorkspacePlanProductPrices>
+export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>

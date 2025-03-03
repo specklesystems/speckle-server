@@ -10,7 +10,7 @@
       <CommonCard class="bg-foundation !p-3 my-2">
         <p class="font-medium">Workspace {{ startCase(plan) }} plan</p>
         <p>
-          £{{ seatPrice }}/seat/month, billed
+          {{ seatPrice }}/seat/month, billed
           {{ billingInterval === BillingInterval.Yearly ? 'annually' : 'monthly' }}
         </p>
       </CommonCard>
@@ -30,7 +30,8 @@ import { startCase } from 'lodash'
 import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
-import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
+import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { formatPrice } from '~/lib/billing/helpers/prices'
 
 const props = defineProps<{
   plan: PaidWorkspacePlansOld
@@ -40,14 +41,17 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { upgradePlan } = useBillingActions()
+const { prices } = useWorkspacePlanPrices()
 
 const seatPrice = computed(() => {
   if (isPaidPlan(props.plan)) {
-    const prices = WorkspaceOldPaidPlanPrices[props.plan]
-    return prices[props.billingInterval][Roles.Workspace.Member]
+    const planPrices = prices.value?.[props.plan]
+    const price = planPrices?.[props.billingInterval]?.[Roles.Workspace.Member]
+
+    return formatPrice(price)
   }
 
-  return 0
+  return `£0`
 })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {

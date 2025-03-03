@@ -37,7 +37,7 @@ import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { getWorkspacePlanPricesFactory } from '@/modules/gatekeeper/services/prices'
+import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -126,7 +126,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         planPrices: async () => {
-          const getWorkspacePlanPrices = getWorkspacePlanPricesFactory({
+          const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
             getRecurringPrices: getRecurringPricesFactory({
               stripe: getStripeClient()
             }),

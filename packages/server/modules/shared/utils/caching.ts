@@ -55,7 +55,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
     resolver: (...args: Args) => MaybeAsync<Results>
   }
 ) => {
-  let cacheProvider = params.cacheProvider
+  const cacheProvider = params.cacheProvider
   const { name, resolver, options } = params
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
@@ -102,11 +102,6 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
      * Get fresh results irregardless of cached data
      */
     fresh: (...args: Args) => Promise<Results>
-
-    /**
-     * Replace the cache provider with a new one. Primarily used in testing to replace w/ mocked providers.
-     */
-    replaceCache: (cacheProvider: CacheProvider<any>) => void
   }
 
   ret.clear = async (...args: Args) => {
@@ -118,10 +113,6 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
   }
 
   ret.fresh = buildRet({ skipCache: true })
-
-  ret.replaceCache = (newCacheProvider) => {
-    cacheProvider = newCacheProvider
-  }
 
   return ret
 }
@@ -139,7 +130,12 @@ export const wrapFactoryWithCache = <
   }
 ) => {
   return (
-    deps: Deps,
+    deps: Deps & {
+      /**
+       * Optionally inject custom cacheProvider
+       */
+      cacheProvider?: CacheProvider<any>
+    },
     options?: Partial<{
       /**
        * The same factory with different kinds of injected deps might require different cache keys.
@@ -150,9 +146,12 @@ export const wrapFactoryWithCache = <
   ) => {
     const { factory, ...rest } = params
     const name = options?.cacheKey ? `${params.name}:${options.cacheKey}` : params.name
+    const cacheProvider = deps.cacheProvider || params.cacheProvider
+
     return wrapWithCache({
       ...rest,
       name,
+      cacheProvider,
       resolver: factory(deps)
     })
   }

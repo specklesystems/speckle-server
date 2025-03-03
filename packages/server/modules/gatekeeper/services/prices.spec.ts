@@ -1,23 +1,26 @@
 import {
-  getFreshWorkspacePlanPricesFactory,
-  getWorkspacePlanPricesFactory
+  getFreshWorkspacePlanProductPricesFactory,
+  getWorkspacePlanProductPricesFactory
 } from '@/modules/gatekeeper/services/prices'
 import {
-  WorkspaceGuestProduct,
   WorkspacePlanProductAndPriceIds,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
-import { PaidWorkspacePlans, PaidWorkspacePlansNew } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlansNew,
+  WorkspaceGuestSeatType
+} from '@speckle/shared'
 import { expect } from 'chai'
 import { flatten, get } from 'lodash'
 
 const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
-  [WorkspaceGuestProduct]: {
+  [WorkspaceGuestSeatType]: {
     productId: 'prod_guest',
     monthly: 'price_guest_monthly',
     yearly: 'price_guest_yearly'
@@ -48,9 +51,9 @@ const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   }
 }
 
-describe('getFreshWorkspacePlanPricesFactory', () => {
+describe('getFreshWorkspacePlanProductPricesFactory', () => {
   it('returns prices', async () => {
-    const sut = getFreshWorkspacePlanPricesFactory({
+    const sut = getFreshWorkspacePlanProductPricesFactory({
       getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
       getRecurringPrices: async () => {
         // Convert testProductAndPriceIds
@@ -85,19 +88,11 @@ describe('getFreshWorkspacePlanPricesFactory', () => {
     expect(result).to.be.ok
     const plans = [
       ...Object.values(PaidWorkspacePlans),
-      WorkspaceGuestProduct
+      WorkspaceGuestSeatType
     ] as WorkspacePricingProducts[]
 
     for (const plan of plans) {
       const planResult = get(result, plan) as (typeof result)[keyof typeof result]
-
-      if (plan === WorkspaceGuestProduct) {
-        if (planResult) {
-          throw new Error('Guest product should not appear in plans')
-        } else {
-          continue
-        }
-      }
 
       if (
         !FF_WORKSPACES_NEW_PLANS_ENABLED &&
@@ -121,7 +116,7 @@ describe('getFreshWorkspacePlanPricesFactory', () => {
   })
 
   it('throws if price not found', async () => {
-    const sut = getFreshWorkspacePlanPricesFactory({
+    const sut = getFreshWorkspacePlanProductPricesFactory({
       getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
       getRecurringPrices: async () => []
     })
@@ -131,7 +126,7 @@ describe('getFreshWorkspacePlanPricesFactory', () => {
   })
 
   it('throws if yearly price not found, where it should be', async () => {
-    const sut = getFreshWorkspacePlanPricesFactory({
+    const sut = getFreshWorkspacePlanProductPricesFactory({
       getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
       getRecurringPrices: async () => {
         const allPriceIds = flatten(
@@ -155,10 +150,10 @@ describe('getFreshWorkspacePlanPricesFactory', () => {
   })
 })
 
-describe('getWorkspacePlanPricesFactory', () => {
+describe('getWorkspacePlanProductPricesFactory', () => {
   it('returns prices in a cached manner', async () => {
     let invoked = 0
-    const sut = getWorkspacePlanPricesFactory({
+    const sut = getWorkspacePlanProductPricesFactory({
       getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
       getRecurringPrices: async () => {
         invoked++
@@ -187,11 +182,10 @@ describe('getWorkspacePlanPricesFactory', () => {
         })
 
         return flatten(pricePairs)
-      }
+      },
+      // Unit test, so we want a fresh cache every time
+      cacheProvider: mockRedisCacheProviderFactory({ createNewCache: true })
     })
-
-    // This is a unit test, we want a fresh cache every time
-    sut.replaceCache(mockRedisCacheProviderFactory({ createNewCache: true }))
 
     const result = await sut()
     expect(result).to.be.ok

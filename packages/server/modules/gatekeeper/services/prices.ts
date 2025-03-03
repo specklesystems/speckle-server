@@ -1,12 +1,9 @@
 import {
   GetRecurringPrices,
-  GetWorkspacePlanPrices,
+  GetWorkspacePlanProductPrices,
   GetWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  WorkspaceGuestProduct,
-  WorkspacePlanProductPrices
-} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlanProductPrices } from '@/modules/gatekeeperCore/domain/billing'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
@@ -18,21 +15,17 @@ import { set } from 'lodash'
 
 const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
-export const getFreshWorkspacePlanPricesFactory =
+export const getFreshWorkspacePlanProductPricesFactory =
   (deps: {
     getRecurringPrices: GetRecurringPrices
     getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds
-  }): GetWorkspacePlanPrices =>
+  }): GetWorkspacePlanProductPrices =>
   async () => {
     const productPrices = await deps.getRecurringPrices()
     const productAndPriceIds = deps.getWorkspacePlanProductAndPriceIds()
 
     const ret = Object.entries(productAndPriceIds).reduce((acc, [plan, planIds]) => {
       const { productId, monthly } = planIds
-      if (plan === WorkspaceGuestProduct) {
-        return acc // not a real workspace plan
-      }
-
       if (
         !FF_WORKSPACES_NEW_PLANS_ENABLED &&
         (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
@@ -80,8 +73,8 @@ export const getFreshWorkspacePlanPricesFactory =
     return ret
   }
 
-export const getWorkspacePlanPricesFactory = wrapFactoryWithCache({
-  factory: getFreshWorkspacePlanPricesFactory,
+export const getWorkspacePlanProductPricesFactory = wrapFactoryWithCache({
+  factory: getFreshWorkspacePlanProductPricesFactory,
   name: 'modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory',
   ttlMs: 1000 * 60 * 60 * 24, // 1 day
   cacheProvider: redisCacheProviderFactory()

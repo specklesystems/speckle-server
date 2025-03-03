@@ -126,14 +126,8 @@ enum WorkspaceFeatureName {
   workspaceDataRegionSpecificity
 }
 
-type Price {
-  amount: Float!
-  currency: String!
-  currencySymbol: String!
-}
-
 type WorkspacePlanPrice {
-  id: WorkspacePlans!
+  id: String!
   monthly: Price
   yearly: Price
 }

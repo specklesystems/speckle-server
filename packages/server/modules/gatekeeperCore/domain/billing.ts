@@ -6,17 +6,15 @@ import {
   UnpaidWorkspacePlans,
   UnpaidWorkspacePlanStatuses,
   WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  WorkspacePlans,
+  WorkspaceGuestSeatType
 } from '@speckle/shared'
 import { OverrideProperties, SetOptional } from 'type-fest'
-
-export const WorkspaceGuestProduct = <const>'guest'
-export type WorkspaceGuestProduct = typeof WorkspaceGuestProduct
 
 /**
  * This includes the pricing plans (Stripe products) a customer can sub to
  */
-export type WorkspacePricingProducts = PaidWorkspacePlans | WorkspaceGuestProduct
+export type WorkspacePricingProducts = PaidWorkspacePlans | WorkspaceGuestSeatType
 
 type BaseWorkspacePlan = {
   workspaceId: string
@@ -57,12 +55,9 @@ type WorkspacePlanProductsMetadata<PriceData = string> = OverrideProperties<
 
 export type WorkspacePlanProductAndPriceIds = WorkspacePlanProductsMetadata<string>
 export type WorkspacePlanProductPrices = SetOptional<
-  Omit<
-    WorkspacePlanProductsMetadata<{
-      amount: number
-      currency: string
-    }>,
-    WorkspaceGuestProduct
-  >,
+  WorkspacePlanProductsMetadata<{
+    amount: number
+    currency: string
+  }>,
   typeof WorkspacePlans.Team | typeof WorkspacePlans.Pro
 >
