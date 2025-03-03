@@ -288,7 +288,15 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
-  ['isOnboardingFinished', 'onboardingStreamId', 'activeWorkspace', 'isProjectsActive'],
+  [
+    'isOnboardingFinished',
+    'onboardingStreamId',
+    'activeWorkspace',
+    'isProjectsActive',
+    // Used in tests
+    'foo',
+    'bar'
+  ],
   'userId'
 )
 
