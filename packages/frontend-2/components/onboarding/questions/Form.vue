@@ -53,7 +53,7 @@ const onSubmit = handleSubmit(async () => {
     plans: values.plan,
     source: values.source
   })
-  if (isWorkspaceNewPlansEnabled.value && isWorkspacesEnabled.value) {
+  if (!isWorkspaceNewPlansEnabled.value && isWorkspacesEnabled.value) {
     navigateTo(workspaceJoinRoute)
   } else {
     navigateTo(homeRoute)

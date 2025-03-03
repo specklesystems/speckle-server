@@ -14,9 +14,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  if (!isWorkspaceNewPlansEnabled.value) return
-  if (!isWorkspacesEnabled.value) return
-
   const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
@@ -24,6 +21,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
       fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
+
+  // Check for FF's after fetching the active user to ensure discoverable workspaces are up to date
+  // TODO: This is a bit of a hack, we should find a better way to do this
+  if (!isWorkspacesEnabled.value) return
+  if (!isWorkspaceNewPlansEnabled.value) return
 
   // Ignore if not logged in
   if (!data?.activeUser?.id) return

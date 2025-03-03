@@ -169,6 +169,7 @@ export const useDiscoverableWorkspaces = () => {
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
     processRequest,
-    loading
+    loading,
+    refetch
   }
 }
