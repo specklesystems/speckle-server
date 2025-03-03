@@ -5,11 +5,15 @@
     </template>
     <template #header-right>
       <FormButton
+        v-if="isWorkspaceNewPlansEnabled"
         size="sm"
         color="outline"
         @click="() => logout({ skipRedirect: false })"
       >
         Sign out
+      </FormButton>
+      <FormButton v-else size="sm" color="outline" @click="() => navigateTo(homeRoute)">
+        Skip
       </FormButton>
     </template>
 
