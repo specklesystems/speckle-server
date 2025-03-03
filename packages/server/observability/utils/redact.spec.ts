@@ -1,7 +1,7 @@
 import { expect } from 'chai'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { redactSensitiveVariables } from '@/observability/utils/redact'
 
-describe('loggingHelper', () => {
+describe('redact', () => {
   describe('filterSensitiveVariables', () => {
     it('should filter sensitive variables at root', () => {
       const variables = {

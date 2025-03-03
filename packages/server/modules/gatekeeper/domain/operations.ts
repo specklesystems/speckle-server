@@ -1,3 +1,4 @@
+import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import {
@@ -30,3 +31,7 @@ export type GetWorkspacePlanByProjectId = ({
 }: {
   projectId: string
 }) => Promise<WorkspacePlan | null>
+
+export type CreateWorkspaceSeat = (
+  args: Pick<WorkspaceSeat, 'workspaceId' | 'userId' | 'type'>
+) => Promise<void>

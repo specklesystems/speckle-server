@@ -41,7 +41,7 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
@@ -169,17 +169,12 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
-import { getWorkspaceFunctions } from '@/modules/automate/clients/executionEngine'
+import { getFunctionsFactory } from '@/modules/automate/clients/executionEngine'
 import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import {
-  AuthCodePayloadAction,
-  createStoredAuthCodeFactory
-} from '@/modules/automate/services/authCode'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
@@ -204,6 +199,11 @@ import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/opera
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCodeFactory
+} from '@/modules/automate/services/authCode'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1081,6 +1081,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         automateFunctions: async (parent, args, context) => {
           try {
+            await authorizeResolver(
+              context.userId,
+              parent.id,
+              Roles.Workspace.Member,
+              context.resourceAccessRules
+            )
+
             const authCode = await createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })({
@@ -1088,14 +1095,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
               action: AuthCodePayloadAction.ListWorkspaceFunctions
             })
 
-            const res = await getWorkspaceFunctions({
-              workspaceId: parent.id,
-              query: removeNullOrUndefinedKeys(args),
-              body: {
-                speckleServerAuthenticationPayload: {
-                  ...authCode,
-                  origin: getServerOrigin()
-                }
+            const res = await getFunctionsFactory({
+              logger: context.log
+            })({
+              auth: authCode,
+              filters: {
+                query: args.filter?.search ?? undefined,
+                cursor: args.cursor ?? undefined,
+                limit: args.limit,
+                requireRelease: true,
+                includeFeatured: true,
+                includeWorkspaces: [parent.id],
+                includeUsers: []
               }
             })
 
@@ -1107,12 +1118,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
               }
             }
 
-            const items = res.functions.map(convertFunctionToGraphQLReturn)
+            const items = res.items.map(convertFunctionToGraphQLReturn)
 
             return {
-              cursor: undefined,
-              totalCount: res.functions.length,
-              items
+              items,
+              cursor: res.cursor,
+              totalCount: res.totalCount
             }
           } catch (e) {
             const isNotFound =

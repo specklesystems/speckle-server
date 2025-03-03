@@ -17,7 +17,7 @@
  */
 
 import { Histogram, Registry } from 'prom-client'
-import type { Metric } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
+import type { Metric } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 
 const NODEJS_HEAP_SIZE_TOTAL = 'nodejs_heap_size_total_bytes_high_frequency'
 const NODEJS_HEAP_SIZE_USED = 'nodejs_heap_size_used_bytes_high_frequency'

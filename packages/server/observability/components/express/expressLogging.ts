@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { randomUUID } from 'crypto'
 import HttpLogger from 'pino-http'
 import type { NextFunction, Response } from 'express'

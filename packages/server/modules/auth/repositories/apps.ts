@@ -1,4 +1,4 @@
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
 import {
   CreateApp,
