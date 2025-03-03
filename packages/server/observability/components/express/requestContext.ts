@@ -43,7 +43,7 @@ export const enterNewRequestContext = (params: { reqId: string; logger: Logger }
 export const getRequestContext = () => storage?.getStore()
 export const getRequestLogger = () => getRequestContext()?.logger
 
-export const maybeLoggerWithContext = ({ logger }: { logger: Logger }) => {
+export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
   const reqCtx = getRequestContext()
   return reqCtx?.logger || logger
 }

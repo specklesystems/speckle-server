@@ -14,7 +14,7 @@
     </template>
     <template #nothing-selected>
       <span class="min-w-64 block">
-        {{ multiple ? 'Select regions' : 'Select a region' }}
+        {{ multiple ? 'Select default data regions' : 'Select default data region' }}
       </span>
     </template>
     <template #something-selected="{ value }">
