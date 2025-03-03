@@ -20,7 +20,7 @@
       </div>
     </template>
     <div class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
-      <h1 class="text-heading-xl text-forefround mb-2 font-normal">
+      <h1 class="text-heading-xl text-foreground mb-2 font-normal">
         Tell us about yourself
       </h1>
       <p class="text-center text-body-sm text-foreground-2 mb-8">
