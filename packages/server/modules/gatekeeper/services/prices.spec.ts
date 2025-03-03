@@ -96,10 +96,13 @@ describe('getFreshWorkspacePlanProductPricesFactory', () => {
 
       if (
         !FF_WORKSPACES_NEW_PLANS_ENABLED &&
-        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan) &&
-        planResult
+        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
       ) {
-        throw new Error('New plans should not appear w/ FF on')
+        if (planResult) {
+          throw new Error('New plans should not appear w/ FF on')
+        } else {
+          continue
+        }
       }
 
       expect(planResult).to.be.ok

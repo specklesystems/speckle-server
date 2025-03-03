@@ -10,7 +10,7 @@ import {
   redisCacheProviderFactory,
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
-import { Optional, PaidWorkspacePlansNew } from '@speckle/shared'
+import { Optional, PaidWorkspacePlansNew, TIME } from '@speckle/shared'
 import { set } from 'lodash'
 
 const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
@@ -76,6 +76,6 @@ export const getFreshWorkspacePlanProductPricesFactory =
 export const getWorkspacePlanProductPricesFactory = wrapFactoryWithCache({
   factory: getFreshWorkspacePlanProductPricesFactory,
   name: 'modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory',
-  ttlMs: 1000 * 60 * 60 * 24, // 1 day
+  ttlMs: 1000 * TIME.day, // 1 day
   cacheProvider: redisCacheProviderFactory()
 })

@@ -45,5 +45,8 @@ export const getRequestLogger = () => getRequestContext()?.logger
 
 export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
   const reqCtx = getRequestContext()
-  return reqCtx?.logger || logger
+  if (!reqCtx) return logger
+  return logger.child({
+    req: { id: reqCtx.requestId }
+  })
 }
