@@ -1,6 +1,5 @@
 import {
   filteredSubscribe,
-  publish,
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -26,10 +25,8 @@ import {
   legacyGetStreamsFactory,
   getFavoritedStreamsCountFactory,
   getFavoritedStreamsPageFactory,
-  getStreamCollaboratorsFactory,
   canUserFavoriteStreamFactory,
   setStreamFavoritedFactory,
-  legacyGetStreamUsersFactory,
   getUserStreamsPageFactory,
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
@@ -64,14 +61,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
-  addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
   removeStreamCollaboratorFactory,
@@ -93,7 +82,6 @@ const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
   getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
   getFavoritedStreamsPage: getFavoritedStreamsPageFactory({ db })
 })
-const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
@@ -123,11 +111,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),
   authorizeResolver,
-  addStreamDeletedActivity: addStreamDeletedActivityFactory({
-    publish,
-    saveActivity: saveActivityFactory({ db }),
-    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-  }),
+  emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
   getStream
 })
@@ -135,7 +119,7 @@ const updateStreamAndNotify = updateStreamAndNotifyFactory({
   authorizeResolver,
   getStream,
   updateStream: updateStreamFactory({ db }),
-  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ publish, saveActivity })
+  emitEvent: getEventBus().emit
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -145,10 +129,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
@@ -156,14 +137,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
-    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
 })
@@ -177,7 +151,6 @@ const favoriteStream = favoriteStreamFactory({
   setStreamFavorited: setStreamFavoritedFactory({ db }),
   getStream
 })
-const getStreamUsers = legacyGetStreamUsersFactory({ db })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
@@ -208,6 +181,8 @@ export = {
     },
 
     async streams(_, args, ctx) {
+      const countOnly = args.limit === 0 && !args.query
+
       const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -222,15 +197,17 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true
         }),
-        getUserStreams({
-          userId: ctx.userId!,
-          limit: args.limit,
-          cursor: args.cursor || undefined,
-          searchQuery: args.query || undefined,
-          forOtherUser: false,
-          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
-          onlyWithActiveSsoSession: true
-        })
+        !countOnly
+          ? getUserStreams({
+              userId: ctx.userId!,
+              limit: args.limit,
+              cursor: args.cursor || undefined,
+              searchQuery: args.query || undefined,
+              forOtherUser: false,
+              streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+              onlyWithActiveSsoSession: true
+            })
+          : { cursor: null, streams: [] }
       ])
 
       return {
@@ -267,9 +244,14 @@ export = {
   },
 
   Stream: {
-    async collaborators(parent) {
-      const users = await getStreamUsers({ streamId: parent.id })
-      return users
+    async collaborators(parent, _args, ctx) {
+      const collaborators = await ctx.loaders.streams.getCollaborators.load(parent.id)
+
+      // In this GQL return type, role actually refers to the stream role
+      return collaborators.map((collaborator) => ({
+        ...collaborator,
+        role: collaborator.streamRole
+      }))
     },
 
     async pendingCollaborators(parent) {

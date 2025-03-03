@@ -179,7 +179,6 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
-      url
       this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
@@ -500,10 +499,18 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
+      console.warn(await this.viewer.screenshot())
+
+      /** Read depth */
+      // const pass = [
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+      // ]
+      // const [depthData, width, height] = await this.viewer
+      //   .getExtension(PassReader)
+      //   .read(pass)
+
+      // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -910,8 +917,7 @@ export default class Sandbox {
         min: 0,
         max: 10
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -922,8 +928,7 @@ export default class Sandbox {
 
     shadowcatcherFolder
       .addInput(this.lightParams, 'shadowcatcher', { label: 'Enabled' })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -1061,8 +1066,7 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)

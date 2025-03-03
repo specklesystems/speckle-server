@@ -1,4 +1,3 @@
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
 import { validateScopes } from '@/modules/shared'
 import zxcvbn from 'zxcvbn'
 import { Roles, Scopes } from '@speckle/shared'
@@ -27,21 +26,25 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { BadRequestError } from '@/modules/shared/errors'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   updateUserAndNotifyFactory,
   deleteUserFactory,
   changeUserRoleFactory
 } from '@/modules/core/services/users/management'
-import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getMailchimpStatus,
+  getMailchimpOnboardingIds
+} from '@/modules/shared/helpers/envHelper'
+import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -49,9 +52,7 @@ const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateUserAndNotify = updateUserAndNotifyFactory({
   getUser: getUserFactory({ db }),
   updateUser: updateUserFactory({ db }),
-  addUserUpdatedActivity: addUserUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db })
-  })
+  emitEvent: getEventBus().emit
 })
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -61,7 +62,8 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db })
+  deleteUserRecord: deleteUserRecordFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 const getUserRole = getUserRoleFactory({ db })
 const changeUserRole = changeUserRoleFactory({
@@ -226,7 +228,7 @@ export = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser(user.id)
+      await deleteUser(user.id, context.userId)
       return true
     },
 
@@ -243,17 +245,7 @@ export = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId!)
-
-      await saveActivityFactory({ db })({
-        streamId: null,
-        resourceType: 'user',
-        resourceId: context.userId!,
-        actionType: ActionTypes.User.Delete,
-        userId: context.userId!,
-        info: {},
-        message: 'User deleted'
-      })
+      await deleteUser(context.userId!, context.userId!)
 
       return true
     },
@@ -261,8 +253,30 @@ export = {
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
-    async finishOnboarding(_parent, _args, ctx) {
-      return await markOnboardingComplete(ctx.userId || '')
+    async finishOnboarding(_parent, args, ctx) {
+      const userId = ctx.userId
+      if (!userId) return false
+
+      const success = await markOnboardingComplete(userId)
+
+      // If onboarding was marked complete successfully and we have onboarding data
+      if (success && args.input && getMailchimpStatus()) {
+        try {
+          const user = await getUser(userId)
+          const { listId } = getMailchimpOnboardingIds()
+
+          await updateMailchimpMemberTags(user, listId, {
+            role: args.input?.role || undefined,
+            plans: args.input?.plans || undefined,
+            source: args.input?.source || undefined
+          })
+        } catch (error) {
+          // Log but don't fail the request
+          ctx.log.warn({ err: error }, 'Failed to update Mailchimp tags')
+        }
+      }
+
+      return success
     },
     async update(_parent, args, context) {
       const newUser = await updateUserAndNotify(context.userId!, args.user)

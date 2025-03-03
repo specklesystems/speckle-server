@@ -11,17 +11,18 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /speckle-server
 
-# install tini
+# configure tini
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
-RUN chmod +x /usr/bin/tini
 
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
+     ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
+    && chmod +x /usr/bin/tini \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      nodejs=18.20.5-1nodesource1 \
@@ -51,7 +52,7 @@ RUN yarn workspaces foreach -W run build
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     python3.12=3.12.3-1ubuntu0.3 \
+     python3.12=3.12.3-1ubuntu0.5 \
      python3-pip=24.0+dfsg-1ubuntu1.1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -68,7 +69,7 @@ ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
 ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
 ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
-COPY --from=dotnet-build-stage /app/output packages/fileimport-service/ifc-dotnet
+COPY --link --from=dotnet-build-stage /app/output packages/fileimport-service/ifc-dotnet
 
 WORKDIR /speckle-server/packages/fileimport-service
 

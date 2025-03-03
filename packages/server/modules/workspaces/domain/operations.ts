@@ -29,6 +29,7 @@ import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 /** Workspace */
 
@@ -38,7 +39,6 @@ export type UpsertWorkspaceArgs = {
       NullableKeysToOptional<Workspace>,
       | 'domainBasedMembershipProtectionEnabled'
       | 'discoverabilityEnabled'
-      | 'defaultLogoIndex'
       | 'defaultProjectRole'
       | 'slug'
     >,
@@ -51,12 +51,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<
-  Pick<
-    Workspace,
-    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
-  >[]
->
+}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -74,7 +69,7 @@ export type GetWorkspaceBySlugOrId = (args: {
 }) => Promise<Workspace | null>
 
 export type GetWorkspaces = (args: {
-  workspaceIds: string[]
+  workspaceIds?: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
@@ -289,7 +284,7 @@ export type GetAvailableRegions = (params: {
   workspaceId: string
 }) => Promise<ServerRegion[]>
 
-export type AssignRegion = (params: {
+export type AssignWorkspaceRegion = (params: {
   workspaceId: string
   regionKey: string
 }) => Promise<void>
@@ -325,3 +320,82 @@ export type SendWorkspaceJoinRequestReceivedEmail = (params: {
   workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
   requester: { id: string; name: string; email: string }
 }) => Promise<void>
+
+export type SendWorkspaceJoinRequestApprovedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type SendWorkspaceJoinRequestDeniedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type GetWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'userId' | 'workspaceId'> &
+    Partial<Pick<WorkspaceJoinRequest, 'status'>>
+) => Promise<WorkspaceJoinRequest | undefined>
+
+export type ApproveWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>
+
+export type DenyWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>
+
+/**
+ * Project regions
+ */
+
+/**
+ * Updates project region and moves all regional data to target regional db
+ */
+export type UpdateProjectRegion = (params: {
+  projectId: string
+  regionKey: string
+}) => Promise<Stream>
+
+/**
+ * Given a count of objects successfully copied to another region, confirm that these counts
+ * match the current state of the source project in its original region.
+ */
+export type ValidateProjectRegionCopy = (params: {
+  projectId: string
+  copiedRowCount: {
+    models: number
+    versions: number
+    objects: number
+    automations: number
+    comments: number
+    webhooks: number
+  }
+}) => Promise<boolean>
+
+export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
+export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
+export type CopyProjectModels = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectVersions = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectObjects = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectAutomations = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type AssignWorkspaceSeat = (
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type?: WorkspaceSeatType }
+) => Promise<void>
+export type CopyProjectComments = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectWebhooks = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>

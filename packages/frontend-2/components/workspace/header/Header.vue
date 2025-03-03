@@ -23,7 +23,7 @@
           @click="
             workspaceInfo.logo
               ? undefined
-              : openSettingsDialog(SettingMenuKeys.Workspace.General)
+              : navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))
           "
         />
         <WorkspaceAvatar
@@ -55,7 +55,7 @@
           color="outline"
           :icon-left="Cog8ToothIcon"
           hide-text
-          @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+          @click="navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))"
         >
           Settings
         </FormButton>
@@ -70,7 +70,6 @@
         v-if="!isWorkspaceGuest"
         :workspace-info="workspaceInfo"
         :is-workspace-admin="isWorkspaceAdmin"
-        @show-settings-dialog="openSettingsDialog"
         @show-invite-dialog="$emit('show-invite-dialog')"
       />
     </div>
@@ -84,24 +83,21 @@ import {
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
-import {
-  SettingMenuKeys,
-  type AvailableSettingsMenuKeys
-} from '~/lib/settings/helpers/types'
-import { type AlertAction } from '@speckle/ui-components'
+import type { AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...BillingAlert_Workspace
+    slug
     readOnly
   }
 `)
 
-const emit = defineEmits<{
-  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
+defineEmits<{
   (e: 'show-move-projects-dialog'): void
   (e: 'show-new-project-dialog'): void
   (e: 'show-invite-dialog'): void
@@ -133,15 +129,12 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
     return [
       {
         title: 'Subscribe',
-        onClick: () => openSettingsDialog(SettingMenuKeys.Workspace.Billing)
+        onClick: () =>
+          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
       }
     ]
   }
 
   return []
 })
-
-const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  emit('show-settings-dialog', target)
-}
 </script>

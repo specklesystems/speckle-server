@@ -7,7 +7,7 @@
  */
 
 require('ts-node/register')
-const { logger } = require('../logging/logging')
+const { logger } = require('../observability/logging')
 const { init, startHttp } = require('../app')
 
 init()

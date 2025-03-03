@@ -96,7 +96,7 @@ export class MRTPenViewPipeline extends ProgressivePipeline {
         return +a.material.colorWrite - +b.material.colorWrite
       }
     })()
-    geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.PROPS])
 
     const stencilMaskPass = new StencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)
@@ -104,11 +104,7 @@ export class MRTPenViewPipeline extends ProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS,
-      ObjectLayers.PROPS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     const outputPass = new OutputPass()
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)

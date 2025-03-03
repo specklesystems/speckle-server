@@ -1,6 +1,7 @@
 <template>
   <div
-    class="flex flex-col gap-y-2 max-h-64 2xl:max-h-96 overflow-y-auto overflow-x-hidden simple-scrollbar"
+    v-if="renders.length"
+    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar mb-3"
   >
     <ViewerGendoItem
       v-for="render in renders"
@@ -9,6 +10,7 @@
       @reuse-prompt="$emit('reuse-prompt', $event)"
     />
   </div>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
@@ -34,7 +36,7 @@ const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
 })
 
-const { result, subscribeToMore, refetch } = useQuery(getGendoAIRenders, () => ({
+const { result, refetch } = useQuery(getGendoAIRenders, () => ({
   projectId: projectId.value,
   versionId: versionId.value
 }))
@@ -47,18 +49,6 @@ const { onResult: onRenderCreated } = useSubscription(onGendoAiRenderCreated, ()
 onRenderCreated(() => {
   refetch()
 })
-
-subscribeToMore(() => ({
-  document: onGendoAiRenderCreated,
-  variables: {
-    id: projectId.value,
-    versionId: versionId.value
-  },
-  updateQuery: (previousResult) => {
-    refetch()
-    return previousResult
-  }
-}))
 
 const renders = computed(() => {
   return (result.value?.project?.version?.gendoAIRenders?.items ||

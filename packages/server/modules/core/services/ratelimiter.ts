@@ -14,9 +14,10 @@ import {
 import { TIME } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { rateLimiterLogger } from '@/logging/logging'
+import { rateLimiterLogger } from '@/observability/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRequestPath } from '@/modules/core/helpers/server'
+import { getTokenFromRequest } from '@/modules/shared/middleware'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -275,6 +276,7 @@ export const sendRateLimitResponse = (
   res: express.Response,
   rateLimitBreached: RateLimitBreached
 ): express.Response => {
+  if (res.headersSent) return res
   res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
   res.removeHeader('X-RateLimit-Remaining')
   res.setHeader(
@@ -297,7 +299,10 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
-  let source: string | null = req?.context?.userId || getIpFromRequest(req)
+  let source: string | null =
+    req?.context?.userId ||
+    getTokenFromRequest(req)?.substring(10) || // token ID
+    getIpFromRequest(req)
 
   if (!source) source = 'unknown'
   return source
@@ -321,6 +326,7 @@ export const createRateLimiterMiddleware = (
       return sendRateLimitResponse(res, rateLimitResult)
     } else {
       try {
+        if (res.headersSent) return res
         res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
         return next()
       } catch (err) {

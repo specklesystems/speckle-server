@@ -61,6 +61,7 @@
           v-model:automation-name="automationName"
           :preselected-project="preselectedProject"
           :is-test-automation="isTestAutomation"
+          :workspace-id="workspaceId"
         />
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"
@@ -231,7 +232,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'fnParamsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -253,7 +254,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -419,7 +420,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
               parameters: encryptedParams
             }
           ],
-          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          triggerDefinitions: {
             version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
             definitions: [
               {
@@ -427,7 +428,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
                 modelId: model.id
               }
             ]
-          }
+          } as Automate.AutomateTypes.TriggerDefinitionsSchema
         }
       },
       { hideSuccessToast: true }

@@ -4,21 +4,20 @@
       v-model:search="search"
       v-model:role="roleFilter"
       search-placeholder="Search members..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
       show-role-filter
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'verified', header: 'Status', classes: 'col-span-3' },
         { id: 'role', header: 'Role', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-4 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -47,11 +46,6 @@
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
           {{ item.company ? item.company : '-' }}
-        </span>
-      </template>
-      <template #verified="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          {{ item.verified ? 'Verified' : 'Unverified' }}
         </span>
       </template>
       <template #role="{ item }">
@@ -102,10 +96,10 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
@@ -120,7 +114,7 @@ import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 type UserItem = (typeof members)['value'][0]
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
+  fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
     user {
@@ -128,14 +122,13 @@ graphql(`
       avatar
       name
       company
-      verified
-      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
+      workspaceDomainPolicyCompliant
     }
   }
 `)
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
+  fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
     id
     name
     ...SettingsSharedDeleteUserDialog_Workspace
@@ -144,7 +137,7 @@ graphql(`
     team {
       items {
         id
-        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
       }
     }
   }
@@ -157,8 +150,8 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
-  workspaceId: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspaceSlug: string
 }>()
 
 const search = ref('')
@@ -173,7 +166,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         ? [roleFilter.value]
         : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length || !!roleFilter.value
@@ -194,7 +187,7 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const members = computed(() => {
   const memberArray =
     search.value.length || roleFilter.value
-      ? searchResult.value?.workspace?.team.items
+      ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
   return (memberArray || [])
     .map(({ user, ...rest }) => ({
@@ -214,7 +207,7 @@ const canRemoveMember = computed(
 const hasNoResults = computed(
   () =>
     (search.value.length || roleFilter.value) &&
-    searchResult.value?.workspace.team.items.length === 0
+    searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
 
 const currentUserRole = computed<WorkspaceRoles | undefined>(() => {
@@ -261,22 +254,22 @@ const openDeleteUserRoleDialog = (user: UserItem) => {
 }
 
 const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue) return
+  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: newRoleValue,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 
 const onRemoveUser = async () => {
-  if (!userToModify.value?.id) return
+  if (!userToModify.value?.id || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: null,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 

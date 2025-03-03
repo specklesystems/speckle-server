@@ -17,16 +17,16 @@ export const settingsSidebarAutomateFunctionsQuery = graphql(`
 `)
 
 export const settingsWorkspaceGeneralQuery = graphql(`
-  query SettingsWorkspaceGeneral($id: String!) {
-    workspace(id: $id) {
+  query SettingsWorkspaceGeneral($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesGeneral_Workspace
     }
   }
 `)
 
 export const settingsWorkspaceBillingQuery = graphql(`
-  query SettingsWorkspaceBilling($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceBilling($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       id
       ...SettingsWorkspacesBilling_Workspace
     }
@@ -42,8 +42,8 @@ export const settingsWorkspaceBillingCustomerPortalQuery = graphql(`
 `)
 
 export const settingsWorkspaceRegionsQuery = graphql(`
-  query SettingsWorkspaceRegions($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceRegions($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       id
       ...SettingsWorkspacesRegions_Workspace
     }
@@ -54,30 +54,53 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersQuery = graphql(`
-  query SettingsWorkspacesMembers(
-    $workspaceId: String!
-    $invitesFilter: PendingWorkspaceCollaboratorsFilter
-  ) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspacesMembers($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembers_Workspace
-      ...SettingsWorkspacesMembersMembersTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesMembersTableQuery = graphql(`
+  query SettingsWorkspacesMembersTable($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsWorkspacesMembersTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesMembersGuestsQuery = graphql(`
+  query SettingsWorkspacesMembersGuests($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersGuestsTable_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesMembersInvitesQuery = graphql(`
+  query SettingsWorkspacesMembersInvites($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersInvitesTable_Workspace
     }
   }
 `)
 
+export const settingsWorkspacesMembersRequestsQuery = graphql(`
+  query SettingsWorkspacesMembersRequests($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsWorkspacesMembersRequestsTable_Workspace
+    }
+  }
+`)
+
 export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch(
-    $workspaceId: String!
-    $filter: WorkspaceTeamFilter
-  ) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+    workspaceBySlug(slug: $slug) {
       id
       team(filter: $filter) {
         items {
           id
-          ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+          ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
         }
       }
     }
@@ -86,31 +109,23 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
 
 export const settingsWorkspacesInvitesSearchQuery = graphql(`
   query SettingsWorkspacesInvitesSearch(
-    $workspaceId: String!
+    $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersInvitesTable_Workspace
-    }
-  }
-`)
-
-export const settingsUserEmailsQuery = graphql(`
-  query SettingsUserEmailsQuery {
-    activeUser {
-      ...SettingsUserEmails_User
     }
   }
 `)
 
 export const settingsWorkspacesProjectsQuery = graphql(`
   query SettingsWorkspacesProjects(
-    $workspaceId: String!
+    $slug: String!
     $limit: Int!
     $cursor: String
     $filter: WorkspaceProjectsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       id
       slug
       readOnly
@@ -123,8 +138,8 @@ export const settingsWorkspacesProjectsQuery = graphql(`
 `)
 
 export const settingsWorkspacesSecurityQuery = graphql(`
-  query SettingsWorkspaceSecurity($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceSecurity($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
     }
     activeUser {

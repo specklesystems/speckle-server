@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
@@ -41,6 +41,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import coreModule from '@/modules/core/index'
 import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
+import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -170,7 +171,7 @@ const gatekeeperModule: SpeckleModule = {
       requiredModules: ['gatekeeper']
     })
     if (!isLicenseValid)
-      throw new Error(
+      throw new InvalidLicenseError(
         'The gatekeeper module needs a valid license to run, contact Speckle to get one.'
       )
 
@@ -203,7 +204,7 @@ const gatekeeperModule: SpeckleModule = {
           requiredModules: ['billing']
         })
         if (!isLicenseValid)
-          throw new Error(
+          throw new InvalidLicenseError(
             'The the billing module needs a valid license to run, contact Speckle to get one.'
           )
         // TODO: create a cron job, that removes unused seats from the subscription at the beginning of each workspace plan's billing cycle

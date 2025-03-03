@@ -4,9 +4,9 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  HybridCameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -21,6 +21,7 @@ import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
+import { PassReader } from './Extensions/PassReader'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -44,28 +45,19 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
+  viewer.createExtension(HybridCameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(MeasurementsExtension)
+  viewer.createExtension(FilteringExtension)
+  viewer.createExtension(ExplodeExtension)
+  viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
+  viewer.createExtension(PassReader)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -111,7 +103,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -456,6 +448,8 @@ const getStream = () => {
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
+    // big baker
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716'
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
@@ -466,7 +460,20 @@ const getStream = () => {
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
 
-    'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
+    // 'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
+    // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
+
+    // FAR OFF
+    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+
+    // SUPER TINY
+    // 'https://latest.speckle.systems/projects/6631c0378c/models/4fed65a49c'
+
+    // v2 colored lines
+    // 'https://app.speckle.systems/projects/052b576a45/models/c756235fcc'
+
+    // Custom normals
+    // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
   )
 }
 

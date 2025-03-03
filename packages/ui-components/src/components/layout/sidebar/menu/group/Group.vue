@@ -5,44 +5,39 @@
       class="h-8 flex items-center justify-between select-none rounded-md"
       :class="[collapsible && !noHover && 'hover:bg-highlight-1']"
     >
-      <button
-        v-if="collapsible"
-        class="group flex items-center w-full rounded-md"
-        :class="noHover ? '' : 'py-0.5 px-2'"
-        @click="isCollapsed = !isCollapsed"
+      <component
+        :is="collapsible ? 'button' : 'div'"
+        class="flex items-center w-full"
+        :class="[
+          collapsible ? 'group rounded-md gap-x-1' : 'space-x-1 p-1 text-foreground-2',
+          collapsible && !noHover ? 'py-0.5 px-2' : 'pl-2'
+        ]"
+        @click="collapsible ? (isCollapsed = !isCollapsed) : undefined"
       >
         <ArrowFilled
+          v-if="collapsible"
           :class="[isCollapsed ? '-rotate-90' : '', noHover ? '-ml-1' : '']"
           class="text-foreground-2 shrink-0"
         />
         <div
           v-if="$slots['title-icon']"
-          class="flex items-center justify-center ml-1 mr-2"
+          class="flex items-center justify-center"
+          :class="[collapsible ? 'ml-1 mr-2' : '']"
         >
           <slot name="title-icon"></slot>
         </div>
         <div class="flex flex-1 items-center truncate justify-between">
-          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
+          <h6
+            class="truncate text-body-2xs pr-2"
+            :class="[nested ? 'text-foreground' : 'font-semibold text-foreground-2']"
+          >
             {{ title }}
           </h6>
           <CommonBadge v-if="tag" rounded>
             {{ tag }}
           </CommonBadge>
         </div>
-      </button>
-      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-2">
-        <div v-if="$slots['title-icon']" class="flex items-center justify-center">
-          <slot name="title-icon"></slot>
-        </div>
-        <div class="flex flex-1 items-center justify-between truncate">
-          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
-            {{ title }}
-          </h6>
-          <CommonBadge v-if="tag" rounded>
-            {{ tag }}
-          </CommonBadge>
-        </div>
-      </div>
+      </component>
       <button
         v-if="iconClick"
         v-tippy="iconText ? iconText : undefined"
@@ -76,6 +71,7 @@ defineProps<{
   iconText?: string
   iconClick?: () => void
   noHover?: boolean
+  nested?: boolean
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')

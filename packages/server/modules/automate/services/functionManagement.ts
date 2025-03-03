@@ -2,7 +2,7 @@ import {
   CreateFunctionBody,
   ExecutionEngineFunctionTemplateId,
   createFunction,
-  getFunction,
+  getFunctionFactory,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
@@ -43,10 +43,12 @@ import {
   speckleAutomateUrl
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger, Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
+import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -59,7 +61,7 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
     default:
-      throw new Error('Unknown template id')
+      throw new UnknownFunctionTemplateError('Unknown template id')
   }
 }
 
@@ -69,7 +71,7 @@ const repoUrlToBasicGitRepositoryMetadata = (
   const repoUrl = new URL(url)
   const pathParts = repoUrl.pathname.split('/').filter(Boolean)
   if (pathParts.length < 2) {
-    throw new Error('Invalid GitHub repository URL')
+    throw new UserInputError('Invalid GitHub repository URL')
   }
 
   const [owner, name] = pathParts
@@ -87,6 +89,14 @@ const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string>
 export const convertFunctionToGraphQLReturn = (
   fn: FunctionSchemaType
 ): AutomateFunctionGraphQLReturn => {
+  const functionCreator: FunctionSchemaType['functionCreator'] =
+    fn.functionCreatorSpeckleUserId && fn.functionCreatorSpeckleServerOrigin
+      ? {
+          speckleUserId: fn.functionCreatorSpeckleUserId,
+          speckleServerOrigin: fn.functionCreatorSpeckleServerOrigin
+        }
+      : fn.functionCreator
+
   const ret: AutomateFunctionGraphQLReturn = {
     id: fn.functionId,
     name: fn.functionName,
@@ -96,7 +106,7 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator,
+    functionCreator,
     workspaceIds: fn.workspaceIds
   }
 
@@ -185,17 +195,18 @@ export const createFunctionFromTemplateFactory =
 
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
-  getFunction: typeof getFunction
+  getFunction: ReturnType<typeof getFunctionFactory>
   createStoredAuthCode: CreateStoredAuthCode
+  logger: Logger
 }
 
 export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    const { updateFunction, createStoredAuthCode } = deps
+    const { updateFunction, createStoredAuthCode, logger } = deps
     const { input, userId } = params
 
-    const existingFn = await getFunction({ functionId: input.id })
+    const existingFn = await getFunctionFactory({ logger })({ functionId: input.id })
     if (!existingFn) {
       throw new AutomateFunctionUpdateError('Function not found')
     }

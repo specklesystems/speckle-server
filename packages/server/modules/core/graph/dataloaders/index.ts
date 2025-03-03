@@ -11,7 +11,8 @@ import {
   getOwnedFavoritesCountByUserIdsFactory,
   getStreamRolesFactory,
   getUserStreamCountsFactory,
-  getStreamsSourceAppsFactory
+  getStreamsSourceAppsFactory,
+  getStreamsCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash'
 import {
@@ -55,7 +56,7 @@ import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import {
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationRunTriggerRecord,
@@ -70,8 +71,8 @@ import {
   getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
-  getFunction,
-  getFunctionReleases
+  getFunctionFactory,
+  getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
 import {
   FunctionReleaseSchemaType,
@@ -83,7 +84,10 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
-import { StreamWithCommitId } from '@/modules/core/domain/streams/types'
+import {
+  LimitedUserWithStreamRole,
+  StreamWithCommitId
+} from '@/modules/core/domain/streams/types'
 import {
   getUsersFactory,
   UserWithOptionalRole
@@ -92,6 +96,7 @@ import {
   CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
+import { logger } from '@/observability/logging'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -139,6 +144,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getUserStreamCounts = getUserStreamCountsFactory({ db })
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
+    const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
 
     return {
       streams: {
@@ -198,6 +204,17 @@ const dataLoadersDefinition = defineRequestDataloaders(
             }
           }
         })(),
+        /**
+         * Get all collaborators for a stream
+         */
+        getCollaborators: createLoader<string, Array<LimitedUserWithStreamRole>>(
+          async (streamIds) => {
+            const results = await getStreamsCollaborators({
+              streamIds: streamIds.slice()
+            })
+            return streamIds.map((i) => results[i] || [])
+          }
+        ),
 
         /**
          * Get favorite metadata for a specific stream and user
@@ -579,7 +596,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
           })
           return ids.map((i) => results[i] || [])
         }),
-        getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        getRevisionFunctions: createLoader<string, AutomationRevisionFunctionRecord[]>(
           async (ids) => {
             const results = await getRevisionsFunctions({
               automationRevisionIds: ids.slice()
@@ -602,7 +619,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
             const results = await Promise.all(
               fnIds.map(async (fnId) => {
                 try {
-                  return await getFunction({ functionId: fnId })
+                  return await getFunctionFactory({ logger })({ functionId: fnId })
                 } catch (e) {
                   const isNotFound =
                     e instanceof ExecutionEngineFailedResponseError &&
@@ -626,7 +643,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
         >(
           async (keys) => {
             const results = keyBy(
-              await getFunctionReleases({
+              await getFunctionReleasesFactory({ logger })({
                 ids: keys.map(([fnId, fnReleaseId]) => ({
                   functionId: fnId,
                   functionReleaseId: fnReleaseId

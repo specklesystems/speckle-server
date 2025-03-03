@@ -64,7 +64,7 @@ import {
 import { SetOptional } from 'type-fest'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
-  assignRegionFactory,
+  assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -74,7 +74,7 @@ import {
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
-import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -140,8 +140,7 @@ export const createTestWorkspace = async (
       name: workspace.name,
       slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
-      logo: workspace.logo || null,
-      defaultLogoIndex: 0
+      logo: workspace.logo || null
     },
     userResourceAccessLimits: null
   })
@@ -185,7 +184,7 @@ export const createTestWorkspace = async (
 
   if (useRegion) {
     const regionDb = await getDb({ regionKey })
-    const assignRegion = assignRegionFactory({
+    const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
         canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -247,10 +246,6 @@ export const assignToWorkspace = async (
   user: BasicTestUser,
   role?: WorkspaceRoles
 ) => {
-  if (!FF_WORKSPACES_MODULE_ENABLED) {
-    return // Just skip
-  }
-
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),

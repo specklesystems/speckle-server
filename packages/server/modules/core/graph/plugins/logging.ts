@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { type Registry, Counter } from 'prom-client'
-import { graphqlLogger } from '@/logging/logging'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { graphqlLogger } from '@/observability/logging'
+import { redactSensitiveVariables } from '@/observability/utils/redact'
 import { FieldNode, SelectionNode } from 'graphql'
 import { ApolloServerPlugin } from '@apollo/server'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import { getRequestContext } from '@/logging/requestContext'
+import { shouldLogAsInfoLevel } from '@/observability/utils/logLevels'
+import { getRequestContext } from '@/observability/components/express/requestContext'
 
 type ApolloLoggingPluginTransaction = {
   start: number
@@ -97,7 +97,6 @@ export const loggingPluginFactory: (deps: {
           logger.error({ err: e, transaction }, 'Error while defining action name')
         }
 
-        ctx.request.http
         ctx.request.transaction = transaction
         ctx.contextValue.log = logger
       },
@@ -107,37 +106,44 @@ export const loggingPluginFactory: (deps: {
           apollo_query_duration_ms: Date.now() - apolloRequestStart
         })
 
-        for (const err of ctx.errors) {
-          const operationName = ctx.request.operationName || null
-          const query = ctx.request.query
-          const variables = redactSensitiveVariables(ctx.request.variables)
+        const operationName = ctx.request.operationName || null
+        const query = ctx.request.query
+        const variables = redactSensitiveVariables(ctx.request.variables)
 
-          const reqCtx = getRequestContext()
-          if (reqCtx) {
-            logger = logger.child({
-              dbMetrics: reqCtx.dbMetrics
-            })
-          }
+        const reqCtx = getRequestContext()
+        if (reqCtx) {
+          logger = logger.child({
+            dbMetrics: reqCtx.dbMetrics
+          })
+        }
 
-          if (err.path) {
-            logger = logger.child({
-              'query-path': err.path.join(' > '),
-              graphql_operation_name: operationName,
-              graphql_query: query,
-              graphql_variables: variables
-            })
-          }
-          if (shouldLogAsInfoLevel(err)) {
-            logger.info(
-              { err },
-              '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
-            )
-          } else {
-            logger.error(
-              err,
-              '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
-            )
-          }
+        const importantError = ctx.errors.find((err) => !shouldLogAsInfoLevel(err))
+        const firstError = ctx.errors[0]
+        const loggableError = importantError || firstError
+
+        logger = logger.child({
+          error_count: loggableError ? ctx.errors.length : undefined,
+          first_error: loggableError
+            ? {
+                message: loggableError.message,
+                path: loggableError.path?.join(' > ')
+              }
+            : {},
+          graphql_operation_name: operationName,
+          graphql_query: query,
+          graphql_variables: variables
+        })
+
+        if (!importantError) {
+          logger.info(
+            { err: firstError },
+            '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
+          )
+        } else {
+          logger.error(
+            { err: importantError },
+            '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
+          )
         }
       },
       willSendResponse: async (ctx) => {

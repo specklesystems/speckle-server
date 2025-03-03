@@ -1,7 +1,7 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { authLogger, moduleLogger } from '@/logging/logging'
+import { authLogger, moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -66,10 +66,13 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
   getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
   renderEmail,
   sendEmail
 })
+
 const createUser = createUserFactory({
   getServerInfo: getServerInfoFactory({ db }),
   findEmail,

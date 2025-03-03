@@ -41,8 +41,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -60,9 +59,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getUsersFactory,
   getUserFactory,
@@ -100,8 +96,7 @@ import {
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -137,11 +132,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -214,9 +205,7 @@ const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateUser = updateUserAndNotifyFactory({
   getUser: getUserFactory({ db }),
   updateUser: updateUserFactory({ db }),
-  addUserUpdatedActivity: addUserUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db })
-  })
+  emitEvent: getEventBus().emit
 })
 const updateUserPassword = changePasswordFactory({
   getUser: getUserFactory({ db }),
@@ -231,7 +220,8 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db })
+  deleteUserRecord: deleteUserRecordFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
@@ -270,14 +260,13 @@ const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
   getStreamBranchCount: getStreamBranchCountFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

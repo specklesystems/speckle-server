@@ -1,4 +1,4 @@
-import { automateLogger, moduleLogger } from '@/logging/logging'
+import { automateLogger, moduleLogger } from '@/observability/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   onModelVersionCreateFactory,
@@ -14,9 +14,12 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { isNonNullable, Scopes, throwUncoveredError } from '@speckle/shared'
+import { isNonNullable, Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import {
+  getFunctionFactory,
+  triggerAutomationRun
+} from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
   getEncryptionKeyPairFor,
@@ -25,7 +28,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
@@ -46,7 +49,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   isVersionCreatedTriggerManifest,
-  RunTriggerSource,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import { isFinished } from '@/modules/automate/domain/logic'
@@ -55,6 +57,8 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
+import { LogicError } from '@/modules/shared/errors'
+import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -173,14 +177,18 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { manifests, run, automation } }) => {
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const validatedManifests = manifests
           .map((manifest) => {
             if (isVersionCreatedTriggerManifest(manifest)) {
               return manifest
             } else {
-              automateLogger.error('Unexpected run trigger manifest type', {
-                manifest
-              })
+              logger.error(
+                {
+                  manifest
+                },
+                'Unexpected run trigger manifest type'
+              )
             }
 
             return null
@@ -259,7 +267,7 @@ const initializeEventListeners = () => {
       AutomationRunEvents.StatusUpdated,
       async ({ payload: { run, functionRun, automationId, projectId } }) => {
         if (!isFinished(run.status)) return
-
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const projectDb = await getProjectDbClient({ projectId })
         const project = await getProjectFactory({ db: projectDb })({ projectId })
 
@@ -267,10 +275,10 @@ const initializeEventListeners = () => {
           db: projectDb
         })(run.automationRevisionId)
         const fullRun = await getFullAutomationRunByIdFactory({ db: projectDb })(run.id)
-        if (!fullRun) throw new Error('This should never happen')
+        if (!fullRun) throw new LogicError('This should never happen')
 
         if (!automationWithRevision) {
-          automateLogger.error(
+          logger.error(
             {
               run
             },
@@ -278,6 +286,10 @@ const initializeEventListeners = () => {
           )
           return
         }
+
+        const fn = isTestEnv()
+          ? null
+          : await getFunctionFactory({ logger })({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
@@ -294,6 +306,9 @@ const initializeEventListeners = () => {
           automationRevisionId: automationWithRevision.id,
           automationName: automationWithRevision.name,
           runId: run.id,
+          functionId: fn?.functionId,
+          functionName: fn?.functionName,
+          functionType: fn?.isFeatured ? 'public' : 'private',
           functionRunId: functionRun.id,
           status: functionRun.status,
           durationInSeconds: functionRun.elapsed / 1000,
@@ -306,11 +321,15 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { automation, run: automationRun, source, manifests } }) => {
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const manifest = manifests.at(0)
         if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
-          automateLogger.error('Unexpected run trigger manifest type', {
-            manifest
-          })
+          logger.error(
+            {
+              manifest
+            },
+            'Unexpected run trigger manifest type'
+          )
           return
         }
         const projectDb = await getProjectDbClient({ projectId: manifest.projectId })
@@ -318,36 +337,27 @@ const initializeEventListeners = () => {
           projectId: manifest.projectId
         })
 
-        // all triggers, that are automatic result of an action are in a need to be tracked
-        switch (source) {
-          case RunTriggerSource.Automatic: {
-            const userEmail = await getUserEmailFromAutomationRunFactory({
-              getFullAutomationRevisionMetadata:
-                getFullAutomationRevisionMetadataFactory({ db: projectDb }),
-              getFullAutomationRunById: getFullAutomationRunByIdFactory({
-                db: projectDb
-              }),
-              getCommit: getCommitFactory({ db: projectDb }),
-              getUser: legacyGetUserFactory({ db: projectDb })
-            })(automationRun, automation.projectId)
-            const mp = mixpanel({ userEmail, req: undefined })
-            await mp.track('Automation Run Triggered', {
-              automationId: automation.id,
-              automationName: automation.name,
-              automationRunId: automationRun.id,
-              projectId: automation.projectId,
-              source,
-              /* eslint-disable-next-line camelcase */
-              workspace_id: project?.workspaceId
-            })
-            break
-          }
-          // runs created from a user interaction are tracked in the frontend
-          case RunTriggerSource.Manual:
-            return
-          default:
-            throwUncoveredError(source)
-        }
+        const userEmail = await getUserEmailFromAutomationRunFactory({
+          getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
+            db: projectDb
+          }),
+          getFullAutomationRunById: getFullAutomationRunByIdFactory({
+            db: projectDb
+          }),
+          getCommit: getCommitFactory({ db: projectDb }),
+          getUser: legacyGetUserFactory({ db: projectDb })
+        })(automationRun, automation.projectId)
+
+        const mp = mixpanel({ userEmail, req: undefined })
+        await mp.track('Automation Run Triggered', {
+          automationId: automation.id,
+          automationName: automation.name,
+          automationRunId: automationRun.id,
+          projectId: automation.projectId,
+          source,
+          /* eslint-disable-next-line camelcase */
+          workspace_id: project?.workspaceId
+        })
       }
     )
   ]

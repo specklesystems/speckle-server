@@ -11,6 +11,10 @@ export const activeUserQuery = graphql(`
     activeUser {
       id
       email
+      emails {
+        id
+        verified
+      }
       company
       bio
       name
@@ -22,6 +26,19 @@ export const activeUserQuery = graphql(`
       notificationPreferences
       versions(limit: 0) {
         totalCount
+      }
+      workspaces {
+        items {
+          id
+        }
+      }
+      discoverableWorkspaces {
+        id
+      }
+      workspaceJoinRequests {
+        items {
+          id
+        }
       }
     }
   }
@@ -54,6 +71,8 @@ export function useResolveUserDistinctId() {
 export function useActiveUser() {
   const { result, refetch, onResult } = useQuery(activeUserQuery)
   const getDistinctId = useResolveUserDistinctId()
+  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const activeUser = computed(() =>
     result.value ? result.value.activeUser : undefined
@@ -70,6 +89,16 @@ export function useActiveUser() {
 
   const projectVersionCount = computed(() => activeUser.value?.versions.totalCount)
 
+  const requiresWorkspaceCreation = computed(() => {
+    return (
+      isWorkspacesEnabled.value &&
+      isWorkspaceNewPlansEnabled.value &&
+      activeUser.value?.workspaces?.items?.length === 0 &&
+      // Legacy projects
+      projectVersionCount.value === 0
+    )
+  })
+
   return {
     activeUser,
     userId,
@@ -79,7 +108,8 @@ export function useActiveUser() {
     onResult,
     isGuest,
     isAdmin,
-    projectVersionCount
+    projectVersionCount,
+    requiresWorkspaceCreation
   }
 }
 

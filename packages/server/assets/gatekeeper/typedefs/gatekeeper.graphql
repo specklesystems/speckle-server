@@ -1,7 +1,3 @@
-extend type Query {
-  workspacePricingPlans: JSONObject!
-}
-
 extend type WorkspaceMutations {
   billing: WorkspaceBillingMutations! @hasScope(scope: "workspace:billing")
 }
@@ -57,11 +53,17 @@ type WorkspaceBillingMutations {
 }
 
 enum WorkspacePlans {
+  free
   starter
   plus
   business
   unlimited
   academia
+  starterInvoiced
+  plusInvoiced
+  businessInvoiced
+  team
+  pro
 }
 
 enum WorkspacePlanStatuses {
@@ -73,10 +75,17 @@ enum WorkspacePlanStatuses {
   expired
 }
 
+enum WorkspacePaymentMethod {
+  unpaid
+  invoice
+  billing
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
+  paymentMethod: WorkspacePaymentMethod!
 }
 
 type WorkspaceSubscriptionSeats {

@@ -547,9 +547,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: LOG_PRETTY
   value: {{ .Values.server.logPretty | quote }}
 
-- name: USE_FRONTEND_2
-  value: {{ .Values.frontend_2.enabled | quote }}
-
 - name: FRONTEND_ORIGIN
   {{- if .Values.ssl_canonical_url }}
   value: https://{{ .Values.domain }}
@@ -566,8 +563,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
+
+- name: FF_WORKSPACES_NEW_PLAN_ENABLED
+  value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
 
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
@@ -588,6 +591,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+
+- name: FF_FORCE_ONBOARDING
+  value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -620,41 +626,41 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
+- name: WORKSPACE_STARTER_SEAT_STRIPE_PRODUCT_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceTeamSeatStripeProductId.secretKey }}
+      key: {{ .Values.server.billing.workspaceStarterSeatStripeProductId.secretKey }}
 
-- name: WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_MONTHLY_STARTER_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey }}
+      key: {{ .Values.server.billing.workspaceMonthlyStarterSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_YEARLY_STARTER_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey }}
+      key: {{ .Values.server.billing.workspaceYearlyStarterSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
+- name: WORKSPACE_PLUS_SEAT_STRIPE_PRODUCT_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceProSeatStripeProductId.secretKey }}
+      key: {{ .Values.server.billing.workspacePlusSeatStripeProductId.secretKey }}
 
-- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_MONTHLY_PLUS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyProSeatStripePriceId.secretKey }}
+      key: {{ .Values.server.billing.workspaceMonthlyPlusSeatStripePriceId.secretKey }}
 
-- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+- name: WORKSPACE_YEARLY_PLUS_SEAT_STRIPE_PRICE_ID
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyProSeatStripePriceId.secretKey }}
+      key: {{ .Values.server.billing.workspaceYearlyPlusSeatStripePriceId.secretKey }}
 
 - name: WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID
   valueFrom:
@@ -723,10 +729,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.asyncRequestContextEnabled | quote }}
 {{- end}}
 
-# *** No more closures flag - prevents writing to the closure table ***
-- name: FF_NO_CLOSURE_WRITES
-  value: {{ .Values.featureFlags.noClosureWrites | quote }}
-
 # *** Gendo render module ***
 - name: FF_GENDOAI_MODULE_ENABLED
   value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
@@ -780,6 +782,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.db.knexAsyncStackTracesEnabled }}
 - name: KNEX_ASYNC_STACK_TRACES_ENABLED
   value: {{ .Values.db.knexAsyncStackTracesEnabled | quote }}
+{{- end}}
+
+{{- if .Values.db.knexImprovedTelemetryStackTraces }}
+- name: KNEX_IMPROVED_TELEMETRY_STACK_TRACES
+  value: {{ .Values.db.knexImprovedTelemetryStackTraces | quote }}
 {{- end}}
 
 - name: PGSSLMODE

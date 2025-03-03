@@ -1,7 +1,7 @@
 <template>
-  <InviteBanner :invite="invite" @processed="processJoin">
+  <InviteBanner :invite="invite" @processed="handleRequest">
     <template #message>
-      Your team is already using Workspaces! Collaborate in the
+      Your team is already using Workspaces, request to join the
       <span class="font-medium">{{ workspace.name }}</span>
       space!
     </template>
@@ -9,57 +9,17 @@
 </template>
 
 <script setup lang="ts">
-import { useApolloClient } from '@vue/apollo-composable'
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
-import { graphql } from '~/lib/common/generated/gql'
-import {
-  DashboardJoinWorkspaceDocument,
-  type WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
-import { CookieKeys } from '~/lib/common/helpers/constants'
-import {
-  getCacheId,
-  getFirstErrorMessage,
-  modifyObjectField
-} from '~/lib/common/helpers/graphql'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-
-graphql(`
-  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {
-    id
-    name
-    slug
-    description
-    logo
-  }
-  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {
-    id
-    name
-    description
-    createdAt
-    updatedAt
-    logo
-    domainBasedMembershipProtectionEnabled
-    discoverabilityEnabled
-  }
-`)
+import type { LimitedWorkspace } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  workspace: WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment
+  workspace: LimitedWorkspace
 }>()
 
+const { processRequest } = useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
-const { client: apollo } = useApolloClient()
-const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
-const router = useRouter()
-const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
-  CookieKeys.DismissedDiscoverableWorkspaces,
-  {
-    default: () => []
-  }
-)
 
 const invite = computed(() => ({
   workspace: {
@@ -69,73 +29,25 @@ const invite = computed(() => ({
   }
 }))
 
-const processJoin = async (accept: boolean) => {
-  if (!accept) {
-    dismissedDiscoverableWorkspaces.value = [
-      ...dismissedDiscoverableWorkspaces.value,
-      props.workspace.id
-    ]
-    apollo.cache.evict({
-      id: getCacheId('LimitedWorkspace', props.workspace.id)
-    })
-    return
-  }
+const emit = defineEmits<{
+  (e: 'dismiss', workspaceId: string): void
+}>()
 
-  const userId = activeUser.value?.id
-  if (!userId) return
-
-  const result = await apollo
-    .mutate({
-      mutation: DashboardJoinWorkspaceDocument,
-      variables: {
-        input: {
-          workspaceId: props.workspace.id
-        }
-      },
-      update(cache, { data }) {
-        const workspaceId = data?.workspaceMutations.join.id
-        if (!workspaceId) return
-
-        modifyObjectField(
-          cache,
-          getCacheId('User', userId),
-          'workspaces',
-          ({ variables, helpers: { evict, createUpdatedValue, ref } }) => {
-            if (variables.filter?.search?.length) return evict()
-
-            return createUpdatedValue(({ update }) => {
-              update('totalCount', (totalCount) => totalCount + 1)
-              update('items', (items) => [...items, ref('Workspace', workspaceId)])
-            })
-          }
-        )
-      }
-    })
-    .catch(convertThrowIntoFetchResult)
-
-  if (result?.data) {
-    apollo.cache.evict({
-      id: getCacheId('LimitedWorkspace', props.workspace.id)
-    })
-
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Joined workspace',
-      description: 'Successfully joined workspace'
-    })
-
-    mixpanel.track('Workspace Joined', {
+const handleRequest = async (accept: boolean) => {
+  if (accept) {
+    await processRequest(true, props.workspace.id)
+    emit('dismiss', props.workspace.id)
+  } else {
+    emit('dismiss', props.workspace.id)
+    mixpanel.track('Workspace Discovery Banner Dismissed', {
+      workspaceId: props.workspace.id,
       location: 'discovery banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
     })
-
-    router.push(workspaceRoute(props.workspace.slug))
-  } else {
     triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to join workspace',
-      description: getFirstErrorMessage(result?.errors)
+      title: 'Discoverable workspace dismissed',
+      type: ToastNotificationType.Info
     })
   }
 }

@@ -1,4 +1,4 @@
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import {
   MentionedInCommentData,
   NotificationType

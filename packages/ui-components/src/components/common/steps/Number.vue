@@ -8,17 +8,15 @@
           :class="linkClasses"
           @click="(e) => switchStep(i, e)"
         >
-          <div
-            class="flex space-x-3 items-center text-primary normal font-medium leading-5"
-          >
+          <div class="flex space-x-2 items-center">
             <div
-              class="shrink-0 h-8 w-8 rounded-full bg-primary text-foreground-on-primary inline-flex items-center justify-center select-none"
+              class="shrink-0 h-7 w-7 rounded-full border border-primary text-white bg-primary inline-flex items-center justify-center select-none"
             >
-              <CheckIcon class="w-5 h-5" />
+              <CheckIcon class="w-4 h-4" />
             </div>
             <div class="flex flex-col">
-              <div>{{ step.name }}</div>
-              <div v-if="step.description" class="label label--light text-foreground">
+              <div class="text-body-xs font-medium text-primary">{{ step.name }}</div>
+              <div v-if="step.description" class="text-body-2xs text-foreground-2">
                 {{ step.description }}
               </div>
             </div>
@@ -31,17 +29,15 @@
           aria-current="step"
           @click="(e) => switchStep(i, e)"
         >
-          <div
-            class="flex space-x-3 items-center text-primary normal font-medium leading-5"
-          >
+          <div class="flex space-x-2 items-center">
             <div
-              class="shrink-0 h-8 w-8 rounded-full border-2 border-primary inline-flex items-center justify-center select-none"
+              class="shrink-0 h-7 w-7 text-body-xs rounded-full border border-primary inline-flex items-center justify-center select-none text-primary"
             >
               {{ getStepDisplayValue(i) }}
             </div>
             <div class="flex flex-col">
-              <div>{{ step.name }}</div>
-              <div v-if="step.description" class="label label--light text-foreground">
+              <div class="text-body-xs font-medium text-primary">{{ step.name }}</div>
+              <div v-if="step.description" class="text-body-2xs text-foreground-2">
                 {{ step.description }}
               </div>
             </div>
@@ -53,17 +49,17 @@
           :class="linkClasses"
           @click="(e) => switchStep(i, e)"
         >
-          <div
-            class="flex space-x-3 items-center text-foreground-disabled normal font-medium leading-5"
-          >
+          <div class="flex space-x-2 items-center">
             <div
-              class="shrink-0 h-8 w-8 rounded-full border-2 border-foreground-disabled inline-flex items-center justify-center select-none"
+              class="shrink-0 h-7 w-7 rounded-full border border-foreground-3 inline-flex items-center justify-center select-none text-foreground-3"
             >
               {{ getStepDisplayValue(i) }}
             </div>
             <div class="flex flex-col">
-              <div>{{ step.name }}</div>
-              <div v-if="step.description" class="label label--light">
+              <div class="text-body-xs font-medium text-foreground-2">
+                {{ step.name }}
+              </div>
+              <div v-if="step.description" class="text-body-2xs text-foreground-2">
                 {{ step.description }}
               </div>
             </div>

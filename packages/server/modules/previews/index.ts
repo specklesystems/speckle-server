@@ -2,10 +2,8 @@
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { messageProcessor } from '@/modules/previews/resultListener'
-
-import cors from 'cors'
 import { db } from '@/db/knex'
 import {
   getObjectPreviewBufferOrFilepathFactory,
@@ -29,6 +27,8 @@ import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branch
 import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { disablePreviews } from '@/modules/shared/helpers/envHelper'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -36,14 +36,14 @@ const httpErrorImage = (httpErrorCode: number) =>
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
 export const init: SpeckleModule['init'] = (app, isInitial) => {
-  if (process.env.DISABLE_PREVIEWS) {
+  if (disablePreviews()) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
     moduleLogger.info('📸 Init object preview module')
   }
 
-  app.options('/preview/:streamId/:angle?', cors())
-  app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
+  app.options('/preview/:streamId/:angle?', corsMiddlewareFactory())
+  app.get('/preview/:streamId/:angle?', corsMiddlewareFactory(), async (req, res) => {
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
     const checkStreamPermissions = checkStreamPermissionsFactory({
       validateScopes,
@@ -75,7 +75,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+      logger: req.log
     })
 
     const sendObjectPreview = sendObjectPreviewFactory({
@@ -94,10 +95,13 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     )
   })
 
-  app.options('/preview/:streamId/branches/:branchName/:angle?', cors())
+  app.options(
+    '/preview/:streamId/branches/:branchName/:angle?',
+    corsMiddlewareFactory()
+  )
   app.get(
     '/preview/:streamId/branches/:branchName/:angle?',
-    cors(),
+    corsMiddlewareFactory(),
     async (req, res) => {
       const checkStreamPermissions = checkStreamPermissionsFactory({
         validateScopes,
@@ -140,7 +144,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         getObject: getFormattedObjectFactory({ db: projectDb }),
         getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
         createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+        getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+        logger: req.log
       })
 
       const sendObjectPreview = sendObjectPreviewFactory({
@@ -160,86 +165,96 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     }
   )
 
-  app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
-  app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
-    const checkStreamPermissions = checkStreamPermissionsFactory({
-      validateScopes,
-      authorizeResolver,
-      // getting the stream from the main DB, cause it needs to join on roles
-      getStream: getStreamFactory({ db })
-    })
-    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile(httpErrorImage(httpErrorCode))
+  app.options('/preview/:streamId/commits/:commitId/:angle?', corsMiddlewareFactory())
+  app.get(
+    '/preview/:streamId/commits/:commitId/:angle?',
+    corsMiddlewareFactory(),
+    async (req, res) => {
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        // return res.status( httpErrorCode ).end()
+        return res.sendFile(httpErrorImage(httpErrorCode))
+      }
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+      const getCommit = getCommitFactory({ db: projectDb })
+      const commit = await getCommit(req.params.commitId, {
+        streamId: req.params.streamId
+      })
+      if (!commit) return res.sendFile(noPreviewImage)
+
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+        logger: req.log
+      })
+
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        commit.referencedObject,
+        req.params.angle
+      )
     }
+  )
 
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+  app.options('/preview/:streamId/objects/:objectId/:angle?', corsMiddlewareFactory())
+  app.get(
+    '/preview/:streamId/objects/:objectId/:angle?',
+    corsMiddlewareFactory(),
+    async (req, res) => {
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
+      const { hasPermissions } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        return res.status(403).end()
+      }
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
-    const getCommit = getCommitFactory({ db: projectDb })
-    const commit = await getCommit(req.params.commitId, {
-      streamId: req.params.streamId
-    })
-    if (!commit) return res.sendFile(noPreviewImage)
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+        logger: req.log
+      })
 
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      getObject: getFormattedObjectFactory({ db: projectDb }),
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
-      createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
-    })
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
 
-    const sendObjectPreview = sendObjectPreviewFactory({
-      // getting the stream from the projectDb here, to handle preview data properly
-      getStream: getStreamFactory({ db: projectDb }),
-      getObjectPreviewBufferOrFilepath,
-      makeOgImage
-    })
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      commit.referencedObject,
-      req.params.angle
-    )
-  })
-
-  app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
-  app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
-    const checkStreamPermissions = checkStreamPermissionsFactory({
-      validateScopes,
-      authorizeResolver,
-      // getting the stream from the main DB, cause it needs to join on roles
-      getStream: getStreamFactory({ db })
-    })
-    const { hasPermissions } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      return res.status(403).end()
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        req.params.objectId,
+        req.params.angle
+      )
     }
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-
-    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-      getObject: getFormattedObjectFactory({ db: projectDb }),
-      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
-      createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
-    })
-
-    const sendObjectPreview = sendObjectPreviewFactory({
-      // getting the stream from the projectDb here, to handle preview data properly
-      getStream: getStreamFactory({ db: projectDb }),
-      getObjectPreviewBufferOrFilepath,
-      makeOgImage
-    })
-
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      req.params.objectId,
-      req.params.angle
-    )
-  })
+  )
 
   if (isInitial) {
     listenFor('preview_generation_update', messageProcessor)

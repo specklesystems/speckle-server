@@ -1,4 +1,4 @@
-import plugin from 'tailwindcss/plugin.js'
+import buildPlugin from 'tailwindcss/plugin.js'
 import preset from './preset.js'
 
 export const lightThemeVariables = {
@@ -123,8 +123,8 @@ export const darkThemeVariables = {
 
   /* info variations */
   '--info': '#B8C0CC',
-  '--info-lighter': '#E0ECFF',
-  '--info-lightest': '#030330',
+  '--info-lighter': '#0043B2',
+  '--info-lightest': '#0043B2',
   '--info-darker': '#6B7D99',
 
   /* danger variations */
@@ -134,7 +134,7 @@ export const darkThemeVariables = {
   '--danger-darker': '#AB3E3E'
 }
 
-export default plugin(function ({ addComponents, addBase }) {
+const plugin = buildPlugin(({ addComponents, addBase }) => {
   addBase({
     /* cyrillic-ext */
     '@font-face': {
@@ -379,3 +379,6 @@ export default plugin(function ({ addComponents, addBase }) {
     }
   })
 }, preset)
+
+export default plugin
+export { plugin }

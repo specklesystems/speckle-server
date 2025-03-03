@@ -83,54 +83,51 @@ varying vec2 vHighPrecisionZW;
     { 
         return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
     }
+
+    highp vec3 rotate_vertex_position_delta(highp vec4 v0, highp vec4 v1, highp vec4 quat)
+    {
+        /** !!! WORKAROUND FOR Intel IrisXe CARDS !!! */
+        /** The code below will not produce correct results in intel IrisXE integrated GPUs. 
+         *  The geometry will turn mangled, albeit stable
+         *  I can't know for sure what is going on, but rotating the difference seems to 
+         *  force the result into a lower precision?
+         */
+        // highp vec4 position = v0 - v1;
+        // return position.xyz + 2.0 * cross(quat.xyz, cross(quat.xyz, position.xyz) + quat.w * position.xyz);
+
+        /** Subtracting the rotated vectors works. */
+        return rotate_vertex_position(v0.xyz, quat) - rotate_vertex_position(v1.xyz, quat);
+
+        /** An alternate workaround is
+         * highp vec3 position = (v0.xyz * (1. + 1e-7)) - (v1.xyz * (1. _ 1e-7));
+           return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
+
+           However I'm not such a fan of the (1. + 1e-7) part
+         */
+    }
+
+    
 #endif
 
 #ifdef USE_RTE
-    vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
-        /* 
-        Vector calculation for the high and low differences works on everything 
-        *BESIDES* Apple Silicon (or whatever they call it) GPUs
-
-        It would seem that when this code gets compiled, vector types get a lower precision(?)
-        which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
-        vector component using floats works fine.
-        */
-        vec3 highDifference;
-        vec3 lowDifference;
-        float t1 = position_low.x - relativeTo_low.x;
-        float e = t1 - position_low.x;
-        float t2 = ((-relativeTo_low.x - e) + (position_low.x - (t1 - e))) + position_high.x - relativeTo_high.x;
-        highDifference.x = t1 + t2;
-        lowDifference.x = t2 - (highDifference.x - t1);
-
-        t1 = position_low.y - relativeTo_low.y;
-        e = t1 - position_low.y;
-        t2 = ((-relativeTo_low.y - e) + (position_low.y - (t1 - e))) + position_high.y - relativeTo_high.y;
-        highDifference.y = t1 + t2;
-        lowDifference.y = t2 - (highDifference.y - t1);
-
-        t1 = position_low.z - relativeTo_low.z;
-        e = t1 - position_low.z;
-        t2 = ((-relativeTo_low.z - e) + (position_low.z - (t1 - e))) + position_high.z - relativeTo_high.z;
-        highDifference.z = t1 + t2;
-        lowDifference.z = t2 - (highDifference.z - t1);
-
-        vec3 position = highDifference.xyz + lowDifference.xyz;
-        return vec4(position, 1.);
-    }
-
-    vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+    highp vec4 computeRelativePosition(in highp vec3 position_low, in highp vec3 position_high, in highp vec3 relativeTo_low, in highp vec3 relativeTo_high){
         /* 
         Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
         Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
         */
-        vec3 t1 = position_low.xyz - relativeTo_low;
-        vec3 e = t1 - position_low.xyz;
-        vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - relativeTo_high;
-        vec3 highDifference = t1 + t2;
-        vec3 lowDifference = t2 - (highDifference - t1);
+        highp vec3 t1 = position_low.xyz - relativeTo_low.xyz;
+        highp vec3 e = t1 - position_low.xyz;
+        /** This is redunant, but necessary as a workaround for Apple platforms */
+        highp float x = position_high.x - relativeTo_high.x;
+        highp float y = position_high.y - relativeTo_high.y;
+        highp float z = position_high.z - relativeTo_high.z;
+        highp vec3 v = vec3(x, y, z);
+        /** End of redundant part */
+        highp vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + v;
+        highp vec3 highDifference = t1 + t2;
+        highp vec3 lowDifference = t2 - (highDifference.xyz - t1.xyz);
         
-        vec3 position = highDifference.xyz + lowDifference.xyz;
+        highp vec3 position = highDifference.xyz + lowDifference.xyz;
         return vec4(position, 1.);
     }
 #endif
@@ -158,13 +155,13 @@ void main() {
         vec4 position_highT = vec4(position, 1.);
         const vec3 ZERO3 = vec3(0., 0., 0.);
 
-        vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
+        vec4 rteLocalPosition = computeRelativePosition(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
-            vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
-            rteLocalPosition.xyz = rotate_vertex_position((rteLocalPosition - rtePivot).xyz, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+            vec4 rtePivot = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
+            rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
-            vec4 instancePivot = computeRelativePositionSeparate(ZERO3, ZERO3, uViewer_low, uViewer_high);
+            vec4 instancePivot = computeRelativePosition(ZERO3, ZERO3, uViewer_low, uViewer_high);
             rteLocalPosition.xyz = (mat3(instanceMatrix) * (rteLocalPosition - instancePivot).xyz) + instancePivot.xyz + instanceMatrix[3].xyz;
         #endif
     #endif

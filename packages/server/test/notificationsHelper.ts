@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { notificationsLogger as logger } from '@/observability/logging'
 import { getQueue, NotificationJobResult } from '@/modules/notifications/services/queue'
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'

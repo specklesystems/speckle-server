@@ -12,7 +12,7 @@ export class BasitPipeline extends Pipeline {
     super(speckleRenderer)
 
     const basitPass = new BasitPass(tree, speckleRenderer)
-    basitPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    basitPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.PROPS])
     basitPass.setClearColor(0x000000, 0)
     basitPass.setClearFlags(ClearFlags.COLOR)
     basitPass.outputTarget = null
@@ -34,11 +34,7 @@ export class BasitPipeline extends Pipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.passList.push(
       stencilPass,

@@ -45,6 +45,10 @@ import {
   automationRunEventsNamespace,
   AutomationRunEventsPayloads
 } from '@/modules/automate/domain/events'
+import {
+  multiregionEventNamespace,
+  MultiregionEventsPayloads
+} from '@/modules/multiregion/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -73,6 +77,7 @@ type EventsByNamespace = {
   [commentEventsNamespace]: CommentEventsPayloads
   [automationEventsNamespace]: AutomationEventsPayloads
   [automationRunEventsNamespace]: AutomationRunEventsPayloads
+  [multiregionEventNamespace]: MultiregionEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -212,6 +217,7 @@ export function initializeEventBus() {
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EventBusListen = EventBus['listen']
 export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus

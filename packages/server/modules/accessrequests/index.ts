@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { initializeEventListenerFactory } from '@/modules/accessrequests/services/eventListener'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { publishNotification } from '@/modules/notifications/services/publication'

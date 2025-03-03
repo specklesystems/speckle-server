@@ -1,13 +1,4 @@
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamClonedActivityFactory,
-  addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
@@ -45,7 +36,6 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
-  getStreamCollaboratorsFactory,
   createStreamFactory,
   deleteStreamFactory,
   updateStreamFactory,
@@ -96,7 +86,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
-  publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
@@ -104,9 +93,7 @@ import { has } from 'lodash'
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
-const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
@@ -140,10 +127,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
@@ -151,14 +135,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
-    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
 })
@@ -181,10 +158,7 @@ const cloneStream = cloneStreamFactory({
   insertComments: insertCommentsFactory({ db }),
   getCommentLinks: getCommentLinksFactory({ db }),
   insertCommentLinks: insertCommentLinksFactory({ db }),
-  addStreamClonedActivity: addStreamClonedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 // We want to read & write from main DB - this isn't occuring in a multi region workspace ctx
@@ -240,11 +214,7 @@ export = {
               db: projectDb
             }),
             authorizeResolver,
-            addStreamDeletedActivity: addStreamDeletedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish,
-              getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-            }),
+            emitEvent: getEventBus().emit,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
             getStream: getStreamFactory({ db: projectDb })
           })
@@ -262,18 +232,18 @@ export = {
           db: projectDb
         }),
         authorizeResolver,
-        addStreamDeletedActivity: addStreamDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish,
-          getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-        }),
+        emitEvent: getEventBus().emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
         getStream: getStreamFactory({ db: projectDb })
       })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
-    async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
-      return await createOnboardingStream(userId!, resourceAccessRules)
+    async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
+      return await createOnboardingStream({
+        targetUserId: userId!,
+        targetUserResourceAccessRules: resourceAccessRules,
+        logger: log
+      })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
       const projectDB = await getProjectDbClient({ projectId: update.id })
@@ -281,10 +251,7 @@ export = {
         authorizeResolver,
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
-        addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
-          saveActivity,
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
@@ -394,8 +361,8 @@ export = {
 
       return await ctx.loaders.streams.getRole.load(parent.id)
     },
-    async team(parent) {
-      const users = await getStreamCollaborators(parent.id)
+    async team(parent, _args, ctx) {
+      const users = await ctx.loaders.streams.getCollaborators.load(parent.id)
       return users.map((u) => ({
         user: u,
         role: u.streamRole,

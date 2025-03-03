@@ -1,4 +1,4 @@
-import type { SpeckleRenderer } from '@speckle/viewer'
+import type { GPass, SpeckleRenderer } from '@speckle/viewer'
 import { Extension } from '@speckle/viewer'
 import type { WebGLRenderTarget } from 'three'
 import { Vector3, Vector4 } from 'three'
@@ -11,21 +11,34 @@ export class PassReader extends Extension {
     | ((arg: [Uint8ClampedArray, number, number]) => void)
     | null = null
 
-  public async read(passName: string): Promise<[Uint8ClampedArray, number, number]> {
+  public async read(pass: string): Promise<[Uint8ClampedArray, number, number]>
+  public async read(pass: GPass | GPass[]): Promise<[Uint8ClampedArray, number, number]>
+
+  public async read(
+    pass: string | GPass | GPass[]
+  ): Promise<[Uint8ClampedArray, number, number]> {
     return new Promise<[Uint8ClampedArray, number, number]>((resolve, reject) => {
       const renderer: SpeckleRenderer = this.viewer.getRenderer()
+      let passes: GPass[]
+      if (typeof pass === 'string') passes = renderer.pipeline.getPass(pass)
+      else if (Array.isArray(pass)) passes = pass
+      else passes = [pass]
 
-      const depthPass = renderer.pipeline.getPass(passName)[0]
+      if (!passes || !passes.length) {
+        reject(`Could not read from pass`)
+        return
+      }
+      const validPass = passes.find((pass: GPass) => this.hasFramebuffer(pass))
 
-      if (!depthPass) {
-        reject(`Pipeline does not have a ${passName} pass`)
+      if (!validPass) {
+        reject(`Requested pass does not have a valid framebuffer`)
         return
       }
 
-      this.renderTarget = depthPass.outputTarget
+      this.renderTarget = validPass.outputTarget
 
       if (!this.renderTarget) {
-        reject('Pass does not have a render target assigned')
+        reject('Requested Pass does not have a render target assigned')
         return
       }
 
@@ -38,19 +51,24 @@ export class PassReader extends Extension {
     })
   }
 
+  protected hasFramebuffer(pass: GPass) {
+    const renderer = this.viewer.getRenderer().renderer
+
+    return renderer.properties.get(pass.outputTarget).__webglFramebuffer !== undefined
+  }
+
   public onRender(): void {
     if (!this.needsRead || !this.renderTarget) return
 
-    this.viewer
-      .getRenderer()
-      .renderer.readRenderTargetPixels(
-        this.renderTarget,
-        0,
-        0,
-        this.renderTarget.width,
-        this.renderTarget.height,
-        this.outputBuffer
-      )
+    const renderer = this.viewer.getRenderer().renderer
+    renderer.readRenderTargetPixels(
+      this.renderTarget,
+      0,
+      0,
+      this.renderTarget.width,
+      this.renderTarget.height,
+      this.outputBuffer
+    )
 
     if (this.readbackExecutor)
       this.readbackExecutor([

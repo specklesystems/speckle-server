@@ -8,21 +8,35 @@
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover
   >
-    <div class="flex lg:flex-col items-center lg:items-start gap-4 pb-0 lg:pb-4 mt-1">
-      <div class="flex items-center gap-1">
+    <div class="flex lg:flex-col items-center lg:items-start gap-y-3 pb-0 lg:pb-4 mt-1">
+      <div class="flex gap-y-3 flex-col w-full">
         <UserAvatarGroup
           :overlap="false"
           :users="team.map((teamMember) => teamMember.user)"
-          :max-avatars="3"
+          :max-avatars="isDesktop ? 5 : 3"
           class="shrink-0"
         />
-        <button
-          v-if="invitedTeamCount && isWorkspaceAdmin"
-          class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-          @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
-        >
-          + {{ invitedTeamCount }} pending
-        </button>
+        <div class="w-full flex items-center gap-x-2">
+          <button
+            v-if="adminWorkspacesJoinRequestsCount && isWorkspaceAdmin"
+            class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
+            @click="
+              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
+            "
+          >
+            {{ adminWorkspacesJoinRequestsCount }} join
+            {{ adminWorkspacesJoinRequestsCount > 1 ? 'requests' : 'request' }}
+          </button>
+          <button
+            v-if="invitedTeamCount && isWorkspaceAdmin"
+            class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
+            @click="
+              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
+            "
+          >
+            {{ invitedTeamCount }} pending
+          </button>
+        </div>
       </div>
       <FormButton
         v-if="isWorkspaceAdmin"
@@ -36,33 +50,26 @@
   </LayoutSidebarMenuGroup>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
 import {
-  type AvailableSettingsMenuKeys,
-  SettingMenuKeys
-} from '~/lib/settings/helpers/types'
-import type { WorkspaceSidebarMembers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+  type WorkspaceTeam_WorkspaceFragment,
+  WorkspaceJoinRequestStatus
+} from '~/lib/common/generated/gql/graphql'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
-graphql(`
-  fragment WorkspaceSidebarMembers_Workspace on Workspace {
-    ...WorkspaceTeam_Workspace
-  }
-`)
+defineEmits<{
+  (e: 'show-invite-dialog'): void
+}>()
 
 const props = defineProps<{
-  workspaceInfo: WorkspaceSidebarMembers_WorkspaceFragment
+  workspaceInfo: WorkspaceTeam_WorkspaceFragment
   collapsible?: boolean
   isWorkspaceAdmin?: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'show-invite-dialog'): void
-  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
-}>()
-
-const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  emit('show-settings-dialog', target)
-}
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isDesktop = breakpoints.greaterOrEqual('lg')
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 
@@ -73,7 +80,8 @@ const iconName = computed(() => {
 
 const iconClick = computed(() => {
   if (!props.isWorkspaceAdmin) return undefined
-  return () => openSettingsDialog(SettingMenuKeys.Workspace.Members)
+  return () =>
+    navigateTo(settingsWorkspaceRoutes.members.route(props.workspaceInfo.slug))
 })
 
 const iconText = computed(() => {
@@ -82,4 +90,10 @@ const iconText = computed(() => {
 })
 
 const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)
+const adminWorkspacesJoinRequestsCount = computed(
+  () =>
+    props.workspaceInfo?.adminWorkspacesJoinRequests?.items.filter(
+      (request) => request.status === WorkspaceJoinRequestStatus.Pending
+    ).length
+)
 </script>

@@ -5,12 +5,8 @@
       "name": "🖥️ server"
     },
     {
-      "path": "packages/frontend",
-      "name": "🪟 frontend"
-    },
-    {
       "path": "packages/frontend-2",
-      "name": "🏬 frontend 2.0"
+      "name": "🏬 frontend"
     },
     {
       "path": "packages/dui3",
@@ -104,7 +100,7 @@
       "Prorotation"
     ],
     "tailwindCSS.experimental.configFile": {
-      "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
+      "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },
     "vue-semantic-server.trace.server": "off",
     "vue-syntactic-server.trace.server": "off",

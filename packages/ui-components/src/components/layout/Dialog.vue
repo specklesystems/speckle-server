@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-50" @close="onClose">
+    <Dialog as="div" class="relative z-50" open @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -124,7 +124,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
-import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
+import { computed, ref, useSlots, watch, onUnmounted, type SetupContext } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
@@ -165,7 +165,7 @@ const props = withDefaults(
   }
 )
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
@@ -268,13 +268,15 @@ const dialogPanelClasses = computed(() => {
 const slotContainerClasses = computed(() => {
   const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
-  if (hasTitle.value) {
-    classParts.push('px-6 py-4')
-    if (isFullscreenDesktop.value) {
-      classParts.push('md:p-0')
+  if (!props.isTransparent) {
+    if (hasTitle.value) {
+      classParts.push('px-6 py-4')
+      if (isFullscreenDesktop.value) {
+        classParts.push('md:p-0')
+      }
+    } else if (!isFullscreenDesktop.value) {
+      classParts.push('px-6 py-4')
     }
-  } else if (!isFullscreenDesktop.value) {
-    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')

@@ -6,6 +6,7 @@
     class="group/item flex items-center justify-between space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1"
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
+      disabled && 'cursor-not-allowed',
       active && 'bg-highlight-3 hover:!bg-highlight-3',
       $slots.icon ? 'pl-1 pr-2' : 'pr-2 pl-7',
       extraPadding && '!pl-14'
@@ -57,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useSlots } from 'vue'
+import { ref, useSlots, type SetupContext } from 'vue'
 import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 import CommonBadge from '~~/src/components/common/Badge.vue'
@@ -75,7 +76,7 @@ const props = defineProps<{
 
 const isOpen = ref(true)
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const hasChildren = !!slots.default
 

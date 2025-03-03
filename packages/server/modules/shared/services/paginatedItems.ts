@@ -20,15 +20,22 @@ export const getPaginatedItemsFactory =
     getTotalCount
   }: {
     getItems: (args: TArgs) => Promise<T[]>
-    getTotalCount: (args: TArgs) => Promise<number>
+    getTotalCount: (args: Omit<TArgs, 'cursor' | 'limit'>) => Promise<number>
   }) =>
   async (args: TArgs): Promise<Collection<T>> => {
+    const totalCount = await getTotalCount(args)
+    if (args.limit === 0) {
+      return {
+        cursor: null,
+        items: [],
+        totalCount
+      }
+    }
     const maybeDecodedCursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
     const items = await getItems({
       ...args,
       cursor: maybeDecodedCursor ?? undefined
     })
-    const totalCount = await getTotalCount(args)
 
     let cursor = null
     if (items.length === args.limit) {

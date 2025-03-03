@@ -1,18 +1,28 @@
-import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import {
+  WorkspaceNotDiscoverableError,
+  WorkspaceNotFoundError,
+  WorkspaceNotJoinableError,
+  WorkspaceProtectedError
+} from '@/modules/workspaces/errors/workspace'
 import { GetUser } from '@/modules/core/domain/users/operations'
-import { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
 import { NotFoundError } from '@/modules/shared/errors'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   CreateWorkspaceJoinRequest,
+  DenyWorkspaceJoinRequest,
   GetWorkspace,
-  GetWorkspaceCollaborators,
+  GetWorkspaceJoinRequest,
+  GetWorkspaceWithDomains,
+  SendWorkspaceJoinRequestApprovedEmail,
+  SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus
+  UpdateWorkspaceJoinRequestStatus,
+  UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { EventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export const dismissWorkspaceJoinRequestFactory =
   ({
@@ -35,122 +45,44 @@ export const dismissWorkspaceJoinRequestFactory =
     return true
   }
 
-type WorkspaceJoinRequestReceivedEmailArgs = {
-  workspace: { id: string; name: string; slug: string }
-  requester: { name: string }
-  workspaceAdmin: { id: string; name: string }
-}
-
-const buildMjmlBody = ({
-  workspace,
-  requester,
-  workspaceAdmin
-}: WorkspaceJoinRequestReceivedEmailArgs) => {
-  const bodyStart = `<mj-text>
-Hi ${workspaceAdmin.name}!
-<br/>
-<br/>
-<span style="font-weight: bold;">${requester.name}</span> is requesting to join your workspace <span style="font-weight: bold;">${workspace.name}</span>.
-<br/>
-<br/>
-
-</mj-text>
-  `
-  const bodyEnd = `<mj-text>
-<span style="font-weight: bold;">Have questions or feedback?</span> Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
-  </mj-text>`
-  return { bodyStart, bodyEnd }
-}
-
-const buildTextBody = ({
-  workspace,
-  requester,
-  workspaceAdmin
-}: WorkspaceJoinRequestReceivedEmailArgs) => {
-  const bodyStart = `
-Hi ${workspaceAdmin.name}!
-\r\n\r\n
-${requester.name} is requesting to join your workspace ${workspace.name}.
-\r\n\r\n
-    `
-  const bodyEnd = `Have questions or feedback? Please write us at hello@speckle.systems and we'd be more than happy to talk.`
-  return { bodyStart, bodyEnd }
-}
-
-const buildEmailTemplateParams = (args: WorkspaceJoinRequestReceivedEmailArgs) => {
-  const url = new URL(
-    `workspaces/${args.workspace.slug}`,
-    getFrontendOrigin()
-  ).toString()
-  return {
-    mjml: buildMjmlBody(args),
-    text: buildTextBody(args),
-    cta: {
-      title: 'Manage Members',
-      url
-    }
-  }
-}
-
-export const sendWorkspaceJoinRequestReceivedEmailFactory =
-  ({
-    renderEmail,
-    sendEmail,
-    getServerInfo,
-    getWorkspaceCollaborators,
-    getUserEmails
-  }: {
-    renderEmail: RenderEmail
-    sendEmail: SendEmail
-    getServerInfo: GetServerInfo
-    getWorkspaceCollaborators: GetWorkspaceCollaborators
-    getUserEmails: FindEmailsByUserId
-  }) =>
-  async (args: Omit<WorkspaceJoinRequestReceivedEmailArgs, 'workspaceAdmin'>) => {
-    const { requester, workspace } = args
-    const [serverInfo, workspaceAdmins] = await Promise.all([
-      getServerInfo(),
-      getWorkspaceCollaborators({
-        workspaceId: workspace.id,
-        limit: 100,
-        filter: { roles: [Roles.Workspace.Admin] }
-      })
-    ])
-    const sendEmailParams = await Promise.all(
-      workspaceAdmins.map(async (admin) => {
-        const userEmails = await getUserEmails({ userId: admin.id })
-        const emailTemplateParams = buildEmailTemplateParams({
-          requester,
-          workspace,
-          workspaceAdmin: admin
-        })
-        const { html, text } = await renderEmail(emailTemplateParams, serverInfo, null)
-        const subject = `${requester.name} wants to join your workspace`
-        const sendEmailParams = {
-          html,
-          text,
-          subject,
-          to: userEmails.map((e) => e.email)
-        }
-        return sendEmailParams
-      })
-    )
-    await Promise.all(sendEmailParams.map((params) => sendEmail(params)))
-  }
-
 export const requestToJoinWorkspaceFactory =
   ({
     createWorkspaceJoinRequest,
     sendWorkspaceJoinRequestReceivedEmail,
     getUserById,
-    getWorkspace
+    getWorkspaceWithDomains,
+    getUserEmails
   }: {
     createWorkspaceJoinRequest: CreateWorkspaceJoinRequest
     sendWorkspaceJoinRequestReceivedEmail: SendWorkspaceJoinRequestReceivedEmail
     getUserById: GetUser
-    getWorkspace: GetWorkspace
+    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    getUserEmails: FindEmailsByUserId
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    const requester = await getUserById(userId)
+    if (!requester) {
+      throw new NotFoundError('User not found')
+    }
+
+    const workspace = await getWorkspaceWithDomains({ id: workspaceId })
+    if (!workspace) {
+      throw new WorkspaceNotFoundError('Workspace not found')
+    }
+    if (!workspace?.discoverabilityEnabled) throw new WorkspaceNotDiscoverableError()
+    const workspaceDomains = workspace.domains.filter((domain) => domain.verified)
+    if (!workspaceDomains.length) throw new WorkspaceNotJoinableError()
+
+    const userEmails = await getUserEmails({ userId })
+
+    const canJoinWorkspace = userEmailsCompliantWithWorkspaceDomains({
+      workspaceDomains: workspace.domains,
+      userEmails
+    })
+    if (!canJoinWorkspace) {
+      throw new WorkspaceProtectedError()
+    }
+
     await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
         userId,
@@ -159,6 +91,33 @@ export const requestToJoinWorkspaceFactory =
       }
     })
 
+    await sendWorkspaceJoinRequestReceivedEmail({
+      workspace,
+      requester
+    })
+
+    return true
+  }
+
+export const approveWorkspaceJoinRequestFactory =
+  ({
+    updateWorkspaceJoinRequestStatus,
+    sendWorkspaceJoinRequestApprovedEmail,
+    getUserById,
+    getWorkspace,
+    getWorkspaceJoinRequest,
+    upsertWorkspaceRole,
+    emit
+  }: {
+    updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
+    sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
+    getUserById: GetUser
+    getWorkspace: GetWorkspace
+    getWorkspaceJoinRequest: GetWorkspaceJoinRequest
+    upsertWorkspaceRole: UpsertWorkspaceRole
+    emit: EventBus['emit']
+  }) =>
+  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     const requester = await getUserById(userId)
     if (!requester) {
       throw new NotFoundError('User not found')
@@ -166,10 +125,82 @@ export const requestToJoinWorkspaceFactory =
 
     const workspace = await getWorkspace({ workspaceId })
     if (!workspace) {
-      throw new NotFoundError('Workspace not found')
+      throw new WorkspaceNotFoundError('Workspace not found')
     }
 
-    await sendWorkspaceJoinRequestReceivedEmail({
+    const request = await getWorkspaceJoinRequest({
+      userId,
+      workspaceId,
+      status: 'pending'
+    })
+    if (!request) {
+      throw new NotFoundError('Workspace join request not found')
+    }
+
+    await updateWorkspaceJoinRequestStatus({
+      userId,
+      workspaceId,
+      status: 'approved'
+    })
+
+    const role = Roles.Workspace.Member
+    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
+
+    await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
+    await emit({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: { workspaceId, userId, role }
+    })
+
+    await sendWorkspaceJoinRequestApprovedEmail({
+      workspace,
+      requester
+    })
+
+    return true
+  }
+
+export const denyWorkspaceJoinRequestFactory =
+  ({
+    updateWorkspaceJoinRequestStatus,
+    sendWorkspaceJoinRequestDeniedEmail,
+    getUserById,
+    getWorkspace,
+    getWorkspaceJoinRequest
+  }: {
+    updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
+    sendWorkspaceJoinRequestDeniedEmail: SendWorkspaceJoinRequestDeniedEmail
+    getUserById: GetUser
+    getWorkspace: GetWorkspace
+    getWorkspaceJoinRequest: GetWorkspaceJoinRequest
+  }): DenyWorkspaceJoinRequest =>
+  async ({ userId, workspaceId }) => {
+    const requester = await getUserById(userId)
+    if (!requester) {
+      throw new NotFoundError('User not found')
+    }
+
+    const workspace = await getWorkspace({ workspaceId })
+    if (!workspace) {
+      throw new WorkspaceNotFoundError('Workspace not found')
+    }
+
+    const request = await getWorkspaceJoinRequest({
+      userId,
+      workspaceId,
+      status: 'pending'
+    })
+    if (!request) {
+      throw new NotFoundError('Workspace join request not found')
+    }
+
+    await updateWorkspaceJoinRequestStatus({
+      userId,
+      workspaceId,
+      status: 'denied'
+    })
+
+    await sendWorkspaceJoinRequestDeniedEmail({
       workspace,
       requester
     })

@@ -3,17 +3,16 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       search-placeholder="Search guests..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'verified', header: 'Status', classes: 'col-span-3' },
         { id: 'projects', header: 'Projects', classes: 'col-span-2' },
-        { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
+        { id: 'actions', header: '', classes: 'col-span-4 flex justify-end' }
       ]"
       :items="guests"
       :loading="searchResultLoading"
@@ -34,11 +33,6 @@
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
           {{ item.user.company ? item.user.company : '-' }}
-        </span>
-      </template>
-      <template #verified="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          {{ item.user.verified ? 'Verified' : 'Unverified' }}
         </span>
       </template>
       <template #projects="{ item }">
@@ -83,7 +77,7 @@
       v-if="userToModify"
       v-model:open="showGuestsPermissionsDialog"
       :user="userToModify"
-      :workspace-id="workspaceId"
+      :workspace-id="workspace?.id"
     />
 
     <SettingsWorkspacesMembersChangeRoleDialog
@@ -104,7 +98,7 @@ import type {
   WorkspaceCollaborator
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
@@ -121,7 +115,6 @@ graphql(`
       avatar
       name
       company
-      verified
     }
     projectRoles {
       role
@@ -155,9 +148,11 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace?: SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  workspaceId: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersGuestsTable_WorkspaceFragment>
+  workspaceSlug: string
 }>()
+
+const updateUserRole = useWorkspaceUpdateRole()
 
 const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
@@ -170,8 +165,6 @@ const userToModify = computed(
   () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
 )
 
-const updateUserRole = useWorkspaceUpdateRole()
-
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
@@ -179,7 +172,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: [Roles.Workspace.Guest]
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length
@@ -188,7 +181,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const guests = computed(() => {
   const guestArray = search.value.length
-    ? searchResult.value?.workspace?.team.items
+    ? searchResult.value?.workspaceBySlug?.team.items
     : props.workspace?.team.items
 
   return (guestArray || []).filter(
@@ -234,12 +227,12 @@ const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator)
 }
 
 const onRemoveUser = async () => {
-  if (!userIdToModify.value) return
+  if (!userIdToModify.value || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userIdToModify.value,
     role: null,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 
@@ -248,12 +241,12 @@ const toggleMenu = (itemId: string) => {
 }
 
 const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue) return
+  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: newRoleValue,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 </script>

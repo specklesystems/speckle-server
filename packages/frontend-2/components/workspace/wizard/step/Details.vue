@@ -1,5 +1,8 @@
 <template>
-  <WorkspaceWizardStep title="Create a workspace" description="Start with a good name">
+  <WorkspaceWizardStep
+    title="Create a workspace"
+    description="Workspaces are environments where you can safely collaborate with your team and manage guests."
+  >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
         id="workspace-name"
@@ -17,11 +20,11 @@
         <FormTextInput
           id="workspace-slug"
           v-model:model-value="state.slug"
-          name="slug"
+          name="short-id"
           label="Short ID"
           color="foundation"
           :loading="loading"
-          :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+          :rules="isStringOfLength({ maxLength: 30, minLength: 3 })"
           :custom-error-message="error?.graphQLErrors[0]?.message"
           show-label
           size="lg"

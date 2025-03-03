@@ -58,7 +58,8 @@ export const createNewProjectFactory =
       try {
         await retry(
           async () => {
-            await getProject({ projectId })
+            const replicatedProject = await getProject({ projectId })
+            if (!replicatedProject) throw new StreamNotFoundError()
           },
           { maxAttempts: 10 }
         )
@@ -79,6 +80,17 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await emitEvent({ eventName: ProjectEvents.Created, payload: { project, ownerId } })
+    await emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project,
+        ownerId,
+        input: {
+          description: project.description,
+          name: project.name,
+          visibility: isPublic ? 'PUBLIC' : isDiscoverable ? 'UNLISTED' : 'PRIVATE'
+        }
+      }
+    })
     return project
   }
