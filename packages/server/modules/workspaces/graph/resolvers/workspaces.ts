@@ -1427,7 +1427,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           await setUserActiveWorkspaceFactory({ db })({
             userId,
             workspaceSlug: args.slug ?? null,
-            isProjectsActive: args.isProjectsActive
+            isProjectsActive: !!args.isProjectsActive
           })
 
           return true
