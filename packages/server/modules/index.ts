@@ -81,6 +81,7 @@ const getEnabledModuleNames = () => {
     'stats',
     'webhooks',
     'workspacesCore',
+    'gatekeeperCore',
     'multiregion'
   ]
 

@@ -7,11 +7,14 @@ import {
   WorkspacePlanProductAndPriceIds,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
-import { PaidWorkspacePlans } from '@speckle/shared'
+import { PaidWorkspacePlans, PaidWorkspacePlansNew } from '@speckle/shared'
 import { expect } from 'chai'
-import { flatten } from 'lodash'
+import { flatten, get } from 'lodash'
+
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   [WorkspaceGuestProduct]: {
@@ -86,11 +89,31 @@ describe('getFreshWorkspacePlanPricesFactory', () => {
     ] as WorkspacePricingProducts[]
 
     for (const plan of plans) {
-      expect(result[plan].productId).to.be.ok
-      expect(result[plan].monthly.amount).to.be.ok
-      expect(result[plan].monthly.currency).to.be.ok
-      if ('yearly' in result[plan]) {
-        const yearly = result[plan].yearly as { amount: number; currency: string }
+      const planResult = get(result, plan) as (typeof result)[keyof typeof result]
+
+      if (plan === WorkspaceGuestProduct) {
+        if (planResult) {
+          throw new Error('Guest product should not appear in plans')
+        } else {
+          continue
+        }
+      }
+
+      if (
+        !FF_WORKSPACES_NEW_PLANS_ENABLED &&
+        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan) &&
+        planResult
+      ) {
+        throw new Error('New plans should not appear w/ FF on')
+      }
+
+      expect(planResult).to.be.ok
+      expect(planResult!.productId).to.be.ok
+      expect(planResult!.monthly.amount).to.be.ok
+      expect(planResult!.monthly.currency).to.eq('USD')
+      expect(planResult!.monthly.currency).to.be.ok
+      if ('yearly' in planResult!) {
+        const yearly = planResult.yearly as { amount: number; currency: string }
         expect(yearly.amount).to.be.ok
         expect(yearly.currency).to.be.ok
       }

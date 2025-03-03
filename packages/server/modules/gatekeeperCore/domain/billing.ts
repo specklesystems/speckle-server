@@ -5,9 +5,10 @@ import {
   TrialWorkspacePlanStatuses,
   UnpaidWorkspacePlans,
   UnpaidWorkspacePlanStatuses,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanBillingIntervals,
+  WorkspacePlans
 } from '@speckle/shared'
-import { OverrideProperties } from 'type-fest'
+import { OverrideProperties, SetOptional } from 'type-fest'
 
 export const WorkspaceGuestProduct = <const>'guest'
 export type WorkspaceGuestProduct = typeof WorkspaceGuestProduct
@@ -55,7 +56,13 @@ type WorkspacePlanProductsMetadata<PriceData = string> = OverrideProperties<
 >
 
 export type WorkspacePlanProductAndPriceIds = WorkspacePlanProductsMetadata<string>
-export type WorkspacePlanProductPrices = WorkspacePlanProductsMetadata<{
-  amount: number
-  currency: string
-}>
+export type WorkspacePlanProductPrices = SetOptional<
+  Omit<
+    WorkspacePlanProductsMetadata<{
+      amount: number
+      currency: string
+    }>,
+    WorkspaceGuestProduct
+  >,
+  typeof WorkspacePlans.Team | typeof WorkspacePlans.Pro
+>

@@ -1943,6 +1943,13 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Price = {
+  __typename?: 'Price';
+  amount: Scalars['Float']['output'];
+  currency: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
+};
+
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean']['output'];
@@ -3081,6 +3088,8 @@ export type ServerStats = {
 
 export type ServerWorkspacesInfo = {
   __typename?: 'ServerWorkspacesInfo';
+  /** Up-to-date prices for paid & non-invoiced Workspace plans */
+  planPrices: Array<WorkspacePlanPrice>;
   /**
    * This is a backend control variable for the workspaces feature set.
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
@@ -4632,6 +4641,13 @@ export type WorkspacePlan = {
   name: WorkspacePlans;
   paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
+};
+
+export type WorkspacePlanPrice = {
+  __typename?: 'WorkspacePlanPrice';
+  id: WorkspacePlans;
+  monthly?: Maybe<Price>;
+  yearly?: Maybe<Price>;
 };
 
 export const WorkspacePlanStatuses = {
@@ -7125,6 +7141,7 @@ export type AllObjectTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults,
   PendingStreamCollaborator: PendingStreamCollaborator,
   PendingWorkspaceCollaborator: PendingWorkspaceCollaborator,
+  Price: Price,
   Project: Project,
   ProjectAccessRequest: ProjectAccessRequest,
   ProjectAccessRequestMutations: ProjectAccessRequestMutations,
@@ -7209,6 +7226,7 @@ export type AllObjectTypes = {
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutations,
   WorkspaceMutations: WorkspaceMutations,
   WorkspacePlan: WorkspacePlan,
+  WorkspacePlanPrice: WorkspacePlanPrice,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessage,
   WorkspaceSso: WorkspaceSso,
@@ -7773,6 +7791,11 @@ export type PendingWorkspaceCollaboratorFieldArgs = {
   workspaceName: {},
   workspaceSlug: {},
 }
+export type PriceFieldArgs = {
+  amount: {},
+  currency: {},
+  currencySymbol: {},
+}
 export type ProjectFieldArgs = {
   allowPublicComments: {},
   automation: ProjectAutomationArgs,
@@ -8070,6 +8093,7 @@ export type ServerStatsFieldArgs = {
   userHistory: {},
 }
 export type ServerWorkspacesInfoFieldArgs = {
+  planPrices: {},
   workspacesEnabled: {},
 }
 export type SmartTextEditorValueFieldArgs = {
@@ -8451,6 +8475,11 @@ export type WorkspacePlanFieldArgs = {
   paymentMethod: {},
   status: {},
 }
+export type WorkspacePlanPriceFieldArgs = {
+  id: {},
+  monthly: {},
+  yearly: {},
+}
 export type WorkspaceProjectMutationsFieldArgs = {
   create: WorkspaceProjectMutationsCreateArgs,
   moveToRegion: WorkspaceProjectMutationsMoveToRegionArgs,
@@ -8558,6 +8587,7 @@ export type AllObjectFieldArgTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResultsFieldArgs,
   PendingStreamCollaborator: PendingStreamCollaboratorFieldArgs,
   PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorFieldArgs,
+  Price: PriceFieldArgs,
   Project: ProjectFieldArgs,
   ProjectAccessRequest: ProjectAccessRequestFieldArgs,
   ProjectAccessRequestMutations: ProjectAccessRequestMutationsFieldArgs,
@@ -8642,6 +8672,7 @@ export type AllObjectFieldArgTypes = {
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsFieldArgs,
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
   WorkspacePlan: WorkspacePlanFieldArgs,
+  WorkspacePlanPrice: WorkspacePlanPriceFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessageFieldArgs,
   WorkspaceSso: WorkspaceSsoFieldArgs,

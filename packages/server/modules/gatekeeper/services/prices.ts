@@ -3,14 +3,20 @@ import {
   GetWorkspacePlanPrices,
   GetWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePlanProductPrices } from '@/modules/gatekeeperCore/domain/billing'
+import {
+  WorkspaceGuestProduct,
+  WorkspacePlanProductPrices
+} from '@/modules/gatekeeperCore/domain/billing'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   redisCacheProviderFactory,
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
-import { Optional } from '@speckle/shared'
+import { Optional, PaidWorkspacePlansNew } from '@speckle/shared'
 import { set } from 'lodash'
+
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const getFreshWorkspacePlanPricesFactory =
   (deps: {
@@ -23,6 +29,16 @@ export const getFreshWorkspacePlanPricesFactory =
 
     const ret = Object.entries(productAndPriceIds).reduce((acc, [plan, planIds]) => {
       const { productId, monthly } = planIds
+      if (plan === WorkspaceGuestProduct) {
+        return acc // not a real workspace plan
+      }
+
+      if (
+        !FF_WORKSPACES_NEW_PLANS_ENABLED &&
+        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
+      ) {
+        return acc // skipping new plans
+      }
 
       const monthlyPrice = productPrices.find(
         (p) => p.id === monthly && p.productId === productId
@@ -32,8 +48,8 @@ export const getFreshWorkspacePlanPricesFactory =
           `Price ${monthly} not found for plan ${plan}`
         )
       const monthlyStruct = {
-        amount: monthlyPrice.unitAmount,
-        currency: monthlyPrice.currency
+        amount: monthlyPrice.unitAmount / 100,
+        currency: monthlyPrice.currency.toUpperCase()
       }
 
       let yearlyStruct: Optional<typeof monthlyStruct> = undefined
@@ -45,8 +61,8 @@ export const getFreshWorkspacePlanPricesFactory =
             `Price ${yearly} not found for plan ${plan}`
           )
         yearlyStruct = {
-          amount: yearlyPrice.unitAmount,
-          currency: yearlyPrice.currency
+          amount: yearlyPrice.unitAmount / 100,
+          currency: yearlyPrice.currency.toUpperCase()
         }
       }
 

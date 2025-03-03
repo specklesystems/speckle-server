@@ -11,12 +11,14 @@ import { db } from '@/db/knex'
 import {
   createCheckoutSessionFactory,
   createCustomerPortalUrlFactory,
+  getRecurringPricesFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanPriceId,
   getStripeClient,
-  getWorkspacePlanProductId
+  getWorkspacePlanProductId,
+  getWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
@@ -35,6 +37,7 @@ import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { getWorkspacePlanPricesFactory } from '@/modules/gatekeeper/services/prices'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -119,6 +122,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        }
+      },
+      ServerWorkspacesInfo: {
+        planPrices: async () => {
+          const getWorkspacePlanPrices = getWorkspacePlanPricesFactory({
+            getRecurringPrices: getRecurringPricesFactory({
+              stripe: getStripeClient()
+            }),
+            getWorkspacePlanProductAndPriceIds
+          })
+          const prices = await getWorkspacePlanPrices()
+          return Object.entries(prices).map(([plan, price]) => ({
+            id: plan,
+            monthly: price.monthly,
+            yearly: 'yearly' in price ? price.yearly : null
+          }))
         }
       },
       WorkspaceMutations: {

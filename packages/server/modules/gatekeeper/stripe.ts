@@ -15,7 +15,7 @@ export const getStripeClient = () => {
   return stripeClient
 }
 
-export const workspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds =
+export const getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds =
   () => ({
     // old
     guest: {
@@ -55,7 +55,7 @@ export const getWorkspacePlanPriceId: GetWorkspacePlanPriceId = ({
   workspacePlan,
   billingInterval
 }) => {
-  const plan = workspacePlanProductAndPriceIds()[workspacePlan]
+  const plan = getWorkspacePlanProductAndPriceIds()[workspacePlan]
   if (!has(plan, billingInterval)) {
     throw new InvalidBillingIntervalError(
       `Plan '${plan}' does not have a billing interval '${billingInterval}'`
@@ -67,4 +67,4 @@ export const getWorkspacePlanPriceId: GetWorkspacePlanPriceId = ({
 
 export const getWorkspacePlanProductId: GetWorkspacePlanProductId = ({
   workspacePlan
-}) => workspacePlanProductAndPriceIds()[workspacePlan].productId
+}) => getWorkspacePlanProductAndPriceIds()[workspacePlan].productId
