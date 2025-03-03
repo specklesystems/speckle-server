@@ -1,152 +1,117 @@
 <template>
-  <div class="w-full px-2 sm:px-0 mb-4">
-    <TabGroup>
-      <div class="flex w-full justify-center">
-        <TabList
-          class="flex space-x-1 rounded-xl p-2 bg-foundation-2 w-full shadow-inner"
+  <div>
+    <div class="grid grid-cols-2 mb-6">
+      <div class="flex items-center">
+        <h3 class="text-4xl font-bold tracking-tight">
+          Productive workflows that save you time
+        </h3>
+      </div>
+      <div class="flex items-center h-32">
+        <div class="text-body text-right text-foreground-2">
+          Unify your tech stack & gain data-driven insights for decision making and Set
+          the maximum width of an element using the max-w-* utilities.
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="useCases"
+      class="w-full py-4 px-2 bg-foundation-2 shadow-inner dark:shadow-neutral-700/30 rounded-xl"
+    >
+      <div class="flex flex-wrap md:flex-nowrap">
+        <button
+          v-for="useCase in useCases"
+          :key="useCase._id"
+          :class="[
+            'w-full md:w-full rounded-lg py-2.5 px-2 text-heading-lg leading-5 transition-all hover:text-primary focus:outline-0 overflow-hidden',
+            '',
+            selectedUseCaseId === useCase._id
+              ? 'bg-foundation text-primary shadow'
+              : ' '
+          ]"
+          @click="
+            selectedUseCaseId = selectedUseCaseId === useCase._id ? '' : useCase._id
+          "
         >
-          <Tab
-            v-for="category in Object.keys(categories)"
-            as="template"
-            :key="category"
-            v-slot="{ selected }"
-          >
-            <button
-              :class="[
-                'w-full rounded-lg py-2.5 px-2 text-heading-lg leading-5 transition-all hover:text-primary focus:outline-0',
-                '',
-                selected ? 'bg-foundation text-primary shadow' : ' '
-              ]"
-            >
-              {{ category }}
-            </button>
-          </Tab>
-        </TabList>
+          {{ useCase.title }}
+        </button>
       </div>
 
-      <TabPanels class="mt-2 hidden">
-        <TabPanel
-          v-for="(posts, idx) in Object.values(categories)"
-          :key="idx"
-          :class="['rounded-xl  p-3']"
+      <div
+        v-if="workflows"
+        class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
+        <div
+          v-if="filteredWorkflows.length == 0"
+          class="flex items-center justify-center space-x-2 col-span-3"
         >
-          <ul class="grid grid-cols-3">
-            <li
-              v-for="post in posts"
-              :key="post.id"
-              class="relative rounded-md p-3 hover:bg-gray-100"
-            >
-              <h3 class="text-sm font-medium leading-5">
-                {{ post.title }}
-              </h3>
-
-              <ul
-                class="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500"
-              >
-                <li>{{ post.date }}</li>
-                <li>&middot;</li>
-                <li>{{ post.commentCount }} comments</li>
-                <li>&middot;</li>
-                <li>{{ post.shareCount }} shares</li>
-              </ul>
-
-              <a
-                href="#"
-                :class="[
-                  'absolute inset-0 rounded-md',
-                  'ring-blue-400 focus:z-10 focus:outline-none focus:ring-2'
-                ]"
-              />
-            </li>
-          </ul>
-        </TabPanel>
-      </TabPanels>
-    </TabGroup>
+          <div class="text-foreground-2 text-body-xs">No workflows found</div>
+        </div>
+        <NuxtLink
+          v-for="workflow in filteredWorkflows"
+          :key="workflow._id"
+          :to="`/workflows/${workflow.slug.current}`"
+          class="block h-full shadow-blue-500/40 transition"
+        >
+          <LayoutPanel class="group">
+            <template #header>
+              <h4 class="text-heading line-clamp-2 flex items-center space-x-2">
+                <NuxtImg
+                  :src="workflow?.source.imageUrl"
+                  class="h-5 rounded-md grayscale opacity-50 transition-all group-hover:opacity-100 group-hover:grayscale-0 mr-"
+                />
+                <span>{{ workflow?.source.name }}</span>
+                <span>to</span>
+                <NuxtImg
+                  :src="workflow?.receiver.imageUrl"
+                  class="h-5 rounded-md grayscale opacity-50 transition-all group-hover:opacity-100 group-hover:grayscale-0 mr-"
+                />
+                <span>{{ workflow?.receiver.name }}</span>
+              </h4>
+            </template>
+            <div class="text-body-xs text-foreground-2 -my-3">
+              Collaborate with ease while tracking changes in real-time.
+            </div>
+          </LayoutPanel>
+        </NuxtLink>
+      </div>
+      <div
+        v-if="selectedUsecase"
+        class="mt-4 px-10 text-center rounded-lg bg-foundation shadow p-4"
+      >
+        <div class="flex items-center justify-center space-x-2">
+          <div class="text-foreground-2 text-body-xs">
+            {{ selectedUsecase?.subheading }}
+          </div>
+          <FormButton size="sm" text>
+            See all {{ selectedUsecase.title }} workflows
+          </FormButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
+<script setup lang="ts">
+const selectedUseCaseId = ref('')
 
-const categories = ref({
-  'Business Intelligence': [
-    {
-      id: 1,
-      title: 'Does drinking coffee make you smarter?',
-      date: '5h ago',
-      commentCount: 5,
-      shareCount: 2
-    },
-    {
-      id: 2,
-      title: "So you've bought coffee... now what?",
-      date: '2h ago',
-      commentCount: 3,
-      shareCount: 2
-    },
-    {
-      id: 1,
-      title: 'Does drinking coffee make you smarter?',
-      date: '5h ago',
-      commentCount: 5,
-      shareCount: 2
-    },
-    {
-      id: 2,
-      title: "So you've bought coffee... now what?",
-      date: '2h ago',
-      commentCount: 3,
-      shareCount: 2
-    }
-  ],
-  'Design Coordination': [
-    {
-      id: 1,
-      title: 'Is tech making coffee better or worse?',
-      date: 'Jan 7',
-      commentCount: 29,
-      shareCount: 16
-    },
-    {
-      id: 2,
-      title: 'The most innovative things happening in coffee',
-      date: 'Mar 19',
-      commentCount: 24,
-      shareCount: 12
-    }
-  ],
-  Automation: [
-    {
-      id: 1,
-      title: 'Ask Me Anything: 10 answers to your questions about coffee',
-      date: '2d ago',
-      commentCount: 9,
-      shareCount: 5
-    },
-    {
-      id: 2,
-      title: "The worst advice we've ever heard about coffee",
-      date: '4d ago',
-      commentCount: 1,
-      shareCount: 2
-    }
-  ],
-  'Interactive Model Viewing': [
-    {
-      id: 1,
-      title: 'Ask Me Anything: 10 answers to your questions about coffee',
-      date: '2d ago',
-      commentCount: 9,
-      shareCount: 5
-    },
-    {
-      id: 2,
-      title: "The worst advice we've ever heard about coffee",
-      date: '4d ago',
-      commentCount: 1,
-      shareCount: 2
-    }
-  ]
+const useCaseQuery = groq`*[_type == "useCase"]{...}`
+const { data: useCases } = useSanityQuery(useCaseQuery)
+
+const selectedUsecase = computed(() => {
+  if (selectedUseCaseId.value === '') return
+  return useCases?.value?.find((u) => u._id === selectedUseCaseId.value)
+})
+
+const workflowsQuery = groq`*[_type == "workflow"]{_id, title, slug, content, useCase->{title, _id}, source -> {name, "imageUrl": image.asset->url}, receiver -> {name, "imageUrl": image.asset->url}}`
+const { data: workflows } = useSanityQuery(workflowsQuery)
+
+const filteredWorkflows = computed(() => {
+  if (selectedUseCaseId.value === '') return workflows.value ?? []
+  if (!workflows) return []
+  const x = workflows?.value?.filter(
+    (workflow) => workflow.useCase._id === selectedUseCaseId.value
+  )
+  console.log(x)
+  return x
 })
 </script>

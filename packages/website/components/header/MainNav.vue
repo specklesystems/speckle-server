@@ -15,8 +15,7 @@
               <NavigationMenuTrigger class="flex items-center group">
                 <span>{{ item.label }}</span>
                 <ChevronDownIcon
-                  :class="open ? 'rotate-180' : ''"
-                  class="ml-[3px] h-3 w-3 transition duration-150 ease-in-out group-hover:rotate-180"
+                  class="ml-[3px] h-3 w-3 transition duration-150 ease-in-out group-data-[state=open]:-rotate-180"
                   aria-hidden="true"
                 />
               </NavigationMenuTrigger>
@@ -24,12 +23,12 @@
                 class="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight"
               >
                 <ul
-                  class="m-0 grid list-none gap-2 grid-cols-4 p-6 max-w-screen-lg mx-auto"
+                  :class="`m-0 grid list-none gap-2 grid-cols-${item.items.length} p-6 max-w-screen-lg mx-auto divide-x divide-outline-2`"
                 >
                   <NavigationMenuListItem
                     v-for="item in item.items"
                     :title="item.label"
-                    href="/docs/primitives/overview/introduction"
+                    :href="item.url.current"
                   >
                     {{ item.description }}
                   </NavigationMenuListItem>
@@ -48,11 +47,9 @@
         </NavigationMenuIndicator>
       </NavigationMenuList>
 
-      <div
-        class="fixed top-full -mt-4 left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] flex w-screen pb-2"
-      >
+      <div class="absolute top-full inset-0 -mt-4 flex max-w-screen-lg pb-2 mx-auto">
         <NavigationMenuViewport
-          class="w-full bg-neutral-50/90 dark:bg-neutral-950/90 border border-outline-2 shadow-md backdrop-blur-sm overflow-hidden data-[state=open]:animate-scaleIn data-[state=closed]:animate-scaleOut relative mt-[10px] h-[var(--reka-navigation-menu-viewport-height)] origin-[top_center] transition-[width,_height] duration-300"
+          class="w-full bg-foundation-page rounded-lg border border-outline-2 shadow-md overflow-hidden data-[state=open]:animate-scaleIn data-[state=closed]:animate-scaleOut relative mt-[10px] h-[var(--reka-navigation-menu-viewport-height)] origin-[top_center] transition-[width,_height] duration-300"
         />
       </div>
     </NavigationMenuRoot>

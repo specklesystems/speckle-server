@@ -1,8 +1,12 @@
 <template>
   <section class="relative py-16">
-    <h2 class="text-center text-heading-lg mb-2 text-foreground-2">
-      Integrating with all your authoring tools.
+    <h2 class="text-center text-4xl font-bold tracking-tight">
+      Integrating with all AEC tools
     </h2>
+    <h4 class="text-center text-heading-sm">
+      Extract and exchange data in real time between the most popular AEC applications
+      using our tailored connectors.
+    </h4>
     <div
       class="logos group relative overflow-hidden whitespace-nowrap py-10 [mask-image:_linear-gradient(to_right,_transparent_0,_white_128px,white_calc(100%-128px),_transparent_100%)]"
     >
@@ -21,7 +25,7 @@
             :title="connector.name"
           />
           <div
-            class="text-center text-body-sm text-foreground-2 opacity-0 group-hover:opacity-100 transition mt-2"
+            class="text-center text-body-xs text-foreground-2 opacity-0 group-hover:opacity-100 transition mt-2"
           >
             {{ connector.name }}
           </div>
@@ -42,7 +46,7 @@
             :title="connector.name"
           />
           <div
-            class="text-center text-body-sm text-foreground-2 opacity-0 group-hover:opacity-100 transition mt-2"
+            class="text-center text-body-xs text-foreground-2 opacity-0 group-hover:opacity-100 transition mt-2"
           >
             {{ connector.name }}
           </div>

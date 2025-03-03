@@ -15,7 +15,7 @@
     <div
       class="relative -mt-20 z-0 w-screen left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] py-10 justify-center flex"
     >
-      <div class="max-w-screen-lg">
+      <div class="max-w-screen-lg rotate-x-50 rotate-z-45">
         <div
           class="dark:hidden flex rounded-xl overflow-hidden shadow-md border-2 border-outline-2 bg-red-200"
         >
@@ -117,64 +117,15 @@
       </div>
     </section>
 
-    <div class="grid grid-cols-2">
-      <div class="flex items-center">
-        <h3 class="text-4xl font-bold tracking-tight">
-          Productive workflows that save you time
-        </h3>
-      </div>
-      <div class="flex items-center h-32">
-        <div class="text-body text-right text-foreground-2">
-          Unify your tech stack & gain data-driven insights for decision making and Set
-          the maximum width of an element using the max-w-* utilities.
-        </div>
-      </div>
-    </div>
-    <section>
+    <section class="my-10">
       <HomepageWorkflows />
     </section>
 
-    <div
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 perspective-400 rounded-xl p-4 bg-foundation-2 shadow-inner"
-    >
-      <NuxtLink
-        v-for="workflow in workflows"
-        :key="workflow._id"
-        :to="`/workflows/${workflow.slug.current}`"
-        class="block h-full hover:shadow-lg transition"
-      >
-        <LayoutPanel class="group">
-          <template #header>
-            <h4 class="text-heading line-clamp-2 flex items-center space-x-2">
-              <NuxtImg
-                :src="workflow?.source.imageUrl"
-                class="h-5 rounded-md grayscale opacity-50 transition-all group-hover:opacity-100 group-hover:grayscale-0 mr-"
-              />
-              <span>{{ workflow?.source.name }}</span>
-              <span>to</span>
-              <NuxtImg
-                :src="workflow?.receiver.imageUrl"
-                class="h-5 rounded-md grayscale opacity-50 transition-all group-hover:opacity-100 group-hover:grayscale-0 mr-"
-              />
-              <span>{{ workflow?.receiver.name }}</span>
-            </h4>
-          </template>
-          <div class="text-body-xs text-foreground-2 -my-3">
-            Collaborate with ease while tracking changes in real-time.
-          </div>
-        </LayoutPanel>
-      </NuxtLink>
-    </div>
-
     <HomepageConnectorsSlideshow />
-
-    <section>
-      <HomepageStats />
-    </section>
   </div>
 </template>
 <script setup lang="ts">
-const query = groq`*[_type == "workflow"]{_id, title, slug, content, useCase->{title}, source -> {name, "imageUrl": image.asset->url}, receiver -> {name, "imageUrl": image.asset->url}}`
+const query = groq`*[_type == "workflow"]{_id, title, slug, content, useCase->{title, _id}, source -> {name, "imageUrl": image.asset->url}, receiver -> {name, "imageUrl": image.asset->url}}`
 
 const { data: workflows } = useSanityQuery(query)
 </script>
