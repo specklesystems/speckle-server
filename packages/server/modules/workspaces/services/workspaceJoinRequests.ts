@@ -147,6 +147,10 @@ export const approveWorkspaceJoinRequestFactory =
     await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
 
     await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
+    await emit({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: { workspaceId, userId, role }
+    })
 
     await sendWorkspaceJoinRequestApprovedEmail({
       workspace,

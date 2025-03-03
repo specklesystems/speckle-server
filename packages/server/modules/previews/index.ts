@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { moduleLogger, logger } from '@/logging/logging'
+import { moduleLogger, previewLogger as logger } from '@/observability/logging'
 import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
 
 import { db } from '@/db/knex'

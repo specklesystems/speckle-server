@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { testLogger as logger } from '@/observability/logging'
 import {
   SubscriptionData,
   SubscriptionDataInput,
