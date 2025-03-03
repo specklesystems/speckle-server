@@ -15,7 +15,7 @@ import { NotImplementedError } from '@/modules/shared/errors'
 
 let stripeClient: Stripe | undefined = undefined
 
-const { FF_WORKSPACES_NEW_PLAN_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const getStripeClient = () => {
   if (!stripeClient) stripeClient = new Stripe(getStripeApiKey(), { typescript: true })
@@ -46,7 +46,7 @@ export const getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPrice
       yearly: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
     },
     // new
-    ...(FF_WORKSPACES_NEW_PLAN_ENABLED
+    ...(FF_WORKSPACES_NEW_PLANS_ENABLED
       ? {
           team: {
             productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),

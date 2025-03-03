@@ -75,7 +75,7 @@ export const getFreshWorkspacePlanProductPricesFactory =
 
 export const getWorkspacePlanProductPricesFactory = wrapFactoryWithCache({
   factory: getFreshWorkspacePlanProductPricesFactory,
-  name: 'modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory',
+  name: `modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory:withNewPlans=${FF_WORKSPACES_NEW_PLANS_ENABLED}`,
   ttlMs: 1000 * TIME.day, // 1 day
   cacheProvider: redisCacheProviderFactory()
 })

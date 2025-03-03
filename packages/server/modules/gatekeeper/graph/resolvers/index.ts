@@ -135,7 +135,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }),
             getWorkspacePlanProductAndPriceIds
           })
-          const prices = await getWorkspacePlanPrices()
+          const prices = await getWorkspacePlanPrices.fresh()
           return Object.entries(prices).map(([plan, price]) => ({
             id: plan,
             monthly: price.monthly,

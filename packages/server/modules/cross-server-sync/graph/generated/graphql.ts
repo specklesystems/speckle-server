@@ -4654,7 +4654,7 @@ export type WorkspacePlan = {
 
 export type WorkspacePlanPrice = {
   __typename?: 'WorkspacePlanPrice';
-  id: WorkspacePlans;
+  id: Scalars['String']['output'];
   monthly?: Maybe<Price>;
   yearly?: Maybe<Price>;
 };

@@ -4674,7 +4674,7 @@ export type WorkspacePlan = {
 
 export type WorkspacePlanPrice = {
   __typename?: 'WorkspacePlanPrice';
-  id: WorkspacePlans;
+  id: Scalars['String']['output'];
   monthly?: Maybe<Price>;
   yearly?: Maybe<Price>;
 };
@@ -7128,7 +7128,7 @@ export type WorkspacePlanResolvers<ContextType = GraphQLContext, ParentType exte
 };
 
 export type WorkspacePlanPriceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePlanPrice'] = ResolversParentTypes['WorkspacePlanPrice']> = {
-  id?: Resolver<ResolversTypes['WorkspacePlans'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   monthly?: Resolver<Maybe<ResolversTypes['Price']>, ParentType, ContextType>;
   yearly?: Resolver<Maybe<ResolversTypes['Price']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
