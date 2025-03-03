@@ -19,45 +19,64 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-0 md:right-4 top-10 md:top-16 w-full md:w-64 origin-top-right bg-foundation sm:rounded-t-md rounded-b-2xl shadow-lg overflow-hidden"
+          class="absolute right-1 top-11 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <MenuItem v-slot="{ close }" as="div">
-            <div class="px-2 py-3 flex flex-col space-y-2 border-t-1 justify-between">
-              <!-- <div class="flex space-x-2"> -->
-              <FormButton
-                size="sm"
-                color="secondary"
-                class="text-xs text-foreground-2 hover:text-primary transition"
-                @click="$showDevTools"
-              >
-                Open Dev Tools
-              </FormButton>
-
-              <FormButton
-                size="sm"
-                color="secondary"
-                class="text-xs text-foreground-2 hover:text-primary transition"
-                to="/test"
-                @click="close()"
-              >
-                Test Page
-              </FormButton>
-              <!-- </div> -->
-              <!-- 
-                NOTE: Here's an example of customising the frontend app based on what bindings we
-                have loaded. E.g., if config bindings are not present, we do not show any button
-                regarding switching themes. 
-              -->
-              <div v-if="hasConfigBindings">
-                <FormButton size="xs" text full-width @click="toggleTheme()">
-                  {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
-                </FormButton>
-              </div>
+          <MenuItem v-slot="{ active }" @click="showFeedbackDialog = true">
+            <div
+              :class="[
+                active ? 'bg-highlight-1' : '',
+                'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+              ]"
+            >
+              Feedback
             </div>
           </MenuItem>
+          <MenuItem v-slot="{ active }" @click="toggleTheme">
+            <div
+              :class="[
+                active ? 'bg-highlight-1' : '',
+                'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+              ]"
+            >
+              {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
+            </div>
+          </MenuItem>
+          <div v-if="hasConfigBindings && isDevMode">
+            <div class="border-t border-outline-3 py-1 mt-1">
+              <MenuItem v-slot="{ active }" @click="$showDevTools">
+                <div
+                  :class="[
+                    active ? 'bg-highlight-1' : '',
+                    'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                  ]"
+                >
+                  Open Dev Tools
+                </div>
+              </MenuItem>
+            </div>
+            <MenuItem v-slot="{ active }">
+              <NuxtLink
+                to="/test"
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+              >
+                Test Page
+              </NuxtLink>
+            </MenuItem>
+          </div>
+          <div class="border-t border-outline-3 py-1 mt-1">
+            <MenuItem>
+              <div class="px-3 pt-1 text-tiny text-foreground-2">
+                Version {{ hostApp.connectorVersion }}
+              </div>
+            </MenuItem>
+          </div>
         </MenuItems>
       </Transition>
     </Menu>
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -65,10 +84,14 @@ import { storeToRefs } from 'pinia'
 import { XMarkIcon, Bars3Icon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useConfigStore } from '~/store/config'
+import { useHostAppStore } from '~/store/hostApp'
 
 const uiConfigStore = useConfigStore()
-const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
+const { isDarkTheme, hasConfigBindings, isDevMode } = storeToRefs(uiConfigStore)
 const { toggleTheme } = uiConfigStore
+const hostApp = useHostAppStore()
 
 const { $showDevTools } = useNuxtApp()
+
+const showFeedbackDialog = ref<boolean>(false)
 </script>
