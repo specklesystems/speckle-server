@@ -55,7 +55,8 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
     resolver: (...args: Args) => MaybeAsync<Results>
   }
 ) => {
-  const { name, resolver, cacheProvider, options } = params
+  let cacheProvider = params.cacheProvider
+  const { name, resolver, options } = params
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
 
@@ -101,6 +102,11 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
      * Get fresh results irregardless of cached data
      */
     fresh: (...args: Args) => Promise<Results>
+
+    /**
+     * Replace the cache provider with a new one. Primarily used in testing to replace w/ mocked providers.
+     */
+    replaceCache: (cacheProvider: CacheProvider<any>) => void
   }
 
   ret.clear = async (...args: Args) => {
@@ -112,6 +118,10 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
   }
 
   ret.fresh = buildRet({ skipCache: true })
+
+  ret.replaceCache = (newCacheProvider) => {
+    cacheProvider = newCacheProvider
+  }
 
   return ret
 }

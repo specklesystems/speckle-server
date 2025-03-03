@@ -6,7 +6,7 @@ import {
 } from '@/modules/multiregion/repositories/projectRegion'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { createInmemoryRedisClient } from '@/test/redisHelper'
+import { getInmemoryRedisClient } from '@/test/redisHelper'
 import { createStreamFactory } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import { storeRegionFactory } from '@/modules/multiregion/repositories'
@@ -39,10 +39,10 @@ describe('projectRegion repositories @multiregion', () => {
   })
   describe('getRegionKeyFromCacheFactory returns a function, that', () => {
     const getRegionKeyFromCache = getRegionKeyFromCacheFactory({
-      redis: createInmemoryRedisClient()
+      redis: getInmemoryRedisClient()
     })
     const writeRegionKeyToCache = writeRegionKeyToCacheFactory({
-      redis: createInmemoryRedisClient()
+      redis: getInmemoryRedisClient()
     })
     it('returns undefined if projectId is not in the cache', async () => {
       const projectId = cryptoRandomString({ length: 10 })

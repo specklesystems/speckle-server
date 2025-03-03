@@ -5,10 +5,14 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePlanProductPrices } from '@/modules/gatekeeperCore/domain/billing'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import {
+  redisCacheProviderFactory,
+  wrapFactoryWithCache
+} from '@/modules/shared/utils/caching'
 import { Optional } from '@speckle/shared'
 import { set } from 'lodash'
 
-export const getWorkspacePlanPricesFactory =
+export const getFreshWorkspacePlanPricesFactory =
   (deps: {
     getRecurringPrices: GetRecurringPrices
     getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds
@@ -59,3 +63,10 @@ export const getWorkspacePlanPricesFactory =
     }, {} as WorkspacePlanProductPrices)
     return ret
   }
+
+export const getWorkspacePlanPricesFactory = wrapFactoryWithCache({
+  factory: getFreshWorkspacePlanPricesFactory,
+  name: 'modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory',
+  ttlMs: 1000 * 60 * 60 * 24, // 1 day
+  cacheProvider: redisCacheProviderFactory()
+})
