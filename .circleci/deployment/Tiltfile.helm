@@ -31,11 +31,18 @@ speckle_image('webhook-service')
 # Create namespaces
 k8s_yaml_glob('./manifests/*.namespace.yaml')
 
+IS_MULTI_REGION = os.getenv('ENABLE_MULTI_REGION', "false") == "true"
+
 # Install volumes
 k8s_yaml('./manifests/postgres.pv.yaml')
 k8s_yaml('./manifests/postgres.pvc.yaml')
 k8s_yaml('./manifests/minio.pv.yaml')
 k8s_yaml('./manifests/minio.pvc.yaml')
+if IS_MULTI_REGION:
+  k8s_yaml('./manifests/postgres-region1.pv.yaml')
+  k8s_yaml('./manifests/postgres-region1.pvc.yaml')
+  k8s_yaml('./manifests/minio-region1.pv.yaml')
+  k8s_yaml('./manifests/minio-region1.pvc.yaml')
 
 # Update CoreDNS to allow for local resolution of services internally (i.e. speckle.internal will be routed to nginx)
 local(command='./coredns-up.sh')
@@ -65,6 +72,27 @@ helm_resource('minio',
                     '--kube-context=kind-speckle-server'],
             deps=['./values/minio.values.yaml'],
             labels=['speckle-dependencies'])
+
+if IS_MULTI_REGION:
+  helm_resource('postgresql-region1',
+              release_name='postgresql',
+              namespace='postgres-region1',
+              chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
+              flags=['--version=^15.5.38',
+                      '--values=./values/postgres-region1.values.yaml',
+                      '--kube-context=kind-speckle-server'],
+              deps=['./values/postgres-region1.values.yaml'],
+              labels=['speckle-dependencies'])
+
+  helm_resource('minio-region1',
+              release_name='minio',
+              namespace='minio-region1',
+              chart='oci://registry-1.docker.io/bitnamicharts/minio',
+              flags=['--version=^12.0.0',
+                      '--values=./values/minio-region1.values.yaml',
+                      '--kube-context=kind-speckle-server'],
+              deps=['./values/minio-region1.values.yaml'],
+              labels=['speckle-dependencies'])
 
 helm_resource('redis',
             release_name='redis',
