@@ -1,0 +1,146 @@
+name: GraphQL API Fuzz Test
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "15 4 3 * *" # Run at 4:15am on the 3rd of every month
+  pull_request:
+    paths:
+      - '.github/workflows/graphql-api-fuzzer.yml'
+      - 'setup/fuzzer-graphql/**/*'
+      - 'setup/fuzzer/docker-compose-speckle.yml'
+      - 'setup/fuzzer/speckle.backup.sql'
+
+env:
+  PYTHON_VERSION: '3.12'
+  GRAPHQLER_VERSION: '2.3.6'
+
+jobs:
+  graphql-fuzzer:
+    name: Fuzz test speckle-server Graphql API
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout speckle-server
+        with:
+          path: 'speckle-server'
+
+      - uses: actions/checkout@v4
+        name: Checkout Graphqler Fuzzer
+        with:
+          repository: omar2535/GraphQLer
+          ref: V${{ env.GRAPHQLER_VERSION }}
+          path: 'graphqler-fuzzer' # The path to clone the repository within the {{ github.workspace }} directory
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'poetry'
+          cache-dependency-path: ${{ github.workspace }}/graphqler-fuzzer/poetry.lock
+
+      - name: Install dependencies with Poetry
+        working-directory: ${{ github.workspace }}/graphqler-fuzzer
+        run: |
+          poetry install
+
+      - name: Deploy dependencies (docker compose)
+        run: |
+          docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml up --detach
+
+      - name: Seed the database
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+          PGPASSWORD=speckle psql -h 127.0.0.1 -U speckle -d speckle -p 5432 -w < ${{ github.workspace }}/speckle-server/setup/fuzzer/speckle.backup.sql
+
+      - name: Deploy speckle-server (docker compose)
+        working-directory: ${{ github.workspace }}
+        timeout-minutes: 1
+        run: |
+          docker compose --file ${{ github.workspace }}/speckle-server/setup/fuzzer/docker-compose-speckle.yml up --detach
+          until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
+            echo "Waiting a further 3 seconds for speckle-server to start..."
+            sleep 3
+          done
+
+      # - name: Restore cached Graphqler configuration
+      #   id: cache-config-restore
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: |
+      #       ${{ github.workspace }}/graphqlerConfig
+      #     key: graphqler-config-${{ github.sha }}
+
+      # - name: Generate Graphqler config from Graphql server
+      #   if: steps.cache-config-restore.outputs.cache-hit != 'true'
+      #   working-directory: ${{ github.workspace }}/graphqler-fuzzer
+      #   run: |
+      #     poetry run python ./graphqler --mode compile --url http://127.0.0.1:3000/graphql --path ${{ github.workspace }}/graphqlerOutput
+
+      # - name: Print the Graphqler configuration
+      #   run: |
+      #     ls -la ${{ github.workspace }} || true
+      #     ls -la ${{ github.workspace }}/graphqlerOutput || true
+      #     ls -la ${{ github.workspace }}/graphqlerOutput/compiled || true
+      # echo ""
+      # echo "############################################"
+      # echo "# Engine settings                          #"
+      # echo "# To customize, copy and save this file to #"
+      # echo "# setup/fuzzer/settings.graphqler.json       #"
+      # echo "############################################"
+      # echo ""
+      # cat ${{ github.workspace }}/graphqlerOutput/compiled/engine_settings.json
+      # - name: Save Graphqler Config
+      #   if: steps.cache-config-restore.outputs.cache-hit != 'true'
+      #   id: cache-config-save
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     path: |
+      #       ${{ github.workspace }}/graphqlerOutput
+      #     key: ${{ steps.cache-config-restore.outputs.cache-primary-key }}
+
+      - name: Run Graphqler fuzz test
+        working-directory: ${{ github.workspace }}/graphqler-fuzzer
+        run: |
+          poetry run python ./graphqler --mode run --url http://127.0.0.1:3000/graphql --path ${{ github.workspace }}/graphqlerOutput --auth 'Bearer 103b2cf86168ec87fc6ec88978455667feb0f08d12' --config ${{ github.workspace }}/speckle-server/setup/fuzzer/config.graphqler.toml
+
+      - name: Print the results
+        if: always()
+        run: |
+          ls -la ${{ github.workspace }}/graphqlerOutput
+          ls -la ${{ github.workspace }}/graphqlerOutput/logs || true
+          echo ""
+          echo "############################################"
+          echo "#            Status.txt                 #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/graphqlerOutput/stats.txt || true
+          echo ""
+          echo "############################################"
+          echo "#           ./logs/fuzzer.log              #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/logs/fuzzer.log || true
+
+      - uses: actions/upload-artifact@v4
+        name: Store the Test output
+        if: always()
+        with:
+          name: fuzz-test-graphql-api-output
+          path: ${{ github.workspace }}/graphqlerOutput
+          if-no-files-found: error
+          retention-days: 5
+          overwrite: true
+
+      - name: Print Docker Compose logs
+        if: always()
+        run: |
+          docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml logs
+          docker compose --file ${{ github.workspace }}/speckle-server/setup/fuzzer/docker-compose-speckle.yml logs

@@ -39,7 +39,8 @@
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml",
-    "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\""
+    "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\"",
+    "start": "cross-env NODE_ENV=production LOG_PRETTY=true node ./bin/ts-www"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",

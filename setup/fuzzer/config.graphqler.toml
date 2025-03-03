@@ -1,0 +1,44 @@
+# Configuration
+
+# For debugging purposes
+DEBUG = false
+
+# For clairvoyance
+WORDLIST_PATH = "static/wordlist.txt"
+
+# For the resolver
+MAX_LEVENSHTEIN_THRESHOLD = 20  # A very high threshold, we could probably lower this, but this almost guarantees us to find a matching object name - ID
+
+# For the linker
+GRAPH_VISUALIZATION_OUTPUT = "dependency_graph.png"
+
+# For materializers
+MAX_OBJECT_CYCLES = 3
+MAX_OUTPUT_SELECTOR_DEPTH = 3
+HARD_CUTOFF_DEPTH = 20
+MAX_INPUT_DEPTH = 20
+
+# For using GraphQLer in different modes
+USE_OBJECTS_BUCKET = true  # This mode is for when we want to use the objects bucket
+USE_DEPENDENCY_GRAPH = true  # This mode is for when we want to use DFS through the dependency graph
+NO_DATA_COUNT_AS_SUCCESS = false  # This mode is for when we want to count no data in the data object as a success or failure
+
+# For fuzzing
+ALLOW_DELETION_OF_OBJECTS = false  # This mode is for when we want to allow the deletion of objects from the objects bucket when coming across a DELETE mutation success
+MAX_FUZZING_ITERATIONS = 5
+MAX_TIME = 180  # in seconds
+SKIP_MAXIMAL_PAYLOADS = false # This mode is for when we want to skip the maximal payloads
+SKIP_DOS_ATTACKS = true # This mode is for when we want to skip the DoS check
+SKIP_INJECTION_ATTACKS = false # This mode is for when we want to skip the injection check
+SKIP_MISC_ATTACKS = false # This mode is for when we want to skip the miscellaneous attacks
+
+# For each request
+REQUEST_TIMEOUT = 30  # in seconds
+TIME_BETWEEN_REQUESTS = 0.001  # in seconds
+
+# For custom skipping specific nodes"""
+SKIP_NODES = []
+
+# Put custom headers here
+[CUSTOM_HEADERS]
+Accept = "application/json"
