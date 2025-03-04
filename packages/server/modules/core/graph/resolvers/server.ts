@@ -3,8 +3,7 @@ import { Roles, Scopes, RoleInfo, removeNullOrUndefinedKeys } from '@speckle/sha
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   speckleAutomateUrl,
-  enableNewFrontendMessaging,
-  isEmailEnabled
+  enableNewFrontendMessaging
 } from '@/modules/shared/helpers/envHelper'
 import {
   getServerInfoFactory,
@@ -60,9 +59,6 @@ export = {
     },
     enableNewWebUiMessaging() {
       return enableNewFrontendMessaging()
-    },
-    isEmailEnabled() {
-      return isEmailEnabled()
     }
   },
 

@@ -2946,6 +2946,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -2974,8 +2976,6 @@ export type ServerInfo = {
   enableNewWebUiMessaging?: Maybe<Scalars['Boolean']['output']>;
   guestModeEnabled: Scalars['Boolean']['output'];
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
-  /** Whether the email feature is enabled on this server */
-  isEmailEnabled: Scalars['Boolean']['output'];
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
   /** Info about server regions */

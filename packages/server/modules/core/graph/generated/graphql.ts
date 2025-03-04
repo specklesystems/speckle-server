@@ -2965,6 +2965,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -2993,8 +2995,6 @@ export type ServerInfo = {
   enableNewWebUiMessaging?: Maybe<Scalars['Boolean']['output']>;
   guestModeEnabled: Scalars['Boolean']['output'];
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
-  /** Whether the email feature is enabled on this server */
-  isEmailEnabled: Scalars['Boolean']['output'];
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
   /** Info about server regions */
@@ -6546,6 +6546,7 @@ export type ServerAutomateInfoResolvers<ContextType = GraphQLContext, ParentType
 
 export type ServerConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerConfiguration'] = ResolversParentTypes['ServerConfiguration']> = {
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6564,7 +6565,6 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   enableNewWebUiMessaging?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
   multiRegion?: Resolver<ResolversTypes['ServerMultiRegionConfiguration'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

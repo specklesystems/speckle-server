@@ -92,8 +92,8 @@ export type ServerInfo = ServerConfigRecord & {
   configuration: {
     objectSizeLimitBytes: number
     objectMultipartUploadSizeLimitBytes: number
+    isEmailEnabled: boolean
   }
-  isEmailEnabled: boolean
 }
 
 export type CommitRecord = {
