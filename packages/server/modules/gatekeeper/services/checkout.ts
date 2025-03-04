@@ -97,11 +97,7 @@ export const startCheckoutSessionFactory =
       if (workspaceCheckoutSession.paymentStatus === 'paid')
         // this is should not be possible, but its better to be checking it here, than double charging the customer
         throw new WorkspaceAlreadyPaidError()
-      if (
-        new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        1000
-        // 10 * 60 * 1000
-      ) {
+      if (new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() > 1000) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id
         })

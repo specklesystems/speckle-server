@@ -875,7 +875,6 @@ describe('subscriptions @gatekeeper', () => {
       })
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
       await manageSubscriptionDownscaleFactory({
-        logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
           throw new Error('kabumm')
@@ -883,7 +882,7 @@ describe('subscriptions @gatekeeper', () => {
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
         }
-      })()
+      })({ logger })
 
       const updatedBillingCycleEnd = new Date(2035, 0, 5)
       expect(updatedWorkspaceSubscription).deep.equal({
@@ -898,7 +897,6 @@ describe('subscriptions @gatekeeper', () => {
       })
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
       await manageSubscriptionDownscaleFactory({
-        logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
           throw new Error('kabumm')
@@ -906,7 +904,7 @@ describe('subscriptions @gatekeeper', () => {
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
         }
-      })()
+      })({ logger })
 
       const updatedBillingCycleEnd = new Date(2035, 11, 5)
       expect(updatedWorkspaceSubscription).deep.equal({
