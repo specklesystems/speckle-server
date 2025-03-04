@@ -56,7 +56,7 @@ import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import {
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationRunTriggerRecord,
@@ -71,8 +71,8 @@ import {
   getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
-  getFunction,
-  getFunctionReleases
+  getFunctionFactory,
+  getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
 import {
   FunctionReleaseSchemaType,
@@ -96,6 +96,7 @@ import {
   CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
+import { logger } from '@/observability/logging'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -595,7 +596,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
           })
           return ids.map((i) => results[i] || [])
         }),
-        getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        getRevisionFunctions: createLoader<string, AutomationRevisionFunctionRecord[]>(
           async (ids) => {
             const results = await getRevisionsFunctions({
               automationRevisionIds: ids.slice()
@@ -618,7 +619,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
             const results = await Promise.all(
               fnIds.map(async (fnId) => {
                 try {
-                  return await getFunction({ functionId: fnId })
+                  return await getFunctionFactory({ logger })({ functionId: fnId })
                 } catch (e) {
                   const isNotFound =
                     e instanceof ExecutionEngineFailedResponseError &&
@@ -642,7 +643,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
         >(
           async (keys) => {
             const results = keyBy(
-              await getFunctionReleases({
+              await getFunctionReleasesFactory({ logger })({
                 ids: keys.map(([fnId, fnReleaseId]) => ({
                   functionId: fnId,
                   functionReleaseId: fnReleaseId

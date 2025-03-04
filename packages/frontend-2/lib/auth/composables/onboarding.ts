@@ -1,7 +1,12 @@
 import { useApolloClient } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
-import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
+import type {
+  OnboardingPlan,
+  OnboardingRole,
+  OnboardingSource,
+  OnboardingState
+} from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnboardingError } from '~~/lib/auth/errors/errors'
 import { finishOnboardingMutation } from '~~/lib/auth/graphql/mutations'
@@ -86,14 +91,22 @@ export const useProcessOnboarding = () => {
 
   /**
    * Marks the current user as having completed the onboarding - we're using this as a flag to
-   * know that we've set up the sample project once.
+   * know that we've set up the sample project once. Also updates their Mailchimp tags.
    */
-  const setUserOnboardingComplete = async () => {
+  const setUserOnboardingComplete = async (onboardingData?: {
+    role?: OnboardingRole
+    plans?: OnboardingPlan[]
+    source?: OnboardingSource
+  }) => {
     const user = activeUser.value
     if (!user) throw new OnboardingError('Attempting to onboard unidentified user')
+
     await apollo
       .mutate({
         mutation: finishOnboardingMutation,
+        variables: {
+          input: onboardingData
+        },
         update: (cache, { data }) => {
           if (!data?.activeUserMutations.finishOnboarding) return
 
@@ -107,6 +120,7 @@ export const useProcessOnboarding = () => {
         }
       })
       .catch(convertThrowIntoFetchResult)
+    goHome()
   }
 
   /**

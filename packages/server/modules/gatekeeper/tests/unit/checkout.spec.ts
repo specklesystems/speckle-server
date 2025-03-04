@@ -16,11 +16,8 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import { omit } from 'lodash'
-import {
-  PaidWorkspacePlan,
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeperCore/domain/billing'
+import { PaidWorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 
 describe('checkout @gatekeeper', () => {
   describe('startCheckoutSessionFactory creates a function, that', () => {

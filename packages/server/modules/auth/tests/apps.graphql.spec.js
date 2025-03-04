@@ -130,7 +130,7 @@ describe('GraphQL @apps-api', () => {
     ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
-      email: 'didimitrie@gmail.com',
+      email: 'didimitrie@example.org',
       password: 'wtfwtfwtf'
     }
 
@@ -232,7 +232,7 @@ describe('GraphQL @apps-api', () => {
     expect(res).to.be.json
     expect(res.body.errors).to.not.exist
     expect(res.body.data.apps).to.be.an('array')
-    expect(res.body.data.apps.length).to.equal(8)
+    expect(res.body.data.apps.length).to.equal(9)
   })
 
   it('Should get app info without secret if not authenticated and owner', async () => {

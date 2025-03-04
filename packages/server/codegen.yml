@@ -8,6 +8,7 @@ generates:
       - 'typescript'
       - 'typescript-resolvers'
     config:
+      enumsAsConst: true
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
@@ -66,6 +67,7 @@ generates:
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
         WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
+        LimitedWorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceJoinRequestGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueGraphQLReturn'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
@@ -88,6 +90,7 @@ generates:
     documents:
       - 'modules/cross-server-sync/**/*.{js,ts}'
     config:
+      enumsAsConst: true
       scalars:
         JSONObject: Record<string, unknown>
         DateTime: string
@@ -100,10 +103,12 @@ generates:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
     config:
+      enumsAsConst: true
       scalars:
         JSONObject: Record<string, unknown>
         DateTime: string
 config:
+  enumsAsConst: true
   scalars:
     JSONObject: Record<string, unknown>
     DateTime: Date

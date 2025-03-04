@@ -58,7 +58,8 @@ describe('Event handlers', () => {
 
       await onProjectCreated({
         project: { workspaceId, id: projectId } as StreamRecord,
-        ownerId: cryptoRandomString({ length: 10 })
+        ownerId: cryptoRandomString({ length: 10 }),
+        input: { name: 'test' }
       })
 
       expect(projectRoles.length).to.equal(2)
@@ -83,7 +84,8 @@ describe('Event handlers', () => {
         },
         upsertProjectRole: async () => {
           expect.fail()
-        }
+        },
+        assignWorkspaceSeat: async () => undefined
       })({
         role: Roles.Workspace.Guest,
         userId: cryptoRandomString({ length: 10 }),
@@ -122,7 +124,8 @@ describe('Event handlers', () => {
           storedRoles.push(args)
           trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
           return {} as StreamRecord
-        }
+        },
+        assignWorkspaceSeat: async () => undefined
       })({
         role: Roles.Workspace.Member,
         userId,

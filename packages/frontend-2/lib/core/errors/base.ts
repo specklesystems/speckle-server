@@ -1,3 +1,5 @@
+import { BaseError } from '@speckle/ui-components'
+
 export {
   BaseError,
   LogicError,
@@ -5,3 +7,7 @@ export {
   ComposableInvokedOutOfScopeError,
   UnsupportedEnvironmentError
 } from '@speckle/ui-components'
+
+export class ResourceLoadError extends BaseError {
+  static defaultMessage = 'External resource failed to load'
+}

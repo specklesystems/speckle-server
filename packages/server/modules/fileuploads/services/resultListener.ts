@@ -10,8 +10,9 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
-import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
-import { fileUploadsLogger as logger } from '@/logging/logging'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ModelEvents } from '@/modules/core/domain/branches/events'
+import { fileUploadsLogger as logger } from '@/observability/logging'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
 
@@ -19,7 +20,7 @@ type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
   publish: PublishSubscription
-  addBranchCreatedActivity: AddBranchCreatedActivity
+  eventEmit: EventBusEmit
 }
 
 type ParsedMessage = {
@@ -71,7 +72,12 @@ export const onFileImportProcessedFactory =
         projectId: upload.streamId
       })
 
-      if (branch) await deps.addBranchCreatedActivity({ branch })
+      if (branch) {
+        await deps.eventEmit({
+          eventName: ModelEvents.Created,
+          payload: { model: branch, projectId: branch.streamId }
+        })
+      }
     } else {
       await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
         projectPendingVersionsUpdated: {

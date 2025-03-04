@@ -1,8 +1,7 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { pricingTable } from '@/modules/gatekeeper/domain/workspacePricing'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory
@@ -34,7 +33,11 @@ import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/servic
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError } from '@/modules/shared/errors'
+import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { extendLoggerComponent } from '@/observability/logging'
+import { OperationName, OperationStatus } from '@/observability/domain/fields'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -43,11 +46,6 @@ const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
-      Query: {
-        workspacePricingPlans: async () => {
-          return pricingTable
-        }
-      },
       Workspace: {
         plan: async (parent) => {
           const workspacePlan = await getWorkspacePlanFactory({ db })({
@@ -59,10 +57,13 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starter':
             case 'plus':
             case 'business':
+            case 'team':
+            case 'pro':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
             case 'academia':
+            case 'free':
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
             case 'starterInvoiced':
@@ -140,8 +141,15 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return true
         },
         createCheckoutSession: async (parent, args, ctx) => {
+          let logger = extendLoggerComponent(
+            ctx.log,
+            'gatekeeper',
+            'resolvers',
+            'createCheckoutSession'
+          ).child(OperationName('createCheckoutSession'))
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
+          logger = logger.child({ workspaceId, workspacePlan })
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
 
           if (!workspace) throw new WorkspaceNotFoundError()
@@ -161,25 +169,44 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
 
-          const session = await startCheckoutSessionFactory({
-            getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            countRole,
-            createCheckoutSession,
-            saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-            deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-          })({
-            workspacePlan,
-            workspaceId,
-            workspaceSlug: workspace.slug,
-            isCreateFlow: isCreateFlow || false,
-            billingInterval
-          })
-
-          return session
+          try {
+            logger.info(OperationStatus.start, '[{operationName} ({operationStatus})]')
+            const session = await startCheckoutSessionFactory({
+              getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+              getWorkspacePlan: getWorkspacePlanFactory({ db }),
+              countRole,
+              createCheckoutSession,
+              saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+              deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+            })({
+              workspacePlan,
+              workspaceId,
+              workspaceSlug: workspace.slug,
+              isCreateFlow: isCreateFlow || false,
+              billingInterval
+            })
+            logger.info(
+              { ...OperationStatus.success, sessionId: session.id },
+              '[{operationName} ({operationStatus})]'
+            )
+            return session
+          } catch (err) {
+            const e = ensureError(err, 'Unknown error creating checkout session')
+            logWithErr(
+              logger,
+              e,
+              { ...OperationStatus.failure },
+              '[{operationName} ({operationStatus})]'
+            )
+            throw e
+          }
         },
-        upgradePlan: async (parent, args, ctx) => {
+        upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
+          if (isNewPlanType(workspacePlan)) {
+            throw new NotImplementedError()
+          }
+
           await authorizeResolver(
             ctx.userId,
             workspaceId,

@@ -23,8 +23,8 @@ const {
   isApolloMonitoringEnabled,
   getApolloServerVersion,
   getServerVersion
-} = require('./modules/shared/helpers/envHelper')
-const { logger } = require('@/logging/logging')
+} = require('@/modules/shared/helpers/envHelper')
+const { logger } = require('@/observability/logging')
 
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
   process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
@@ -46,10 +46,10 @@ if (isTestEnv()) {
 dotenv.config({ path: `${packageRoot}/.env` })
 
 // knex is a singleton controlled by module so can't wait til app init
-const { initOpenTelemetry } = require('./otel')
+const { initOpenTelemetry } = require('@/observability/otel')
 initOpenTelemetry()
 
-const { patchKnex } = require('./modules/core/patches/knex')
+const { patchKnex } = require('@/modules/core/patches/knex')
 patchKnex()
 
 module.exports = {

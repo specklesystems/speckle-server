@@ -5,6 +5,7 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
+  AssignWorkspaceSeat,
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspace,
@@ -21,7 +22,7 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
@@ -71,7 +72,8 @@ import { getBaseTrackingProperties, getClient } from '@/modules/shared/utils/mix
 import {
   calculateSubscriptionSeats,
   GetWorkspacePlan,
-  GetWorkspaceSubscription
+  GetWorkspaceSubscription,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspacePlanProductId } from '@/modules/gatekeeper/stripe'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
@@ -81,6 +83,11 @@ import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const onProjectCreatedFactory =
   ({
@@ -222,22 +229,26 @@ export const onWorkspaceRoleUpdatedFactory =
     getWorkspaceRoleToDefaultProjectRoleMapping,
     queryAllWorkspaceProjects,
     deleteProjectRole,
-    upsertProjectRole
+    upsertProjectRole,
+    assignWorkspaceSeat
   }: {
     getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteProjectRole: DeleteProjectRole
     upsertProjectRole: UpsertProjectRole
+    assignWorkspaceSeat: AssignWorkspaceSeat
   }) =>
   async ({
     userId,
     role,
     workspaceId,
+    seatType,
     flags
   }: {
     userId: string
     role: WorkspaceRoles
     workspaceId: string
+    seatType?: WorkspaceSeatType
     flags?: {
       skipProjectRoleUpdatesFor: string[]
     }
@@ -275,6 +286,10 @@ export const onWorkspaceRoleUpdatedFactory =
           )
         })
       )
+    }
+
+    if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
+      await assignWorkspaceSeat({ userId, workspaceId, type: seatType })
     }
   }
 
@@ -363,8 +378,6 @@ export const workspaceTrackingFactory =
       case 'workspace.authorized':
         break
       case 'workspace.created':
-        payload.createdByUserId
-
         // we're setting workspace props and attributing to speckle users
         mixpanel.groups.set('workspace_id', payload.workspace.id, {
           ...(await calculateProperties(payload.workspace)),
@@ -372,7 +385,6 @@ export const workspaceTrackingFactory =
         })
         break
       case 'workspace.updated':
-      case 'workspace.metrics':
         // just updating workspace props
         mixpanel.groups.set(
           'workspace_id',
@@ -453,6 +465,21 @@ const emitWorkspaceGraphqlSubscriptionsFactory =
 
         break
     }
+  }
+
+const onWorkspaceCreatedFactory =
+  ({ assignWorkspaceSeat }: { assignWorkspaceSeat: AssignWorkspaceSeat }) =>
+  async ({
+    workspace,
+    createdByUserId
+  }: {
+    workspace: Workspace
+    createdByUserId: string
+  }) => {
+    if (!FF_WORKSPACES_NEW_PLANS_ENABLED) {
+      return
+    }
+    await assignWorkspaceSeat({ userId: createdByUserId, workspaceId: workspace.id })
   }
 
 export const initializeEventListenersFactory =
@@ -537,9 +564,23 @@ export const initializeEventListenersFactory =
             }),
           queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
           deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-          upsertProjectRole: upsertProjectRoleFactory({ db: trx })
+          upsertProjectRole: upsertProjectRoleFactory({ db: trx }),
+          assignWorkspaceSeat: assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: trx })
+          })
         })
         await withTransaction(onWorkspaceRoleUpdated(payload), trx)
+      }),
+      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
+        const trx = await db.transaction()
+        const onWorkspaceCreated = onWorkspaceCreatedFactory({
+          assignWorkspaceSeat: assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: trx })
+          })
+        })
+        await withTransaction(onWorkspaceCreated(payload), trx)
       }),
       eventBus.listen('**', emitWorkspaceGraphqlSubscriptions)
     ]

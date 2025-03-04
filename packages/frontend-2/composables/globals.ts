@@ -57,11 +57,26 @@ export const useIsGendoModuleEnabled = () => {
   return ref(FF_GENDOAI_MODULE_ENABLED)
 }
 
+export const useWorkspaceNewPlansEnabled = () => {
+  const {
+    public: { FF_WORKSPACES_NEW_PLANS_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_WORKSPACES_NEW_PLANS_ENABLED)
+}
+
 export const useIsBillingIntegrationEnabled = () => {
   const {
     public: { FF_BILLING_INTEGRATION_ENABLED }
   } = useRuntimeConfig()
   return ref(FF_BILLING_INTEGRATION_ENABLED)
+}
+
+export const useIsNoPersonalEmailsEnabled = () => {
+  const {
+    public: { FF_NO_PERSONAL_EMAILS_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_NO_PERSONAL_EMAILS_ENABLED)
 }
 
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }
