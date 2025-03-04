@@ -58,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
+import { loggerWithMaybeContext } from '@/observability/utils/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
