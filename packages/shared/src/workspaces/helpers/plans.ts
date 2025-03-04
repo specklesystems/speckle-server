@@ -1,3 +1,5 @@
+import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
+
 /**
  * PLANS
  */
@@ -54,6 +56,16 @@ export const WorkspacePlans = <const>{
 }
 
 export type WorkspacePlans = (typeof WorkspacePlans)[keyof typeof WorkspacePlans]
+
+export const isNewWorkspacePlan = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>
+): boolean => {
+  return (
+    plan === PaidWorkspacePlansNew.Team ||
+    plan === PaidWorkspacePlansNew.Pro ||
+    plan === UnpaidWorkspacePlans.Free
+  )
+}
 
 /**
  * BILLING INTERVALS
