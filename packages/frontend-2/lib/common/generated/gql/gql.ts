@@ -304,6 +304,7 @@ type Documents = {
     "\n  query SettingsSidebarAutomateFunctions {\n    activeUser {\n      ...Sidebar_User\n    }\n  }\n": typeof types.SettingsSidebarAutomateFunctionsDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
+    "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": typeof types.SettingsWorkspaceBillingNewDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": typeof types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": typeof types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesMembers_Workspace\n    }\n  }\n": typeof types.SettingsWorkspacesMembersDocument,
@@ -694,6 +695,7 @@ const documents: Documents = {
     "\n  query SettingsSidebarAutomateFunctions {\n    activeUser {\n      ...Sidebar_User\n    }\n  }\n": types.SettingsSidebarAutomateFunctionsDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
+    "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.SettingsWorkspaceBillingNewDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesMembers_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
@@ -1968,6 +1970,10 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($slug: Strin
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

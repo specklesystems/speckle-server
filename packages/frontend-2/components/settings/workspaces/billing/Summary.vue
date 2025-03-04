@@ -17,7 +17,7 @@
             <span class="capitalize">{{ billingInterval }}</span>
             bill
           </template>
-          Bill
+          <template v-else>Bill</template>
         </h3>
         <p class="text-heading-lg text-foreground inline-block">
           {{ totalCostFormatted }}
