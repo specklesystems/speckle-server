@@ -1,4 +1,4 @@
-import prometheusClient, { type Registry } from 'prom-client'
+import { type Registry, Summary, Counter, Gauge, Histogram } from 'prom-client'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { type Knex } from 'knex'
 import { Logger } from 'pino'
@@ -7,12 +7,12 @@ import { omit } from 'lodash'
 import { getRequestContext } from '@/observability/components/express/requestContext'
 import { collectLongTrace } from '@speckle/shared'
 
-let metricQueryDuration: prometheusClient.Summary<string>
-let metricQueryErrors: prometheusClient.Counter<string>
-let metricConnectionAcquisitionDuration: prometheusClient.Histogram<string>
-let metricConnectionPoolErrors: prometheusClient.Counter<string>
-let metricConnectionInUseDuration: prometheusClient.Histogram<string>
-let metricConnectionPoolReapingDuration: prometheusClient.Histogram<string>
+let metricQueryDuration: Summary<string>
+let metricQueryErrors: Counter<string>
+let metricConnectionAcquisitionDuration: Histogram<string>
+let metricConnectionPoolErrors: Counter<string>
+let metricConnectionInUseDuration: Histogram<string>
+let metricConnectionPoolReapingDuration: Histogram<string>
 const initializedRegions: string[] = []
 let initializedPollingMetrics = false
 
@@ -20,13 +20,16 @@ export const initKnexPrometheusMetrics = async (params: {
   getAllDbClients: () => Promise<
     Array<{ client: Knex; isMain: boolean; regionKey: string }>
   >
-  register: Registry
+  registers: Registry[]
   logger: Logger
 }) => {
+  const { registers } = params
   if (!initializedPollingMetrics) {
     initializedPollingMetrics = true
-    new prometheusClient.Gauge({
-      registers: [params.register],
+
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_free'))
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_free',
       labelNames: ['region'],
       help: 'Number of free DB connections',
@@ -40,8 +43,9 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    new prometheusClient.Gauge({
-      registers: [params.register],
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_used'))
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_used',
       labelNames: ['region'],
       help: 'Number of used DB connections',
@@ -55,8 +59,9 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    new prometheusClient.Gauge({
-      registers: [params.register],
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_pending'))
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_pending',
       labelNames: ['region'],
       help: 'Number of pending DB connection aquires',
@@ -70,8 +75,11 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    new prometheusClient.Gauge({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_pending_creates')
+    )
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_pending_creates',
       labelNames: ['region'],
       help: 'Number of pending DB connection creates',
@@ -85,8 +93,11 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    new prometheusClient.Gauge({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_pending_validations')
+    )
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_pending_validations',
       labelNames: ['region'],
       help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
@@ -100,8 +111,11 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    new prometheusClient.Gauge({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_remaining_capacity')
+    )
+    new Gauge({
+      registers,
       name: 'speckle_server_knex_remaining_capacity',
       labelNames: ['region'],
       help: 'Remaining capacity of the DB connection pool',
@@ -115,43 +129,57 @@ export const initKnexPrometheusMetrics = async (params: {
       }
     })
 
-    metricQueryDuration = new prometheusClient.Summary({
-      registers: [params.register],
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_query_duration'))
+    metricQueryDuration = new Summary({
+      registers,
       labelNames: ['sqlMethod', 'sqlNumberBindings', 'region'],
       name: 'speckle_server_knex_query_duration',
       help: 'Summary of the DB query durations in seconds'
     })
 
-    metricQueryErrors = new prometheusClient.Counter({
-      registers: [params.register],
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_query_errors'))
+    metricQueryErrors = new Counter({
+      registers,
       labelNames: ['sqlMethod', 'sqlNumberBindings', 'region'],
       name: 'speckle_server_knex_query_errors',
       help: 'Number of DB queries with errors'
     })
 
-    metricConnectionAcquisitionDuration = new prometheusClient.Histogram({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_connection_acquisition_duration')
+    )
+    metricConnectionAcquisitionDuration = new Histogram({
+      registers,
       name: 'speckle_server_knex_connection_acquisition_duration',
       labelNames: ['region'],
       help: 'Summary of the DB connection acquisition duration, from request to acquire connection from pool until successfully acquired, in seconds'
     })
 
-    metricConnectionPoolErrors = new prometheusClient.Counter({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_connection_acquisition_errors')
+    )
+    metricConnectionPoolErrors = new Counter({
+      registers,
       name: 'speckle_server_knex_connection_acquisition_errors',
       labelNames: ['region'],
       help: 'Number of DB connection pool acquisition errors'
     })
 
-    metricConnectionInUseDuration = new prometheusClient.Histogram({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_connection_usage_duration')
+    )
+    metricConnectionInUseDuration = new Histogram({
+      registers,
       name: 'speckle_server_knex_connection_usage_duration',
       labelNames: ['region'],
       help: 'Summary of the DB connection duration, from successful acquisition of connection from pool until release back to pool, in seconds'
     })
 
-    metricConnectionPoolReapingDuration = new prometheusClient.Histogram({
-      registers: [params.register],
+    registers.forEach((r) =>
+      r.removeSingleMetric('speckle_server_knex_connection_pool_reaping_duration')
+    )
+    metricConnectionPoolReapingDuration = new Histogram({
+      registers,
       name: 'speckle_server_knex_connection_pool_reaping_duration',
       labelNames: ['region'],
       help: 'Summary of the DB connection pool reaping duration, in seconds. Reaping is the process of removing idle connections from the pool.'
