@@ -27,6 +27,7 @@ import {
 } from '@/modules/previews/repository/previews'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import prometheusClient from 'prom-client'
+import { initializeMetrics } from '@/modules/previews/observability/metrics'
 
 const getPreviewQueues = (params: { responseQueueName: string }) => {
   const { responseQueueName } = params
@@ -92,50 +93,13 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       new URL(getServerOrigin()).hostname
     }`
 
-    // add a metric to gauge the length of the preview job queue
-    prometheusClient.register.removeSingleMetric(
-      'speckle_server_preview_jobs_queue_pending'
-    )
-    new prometheusClient.Gauge({
-      name: 'speckle_server_preview_jobs_queue_pending',
-      help: 'Number of preview jobs waiting in the job queue',
-      async collect() {
-        this.set(await previewRequestQueue.count())
-      }
-    })
-
-    prometheusClient.register.removeSingleMetric('speckle_server_preview_jobs_count')
-    const previewJobsCounter = new prometheusClient.Counter({
-      name: 'speckle_server_preview_jobs_count',
-      help: 'Total number of preview jobs which have been requested to be processed.'
-    })
-
-    prometheusClient.register.removeSingleMetric(
-      'speckle_server_preview_jobs_request_failed_count'
-    )
-    const previewJobsFailedCounter = new prometheusClient.Counter({
-      name: 'speckle_server_preview_jobs_request_failed_count',
-      help: 'Total number of preview jobs which have been requested but failed to be processed.'
-    })
-
-    prometheusClient.register.removeSingleMetric(
-      'speckle_server_preview_jobs_processed_duration_seconds'
-    )
-    const previewJobsProcessedSummary = new prometheusClient.Summary({
-      name: 'speckle_server_preview_jobs_processed_duration_seconds',
-      help: 'Duration of preview job processing, in seconds',
-      labelNames: ['status']
-    })
-
     const { previewRequestQueue, previewResponseQueue } = getPreviewQueues({
       responseQueueName
     })
 
-    previewRequestQueue.on('added', () => {
-      previewJobsCounter.inc()
-    })
-    previewRequestQueue.on('failed', () => {
-      previewJobsFailedCounter.inc()
+    const { previewJobsProcessedSummary } = initializeMetrics({
+      registers: [prometheusClient.register],
+      previewRequestQueue
     })
 
     const router = createBullBoard([
