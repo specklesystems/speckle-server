@@ -1,5 +1,5 @@
 import { homeRoute, verifyEmailRoute } from '~/lib/common/helpers/route'
-import { serverInfoEmailEnabledQuery } from '~/lib/workspaces/graphql/queries'
+import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
   const { data: emailData } = await client
     .query({
-      query: serverInfoEmailEnabledQuery
+      query: mainServerInfoDataQuery
     })
     .catch(convertThrowIntoFetchResult)
 

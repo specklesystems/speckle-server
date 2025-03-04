@@ -141,13 +141,3 @@ export const discoverableWorkspacesRequestsQuery = graphql(`
     }
   }
 `)
-
-export const serverInfoEmailEnabledQuery = graphql(`
-  query ServerInfoEmailEnabled {
-    serverInfo {
-      configuration {
-        isEmailEnabled
-      }
-    }
-  }
-`)
