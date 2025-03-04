@@ -47,6 +47,8 @@ export const updateWorkspacePlanFactory =
         break
       case 'business':
       case 'plus':
+      case 'team':
+      case 'pro':
         switch (status) {
           case 'trial':
           case 'expired':
@@ -64,6 +66,7 @@ export const updateWorkspacePlanFactory =
         }
         break
 
+      case 'free':
       case 'academia':
       case 'unlimited':
       case 'starterInvoiced':

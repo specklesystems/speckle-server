@@ -70,7 +70,6 @@ const onChange = async (e: JsonFormsChangeEvent) => {
 const getFormState = (): Optional<JsonFormsChangeEvent> =>
   internalRef.value?.jsonforms.core
     ? ({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data: internalRef.value.jsonforms.core.data,
         errors: internalRef.value.jsonforms.core.errors
       } as JsonFormsChangeEvent)

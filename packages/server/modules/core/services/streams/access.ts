@@ -1,7 +1,4 @@
-import {
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   AddOrUpdateStreamCollaborator,
   GetStream,
@@ -94,9 +91,7 @@ export const removeStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     isStreamCollaborator: IsStreamCollaborator
     revokeStreamPermissions: RevokeStreamPermissions
-    addStreamPermissionsRevokedActivity: ReturnType<
-      typeof addStreamPermissionsRevokedActivityFactory
-    >
+    emitEvent: EventBusEmit
   }): RemoveStreamCollaborator =>
   async (streamId, userId, removedById, removerResourceAccessRules) => {
     if (userId !== removedById) {
@@ -120,11 +115,13 @@ export const removeStreamCollaboratorFactory =
       throw new LogicError('Stream not found')
     }
 
-    await deps.addStreamPermissionsRevokedActivity({
-      streamId,
-      activityUserId: removedById,
-      removedUserId: userId,
-      stream
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsRevoked,
+      payload: {
+        project: stream,
+        activityUserId: removedById,
+        removedUserId: userId
+      }
     })
 
     return stream
@@ -146,9 +143,6 @@ export const addOrUpdateStreamCollaboratorFactory =
     getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
     emitEvent: EventBusEmit
-    addStreamPermissionsAddedActivity: ReturnType<
-      typeof addStreamPermissionsAddedActivityFactory
-    >
   }): AddOrUpdateStreamCollaborator =>
   async (
     streamId,
@@ -199,12 +193,14 @@ export const addOrUpdateStreamCollaboratorFactory =
         }
       })
     } else {
-      await deps.addStreamPermissionsAddedActivity({
-        streamId,
-        activityUserId: addedById,
-        targetUserId: userId,
-        role: role as StreamRoles,
-        stream
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsAdded,
+        payload: {
+          project: stream,
+          activityUserId: addedById,
+          targetUserId: userId,
+          role: role as StreamRoles
+        }
       })
     }
 

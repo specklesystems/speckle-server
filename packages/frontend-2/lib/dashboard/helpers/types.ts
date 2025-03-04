@@ -1,4 +1,4 @@
-import { type LayoutDialogButton } from '@speckle/ui-components'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 export type TutorialItem = {
   title: string

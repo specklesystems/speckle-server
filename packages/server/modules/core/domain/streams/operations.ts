@@ -299,7 +299,7 @@ export type IsStreamCollaborator = (
 export type ValidateStreamAccess = (
   userId: MaybeNullOrUndefined<string>,
   streamId: string,
-  expectedRole?: string | undefined,
+  expectedRole?: string,
   userResourceAccessLimits?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) => Promise<boolean>
 

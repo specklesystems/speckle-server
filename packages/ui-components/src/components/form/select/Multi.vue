@@ -133,6 +133,7 @@
                 </label>
 
                 <div
+                  ref="optionsContainer"
                   class="overflow-auto simple-scrollbar max-h-60 gap-1 flex flex-col"
                 >
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
@@ -220,7 +221,7 @@ import {
 } from '@heroicons/vue/20/solid'
 import { debounce, isArray, isObjectLike } from 'lodash'
 import type { CSSProperties, PropType, Ref } from 'vue'
-import { computed, onMounted, ref, unref, watch } from 'vue'
+import { computed, onMounted, ref, unref, watch, nextTick } from 'vue'
 import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
@@ -763,9 +764,14 @@ const isSelected = (item: SingleItem) => {
   return wrappedValue.value.some((v) => itemKey(v) === itemKey(item))
 }
 
+const optionsContainer = ref<HTMLDivElement | null>(null)
+const scrollPosition = ref(0)
+
 const selectItem = (item: SingleItem, event?: Event) => {
   if (props.disabledItemPredicate?.(item)) return
   event?.stopPropagation()
+
+  scrollPosition.value = optionsContainer.value?.scrollTop || 0
 
   const currentValue = wrappedValue.value
   const itemExists = currentValue.some((v) => itemKey(v) === itemKey(item))
@@ -773,6 +779,12 @@ const selectItem = (item: SingleItem, event?: Event) => {
   wrappedValue.value = itemExists
     ? currentValue.filter((v) => itemKey(v) !== itemKey(item))
     : [...currentValue, item]
+
+  void nextTick(() => {
+    if (optionsContainer.value) {
+      optionsContainer.value.scrollTop = scrollPosition.value
+    }
+  })
 }
 
 onClickOutside(

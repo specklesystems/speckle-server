@@ -38,4 +38,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   }
 ])
+
+// testing deployments in prod, ignore this
+markUsed('a')
 </script>

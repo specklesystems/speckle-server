@@ -33,7 +33,10 @@ export default function (app: express.Express) {
       const digest = Buffer.from(hmac.update(req.body).digest('base64'), 'utf-8')
 
       //     //Compare HMACs
-      if (sig.length !== digest.length || !timingSafeEqual(digest, sig)) {
+      if (
+        sig.length !== digest.length ||
+        !timingSafeEqual(new Uint8Array(digest), new Uint8Array(sig))
+      ) {
         return res
           .status(401)
           .send('Speckle says your webhook signature is not valid 😠')

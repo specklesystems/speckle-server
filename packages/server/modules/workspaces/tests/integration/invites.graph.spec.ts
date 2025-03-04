@@ -52,14 +52,11 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   TestInvitesGraphQLOperations,
@@ -72,7 +69,6 @@ enum InviteByTarget {
   Id = 'id'
 }
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 const getUser = getUserFactory({ db })
@@ -80,11 +76,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Workspaces Invites GQL', () => {
@@ -92,13 +84,13 @@ describe('Workspaces Invites GQL', () => {
 
   const me: BasicTestUser = {
     name: 'Authenticated server invites guy',
-    email: 'serverinvitesguy@gmail.com',
+    email: 'serverinvitesguy@example.org',
     id: ''
   }
 
   const otherGuy: BasicTestUser = {
     name: 'Some Other DUde',
-    email: 'otherguy111@gmail.com',
+    email: 'otherguy111@example.org',
     id: ''
   }
 
@@ -257,7 +249,7 @@ describe('Workspaces Invites GQL', () => {
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: myFirstWorkspace.id,
           input: times(11, () => ({
-            email: `asdasasd${Math.random()}@gmail.com`,
+            email: `asdasasd${Math.random()}@example.org`,
             role: WorkspaceRole.Member
           }))
         })
@@ -272,7 +264,7 @@ describe('Workspaces Invites GQL', () => {
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: otherGuysWorkspace.id,
           input: times(10, () => ({
-            email: `asdasasd${Math.random()}@gmail.com`,
+            email: `asdasasd${Math.random()}@example.org`,
             role: WorkspaceRole.Member
           }))
         })
@@ -320,7 +312,7 @@ describe('Workspaces Invites GQL', () => {
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: myFirstWorkspace.id,
           input: times(count, () => ({
-            email: `asdasasd${Math.random()}@gmail.com`,
+            email: `asdasasd${Math.random()}@example.org`,
             role: WorkspaceRole.Member
           }))
         })
@@ -491,7 +483,7 @@ describe('Workspaces Invites GQL', () => {
 
       const workspaceMemberWithNoProjectAccess: BasicTestUser = {
         name: 'Workspace Member With No Project Access #1',
-        email: 'workspaceMemberWithNoProjectAccess1@gmail.com',
+        email: 'workspaceMemberWithNoProjectAccess1@example.org',
         id: ''
       }
 
@@ -686,7 +678,7 @@ describe('Workspaces Invites GQL', () => {
           {
             workspaceId: myAdministrationWorkspace.id,
             input: times(10, () => ({
-              email: `aszzzdasasd${Math.random()}@gmail.com`,
+              email: `aszzzdasasd${Math.random()}@example.org`,
               role: WorkspaceRole.Member
             }))
           },
@@ -1464,7 +1456,7 @@ describe('Workspaces Invites GQL', () => {
 
     const otherWorkspaceOwner: BasicTestUser = {
       name: 'Other Workspace Owner',
-      email: 'otherworkspaceowner@gmail.com',
+      email: 'otherworkspaceowner@example.org',
       id: ''
     }
 

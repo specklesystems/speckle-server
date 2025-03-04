@@ -2,7 +2,7 @@
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
   onFileProcessingFactory,
@@ -119,7 +119,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      req.pipe(pipedReq)
+      req.pipe(pipedReq as unknown as NodeJS.WritableStream)
     }
   )
 

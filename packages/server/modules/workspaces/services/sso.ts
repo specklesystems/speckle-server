@@ -38,7 +38,7 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
-import { Logger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({

@@ -132,7 +132,6 @@
   </div>
 </template>
 <script setup lang="ts">
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'

@@ -1,4 +1,3 @@
-{{- if .Values.frontend_2.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -139,6 +138,10 @@ spec:
             value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_FORCE_ONBOARDING
             value: {{ .Values.featureFlags.forceOnboarding | quote }}
+          - name: NUXT_PUBLIC_FF_NO_PERSONAL_EMAILS_ENABLED
+            value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLAN_ENABLED
+            value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
@@ -160,4 +163,3 @@ spec:
       {{- if .Values.frontend_2.serviceAccount.create }}
       serviceAccountName: {{ include "frontend_2.name" $ }}
       {{- end }}
-{{- end }}

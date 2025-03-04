@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
+// eslint-disable-next-line no-restricted-imports
 import './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
@@ -10,34 +10,33 @@ import 'express-async-errors'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import Metrics from '@/logging'
+import Metrics, { initPrometheusRegistry } from '@/observability'
 import {
   startupLogger,
   shutdownLogger,
   subscriptionLogger,
   graphqlLogger
-} from '@/logging/logging'
+} from '@/observability/logging'
 import {
   DetermineRequestIdMiddleware,
   LoggingExpressMiddleware,
   sanitizeHeaders
-} from '@/logging/expressLogging'
+} from '@/observability/components/express/expressLogging'
 
-import { errorMetricsMiddleware } from '@/logging/errorMetrics'
-import prometheusClient from 'prom-client'
+import { errorMetricsMiddlewareFactory } from '@/observability/components/express/metrics/errorMetrics'
+import prometheusClient, { Registry } from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
-
-import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
+import type { ConnectionContext } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex, { db } from '@/db/knex'
-import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
+import { monitorActiveConnections } from '@/observability/components/httpServer/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
   getFileSizeLimitMB,
@@ -64,17 +63,15 @@ import {
   compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
-  requestBodyParsingMiddlewareFactory
+  requestBodyParsingMiddlewareFactory,
+  setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
-import { GraphQLError } from 'graphql'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { BadRequestError, BaseError, ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/types'
@@ -85,63 +82,17 @@ import {
   enterNewRequestContext,
   getRequestContext,
   initiateRequestContextMiddleware
-} from '@/logging/requestContext'
+} from '@/observability/components/express/requestContext'
 import { randomUUID } from 'crypto'
+import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
+import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
 
 const GRAPHQL_PATH = '/graphql'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
 
 /**
  * In mocked Ws connections, request will be undefined
  */
 type PossiblyMockedConnectionContext = SetOptional<ConnectionContext, 'request'>
-
-function logSubscriptionOperation(params: {
-  ctx: GraphQLContext
-  execParams: ExecutionParams
-  error?: Error
-  response?: SubscriptionResponse
-}) {
-  const { error, response, ctx, execParams } = params
-  const userId = ctx.userId
-  if (!error && !response) return
-
-  const reqCtx = getRequestContext()
-
-  const logger = ctx.log.child({
-    graphql_query: execParams.query.toString(),
-    graphql_variables: redactSensitiveVariables(execParams.variables),
-    graphql_operation_name: execParams.operationName,
-    graphql_operation_type: 'subscription',
-    userId,
-    ...(reqCtx
-      ? {
-          req: { id: reqCtx.requestId },
-          dbMetrics: reqCtx.dbMetrics
-        }
-      : {})
-  })
-
-  const errMsg = 'GQL subscription event {graphql_operation_name} errored'
-  const errors = response?.errors || (error ? [error] : [])
-  if (errors.length) {
-    for (const error of errors) {
-      let errorLogger = logger
-      if (error instanceof BaseError) {
-        errorLogger = errorLogger.child({ ...error.info() })
-      }
-      if (shouldLogAsInfoLevel(error)) {
-        errorLogger.info({ err: error }, errMsg)
-      } else {
-        errorLogger.error({ err: error }, errMsg)
-      }
-    }
-  } else if (response?.data) {
-    logger.info('GQL subscription event {graphql_operation_name} emitted')
-  }
-}
 
 const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer => {
   return 'on' in server && 'clients' in server
@@ -152,9 +103,11 @@ const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer 
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-export function buildApolloSubscriptionServer(
+export function buildApolloSubscriptionServer(params: {
   server: http.Server | MockWsServer
-): SubscriptionServer {
+  registers?: Registry[]
+}): SubscriptionServer {
+  const { server, registers } = params
   const httpServer = isWsServer(server) ? undefined : server
   const mockServer = isWsServer(server) ? server : undefined
 
@@ -162,34 +115,13 @@ export function buildApolloSubscriptionServer(
   const wsServer = mockServer ? (mockServer as unknown as ws.Server) : undefined
   const schema = ModulesSetup.graphSchema()
 
-  // Init metrics
-  prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
-  const metricConnectCounter = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_connect',
-    help: 'Number of connects'
-  })
-  prometheusClient.register.removeSingleMetric('speckle_server_apollo_clients')
-  const metricConnectedClients = new prometheusClient.Gauge({
-    name: 'speckle_server_apollo_clients',
-    help: 'Number of currently connected clients'
-  })
-
-  prometheusClient.register.removeSingleMetric(
-    'speckle_server_apollo_graphql_total_subscription_operations'
-  )
-  const metricSubscriptionTotalOperations = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_graphql_total_subscription_operations',
-    help: 'Number of total subscription operations served by this instance',
-    labelNames: ['subscriptionType'] as const
-  })
-
-  prometheusClient.register.removeSingleMetric(
-    'speckle_server_apollo_graphql_total_subscription_responses'
-  )
-  const metricSubscriptionTotalResponses = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_graphql_total_subscription_responses',
-    help: 'Number of total subscription responses served by this instance',
-    labelNames: ['subscriptionType', 'status'] as const
+  const {
+    metricConnectCounter,
+    metricConnectedClients,
+    metricSubscriptionTotalOperations,
+    metricSubscriptionTotalResponses
+  } = initApolloSubscriptionMonitoring({
+    registers: registers ?? [prometheusClient.register]
   })
 
   const getHeaders = (params: {
@@ -256,7 +188,7 @@ export function buildApolloSubscriptionServer(
           if (!token) {
             throw new BadRequestError("Couldn't resolve token from auth header")
           }
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('You need a token to subscribe')
         }
 
@@ -279,7 +211,7 @@ export function buildApolloSubscriptionServer(
             'Websocket connected and subscription context built.'
           )
           return buildCtx
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('Subscription context build failed')
         }
       },
@@ -301,58 +233,10 @@ export function buildApolloSubscriptionServer(
         )
         metricConnectedClients.dec()
       },
-      onOperation: (...params: [() => void, ExecutionParams]) => {
-        // kinda hacky, but we're using this as an "subscription event emitted"
-        // callback to clear subscription connection dataloaders to avoid stale cache
-        const baseParams = params[1]
-
-        metricSubscriptionTotalOperations.inc({
-          subscriptionType: baseParams.operationName // FIXME: operationName can be empty
-        })
-        const ctx = baseParams.context as GraphQLContext
-
-        const reqCtx = getRequestContext()
-        if (reqCtx) {
-          // Reset db metrics for each event
-          reqCtx.dbMetrics.totalCount = 0
-          reqCtx.dbMetrics.totalDuration = 0
-        }
-
-        const logger = ctx.log || subscriptionLogger
-        logger.info(
-          {
-            graphql_operation_name: baseParams.operationName,
-            userId: baseParams.context.userId,
-            graphql_query: baseParams.query.toString(),
-            graphql_variables: redactSensitiveVariables(baseParams.variables),
-            graphql_operation_type: 'subscription',
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
-          },
-          'Subscription event fired for {graphql_operation_name}'
-        )
-
-        baseParams.formatResponse = (val: SubscriptionResponse) => {
-          ctx.loaders.clearAll()
-          logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
-          metricSubscriptionTotalResponses.inc({
-            subscriptionType: baseParams.operationName,
-            status: 'success'
-          })
-          return val
-        }
-        baseParams.formatError = (e: Error) => {
-          ctx.loaders.clearAll()
-          logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
-
-          metricSubscriptionTotalResponses.inc({
-            subscriptionType: baseParams.operationName,
-            status: 'error'
-          })
-          return e
-        }
-
-        return baseParams
-      },
+      onOperation: onOperationHandlerFactory({
+        metricSubscriptionTotalOperations,
+        metricSubscriptionTotalResponses
+      }),
       keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
     wsServer || {
@@ -376,7 +260,7 @@ export async function buildApolloServer(options?: {
     schema,
     plugins: [
       statusCodePlugin,
-      loggingPluginFactory({ register: prometheusClient.register }),
+      loggingPluginFactory({ registers: [prometheusClient.register] }),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
@@ -425,6 +309,8 @@ export async function init() {
   startupLogger.info('🖼️  Serving for frontend-2...')
 
   const app = express()
+  const promRegister = initPrometheusRegistry() // has to be called before both Metrics and Modules are initialized
+
   app.disable('x-powered-by')
 
   // Moves things along automatically on restart.
@@ -459,16 +345,7 @@ export async function init() {
 
   app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(
-    async (
-      _req: express.Request,
-      res: express.Response,
-      next: express.NextFunction
-    ) => {
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
-      next()
-    }
-  )
+  app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())
     app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
@@ -481,11 +358,14 @@ export async function init() {
   // Metrics relies on 'regions' table in the database, so much be initialized after migrations in the main database ("migrateDbToLatest({ region: 'main'," etc..)
   // It also relies on the regional knex clients, which will initialize and run migrations in the respective regions.
   // It must be initialized after the multiregion module is initialized in ModulesSetup.init
-  await Metrics(app)
+  await Metrics({ app, registry: promRegister })
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
-  const subscriptionServer = buildApolloSubscriptionServer(server)
+  const subscriptionServer = buildApolloSubscriptionServer({
+    server,
+    registers: [promRegister]
+  })
 
   // Initialize graphql server
   const graphqlServer = await buildApolloServer({
@@ -499,12 +379,13 @@ export async function init() {
   )
 
   // At the very end adding default error handler middleware
-  app.use(errorMetricsMiddleware)
+  app.use(errorMetricsMiddlewareFactory({ promRegisters: [promRegister] }))
   app.use(defaultErrorHandler)
 
   return {
     app,
     graphqlServer,
+    registers: [promRegister],
     server,
     subscriptionServer,
     readinessCheck: healthchecks.isReady
@@ -543,11 +424,13 @@ async function createFrontendProxy() {
 export async function startHttp(params: {
   server: http.Server
   app: Express
+  registers?: Registry[]
   graphqlServer: ApolloServer<GraphQLContext>
   readinessCheck: ReadinessHandler
   customPortOverride?: number
 }) {
-  const { server, app, graphqlServer, readinessCheck, customPortOverride } = params
+  const { server, app, registers, graphqlServer, readinessCheck, customPortOverride } =
+    params
   let bindAddress = getBindAddress() // defaults to 127.0.0.1
   let port = getPort() // defaults to 3000
 
@@ -565,7 +448,10 @@ export async function startHttp(params: {
     bindAddress = getBindAddress('0.0.0.0')
   }
 
-  monitorActiveConnections(server)
+  monitorActiveConnections({
+    httpServer: server,
+    registers: registers ?? [prometheusClient.register]
+  })
 
   app.set('port', port)
 

@@ -47,6 +47,31 @@ const getActiveUserQuery = gql`
   ${baseUserFieldsFragment}
 `
 
+export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`
+  query GetActiveUserWithWorkspaceJoinRequests {
+    activeUser {
+      ...BaseUserFields
+      workspaceJoinRequests {
+        totalCount
+        cursor
+        items {
+          workspace {
+            id
+            name
+          }
+          user {
+            id
+            name
+          }
+          status
+        }
+      }
+    }
+  }
+
+  ${baseUserFieldsFragment}
+`
+
 const getOtherUserQuery = gql`
   query GetOtherUser($id: String!) {
     otherUser(id: $id) {
@@ -96,6 +121,26 @@ const getPendingEmailVerificationStatusQuery = gql`
 const requestVerificationMutation = gql`
   mutation RequestVerification {
     requestVerification
+  }
+`
+
+export const getUserActiveResources = gql`
+  query UserActiveResources {
+    activeUser {
+      activeWorkspace {
+        id
+        name
+      }
+      isProjectsActive
+    }
+  }
+`
+
+export const setUserActiveWorkspaceMutation = gql`
+  mutation SetUserActiveWorkspace($slug: String, $isProjectsActive: Boolean) {
+    activeUserMutations {
+      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)
+    }
   }
 `
 

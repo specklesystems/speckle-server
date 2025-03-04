@@ -20,8 +20,6 @@ import {
   InsertComments
 } from '@/modules/comments/domain/operations'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-
-import { addStreamClonedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   CloneStream,
   GetStream,
@@ -43,6 +41,8 @@ import {
   InsertBranches
 } from '@/modules/core/domain/branches/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -509,7 +509,7 @@ export const cloneStreamFactory =
     deps: PrepareStateDeps &
       CloneStreamCoreDeps &
       CloneStreamCommentsDeps & {
-        addStreamClonedActivity: ReturnType<typeof addStreamClonedActivityFactory>
+        emitEvent: EventBusEmit
       }
   ): CloneStream =>
   async (userId: string, sourceStreamId: string) => {
@@ -525,11 +525,14 @@ export const cloneStreamFactory =
       // Commit transaction
       await state.trx.commit()
 
-      // Create activity item
-      await deps.addStreamClonedActivity({
-        sourceStreamId,
-        newStream,
-        clonerId: userId
+      // Emit event
+      await deps.emitEvent({
+        eventName: ProjectEvents.Cloned,
+        payload: {
+          sourceProject: state.targetStream,
+          newProject: newStream,
+          clonerId: userId
+        }
       })
       return coreCloneResult.newStream
     } catch (e) {

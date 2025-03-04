@@ -16,13 +16,14 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
-import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeperCore/domain/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  Roles,
+  throwUncoveredError,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 
 export const startCheckoutSessionFactory =
   ({
@@ -96,11 +97,7 @@ export const startCheckoutSessionFactory =
       if (workspaceCheckoutSession.paymentStatus === 'paid')
         // this is should not be possible, but its better to be checking it here, than double charging the customer
         throw new WorkspaceAlreadyPaidError()
-      if (
-        new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        1000
-        // 10 * 60 * 1000
-      ) {
+      if (new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() > 1000) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id
         })

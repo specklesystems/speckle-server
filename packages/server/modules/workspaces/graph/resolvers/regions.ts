@@ -11,10 +11,13 @@ import {
 } from '@/modules/workspaces/repositories/regions'
 import {
   copyProjectAutomationsFactory,
+  copyProjectCommentsFactory,
+  copyProjectBlobs,
   copyProjectModelsFactory,
   copyProjectObjectsFactory,
   copyProjectsFactory,
   copyProjectVersionsFactory,
+  copyProjectWebhooksFactory,
   copyWorkspaceFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import {
@@ -25,7 +28,10 @@ import {
   assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
-import { updateProjectRegionFactory } from '@/modules/workspaces/services/projectRegions'
+import {
+  updateProjectRegionFactory,
+  validateProjectRegionCopyFactory
+} from '@/modules/workspaces/services/projectRegions'
 import { Roles } from '@speckle/shared'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
@@ -35,6 +41,19 @@ import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects
 import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
 import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
+import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
+import {
+  getProjectObjectStorage,
+  getRegionObjectStorage
+} from '@/modules/multiregion/utils/blobStorageSelector'
+import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
+import {
+  deleteRegionKeyFromCacheFactory,
+  upsertProjectRegionKeyFactory
+} from '@/modules/multiregion/repositories/projectRegion'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -87,16 +106,16 @@ export default {
       )
 
       const sourceDb = await getProjectDbClient({ projectId: args.projectId })
+      const sourceObjectStorage = await getProjectObjectStorage({
+        projectId: args.projectId
+      })
       const targetDb = await (await getDb({ regionKey: args.regionKey })).transaction()
+      const targetObjectStorage = await getRegionObjectStorage({
+        regionKey: args.regionKey
+      })
 
       const updateProjectRegion = updateProjectRegionFactory({
         getProject: getProjectFactory({ db: sourceDb }),
-        countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
-        countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
-        countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
-        countProjectAutomations: getProjectAutomationsTotalCountFactory({
-          db: sourceDb
-        }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -108,7 +127,32 @@ export default {
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
         copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
-        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb })
+        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
+        copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb }),
+        copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb }),
+        copyProjectBlobs: copyProjectBlobs({
+          sourceDb,
+          sourceObjectStorage,
+          targetDb,
+          targetObjectStorage
+        }),
+        validateProjectRegionCopy: validateProjectRegionCopyFactory({
+          countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
+          countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
+          countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
+          countProjectAutomations: getProjectAutomationsTotalCountFactory({
+            db: sourceDb
+          }),
+          countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
+          getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
+        }),
+        updateProjectRegionKey: updateProjectRegionKeyFactory({
+          upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
+          cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
+            redis: getGenericRedis()
+          }),
+          emitEvent: getEventBus().emit
+        })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)

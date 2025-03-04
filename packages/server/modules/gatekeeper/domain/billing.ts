@@ -1,12 +1,11 @@
 import {
   PaidWorkspacePlan,
-  PaidWorkspacePlans,
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
+  WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
@@ -150,12 +149,12 @@ export type GetSubscriptionData = (args: {
 }) => Promise<SubscriptionData>
 
 export type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
 }) => string
 
 export type SubscriptionDataInput = OverrideProperties<
@@ -169,3 +168,13 @@ export type ReconcileSubscriptionData = (args: {
   subscriptionData: SubscriptionDataInput
   applyProrotation: boolean
 }) => Promise<void>
+
+export type WorkspaceSeatType = 'viewer' | 'editor'
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
+  createdAt: Date
+  updatedAt: Date
+}
