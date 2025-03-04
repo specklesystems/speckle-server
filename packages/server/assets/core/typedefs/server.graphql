@@ -46,6 +46,11 @@ type ServerInfo {
   Please contact your server administrator if you wish to suggest a change to these values.
   """
   configuration: ServerConfiguration!
+
+  """
+  Whether the email feature is enabled on this server
+  """
+  isEmailEnabled: Boolean!
 }
 
 type Role {

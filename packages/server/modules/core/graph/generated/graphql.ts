@@ -2986,6 +2986,8 @@ export type ServerInfo = {
   enableNewWebUiMessaging?: Maybe<Scalars['Boolean']['output']>;
   guestModeEnabled: Scalars['Boolean']['output'];
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
   /** Info about server regions */
@@ -6550,6 +6552,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   enableNewWebUiMessaging?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
   multiRegion?: Resolver<ResolversTypes['ServerMultiRegionConfiguration'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
