@@ -77,7 +77,7 @@
             <span class="text-foreground text-body-2xs">
               {{ getPropertyName(filter.key) }}
             </span>
-            <span class="">{{ filter.key }}</span>
+            <span class="truncate">{{ filter.key }}</span>
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
