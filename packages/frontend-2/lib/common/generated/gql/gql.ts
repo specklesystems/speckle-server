@@ -379,6 +379,7 @@ type Documents = {
     "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n": typeof types.WorkspaceWizardRegionDocument,
     "\n  query DiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": typeof types.DiscoverableWorkspaces_ActiveUserDocument,
     "\n  query DiscoverableWorkspacesRequests_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": typeof types.DiscoverableWorkspacesRequests_ActiveUserDocument,
+    "\n  query ServerInfoEmailEnabled {\n    serverInfo {\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": typeof types.ServerInfoEmailEnabledDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -768,6 +769,7 @@ const documents: Documents = {
     "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n": types.WorkspaceWizardRegionDocument,
     "\n  query DiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": types.DiscoverableWorkspaces_ActiveUserDocument,
     "\n  query DiscoverableWorkspacesRequests_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": types.DiscoverableWorkspacesRequests_ActiveUserDocument,
+    "\n  query ServerInfoEmailEnabled {\n    serverInfo {\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": types.ServerInfoEmailEnabledDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -2266,6 +2268,10 @@ export function graphql(source: "\n  query DiscoverableWorkspaces_ActiveUser {\n
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query DiscoverableWorkspacesRequests_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n"): (typeof documents)["\n  query DiscoverableWorkspacesRequests_ActiveUser {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ServerInfoEmailEnabled {\n    serverInfo {\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoEmailEnabled {\n    serverInfo {\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

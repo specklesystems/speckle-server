@@ -1,4 +1,5 @@
 import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
+import { serverInfoEmailEnabledQuery } from '~/lib/workspaces/graphql/queries'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/route'
@@ -27,8 +28,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 
+  const { data: emailData } = await client
+    .query({
+      query: serverInfoEmailEnabledQuery
+    })
+    .catch(convertThrowIntoFetchResult)
+
   // Ignore if user has not verified their email yet
-  if (!data?.activeUser?.verified) return
+  if (!data?.activeUser?.verified && emailData?.serverInfo.configuration.isEmailEnabled)
+    return
 
   // Ignore if user has not completed onboarding yet
   if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
