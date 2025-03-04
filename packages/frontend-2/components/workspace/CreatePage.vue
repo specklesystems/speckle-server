@@ -50,6 +50,8 @@ import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useAuthManager } from '~/lib/auth/composables/auth'
+import { useQuery } from '@vue/apollo-composable'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
 defineProps<{
   workspaceId?: string
@@ -58,11 +60,24 @@ defineProps<{
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
-const { requiresWorkspaceCreation } = useActiveUser()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery)
 
 const isCancelDialogOpen = ref(false)
 
 const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
+
+const requiresWorkspaceCreation = computed(() => {
+  return (
+    isWorkspacesEnabled.value &&
+    isWorkspaceNewPlansEnabled.value &&
+    (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
+    // Legacy projects
+    (result.value?.activeUser?.versions.totalCount || 0) === 0
+  )
+})
 
 const onCancelClick = () => {
   if (isFirstStep.value) {
