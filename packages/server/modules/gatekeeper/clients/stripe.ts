@@ -69,7 +69,7 @@ export const createCheckoutSessionFactory =
       })
 
     const cancel_url = isCreateFlow
-      ? `${frontendOrigin}/workspaces/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      ? `${frontendOrigin}/workspaces/actions/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
       : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
 
     const session = await stripe.checkout.sessions.create({
