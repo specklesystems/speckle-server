@@ -35,7 +35,7 @@ const httpErrorImage = (httpErrorCode: number) =>
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
-export const init: SpeckleModule['init'] = (app, isInitial) => {
+export const init: SpeckleModule['init'] = ({ app, isInitial }) => {
   if (disablePreviews()) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
