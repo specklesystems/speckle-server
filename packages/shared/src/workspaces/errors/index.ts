@@ -1,5 +1,3 @@
-import { blockedSlugs } from '../../core/constants.js'
-
 export const VALID_SLUG_CHARACTERS_REGEX = /^[a-z0-9-]+$/
 export const VALID_SLUG_BOUNDARY_REGEX = /^[a-z0-9].*[a-z0-9]$/
 const MIN_SLUG_LENGTH = 3
@@ -41,9 +39,5 @@ export function validateWorkspaceSlug(slug: string): void {
 
   if (!VALID_SLUG_BOUNDARY_REGEX.test(slug)) {
     throw new InvalidWorkspaceSlugError('Short ID cannot start or end with a hyphen.')
-  }
-
-  if (blockedSlugs.includes(slug)) {
-    throw new InvalidWorkspaceSlugError('This Short ID is reserved and cannot be used.')
   }
 }
