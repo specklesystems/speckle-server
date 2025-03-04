@@ -15031,10 +15031,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@portabletext/toolkit@npm:^2.0.17":
+  version: 2.0.17
+  resolution: "@portabletext/toolkit@npm:2.0.17"
+  dependencies:
+    "@portabletext/types": "npm:^2.0.13"
+  checksum: 10/a029443713f27f4ab7231ae83adfa05a9373311fc49f0b01d87c641d4816a82a44f089c39b0737c89333b9ec833babe30f4ee40cecc116b635ae4382d0607d9a
+  languageName: node
+  linkType: hard
+
 "@portabletext/types@npm:^2.0.13":
   version: 2.0.13
   resolution: "@portabletext/types@npm:2.0.13"
   checksum: 10/c0eb64db2e8edc8d5ae291687fc9447e67785bfee0542b3d2e4fd0fc5823f3c45e2a42a729b545d7c69784a7c4280f705143a66b6e082dd7c674483553f8b1cd
+  languageName: node
+  linkType: hard
+
+"@portabletext/vue@npm:^1.0.12":
+  version: 1.0.12
+  resolution: "@portabletext/vue@npm:1.0.12"
+  dependencies:
+    "@portabletext/toolkit": "npm:^2.0.17"
+    "@portabletext/types": "npm:^2.0.13"
+  peerDependencies:
+    vue: ^3.3.4
+  checksum: 10/e90ed5d3bd4eda4b54395b5589334beaa9b4fc1c188ee70c0d933068a1ec2e0c742f5d7f8ee0bcd3dcd26ddfc26e9850a135b48feface3a9ed714d4f188859a6
   languageName: node
   linkType: hard
 
@@ -16514,6 +16535,13 @@ __metadata:
   peerDependencies:
     react: ^18.3 || ^19.0.0-0
   checksum: 10/049f46efea86d16c49fa96509680b17d8120fc408b46a9cedb5dc4397b1a9d2943f9a312597f120fb63ad22bd1c1e55a9b20a81b81a30f384bcc0455d723503d
+  languageName: node
+  linkType: hard
+
+"@sanity/image-url@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@sanity/image-url@npm:1.1.0"
+  checksum: 10/e6caf270e19973d99ccb999ec5a1e6b185bb80ab275d31e21692d02dd109945ccda05fd54a9a797efc5768c10c32140a4d5dd85ec2c01a02955acc5d917b7e9f
   languageName: node
   linkType: hard
 
@@ -18687,10 +18715,13 @@ __metadata:
     "@nuxtjs/tailwindcss": "npm:^6.7.0"
     "@parcel/watcher": "npm:^2.4.1"
     "@pinia/nuxt": "npm:^0.4.11"
+    "@portabletext/vue": "npm:^1.0.12"
+    "@sanity/image-url": "npm:^1.1.0"
     "@speckle/objectsender": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
+    "@tailwindcss/typography": "npm:^0.5.16"
     "@types/apollo-upload-client": "npm:^17.0.1"
     "@types/eslint": "npm:^8.56.10"
     "@types/lodash-es": "npm:^4.17.6"
@@ -20129,6 +20160,20 @@ __metadata:
   peerDependencies:
     tailwindcss: "*"
   checksum: 10/bae016432101cfd843dfbcc40789b8db334f53d23c96cc4ff2ec1e0757ff54db44b1b99d7a8b584116497ebf8abb7b656df01e57527172328f67eb890aec4cf5
+  languageName: node
+  linkType: hard
+
+"@tailwindcss/typography@npm:^0.5.16":
+  version: 0.5.16
+  resolution: "@tailwindcss/typography@npm:0.5.16"
+  dependencies:
+    lodash.castarray: "npm:^4.4.0"
+    lodash.isplainobject: "npm:^4.0.6"
+    lodash.merge: "npm:^4.6.2"
+    postcss-selector-parser: "npm:6.0.10"
+  peerDependencies:
+    tailwindcss: "*"
+  checksum: 10/ca6cca2c824b4124223dd28d4bd5cc21dd261fe53a9654b9802bb958badd637313118d8e81978c3509df7dac1826317050fb034bc4357085b451371e31adff6d
   languageName: node
   linkType: hard
 

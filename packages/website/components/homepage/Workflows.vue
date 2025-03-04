@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <section class="my-10">
     <div class="grid grid-cols-2 mb-6">
       <div class="flex items-center">
         <h3 class="text-4xl font-bold tracking-tight">
@@ -15,17 +15,17 @@
     </div>
     <div
       v-if="useCases"
-      class="w-full py-4 px-2 bg-foundation-2 shadow-inner dark:shadow-neutral-700/30 rounded-xl"
+      class="w-full py-4 px-4 bg-foundation-2 shadow-inner dark:shadow-neutral-700/30 rounded-xl"
     >
       <div class="flex flex-wrap md:flex-nowrap">
         <button
           v-for="useCase in useCases"
           :key="useCase._id"
           :class="[
-            'w-full md:w-full rounded-lg py-2.5 px-2 text-heading-lg leading-5 transition-all hover:text-primary focus:outline-0 overflow-hidden',
+            'relative w-full md:w-full rounded-lg py-2.5 px-2 text-heading leading-5 transition-all hover:text-primary focus:outline-0 overflow-hidden',
             '',
             selectedUseCaseId === useCase._id
-              ? 'bg-foundation text-primary shadow'
+              ? 'bg-foundation text-primary shadow-md shadow-blue-300/30 dark:shadow-blue-800/20'
               : ' '
           ]"
           @click="
@@ -33,6 +33,10 @@
           "
         >
           {{ useCase.title }}
+          <!-- <XMarkIcon
+            v-if="selectedUseCaseId === useCase._id"
+            class="w-4 h-4 absolute top-3 right-2"
+          /> -->
         </button>
       </div>
 
@@ -88,10 +92,12 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
+import { XMarkIcon } from '@heroicons/vue/20/solid'
+
 const selectedUseCaseId = ref('')
 
 const useCaseQuery = groq`*[_type == "useCase"]{...}`

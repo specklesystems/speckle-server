@@ -1,5 +1,6 @@
 /* stylelint-disable selector-id-pattern */
 @import '@speckle/ui-components/style.css';
+@plugin '@tailwindcss/typography';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

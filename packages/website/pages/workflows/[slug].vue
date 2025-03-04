@@ -37,14 +37,27 @@
         </div>
       </div>
     </div>
-    <div class="my-20"></div>
+    <article v-if="workflow" class="my-20 prose dark:prose-invert mx-auto px-2 md:px-0">
+      <PortableText :value="workflow.content" :components="myPortableTextComponents" />
+    </article>
   </div>
 </template>
 <script setup lang="ts">
+import { PortableText } from '@portabletext/vue'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
-
+import Image from '~/components/portabletext/Image.vue'
+import Callout from '~/components/portabletext/Callout.vue'
+import AccordionItem from '~/components/portabletext/AccordionItem.vue'
 const query = groq`*[_type == "workflow" && slug.current==$slug][0] {title, content, useCase->{title}, source -> {name, "imageUrl": image.asset->url}, receiver -> {name, "imageUrl": image.asset->url}}`
 const route = useRoute()
 
 const { data: workflow } = useSanityQuery(query, { slug: route.params.slug })
+
+const myPortableTextComponents = {
+  types: {
+    image: Image,
+    callout: Callout,
+    accordionItem: AccordionItem
+  }
+}
 </script>

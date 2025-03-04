@@ -2,6 +2,7 @@ import speckleTheme from '@speckle/tailwind-theme'
 import { tailwindContentEntries as themeEntries } from '@speckle/tailwind-theme/tailwind-configure'
 import { tailwindContentEntries as uiLibEntries } from '@speckle/ui-components/tailwind-configure'
 import formsPlugin from '@tailwindcss/forms'
+import tailwindTypography from '@tailwindcss/typography'
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -20,7 +21,12 @@ const config = {
     ...uiLibEntries()
     // `./lib/**/*.{js,ts,vue}`, // TODO: Wait for fix https://github.com/nuxt/framework/issues/2886#issuecomment-1108312903
   ],
-  plugins: [speckleTheme, formsPlugin, require('@xpd/tailwind-3dtransforms')],
+  plugins: [
+    speckleTheme,
+    formsPlugin,
+    tailwindTypography,
+    require('@xpd/tailwind-3dtransforms')
+  ],
   theme: {
     extend: {
       keyframes: {
