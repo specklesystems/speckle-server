@@ -41,15 +41,17 @@ type MetricConfig = {
 }
 
 export const heapSizeAndUsed = (
-  registry: Registry,
+  registers: Registry[],
   config: MetricConfig = {}
 ): Metric => {
-  const registers = registry ? [registry] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
   const buckets = { ...DEFAULT_NODEJS_HEAP_SIZE_BUCKETS, ...config.buckets }
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + NODEJS_HEAP_SIZE_TOTAL)
+  })
   const heapSizeTotal = new Histogram({
     name: namePrefix + NODEJS_HEAP_SIZE_TOTAL,
     help: 'Process heap size from Node.js in bytes. This data is collected at a higher frequency than Prometheus scrapes, and is presented as a Histogram.',
@@ -57,12 +59,20 @@ export const heapSizeAndUsed = (
     buckets: buckets.NODEJS_HEAP_SIZE_TOTAL,
     labelNames
   })
+
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + NODEJS_HEAP_SIZE_USED)
+  })
   const heapSizeUsed = new Histogram({
     name: namePrefix + NODEJS_HEAP_SIZE_USED,
     help: 'Process heap size used from Node.js in bytes. This data is collected at a higher frequency than Prometheus scrapes, and is presented as a Histogram.',
     registers,
     buckets: buckets.NODEJS_HEAP_SIZE_USED,
     labelNames
+  })
+
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + NODEJS_EXTERNAL_MEMORY)
   })
   const externalMemUsed = new Histogram({
     name: namePrefix + NODEJS_EXTERNAL_MEMORY,

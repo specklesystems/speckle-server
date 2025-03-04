@@ -399,3 +399,10 @@ export type CopyProjectWebhooks = (params: {
 export type CopyProjectBlobs = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type SetUserActiveWorkspace = (args: {
+  userId: string
+  workspaceSlug: string | null
+  /** Is the user in a "personal project" outside of a workspace? */
+  isProjectsActive?: boolean
+}) => Promise<void>

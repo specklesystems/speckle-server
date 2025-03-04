@@ -1,22 +1,22 @@
 /* istanbul ignore file */
 import type { Nullable } from '@speckle/shared'
-import prometheusClient from 'prom-client'
-import type express from 'express'
+import { Counter, type Registry } from 'prom-client'
+import type { ErrorRequestHandler } from 'express'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let metricErrorCount: Nullable<prometheusClient.Counter<any>> = null
+let metricErrorCount: Nullable<Counter<'route'>> = null
 
-export const errorMetricsMiddleware: express.ErrorRequestHandler = (
-  err,
-  req,
-  res,
-  next
-) => {
+export const errorMetricsMiddlewareFactory: (params: {
+  promRegisters: Registry[]
+}) => ErrorRequestHandler = (params) => (err, req, res, next) => {
   if (metricErrorCount === null) {
-    metricErrorCount = new prometheusClient.Counter({
+    params.promRegisters.forEach((register) => {
+      register.removeSingleMetric('speckle_server_request_errors')
+    })
+    metricErrorCount = new Counter({
       name: 'speckle_server_request_errors',
       help: 'Number of requests that threw exceptions',
-      labelNames: ['route']
+      labelNames: ['route'],
+      registers: params.promRegisters
     })
   }
 
