@@ -6,7 +6,8 @@
   "author": "Speckle Systems <hello@speckle.systems>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "license": "SEE LICENSE IN readme.md",
-  "main": "daemon.js",
+  "main": "./bin/www.js",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/specklesystems/speckle-server.git"
@@ -15,34 +16,52 @@
     "node": "^18.19.0"
   },
   "scripts": {
-    "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@127.0.0.1/speckle NODE_ENV=development LOG_PRETTY=true SPECKLE_SERVER_URL=http://127.0.0.1:3000 nodemon --no-experimental-fetch ./src/daemon.js",
-    "parse:ifc": "node --no-experimental-fetch ./ifc/import_file.js ./ifc/ifcs/steelplates.ifc 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
-    "lint": "eslint ."
-  },
-  "bugs": {
-    "url": "https://github.com/specklesystems/speckle-server/issues"
+    "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
+    "run:watch": "NODE_ENV=development LOG_PRETTY=true LOG_LEVEL=debug nodemon --exec \"yarn start\" --trace-deprecation --watch ./bin/www.js --watch ./dist",
+    "dev": "concurrently \"npm:build:tsc:watch\" \"npm:run:watch\"",
+    "dev:headed": "yarn dev",
+    "build:tsc": "rimraf ./dist/src && tsc -p ./tsconfig.build.json",
+    "build": "yarn build:tsc",
+    "lint": "yarn lint:tsc && yarn lint:eslint",
+    "lint:ci": "yarn lint:tsc",
+    "lint:tsc": "tsc --noEmit",
+    "lint:eslint": "eslint .",
+    "start": "node --loader=./dist/src/aliasLoader.js ./bin/www.js",
+    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "bcrypt": "^5.0.1",
-    "crypto-random-string": "^3.3.1",
+    "bcrypt": "^5.0.0",
+    "crypto": "^1.0.1",
+    "crypto-random-string": "^3.2.0",
+    "dotenv": "^16.4.5",
+    "esm-module-alias": "^2.2.0",
     "knex": "^2.5.1",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "pg": "^8.7.3",
     "pino": "^8.7.0",
-    "pino-http": "^8.0.0",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
+    "tarn": "^3.0.2",
     "undici": "^5.28.4",
     "valid-filename": "^3.1.0",
-    "web-ifc": "^0.0.36",
-    "znv": "^0.4.0",
-    "zod": "^3.22.4"
+    "web-ifc": "^0.0.36"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
+    "@types/bcrypt": "^5.0.0",
+    "@types/lodash-es": "^4.17.6",
+    "@types/node": "^18.19.38",
+    "@vitest/coverage-istanbul": "^1.6.0",
+    "concurrently": "^8.2.2",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-vitest": "^0.5.4",
     "nodemon": "^2.0.20",
-    "prettier": "^2.5.1"
+    "prettier": "^2.5.1",
+    "rimraf": "^5.0.7",
+    "typescript": "^4.6.4",
+    "typescript-eslint": "^7.12.0",
+    "vitest": "^1.6.0"
   }
 }

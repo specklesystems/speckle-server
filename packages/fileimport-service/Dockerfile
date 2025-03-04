@@ -2,7 +2,7 @@ ARG NODE_ENV=production
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS dotnet-build-stage
 WORKDIR /app
-COPY packages/fileimport-service/ifc-dotnet .
+COPY packages/fileimport-service/src/ifc-dotnet .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
 
 
@@ -69,8 +69,9 @@ ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
 ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
 ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
-COPY --link --from=dotnet-build-stage /app/output packages/fileimport-service/ifc-dotnet
+COPY --link --from=dotnet-build-stage /app/output packages/fileimport-service/src/ifc-dotnet
+ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll'
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENTRYPOINT [ "tini", "--", "node", "--no-experimental-fetch", "src/daemon.js"]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
