@@ -63,17 +63,21 @@
         <div
           v-for="(filter, index) in relevantFiltersLimited"
           :key="index"
+          v-tippy="filter.key"
           class="text-xs"
         >
           <button
-            class="block w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2"
+            class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
             @click="
               ;(showAllFilters = false),
                 setPropertyFilter(filter),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            {{ getPropertyName(filter.key) }}
+            <span class="text-foreground text-body-2xs">
+              {{ getPropertyName(filter.key) }}
+            </span>
+            <span class="">{{ filter.key }}</span>
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
@@ -265,11 +269,11 @@ const getPropertyName = (key: string): string => {
       (f) => f.key === key.replace('.value', '.name')
     )
     if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-      return correspondingProperty.valueGroups[0]?.value || key
+      return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
     }
   }
 
-  // Return the key as is for non-Revit properties
-  return key
+  // For all other properties, just return the last part of the path
+  return key.split('.').pop() || key
 }
 </script>
