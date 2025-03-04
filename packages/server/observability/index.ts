@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import prometheusClient from 'prom-client'
+import prometheusClient, { Registry } from 'prom-client'
 import promBundle from 'express-prom-bundle'
 
 import { initKnexPrometheusMetrics } from '@/observability/components/knex/knexMonitoring'
@@ -10,18 +10,34 @@ import type express from 'express'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 let prometheusInitialized = false
+let prometheusRegistryInitialized = false
 
-export default async function (app: express.Express) {
-  if (!prometheusInitialized) {
-    prometheusInitialized = true
+/**
+ * This has to be called prior to using Prometheus
+ * @returns The registry of Prometheus metrics which will be served
+ */
+export function initPrometheusRegistry() {
+  if (!prometheusRegistryInitialized) {
+    prometheusRegistryInitialized = true
     prometheusClient.register.clear()
     prometheusClient.register.setDefaultLabels({
       project: 'speckle-server',
       app: 'server'
     })
-    prometheusClient.collectDefaultMetrics()
+  }
+
+  return prometheusClient.register
+}
+
+export default async function (params: { app: express.Express; registry: Registry }) {
+  const { app, registry } = params
+  if (!prometheusInitialized) {
+    prometheusInitialized = true
+    prometheusClient.collectDefaultMetrics({
+      register: registry
+    })
     const highfrequencyMonitoring = initHighFrequencyMonitoring({
-      register: prometheusClient.register,
+      registers: [registry],
       collectionPeriodMilliseconds: highFrequencyMetricsCollectionPeriodMs(),
       config: {
         getDbClients: getAllRegisteredDbClients
@@ -30,7 +46,7 @@ export default async function (app: express.Express) {
     highfrequencyMonitoring.start()
 
     await initKnexPrometheusMetrics({
-      register: prometheusClient.register,
+      registers: [registry],
       getAllDbClients: getAllRegisteredDbClients,
       logger
     })
@@ -41,7 +57,8 @@ export default async function (app: express.Express) {
         includePath: true,
         httpDurationMetricName: 'speckle_server_request_duration',
         metricType: 'summary',
-        autoregister: false
+        autoregister: false,
+        promRegistry: registry
       })
     )
   }
@@ -49,8 +66,8 @@ export default async function (app: express.Express) {
   // Expose prometheus metrics
   app.get('/metrics', async (req, res, next) => {
     try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
+      res.set('Content-Type', registry.contentType)
+      res.end(await registry.metrics())
     } catch (ex: unknown) {
       res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
       next(ex)

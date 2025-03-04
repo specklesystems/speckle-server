@@ -1,5 +1,6 @@
 import cron from 'node-cron'
 import crs from 'crypto-random-string'
+import crs from 'crypto-random-string'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { type Logger, taskSchedulerLogger as logger } from '@/observability/logging'
 import {
@@ -13,6 +14,7 @@ export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
   taskName: string,
   lockTimeout: number,
+  callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
   callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
   acquireLock: AcquireTaskLock,
   releaseTaskLock: ReleaseTaskLock

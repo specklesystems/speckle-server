@@ -1,26 +1,26 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
-const request = require('supertest')
+import { expect } from 'chai'
+import request from 'supertest'
 
-const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
-const { generateManyObjects } = require(`@/test/helpers`)
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { generateManyObjects } from '@/test/helpers'
 
-const { Roles, Scopes } = require('@speckle/shared')
-const cryptoRandomString = require('crypto-random-string')
-const { db } = require('@/db/knex')
-const {
+import { Roles, Scopes } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
+import { db } from '@/db/knex'
+import {
   validateStreamAccessFactory,
   isStreamCollaboratorFactory,
   removeStreamCollaboratorFactory,
   addOrUpdateStreamCollaboratorFactory
-} = require('@/modules/core/services/streams/access')
-const { authorizeResolver } = require('@/modules/shared')
-const {
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import {
   getStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory
-} = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/repositories/streams'
+import {
   getUserFactory,
   legacyGetPaginatedUsersFactory,
   storeUserFactory,
@@ -28,43 +28,38 @@ const {
   storeUserAclFactory,
   isLastAdminUserFactory,
   updateUserServerRoleFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import {
   createUserFactory,
   changeUserRoleFactory
-} = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { Express } from 'express'
+import { Server } from 'http'
+import { omit } from 'lodash'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -125,9 +120,9 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
-let app
-let server
-let sendRequest
+let app: Express
+let server: Server
+let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
@@ -137,16 +132,22 @@ const changeUserRole = changeUserRoleFactory({
 
 describe('GraphQL API Core @core-api', () => {
   const userA = {
+    id: '',
+    token: '',
     name: 'd1',
     email: 'd.1@speckle.systems',
     password: 'wowwowwowwowwow'
   }
   const userB = {
+    id: '',
+    token: '',
     name: 'd2',
     email: 'd.2@speckle.systems',
     password: 'wowwowwowwowwow'
   }
   const userC = {
+    id: '',
+    token: '',
     name: 'd3',
     email: 'd.3@speckle.systems',
     password: 'wowwowwowwowwow'
@@ -263,30 +264,64 @@ describe('GraphQL API Core @core-api', () => {
   })
 
   // the stream ids
-  let ts1
-  let ts2
-  let ts3
-  let ts4
-  let ts5
-  let ts6
+  let ts1: string
+  let ts2: string
+  let ts3: string
+  let ts4: string
+  let ts5: string
+  let ts6: string
 
   // some api tokens
-  let token1
-  let token2
-  let token3
+  let token1: string
+  let token2: string
+  let token3: string
 
   // object ids
-  let objIds
+  let objIds: string[]
 
   // some commits
-  const c1 = {}
-  const c2 = {}
+  const c1 = {
+    id: '',
+    message: '',
+    streamId: '',
+    objectId: '',
+    branchName: '',
+    previousCommitIds: []
+  }
+  const c2 = {
+    id: '',
+    message: '',
+    streamId: '',
+    objectId: '',
+    branchName: '',
+    previousCommitIds: new Array<string>()
+  }
 
   // some branches
-  let b1 = {}
-  let b2 = {}
-  let b3 = {}
-  let b4 = {}
+  let b1 = {
+    id: '',
+    streamId: '',
+    name: '',
+    description: ''
+  }
+  let b2 = {
+    id: '',
+    streamId: '',
+    name: '',
+    description: ''
+  }
+  let b3 = {
+    id: '',
+    streamId: '',
+    name: '',
+    description: ''
+  }
+  let b4 = {
+    id: '',
+    streamId: '',
+    name: '',
+    description: ''
+  }
 
   describe('Mutations', () => {
     describe('Users & Api tokens', () => {
@@ -358,6 +393,8 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should delete my account', async () => {
         const userDelete = {
+          id: '',
+          token: '',
           name: 'delete',
           email: `${cryptoRandomString({ length: 10 })}@example.org`,
           password: 'wowwowwowwowwow'
@@ -468,6 +505,7 @@ describe('GraphQL API Core @core-api', () => {
     describe('User deletion', () => {
       it('Only admins can delete user', async () => {
         const userDelete = {
+          id: '',
           name: 'delete',
           email: `${cryptoRandomString({ length: 10 })}@example.org`,
           password: 'wowwowwowwowwow'
@@ -484,6 +522,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Admin can delete user', async () => {
         const userDelete = {
+          id: '',
           name: 'delete',
           email: 'd3l3t3@speckle.systems',
           password: 'wowwowwowwowwow'
@@ -572,7 +611,7 @@ describe('GraphQL API Core @core-api', () => {
           expect(res).to.be.json
           expect(res.body.errors).to.be.ok
           expect(res.body.data.streamUpdatePermission).to.be.not.ok
-          expect(res.body.errors.map((e) => e.message).join('|')).to.contain(
+          expect(res.body.errors.map((e: Error) => e.message).join('|')).to.contain(
             "Cannot grant permissions to users who aren't collaborators already"
           )
         })
@@ -763,16 +802,18 @@ describe('GraphQL API Core @core-api', () => {
           query:
             '{ adminStreams( visibility: "private" ) { totalCount items { id name isPublic } } }'
         })
-        expect(streamResults.body.data.adminStreams.items).to.satisfy((streams) =>
-          streams.every((stream) => !stream.isPublic)
+        expect(streamResults.body.data.adminStreams.items).to.satisfy(
+          (streams: { isPublic: boolean }[]) =>
+            streams.every((stream) => !stream.isPublic)
         )
 
         streamResults = await sendRequest(userA.token, {
           query:
             '{ adminStreams( visibility: "public" ) { totalCount items { id name isPublic } } }'
         })
-        expect(streamResults.body.data.adminStreams.items).to.satisfy((streams) =>
-          streams.every((stream) => stream.isPublic)
+        expect(streamResults.body.data.adminStreams.items).to.satisfy(
+          (streams: { isPublic: boolean }[]) =>
+            streams.every((stream) => stream.isPublic)
         )
       })
 
@@ -782,7 +823,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(streamResults.body.data.adminStreams.totalCount).to.equal(5)
         const streamIds = streamResults.body.data.adminStreams.items.map(
-          (stream) => stream.id
+          (stream: { id: string }) => stream.id
         )
         const res = await sendRequest(userA.token, {
           query: 'mutation ( $ids: [String!] ){ streamsDelete( ids: $ids )}',
@@ -848,11 +889,11 @@ describe('GraphQL API Core @core-api', () => {
         let res = await sendRequest(userA.token, {
           query:
             'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
-          variables: { myCommit: c1 }
+          variables: { myCommit: omit(c1, 'id') }
         })
 
         expect(res).to.be.json
-        expect(res.body.errors).to.not.exist
+        expect(res.body.errors, JSON.stringify(res.body.errors)).to.not.exist
         expect(res.body.data).to.have.property('commitCreate')
         expect(res.body.data.commitCreate).to.be.a('string')
         c1.id = res.body.data.commitCreate
@@ -866,10 +907,10 @@ describe('GraphQL API Core @core-api', () => {
         res = await sendRequest(userA.token, {
           query:
             'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
-          variables: { myCommit: c2 }
+          variables: { myCommit: omit(c2, 'id') }
         })
         expect(res).to.be.json
-        expect(res.body.errors).to.not.exist
+        expect(res.body.errors, JSON.stringify(res.body.errors)).to.not.exist
         expect(res.body.data).to.have.property('commitCreate')
         expect(res.body.data.commitCreate).to.be.a('string')
 
@@ -961,6 +1002,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should create several branches', async () => {
         b1 = {
+          id: '',
           streamId: ts1,
           name: 'dim/dev',
           description: 'dimitries development branch'
@@ -969,15 +1011,16 @@ describe('GraphQL API Core @core-api', () => {
         const res1 = await sendRequest(userA.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b1 }
+          variables: { branch: omit(b1, 'id') }
         })
         expect(res1).to.be.json
-        expect(res1.body.errors).to.not.exist
+        expect(res1.body.errors, JSON.stringify(res1.body.errors)).to.not.exist
         expect(res1.body.data).to.have.property('branchCreate')
         expect(res1.body.data.branchCreate).to.be.a('string')
         b1.id = res1.body.data.branchCreate
 
         b2 = {
+          id: '',
           streamId: ts1,
           name: 'dim/dev/api-surgery',
           description: 'another branch'
@@ -992,12 +1035,13 @@ describe('GraphQL API Core @core-api', () => {
         const res2 = await sendRequest(userB.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b2 }
+          variables: { branch: omit(b2, 'id') }
         })
-        expect(res2.body.errors).to.not.exist
+        expect(res2.body.errors, JSON.stringify(res2.body.errors)).to.not.exist
         b2.id = res2.body.data.branchCreate
 
         b3 = {
+          id: '',
           streamId: ts1,
           name: 'userB/dev/api',
           description: 'more branches branch'
@@ -1005,14 +1049,15 @@ describe('GraphQL API Core @core-api', () => {
         const res3 = await sendRequest(userB.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b3 }
+          variables: { branch: omit(b3, 'id') }
         })
-        expect(res3.body.errors).to.not.exist
+        expect(res3.body.errors, JSON.stringify(res3.body.errors)).to.not.exist
         b3.id = res3.body.data.branchCreate
       })
 
       it('Should update a branch', async () => {
         const b1 = {
+          id: '',
           streamId: ts1,
           name: 'randomupdateablebranch',
           description: 'dimitries development branch'
@@ -1020,8 +1065,10 @@ describe('GraphQL API Core @core-api', () => {
         const b1Res = await sendRequest(userA.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b1 }
+          variables: { branch: omit(b1, 'id') }
         })
+        expect(b1Res).to.be.json
+        expect(b1Res.body.errors, JSON.stringify(b1Res.body)).to.not.exist
         b1.id = b1Res.body.data.branchCreate
 
         const payload = {
@@ -1043,6 +1090,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should delete a branch', async () => {
         const b1 = {
+          id: '',
           streamId: ts1,
           name: 'randomudeletablebranch',
           description: 'dimitries development branch'
@@ -1050,8 +1098,10 @@ describe('GraphQL API Core @core-api', () => {
         const b1Res = await sendRequest(userA.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b1 }
+          variables: { branch: omit(b1, 'id') }
         })
+        expect(b1Res).to.be.json
+        expect(b1Res.body.errors, JSON.stringify(b1Res.body.errors)).to.not.exist
         b1.id = b1Res.body.data.branchCreate
 
         // give C some access permissions
@@ -1109,11 +1159,12 @@ describe('GraphQL API Core @core-api', () => {
       })
 
       it('Should commit to a non-main branch as well...', async () => {
-        const cc = {}
-        cc.message = 'what a message for a second commit'
-        cc.streamId = ts1
-        cc.objectId = objIds[3]
-        cc.branchName = 'userB/dev/api'
+        const cc = {
+          message: 'what a message for a second commit',
+          streamId: ts1,
+          objectId: objIds[3],
+          branchName: 'userB/dev/api'
+        }
 
         const res = await sendRequest(userB.token, {
           query:
@@ -1121,7 +1172,7 @@ describe('GraphQL API Core @core-api', () => {
           variables: { myCommit: cc }
         })
         expect(res).to.be.json
-        expect(res.body.errors).to.not.exist
+        expect(res.body.errors, JSON.stringify(res.body.errors)).to.not.exist
         expect(res.body.data).to.have.property('commitCreate')
         expect(res.body.data.commitCreate).to.be.a('string')
       })
@@ -1132,10 +1183,13 @@ describe('GraphQL API Core @core-api', () => {
           query:
             'mutation { streamCreate(stream: { name: "TS (u C) private", description: "sup my dudes", isPublic:false } ) }'
         })
+        expect(res).to.be.json
+        expect(res.body.errors, JSON.stringify(res.body.errors)).to.not.exist
         ts6 = res.body.data.streamCreate
 
         // user B creates branch on private stream
         b4 = {
+          id: '',
           streamId: ts3,
           name: 'izz/secret',
           description: 'a private branch on a private stream'
@@ -1143,10 +1197,10 @@ describe('GraphQL API Core @core-api', () => {
         const res1 = await sendRequest(userB.token, {
           query:
             'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
-          variables: { branch: b4 }
+          variables: { branch: omit(b4, 'id') }
         })
         expect(res1).to.be.json
-        expect(res1.body.errors).to.not.exist
+        expect(res1.body.errors, JSON.stringify(res1.body.errors)).to.not.exist
         expect(res1.body.data).to.have.property('branchCreate')
         expect(res1.body.data.branchCreate).to.be.a('string')
         b4.id = res1.body.data.branchCreate
@@ -1241,7 +1295,9 @@ describe('GraphQL API Core @core-api', () => {
         expect(res2.body.data.user.streams.items.length).to.equal(3)
 
         const streams = res2.body.data.user.streams.items
-        const s1 = streams.find((s) => s.name === 'TS1 (u A) Private UPDATED')
+        const s1 = streams.find(
+          (s: { name: string }) => s.name === 'TS1 (u A) Private UPDATED'
+        )
         expect(s1).to.exist
       })
 
@@ -1427,9 +1483,11 @@ describe('GraphQL API Core @core-api', () => {
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
 
-        const d2User = stream.collaborators.find((c) => c.name === 'd2')
+        const d2User = stream.collaborators.find(
+          (c: { name: string }) => c.name === 'd2'
+        )
         const testUserUpdated = stream.collaborators.find(
-          (c) => c.name === 'test user updated'
+          (c: { name: string }) => c.name === 'test user updated'
         )
         expect(d2User).to.be.ok
         expect(testUserUpdated).to.be.ok
@@ -1556,7 +1614,7 @@ describe('GraphQL API Core @core-api', () => {
         )
       })
 
-      let commitList
+      let commitList: { id: string }[]
 
       it('should retrieve all stream commits', async () => {
         const query = `
@@ -1633,8 +1691,8 @@ describe('GraphQL API Core @core-api', () => {
     })
 
     describe('Objects', () => {
-      let myCommit
-      let myObjs
+      let myCommit: { id: string; name: string }
+      let myObjs: { name: string }[]
 
       before(async () => {
         const { commit, objs } = generateManyObjects(100, 'noise__')
@@ -1656,7 +1714,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(objIds.length).to.equal(101) // +1 for the actual "commit" object
       })
 
-      it("should get an object's subojects objects", async () => {
+      it("should get an object's sub-objects' objects", async () => {
         const first = await sendRequest(userA.token, {
           query: `
           query {
@@ -1846,11 +1904,13 @@ describe('GraphQL API Core @core-api', () => {
 
   describe('Archived role access validation', () => {
     const archivedUser = {
+      id: '',
+      token: '',
       name: 'Mark von Archival',
       email: 'archi@speckle.systems',
       password: 'i"ll be back, just wait'
     }
-    let streamId
+    let streamId: string
     before(async () => {
       archivedUser.id = await createUser(archivedUser)
       archivedUser.token = `Bearer ${await createPersonalAccessToken(
