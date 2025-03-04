@@ -59,3 +59,25 @@ export const authorizableAppMetadataQuery = graphql(`
     }
   }
 `)
+
+export const activeUserWorkspaceExistenceCheckQuery = graphql(`
+  query ActiveUserWorkspaceExistenceCheck {
+    activeUser {
+      id
+      verified
+      isOnboardingFinished
+      versions(limit: 0) {
+        totalCount
+      }
+      workspaces(limit: 0) {
+        totalCount
+      }
+      discoverableWorkspaces {
+        id
+      }
+      workspaceJoinRequests(limit: 0) {
+        totalCount
+      }
+    }
+  }
+`)
