@@ -4,7 +4,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Redirect user to /workspaces/create, if they have no discoverable workspaces
+ * Redirect user to /workspaces/actions/create, if they have no discoverable workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()

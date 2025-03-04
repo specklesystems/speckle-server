@@ -4,7 +4,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Redirect user to /workspaces/join or /workspaces/create, if they have no workspaces
+ * Redirect user to /workspaces/actions/join or /workspaces/actions/create, if they have no workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
