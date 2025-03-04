@@ -2943,6 +2943,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -8028,6 +8030,7 @@ export type ServerAutomateInfoFieldArgs = {
 }
 export type ServerConfigurationFieldArgs = {
   blobSizeLimitBytes: {},
+  isEmailEnabled: {},
   objectMultipartUploadSizeLimitBytes: {},
   objectSizeLimitBytes: {},
 }
