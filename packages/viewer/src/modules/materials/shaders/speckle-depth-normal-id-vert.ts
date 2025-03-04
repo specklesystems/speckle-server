@@ -1,17 +1,17 @@
-export const speckleStandardVert = /* glsl */ `
-#define STANDARD
+export const speckleDepthNormalIdVert = /* glsl */ `
+#include <common>
 #ifdef USE_RTE
     // The high component is stored as the default 'position' attribute buffer
     attribute vec3 position_low;
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
-    uniform mat4 rteShadowMatrix;
-    uniform vec3 uShadowViewer_high;
-    uniform vec3 uShadowViewer_low;
+    uniform mat4 rteModelViewMatrix;
 #endif
 
 #ifdef TRANSFORM_STORAGE
     attribute float objIndex;
+    varying vec3 vIdColor;
+    uniform uint batchIndex;
     #if TRANSFORM_STORAGE == 0
         #if __VERSION__ == 300
             #define TRANSFORM_STRIDE 4
@@ -25,26 +25,21 @@ export const speckleStandardVert = /* glsl */ `
     #endif
 #endif
 
-varying vec3 vViewPosition;
-
-#ifdef USE_TRANSMISSION
-
-    varying vec3 vWorldPosition;
-
+#ifdef LINEAR_DEPTH
+    varying vec4 vViewPosition;
 #endif
+varying vec3 vNormal;
 
-#include <common>
 #include <uv_pars_vertex>
-#include <uv2_pars_vertex>
 #include <displacementmap_pars_vertex>
-#include <color_pars_vertex>
-#include <fog_pars_vertex>
-#include <normal_pars_vertex>
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
-#include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
+// This is used for computing an equivalent of gl_FragCoord.z that is as high precision as possible.
+// Some platforms compute gl_FragCoord at a lower precision which makes the manually computed value better for
+// depth-based postprocessing effects. Reproduced on iPad with A10 processor / iPadOS 13.3.1.
+varying vec2 vHighPrecisionZW;
 
 #ifdef TRANSFORM_STORAGE
     void objectTransform(out vec4 quaternion, out vec4 pivotLow, out vec4 pivotHigh, out vec4 translation, out vec4 scale){
@@ -86,9 +81,8 @@ varying vec3 vViewPosition;
         #endif
     }
 
-
-    highp vec3 rotate_vertex_position(highp vec3 position, highp vec4 quat)
-    {   
+    vec3 rotate_vertex_position(vec3 position, vec4 quat)
+    { 
         return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
     }
 
@@ -138,28 +132,55 @@ varying vec3 vViewPosition;
     }
 #endif
 
+vec3 hashColor(uint id) {
+    // A simple integer hash function
+    id = (id ^ 61u) ^ (id >> 16u);
+    id = id * 9u;
+    id = id ^ (id >> 4u);
+    id = id * 0x27d4eb2du;
+    id = id ^ (id >> 15u);
+
+    return vec3(
+        float((id >> 16u) & 0xFFu) / 255.0,
+        float((id >> 8u) & 0xFFu) / 255.0,
+        float(id & 0xFFu) / 255.0
+    );
+}
+
+vec3 hsvToRgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+/** Not sure about this... */
+vec3 goldenRatioColor(uint id) {
+    float goldenRatioConjugate = 0.61803398875; // 1/phi
+    float hue = fract(float(id) * goldenRatioConjugate + 0.3); // Offset to avoid clustering
+    return hsvToRgb(vec3(hue, 0.7, 0.9)); // Convert to RGB
+}
+
+uint szudzikHash(uint x, uint y) {
+    return (x >= y) ? (x * x + x + y) : (y * y + x);
+}
 
 void main() {
-
-    #include <uv_vertex>
-    #include <uv2_vertex>
-    #include <color_vertex>
-    #include <morphcolor_vertex>
+	#include <uv_vertex>
+	#include <skinbase_vertex>
     #include <beginnormal_vertex>
-    #include <morphnormal_vertex>
-    #include <skinbase_vertex>
-    #include <skinnormal_vertex>
+	#ifdef USE_DISPLACEMENTMAP
+		#include <morphnormal_vertex>
+		#include <skinnormal_vertex>
+	#endif
     #include <defaultnormal_vertex>
-    #include <normal_vertex>
-
-    #include <begin_vertex>
-    #include <morphtarget_vertex>
-    #include <skinning_vertex>
-    #include <displacementmap_vertex>
-    //#include <project_vertex> // EDITED CHUNK
-    
+	#include <normal_vertex>
+	#include <begin_vertex>
+	#include <morphtarget_vertex>
+	#include <skinning_vertex>
+	#include <displacementmap_vertex>
+	//#include <project_vertex> // EDITED CHUNK
     #ifdef TRANSFORM_STORAGE
-        highp vec4 tQuaternion, tPivotLow, tPivotHigh, tTranslation, tScale;
+        vec4 tQuaternion, tPivotLow, tPivotHigh, tTranslation, tScale;
         objectTransform(tQuaternion, tPivotLow, tPivotHigh, tTranslation, tScale);
     #endif
     #ifdef USE_RTE
@@ -186,78 +207,29 @@ void main() {
             mvPosition = instanceMatrix * mvPosition;
         #endif
     #endif
+   
+    #ifdef USE_RTE
+        mvPosition = rteModelViewMatrix * mvPosition;
+    #else
+        mvPosition = modelViewMatrix * mvPosition;
+    #endif
     
-    mvPosition = modelViewMatrix * mvPosition;
+    #ifdef LINEAR_DEPTH
+        vViewPosition = mvPosition;
+    #endif 
 
-    gl_Position = projectionMatrix * mvPosition;
-
-
-    #include <logdepthbuf_vertex>
-    #include <clipping_planes_vertex>
-
-    vViewPosition = - mvPosition.xyz;
-
-    #include <worldpos_vertex>
-    // #include <shadowmap_vertex> COMMENTED CHUNK!!!
-    #ifdef USE_SHADOWMAP
-	#if NUM_DIR_LIGHT_SHADOWS > 0 || NUM_SPOT_LIGHT_SHADOWS > 0 || NUM_POINT_LIGHT_SHADOWS > 0
-		// Offsetting the position used for querying occlusion along the world normal can be used to reduce shadow acne.
-		vec3 shadowWorldNormal = inverseTransformDirection( transformedNormal, viewMatrix );
-		vec4 shadowWorldPosition;
-	#endif
-	#if NUM_DIR_LIGHT_SHADOWS > 0
-	#pragma unroll_loop_start
-	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
-        vec4 shadowPosition = vec4(transformed, 1.0);
-        mat4 shadowMatrix = directionalShadowMatrix[ i ];
-
-        #ifdef USE_RTE
-            shadowPosition = computeRelativePosition(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
-            shadowMatrix = rteShadowMatrix;
-        #endif
-        #ifdef TRANSFORM_STORAGE
-            vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
-            shadowPosition.xyz = rotate_vertex_position_delta(shadowPosition, rtePivotShadow, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
-        #endif
-        #ifdef USE_INSTANCING
-            vec4 rtePivotShadow = computeRelativePosition(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
-            shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
-        #endif
-        shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
-        vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;
-	}
+    vNormal = normalize( transformedNormal );
     
-	#pragma unroll_loop_end
-	#endif
-	#if NUM_SPOT_LIGHT_SHADOWS > 0
-	#pragma unroll_loop_start
-	for ( int i = 0; i < NUM_SPOT_LIGHT_SHADOWS; i ++ ) {
-		shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * spotLightShadows[ i ].shadowNormalBias, 0 );
-		vSpotShadowCoord[ i ] = spotShadowMatrix[ i ] * shadowWorldPosition;
-	}
-	#pragma unroll_loop_end
-	#endif
-	#if NUM_POINT_LIGHT_SHADOWS > 0
-	#pragma unroll_loop_start
-	for ( int i = 0; i < NUM_POINT_LIGHT_SHADOWS; i ++ ) {
-		shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * pointLightShadows[ i ].shadowNormalBias, 0 );
-		vPointShadowCoord[ i ] = pointShadowMatrix[ i ] * shadowWorldPosition;
-	}
-	#pragma unroll_loop_end
-	#endif
-	/*
-	#if NUM_RECT_AREA_LIGHTS > 0
-		// TODO (abelnation): update vAreaShadowCoord with area light info
-	#endif
-	*/
+    #ifdef TRANSFORM_STORAGE
+        vIdColor = hashColor(szudzikHash(uint(objIndex), batchIndex));
     #endif
 
-    #include <fog_vertex>
-
-#ifdef USE_TRANSMISSION
-
-    vWorldPosition = worldPosition.xyz;
-
-#endif
+    gl_Position = projectionMatrix * mvPosition;
+	#include <logdepthbuf_vertex>
+	// #include <clipping_planes_vertex>
+    #if NUM_CLIPPING_PLANES > 0
+	    vClipPosition = - mvPosition.xyz;
+    #endif
+	vHighPrecisionZW = gl_Position.zw;
 }
 `

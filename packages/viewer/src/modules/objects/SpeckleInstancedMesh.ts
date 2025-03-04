@@ -25,6 +25,7 @@ import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.j
 import { ObjectLayers } from '../../IViewer.js'
 import {
   type DrawGroup,
+  getNextBatchIndex,
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
 } from '../batching/Batch.js'
@@ -68,7 +69,8 @@ export default class SpeckleInstancedMesh extends Group {
   private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects!: BatchObject[]
+  private _batchObjects: BatchObject[]
+  private _batchIndex: number
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
@@ -83,10 +85,15 @@ export default class SpeckleInstancedMesh extends Group {
     return this._batchObjects
   }
 
+  public get batchIndex(): number {
+    return this._batchIndex
+  }
+
   constructor(geometry: BufferGeometry) {
     super()
     this.instanceGeometry = geometry
     this.userData.raycastChildren = false
+    this._batchIndex = getNextBatchIndex()
   }
 
   public setBatchMaterial(material: Material) {

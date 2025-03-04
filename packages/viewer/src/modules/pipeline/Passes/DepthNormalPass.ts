@@ -25,8 +25,8 @@ export const DefaultDepthNormalPassOptions: Required<DepthNormalPassOptions> = {
 }
 
 export class DepthNormalPass extends BaseGPass {
-  private depthNormalMaterial: SpeckleDepthNormalMaterial
-  private mrt: WebGLMultipleRenderTargets
+  protected depthNormalMaterial: SpeckleDepthNormalMaterial
+  protected mrt: WebGLMultipleRenderTargets
 
   public _options: Required<DepthNormalPassOptions> = Object.assign(
     {},

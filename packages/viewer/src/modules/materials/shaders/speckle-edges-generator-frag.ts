@@ -3,6 +3,7 @@ export const speckleEdgesGeneratorFrag = /* glsl */ `
 varying vec2 vUv;
 uniform sampler2D tDepth;
 uniform sampler2D tNormal;
+uniform sampler2D tId;
 uniform float uDepthMultiplier;
 uniform float uDepthBias;
 uniform float uNormalMultiplier;
@@ -323,6 +324,30 @@ float NormalEdge(float scale)
 	return sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
 }
 
+float Edge(sampler2D tex, float scale)
+{
+	float halfScaleFloor = floor(scale * 0.5);
+	float halfScaleCeil = ceil(scale * 0.5);
+
+	vec2 pixelSize = vec2(1.0 / size.x, 1.0 / size.y);
+
+	vec2 bottomLeftUV = vUv - pixelSize * halfScaleFloor;
+	vec2 topRightUV = vUv + pixelSize * halfScaleCeil;  
+	vec2 bottomRightUV = vUv + vec2(pixelSize.x * halfScaleCeil, -pixelSize.y * halfScaleFloor);
+	vec2 topLeftUV = vUv + vec2(-pixelSize.x * halfScaleFloor, pixelSize.y * halfScaleCeil);
+
+	vec3 center = texture2D(tex, vUv).rgb;
+	vec3 value0 = texture2D(tex, bottomLeftUV).rgb;
+	vec3 value1 = texture2D(tex, topRightUV).rgb;
+	vec3 value2 = texture2D(tex, bottomRightUV).rgb;
+	vec3 value3 = texture2D(tex, topLeftUV).rgb;
+
+	vec3 valueFiniteDifference0 = value1 - value0;
+	vec3 valueFiniteDifference1 = value3 - value2;
+
+	return sqrt(dot(valueFiniteDifference0, valueFiniteDifference0) + dot(valueFiniteDifference1, valueFiniteDifference1));
+}
+
 vec2 rotate2D(vec2 v, float rad) {
   float s = sin(rad);
   float c = cos(rad);
@@ -503,14 +528,15 @@ void main() {
 	// Silhouette-edge value
   float depthEdge = DetectSilho(ivec2(gl_FragCoord), uDepthBias) * uDepthMultiplier; 
 	float normalEdge = pow(NormalEdge(uOutlineThickness) * uNormalMultiplier, uNormalBias);
-	// vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
+  // float idEdge = Edge(tId, uOutlineThickness);
+	vec3 offset = vec3((1.0 / size.x), (1.0 / size.y), 0.0) * uOutlineThickness;
 	// float sobel = SobelSampleDepth(vUv, offset);
 	// sobel = pow(abs(saturate(sobel) * uDepthMultiplier), uDepthBias);
 	
-	// vec3 sobelNormalVec = abs(SobelSampleNormal(tNormal, vUv, offset));
-	// float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
+	vec3 sobelNormalVec = abs(SobelSampleNormal(tId, vUv, offset));
+	float sobelNormal = sobelNormalVec.x + sobelNormalVec.y + sobelNormalVec.z;
 	// sobelNormal = pow(abs(sobelNormal * uNormalMultiplier), uNormalBias);
-  float maxOutline = saturate(max(depthEdge, normalEdge));
+  float maxOutline = saturate(max(sobelNormal, max(depthEdge, normalEdge)));
 	float sobelOutline = 1. - maxOutline * uOutlineDensity;
 	// float canny = cannyEdgeDetection(tNormal, vUv, size, uDepthMultiplier, uDepthBias) * uOutlineDensity;
 

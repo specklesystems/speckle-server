@@ -48,9 +48,6 @@ uniform float opacity;
 #endif
 
 varying vec3 vViewPosition;
-#ifdef TRANSFORM_STORAGE
-    varying float vObjIndex;
-#endif
 /** We're disabling color grading for now until we want to properly offer it to the users */
 //#define CUSTOM_TONEMAPPING 
 
@@ -139,34 +136,6 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-vec3 hashColor(uint id) {
-    // A simple integer hash function
-    id = (id ^ 61u) ^ (id >> 16u);
-    id = id * 9u;
-    id = id ^ (id >> 4u);
-    id = id * 0x27d4eb2du;
-    id = id ^ (id >> 15u);
-
-    return vec3(
-        float((id >> 16u) & 0xFFu) / 255.0,
-        float((id >> 8u) & 0xFFu) / 255.0,
-        float(id & 0xFFu) / 255.0
-    );
-}
-
-vec3 hsvToRgb(vec3 c) {
-    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-vec3 goldenRatioColor(uint id) {
-    float goldenRatioConjugate = 0.61803398875; // 1/phi
-    float hue = fract(float(id) * goldenRatioConjugate + 0.3); // Offset to avoid clustering
-    return hsvToRgb(vec3(hue, 0.7, 0.9)); // Convert to RGB
-}
-
-
 
 void main() {
 
@@ -242,7 +211,7 @@ void main() {
 			gl_FragColor.rgb = postProcess(gl_FragColor.rgb, toneMappingExposure, contrast, saturation);
 		#else
             
-			gl_FragColor.rgb = hashColor(uint(vObjIndex));//toneMapping( gl_FragColor.rgb );
+			gl_FragColor.rgb = toneMapping( gl_FragColor.rgb );
 		#endif
 	#endif
     #include <encodings_fragment>
