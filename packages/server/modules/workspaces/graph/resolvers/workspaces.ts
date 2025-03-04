@@ -197,6 +197,8 @@ import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import { UsersMeta } from '@/modules/core/dbSchema'
+import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import {
   AuthCodePayloadAction,
@@ -1307,6 +1309,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
 
           return await getInvites(parent.id)
+        },
+        async activeWorkspace(parent, _args, ctx) {
+          const metaVal = await ctx.loaders.users.getUserMeta.load({
+            userId: parent.id,
+            key: UsersMeta.metaKey.activeWorkspace
+          })
+
+          if (!metaVal?.value) return null
+
+          return await getWorkspaceBySlugFactory({ db })({
+            workspaceSlug: metaVal.value
+          })
+        },
+        async isProjectsActive(parent, _args, ctx) {
+          const metaVal = await ctx.loaders.users.getUserMeta.load({
+            userId: parent.id,
+            key: UsersMeta.metaKey.isProjectsActive
+          })
+
+          return !!metaVal?.value
         }
       },
       Project: {
@@ -1395,6 +1417,31 @@ export = FF_WORKSPACES_MODULE_ENABLED
             cursor: args.cursor ?? undefined
           })
           return team
+        }
+      },
+      ActiveUserMutations: {
+        async setActiveWorkspace(_parent, args, ctx) {
+          const userId = ctx.userId
+          if (!userId) return false
+
+          await Promise.all([
+            ctx.loaders.users.getUserMeta.clear({
+              userId,
+              key: UsersMeta.metaKey.activeWorkspace
+            }),
+            ctx.loaders.users.getUserMeta.clear({
+              userId,
+              key: UsersMeta.metaKey.isProjectsActive
+            })
+          ])
+
+          await setUserActiveWorkspaceFactory({ db })({
+            userId,
+            workspaceSlug: args.slug ?? null,
+            isProjectsActive: !!args.isProjectsActive
+          })
+
+          return true
         }
       },
       Subscription: {
