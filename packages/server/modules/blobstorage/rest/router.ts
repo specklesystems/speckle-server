@@ -32,7 +32,6 @@ import {
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { ensureError } from '@speckle/shared'
-import { errorHandler } from '@/modules/blobstorage/rest/errorHandler'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 
 export const blobStorageRouterFactory = (): Router => {
@@ -135,32 +134,30 @@ export const blobStorageRouterFactory = (): Router => {
       allowAnonymousUsersOnPublicStreams
     ]),
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
-        const streamId = req.params.streamId
-        const [projectDb, projectStorage] = await Promise.all([
-          getProjectDbClient({ projectId: streamId }),
-          getProjectObjectStorage({ projectId: streamId })
-        ])
+      const streamId = req.params.streamId
+      const [projectDb, projectStorage] = await Promise.all([
+        getProjectDbClient({ projectId: streamId }),
+        getProjectObjectStorage({ projectId: streamId })
+      ])
 
-        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-        const getFileStream = getFileStreamFactory({ getBlobMetadata })
-        const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
+      const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+      const getFileStream = getFileStreamFactory({ getBlobMetadata })
+      const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
 
-        const { fileName } = await getBlobMetadata({
-          streamId: req.params.streamId,
-          blobId: req.params.blobId
-        })
-        const fileStream = await getFileStream({
-          getObjectStream,
-          streamId: req.params.streamId,
-          blobId: req.params.blobId
-        })
-        res.writeHead(200, {
-          'Content-Type': 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${fileName}"`
-        })
-        fileStream.pipe(res)
+      const { fileName } = await getBlobMetadata({
+        streamId: req.params.streamId,
+        blobId: req.params.blobId
       })
+      const fileStream = await getFileStream({
+        getObjectStream,
+        streamId: req.params.streamId,
+        blobId: req.params.blobId
+      })
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${fileName}"`
+      })
+      fileStream.pipe(res)
     }
   )
 
@@ -168,27 +165,25 @@ export const blobStorageRouterFactory = (): Router => {
     '/api/stream/:streamId/blob/:blobId',
     authMiddlewareCreator(createStreamReadPermissions()),
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
-        const streamId = req.params.streamId
-        const [projectDb, projectStorage] = await Promise.all([
-          getProjectDbClient({ projectId: streamId }),
-          getProjectObjectStorage({ projectId: streamId })
-        ])
+      const streamId = req.params.streamId
+      const [projectDb, projectStorage] = await Promise.all([
+        getProjectDbClient({ projectId: streamId }),
+        getProjectObjectStorage({ projectId: streamId })
+      ])
 
-        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-        const deleteBlob = fullyDeleteBlobFactory({
-          getBlobMetadata,
-          deleteBlob: deleteBlobFactory({ db: projectDb })
-        })
-        const deleteObject = deleteObjectFactory({ storage: projectStorage })
-
-        await deleteBlob({
-          streamId: req.params.streamId,
-          blobId: req.params.blobId,
-          deleteObject
-        })
-        res.status(204).send()
+      const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+      const deleteBlob = fullyDeleteBlobFactory({
+        getBlobMetadata,
+        deleteBlob: deleteBlobFactory({ db: projectDb })
       })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage })
+
+      await deleteBlob({
+        streamId: req.params.streamId,
+        blobId: req.params.blobId,
+        deleteObject
+      })
+      res.status(204).send()
     }
   )
 
@@ -205,19 +200,18 @@ export const blobStorageRouterFactory = (): Router => {
       const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
         db: projectDb
       })
-      errorHandler(req, res, async (req, res) => {
-        const blobMetadataCollection = await getBlobMetadataCollection({
-          streamId: req.params.streamId,
-          query: fileName as string
-        })
 
-        res.status(200).send(blobMetadataCollection)
+      const blobMetadataCollection = await getBlobMetadataCollection({
+        streamId: req.params.streamId,
+        query: fileName as string
       })
+
+      return res.status(200).send(blobMetadataCollection)
     }
   )
 
   app.delete('/api/stream/:streamId/blobs', async (_req, res) => {
-    res.status(501).send('This method is not implemented yet.')
+    return res.status(501).send('This method is not implemented yet.')
   })
 
   return app
