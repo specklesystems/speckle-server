@@ -1,6 +1,6 @@
 <mj-section padding-top="0" padding-bottom="10px" border-bottom="1px solid #e0e0e0">
   <mj-column>
-    <mj-text font-size="12px" line-height="18px" align="center" color="#626263">
+    <mj-text font-size="10px" line-height="16px" align="center" color="#626263">
       Sent from <%- params.serverInfo.name -%> at
       <a
         href="<%- params.serverInfo.canonicalUrl -%>"
@@ -20,11 +20,10 @@
 </mj-section>
 <mj-section padding-top="10px" padding-bottom="30px">
   <mj-column>
-    <mj-text font-size="12px" line-height="18px" align="center" color="#626263">
+    <mj-text font-size="10px" line-height="16px" align="center" color="#626263">
       Brought to you by
       <a href="https://speckle.systems" target="_blank">Speckle</a>
       , the Open Source Data Platform for 3D Data.
-      <br />
       <br />
       Join our
       <a href="https://speckle.community/" target="_blank">Community forum</a>
