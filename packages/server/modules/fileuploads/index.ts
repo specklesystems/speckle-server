@@ -19,18 +19,17 @@ import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getPort } from '@/modules/shared/helpers/envHelper'
+import { getPort, isFileUploadsEnabled } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const init: SpeckleModule['init'] = async (app, isInitial) => {
-  if (process.env.DISABLE_FILE_UPLOADS) {
+  if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
-  } else {
-    moduleLogger.info('📄 Init FileUploads module')
   }
+  moduleLogger.info('📄 Init FileUploads module')
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
@@ -85,7 +84,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
           })
         )
       }
-      //TODO refactor packages/server/modules/blobstorage/index.js to use the service pattern, and then refactor this to call the service directly from here without the http overhead
+      //TODO refactor packages/server/modules/blobstorage/index.ts to use the service pattern, and then refactor this to call the service directly from here without the http overhead
       const pipedReq = request(
         // we call this same server on localhost (IPv4) to upload the blob and do not make an external call
         `http://127.0.0.1:${getPort()}/api/stream/${req.params.streamId}/blob`,

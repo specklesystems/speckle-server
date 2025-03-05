@@ -379,6 +379,13 @@ export function maximumObjectUploadFileSizeMb() {
   return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
 }
 
+export function isFileUploadsEnabled() {
+  // the env var should ideally be written as a positive
+  // (e.g. ENABLE_FILE_UPLOADS),
+  // but for legacy reasons is the negation.
+  return !getBooleanFromEnv('DISABLE_FILE_UPLOADS', false)
+}
+
 export function getS3AccessKey() {
   return getStringFromEnv('S3_ACCESS_KEY')
 }
