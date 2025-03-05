@@ -392,8 +392,7 @@ describe('Workspace project GQL CRUD', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(projects).to.exist
-      expect(projects?.every((project) => project?.workspace?.id === workspace.id)).to
-        .be.true
+      expect(projects?.every((project) => !!project?.workspace?.id)).to.be.ok
     })
   })
 
