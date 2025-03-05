@@ -2965,6 +2965,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -6544,6 +6546,7 @@ export type ServerAutomateInfoResolvers<ContextType = GraphQLContext, ParentType
 
 export type ServerConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerConfiguration'] = ResolversParentTypes['ServerConfiguration']> = {
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

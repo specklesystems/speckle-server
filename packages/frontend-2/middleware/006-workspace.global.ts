@@ -1,10 +1,11 @@
-import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
+import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Redirect user to /workspaces/join or /workspaces/create, if they have no workspaces
+ * Redirect user to /workspaces/actions/join or /workspaces/actions/create, if they have no workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
@@ -14,37 +15,42 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
+  if (!isWorkspacesEnabled.value) return
+  if (!isWorkspaceNewPlansEnabled.value) return
+
   const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
-      query: activeUserQuery,
-      fetchPolicy: 'network-only'
+      query: activeUserWorkspaceExistenceCheckQuery
     })
     .catch(convertThrowIntoFetchResult)
-
-  // Check for FF's after fetching the active user to ensure discoverable workspaces are up to date
-  // TODO: This is a bit of a hack, we should find a better way to do this
-  if (!isWorkspacesEnabled.value) return
-  if (!isWorkspaceNewPlansEnabled.value) return
 
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 
+  const { data: emailData } = await client
+    .query({
+      query: mainServerInfoDataQuery
+    })
+    .catch(convertThrowIntoFetchResult)
+
   // Ignore if user has not verified their email yet
-  if (!data?.activeUser?.verified) return
+  if (!data?.activeUser?.verified && emailData?.serverInfo.configuration.isEmailEnabled)
+    return
 
   // Ignore if user has not completed onboarding yet
   if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
 
-  const isMemberOfWorkspace = data?.activeUser?.workspaces?.items?.length > 0
+  const isMemberOfWorkspace = (data?.activeUser?.workspaces?.totalCount ?? 0) > 0
+  const hasLegacyProjects = (data?.activeUser?.versions?.totalCount ?? 0) > 0
   const hasDiscoverableWorkspaces =
     (data?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
-    (data?.activeUser?.workspaceJoinRequests?.items?.length ?? 0) > 0
+    (data?.activeUser?.workspaceJoinRequests?.totalCount ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
 
-  if (!isMemberOfWorkspace) {
+  if (!isMemberOfWorkspace && !hasLegacyProjects) {
     if (
       hasDiscoverableWorkspaces &&
       !isGoingToJoinWorkspace &&
