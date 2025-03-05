@@ -4,7 +4,7 @@ import { useQuery } from '@vue/apollo-composable'
 import {
   isNewWorkspacePlan,
   PaidWorkspacePlansNew,
-  TrialEnabledPaidWorkspacePlans
+  UnpaidWorkspacePlans
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
@@ -70,9 +70,7 @@ export const useWorkspacePlan = (slug: string) => {
       plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
   )
 
-  const isFreePlan = computed(
-    () => plan.value?.name === TrialEnabledPaidWorkspacePlans.Starter
-  )
+  const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
 
   const billingInterval = computed(() => subscription.value?.billingInterval)
 
