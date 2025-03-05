@@ -70,7 +70,7 @@ export const blobStorageRouterFactory = (): Router => {
         streamId,
         userId,
         logger: req.log,
-        onFinishAllFileUploads: (uploadResults) => {
+        onFinishAllFileUploads: async (uploadResults) => {
           res.status(201).send({ uploadResults })
         },
         onError: () => {

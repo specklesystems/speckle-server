@@ -15,27 +15,23 @@ import {
   getObjectAttributesFactory,
   storeFileStreamFactory
 } from '@/modules/blobstorage/repositories/blobs'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
 import type { Writable } from 'stream'
 import { get } from 'lodash'
+import { UploadResult } from '@/modules/blobstorage/domain/types'
+import { ProcessingResult } from '@/modules/blobstorage/domain/types'
 
 type NewFileStreamProcessor = (params: {
   writeable: Writable
   streamId: string
   userId: string
-  onFinishAllFileUploads: (results: UploadResult[]) => void
+  onFinishAllFileUploads: (results: Array<UploadResult>) => Promise<void>
   onError: (err: unknown) => void
   logger: Logger
 }) => Promise<Writable>
-
-type UploadResult = {
-  uploadStatus?: number
-  uploadError?: Error | null | string
-  formKey: string
-}
 
 export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
   return async (params) => {
@@ -46,6 +42,9 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       uploadStatus?: number
       uploadError?: Error | null | string
       formKey: string
+      blobId: string
+      fileName: string
+      fileSize: Nullable<number>
     }>[] = []
 
     const [projectDb, projectStorage] = await Promise.all([
@@ -82,12 +81,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       const { filename: fileName } = info
       const fileType = fileName?.split('.')?.pop()?.toLowerCase()
       logger = logger.child({ fileName, fileType })
-      const registerUploadResult = (
-        processingPromise: Promise<{
-          uploadStatus?: number
-          uploadError?: Error | null | string
-        }>
-      ) => {
+      const registerUploadResult = (processingPromise: Promise<ProcessingResult>) => {
         finalizePromises.push(
           processingPromise.then((resultItem) => ({ ...resultItem, formKey }))
         )
@@ -141,7 +135,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       await Promise.all(Object.values(uploadOperations))
       // have to make sure all finalize promises have been awaited
       const uploadResults = await Promise.all(finalizePromises)
-      onFinishAllFileUploads(uploadResults)
+      await onFinishAllFileUploads(uploadResults)
       return
     })
 
