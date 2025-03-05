@@ -61,7 +61,11 @@ import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
-import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceAdminError,
+  WorkspaceInvalidRoleError,
+  WorkspacesNotAuthorizedError
+} from '@/modules/workspaces/errors/workspace'
 import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
 import {
@@ -482,6 +486,31 @@ const onWorkspaceCreatedFactory =
     await assignWorkspaceSeat({ userId: createdByUserId, workspaceId: workspace.id })
   }
 
+const blockInvalidWorkspaceProjectRoleUpdatesFactory =
+  (deps: { getStream: GetStream; getWorkspaceRoleForUser: GetWorkspaceRoleForUser }) =>
+  async ({ payload }: EventPayload<typeof ProjectEvents.PermissionsBeingAdded>) => {
+    const project = await deps.getStream({ streamId: payload.projectId })
+    if (!project?.workspaceId) return // No extra validation necessary
+
+    const currentWorkspaceRole = await deps.getWorkspaceRoleForUser({
+      workspaceId: project.workspaceId,
+      userId: payload.targetUserId
+    })
+
+    if (currentWorkspaceRole?.role === Roles.Workspace.Admin) {
+      // User is workspace admin and cannot have their project roles changed
+      throw new WorkspaceAdminError()
+    }
+
+    if (
+      currentWorkspaceRole?.role === Roles.Workspace.Guest &&
+      payload.role === Roles.Stream.Owner
+    ) {
+      // Workspace guests cannot be project owners
+      throw new WorkspaceInvalidRoleError('Workspace guests cannot be project owners.')
+    }
+  }
+
 export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
@@ -491,6 +520,13 @@ export const initializeEventListenersFactory =
     const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
       getWorkspace
     })
+    const getStream = getStreamFactory({ db })
+    const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
+    const blockInvalidWorkspaceProjectRoleUpdates =
+      blockInvalidWorkspaceProjectRoleUpdatesFactory({
+        getStream,
+        getWorkspaceRoleForUser
+      })
 
     const quitCbs = [
       eventBus.listen(ProjectEvents.Created, async ({ payload }) => {
@@ -582,7 +618,11 @@ export const initializeEventListenersFactory =
         })
         await withTransaction(onWorkspaceCreated(payload), trx)
       }),
-      eventBus.listen('**', emitWorkspaceGraphqlSubscriptions)
+      eventBus.listen('**', emitWorkspaceGraphqlSubscriptions),
+      eventBus.listen(
+        ProjectEvents.PermissionsBeingAdded,
+        blockInvalidWorkspaceProjectRoleUpdates
+      )
     ]
 
     return () => quitCbs.forEach((quit) => quit())
