@@ -53,14 +53,20 @@ graphql(`
 `)
 
 export const useDiscoverableWorkspaces = () => {
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
   const { result: discoverableResult, loading: discoverableLoading } = useQuery(
-    discoverableWorkspacesQuery
+    discoverableWorkspacesQuery,
+    undefined,
+    { enabled: isWorkspacesEnabled }
   )
   const {
     result: requestsResult,
     refetch,
     loading: joinRequestsLoading
-  } = useQuery(discoverableWorkspacesRequestsQuery)
+  } = useQuery(discoverableWorkspacesRequestsQuery, undefined, {
+    enabled: isWorkspacesEnabled
+  })
 
   const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
 

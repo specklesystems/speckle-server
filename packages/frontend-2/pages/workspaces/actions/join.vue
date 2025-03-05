@@ -6,7 +6,11 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['requires-workspaces-enabled', 'auth'],
+  middleware: [
+    'requires-workspaces-enabled',
+    'auth',
+    'require-discoverable-workspaces'
+  ],
   layout: 'empty'
 })
 useHead({
