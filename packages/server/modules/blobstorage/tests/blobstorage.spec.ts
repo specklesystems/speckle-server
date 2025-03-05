@@ -68,7 +68,8 @@ const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
 })
 const deleteBlob = fullyDeleteBlobFactory({
   getBlobMetadata,
-  deleteBlob: deleteBlobFactory({ db })
+  deleteBlob: deleteBlobFactory({ db }),
+  deleteObject: async () => {}
 })
 
 describe('Blob storage @blobstorage', () => {
@@ -338,8 +339,8 @@ describe('Blob storage @blobstorage', () => {
     const blobId = blob.id
     const { objectKey } = await getBlobMetadata({ streamId, blobId })
     expect(objectKey).to.equal(blob.objectKey)
-    const deleteObject = async () => {}
-    await deleteBlob({ streamId, blobId, deleteObject })
+
+    await deleteBlob({ streamId, blobId })
     try {
       await getBlobMetadata({ streamId, blobId })
       throw new Error('This should have thrown')

@@ -33,6 +33,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { ensureError } from '@speckle/shared'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 export const blobStorageRouterFactory = (): Router => {
   const createStreamWritePermissions = () =>
@@ -109,9 +110,7 @@ export const blobStorageRouterFactory = (): Router => {
     ]),
     async (req, res) => {
       if (!isArray(req.body)) {
-        return res
-          .status(400)
-          .json({ error: 'An array of blob IDs expected in the body.' })
+        throw new UserInputError('An array of blob IDs expected in the body.')
       }
 
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
@@ -172,16 +171,16 @@ export const blobStorageRouterFactory = (): Router => {
       ])
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage })
       const deleteBlob = fullyDeleteBlobFactory({
         getBlobMetadata,
-        deleteBlob: deleteBlobFactory({ db: projectDb })
+        deleteBlob: deleteBlobFactory({ db: projectDb }),
+        deleteObject
       })
-      const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
       await deleteBlob({
         streamId: req.params.streamId,
-        blobId: req.params.blobId,
-        deleteObject
+        blobId: req.params.blobId
       })
       res.status(204).send()
     }
@@ -191,10 +190,12 @@ export const blobStorageRouterFactory = (): Router => {
     '/api/stream/:streamId/blobs',
     authMiddlewareCreator(createStreamReadPermissions()),
     async (req, res) => {
-      let fileName = req.query.fileName
+      let fileName = req.query.fileName //filename can be undefined or null, and that returns all blobs
       if (isArray(fileName)) {
         fileName = fileName[0]
       }
+
+      const streamId = req.params.streamId
 
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
@@ -202,7 +203,7 @@ export const blobStorageRouterFactory = (): Router => {
       })
 
       const blobMetadataCollection = await getBlobMetadataCollection({
-        streamId: req.params.streamId,
+        streamId,
         query: fileName as string
       })
 
