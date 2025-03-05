@@ -7,7 +7,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getWorkspacePlanProductId
 } from '@/modules/gatekeeper/stripe'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -32,7 +32,7 @@ export const initializeEventListenersFactory =
             countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
               db
             }),
-            getWorkspacePlanPrice,
+            getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe })
           })

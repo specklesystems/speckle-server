@@ -296,7 +296,7 @@ describe('subscriptions @gatekeeper', () => {
           countWorkspaceRole: async () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspacePlanProductId: () => {
@@ -326,7 +326,7 @@ describe('subscriptions @gatekeeper', () => {
           countWorkspaceRole: async () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspacePlanProductId: () => {
@@ -360,7 +360,7 @@ describe('subscriptions @gatekeeper', () => {
           countWorkspaceRole: async () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspacePlanProductId: () => {
@@ -397,7 +397,7 @@ describe('subscriptions @gatekeeper', () => {
           countWorkspaceRole: async () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspacePlanProductId: () => {
@@ -443,7 +443,7 @@ describe('subscriptions @gatekeeper', () => {
                 return roleCount
             }
           },
-          getWorkspacePlanPrice: ({ workspacePlan, billingInterval }) => {
+          getWorkspacePlanPriceId: ({ workspacePlan, billingInterval }) => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
@@ -507,7 +507,7 @@ describe('subscriptions @gatekeeper', () => {
                   expect.fail()
               }
             },
-            getWorkspacePlanPrice: ({ workspacePlan, billingInterval }) => {
+            getWorkspacePlanPriceId: ({ workspacePlan, billingInterval }) => {
               if (billingInterval !== workspaceSubscription.billingInterval)
                 expect.fail()
               switch (workspacePlan) {
@@ -586,7 +586,7 @@ describe('subscriptions @gatekeeper', () => {
                 expect.fail()
             }
           },
-          getWorkspacePlanPrice: ({ workspacePlan, billingInterval }) => {
+          getWorkspacePlanPriceId: ({ workspacePlan, billingInterval }) => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
@@ -659,7 +659,7 @@ describe('subscriptions @gatekeeper', () => {
                 expect.fail()
             }
           },
-          getWorkspacePlanPrice: ({ workspacePlan, billingInterval }) => {
+          getWorkspacePlanPriceId: ({ workspacePlan, billingInterval }) => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
@@ -921,7 +921,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           expect.fail()
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: () => {
@@ -963,7 +963,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlanProductId: () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspaceSubscription: () => {
@@ -1008,7 +1008,7 @@ describe('subscriptions @gatekeeper', () => {
               getWorkspacePlanProductId: () => {
                 expect.fail()
               },
-              getWorkspacePlanPrice: () => {
+              getWorkspacePlanPriceId: () => {
                 expect.fail()
               },
               getWorkspaceSubscription: () => {
@@ -1054,7 +1054,7 @@ describe('subscriptions @gatekeeper', () => {
             getWorkspacePlanProductId: () => {
               expect.fail()
             },
-            getWorkspacePlanPrice: () => {
+            getWorkspacePlanPriceId: () => {
               expect.fail()
             },
             getWorkspaceSubscription: () => {
@@ -1097,7 +1097,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           expect.fail()
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: async () => {
@@ -1152,7 +1152,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlanProductId: () => {
             expect.fail()
           },
-          getWorkspacePlanPrice: () => {
+          getWorkspacePlanPriceId: () => {
             expect.fail()
           },
           getWorkspaceSubscription: async () => {
@@ -1202,7 +1202,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           expect.fail()
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: async () => {
@@ -1247,7 +1247,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           expect.fail()
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: async () => {
@@ -1291,7 +1291,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           expect.fail()
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: async () => {
@@ -1342,7 +1342,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlanProductId: () => {
           return cryptoRandomString({ length: 10 })
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           expect.fail()
         },
         getWorkspaceSubscription: async () => {
@@ -1424,7 +1424,7 @@ describe('subscriptions @gatekeeper', () => {
               return 'proProduct'
           }
         },
-        getWorkspacePlanPrice: () => {
+        getWorkspacePlanPriceId: () => {
           return 'newPlanPrice'
         },
         getWorkspaceSubscription: async () => {
