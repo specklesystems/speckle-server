@@ -26,7 +26,12 @@ import { logger, moduleLogger } from '@/observability/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { Roles, throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
+import {
+  PaidWorkspacePlansNew,
+  Roles,
+  throwUncoveredError,
+  WorkspaceRoles
+} from '@speckle/shared'
 import {
   DeleteProjectRole,
   UpsertProjectRole
@@ -89,7 +94,11 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
-import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { GetWorkspaceUserSeat } from '@/modules/gatekeeper/domain/operations'
 
 const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
@@ -487,16 +496,27 @@ const onWorkspaceCreatedFactory =
   }
 
 const blockInvalidWorkspaceProjectRoleUpdatesFactory =
-  (deps: { getStream: GetStream; getWorkspaceRoleForUser: GetWorkspaceRoleForUser }) =>
+  (deps: {
+    getStream: GetStream
+    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+    getWorkspacePlan: GetWorkspacePlan
+  }) =>
   async ({ payload }: EventPayload<typeof ProjectEvents.PermissionsBeingAdded>) => {
     const project = await deps.getStream({ streamId: payload.projectId })
     if (!project?.workspaceId) return // No extra validation necessary
 
-    const currentWorkspaceRole = await deps.getWorkspaceRoleForUser({
+    const roleSeatParams = {
       workspaceId: project.workspaceId,
       userId: payload.targetUserId
-    })
+    }
+    const [currentWorkspaceRole, seat, plan] = await Promise.all([
+      deps.getWorkspaceRoleForUser(roleSeatParams),
+      deps.getWorkspaceUserSeat(roleSeatParams),
+      deps.getWorkspacePlan({ workspaceId: project.workspaceId })
+    ])
 
+    // Workspace role checks
     if (currentWorkspaceRole?.role === Roles.Workspace.Admin) {
       // User is workspace admin and cannot have their project roles changed
       throw new WorkspaceAdminError()
@@ -508,6 +528,24 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     ) {
       // Workspace guests cannot be project owners
       throw new WorkspaceInvalidRoleError('Workspace guests cannot be project owners.')
+    }
+
+    // Workspace seat checks
+    if (
+      !plan ||
+      !seat ||
+      !(Object.values(PaidWorkspacePlansNew) as string[]).includes(plan.name)
+    ) {
+      return // Doesn't apply
+    }
+
+    if (
+      seat.type === WorkspaceSeatType.Viewer &&
+      payload.role !== Roles.Stream.Reviewer
+    ) {
+      throw new WorkspaceInvalidRoleError(
+        'Workspace viewers can only be project reviewers.'
+      )
     }
   }
 
@@ -522,10 +560,14 @@ export const initializeEventListenersFactory =
     })
     const getStream = getStreamFactory({ db })
     const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
+    const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
+    const getWorkspacePlan = getWorkspacePlanFactory({ db })
     const blockInvalidWorkspaceProjectRoleUpdates =
       blockInvalidWorkspaceProjectRoleUpdatesFactory({
         getStream,
-        getWorkspaceRoleForUser
+        getWorkspaceRoleForUser,
+        getWorkspaceUserSeat,
+        getWorkspacePlan
       })
 
     const quitCbs = [
@@ -560,7 +602,7 @@ export const initializeEventListenersFactory =
           getDefaultRegion: getDefaultRegionFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
-          getWorkspacePlan: getWorkspacePlanFactory({ db }),
+          getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
         })(payload)
       }),
@@ -570,7 +612,7 @@ export const initializeEventListenersFactory =
           getDefaultRegion: getDefaultRegionFactory({ db }),
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
-          getWorkspacePlan: getWorkspacePlanFactory({ db }),
+          getWorkspacePlan,
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
         })(payload)
       }),

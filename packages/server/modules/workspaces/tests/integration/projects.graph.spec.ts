@@ -4,6 +4,8 @@ import { CommentRecord } from '@/modules/comments/helpers/types'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   createWebhookConfigFactory,
@@ -59,8 +61,10 @@ import {
   createTestObject
 } from '@/test/speckle-helpers/commitHelper'
 import {
+  getMainTestRegionKey,
   isMultiRegionTestMode,
-  waitForRegionUser
+  waitForRegionUser,
+  waitForRegionUsers
 } from '@/test/speckle-helpers/regions'
 import {
   addToStream,
@@ -130,63 +134,170 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when changing workspace project roles', () => {
-    const roleProject: BasicTestStream = {
-      name: 'Role Project',
-      isPublic: false,
+    const workspaceGuest: BasicTestUser = {
       id: '',
-      ownerId: ''
+      name: 'John Guest 2',
+      email: 'johnguest2@gmail.com'
     }
 
-    const roleWorkspace: BasicTestWorkspace = {
+    const workspaceEditor: BasicTestUser = {
       id: '',
-      ownerId: '',
-      slug: cryptoRandomString({ length: 10 }),
-      name: 'Role Workspace'
+      name: 'John Editor 2',
+      email: 'johneditor2@gmail.com'
     }
 
-    const workspaceGuest = serverMemberUser
+    const workspaceMemberViewer: BasicTestUser = {
+      id: '',
+      name: 'John Member Viewer',
+      email: 'johnmemberviewer@gmail.com'
+    }
 
     before(async () => {
-      // TODO: Multiregion
-      await createTestWorkspace(roleWorkspace, serverAdminUser)
-      await assignToWorkspace(roleWorkspace, workspaceGuest, Roles.Workspace.Guest)
-
-      roleProject.workspaceId = roleWorkspace.id
-      await createTestStream(roleProject, serverAdminUser)
-      await addToStream(roleProject, workspaceGuest, Roles.Stream.Reviewer)
+      await Promise.all([
+        createTestUser(workspaceGuest),
+        createTestUser(workspaceEditor),
+        createTestUser(workspaceMemberViewer)
+      ])
+      await waitForRegionUsers([
+        serverAdminUser,
+        workspaceGuest,
+        workspaceEditor,
+        workspaceMemberViewer
+      ])
     })
 
     describeEach(
-      [{ oldResolver: true }, { oldResolver: false }],
-      ({ oldResolver }) => `with ${oldResolver ? 'old' : 'new'} updateRole resolver`,
-      ({ oldResolver }) => {
-        const updateRole = async (input: ProjectUpdateRoleInput) => {
-          if (oldResolver) {
-            const res = await apollo.execute(UpdateProjectRoleDocument, {
-              input
-            })
-            const project = res.data?.projectMutations?.updateRole
-            return { res, project }
-          } else {
-            const res = await apollo.execute(UpdateWorkspaceProjectRoleDocument, {
-              input
-            })
-            const project = res.data?.workspaceMutations?.projects?.updateRole
-            return { res, project }
-          }
+      [{ oldPlan: true }, { oldPlan: false }],
+      ({ oldPlan }) => `with ${oldPlan ? 'old (business)' : 'new (pro)'} plan`,
+      ({ oldPlan }) => {
+        const roleProject: BasicTestStream = {
+          name: 'Role Project',
+          isPublic: false,
+          id: '',
+          ownerId: ''
         }
 
-        it("can't set a workspace guest as a project owner", async () => {
-          const { res } = await updateRole({
-            projectId: roleProject.id,
-            userId: workspaceGuest.id,
-            role: Roles.Stream.Owner
-          })
-          const newRole = await getUserStreamRole(workspaceGuest.id, roleProject.id)
+        const roleWorkspace: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          slug: cryptoRandomString({ length: 10 }),
+          name: 'Role Workspace'
+        }
 
-          expect(res).to.haveGraphQLErrors('Workspace guests cannot be project owners')
-          expect(newRole).to.eq(Roles.Stream.Reviewer)
+        before(async () => {
+          // TODO: Multiregion
+          await createTestWorkspace(roleWorkspace, serverAdminUser, {
+            addPlan: oldPlan
+              ? { name: 'business', status: 'valid' }
+              : { name: 'pro', status: 'valid' },
+            regionKey: isMultiRegionTestMode() ? getMainTestRegionKey() : undefined
+          })
+          roleProject.workspaceId = roleWorkspace.id
+
+          await Promise.all([
+            assignToWorkspace(roleWorkspace, workspaceGuest, Roles.Workspace.Guest),
+            assignToWorkspace(
+              roleWorkspace,
+              workspaceEditor,
+              Roles.Workspace.Member,
+              WorkspaceSeatType.Editor
+            ),
+            assignToWorkspace(
+              roleWorkspace,
+              workspaceMemberViewer,
+              Roles.Workspace.Member,
+              WorkspaceSeatType.Viewer
+            )
+          ])
+          await createTestStream(roleProject, serverAdminUser)
+
+          await Promise.all([
+            addToStream(roleProject, workspaceGuest, Roles.Stream.Reviewer),
+            addToStream(roleProject, workspaceEditor, Roles.Stream.Contributor),
+            addToStream(roleProject, workspaceMemberViewer, Roles.Stream.Reviewer)
+          ])
+
+          // assert seat types
+          const seats = await getWorkspaceUserSeatsFactory({ db })({
+            workspaceId: roleWorkspace.id,
+            userIds: [workspaceGuest.id, workspaceEditor.id, workspaceMemberViewer.id]
+          })
+          expect(seats[workspaceGuest.id].type).to.equal(WorkspaceSeatType.Viewer)
+          expect(seats[workspaceEditor.id].type).to.equal(WorkspaceSeatType.Editor)
+          expect(seats[workspaceMemberViewer.id].type).to.equal(
+            WorkspaceSeatType.Viewer
+          )
         })
+
+        describeEach(
+          [{ oldResolver: true }, { oldResolver: false }],
+          ({ oldResolver }) =>
+            `with ${oldResolver ? 'old' : 'new'} updateRole resolver`,
+          ({ oldResolver }) => {
+            const updateRole = async (input: ProjectUpdateRoleInput) => {
+              if (oldResolver) {
+                const res = await apollo.execute(UpdateProjectRoleDocument, {
+                  input
+                })
+                const project = res.data?.projectMutations?.updateRole
+                return { res, project }
+              } else {
+                const res = await apollo.execute(UpdateWorkspaceProjectRoleDocument, {
+                  input
+                })
+                const project = res.data?.workspaceMutations?.projects?.updateRole
+                return { res, project }
+              }
+            }
+
+            it("can't set a workspace guest as a project owner", async () => {
+              const { res } = await updateRole({
+                projectId: roleProject.id,
+                userId: workspaceGuest.id,
+                role: Roles.Stream.Owner
+              })
+              const newRole = await getUserStreamRole(workspaceGuest.id, roleProject.id)
+
+              expect(res).to.haveGraphQLErrors(
+                'Workspace guests cannot be project owners'
+              )
+              expect(newRole).to.eq(Roles.Stream.Reviewer)
+            })
+
+            it(`can${
+              oldPlan ? '' : 'not'
+            } set a workspace viewer as a project contributor or owner`, async () => {
+              const { res: resA } = await updateRole({
+                projectId: roleProject.id,
+                userId: workspaceMemberViewer.id,
+                role: Roles.Stream.Contributor
+              })
+              const { res: resB } = await updateRole({
+                projectId: roleProject.id,
+                userId: workspaceMemberViewer.id,
+                role: Roles.Stream.Owner
+              })
+              const newRole = await getUserStreamRole(
+                workspaceMemberViewer.id,
+                roleProject.id
+              )
+
+              if (oldPlan) {
+                expect(resA).to.not.haveGraphQLErrors()
+                expect(resB).to.not.haveGraphQLErrors()
+                expect(newRole).to.eq(Roles.Stream.Owner)
+              } else {
+                expect(resA).to.haveGraphQLErrors(
+                  'Workspace viewers can only be project reviewers.'
+                )
+                expect(resB).to.haveGraphQLErrors(
+                  'Workspace viewers can only be project reviewers.'
+                )
+                expect(newRole).to.eq(Roles.Stream.Reviewer)
+              }
+            })
+          }
+        )
       }
     )
   })
