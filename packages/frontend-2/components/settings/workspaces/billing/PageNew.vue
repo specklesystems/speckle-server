@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Summary" subheading />
-        <SettingsWorkspacesBillingSummary />
+        <SettingsWorkspacesBillingSummary :workspace-id="workspace" />
       </section>
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
@@ -73,6 +73,8 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
+
+const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 
 // Temporary hack to change workspace plans to the new free plan
 const handleUpgradeClick = (plan: WorkspacePlans) => {

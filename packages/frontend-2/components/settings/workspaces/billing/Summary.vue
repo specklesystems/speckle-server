@@ -61,6 +61,11 @@
 <script setup lang="ts">
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+defineProps<{
+  id: MaybeNullOrUndefined<string>
+}>()
 
 const { billingPortalRedirect } = useBillingActions()
 const route = useRoute()
