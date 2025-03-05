@@ -30,9 +30,9 @@
             v-model="selectedProduct"
             :label-id="labelId"
             :button-id="buttonId"
-            name="categories"
-            label="Categories"
-            placeholder="All categories"
+            name="products"
+            label="Products"
+            placeholder="All products"
             class="md:min-w-80"
             allow-unset
             :items="products"
