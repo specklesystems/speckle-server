@@ -69,10 +69,11 @@
         <div
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-5"
         >
-          <DashboardTutorialCard
-            v-for="tutorialItem in tutorialItems"
+          <TutorialsCard
+            v-for="tutorialItem in tutorials"
             :key="tutorialItem.title"
             :tutorial-item="tutorialItem"
+            source="dashboard"
           />
         </div>
       </section>
@@ -100,7 +101,7 @@ import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
-import { tutorials } from '~/lib/dashboard/helpers/tutorials'
+import { tutorialItems } from '~/lib/dashboard/helpers/tutorials'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 
 const mixpanel = useMixpanel()
@@ -120,7 +121,7 @@ useUserProjectsUpdatedTracking()
 
 const promoBanners = ref<PromoBanner[]>()
 const openNewProject = ref(false)
-const tutorialItems = shallowRef(tutorials)
+const tutorials = shallowRef(tutorialItems)
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Speckle manager',

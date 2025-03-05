@@ -1,40 +1,40 @@
 <template>
-  <NuxtLink :to="connector.url" target="_blank" class="flex" @click="handleClick">
-    <CommonCard
-      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
+  <NuxtLink :to="tutorialItem.url" target="_blank" @click="trackClick">
+    <div
+      class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
-      <div class="flex gap-2 items-center">
-        <img
-          v-if="connector.image"
-          :src="connector.image"
-          :alt="`${connector.title} logo`"
-          class="w-[48px] -ml-1"
-        />
-        <h2 class="text-body-xs text-foreground font-medium">
-          {{ connector.title }}
-        </h2>
+      <NuxtImg
+        :src="tutorialItem.image"
+        :alt="tutorialItem.title"
+        class="aspect-video w-full object-cover"
+        width="400"
+        height="225"
+      />
+      <div class="p-5">
+        <h3 class="text-body-2xs text-foreground truncate">
+          {{ tutorialItem.title }}
+        </h3>
       </div>
-      <p class="text-body-2xs text-foreground-2 line-clamp-5 leading-5">
-        {{ connector.description }}
-      </p>
-    </CommonCard>
+    </div>
   </NuxtLink>
 </template>
 
-<script setup lang="ts">
-import type { ConnectorItem } from '~~/lib/dashboard/helpers/types'
-import { useMixpanel } from '~/lib/core/composables/mp'
-
-const props = defineProps<{
-  connector: ConnectorItem
-}>()
+<script lang="ts" setup>
+import type { TutorialItem } from '~/lib/dashboard/helpers/types'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const mixpanel = useMixpanel()
 
-const handleClick = () => {
-  mixpanel.track('Connector Card Clicked', {
-    connector: props.connector.title,
-    url: props.connector.url
+const props = defineProps<{
+  tutorialItem: TutorialItem
+  source: 'tutorials' | 'dashboard'
+}>()
+
+const trackClick = () => {
+  mixpanel.track('Tutorial clicked', {
+    title: props.tutorialItem.title,
+    url: props.tutorialItem.url,
+    source: props.source
   })
 }
 </script>

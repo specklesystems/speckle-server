@@ -18,7 +18,7 @@
           <FormTextInput
             name="modelsearch"
             :show-label="false"
-            placeholder="Search connectors..."
+            placeholder="Search tutorials..."
             :custom-icon="MagnifyingGlassIcon"
             color="foundation"
             wrapper-classes="grow"
@@ -27,7 +27,7 @@
             v-on="on"
           />
           <FormSelectBase
-            v-model="selectedCategory"
+            v-model="selectedProduct"
             :label-id="labelId"
             :button-id="buttonId"
             name="categories"
@@ -35,9 +35,10 @@
             placeholder="All categories"
             class="md:min-w-80"
             allow-unset
-            :items="categories"
+            :items="products"
             size="base"
             color="foundation"
+            clearable
           >
             <template #something-selected="{ value }">
               {{ isArray(value) ? value[0].name : value.name }}
@@ -47,15 +48,16 @@
             </template>
           </FormSelectBase>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ConnectorsCard
-            v-for="connector in filteredConnectors"
-            :key="connector.title"
-            :connector="connector"
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <TutorialsCard
+            v-for="tutorial in filteredTutorials"
+            :key="tutorial.title"
+            :tutorial-item="tutorial"
+            source="tutorials"
           />
         </div>
         <p
-          v-if="!filteredConnectors.length"
+          v-if="!filteredTutorials.length"
           class="text-body-xs text-foreground text-center w-full my-4"
         >
           No results.
@@ -66,16 +68,15 @@
 </template>
 
 <script setup lang="ts">
-import { connectorItems, connectorCategories } from '~/lib/dashboard/helpers/connectors'
-import type { ConnectorItem } from '~/lib/dashboard/helpers/types'
+import { tutorialItems, tutorialProducts } from '~/lib/dashboard/helpers/tutorials'
+import type { TutorialItem, TutorialProduct } from '~/lib/dashboard/helpers/types'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { isArray } from 'lodash-es'
-import type { ConnectorCategory } from '~~/lib/dashboard/helpers/types'
 
-type CategoryFilter = {
-  id: ConnectorCategory
-  name: (typeof connectorCategories)[keyof typeof connectorCategories]
+type ProductFilter = {
+  id: TutorialProduct
+  name: (typeof tutorialProducts)[keyof typeof tutorialProducts]
 }
 
 const {
@@ -89,21 +90,21 @@ const {
 const labelId = useId()
 const buttonId = useId()
 
-const selectedCategory = ref<CategoryFilter>()
-const connectors = shallowRef<ConnectorItem[]>(connectorItems)
-const categories = shallowRef(
-  Object.entries(connectorCategories).map(([key, name]) => ({
-    id: key as ConnectorCategory,
+const selectedProduct = ref<ProductFilter>()
+const tutorials = shallowRef<TutorialItem[]>(tutorialItems)
+const products = shallowRef(
+  Object.entries(tutorialProducts).map(([key, name]) => ({
+    id: key as TutorialProduct,
     name
   }))
 )
 
-const filteredConnectors = computed(() => {
-  let filteredItems = connectors.value
+const filteredTutorials = computed(() => {
+  let filteredItems = tutorials.value
 
-  if (selectedCategory.value) {
+  if (selectedProduct.value) {
     filteredItems = filteredItems.filter((item) =>
-      item.categories?.includes(selectedCategory.value!.id)
+      item.products?.includes(selectedProduct.value!.id)
     )
   }
 

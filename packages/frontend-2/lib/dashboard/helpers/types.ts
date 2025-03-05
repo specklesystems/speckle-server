@@ -1,9 +1,24 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
+export enum TutorialProduct {
+  AutoCad = 'AUTOCAD',
+  Automate = 'AUTOMATE',
+  Blender = 'BLENDER',
+  Grasshopper = 'GRASSHOPPER',
+  PowerBI = 'POWERBI',
+  Revit = 'REVIT',
+  Rhino = 'RHINO',
+  SketchUp = 'SKETCHUP',
+  SpecklePy = 'SPECKLEPY',
+  Unity = 'UNITY',
+  Unreal = 'UNREAL'
+}
+
 export type TutorialItem = {
   title: string
   image: string
   url: string
+  products: TutorialProduct[]
 }
 
 export type QuickStartItem = {

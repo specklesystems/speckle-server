@@ -38,6 +38,7 @@
             :items="categories"
             size="base"
             color="foundation"
+            clearable
           >
             <template #something-selected="{ value }">
               {{ isArray(value) ? value[0].name : value.name }}
