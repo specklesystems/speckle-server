@@ -14,10 +14,10 @@
       type="project"
     />
     <SettingsWorkspacesBillingUsageCard
-      button-text="Manage versions"
+      button-text="Manage models"
       :current-value="50"
       :max-value="50"
-      type="version"
+      type="model"
     />
   </div>
 </template>

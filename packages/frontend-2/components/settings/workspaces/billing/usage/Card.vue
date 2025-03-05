@@ -17,7 +17,7 @@
 <script lang="ts" setup>
 import { CommonProgressBar } from '@speckle/ui-components'
 
-type UsageType = 'seat' | 'project' | 'version'
+type UsageType = 'seat' | 'project' | 'model'
 
 const props = defineProps<{
   buttonText: string
