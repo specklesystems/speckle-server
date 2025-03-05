@@ -1,4 +1,4 @@
-export const clefLevels = {
+const clefLevels = {
   60: 'Fatal', // FATAL
   50: 'Error', // ERROR
   40: 'Warning', // WARN
@@ -6,6 +6,15 @@ export const clefLevels = {
   20: 'Debug', // DEBUG
   10: 'Verbose' // TRACE / Verbose
 } as const
+
+export function toClefLogLevel(number: number) {
+  return {
+    '@l':
+      number in clefLevels
+        ? clefLevels[number as keyof typeof clefLevels]
+        : clefLevels[30]
+  }
+}
 
 export function toClef(log: Record<string, unknown>): Record<string, unknown> {
   // add the stuff CLEF wants ....

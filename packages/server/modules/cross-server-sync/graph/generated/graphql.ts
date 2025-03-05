@@ -25,6 +25,7 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
 };
@@ -32,6 +33,12 @@ export type ActiveUserMutations = {
 
 export type ActiveUserMutationsFinishOnboardingArgs = {
   input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
+export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  isProjectsActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -243,6 +250,11 @@ export type AutomateAuthCodePayloadTest = {
   action: Scalars['String']['input'];
   code: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Additional resources to validate user access to. */
+export type AutomateAuthCodeResources = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2728,6 +2740,7 @@ export type QueryAutomateFunctionsArgs = {
 
 export type QueryAutomateValidateAuthCodeArgs = {
   payload: AutomateAuthCodePayloadTest;
+  resources?: InputMaybe<AutomateAuthCodeResources>;
 };
 
 
@@ -2933,6 +2946,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -3696,6 +3711,8 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
+  /** The last-visited workspace for the given user */
+  activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3743,6 +3760,8 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
+  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
+  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;

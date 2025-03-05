@@ -3,7 +3,6 @@ import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
-import { logger } from '@/logging/logging'
 import {
   getFormattedObjectFactory,
   getObjectChildrenStreamFactory
@@ -25,7 +24,7 @@ export default (app: express.Express) => {
   app.options('/objects/:streamId/:objectId', corsMiddlewareFactory())
 
   app.get('/objects/:streamId/:objectId', corsMiddlewareFactory(), async (req, res) => {
-    const boundLogger = (req.log || logger).child({
+    const boundLogger = req.log.child({
       requestId: req.id,
       userId: req.context.userId || '-',
       streamId: req.params.streamId,
@@ -112,7 +111,7 @@ export default (app: express.Express) => {
     '/objects/:streamId/:objectId/single',
     corsMiddlewareFactory(),
     async (req, res) => {
-      const boundLogger = (req.log || logger).child({
+      const boundLogger = req.log.child({
         requestId: req.id,
         userId: req.context.userId || '-',
         streamId: req.params.streamId,
