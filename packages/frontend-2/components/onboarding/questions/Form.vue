@@ -26,15 +26,13 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
-import type {
-  OnboardingRole,
-  OnboardingPlan,
-  OnboardingSource
-} from '~/lib/auth/helpers/onboarding'
+import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { homeRoute } from '~/lib/common/helpers/route'
+import { homeRoute, workspaceJoinRoute } from '~/lib/common/helpers/route'
 
 const isOnboardingForced = useIsOnboardingForced()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
 
@@ -50,7 +48,15 @@ const onSubmit = handleSubmit(async () => {
   if (values.role) {
     setMixpanelSegments({ role: values.role })
   }
-  await setUserOnboardingComplete()
-  navigateTo(homeRoute)
+  await setUserOnboardingComplete({
+    role: values.role,
+    plans: values.plan,
+    source: values.source
+  })
+  if (!isWorkspaceNewPlansEnabled.value && isWorkspacesEnabled.value) {
+    navigateTo(workspaceJoinRoute)
+  } else {
+    navigateTo(homeRoute)
+  }
 })
 </script>

@@ -290,7 +290,7 @@ export const testApolloSubscriptionServer = async () => {
   set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
 
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
-  const apolloSubServer = buildApolloSubscriptionServer(mockWsServer)
+  const apolloSubServer = buildApolloSubscriptionServer({ server: mockWsServer })
 
   // weakRef to ensure we dont prevent garbage collection
   const clients: WeakRef<SubscriptionClient>[] = []

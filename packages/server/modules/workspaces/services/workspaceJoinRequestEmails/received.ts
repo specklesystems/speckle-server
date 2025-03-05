@@ -48,14 +48,14 @@ ${requester.name} is requesting to join your workspace ${workspace.name}.
 
 const buildEmailTemplateParams = (args: WorkspaceJoinRequestReceivedEmailArgs) => {
   const url = new URL(
-    `settings/workspaces/${args.workspace.slug}/members`,
+    `settings/workspaces/${args.workspace.slug}/members/requests`,
     getFrontendOrigin()
   ).toString()
   return {
     mjml: buildMjmlBody(args),
     text: buildTextBody(args),
     cta: {
-      title: 'Manage members',
+      title: 'Review request',
       url
     }
   }

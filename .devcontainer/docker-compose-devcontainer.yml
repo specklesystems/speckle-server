@@ -1,0 +1,194 @@
+services:
+  devcontainer:
+    image: 'mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye'
+    volumes:
+      - ..:/workspaces:cached # mounts our local directory (git root) to the container in /workspaces directory (with access mode of cached)
+
+      # We need to override all node_modules directories
+      # by mounting an empty volume to avoid conflicting
+      # CPU build instructions between the host machine and the DevContainer's docker image
+      # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+      # If you add a new package with a new `node_modules`, it needs to be added here
+      - type: volume
+        source: node_modules # top-level volume
+        target: /workspaces/speckle-server/node_modules
+        read_only: false
+      - type: volume
+        source: dui3-node_modules
+        target: /workspaces/speckle-server/packages/dui3/node_modules
+        read_only: false
+      - type: volume
+        source: fileimport-service-node_modules
+        target: /workspaces/speckle-server/packages/fileimport-service/node_modules
+        read_only: false
+      - type: volume
+        source: frontend-2-node_modules
+        target: /workspaces/speckle-server/packages/frontend-2/node_modules
+        read_only: false
+      - type: volume
+        source: monitor-deployment-node_modules
+        target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
+        read_only: false
+      - type: volume
+        source: objectloader-node_modules
+        target: /workspaces/speckle-server/packages/objectloader/node_modules
+        read_only: false
+      - type: volume
+        source: objectsender-node_modules
+        target: /workspaces/speckle-server/packages/objectsender/node_modules
+        read_only: false
+      - type: volume
+        source: preview-frontend-node_modules
+        target: /workspaces/speckle-server/packages/preview-frontend/node_modules
+        read_only: false
+      - type: volume
+        source: preview-service-node_modules
+        target: /workspaces/speckle-server/packages/preview-service/node_modules
+        read_only: false
+      - type: volume
+        source: server-node_modules
+        target: /workspaces/speckle-server/packages/server/node_modules
+        read_only: false
+      - type: volume
+        source: shared-node_modules
+        target: /workspaces/speckle-server/packages/shared/node_modules
+        read_only: false
+      - type: volume
+        source: tailwind-theme-node_modules
+        target: /workspaces/speckle-server/packages/tailwind-theme/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-node_modules
+        target: /workspaces/speckle-server/packages/ui-components/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-nuxt-node_modules
+        target: /workspaces/speckle-server/packages/ui-components-nuxt/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-node_modules
+        target: /workspaces/speckle-server/packages/viewer/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-sandbox-node_modules
+        target: /workspaces/speckle-server/packages/viewer-sandbox/node_modules
+        read_only: false
+      - type: volume
+        source: webhook-service-node_modules
+        target: /workspaces/speckle-server/packages/webhook-service/node_modules
+        read_only: false
+    command: sleep infinity
+    depends_on:
+      - init
+    # 'host' network_mode makes services provided via docker-compose-deps available at 127.0.0.1 or localhost.
+    # They are not available via Docker Compose DNS resolution of the service name e.g. `postgres`.
+    # This is to ensure that the .env file used for local development remains compatible when running in devcontainer
+    network_mode: host
+
+  # The mcr.microsoft.com/devcontainers/typescript-node docker image used for devcontainer
+  # runs as user 'node' and not as 'root'
+  # The mounted volumes (for the node_module CPU architecture build hack) are owned by 'root' by default
+  # This container will chown these node_modules volumes to the 'node' user
+  init:
+    image: debian:bookworm-slim
+    restart: 'no'
+    entrypoint: |
+      /bin/bash -c "groupadd --gid 1000 node && useradd --uid 1000 --gid node --shell /bin/bash --create-home node && find . -type d -name 'node_modules' | grep '\/node_modules$' | xargs chown node:node {}"
+    volumes:
+      # We need to override all node_modules directories
+      # by mounting an empty volume to avoid conflicting
+      # CPU build instructions between the host machine and the DevContainer's docker image
+      # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+      # If you add a new package with a new `node_modules`, it needs to be added here
+      - type: volume
+        source: node_modules
+        target: /workspaces/speckle-server/node_modules
+        read_only: false
+      - type: volume
+        source: dui3-node_modules
+        target: /workspaces/speckle-server/packages/dui3/node_modules
+        read_only: false
+      - type: volume
+        source: fileimport-service-node_modules
+        target: /workspaces/speckle-server/packages/fileimport-service/node_modules
+        read_only: false
+      - type: volume
+        source: frontend-2-node_modules
+        target: /workspaces/speckle-server/packages/frontend-2/node_modules
+        read_only: false
+      - type: volume
+        source: monitor-deployment-node_modules
+        target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
+        read_only: false
+      - type: volume
+        source: objectloader-node_modules
+        target: /workspaces/speckle-server/packages/objectloader/node_modules
+        read_only: false
+      - type: volume
+        source: objectsender-node_modules
+        target: /workspaces/speckle-server/packages/objectsender/node_modules
+        read_only: false
+      - type: volume
+        source: preview-frontend-node_modules
+        target: /workspaces/speckle-server/packages/preview-frontend/node_modules
+        read_only: false
+      - type: volume
+        source: preview-service-node_modules
+        target: /workspaces/speckle-server/packages/preview-service/node_modules
+        read_only: false
+      - type: volume
+        source: server-node_modules
+        target: /workspaces/speckle-server/packages/server/node_modules
+        read_only: false
+      - type: volume
+        source: shared-node_modules
+        target: /workspaces/speckle-server/packages/shared/node_modules
+        read_only: false
+      - type: volume
+        source: tailwind-theme-node_modules
+        target: /workspaces/speckle-server/packages/tailwind-theme/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-node_modules
+        target: /workspaces/speckle-server/packages/ui-components/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-nuxt-node_modules
+        target: /workspaces/speckle-server/packages/ui-components-nuxt/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-node_modules
+        target: /workspaces/speckle-server/packages/viewer/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-sandbox-node_modules
+        target: /workspaces/speckle-server/packages/viewer-sandbox/node_modules
+        read_only: false
+      - type: volume
+        source: webhook-service-node_modules
+        target: /workspaces/speckle-server/packages/webhook-service/node_modules
+        read_only: false
+
+volumes:
+  # We need to override all node_modules directories
+  # by mounting an empty volume to avoid conflicting
+  # CPU build instructions between the host machine and the DevContainer's docker image
+  # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+  # If you add a new package with a new `node_modules`, it needs to be added here
+  node_modules:
+  dui3-node_modules:
+  fileimport-service-node_modules:
+  frontend-2-node_modules:
+  monitor-deployment-node_modules:
+  objectloader-node_modules:
+  objectsender-node_modules:
+  preview-frontend-node_modules:
+  preview-service-node_modules:
+  server-node_modules:
+  shared-node_modules:
+  tailwind-theme-node_modules:
+  ui-components-node_modules:
+  ui-components-nuxt-node_modules:
+  viewer-node_modules:
+  viewer-sandbox-node_modules:
+  webhook-service-node_modules:
