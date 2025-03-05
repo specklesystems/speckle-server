@@ -66,11 +66,21 @@ export type UpdateCheckoutSessionStatus = (args: {
   paymentStatus: SessionPaymentStatus
 }) => Promise<void>
 
-export type CreateCheckoutSession = (args: {
+// Remove with FF_WORKSPACES_NEW_PLANS_ENABLED
+export type CreateCheckoutSessionOld = (args: {
   workspaceId: string
   workspaceSlug: string
   seatCount: number
   guestCount: number
+  workspacePlan: PaidWorkspacePlans
+  billingInterval: WorkspacePlanBillingIntervals
+  isCreateFlow: boolean
+}) => Promise<CheckoutSession>
+export type CreateCheckoutSession = (args: {
+  workspaceId: string
+  workspaceSlug: string
+  editorsCount: number
+  viewersCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean

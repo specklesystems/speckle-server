@@ -1,5 +1,8 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import {
+  CountSeatsByTypeInWorkspace,
+  CreateWorkspaceSeat
+} from '@/modules/gatekeeper/domain/operations'
 import { Knex } from 'knex'
 
 const tables = {
@@ -7,16 +10,13 @@ const tables = {
 }
 
 export const countSeatsByTypeInWorkspaceFactory =
-  ({ db }: { db: Knex }) =>
-  async ({
-    workspaceId,
-    type
-  }: Pick<WorkspaceSeat, 'workspaceId' | 'type'>): Promise<number> => {
+  ({ db }: { db: Knex }): CountSeatsByTypeInWorkspace =>
+  async ({ workspaceId, type }) => {
     const [count] = await tables
       .workspaceSeats(db)
       .where({ workspaceId, type })
-      .count('id')
-    return parseInt(count.toString())
+      .count('userId')
+    return parseInt(count.count.toString())
   }
 
 export const createWorkspaceSeatFactory =
