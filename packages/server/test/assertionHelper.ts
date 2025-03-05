@@ -22,7 +22,7 @@ export const itEach = <T>(
   testHandler: (test: T) => MaybeAsync<void>,
   options?: Partial<{
     /**
-     * Mark tests as sklipped
+     * Mark tests as skipped
      */
     skip: boolean
   }>
@@ -30,5 +30,26 @@ export const itEach = <T>(
   testCases.forEach((testCase) => {
     const itFn = options?.skip ? it.skip : it
     itFn(name(testCase), testHandler.bind(null, testCase))
+  })
+}
+
+/**
+ * Create pararmeterizable describe blocks for each element in an array
+ */
+export const describeEach = <T>(
+  describeCases: Array<T> | ReadonlyArray<T>,
+  name: (describe: T) => string,
+  describeHandler: (describe: T) => void,
+  options?: Partial<{
+    /**
+     * Mark tests as skipped
+     *
+     */
+    skip: boolean
+  }>
+) => {
+  describeCases.forEach((testCase) => {
+    const describeFn = options?.skip ? describe.skip : describe
+    describeFn(name(testCase), describeHandler.bind(null, testCase))
   })
 }
