@@ -1,3 +1,4 @@
+<!-- "Old" billing page, the component for the new workspace plans is in PageNew.vue -->
 <template>
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
