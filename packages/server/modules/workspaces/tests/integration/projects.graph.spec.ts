@@ -10,9 +10,11 @@ import {
   createWebhookEventFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import {
+  assignToWorkspace,
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { describeEach } from '@/test/assertionHelper'
 import {
   BasicTestUser,
   createAuthTokenForUser,
@@ -33,7 +35,10 @@ import {
   GetWorkspaceProjectsDocument,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
-  UpdateProjectRegionDocument
+  ProjectUpdateRoleInput,
+  UpdateProjectRegionDocument,
+  UpdateProjectRoleDocument,
+  UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -57,7 +62,12 @@ import {
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import {
+  addToStream,
+  BasicTestStream,
+  createTestStream,
+  getUserStreamRole
+} from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -116,6 +126,68 @@ describe('Workspace project GQL CRUD', () => {
       workspaceProjects.map((input) =>
         apollo.execute(CreateWorkspaceProjectDocument, { input })
       )
+    )
+  })
+
+  describe('when changing workspace project roles', () => {
+    const roleProject: BasicTestStream = {
+      name: 'Role Project',
+      isPublic: false,
+      id: '',
+      ownerId: ''
+    }
+
+    const roleWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
+      name: 'Role Workspace'
+    }
+
+    const workspaceGuest = serverMemberUser
+
+    before(async () => {
+      // TODO: Multiregion
+      await createTestWorkspace(roleWorkspace, serverAdminUser)
+      await assignToWorkspace(roleWorkspace, workspaceGuest, Roles.Workspace.Guest)
+
+      roleProject.workspaceId = roleWorkspace.id
+      await createTestStream(roleProject, serverAdminUser)
+      await addToStream(roleProject, workspaceGuest, Roles.Stream.Reviewer)
+    })
+
+    describeEach(
+      [{ oldResolver: true }, { oldResolver: false }],
+      ({ oldResolver }) => `with ${oldResolver ? 'old' : 'new'} updateRole resolver`,
+      ({ oldResolver }) => {
+        const updateRole = async (input: ProjectUpdateRoleInput) => {
+          if (oldResolver) {
+            const res = await apollo.execute(UpdateProjectRoleDocument, {
+              input
+            })
+            const project = res.data?.projectMutations?.updateRole
+            return { res, project }
+          } else {
+            const res = await apollo.execute(UpdateWorkspaceProjectRoleDocument, {
+              input
+            })
+            const project = res.data?.workspaceMutations?.projects?.updateRole
+            return { res, project }
+          }
+        }
+
+        it("can't set a workspace guest as a project owner", async () => {
+          const { res } = await updateRole({
+            projectId: roleProject.id,
+            userId: workspaceGuest.id,
+            role: Roles.Stream.Owner
+          })
+          const newRole = await getUserStreamRole(workspaceGuest.id, roleProject.id)
+
+          expect(res).to.haveGraphQLErrors('Workspace guests cannot be project owners')
+          expect(newRole).to.eq(Roles.Stream.Reviewer)
+        })
+      }
     )
   })
 
