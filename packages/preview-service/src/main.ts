@@ -21,23 +21,6 @@ const port = PORT
 // serve the preview-frontend
 app.use(express.static('public'))
 
-const server = app.listen(port, () => {
-  logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
-})
-
-const launchBrowser = async (): Promise<Browser> => {
-  logger.debug('Starting browser')
-  return await puppeteer.launch({
-    headless: !PREVIEWS_HEADED,
-    executablePath: CHROMIUM_EXECUTABLE_PATH,
-    userDataDir: USER_DATA_DIR,
-    // we trust the web content that is running, so can disable the sandbox
-    // disabling the sandbox allows us to run the docker image without linux kernel privileges
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-  })
-}
-logger.debug('Starting message queues')
-
 let client: Redis
 let subscriber: Redis
 
@@ -72,34 +55,86 @@ const opts = {
 }
 const jobQueue = new Bull('preview-service-jobs', opts)
 
-await jobQueue.process(async (payload, done) => {
-  const browser = await launchBrowser()
-  const parseResult = jobPayload.safeParse(payload.data)
-  if (!parseResult.success) {
-    logger.error({ parseError: parseResult.error }, 'Invalid job payload')
-    return done(parseResult.error)
-  }
-  const job = parseResult.data
-  const result = await jobProcessor({
-    logger,
-    browser,
-    job: parseResult.data,
-    port: PORT,
-    timeout: PREVIEW_TIMEOUT
-  })
+// store this callback, so on shutdown we can error the job
+let jobDoneCallback: Bull.DoneCallback | undefined = undefined
 
-  const resultsQueue = new Bull(job.responseQueue, opts)
-  // with removeOnComplete, the job response potentially containing a large images,
-  // is cleared from the response queue
-  await resultsQueue.add(result, { removeOnComplete: true })
-  await browser.close()
-  done()
+const server = app.listen(port, async () => {
+  logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
+
+  const launchBrowser = async (): Promise<Browser> => {
+    logger.debug('Starting browser')
+    return await puppeteer.launch({
+      headless: !PREVIEWS_HEADED,
+      executablePath: CHROMIUM_EXECUTABLE_PATH,
+      userDataDir: USER_DATA_DIR,
+      // we trust the web content that is running, so can disable the sandbox
+      // disabling the sandbox allows us to run the docker image without linux kernel privileges
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    })
+  }
+  logger.debug('Starting message queues')
+
+  // nothing after this line is getting called, this blocks
+  await jobQueue.process(async (payload, done) => {
+    try {
+      console.log('starting')
+      jobDoneCallback = done
+
+      await wait(30000)
+      const browser = await launchBrowser()
+      const parseResult = jobPayload.safeParse(payload.data)
+      if (!parseResult.success) {
+        logger.error({ parseError: parseResult.error }, 'Invalid job payload')
+        return done(parseResult.error)
+      }
+      const job = parseResult.data
+      const result = await jobProcessor({
+        logger,
+        browser,
+        job: parseResult.data,
+        port: PORT,
+        timeout: PREVIEW_TIMEOUT
+      })
+
+      const resultsQueue = new Bull(job.responseQueue, opts)
+      // with removeOnComplete, the job response potentially containing a large images,
+      // is cleared from the response queue
+      await resultsQueue.add(result, { removeOnComplete: true })
+      await browser.close()
+      done()
+    } catch (err) {
+      logger.error({ err }, 'Job processing failed')
+      if (err instanceof Error) {
+        done(err)
+      } else {
+        throw err
+      }
+    }
+    jobDoneCallback = undefined
+  })
 })
 
-process.on('SIGINT', async () => {
+const shutdown = async () => {
+  // stop accepting new jobs
+  await jobQueue.pause(
+    true, // just pausing this local worker of the queue
+    true // do not wait for active jobs to finish
+  )
+
+  // if there is a job currently running, cancell it with an error
+  if (jobDoneCallback) {
+    console.log('canceling job')
+    jobDoneCallback(new Error('Job cancelled due to perview-service shutdown'))
+    console.log('should be canceled')
+  }
+
   logger.info('Received signal to shut down')
   server.close(() => {
     logger.debug('Exiting the express server')
     process.exit()
   })
-})
+}
+
+process.on('SIGINT', async () => await shutdown())
+process.on('SIGQUIT', async () => await shutdown())
+process.on('SIGABRT', async () => await shutdown())

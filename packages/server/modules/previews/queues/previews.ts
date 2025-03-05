@@ -11,5 +11,5 @@ export const requestObjectPreviewFactory =
   }): RequestObjectPreview =>
   async ({ jobId, token, url }) => {
     const payload = { jobId, token, url, responseQueue }
-    await queue.add(payload, { removeOnComplete: true })
+    await queue.add(payload, { removeOnComplete: true, attempts: 3 })
   }
