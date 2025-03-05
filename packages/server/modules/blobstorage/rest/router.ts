@@ -1,4 +1,3 @@
-import Busboy from 'busboy'
 import {
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
@@ -8,7 +7,7 @@ import {
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { isArray } from 'lodash'
-import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
+import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   getAllStreamBlobIdsFactory,
   getBlobMetadataFactory,
@@ -18,7 +17,6 @@ import {
 import { db } from '@/db/knex'
 import {
   getFileStreamFactory,
-  getFileSizeLimit,
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
@@ -31,9 +29,9 @@ import {
 } from '@/modules/blobstorage/repositories/blobs'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { ensureError } from '@speckle/shared'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 
 export const blobStorageRouterFactory = (): Router => {
   const createStreamWritePermissions = () =>
@@ -66,19 +64,7 @@ export const blobStorageRouterFactory = (): Router => {
       req.log = req.log.child({ streamId, userId })
       req.log.debug('Uploading blob.')
 
-      let busboy: Busboy.Busboy
-      try {
-        // Busboy does some validation of user input (headers) on creation
-        busboy = Busboy({
-          headers: req.headers,
-          limits: { fileSize: getFileSizeLimit() }
-        })
-      } catch (err) {
-        throw new BadRequestError(
-          err instanceof Error ? err.message : 'Error while uploading blob',
-          ensureError(err, 'Unknown error while uploading blob')
-        )
-      }
+      const busboy = createBusboy(req)
       const newFileStreamProcessor = await processNewFileStream({
         writeable: busboy,
         streamId,
