@@ -40,17 +40,20 @@
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   <span v-if="statusIsTrial">
                     <span class="line-through mr-1">
-                      £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
+                      {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
+                      seat/month
                     </span>
                     Free
                   </span>
                   <span
                     v-else-if="currentPlan?.status === WorkspacePlanStatuses.Expired"
                   >
-                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
+                    {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
+                    seat/month
                   </span>
                   <span v-else>
-                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
+                    {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
+                    seat/month, billed
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
                         ? 'annually'
@@ -225,7 +228,8 @@ import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { guideBillingUrl } from '~/lib/common/helpers/route'
 import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
-import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
+import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { formatPrice } from '~/lib/billing/helpers/prices'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -257,6 +261,7 @@ graphql(`
 
 const slug = computed(() => (route.params.slug as string) || '')
 
+const { prices } = useWorkspacePlanPrices()
 const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
@@ -279,9 +284,9 @@ const selectedPlanCycle = ref<BillingInterval>()
 const isUpgradeDialogOpen = ref(false)
 
 const seatPrices = computed(() => ({
-  [WorkspacePlans.Starter]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Starter],
-  [WorkspacePlans.Plus]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Plus],
-  [WorkspacePlans.Business]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Business]
+  [WorkspacePlans.Starter]: prices.value?.[WorkspacePlans.Starter],
+  [WorkspacePlans.Plus]: prices.value?.[WorkspacePlans.Plus],
+  [WorkspacePlans.Business]: prices.value?.[WorkspacePlans.Business]
 }))
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const currentPlan = computed(() => workspace.value?.plan)
@@ -305,10 +310,10 @@ const isAcademiaPlan = computed(
 const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
-    ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
+    ? seatPrices.value?.[currentPlan.value.name as keyof typeof seatPrices.value]?.[
         subscription.value.billingInterval
       ]
-    : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
+    : seatPrices.value?.[WorkspacePlans.Starter]?.[BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
   isPurchasablePlan.value
@@ -335,8 +340,11 @@ const memberSeatCount = computed(() =>
     : 0
 )
 const summaryBillValue = computed(() => {
-  const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
-  const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
+  if (!seatPrice.value) return 'loading'
+  const guestPrice =
+    seatPrice.value[Roles.Workspace.Guest].amount * guestSeatCount.value
+  const memberPrice =
+    seatPrice.value[Roles.Workspace.Member].amount * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
   const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
   return isPurchasablePlan.value ? `£${isAnnual ? totalPrice * 12 : totalPrice}` : '£0'
@@ -350,12 +358,14 @@ const summaryBillDescription = computed(() => {
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
 const billTooltip = computed(() => {
+  if (!seatPrice.value) return undefined
+
   const memberText = `${memberSeatCount.value} member${
     memberSeatCount.value === 1 ? '' : 's'
-  } at £${seatPrice.value[Roles.Workspace.Member]}/month`
+  } at ${formatPrice(seatPrice.value[Roles.Workspace.Member])}/month`
   const guestText = `${guestSeatCount.value} guest${
     guestSeatCount.value === 1 ? '' : 's'
-  } at £${seatPrice.value[Roles.Workspace.Guest]}/month`
+  } at ${formatPrice(seatPrice.value[Roles.Workspace.Guest])}/month`
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })

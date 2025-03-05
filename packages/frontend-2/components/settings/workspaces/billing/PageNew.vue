@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Summary" subheading />
-        <SettingsWorkspacesBillingSummary :workspace-id="workspace" />
+        <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
       </section>
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">

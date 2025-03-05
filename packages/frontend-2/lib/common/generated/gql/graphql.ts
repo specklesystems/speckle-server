@@ -1955,6 +1955,13 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Price = {
+  __typename?: 'Price';
+  amount: Scalars['Float']['output'];
+  currency: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
+};
+
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean']['output'];
@@ -3096,6 +3103,8 @@ export type ServerStats = {
 
 export type ServerWorkspacesInfo = {
   __typename?: 'ServerWorkspacesInfo';
+  /** Up-to-date prices for paid & non-invoiced Workspace plans */
+  planPrices: Array<WorkspacePlanPrice>;
   /**
    * This is a backend control variable for the workspaces feature set.
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
@@ -4653,6 +4662,13 @@ export type WorkspacePlan = {
   status: WorkspacePlanStatuses;
 };
 
+export type WorkspacePlanPrice = {
+  __typename?: 'WorkspacePlanPrice';
+  id: Scalars['String']['output'];
+  monthly?: Maybe<Price>;
+  yearly?: Maybe<Price>;
+};
+
 export const WorkspacePlanStatuses = {
   CancelationScheduled: 'cancelationScheduled',
   Canceled: 'canceled',
@@ -5261,6 +5277,11 @@ export type ActiveUserFunctionsQueryVariables = Exact<{ [key: string]: never; }>
 export type ActiveUserFunctionsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string } }> } } | null };
 
 export type BillingActions_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, invitedTeam?: Array<{ __typename?: 'PendingWorkspaceCollaborator', id: string }> | null, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', billingInterval: BillingInterval } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number }, defaultRegion?: { __typename?: 'ServerRegionItem', name: string } | null };
+
+export type UseWorkspacePlanPricesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UseWorkspacePlanPricesQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', workspaces: { __typename?: 'ServerWorkspacesInfo', planPrices: Array<{ __typename?: 'WorkspacePlanPrice', id: string, monthly?: { __typename?: 'Price', amount: number, currencySymbol: string } | null, yearly?: { __typename?: 'Price', amount: number, currencySymbol: string } | null }> } } };
 
 export type BillingCreateCheckoutSessionMutationVariables = Exact<{
   input: CheckoutSessionInput;
@@ -6920,6 +6941,7 @@ export const FunctionAccessCheckDocument = {"kind":"Document","definitions":[{"k
 export const ProjectAutomationCreationPublicKeysDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectAutomationCreationPublicKeys"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"creationPublicKeys"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectAutomationCreationPublicKeysQuery, ProjectAutomationCreationPublicKeysQueryVariables>;
 export const AutomateFunctionsPagePaginationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateFunctionsPagePagination"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionsPageItems_Query"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionsPageItems_Query"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"6"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}]}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"}}]}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}}]}}]}}]} as unknown as DocumentNode<AutomateFunctionsPagePaginationQuery, AutomateFunctionsPagePaginationQueryVariables>;
 export const ActiveUserFunctionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserFunctions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"2"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<ActiveUserFunctionsQuery, ActiveUserFunctionsQueryVariables>;
+export const UseWorkspacePlanPricesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UseWorkspacePlanPrices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaces"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"planPrices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"monthly"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"currencySymbol"}}]}},{"kind":"Field","name":{"kind":"Name","value":"yearly"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"amount"}},{"kind":"Field","name":{"kind":"Name","value":"currencySymbol"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<UseWorkspacePlanPricesQuery, UseWorkspacePlanPricesQueryVariables>;
 export const BillingCreateCheckoutSessionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BillingCreateCheckoutSession"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CheckoutSessionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"billing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createCheckoutSession"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<BillingCreateCheckoutSessionMutation, BillingCreateCheckoutSessionMutationVariables>;
 export const BillingUpgradePlanDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BillingUpgradePlan"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpgradePlanInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"billing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"upgradePlan"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<BillingUpgradePlanMutation, BillingUpgradePlanMutationVariables>;
 export const AdminUpdateWorkspacePlanDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AdminUpdateWorkspacePlan"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AdminUpdateWorkspacePlanInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"admin"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateWorkspacePlan"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]} as unknown as DocumentNode<AdminUpdateWorkspacePlanMutation, AdminUpdateWorkspacePlanMutationVariables>;
@@ -7175,6 +7197,7 @@ export type AllObjectTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults,
   PendingStreamCollaborator: PendingStreamCollaborator,
   PendingWorkspaceCollaborator: PendingWorkspaceCollaborator,
+  Price: Price,
   Project: Project,
   ProjectAccessRequest: ProjectAccessRequest,
   ProjectAccessRequestMutations: ProjectAccessRequestMutations,
@@ -7259,6 +7282,7 @@ export type AllObjectTypes = {
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutations,
   WorkspaceMutations: WorkspaceMutations,
   WorkspacePlan: WorkspacePlan,
+  WorkspacePlanPrice: WorkspacePlanPrice,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessage,
   WorkspaceSso: WorkspaceSso,
@@ -7824,6 +7848,11 @@ export type PendingWorkspaceCollaboratorFieldArgs = {
   workspaceName: {},
   workspaceSlug: {},
 }
+export type PriceFieldArgs = {
+  amount: {},
+  currency: {},
+  currencySymbol: {},
+}
 export type ProjectFieldArgs = {
   allowPublicComments: {},
   automation: ProjectAutomationArgs,
@@ -8122,6 +8151,7 @@ export type ServerStatsFieldArgs = {
   userHistory: {},
 }
 export type ServerWorkspacesInfoFieldArgs = {
+  planPrices: {},
   workspacesEnabled: {},
 }
 export type SmartTextEditorValueFieldArgs = {
@@ -8505,6 +8535,11 @@ export type WorkspacePlanFieldArgs = {
   paymentMethod: {},
   status: {},
 }
+export type WorkspacePlanPriceFieldArgs = {
+  id: {},
+  monthly: {},
+  yearly: {},
+}
 export type WorkspaceProjectMutationsFieldArgs = {
   create: WorkspaceProjectMutationsCreateArgs,
   moveToRegion: WorkspaceProjectMutationsMoveToRegionArgs,
@@ -8612,6 +8647,7 @@ export type AllObjectFieldArgTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResultsFieldArgs,
   PendingStreamCollaborator: PendingStreamCollaboratorFieldArgs,
   PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorFieldArgs,
+  Price: PriceFieldArgs,
   Project: ProjectFieldArgs,
   ProjectAccessRequest: ProjectAccessRequestFieldArgs,
   ProjectAccessRequestMutations: ProjectAccessRequestMutationsFieldArgs,
@@ -8696,6 +8732,7 @@ export type AllObjectFieldArgTypes = {
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsFieldArgs,
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
   WorkspacePlan: WorkspacePlanFieldArgs,
+  WorkspacePlanPrice: WorkspacePlanPriceFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessageFieldArgs,
   WorkspaceSso: WorkspaceSsoFieldArgs,

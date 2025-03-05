@@ -57,6 +57,11 @@ export const WorkspacePlans = <const>{
 
 export type WorkspacePlans = (typeof WorkspacePlans)[keyof typeof WorkspacePlans]
 
+// TODO: Remove this post workspace migration
+export const WorkspaceGuestSeatType = 'guest'
+export type WorkspaceGuestSeatType = typeof WorkspaceGuestSeatType
+
+// TODO: Remove this post workspace migration, only needed temporarily to differiante between old and new
 export const isNewWorkspacePlan = (
   plan: MaybeNullOrUndefined<WorkspacePlans>
 ): boolean => {

@@ -26,7 +26,7 @@
         <NuxtLink
           v-if="showBillingPortalLink"
           class="text-body-xs text-foreground-2 underline hover:text-foreground cursor-pointer mt-1"
-          @click="billingPortalRedirect('')"
+          @click="billingPortalRedirect(workspaceId)"
         >
           View cost breakdown
         </NuxtLink>
@@ -51,7 +51,7 @@
         </p>
       </div>
 
-      <FormButton color="outline" @click="billingPortalRedirect('')">
+      <FormButton color="outline" @click="billingPortalRedirect(workspaceId)">
         Open billing portal
       </FormButton>
     </div>
@@ -64,7 +64,7 @@ import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
-  id: MaybeNullOrUndefined<string>
+  workspaceId?: MaybeNullOrUndefined<string>
 }>()
 
 const { billingPortalRedirect } = useBillingActions()

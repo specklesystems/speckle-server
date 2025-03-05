@@ -165,7 +165,7 @@ export function buildApolloSubscriptionServer(params: {
         try {
           const headers = getHeaders({ connContext, connectionParams })
           const requestId = headers['x-request-id'] || `ws-${randomUUID()}`
-          enterNewRequestContext({ reqId: requestId })
+          enterNewRequestContext({ reqId: requestId, logger })
 
           logger.debug(
             { requestId, headers: sanitizeHeaders(headers) },
