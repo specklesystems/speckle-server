@@ -18,7 +18,7 @@ export const getStripeClient = () => {
   return stripeClient
 }
 
-const { FF_WORKSPACES_NEW_PLAN_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const workspacePlanPrices = (): Record<
   WorkspacePricingProducts,
@@ -46,8 +46,13 @@ export const workspacePlanPrices = (): Record<
     yearly: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
   },
   // new
-  ...((FF_WORKSPACES_NEW_PLAN_ENABLED
+  ...((FF_WORKSPACES_NEW_PLANS_ENABLED
     ? {
+        viewer: {
+          productId: getStringFromEnv('WORKSPACE_VIEWER_SEAT_STRIPE_PRODUCT_ID'),
+          monthly: getStringFromEnv('WORKSPACE_MONTHLY_VIEWER_SEAT_STRIPE_PRICE_ID'),
+          yearly: getStringFromEnv('WORKSPACE_YEARLY_VIEWER_SEAT_STRIPE_PRICE_ID')
+        },
         team: {
           productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
           monthly: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID'),
@@ -60,7 +65,7 @@ export const workspacePlanPrices = (): Record<
         }
       }
     : {}) as Record<
-    'team' | 'pro',
+    'viewer' | 'team' | 'pro',
     Record<WorkspacePlanBillingIntervals, string> & { productId: string }
   >)
 })
