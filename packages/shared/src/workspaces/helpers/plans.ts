@@ -55,6 +55,9 @@ export const WorkspacePlans = <const>{
 
 export type WorkspacePlans = (typeof WorkspacePlans)[keyof typeof WorkspacePlans]
 
+export const WorkspaceGuestSeatType = 'guest'
+export type WorkspaceGuestSeatType = typeof WorkspaceGuestSeatType
+
 /**
  * BILLING INTERVALS
  */

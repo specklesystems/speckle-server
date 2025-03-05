@@ -13,11 +13,7 @@
     </div>
     <p class="text-body mt-1">
       <span class="font-medium">
-        £{{
-          yearlyIntervalSelected
-            ? planPrices.yearly[Roles.Workspace.Member]
-            : planPrices.monthly[Roles.Workspace.Member]
-        }}
+        {{ formatPrice(planPrice?.[Roles.Workspace.Member]) }}
       </span>
       per seat/month
     </p>
@@ -72,10 +68,7 @@
           v-tippy="
             isFunction(featureMetadata.description)
               ? featureMetadata.description({
-                  price: (yearlyIntervalSelected
-                    ? planPrices.yearly[Roles.Workspace.Guest]
-                    : planPrices.monthly[Roles.Workspace.Guest]
-                  ).toString()
+                  price: formatPrice(planPrice?.[Roles.Workspace.Guest])
                 })
               : featureMetadata.description
           "
@@ -117,7 +110,8 @@ import {
 import { startCase, isFunction } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { SetupContext } from 'vue'
-import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
+import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { formatPrice } from '~/lib/billing/helpers/prices'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -136,12 +130,16 @@ const props = defineProps<{
 }>()
 
 const slots: SetupContext['slots'] = useSlots()
+const { prices } = useWorkspacePlanPrices()
 
 const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
-const planPrices = computed(() => WorkspaceOldPaidPlanPrices[props.plan])
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const planPrice = computed(
+  () =>
+    prices.value?.[props.plan]?.[props.yearlyIntervalSelected ? 'yearly' : 'monthly']
+)
 
 const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {

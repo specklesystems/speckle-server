@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import {
   CreateCheckoutSession,
+  GetRecurringPrices,
   GetSubscriptionData,
   ReconcileSubscriptionData,
   SubscriptionData
@@ -13,6 +14,7 @@ import {
   NotImplementedError
 } from '@/modules/shared/errors'
 import { WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { isString } from 'lodash'
 import { Stripe } from 'stripe'
 
 type GetWorkspacePlanPrice = (args: {
@@ -213,4 +215,20 @@ export const reconcileWorkspaceSubscriptionFactory =
       items,
       proration_behavior: applyProrotation ? 'create_prorations' : 'none'
     })
+  }
+
+export const getRecurringPricesFactory =
+  (deps: { stripe: Stripe }): GetRecurringPrices =>
+  async () => {
+    const results = await deps.stripe.prices.list({
+      type: 'recurring',
+      limit: 100,
+      active: true
+    })
+    return results.data.map((p) => ({
+      id: p.id,
+      currency: p.currency,
+      unitAmount: p.unit_amount!,
+      productId: isString(p.product) ? p.product : p.product.id
+    }))
   }

@@ -9,7 +9,8 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
-  if (isAuthPage) return
+  const isSSOPath = to.path.includes('/sso/')
+  if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
   const { data: emailData } = await client
