@@ -1,6 +1,8 @@
 <!-- TODO: Implement final values, links and copy -->
 <template>
-  <div class="border border-outline-3 rounded-lg divide-x flex flex-col md:flex-row">
+  <div
+    class="border border-outline-3 rounded-lg divide-outline-3 divide-x flex flex-col md:flex-row"
+  >
     <div class="p-6 w-1/2">
       <h3 class="text-body font-medium">Unlimited projects and models</h3>
       <p class="text-body-2xs text-foreground-2 mt-1">plus X per seat / month</p>
