@@ -137,19 +137,19 @@ describe('Workspace project GQL CRUD', () => {
     const workspaceGuest: BasicTestUser = {
       id: '',
       name: 'John Guest 2',
-      email: 'johnguest2@gmail.com'
+      email: 'johnguest2@bababooey.com'
     }
 
     const workspaceEditor: BasicTestUser = {
       id: '',
       name: 'John Editor 2',
-      email: 'johneditor2@gmail.com'
+      email: 'johneditor2@bababooey.com'
     }
 
     const workspaceMemberViewer: BasicTestUser = {
       id: '',
       name: 'John Member Viewer',
-      email: 'johnmemberviewer@gmail.com'
+      email: 'johnmemberviewer@bababooey.com'
     }
 
     before(async () => {
