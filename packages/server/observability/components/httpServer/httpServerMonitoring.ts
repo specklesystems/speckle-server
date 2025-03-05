@@ -1,17 +1,21 @@
 /* istanbul ignore file */
 import type { Nullable } from '@speckle/shared'
-import prometheusClient from 'prom-client'
-import type http from 'http'
+import { Registry, Gauge } from 'prom-client'
+import type { Server } from 'http'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let metricActiveConnections: Nullable<prometheusClient.Gauge<any>> = null
+let metricActiveConnections: Nullable<Gauge<any>> = null
 
-export const monitorActiveConnections = (httpServer: http.Server) => {
+export const monitorActiveConnections = (params: {
+  httpServer: Server
+  registers: Registry[]
+}) => {
+  const { httpServer, registers } = params
   if (metricActiveConnections !== null) {
-    prometheusClient.register.removeSingleMetric('speckle_server_active_connections')
+    registers.forEach((r) => r.removeSingleMetric('speckle_server_active_connections'))
   }
 
-  metricActiveConnections = new prometheusClient.Gauge({
+  metricActiveConnections = new Gauge({
     name: 'speckle_server_active_connections',
     help: 'Number of active http connections',
     async collect() {

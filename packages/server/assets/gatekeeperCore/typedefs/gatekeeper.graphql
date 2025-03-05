@@ -128,3 +128,16 @@ enum WorkspaceFeatureName {
   oidcSso
   workspaceDataRegionSpecificity
 }
+
+type WorkspacePlanPrice {
+  id: String!
+  monthly: Price
+  yearly: Price
+}
+
+extend type ServerWorkspacesInfo {
+  """
+  Up-to-date prices for paid & non-invoiced Workspace plans
+  """
+  planPrices: [WorkspacePlanPrice!]!
+}

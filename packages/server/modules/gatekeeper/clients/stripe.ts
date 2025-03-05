@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
 import {
+  GetRecurringPrices,
   GetSubscriptionData,
   ReconcileSubscriptionData,
   SubscriptionData
@@ -126,4 +127,20 @@ export const reconcileWorkspaceSubscriptionFactory =
       items,
       proration_behavior: applyProrotation ? 'create_prorations' : 'none'
     })
+  }
+
+export const getRecurringPricesFactory =
+  (deps: { stripe: Stripe }): GetRecurringPrices =>
+  async () => {
+    const results = await deps.stripe.prices.list({
+      type: 'recurring',
+      limit: 100,
+      active: true
+    })
+    return results.data.map((p) => ({
+      id: p.id,
+      currency: p.currency,
+      unitAmount: p.unit_amount!,
+      productId: isString(p.product) ? p.product : p.product.id
+    }))
   }

@@ -10,12 +10,14 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
   createCustomerPortalUrlFactory,
+  getRecurringPricesFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getStripeClient,
-  getWorkspacePlanProductId
+  getWorkspacePlanProductId,
+  getWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/stripe'
 import {
   deleteCheckoutSessionFactory,
@@ -37,6 +39,7 @@ import {
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
 import { OperationName, OperationStatus } from '@/observability/domain/fields'
 import { logWithErr } from '@/observability/utils/logLevels'
@@ -138,6 +141,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        }
+      },
+      ServerWorkspacesInfo: {
+        planPrices: async () => {
+          const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
+            getRecurringPrices: getRecurringPricesFactory({
+              stripe: getStripeClient()
+            }),
+            getWorkspacePlanProductAndPriceIds
+          })
+          const prices = await getWorkspacePlanPrices.fresh()
+          return Object.entries(prices).map(([plan, price]) => ({
+            id: plan,
+            monthly: price.monthly,
+            yearly: 'yearly' in price ? price.yearly : null
+          }))
         }
       },
       WorkspaceMutations: {
@@ -256,7 +275,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }),
             countWorkspaceRole,
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            getWorkspacePlanPrice,
+            getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
             upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
             updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })

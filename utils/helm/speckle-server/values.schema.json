@@ -94,6 +94,11 @@
           "type": "boolean",
           "description": "Disables the ability sign up with personal email addresses",
           "default": false
+        },
+        "workspacesNewPlanEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.",
+          "default": false
         }
       }
     },

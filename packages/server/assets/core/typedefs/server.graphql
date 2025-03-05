@@ -73,6 +73,10 @@ Server configuration.
 type ServerConfiguration {
   objectSizeLimitBytes: Int!
   objectMultipartUploadSizeLimitBytes: Int!
+  """
+  Whether the email feature is enabled on this server
+  """
+  isEmailEnabled: Boolean!
 }
 
 extend type Mutation {

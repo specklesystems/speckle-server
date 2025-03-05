@@ -25,6 +25,7 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
 };
@@ -32,6 +33,12 @@ export type ActiveUserMutations = {
 
 export type ActiveUserMutationsFinishOnboardingArgs = {
   input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
+export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  isProjectsActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1953,6 +1960,13 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Price = {
+  __typename?: 'Price';
+  amount: Scalars['Float']['output'];
+  currency: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
+};
+
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean']['output'];
@@ -2941,6 +2955,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -3092,6 +3108,8 @@ export type ServerStats = {
 
 export type ServerWorkspacesInfo = {
   __typename?: 'ServerWorkspacesInfo';
+  /** Up-to-date prices for paid & non-invoiced Workspace plans */
+  planPrices: Array<WorkspacePlanPrice>;
   /**
    * This is a backend control variable for the workspaces feature set.
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
@@ -3704,6 +3722,8 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
+  /** The last-visited workspace for the given user */
+  activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3751,6 +3771,8 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
+  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
+  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;
@@ -4643,6 +4665,13 @@ export type WorkspacePlan = {
   name: WorkspacePlans;
   paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
+};
+
+export type WorkspacePlanPrice = {
+  __typename?: 'WorkspacePlanPrice';
+  id: Scalars['String']['output'];
+  monthly?: Maybe<Price>;
+  yearly?: Maybe<Price>;
 };
 
 export const WorkspacePlanStatuses = {
