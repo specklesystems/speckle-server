@@ -5,7 +5,7 @@ import {
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
 import { getFileInfoFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { isFileUploadsEnabled } from '@/modules/shared/helpers/envHelper'
@@ -24,7 +24,8 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
   app.use(fileuploadRouterFactory())
 
   if (isInitial) {
-    listenFor(FileImportSubscriptions.ProjectFileImportUpdated, async (msg) => {
+    // subscribe to database notifications
+    listenFor('file_import_update', async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
       const projectDb = await getProjectDbClient({ projectId: parsedMessage.streamId })
