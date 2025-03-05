@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { type Registry, Counter } from 'prom-client'
-import { graphqlLogger } from '@/logging/logging'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { graphqlLogger } from '@/observability/logging'
+import { redactSensitiveVariables } from '@/observability/utils/redact'
 import { FieldNode, SelectionNode } from 'graphql'
 import { ApolloServerPlugin } from '@apollo/server'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import { getRequestContext } from '@/logging/requestContext'
+import { shouldLogAsInfoLevel } from '@/observability/utils/logLevels'
+import { getRequestContext } from '@/observability/components/express/requestContext'
 
 type ApolloLoggingPluginTransaction = {
   start: number
@@ -29,14 +29,14 @@ const isFieldNode = (node: SelectionNode): node is FieldNode => node.kind === 'F
 let metricCallCount: Counter<string>
 
 export const loggingPluginFactory: (deps: {
-  register: Registry
+  registers: Registry[]
 }) => ApolloServerPlugin<GraphQLContext> = (deps) => ({
   serverWillStart: async () => {
-    deps.register.removeSingleMetric('speckle_server_apollo_calls')
+    deps.registers.forEach((r) => r.removeSingleMetric('speckle_server_apollo_calls'))
     metricCallCount = new Counter({
       name: 'speckle_server_apollo_calls',
       help: 'Number of calls',
-      registers: [deps.register],
+      registers: deps.registers,
       labelNames: ['actionName']
     })
   },

@@ -94,6 +94,11 @@
           "type": "boolean",
           "description": "Disables the ability sign up with personal email addresses",
           "default": false
+        },
+        "workspacesNewPlanEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.",
+          "default": false
         }
       }
     },
@@ -819,63 +824,63 @@
                 }
               }
             },
-            "workspaceTeamSeatStripeProductId": {
+            "workspaceStarterSeatStripeProductId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
-                  "default": "workspaceTeamSeatStripeProductId"
+                  "description": "The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.",
+                  "default": "workspaceStarterSeatStripeProductId"
                 }
               }
             },
-            "workspaceMonthlyTeamSeatStripePriceId": {
+            "workspaceMonthlyStarterSeatStripePriceId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyTeamSeatStripePriceId"
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyStarterSeatStripePriceId"
                 }
               }
             },
-            "workspaceYearlyTeamSeatStripePriceId": {
+            "workspaceYearlyStarterSeatStripePriceId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyTeamSeatStripePriceId"
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyStarterSeatStripePriceId"
                 }
               }
             },
-            "workspaceProSeatStripeProductId": {
+            "workspacePlusSeatStripeProductId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
-                  "default": "workspaceProSeatStripeProductId"
+                  "description": "The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.",
+                  "default": "workspacePlusSeatStripeProductId"
                 }
               }
             },
-            "workspaceMonthlyProSeatStripePriceId": {
+            "workspaceMonthlyPlusSeatStripePriceId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyProSeatStripePriceId"
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyPlusSeatStripePriceId"
                 }
               }
             },
-            "workspaceYearlyProSeatStripePriceId": {
+            "workspaceYearlyPlusSeatStripePriceId": {
               "type": "object",
               "properties": {
                 "secretKey": {
                   "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyProSeatStripePriceId"
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyPlusSeatStripePriceId"
                 }
               }
             },

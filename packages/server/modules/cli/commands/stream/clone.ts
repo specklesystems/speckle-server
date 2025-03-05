@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
@@ -66,11 +66,11 @@ const command: CommandModule<
       emitEvent: getEventBus().emit
     })
 
-    cliLogger.info(
+    logger.info(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
     const { id } = await cloneStream(targetUserId, sourceStreamId)
-    cliLogger.info('Cloning successful! New stream ID: ' + id)
+    logger.info('Cloning successful! New stream ID: ' + id)
   }
 }
 

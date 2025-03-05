@@ -1,6 +1,6 @@
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
@@ -105,8 +105,8 @@ const scheduleWeeklyActivityNotifications = () => {
     cronExpression,
     'weeklyActivityNotification',
     //task should be locked for 10 minutes
-    async (now: Date) => {
-      activitiesLogger.info('Sending weekly activity digests notifications.')
+    async (now: Date, { logger }) => {
+      logger.info('Sending weekly activity digests notifications.')
       const end = now
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
