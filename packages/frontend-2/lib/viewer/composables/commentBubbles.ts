@@ -176,7 +176,7 @@ export function useViewerCommentBubblesProjection(params: {
     }
   } = useInjectedViewerState()
 
-  useViewerAnchoredPoints({
+  const { updatePositions } = useViewerAnchoredPoints({
     parentEl,
     points: computed(() => Object.values(commentThreads.value)),
     pointLocationGetter: (t) => {
@@ -192,18 +192,18 @@ export function useViewerCommentBubblesProjection(params: {
         return new Vector3(target[0], target[1], target[2])
       }
 
-      return undefined
+      return null
     },
-    updatePositionCallback: (thread, result) => {
-      thread.isOccluded = result.isOccluded
-      thread.style = {
-        ...thread.style,
-        ...result.style,
-        opacity: thread.isOccluded ? '0.5' : '1.0',
-        transition: 'all 100ms ease'
-      }
+    updatePositionCallback: (point, result) => {
+      point.isOccluded = result.isOccluded
+      point.style = result.style
     }
   })
+
+  // Return the updatePositions function so it can be called manually
+  return {
+    updatePositions
+  }
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {

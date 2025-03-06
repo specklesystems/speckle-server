@@ -151,9 +151,20 @@ export function useViewerAnchoredPoints<
     points,
     () => {
       updatePositions()
+
+      // Force another update after a short delay to ensure all points are positioned correctly
+      setTimeout(() => {
+        updatePositions()
+      }, 100)
     },
     { immediate: true }
   )
+
+  // Force an initial update to ensure points are positioned correctly
+  // This is needed because sometimes the camera might not move initially
+  setTimeout(() => {
+    updatePositions()
+  }, 500)
 
   return {
     updatePositions,

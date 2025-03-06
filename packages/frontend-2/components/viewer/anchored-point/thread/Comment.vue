@@ -1,33 +1,16 @@
 <template>
   <div class="flex flex-col items-center">
-    <!-- <div class="xxx-bg-foundation rounded-full caption space-x-2 p-1">
-      <span>{{ absoluteDate }}</span>
-      <span>{{ timeFromNow }}</span>
-    </div> -->
-    <div class="xxx-bg-foundation sm:rounded-xl p-4 sm:pb-2 w-full relative">
-      <div class="flex items-center space-x-1">
-        <UserAvatar :user="comment.author" hide-tooltip class="mr-1" />
-        <span class="grow truncate text-xs sm:text-sm font-medium">
+    <div class="p-4 py-2 w-full relative">
+      <div class="flex items-center space-x-2">
+        <UserAvatar :user="comment.author" hide-tooltip />
+        <span class="grow truncate text-body-xs">
           {{ comment.author.name }}
         </span>
-        <span
-          v-tippy="createdAt.full"
-          class="text-xs truncate text-foreground-2 font-medium"
-        >
+        <span v-tippy="createdAt.full" class="text-body-3xs truncate text-foreground-2">
           {{ createdAt.relative }}
         </span>
-        <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
-        <!-- <div class="pl-2">
-          <CommonTextLink
-            v-if="canArchive"
-            class="absolute text-foreground-2 top-3 right-3"
-            @click="() => archiveComment(comment.id)"
-          >
-            <TrashIcon class="h-3 w-3" />
-          </CommonTextLink>
-        </div> -->
       </div>
-      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-2">
+      <div class="truncate text-body-2xs text-foreground-2 flex flex-col mt-3">
         <CommonTiptapTextEditor
           v-if="comment.text.doc"
           :model-value="comment.text.doc"

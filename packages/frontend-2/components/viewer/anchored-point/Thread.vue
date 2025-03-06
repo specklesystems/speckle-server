@@ -25,7 +25,7 @@
           -->
           <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
-          <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
+          <CheckIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
         </button>
       </div>
     </div>
@@ -38,34 +38,37 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="thread-handle sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
+          class="thread-handle sm:p-1 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 h-full transition-all duration-200"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div
             :class="[
-              'relative bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
-              'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
+              'relative bg-foundation dark:bg-foundation-page border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'group-[.is-dragging]:bg-foundation'
             ]"
           >
             <div
-              class="relative w-full flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full flex justify-between items-center p-4 border-b border-outline-2"
             >
-              <div class="flex-grow flex items-center">
+              <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
                   v-tippy="'Previous'"
                   :icon-left="ChevronLeftIcon"
-                  text
+                  color="outline"
                   hide-text
+                  size="sm"
                   @click="emit('prev', modelValue)"
-                ></FormButton>
+                >
+                  <ChevronLeftIcon class="w-3 h-3" />
+                </FormButton>
                 <FormButton
                   v-tippy="'Next'"
                   :icon-left="ChevronRightIcon"
-                  text
+                  color="outline"
                   hide-text
+                  size="sm"
                   @click="emit('next', modelValue)"
-                ></FormButton>
-                <div class="flex-grow"></div>
+                />
                 <FormButton
                   v-show="isDragged"
                   v-tippy="'Pop in'"
@@ -74,32 +77,33 @@
                   hide-text
                   class="rotate-180"
                   @click="isDragged = false"
-                ></FormButton>
+                />
               </div>
-              <div>
-                <FormButton
-                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                  :icon-left="
-                    modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
-                  "
-                  text
-                  hide-text
-                  :disabled="!canArchiveOrUnarchive"
-                  @click="toggleCommentResolvedStatus()"
-                ></FormButton>
+              <div class="flex gap-x-1.5">
                 <FormButton
                   v-tippy="'Copy link'"
                   :icon-left="LinkIcon"
-                  text
                   hide-text
+                  color="outline"
+                  size="sm"
                   @click="onCopyLink"
-                ></FormButton>
+                />
+                <FormButton
+                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                  :icon-left="CheckIcon"
+                  hide-text
+                  :disabled="!canArchiveOrUnarchive"
+                  color="outline"
+                  size="sm"
+                  @click="toggleCommentResolvedStatus()"
+                />
                 <FormButton
                   :icon-left="XMarkIcon"
-                  text
                   hide-text
+                  color="outline"
+                  size="sm"
                   @click="changeExpanded(false)"
-                ></FormButton>
+                />
               </div>
             </div>
             <div
@@ -107,7 +111,7 @@
             >
               <div
                 ref="commentsContainer"
-                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
@@ -172,14 +176,13 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
-  CheckCircleIcon,
+  CheckIcon,
   ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
+} from '@heroicons/vue/24/outline'
 import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
 import { ensureError, Roles } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
-import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
+import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
@@ -243,9 +246,20 @@ const { ellipsis, controls } = useAnimatingEllipsis()
 const applyState = useApplySerializedState()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
-const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
+
+onClickOutside(threadContainer, (event) => {
+  // Don't close if clicking on the thread activator button
+  if (threadActivator.value && threadActivator.value.contains(event.target as Node)) {
+    return
+  }
+
+  // Only close if the thread is expanded
+  if (isExpanded.value) {
+    changeExpanded(false)
+  }
+})
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)

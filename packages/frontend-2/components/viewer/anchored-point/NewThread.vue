@@ -35,9 +35,9 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] bg-foundation sm:rounded-lg shadow-md"
+          class="sm:absolute w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
         >
-          <div class="relative">
+          <div class="relative p-4 pr-3">
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"
@@ -48,14 +48,15 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex p-2 justify-between">
+            <div class="w-full flex justify-between items-center pr-1 pt-4">
               <FormButton
                 v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
-                text
-                class="sm:px-1"
                 :disabled="isPostingNewThread"
+                color="subtle"
+                size="sm"
+                class="!bg-foundation-page dark:!bg-foundation"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
@@ -137,9 +138,6 @@ const onThreadClick = () => {
   })
 }
 
-// NOTE: will be used later, keep
-// const submitEmoji = (emoji: string) =>
-//   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
 const mp = useMixpanel()
 
 const onSubmit = (comment?: CommentEditorValue) => {
@@ -159,6 +157,12 @@ const onSubmit = (comment?: CommentEditorValue) => {
 
       // switch to new thread
       await open(threadId)
+
+      // Close the new thread bubble after successful submission
+      emit('update:modelValue', {
+        ...props.modelValue,
+        isExpanded: false
+      })
     })
     .finally(() => {
       isPostingNewThread.value = false

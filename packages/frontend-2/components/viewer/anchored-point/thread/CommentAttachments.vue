@@ -1,15 +1,16 @@
 <template>
-  <div class="flex flex-col w-full items-start pt-2">
-    <CommonTextLink
-      v-for="attachment in attachments.text.attachments || []"
-      :key="attachment.id"
-      :icon-left="resolveIconComponent(attachment)"
-      @click="() => onAttachmentClick(attachment)"
-    >
-      <span class="truncate relative text-xs pl-1">
-        {{ attachment.fileName }}
-      </span>
-    </CommonTextLink>
+  <div>
+    <div v-if="attachmentList.length > 0" class="flex flex-col w-full items-start pt-1">
+      <CommonTextLink
+        v-for="attachment in attachmentList"
+        :key="attachment.id"
+        @click="() => onAttachmentClick(attachment)"
+      >
+        <span class="truncate relative text-body-2xs text-foreground">
+          {{ attachment.fileName }}
+        </span>
+      </CommonTextLink>
+    </div>
     <LayoutDialog v-model:open="dialogOpen" max-width="lg" :buttons="dialogButtons">
       <template #header>
         {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
@@ -44,15 +45,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ArchiveBoxIcon,
-  DocumentIcon,
-  GifIcon,
-  PaperClipIcon,
-  PhotoIcon,
-  ArrowDownTrayIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/solid'
+import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -105,23 +98,6 @@ const isImage = (attachment: AttachmentFile) => {
   }
 }
 
-const resolveIconComponent = (attachment: AttachmentFile) => {
-  switch (attachment.fileType) {
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-      return PhotoIcon
-    case 'gif':
-      return GifIcon
-    case 'pdf':
-      return DocumentIcon
-    case 'zip':
-      return ArchiveBoxIcon
-    default:
-      return PaperClipIcon
-  }
-}
-
 const onAttachmentClick = (attachment: AttachmentFile) => {
   dialogAttachment.value = attachment
   dialogOpen.value = true
@@ -141,6 +117,8 @@ const onDownloadClick = async () => {
     })
   }
 }
+
+const attachmentList = computed(() => props.attachments.text.attachments || [])
 
 const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
   if (!dialogAttachment.value) return undefined

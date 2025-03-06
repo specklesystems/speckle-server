@@ -90,7 +90,8 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement }
+  ui: { diff, measurement },
+  urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
@@ -212,10 +213,24 @@ onKeyStroke('Escape', () => {
 watch(
   () => objects.value.length,
   (newLength) => {
-    if (newLength !== 0) {
+    // Dont open sidebar if a comment is open
+    if (newLength !== 0 && !focusedThreadId.value) {
       sidebarOpen.value = true
-    } else {
+    } else if (newLength === 0) {
       sidebarOpen.value = false
+    }
+  }
+)
+
+watch(
+  () => focusedThreadId.value,
+  (newThreadId) => {
+    if (newThreadId) {
+      // If a thread is focused, close the sidebar
+      sidebarOpen.value = false
+    } else if (objects.value.length > 0) {
+      // If no thread is focused and we have objects selected, open the sidebar
+      sidebarOpen.value = true
     }
   }
 )

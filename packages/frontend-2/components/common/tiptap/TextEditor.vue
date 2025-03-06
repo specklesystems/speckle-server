@@ -4,7 +4,7 @@
   >
     <EditorContent
       ref="editorContentRef"
-      class="simple-scrollbar"
+      class="simple-scrollbar flex flex-1"
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
@@ -156,6 +156,8 @@ onBeforeUnmount(() => {
 }
 
 .ProseMirror {
+  flex: 1;
+
   & p:last-of-type {
     margin-bottom: 0;
   }
