@@ -19,7 +19,8 @@ import {
   getWorkspaceWithDomainsFactory,
   getWorkspaceDomainsFactory,
   storeWorkspaceDomainFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -75,6 +76,9 @@ import {
 } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -244,7 +248,8 @@ export const createTestWorkspace = async (
 export const assignToWorkspace = async (
   workspace: BasicTestWorkspace,
   user: BasicTestUser,
-  role?: WorkspaceRoles
+  role?: WorkspaceRoles,
+  seatType?: WorkspaceSeatType
 ) => {
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
@@ -253,12 +258,26 @@ export const assignToWorkspace = async (
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
+  const assignWorkspaceSeat = assignWorkspaceSeatFactory({
+    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
+  })
+
+  role = role || Roles.Workspace.Member
 
   await updateWorkspaceRole({
     userId: user.id,
     workspaceId: workspace.id,
-    role: role || Roles.Workspace.Member
+    role
   })
+
+  if (seatType) {
+    await assignWorkspaceSeat({
+      userId: user.id,
+      workspaceId: workspace.id,
+      type: seatType
+    })
+  }
 }
 
 export const unassignFromWorkspace = async (

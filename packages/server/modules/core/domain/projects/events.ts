@@ -14,6 +14,7 @@ export const ProjectEvents = {
   Updated: `${projectEventsNamespace}.updated`,
   Deleted: `${projectEventsNamespace}.deleted`,
   Cloned: `${projectEventsNamespace}.cloned`,
+  PermissionsBeingAdded: `${projectEventsNamespace}.permissionsBeingAdded`,
   PermissionsAdded: `${projectEventsNamespace}.permissionsAdded`,
   PermissionsRevoked: `${projectEventsNamespace}.permissionsRevoked`
 } as const
@@ -39,6 +40,12 @@ export type ProjectEventsPayloads = {
     clonerId: string
     sourceProject: Project
     newProject: Project
+  }
+  [ProjectEvents.PermissionsBeingAdded]: {
+    activityUserId: string
+    targetUserId: string
+    role: StreamRoles
+    projectId: string
   }
   [ProjectEvents.PermissionsAdded]: {
     activityUserId: string
