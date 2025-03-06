@@ -15,17 +15,17 @@ import {
   getObjectAttributesFactory,
   storeFileStreamFactory
 } from '@/modules/blobstorage/repositories/blobs'
-import { ensureError, Nullable } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
-import type { Writable } from 'stream'
+import type { Readable, Writable } from 'stream'
 import { get } from 'lodash'
-import { UploadResult } from '@/modules/blobstorage/domain/types'
-import { ProcessingResult } from '@/modules/blobstorage/domain/types'
+import type { UploadResult, ProcessingResult } from '@/modules/blobstorage/domain/types'
+import type { Busboy } from 'busboy'
 
 type NewFileStreamProcessor = (params: {
-  writeable: Writable
+  busboy: Busboy
   streamId: string
   userId: string
   onFinishAllFileUploads: (results: Array<UploadResult>) => Promise<void>
@@ -35,17 +35,10 @@ type NewFileStreamProcessor = (params: {
 
 export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
   return async (params) => {
-    const { writeable, streamId, userId, onFinishAllFileUploads, onError } = params
+    const { busboy, streamId, userId, onFinishAllFileUploads, onError } = params
     let { logger } = params
     const uploadOperations: Record<string, unknown> = {}
-    const finalizePromises: Promise<{
-      uploadStatus?: number
-      uploadError?: Error | null | string
-      formKey: string
-      blobId: string
-      fileName: string
-      fileSize: Nullable<number>
-    }>[] = []
+    const finalizePromises: Promise<UploadResult>[] = []
 
     const [projectDb, projectStorage] = await Promise.all([
       getProjectDbClient({ projectId: streamId }),
@@ -77,58 +70,65 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
     })
     const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
-    writeable.on('file', (formKey, file, info) => {
-      const { filename: fileName } = info
-      const fileType = fileName?.split('.')?.pop()?.toLowerCase()
-      logger = logger.child({ fileName, fileType })
-      const registerUploadResult = (processingPromise: Promise<ProcessingResult>) => {
-        finalizePromises.push(
-          processingPromise.then((resultItem) => ({ ...resultItem, formKey }))
-        )
-      }
-
-      let blobId = crs({ length: 10 })
-      let clientHash = null
-      if (formKey.includes('hash:')) {
-        clientHash = formKey.split(':')[1]
-        if (clientHash && clientHash !== '') {
-          // logger.debug(`I have a client hash (${clientHash})`)
-          blobId = clientHash
+    busboy.on(
+      'file',
+      (
+        formKey: string,
+        file: Readable & { truncated?: boolean },
+        info: { filename: string; encoding: string; mimeType: string }
+      ) => {
+        const { filename: fileName } = info
+        const fileType = fileName?.split('.')?.pop()?.toLowerCase()
+        logger = logger.child({ fileName, fileType })
+        const registerUploadResult = (processingPromise: Promise<ProcessingResult>) => {
+          finalizePromises.push(
+            processingPromise.then((resultItem) => ({ ...resultItem, formKey }))
+          )
         }
+
+        let blobId = crs({ length: 10 })
+        let clientHash = null
+        if (formKey.includes('hash:')) {
+          clientHash = formKey.split(':')[1]
+          if (clientHash && clientHash !== '') {
+            // logger.debug(`I have a client hash (${clientHash})`)
+            blobId = clientHash
+          }
+        }
+
+        logger = logger.child({ blobId })
+
+        uploadOperations[blobId] = uploadFileStream(
+          { streamId, userId },
+          { blobId, fileName, fileType, fileStream: file }
+        )
+
+        //this file level 'close' is fired when a single file upload finishes
+        //this way individual upload statuses can be updated, when done
+        file.on('close', async () => {
+          //this is handled by the file.on('limit', ...) event
+          if (file.truncated) return
+          await uploadOperations[blobId]
+
+          registerUploadResult(markUploadSuccess(getObjectAttributes, streamId, blobId))
+        })
+
+        file.on('limit', async () => {
+          await uploadOperations[blobId]
+          registerUploadResult(
+            markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
+          )
+        })
+
+        file.on('error', (err: unknown) => {
+          registerUploadResult(
+            markUploadError(deleteObject, streamId, blobId, get(err, 'message'))
+          )
+        })
       }
+    )
 
-      logger = logger.child({ blobId })
-
-      uploadOperations[blobId] = uploadFileStream(
-        { streamId, userId },
-        { blobId, fileName, fileType, fileStream: file }
-      )
-
-      //this file level 'close' is fired when a single file upload finishes
-      //this way individual upload statuses can be updated, when done
-      file.on('close', async () => {
-        //this is handled by the file.on('limit', ...) event
-        if (file.truncated) return
-        await uploadOperations[blobId]
-
-        registerUploadResult(markUploadSuccess(getObjectAttributes, streamId, blobId))
-      })
-
-      file.on('limit', async () => {
-        await uploadOperations[blobId]
-        registerUploadResult(
-          markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
-        )
-      })
-
-      file.on('error', (err: unknown) => {
-        registerUploadResult(
-          markUploadError(deleteObject, streamId, blobId, get(err, 'message'))
-        )
-      })
-    })
-
-    writeable.on('finish', async () => {
+    busboy.on('finish', async () => {
       // make sure all upload operations have been awaited,
       // otherwise the finish even can fire before all async operations finish
       //resulting in missing return values
@@ -139,7 +139,7 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       return
     })
 
-    writeable.on('error', async (err) => {
+    busboy.on('error', async (err) => {
       logger.info({ err }, 'Upload request error.')
       //delete all started uploads
       await Promise.all(
@@ -157,6 +157,6 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
       return
     })
 
-    return writeable
+    return busboy
   }
 }

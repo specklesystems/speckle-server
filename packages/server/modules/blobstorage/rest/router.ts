@@ -66,7 +66,7 @@ export const blobStorageRouterFactory = (): Router => {
 
       const busboy = createBusboy(req)
       const newFileStreamProcessor = await processNewFileStream({
-        writeable: busboy,
+        busboy,
         streamId,
         userId,
         logger: req.log,
