@@ -2,7 +2,7 @@
  * Combined onboarding middleware that handles:
  * 1. Email verification redirect
  * 2. Segmentation questions redirect
- * 3. Workspace redirect
+ * 3. Workspace join/create redirect
  */
 
 import {
@@ -43,7 +43,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isEmailEnabled = serverInfoData?.serverInfo.configuration.isEmailEnabled
 
-  // 1. Email Verification Check
+  // 1. Email verification redirect
   if (isEmailEnabled) {
     const isVerifyEmailPage = to.path === verifyEmailRoute
     const hasUnverifiedEmails = userData.activeUser.emails.some(
@@ -57,7 +57,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  // 2. Onboarding Check
+  // 2. Segmentation questions redirect
   const isOnboardingFinished = userData.activeUser.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute
 
@@ -69,7 +69,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(homeRoute)
   }
 
-  // 3. Workspace Check
+  // 3. Workspace join/create redirect
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
