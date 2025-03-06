@@ -100,8 +100,7 @@ import {
   getWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory,
-  updateWorkspaceProjectRoleFactory
+  queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -945,19 +944,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return project
         },
         updateRole: async (_parent, args, context) => {
-          const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
-            getStream,
-            updateStreamRoleAndNotify,
-            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-          })
-
-          return await updateWorkspaceProjectRole({
-            role: args.input,
-            updater: {
-              userId: context.userId!,
-              resourceAccessRules: context.resourceAccessRules
-            }
-          })
+          await authorizeResolver(
+            context.userId,
+            args.input.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+          return await updateStreamRoleAndNotify(
+            args.input,
+            context.userId!,
+            context.resourceAccessRules
+          )
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args

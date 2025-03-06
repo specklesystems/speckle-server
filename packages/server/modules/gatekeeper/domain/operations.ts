@@ -2,6 +2,7 @@ import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import {
+  Optional,
   WorkspacePlanFeatures,
   WorkspacePlans,
   WorkspacePlanStatuses
@@ -39,3 +40,15 @@ export type CreateWorkspaceSeat = (
 export type CountSeatsByTypeInWorkspace = (
   params: Pick<WorkspaceSeat, 'workspaceId' | 'type'>
 ) => Promise<number>
+
+export type GetWorkspaceUserSeats = (params: {
+  workspaceId: string
+  userIds: string[]
+}) => Promise<{
+  [userId: string]: WorkspaceSeat
+}>
+
+export type GetWorkspaceUserSeat = (params: {
+  workspaceId: string
+  userId: string
+}) => Promise<Optional<WorkspaceSeat>>

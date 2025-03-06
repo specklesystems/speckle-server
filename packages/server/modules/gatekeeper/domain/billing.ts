@@ -191,7 +191,12 @@ export type ReconcileSubscriptionData = (args: {
   applyProrotation: boolean
 }) => Promise<void>
 
-export type WorkspaceSeatType = 'viewer' | 'editor'
+export const WorkspaceSeatType = <const>{
+  Viewer: 'viewer',
+  Editor: 'editor'
+}
+export type WorkspaceSeatType =
+  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
 
 export type WorkspaceSeat = {
   workspaceId: string

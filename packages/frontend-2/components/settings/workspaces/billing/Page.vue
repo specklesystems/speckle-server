@@ -286,7 +286,13 @@ const isUpgradeDialogOpen = ref(false)
 const seatPrices = computed(() => ({
   [WorkspacePlans.Starter]: prices.value?.[WorkspacePlans.Starter],
   [WorkspacePlans.Plus]: prices.value?.[WorkspacePlans.Plus],
-  [WorkspacePlans.Business]: prices.value?.[WorkspacePlans.Business]
+  [WorkspacePlans.Business]: prices.value?.[WorkspacePlans.Business],
+  ...(isWorkspaceNewPlansEnabled.value
+    ? {
+        [WorkspacePlans.Team]: prices.value?.[WorkspacePlans.Team],
+        [WorkspacePlans.Pro]: prices.value?.[WorkspacePlans.Pro]
+      }
+    : {})
 }))
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const currentPlan = computed(() => workspace.value?.plan)
