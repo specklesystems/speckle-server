@@ -365,6 +365,15 @@ redis:
     ## @param redis.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
     ##
     secretKey: ''
+
+  previewServiceConnectionString:
+    ## @param redis.previewServiceConnectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
+    secretName: ''
+    ## @param redis.previewServiceConnectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
+    ##
+    secretKey: ''
+
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
   networkPolicy:
@@ -1070,6 +1079,9 @@ frontend_2:
 ## @descriptionEnd
 ##
 preview_service:
+  ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
+  ##
+  dedicatedPreviewsQueue: false
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1

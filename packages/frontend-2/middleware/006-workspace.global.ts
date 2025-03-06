@@ -9,9 +9,9 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
-  if (isAuthPage) return
+  const isSSOPath = to.path.includes('/sso/')
+  if (isAuthPage || isSSOPath) return
 
-  const isOnboardingForced = useIsOnboardingForced()
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
@@ -39,7 +39,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
 
   // Ignore if user has not completed onboarding yet
-  if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
+  if (!data?.activeUser?.isOnboardingFinished) return
 
   const isMemberOfWorkspace = (data?.activeUser?.workspaces?.totalCount ?? 0) > 0
   const hasLegacyProjects = (data?.activeUser?.versions?.totalCount ?? 0) > 0

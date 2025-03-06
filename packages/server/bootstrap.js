@@ -22,7 +22,8 @@ const {
   isTestEnv,
   isApolloMonitoringEnabled,
   getApolloServerVersion,
-  getServerVersion
+  getServerVersion,
+  isDevEnv
 } = require('@/modules/shared/helpers/envHelper')
 const { logger } = require('@/observability/logging')
 
@@ -40,6 +41,16 @@ if (isTestEnv()) {
     )
     logger.error(e)
     process.exit(1)
+  }
+}
+
+// Custom inspector init, when debugging doesn't work any other way
+// (e.g. due to various child processes capturing the --inspect flag)
+const startDebugger = process.env.START_DEBUGGER
+if ((isTestEnv() || isDevEnv()) && startDebugger) {
+  const inspector = require('node:inspector')
+  if (!inspector.url()) {
+    inspector.open(undefined, undefined, true)
   }
 }
 
