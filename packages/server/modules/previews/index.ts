@@ -81,7 +81,7 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
   return { previewRequestQueue, previewResponseQueue }
 }
 
-export const init: SpeckleModule['init'] = (app, isInitial) => {
+export const init: SpeckleModule['init'] = ({ app, isInitial }) => {
   if (isInitial) {
     if (disablePreviews()) {
       moduleLogger.warn('📸 Object preview module is DISABLED')
