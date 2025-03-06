@@ -57,7 +57,7 @@ export class Serializer implements IDisposable {
       if (value === undefined || propKey === 'id' || propKey.startsWith('_')) continue
 
       // 1. primitives (numbers, bools, strings)
-      if (typeof value !== 'object') {
+      if (value === null || typeof value !== 'object') {
         traversed[propKey] = value
         continue
       }
