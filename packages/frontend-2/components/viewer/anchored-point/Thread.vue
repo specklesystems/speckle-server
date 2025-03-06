@@ -48,7 +48,8 @@
             ]"
           >
             <div
-              class="relative w-full flex justify-between items-center p-4 border-b border-outline-2"
+              class="relative w-full flex justify-between items-center border-b border-outline-2"
+              :class="isEmbedEnabled ? 'p-2' : 'p-4'"
             >
               <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
@@ -57,6 +58,7 @@
                   color="outline"
                   hide-text
                   size="sm"
+                  :disabled="!hasPrevious"
                   @click="emit('prev', modelValue)"
                 >
                   <ChevronLeftIcon class="w-3 h-3" />
@@ -67,6 +69,7 @@
                   color="outline"
                   hide-text
                   size="sm"
+                  :disabled="!hasNext"
                   @click="emit('next', modelValue)"
                 />
                 <FormButton
@@ -147,13 +150,17 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
-            <div v-if="isEmbedEnabled" class="flex justify-between w-full gap-2 p-2">
+            <div
+              v-if="isEmbedEnabled"
+              class="flex justify-between w-full p-2 border-t border-outline-2"
+            >
               <FormButton
-                :icon-right="ArrowTopRightOnSquareIcon"
                 full-width
                 :to="getLinkToThread(projectId, props.modelValue)"
                 external
                 target="_blank"
+                size="sm"
+                color="outline"
               >
                 Reply in Speckle
               </FormButton>
@@ -219,6 +226,8 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
+  hasPrevious?: boolean
+  hasNext?: boolean
 }>()
 
 const { isEmbedEnabled } = useEmbed()
