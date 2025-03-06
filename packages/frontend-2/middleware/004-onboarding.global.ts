@@ -58,14 +58,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 2. Segmentation questions redirect
-  const isOnboardingFinished = userData.activeUser.isOnboardingFinished
-  const isGoingToOnboarding = to.path === onboardingRoute
+  const isSegmentationFinished = userData.activeUser.isOnboardingFinished
+  const isGoingToSegmentation = to.path === onboardingRoute
 
-  if (!isOnboardingFinished && !isGoingToOnboarding) {
+  if (!isSegmentationFinished && !isGoingToSegmentation) {
     return navigateTo(onboardingRoute)
   }
 
-  if (isGoingToOnboarding && isOnboardingFinished) {
+  if (isGoingToSegmentation && isSegmentationFinished) {
     return navigateTo(homeRoute)
   }
 
