@@ -3,7 +3,6 @@ import {
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
-  WorkspacePlanProductAndPriceIds,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
@@ -169,7 +168,16 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
+type Products = 'guest' | 'starter' | 'plus' | 'business' | 'viewer' | 'team' | 'pro'
+
+export type GetWorkspacePlanProductAndPriceIds = () => Omit<
+  Record<Products, { productId: string; monthly: string; yearly: string }>,
+  'viewer' | 'team' | 'pro'
+> & {
+  team?: { productId: string; monthly: string }
+  pro?: { productId: string; monthly: string; yearly: string }
+  viewer?: { productId: string; monthly: string; yearly: string }
+}
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,

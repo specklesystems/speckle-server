@@ -2,18 +2,12 @@
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
 import {
   CreateCheckoutSession,
-  CreateCheckoutSessionOld
+  CreateCheckoutSessionOld,
+  GetWorkspacePlanPriceId
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import { EnvironmentResourceError, NotImplementedError } from '@/modules/shared/errors'
-import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { Stripe } from 'stripe'
-
-type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingProducts
-  billingInterval: WorkspacePlanBillingIntervals
-}) => string
 
 export const createCheckoutSessionFactoryOld =
   ({
@@ -23,7 +17,7 @@ export const createCheckoutSessionFactoryOld =
   }: {
     stripe: Stripe
     frontendOrigin: string
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspacePlanPrice: GetWorkspacePlanPriceId
   }): CreateCheckoutSessionOld =>
   async ({
     seatCount,
@@ -88,7 +82,7 @@ export const createCheckoutSessionFactoryNew =
   }: {
     stripe: Stripe
     frontendOrigin: string
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspacePlanPrice: GetWorkspacePlanPriceId
   }): CreateCheckoutSession =>
   async ({
     editorsCount,

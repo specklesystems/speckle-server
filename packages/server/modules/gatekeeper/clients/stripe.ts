@@ -7,6 +7,7 @@ import {
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import { LogicError } from '@/modules/shared/errors'
+import { isString } from 'lodash'
 import { Stripe } from 'stripe'
 
 export const createCustomerPortalUrlFactory =

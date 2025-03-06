@@ -163,7 +163,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         billing: () => ({})
       },
       WorkspaceBillingMutations: {
-        cancelCheckoutSession: async (parent, args, ctx) => {
+        cancelCheckoutSession: async (_parent, args, ctx) => {
           const { workspaceId, sessionId } = args.input
 
           await authorizeResolver(
@@ -199,12 +199,12 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             ? createCheckoutSessionFactoryNew({
                 stripe: getStripeClient(),
                 frontendOrigin: getFrontendOrigin(),
-                getWorkspacePlanPrice
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
               })
             : createCheckoutSessionFactoryOld({
                 stripe: getStripeClient(),
                 frontendOrigin: getFrontendOrigin(),
-                getWorkspacePlanPrice
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
               })
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
           const startCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
