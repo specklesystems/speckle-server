@@ -94,6 +94,11 @@
           "type": "boolean",
           "description": "Disables the ability sign up with personal email addresses",
           "default": false
+        },
+        "workspacesNewPlanEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.",
+          "default": false
         }
       }
     },
@@ -467,6 +472,21 @@
       "type": "object",
       "properties": {
         "connectionString": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+              "default": ""
+            }
+          }
+        },
+        "previewServiceConnectionString": {
           "type": "object",
           "properties": {
             "secretName": {
@@ -1799,6 +1819,11 @@
     "preview_service": {
       "type": "object",
       "properties": {
+        "dedicatedPreviewsQueue": {
+          "type": "boolean",
+          "description": "Allows using a dedicated redis url for the preview service job queue",
+          "default": false
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",

@@ -29,6 +29,7 @@ import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 /** Workspace */
 
@@ -385,6 +386,10 @@ export type CopyProjectObjects = (params: {
 export type CopyProjectAutomations = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type AssignWorkspaceSeat = (
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type?: WorkspaceSeatType }
+) => Promise<void>
 export type CopyProjectComments = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
@@ -394,3 +399,10 @@ export type CopyProjectWebhooks = (params: {
 export type CopyProjectBlobs = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type SetUserActiveWorkspace = (args: {
+  userId: string
+  workspaceSlug: string | null
+  /** Is the user in a "personal project" outside of a workspace? */
+  isProjectsActive?: boolean
+}) => Promise<void>

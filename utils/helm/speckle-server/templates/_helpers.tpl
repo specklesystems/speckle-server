@@ -569,6 +569,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
+- name: FF_WORKSPACES_NEW_PLANS_ENABLED
+  value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
+
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -762,6 +765,15 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
       key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+
+
+{{- if .Values.preview_service.dedicatedPreviewsQueue }}
+- name: PREVIEW_SERVICE_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
+      key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
+{{- end }}
 
 # *** PostgreSQL Database ***
 - name: POSTGRES_URL
