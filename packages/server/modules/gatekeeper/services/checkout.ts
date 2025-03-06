@@ -1,131 +1,16 @@
 import {
-  CheckoutSession,
-  CreateCheckoutSession,
   GetCheckoutSession,
-  GetWorkspacePlan,
-  SaveCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
-  GetSubscriptionData,
-  GetWorkspaceCheckoutSession,
-  DeleteCheckoutSession
+  GetSubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
-  WorkspaceAlreadyPaidError,
-  WorkspaceCheckoutSessionInProgressError
+  WorkspaceAlreadyPaidError
 } from '@/modules/gatekeeper/errors/billing'
+import { throwUncoveredError } from '@speckle/shared'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import {
-  PaidWorkspacePlans,
-  Roles,
-  throwUncoveredError,
-  WorkspacePlanBillingIntervals
-} from '@speckle/shared'
-
-export const startCheckoutSessionFactory =
-  ({
-    getWorkspaceCheckoutSession,
-    deleteCheckoutSession,
-    getWorkspacePlan,
-    countRole,
-    createCheckoutSession,
-    saveCheckoutSession
-  }: {
-    getWorkspaceCheckoutSession: GetWorkspaceCheckoutSession
-    deleteCheckoutSession: DeleteCheckoutSession
-    getWorkspacePlan: GetWorkspacePlan
-    countRole: CountWorkspaceRoleWithOptionalProjectRole
-    createCheckoutSession: CreateCheckoutSession
-    saveCheckoutSession: SaveCheckoutSession
-  }) =>
-  async ({
-    workspaceId,
-    workspaceSlug,
-    workspacePlan,
-    billingInterval,
-    isCreateFlow
-  }: {
-    workspaceId: string
-    workspaceSlug: string
-    workspacePlan: PaidWorkspacePlans
-    billingInterval: WorkspacePlanBillingIntervals
-    isCreateFlow: boolean
-  }): Promise<CheckoutSession> => {
-    // get workspace plan, if we're already on a paid plan, do not allow checkout
-    // paid plans should use a subscription modification
-    const existingWorkspacePlan = await getWorkspacePlan({ workspaceId })
-
-    // it will technically not be possible to not have
-    if (existingWorkspacePlan) {
-      // maybe we can just ignore the plan not existing, cause we're putting it on a plan post checkout
-      switch (existingWorkspacePlan.status) {
-        // valid and paymentFailed, but not canceled status is not something we need a checkout for
-        // we already have their credit card info
-        case 'valid':
-        case 'paymentFailed':
-        case 'cancelationScheduled':
-          throw new WorkspaceAlreadyPaidError()
-        case 'canceled':
-          const existingCheckoutSession = await getWorkspaceCheckoutSession({
-            workspaceId
-          })
-          if (existingCheckoutSession)
-            await deleteCheckoutSession({
-              checkoutSessionId: existingCheckoutSession?.id
-            })
-          break
-
-        // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
-        // it will create a new customer and a new sub though, the reactivation would use the existing customer
-        case 'trial':
-        case 'expired':
-          // lets go ahead and pay
-          break
-        default:
-          throwUncoveredError(existingWorkspacePlan)
-      }
-    }
-
-    // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
-    const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
-      workspaceId
-    })
-    if (workspaceCheckoutSession) {
-      if (workspaceCheckoutSession.paymentStatus === 'paid')
-        // this is should not be possible, but its better to be checking it here, than double charging the customer
-        throw new WorkspaceAlreadyPaidError()
-      if (new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() > 1000) {
-        await deleteCheckoutSession({
-          checkoutSessionId: workspaceCheckoutSession.id
-        })
-      } else {
-        throw new WorkspaceCheckoutSessionInProgressError()
-      }
-    }
-
-    const [adminCount, memberCount, guestCount] = await Promise.all([
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
-      countRole({ workspaceId, workspaceRole: Roles.Workspace.Guest })
-    ])
-
-    const checkoutSession = await createCheckoutSession({
-      workspaceId,
-      workspaceSlug,
-
-      billingInterval,
-      workspacePlan,
-      guestCount,
-      seatCount: adminCount + memberCount,
-      isCreateFlow
-    })
-
-    await saveCheckoutSession({ checkoutSession })
-    return checkoutSession
-  }
 
 export const completeCheckoutSessionFactory =
   ({
