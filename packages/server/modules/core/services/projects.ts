@@ -36,7 +36,10 @@ export const createNewProjectFactory =
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
     const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
     const isPublic = !visibility || publicVisibilities.includes(visibility)
-    const isDiscoverable = visibility === 'PUBLIC'
+
+    // const isDiscoverable = visibility === 'PUBLIC'
+    const isDiscoverable = false // discoverability disabled for now
+
     const project: Project = {
       id: cryptoRandomString({ length: 10 }),
       name: name || generateProjectName(),
