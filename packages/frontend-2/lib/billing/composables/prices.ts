@@ -48,6 +48,7 @@ export const useWorkspacePlanPrices = () => {
   const prices = computed(() => {
     const base = result.value?.serverInfo?.workspaces?.planPrices
     if (!base) return undefined
+
     const guestSeatPrices = base.find((p) => p.id === 'guest')
 
     return base.reduce((acc, price) => {
