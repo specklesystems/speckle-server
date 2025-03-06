@@ -1,5 +1,6 @@
 <mj-head>
   <mj-attributes>
+    <mj-all font-family="Helvetica, Arial, sans-serif" />
     <mj-class name="bgblue" background-color="#146CFF" />
   </mj-attributes>
   <mj-style inline="inline">

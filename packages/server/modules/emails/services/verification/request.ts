@@ -101,7 +101,7 @@ const createNewEmailVerificationFactory =
   }
 
 function buildMjmlBody(verificationCode: string) {
-  const bodyStart = `<mj-text align="center" line-height="2">You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</mj-text>
+  const bodyStart = `<mj-text align="center" line-height="2" padding-top="0" padding-bottom="5px">You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</mj-text>
   <mj-text align="center" font-size="32px" font-weight="bold" padding-bottom="5px" line-height="2">${verificationCode}</mj-text>
   <mj-text align="center" line-height="2">This code will expire in 5 minutes. Please do not disclose this code to others.</mj-text>
   <mj-text align="center" line-height="2">If you did not make this request, please disregard this email.</mj-text>

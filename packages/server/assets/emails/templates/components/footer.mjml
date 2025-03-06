@@ -70,19 +70,6 @@
       </a>
       &nbsp;&nbsp;&nbsp;
       <a
-        href="https://www.facebook.com/specklesytems/"
-        target="_blank"
-        style="display: inline-block; vertical-align: middle"
-      >
-        <img
-          src="<%- params.serverInfo.canonicalUrl -%>/static/social/facebook.svg"
-          width="16"
-          height="16"
-          alt="Facebook"
-        />
-      </a>
-      &nbsp;&nbsp;&nbsp;
-      <a
         href="https://www.youtube.com/c/SpeckleSystems"
         target="_blank"
         style="display: inline-block; vertical-align: middle"
