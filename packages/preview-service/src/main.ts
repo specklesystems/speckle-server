@@ -14,12 +14,14 @@ import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 import { wait } from '@speckle/shared'
+import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 
 const app = express()
 const port = PORT
 
 // serve the preview-frontend
 app.use(express.static('public'))
+await initMetrics({ app, registry: initPrometheusRegistry() })
 
 let client: Redis
 let subscriber: Redis

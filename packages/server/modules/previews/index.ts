@@ -26,7 +26,6 @@ import {
   upsertObjectPreviewFactory
 } from '@/modules/previews/repository/previews'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
-import prometheusClient from 'prom-client'
 import { initializeMetrics } from '@/modules/previews/observability/metrics'
 
 const getPreviewQueues = (params: { responseQueueName: string }) => {
@@ -81,7 +80,7 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
   return { previewRequestQueue, previewResponseQueue }
 }
 
-export const init: SpeckleModule['init'] = ({ app, isInitial }) => {
+export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister }) => {
   if (isInitial) {
     if (disablePreviews()) {
       moduleLogger.warn('📸 Object preview module is DISABLED')
@@ -98,7 +97,7 @@ export const init: SpeckleModule['init'] = ({ app, isInitial }) => {
     })
 
     const { previewJobsProcessedSummary } = initializeMetrics({
-      registers: [prometheusClient.register],
+      registers: [metricsRegister],
       previewRequestQueue
     })
 
