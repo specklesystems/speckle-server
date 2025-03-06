@@ -22,7 +22,7 @@ const ensureConditions = async () => {
   })
 }
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   await ensureConditions()
 
   app.use(blobStorageRouterFactory())

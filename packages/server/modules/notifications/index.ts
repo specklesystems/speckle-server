@@ -45,7 +45,7 @@ export async function initializeConsumption(
   }
 }
 
-export const init: SpeckleModule['init'] = async (_, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
     await initializeConsumption()

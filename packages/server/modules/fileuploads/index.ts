@@ -15,7 +15,7 @@ import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return

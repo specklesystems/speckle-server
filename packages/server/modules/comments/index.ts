@@ -19,7 +19,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 let unsubFromEvents: Optional<() => void> = undefined
 
 const commentsModule: SpeckleModule = {
-  async init(_, isInitial) {
+  async init({ isInitial }) {
     moduleLogger.info('🗣  Init comments module')
 
     if (isInitial) {
