@@ -4,15 +4,18 @@ import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 export const initializeMetrics = (params: {
   registers: Registry[]
   previewRequestQueue: Bull.Queue
+  previewResponseQueue: Bull.Queue
 }) => {
-  const { registers, previewRequestQueue } = params
+  const { registers, previewRequestQueue, previewResponseQueue } = params
+
+  // ======= Request Queue =======
   // add a metric to gauge the length of the preview job queue
   registers.forEach((r) =>
-    r.removeSingleMetric('speckle_server_preview_jobs_queue_pending')
+    r.removeSingleMetric('speckle_server_preview_jobs_request_queue_pending')
   )
   new Gauge({
-    name: 'speckle_server_preview_jobs_queue_pending',
-    help: 'Number of preview jobs waiting in the job queue',
+    name: 'speckle_server_preview_jobs_request_queue_pending',
+    help: 'Number of preview jobs waiting in the job request queue',
     async collect() {
       this.set(await previewRequestQueue.count())
     }
@@ -21,7 +24,7 @@ export const initializeMetrics = (params: {
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_request_waiting_count')
   )
-  const previewJobsWaitingCounter = new Counter({
+  const previewJobsRequestWaitingCounter = new Counter({
     name: 'speckle_server_preview_jobs_request_waiting_count',
     help: 'Total number of preview jobs which have been added to the queue to be processed (and are in a waiting state).'
   })
@@ -29,7 +32,7 @@ export const initializeMetrics = (params: {
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_request_active_count')
   )
-  const previewJobsActiveCounter = new Counter({
+  const previewJobsRequestActiveCounter = new Counter({
     name: 'speckle_server_preview_jobs_request_active_count',
     help: 'Total number of preview jobs which have been requested and were being processed (are in an active state).'
   })
@@ -37,18 +40,67 @@ export const initializeMetrics = (params: {
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_request_completed_count')
   )
-  const previewJobsCompletedCounter = new Counter({
-    name: 'speckle_server_preview_jobs_completed_count',
+  const previewJobsRequestCompletedCounter = new Counter({
+    name: 'speckle_server_preview_jobs_request_completed_count',
     help: 'Total number of preview jobs which have been requested and were successful in being completed by a worker.'
   })
 
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_request_failed_count')
   )
-  const previewJobsFailedCounter = new Counter({
+  const previewJobsRequestFailedCounter = new Counter({
     name: 'speckle_server_preview_jobs_request_failed_count',
     help: 'Total number of preview jobs which have been requested and were not successful (failed).'
   })
+
+  previewRequestQueue.on('waiting', () => {
+    previewJobsRequestWaitingCounter.inc()
+  })
+  previewRequestQueue.on('completed', () => {
+    previewJobsRequestCompletedCounter.inc()
+  })
+  previewRequestQueue.on('active', () => {
+    previewJobsRequestActiveCounter.inc()
+  })
+  previewRequestQueue.on('failed', () => {
+    previewJobsRequestFailedCounter.inc()
+  })
+
+  // ======= Response Queue =======
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_response_queue_pending')
+  )
+  new Gauge({
+    name: 'speckle_server_preview_jobs_response_queue_pending',
+    help: 'Number of responses to preview jobs waiting in the response queue',
+    async collect() {
+      this.set(await previewResponseQueue.count())
+    }
+  })
+
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_response_completed_count')
+  )
+  const previewJobsResponseCompletedCounter = new Counter({
+    name: 'speckle_server_preview_jobs_response_completed_count',
+    help: 'Total number of preview jobs which have been responded and the response has been successfully processed.'
+  })
+
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_response_failed_count')
+  )
+  const previewJobsResponseFailedCounter = new Counter({
+    name: 'speckle_server_preview_jobs_response_failed_count',
+    help: 'Total number of preview jobs which have been responded and the response has not been successfully processed.'
+  })
+  previewResponseQueue.on('completed', () => {
+    previewJobsResponseCompletedCounter.inc()
+  })
+  previewResponseQueue.on('failed', () => {
+    previewJobsResponseFailedCounter.inc()
+  })
+
+  // ======= Responses =======
 
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_processed_duration_seconds')
@@ -57,19 +109,6 @@ export const initializeMetrics = (params: {
     name: 'speckle_server_preview_jobs_processed_duration_seconds',
     help: 'Duration of preview job processing, in seconds',
     labelNames: ['status']
-  })
-
-  previewRequestQueue.on('waiting', () => {
-    previewJobsWaitingCounter.inc()
-  })
-  previewRequestQueue.on('completed', () => {
-    previewJobsCompletedCounter.inc()
-  })
-  previewRequestQueue.on('active', () => {
-    previewJobsActiveCounter.inc()
-  })
-  previewRequestQueue.on('failed', () => {
-    previewJobsFailedCounter.inc()
   })
 
   return { previewJobsProcessedSummary }

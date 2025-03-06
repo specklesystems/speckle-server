@@ -98,7 +98,8 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
 
     const { previewJobsProcessedSummary } = initializeMetrics({
       registers: [metricsRegister],
-      previewRequestQueue
+      previewRequestQueue,
+      previewResponseQueue
     })
 
     const router = createBullBoard([
