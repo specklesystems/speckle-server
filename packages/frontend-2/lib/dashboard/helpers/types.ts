@@ -27,7 +27,8 @@ export const enum ConnectorCategory {
 export type ConnectorItem = {
   title: string
   image: string
-  url: string
+  url?: string
   description: string
   categories?: ConnectorCategory[]
+  isComingSoon?: boolean
 }

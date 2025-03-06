@@ -1,5 +1,11 @@
 <template>
-  <NuxtLink :to="connector.url" target="_blank" class="flex" @click="handleClick">
+  <component
+    :is="connector.isComingSoon ? 'div' : NuxtLink"
+    :to="connector.url"
+    target="_blank"
+    class="flex"
+    @click="handleClick"
+  >
     <CommonCard
       class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
     >
@@ -10,15 +16,23 @@
           :alt="`${connector.title} logo`"
           class="w-[48px] -ml-1"
         />
-        <h2 class="text-body-xs text-foreground font-medium">
-          {{ connector.title }}
-        </h2>
+        <div class="flex flex-col gap-y-1.5">
+          <p
+            v-if="connector.isComingSoon"
+            class="text-body-3xs text-foreground-2 leading-none"
+          >
+            Coming soon
+          </p>
+          <h2 class="text-body-xs text-foreground font-medium leading-none">
+            {{ connector.title }}
+          </h2>
+        </div>
       </div>
       <p class="text-body-2xs text-foreground-2 line-clamp-5 leading-5">
         {{ connector.description }}
       </p>
     </CommonCard>
-  </NuxtLink>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +42,8 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 const props = defineProps<{
   connector: ConnectorItem
 }>()
+
+const NuxtLink = resolveComponent('NuxtLink')
 
 const mixpanel = useMixpanel()
 

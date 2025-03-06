@@ -30,22 +30,6 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
   {
-    title: 'Blender',
-    description:
-      'Blender is a powerful 3D modeling software and much more than that. Supports Blender 3.X & 4.X versions on Windows and Mac!',
-    url: 'https://www.speckle.systems/connectors/blender',
-    image: '/images/connectors/blender.png',
-    categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
-  },
-  {
-    title: 'Grasshopper',
-    description:
-      'Create anything from simple to advanced custom workflows using Speckle for Grasshopper, the original Speckle Connector!',
-    url: 'https://www.speckle.systems/connectors/grasshopper',
-    image: '/images/connectors/grasshopper.png',
-    categories: [ConnectorCategory.VisualProgramming]
-  },
-  {
     title: 'Power BI',
     description:
       "Speckle's Power BI Connector allows you to integrate data from various AEC apps (like Revit, Archicad, IFC and more)! You can create detailed analysis and interactive 3D visualisations.",
@@ -68,14 +52,6 @@ export const connectorItems: ConnectorItem[] = [
     url: 'https://www.speckle.systems/connectors/qgis',
     image: '/images/connectors/qgis.png',
     categories: [ConnectorCategory.GIS]
-  },
-  {
-    title: 'Excel',
-    description:
-      "Create geometry, schedules and analyse your geometry's metadata. Available on the Microsoft Office Store.",
-    url: 'https://www.speckle.systems/connectors/excel',
-    image: '/images/connectors/excel.png',
-    categories: [ConnectorCategory.BusinessIntelligence]
   },
   {
     title: 'AutoCAD',
@@ -114,14 +90,6 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
-    title: 'Dynamo',
-    description:
-      'Customise and control basic geometry and transform it into BIM elements using Speckle for Dynamo. Supports Dynamo Revit 2020 to 2023.',
-    url: 'https://www.speckle.systems/connectors/dynamo',
-    image: '/images/connectors/dynamo.png',
-    categories: [ConnectorCategory.VisualProgramming]
-  },
-  {
     title: 'Archicad',
     description:
       'Extract BIM data for further processing and visualisation, or dynamically create models from other CAD applications using Speckle for Archicad! Supports Archicad 25 to 27.',
@@ -130,27 +98,37 @@ export const connectorItems: ConnectorItem[] = [
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
   {
-    title: 'Unity',
-    description:
-      'Visualise your BIM data in one of the world’s most popular game engines using the Speckle for Unity Connector! Early release for developers.',
-    url: 'https://www.speckle.systems/connectors/unity',
-    image: '/images/connectors/unity.png',
-    categories: [ConnectorCategory.Visualisation]
-  },
-  {
-    title: 'Unreal',
-    description:
-      "Coordinate and curate with Speckle for Unreal: visualise your BIM data in Unreal and build VR/XR applications using Epic's fantastic game engine! Early release for developers.",
-    url: 'https://www.speckle.systems/connectors/unreal',
-    image: '/images/connectors/unreal.png',
-    categories: [ConnectorCategory.Visualisation]
-  },
-  {
     title: 'TeklaStructures',
     description:
       'Connect to Speckle with our Connector for Tekla Structures. Send and receive BIM data in customisable ways to enhance your workflows.',
     url: 'https://www.speckle.systems/connectors/teklastructures-alpha',
     image: '/images/connectors/teklastructures.png',
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
+  },
+
+  // Non-available connectors
+  {
+    title: 'Excel',
+    description:
+      "Create geometry, schedules and analyse your geometry's metadata. Available on the Microsoft Office Store.",
+    image: '/images/connectors/excel.png',
+    categories: [ConnectorCategory.BusinessIntelligence],
+    isComingSoon: true
+  },
+  {
+    title: 'Blender',
+    description:
+      'Blender is a powerful 3D modeling software and much more than that. Supports Blender 3.X & 4.X versions on Windows and Mac!',
+    image: '/images/connectors/blender.png',
+    categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling],
+    isComingSoon: true
+  },
+  {
+    title: 'Grasshopper',
+    description:
+      'Create anything from simple to advanced custom workflows using Speckle for Grasshopper, the original Speckle Connector!',
+    image: '/images/connectors/grasshopper.png',
+    categories: [ConnectorCategory.VisualProgramming],
+    isComingSoon: true
   }
 ]
