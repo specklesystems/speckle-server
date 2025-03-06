@@ -70,7 +70,7 @@ const server = app.listen(port, async () => {
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      protocolTimeout: PREVIEW_TIMEOUT * 1000
+      protocolTimeout: PREVIEW_TIMEOUT
     })
   }
   logger.debug('Starting message queues')
