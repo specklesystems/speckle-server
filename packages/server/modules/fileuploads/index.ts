@@ -24,7 +24,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return

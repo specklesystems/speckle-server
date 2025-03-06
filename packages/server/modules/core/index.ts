@@ -41,7 +41,7 @@ const coreModule: SpeckleModule<{
   async executeHooks(key: keyof HooksConfig, { projectId }: { projectId: string }) {
     return await Promise.all(this.hooks[key].map(async (cb) => await cb({ projectId })))
   },
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     moduleLogger.info('💥 Init core module')
 
     // Initialize the static route
