@@ -622,6 +622,7 @@ jobs:
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_GATEKEEPER_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
