@@ -12,6 +12,7 @@ import {
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles } from '@speckle/shared'
@@ -61,13 +62,15 @@ export const createNewProjectFactory =
             const replicatedProject = await getProject({ projectId })
             if (!replicatedProject) throw new StreamNotFoundError()
           },
-          { maxAttempts: 10 }
+          { maxAttempts: 10, delay: isTestEnv() ? 1000 : undefined }
         )
       } catch (err) {
         if (err instanceof StreamNotFoundError) {
           // delete from region
           await deleteProject({ projectId })
-          throw new RegionalProjectCreationError()
+          throw new RegionalProjectCreationError(undefined, {
+            info: { projectId, regionKey }
+          })
         }
         // else throw as is
         throw err

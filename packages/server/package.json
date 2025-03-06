@@ -39,7 +39,8 @@
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml",
-    "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\""
+    "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\"",
+    "stripe:listen": "stripe listen --forward-to 127.0.0.1:3000/api/v1/billing/webhooks"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
