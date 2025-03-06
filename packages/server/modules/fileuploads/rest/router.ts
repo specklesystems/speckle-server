@@ -21,14 +21,12 @@ export const fileuploadRouterFactory = (): Router => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    async (req, res, next) => {
-      await authMiddlewareCreator(
-        streamWritePermissionsPipelineFactory({
-          getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db })
-        })
-      )(req, res, next)
-    },
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getRoles: getRolesFactory({ db }),
+        getStream: getStreamFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       const streamId = req.params.streamId
@@ -86,8 +84,8 @@ export const fileuploadRouterFactory = (): Router => {
         logger,
         onFinishAllFileUploads: async (uploadResults) => {
           await saveFileUploads({
-            userId: req.context.userId!,
-            streamId: req.params.streamId,
+            userId,
+            streamId,
             branchName,
             uploadResults
           })
