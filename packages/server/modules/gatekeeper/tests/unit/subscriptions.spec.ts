@@ -1422,6 +1422,8 @@ describe('subscriptions @gatekeeper', () => {
               return 'teamProduct'
             case 'pro':
               return 'proProduct'
+            case 'viewer':
+              return 'viewerProduct'
           }
         },
         getWorkspacePlanPriceId: () => {
