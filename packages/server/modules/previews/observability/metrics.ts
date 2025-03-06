@@ -18,10 +18,28 @@ export const initializeMetrics = (params: {
     }
   })
 
-  registers.forEach((r) => r.removeSingleMetric('speckle_server_preview_jobs_count'))
-  const previewJobsCounter = new Counter({
-    name: 'speckle_server_preview_jobs_count',
-    help: 'Total number of preview jobs which have been requested to be processed.'
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_request_waiting_count')
+  )
+  const previewJobsWaitingCounter = new Counter({
+    name: 'speckle_server_preview_jobs_request_waiting_count',
+    help: 'Total number of preview jobs which have been added to the queue to be processed (and are in a waiting state).'
+  })
+
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_request_active_count')
+  )
+  const previewJobsActiveCounter = new Counter({
+    name: 'speckle_server_preview_jobs_request_active_count',
+    help: 'Total number of preview jobs which have been requested and were being processed (are in an active state).'
+  })
+
+  registers.forEach((r) =>
+    r.removeSingleMetric('speckle_server_preview_jobs_request_completed_count')
+  )
+  const previewJobsCompletedCounter = new Counter({
+    name: 'speckle_server_preview_jobs_completed_count',
+    help: 'Total number of preview jobs which have been requested and were successful in being completed by a worker.'
   })
 
   registers.forEach((r) =>
@@ -29,7 +47,7 @@ export const initializeMetrics = (params: {
   )
   const previewJobsFailedCounter = new Counter({
     name: 'speckle_server_preview_jobs_request_failed_count',
-    help: 'Total number of preview jobs which have been requested but failed to be processed.'
+    help: 'Total number of preview jobs which have been requested and were not successful (failed).'
   })
 
   registers.forEach((r) =>
@@ -41,8 +59,14 @@ export const initializeMetrics = (params: {
     labelNames: ['status']
   })
 
-  previewRequestQueue.on('added', () => {
-    previewJobsCounter.inc()
+  previewRequestQueue.on('waiting', () => {
+    previewJobsWaitingCounter.inc()
+  })
+  previewRequestQueue.on('completed', () => {
+    previewJobsCompletedCounter.inc()
+  })
+  previewRequestQueue.on('active', () => {
+    previewJobsActiveCounter.inc()
   })
   previewRequestQueue.on('failed', () => {
     previewJobsFailedCounter.inc()
