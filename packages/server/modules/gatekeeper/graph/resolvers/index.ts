@@ -9,7 +9,6 @@ import {
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
-  createCheckoutSessionFactory,
   createCustomerPortalUrlFactory,
   getRecurringPricesFactory,
   reconcileWorkspaceSubscriptionFactory
@@ -20,7 +19,6 @@ import {
   getWorkspacePlanProductId,
   getWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/stripe'
-import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
@@ -33,7 +31,11 @@ import {
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
-import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
+import {
+  calculateSubscriptionSeats,
+  CreateCheckoutSession,
+  CreateCheckoutSessionOld
+} from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
@@ -41,11 +43,25 @@ import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/servi
 import { extendLoggerComponent } from '@/observability/logging'
 import { OperationName, OperationStatus } from '@/observability/domain/fields'
 import { logWithErr } from '@/observability/utils/logLevels'
+import {
+  createCheckoutSessionFactoryNew,
+  createCheckoutSessionFactoryOld
+} from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
+import {
+  startCheckoutSessionFactoryNew,
+  startCheckoutSessionFactoryOld
+} from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
+
+async function shouldUseNewCheckoutFlow(workspaceId: string) {
+  const workspacePlan = await getWorkspacePlan({ workspaceId })
+  return workspacePlan && isNewPlanType(workspacePlan.name)
+}
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
@@ -147,7 +163,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         billing: () => ({})
       },
       WorkspaceBillingMutations: {
-        cancelCheckoutSession: async (parent, args, ctx) => {
+        cancelCheckoutSession: async (_parent, args, ctx) => {
           const { workspaceId, sessionId } = args.input
 
           await authorizeResolver(
@@ -159,7 +175,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           await deleteCheckoutSessionFactory({ db })({ checkoutSessionId: sessionId })
           return true
         },
-        createCheckoutSession: async (parent, args, ctx) => {
+        createCheckoutSession: async (_parent, args, ctx) => {
           let logger = extendLoggerComponent(
             ctx.log,
             'gatekeeper',
@@ -179,25 +195,40 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-
-          const createCheckoutSession = createCheckoutSessionFactory({
-            stripe: getStripeClient(),
-            frontendOrigin: getFrontendOrigin(),
-            getWorkspacePlanPrice: getWorkspacePlanPriceId
-          })
-
+          const createCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
+            ? createCheckoutSessionFactoryNew({
+                stripe: getStripeClient(),
+                frontendOrigin: getFrontendOrigin(),
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
+              })
+            : createCheckoutSessionFactoryOld({
+                stripe: getStripeClient(),
+                frontendOrigin: getFrontendOrigin(),
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
+              })
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+          const startCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
+            ? startCheckoutSessionFactoryNew({
+                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+                getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
+                createCheckoutSession: createCheckoutSession as CreateCheckoutSession,
+                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+              })
+            : startCheckoutSessionFactoryOld({
+                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+                getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                countRole,
+                createCheckoutSession:
+                  createCheckoutSession as CreateCheckoutSessionOld,
+                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+              })
 
           try {
             logger.info(OperationStatus.start, '[{operationName} ({operationStatus})]')
-            const session = await startCheckoutSessionFactory({
-              getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-              getWorkspacePlan: getWorkspacePlanFactory({ db }),
-              countRole,
-              createCheckoutSession,
-              saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-              deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-            })({
+            const session = await startCheckoutSession({
               workspacePlan,
               workspaceId,
               workspaceSlug: workspace.slug,
