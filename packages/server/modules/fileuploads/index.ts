@@ -2,6 +2,7 @@
 import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
+  onFileProcessingFactory,
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
 import { getFileInfoFactory } from '@/modules/fileuploads/repositories/fileUploads'
@@ -34,6 +35,15 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         eventEmit: getEventBus().emit
+      })(parsedMessage)
+    })
+    listenFor('file_import_started', async (msg) => {
+      const parsedMessage = parseMessagePayload(msg.payload)
+      if (!parsedMessage.streamId) return
+      const projectDb = await getProjectDbClient({ projectId: parsedMessage.streamId })
+      await onFileProcessingFactory({
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
+        publish
       })(parsedMessage)
     })
   }
