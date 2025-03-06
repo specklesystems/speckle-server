@@ -57,7 +57,7 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { _: false }
     },
-    // Enables Stripe billing integration
+    // Enables the 'gatekeeper', required for enabling licensed features
     // This requires a valid Speckle Enterprise Edition license in order to be enabled.
     // See https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme
     FF_GATEKEEPER_MODULE_ENABLED: {
