@@ -474,7 +474,8 @@ onKeyStroke('Escape', () => {
 
 onMounted(() => {
   // Set initial panel state after component is mounted
-  activePanel.value = isSmallerOrEqualSm.value ? 'none' : 'models'
+  activePanel.value =
+    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
 })
 
 watch(isSmallerOrEqualSm, (newVal) => {
