@@ -1,3 +1,4 @@
+import { basicProjectFieldsFragment } from '@/test/graphql/projects'
 import { gql } from 'graphql-tag'
 
 export const basicWorkspaceFragment = gql`
@@ -360,4 +361,18 @@ export const getWorkspaceWithJoinRequestsQuery = gql`
     }
   }
   ${basicWorkspaceFragment}
+`
+
+export const updateWorkspaceProjectRoleMutation = gql`
+  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
+    workspaceMutations {
+      projects {
+        updateRole(input: $input) {
+          ...BasicProjectFields
+        }
+      }
+    }
+  }
+
+  ${basicProjectFieldsFragment}
 `
