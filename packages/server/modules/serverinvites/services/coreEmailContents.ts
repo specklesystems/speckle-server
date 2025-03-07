@@ -23,7 +23,7 @@ function buildServerMjmlPreamble(params: Parameters<BuildInviteEmailContents>[0]
   const { message } = invite
 
   const bodyStart = `
-  <mj-text>
+  <mj-text font-size="12px" color="#626263" align="center" padding="0px">
   Hello!
   <br />
   <br />
@@ -37,7 +37,7 @@ function buildServerMjmlPreamble(params: Parameters<BuildInviteEmailContents>[0]
   return {
     bodyStart,
     bodyEnd:
-      '<mj-text>Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
+      '<mj-text font-size="12px" color="#626263" align="center" padding="0px">Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
   }
 }
 

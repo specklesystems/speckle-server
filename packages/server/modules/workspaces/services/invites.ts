@@ -326,7 +326,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const mjml = {
       bodyStart: `
-  <mj-text>
+  <mj-text font-size="12px" color="#626263" align="center" padding="0px">
   Hello!
   <br />
   <br />
@@ -334,7 +334,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
   </mj-text>
   `,
       bodyEnd:
-        '<mj-text>Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
+        '<mj-text font-size="12px" color="#626263" align="center" padding="0px">Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
     }
     const text = {
       bodyStart: `Hello!
