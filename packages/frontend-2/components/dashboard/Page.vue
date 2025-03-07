@@ -62,7 +62,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
           <TutorialsCard
-            v-for="tutorialItem in tutorials.slice(0, 4)"
+            v-for="tutorialItem in tutorialItems.slice(0, 4)"
             :key="tutorialItem.title"
             :tutorial-item="tutorialItem"
             source="dashboard"
@@ -114,7 +114,6 @@ useUserProjectsUpdatedTracking()
 
 const promoBanners = ref<PromoBanner[]>()
 const openNewProject = ref(false)
-const tutorials = shallowRef(tutorialItems)
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Speckle manager',
