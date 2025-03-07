@@ -25,19 +25,19 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           v-if="modelValue.isExpanded && !isEmbedEnabled"
-          class="bg-foundation px-2 py-2 text-sm text-primary sm:hidden font-medium flex justify-between items-center"
+          class="bg-foundation p-3 text-body-2xs text-foreground font-semibold sm:hidden flex justify-between items-center"
         >
           Add Comment
           <button v-tippy="'Close'" @click="onThreadClick">
-            <PlusIcon class="w-5 h-5 text-primary rotate-45" />
+            <PlusIcon class="w-5 h-5 text-foreground-2 rotate-45" />
           </button>
         </div>
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
+          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
         >
-          <div class="relative p-4 pr-3">
+          <div class="relative p-3 px-2 pr-1 sm:p-3 sm:pr-2">
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"

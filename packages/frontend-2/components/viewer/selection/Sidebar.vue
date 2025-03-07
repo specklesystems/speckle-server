@@ -90,7 +90,7 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement },
+  ui: { diff, measurement, threads },
   urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
@@ -217,6 +217,16 @@ watch(
     if (newLength !== 0 && !focusedThreadId.value) {
       sidebarOpen.value = true
     } else if (newLength === 0) {
+      sidebarOpen.value = false
+    }
+  }
+)
+
+// Close sidebar when a new thread is being added and screen is smaller than md breakpoint
+watch(
+  () => threads.openThread.newThreadEditor.value,
+  (isNewThreadEditorOpen) => {
+    if (isNewThreadEditorOpen && isSmallerOrEqualSm.value) {
       sidebarOpen.value = false
     }
   }
