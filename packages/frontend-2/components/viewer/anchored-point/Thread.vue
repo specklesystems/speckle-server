@@ -45,7 +45,7 @@
           >
             <div
               class="relative w-full flex justify-between items-center border-b border-outline-2"
-              :class="isEmbedEnabled ? 'p-2' : 'p-4'"
+              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:p-4'"
             >
               <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
@@ -72,9 +72,10 @@
                   v-show="isDragged"
                   v-tippy="'Pop in'"
                   :icon-left="ArrowTopRightOnSquareIcon"
-                  text
                   hide-text
                   class="rotate-180"
+                  color="subtle"
+                  size="sm"
                   @click="isDragged = false"
                 />
               </div>
@@ -106,11 +107,11 @@
               </div>
             </div>
             <div
-              class="relative w-full pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
+              class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
             >
               <div
                 ref="commentsContainer"
-                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2"
+                class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
@@ -231,8 +232,6 @@ const { isEmbedEnabled } = useEmbed()
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser, isLoggedIn } = useActiveUser()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
 const {
@@ -276,12 +275,7 @@ const comments = computed(() => [
 ])
 
 const showNewReplyComponent = computed(() => {
-  return (
-    !props.modelValue.archived &&
-    canReply.value &&
-    !isSmallerOrEqualSm.value &&
-    !isEmbedEnabled.value
-  )
+  return !props.modelValue.archived && canReply.value && !isEmbedEnabled.value
 })
 
 // Note: conflicted with dragging styles, so took it out temporarily

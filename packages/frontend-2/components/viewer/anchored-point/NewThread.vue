@@ -55,7 +55,6 @@
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
-                size="sm"
                 class="!bg-foundation-page dark:!bg-foundation"
                 @click="trackAttachAndOpenFilePicker()"
               />

@@ -15,7 +15,7 @@
         </span>
       </div>
       <div
-        class="truncate text-body-2xs text-foreground-2 flex flex-col"
+        class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col"
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
         <CommonTiptapTextEditor
