@@ -21,6 +21,11 @@ export type UpdateBlob = (params: {
 
 export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>
 
+export type DeleteBlobAndAssociatedObject = (params: {
+  blobId: string
+  streamId: string
+}) => Promise<void>
+
 export type GetBlobMetadata = (params: {
   blobId: string
   streamId: string
