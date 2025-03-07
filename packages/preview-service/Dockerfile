@@ -29,6 +29,7 @@ COPY package.json yarn.lock ./
 
 # Only copy in the relevant package.json files for the dependencies
 COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
+COPY packages/preview-frontend/package.json ./packages/preview-frontend/
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
@@ -40,6 +41,7 @@ RUN yarn workspaces focus -A && yarn
 COPY packages/shared ./packages/shared/
 COPY packages/objectloader ./packages/objectloader/
 COPY packages/viewer ./packages/viewer/
+COPY packages/preview-frontend ./packages/preview-frontend/
 COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
@@ -86,15 +88,13 @@ COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
 # Only copy in the relevant package.json files for the dependencies
-COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/preview-service/package.json ./packages/preview-service/
 
 WORKDIR /speckle-server/packages
 
 COPY --link --from=build-stage /speckle-server/packages/shared ./shared
-COPY --link --from=build-stage /speckle-server/packages/objectloader ./objectloader
-COPY --link --from=build-stage /speckle-server/packages/viewer ./viewer
 COPY --link --from=build-stage /speckle-server/packages/preview-service ./preview-service
+COPY --link --from=build-stage /speckle-server/packages/preview-frontend/dist ./preview-service/public
 
 WORKDIR /speckle-server/packages/preview-service
 
@@ -131,7 +131,10 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+ENV CHROMIUM_EXECUTABLE_PATH="/usr/bin/google-chrome"
+ENV USER_DATA_DIR='/tmp/puppeteer'
+
 # Run everything after as non-privileged user.
 USER pptruser
 
-ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
+CMD [ "tini", "--", "node", "--loader=./dist/bootstrap.js", "dist/main.js" ]
