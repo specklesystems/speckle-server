@@ -139,7 +139,7 @@
               </div>
               <div
                 v-if="isTypingMessage"
-                class="bg-foundation rounded-full w-full p-2 caption mt-2"
+                class="w-full px-3 md:px-4 pb-3 caption mt-1 text-body-2xs"
               >
                 {{ isTypingMessage }}
               </div>
@@ -166,9 +166,11 @@
             </div>
             <div
               v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
-              class="p-3 flex flex-col items-center justify-center bg-foundation-2"
+              class="flex justify-between w-full p-2 border-t border-outline-2"
             >
-              <FormButton full-width @click="$emit('login')">Reply</FormButton>
+              <FormButton full-width color="outline" size="sm" @click="$emit('login')">
+                Reply
+              </FormButton>
             </div>
           </div>
         </div>

@@ -12,7 +12,7 @@
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />
-    <div class="flex justify-between items-center pt-2 md:pt-4 pr-1">
+    <div class="flex justify-between items-center pt-2 md:pt-3 pr-1">
       <FormButton
         v-tippy="'Attach'"
         :icon-left="PaperClipIcon"
