@@ -2017,7 +2017,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: ProjectVisibility;
+  visibility: SimpleProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -3128,6 +3128,13 @@ export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Visbility without the "discoverable" option */
+export const SimpleProjectVisibility = {
+  Private: 'PRIVATE',
+  Unlisted: 'UNLISTED'
+} as const;
+
+export type SimpleProjectVisibility = typeof SimpleProjectVisibility[keyof typeof SimpleProjectVisibility];
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -5152,7 +5159,7 @@ export type UpdateWorkspaceProjectRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateWorkspaceProjectRoleMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', projects: { __typename?: 'WorkspaceProjectMutations', updateRole: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } } };
+export type UpdateWorkspaceProjectRoleMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', projects: { __typename?: 'WorkspaceProjectMutations', updateRole: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } } };
 
 export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } };
 
@@ -5495,7 +5502,7 @@ export type EditProjectCommentMutationVariables = Exact<{
 
 export type EditProjectCommentMutation = { __typename?: 'Mutation', commentMutations: { __typename?: 'CommentMutations', edit: { __typename?: 'Comment', id: string, rawText: string, authorId: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } } } };
 
-export type BasicProjectFieldsFragment = { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string };
+export type BasicProjectFieldsFragment = { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string };
 
 export type AdminProjectListQueryVariables = Exact<{
   query?: InputMaybe<Scalars['String']['input']>;
@@ -5506,7 +5513,7 @@ export type AdminProjectListQueryVariables = Exact<{
 }>;
 
 
-export type AdminProjectListQuery = { __typename?: 'Query', admin: { __typename?: 'AdminQueries', projectList: { __typename?: 'ProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> } } };
+export type AdminProjectListQuery = { __typename?: 'Query', admin: { __typename?: 'AdminQueries', projectList: { __typename?: 'ProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> } } };
 
 export type GetProjectObjectQueryVariables = Exact<{
   projectId: Scalars['String']['input'];
@@ -5528,7 +5535,7 @@ export type CreateProjectMutationVariables = Exact<{
 }>;
 
 
-export type CreateProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', create: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } };
+export type CreateProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', create: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } };
 
 export type BatchDeleteProjectsMutationVariables = Exact<{
   ids: Array<Scalars['String']['input']> | Scalars['String']['input'];
@@ -5542,7 +5549,7 @@ export type UpdateProjectRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateProjectRoleMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', updateRole: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } };
+export type UpdateProjectRoleMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', updateRole: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } } };
 
 export type CreateServerInviteMutationVariables = Exact<{
   input: ServerInviteCreateInput;
