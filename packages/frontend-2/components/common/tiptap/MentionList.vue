@@ -14,7 +14,7 @@
         </li>
       </template>
       <template v-else>
-        <li class="p-2 text-body-2xs text-foreground-2">Couldn't find anyone</li>
+        <li class="p-2 text-body-2xs text-foreground-2">No matching users found</li>
       </template>
     </ul>
   </div>
