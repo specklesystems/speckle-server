@@ -3,6 +3,9 @@ ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 ARG BUILD_SOURCEMAPS=false
 
+# for better sourcemaps (the app still gets minified at the end)
+ENV SKIP_VIEWER_MINIFICATION=true
+
 WORKDIR /speckle-server
 
 COPY .yarnrc.yml .
