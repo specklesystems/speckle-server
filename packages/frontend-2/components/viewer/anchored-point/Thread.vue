@@ -343,17 +343,33 @@ const threadStyle = computed(() => {
       ? x.value
       : (props.modelValue.style.x as number) + activatorRect.width + 20
   const threadHeight = threadContainer.value?.getBoundingClientRect().height || 0
+  const threadWidth = threadContainer.value?.getBoundingClientRect().width || 0
   const yOffset =
     isDragged.value && areDraggableCoordsInitialized
       ? y.value
       : (props.modelValue.style.y as number) - threadHeight / 2
+
+  // Constrain to viewport boundaries with 10px padding
+  const padding = 10
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  // Ensure the element stays within the viewport with padding
+  const constrainedX = Math.min(
+    Math.max(padding, xOffset),
+    viewportWidth - threadWidth - padding
+  )
+  const constrainedY = Math.min(
+    Math.max(padding, yOffset),
+    viewportHeight - threadHeight - padding
+  )
 
   const transition = isDragged.value ? 'none' : props.modelValue.style.transition
   return {
     ...props.modelValue.style,
     opacity: 1,
     transition,
-    transform: `translate(${xOffset}px,${yOffset}px)`
+    transform: `translate(${constrainedX}px,${constrainedY}px)`
   }
 })
 
