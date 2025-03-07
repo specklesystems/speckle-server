@@ -1902,7 +1902,9 @@ export type OnboardingCompletionInput = {
 export const PaidWorkspacePlans = {
   Business: 'business',
   Plus: 'plus',
-  Starter: 'starter'
+  Pro: 'pro',
+  Starter: 'starter',
+  Team: 'team'
 } as const;
 
 export type PaidWorkspacePlans = typeof PaidWorkspacePlans[keyof typeof PaidWorkspacePlans];
@@ -4741,10 +4743,12 @@ export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
   /**
-   * Update project region and move all regional data to new db.
-   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   * Schedule a job that will:
+   * - Move all regional data to target region
+   * - Update project region key
+   * - TODO: Eventually delete data in previous region
    */
-  moveToRegion: Project;
+  moveToRegion: Scalars['String']['output'];
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -7153,7 +7157,7 @@ export type WorkspacePlanPriceResolvers<ContextType = GraphQLContext, ParentType
 
 export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectMutations'] = ResolversParentTypes['WorkspaceProjectMutations']> = {
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsCreateArgs, 'input'>>;
-  moveToRegion?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToRegionArgs, 'projectId' | 'regionKey'>>;
+  moveToRegion?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToRegionArgs, 'projectId' | 'regionKey'>>;
   moveToWorkspace?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToWorkspaceArgs, 'projectId' | 'workspaceId'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

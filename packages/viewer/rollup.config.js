@@ -9,6 +9,7 @@ import image from '@rollup/plugin-image'
 
 const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
+const skipMinification = process.env.SKIP_VIEWER_MINIFICATION === 'true'
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
@@ -40,7 +41,7 @@ const config = {
       babelHelpers: 'bundled',
       configFile: './.babelrc'
     }),
-    ...(isProd ? [terser()] : [])
+    ...(isProd && !skipMinification ? [terser()] : [])
   ],
   // Externalizing all deps, we don't want to bundle them in cause this is a library
   external: Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`))

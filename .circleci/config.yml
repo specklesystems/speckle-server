@@ -522,6 +522,7 @@ jobs:
       - run:
           command: yarn test:report
           working_directory: 'packages/server'
+          no_output_timeout: 20m
 
       - codecov/upload:
           files: packages/server/coverage/lcov.info
