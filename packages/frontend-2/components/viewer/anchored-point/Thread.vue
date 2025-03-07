@@ -10,11 +10,7 @@
       <div ref="threadActivator" class="relative">
         <button
           :class="`
-        ${
-          modelValue.isOccluded && !isExpanded
-            ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
-            : ''
-        }
+        ${modelValue.isOccluded && !isExpanded ? 'opacity-60 hover:opacity-100' : ''}
         ${isExpanded ? 'outline outline-2 outline-primary' : ''}
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
           @click="onThreadClick"
