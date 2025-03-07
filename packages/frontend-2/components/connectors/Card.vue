@@ -1,11 +1,5 @@
 <template>
-  <component
-    :is="connector.isComingSoon ? 'div' : NuxtLink"
-    :to="connector.url"
-    target="_blank"
-    class="flex"
-    @click="handleClick"
-  >
+  <div>
     <CommonCard
       class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
     >
@@ -28,29 +22,80 @@
           </h2>
         </div>
       </div>
-      <p class="text-body-2xs text-foreground-2 line-clamp-5 leading-5">
+      <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
         {{ connector.description }}
       </p>
+      <div class="space-x-2 mt-2">
+        <FormButton
+          color="outline"
+          size="sm"
+          :disabled="isLoadingVersions"
+          external
+          :to="latestAvailableVersion?.Url"
+          @click="
+            mixpanel.track('Connector Card Install Clicked', {
+              connector: props.connector.slug
+            })
+          "
+        >
+          {{ connector.isComingSoon ? 'Coming soon' : 'Install' }}
+        </FormButton>
+        <FormButton
+          v-if="connector.url"
+          color="outline"
+          size="sm"
+          text
+          target="_blank"
+          external
+          :to="connector.url"
+          @click="
+            mixpanel.track('Connector Card Documentation Clicked', {
+              connector: props.connector.slug
+            })
+          "
+        >
+          Documentation
+        </FormButton>
+      </div>
     </CommonCard>
-  </component>
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { ConnectorItem } from '~~/lib/dashboard/helpers/types'
+import type { ConnectorItem, Version, Versions } from '~~/lib/dashboard/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   connector: ConnectorItem
 }>()
 
-const NuxtLink = resolveComponent('NuxtLink')
-
 const mixpanel = useMixpanel()
 
-const handleClick = () => {
-  mixpanel.track('Connector Card Clicked', {
-    connector: props.connector.title,
-    url: props.connector.url
+const versions = ref<Version[]>([])
+const latestAvailableVersion = ref<Version | null>(null)
+const isLoadingVersions = ref(true)
+
+const getVersions = async () => {
+  const response = await fetch(
+    `https://releases.speckle.dev/manager2/feeds/${props.connector.slug}-v3.json`,
+    {
+      method: 'GET'
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch versions')
+  }
+
+  const data = (await response.json()) as unknown as Versions
+  const sortedVersions = data.Versions.sort(function (a: Version, b: Version) {
+    return new Date(b.Date).getTime() - new Date(a.Date).getTime()
   })
+  versions.value = sortedVersions
+  latestAvailableVersion.value = sortedVersions[0]
+
+  isLoadingVersions.value = false
 }
+
+void getVersions()
 </script>

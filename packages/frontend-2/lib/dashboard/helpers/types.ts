@@ -9,6 +9,7 @@ export type TutorialItem = {
 export type QuickStartItem = {
   title: string
   description: string
+  isExternalRoute?: boolean
   buttons: LayoutDialogButton[]
 }
 
@@ -26,9 +27,24 @@ export const enum ConnectorCategory {
 
 export type ConnectorItem = {
   title: string
+  slug: string
   image: string
   url?: string
   description: string
   categories?: ConnectorCategory[]
   isComingSoon?: boolean
+}
+
+export type Version = {
+  Number: string
+  Url: string
+  Os: number
+  Architecture: number
+  Date: string
+  Prerelease: boolean
+}
+
+// yolo
+export type Versions = {
+  Versions: Version[]
 }

@@ -15,16 +15,21 @@
       <div class="flex flex-col-reverse lg:flex-col gap-y-12">
         <section>
           <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
             <CommonCard
               v-for="quickStartItem in quickStartItems"
               :key="quickStartItem.title"
               :title="quickStartItem.title"
               :description="quickStartItem.description"
               :buttons="quickStartItem.buttons"
+              :is-external-route="quickStartItem.isExternalRoute"
             />
           </div>
         </section>
+        <!-- <section>
+          <h2 class="text-heading-sm text-foreground-2">Connectors</h2>
+
+        </section> -->
         <section>
           <div class="flex items-center justify-between">
             <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
@@ -88,22 +93,23 @@ import {
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { useQuery } from '@vue/apollo-composable'
-import { useMixpanel } from '~~/lib/core/composables/mp'
+// import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   docsPageUrl,
   forumPageUrl,
   homeRoute,
+  connectorsRoute,
   projectsRoute
 } from '~~/lib/common/helpers/route'
-import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
-import { downloadManager } from '~~/lib/common/utils/downloadManager'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+// import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
+// import { downloadManager } from '~~/lib/common/utils/downloadManager'
+// import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
 import { tutorials } from '~/lib/dashboard/helpers/tutorials'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 
-const mixpanel = useMixpanel()
+// const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
 const { result: workspacesResult } = useQuery(
@@ -113,7 +119,7 @@ const { result: workspacesResult } = useQuery(
     enabled: isWorkspacesEnabled.value
   })
 )
-const { triggerNotification } = useGlobalToast()
+// const { triggerNotification } = useGlobalToast()
 const { isGuest } = useActiveUser()
 const router = useRouter()
 useUserProjectsUpdatedTracking()
@@ -123,18 +129,16 @@ const openNewProject = ref(false)
 const tutorialItems = shallowRef(tutorials)
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
-    title: 'Install Speckle manager',
-    description: 'Use our Manager to install and manage Connectors with ease.',
+    title: 'Install Connectors',
+    description:
+      'Extract and exchange data in real time between the most popular AEC applications using our tailored connectors.',
     buttons: [
       {
-        text: 'Download for Windows',
-        onClick: () => onDownloadManager('exe')
-      },
-      {
-        text: 'Download for Mac',
-        onClick: () => onDownloadManager('dmg')
+        text: 'Install connectors',
+        props: { to: connectorsRoute }
       }
-    ]
+    ],
+    isExternalRoute: false
   },
   {
     title: "Don't know where to start?",
@@ -168,19 +172,4 @@ const createProjectButton = shallowRef<LayoutDialogButton[]>([
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
-
-const onDownloadManager = (extension: ManagerExtension) => {
-  try {
-    downloadManager(extension)
-
-    mixpanel.track('Manager Download', {
-      os: extension === 'exe' ? 'win' : 'mac'
-    })
-  } catch {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Download failed'
-    })
-  }
-}
 </script>
