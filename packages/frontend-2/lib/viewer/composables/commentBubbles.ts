@@ -176,7 +176,7 @@ export function useViewerCommentBubblesProjection(params: {
     }
   } = useInjectedViewerState()
 
-  const { updatePositions } = useViewerAnchoredPoints({
+  useViewerAnchoredPoints({
     parentEl,
     points: computed(() => Object.values(commentThreads.value)),
     pointLocationGetter: (t) => {
@@ -204,17 +204,6 @@ export function useViewerCommentBubblesProjection(params: {
       }
     }
   })
-
-  // Use the viewer load complete event to ensure comment bubbles are positioned correctly on first load
-  if (import.meta.client) {
-    import('~~/lib/viewer/composables/viewer').then(({ useOnViewerLoadComplete }) => {
-      useOnViewerLoadComplete(() => {
-        nextTick(() => {
-          updatePositions()
-        })
-      })
-    })
-  }
 
   // Return the updatePositions function so it can be called manually
   return {
