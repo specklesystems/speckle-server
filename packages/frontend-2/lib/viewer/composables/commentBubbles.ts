@@ -204,11 +204,6 @@ export function useViewerCommentBubblesProjection(params: {
       }
     }
   })
-
-  // Return the updatePositions function so it can be called manually
-  return {
-    updatePositions
-  }
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {
