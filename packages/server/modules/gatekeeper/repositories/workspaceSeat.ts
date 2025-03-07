@@ -1,6 +1,7 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import {
+  CountSeatsByTypeInWorkspace,
   CreateWorkspaceSeat,
   GetWorkspaceUserSeat,
   GetWorkspaceUserSeats
@@ -20,16 +21,13 @@ const tables = {
 }
 
 export const countSeatsByTypeInWorkspaceFactory =
-  ({ db }: { db: Knex }) =>
-  async ({
-    workspaceId,
-    type
-  }: Pick<WorkspaceSeat, 'workspaceId' | 'type'>): Promise<number> => {
+  ({ db }: { db: Knex }): CountSeatsByTypeInWorkspace =>
+  async ({ workspaceId, type }) => {
     const [count] = await tables
       .workspaceSeats(db)
       .where({ workspaceId, type })
-      .count('id')
-    return parseInt(count.toString())
+      .count('userId')
+    return parseInt(count.count.toString())
   }
 
 export const createWorkspaceSeatFactory =

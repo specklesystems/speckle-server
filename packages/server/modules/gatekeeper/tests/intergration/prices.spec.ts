@@ -21,7 +21,8 @@ describe('Workspace plan prices', () => {
 
     let expectedPlans = [
       ...Object.values(PaidWorkspacePlans),
-      WorkspaceGuestSeatType
+      WorkspaceGuestSeatType,
+      'viewer'
     ].filter(
       (p) =>
         FF_WORKSPACES_NEW_PLANS_ENABLED ||

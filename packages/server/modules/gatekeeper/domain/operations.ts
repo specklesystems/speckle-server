@@ -37,6 +37,10 @@ export type CreateWorkspaceSeat = (
   args: Pick<WorkspaceSeat, 'workspaceId' | 'userId' | 'type'>
 ) => Promise<void>
 
+export type CountSeatsByTypeInWorkspace = (
+  params: Pick<WorkspaceSeat, 'workspaceId' | 'type'>
+) => Promise<number>
+
 export type GetWorkspaceUserSeats = (params: {
   workspaceId: string
   userIds: string[]
