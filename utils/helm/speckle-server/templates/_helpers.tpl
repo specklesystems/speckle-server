@@ -572,6 +572,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_NEW_PLANS_ENABLED
   value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
 
+- name: FF_MOVE_PROJECT_REGION_ENABLED
+  value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
+
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:

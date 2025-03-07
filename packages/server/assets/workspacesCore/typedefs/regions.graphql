@@ -21,4 +21,5 @@ extend type WorkspaceProjectMutations {
   - TODO: Eventually delete data in previous region
   """
   moveToRegion(projectId: String!, regionKey: String!): String!
+    @hasServerRole(role: SERVER_ADMIN)
 }
