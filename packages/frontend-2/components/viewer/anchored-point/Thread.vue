@@ -115,16 +115,18 @@
               >
                 <div
                   v-if="!isThreadResourceLoaded"
-                  class="pl-3 pr-1 py-1 flex items-center justify-between text-xs text-primary bg-primary-muted"
+                  class="pl-2.5 pr-1.5 py-1 flex items-center justify-between text-body-2xs text-foreground border border-outline-2 rounded-md mx-2 bg-foundation-page dark:bg-foundation"
                 >
-                  <span>Conversation started in a different version.</span>
+                  <span>Conversation started in a different version</span>
                   <FormButton
                     v-tippy="'Load thread context'"
                     size="sm"
                     text
                     @click="onLoadThreadContext"
                   >
-                    <ArrowDownCircleIcon class="w-5 h-5" />
+                    <ArrowDownCircleIcon
+                      class="w-5 h-5 text-foreground-2 hover:text-foreground"
+                    />
                   </FormButton>
                 </div>
                 <ViewerAnchoredPointThreadComment
@@ -181,9 +183,9 @@ import {
   ChevronRightIcon,
   XMarkIcon,
   CheckIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  ArrowDownCircleIcon
 } from '@heroicons/vue/24/outline'
-import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
 import { ensureError, Roles } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
