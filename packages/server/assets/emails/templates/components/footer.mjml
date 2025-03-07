@@ -12,9 +12,8 @@
       <br />
       Your admin contact is
       <a href="mailto:<%- params.serverInfo.adminContact -%>">
-        <%- params.serverInfo.adminContact -%>
+        <%- params.serverInfo.adminContact -%>.
       </a>
-      .
     </mj-text>
   </mj-column>
 </mj-section>
