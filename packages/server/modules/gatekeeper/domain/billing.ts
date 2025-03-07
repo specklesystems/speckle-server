@@ -81,7 +81,6 @@ export type CreateCheckoutSession = (args: {
   workspaceId: string
   workspaceSlug: string
   editorsCount: number
-  viewersCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean
@@ -168,15 +167,14 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | 'starter' | 'plus' | 'business' | 'viewer' | 'team' | 'pro'
+type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
 
 export type GetWorkspacePlanProductAndPriceIds = () => Omit<
   Record<Products, { productId: string; monthly: string; yearly: string }>,
-  'viewer' | 'team' | 'pro'
+  'team' | 'pro'
 > & {
   team?: { productId: string; monthly: string }
   pro?: { productId: string; monthly: string; yearly: string }
-  viewer?: { productId: string; monthly: string; yearly: string }
 }
 
 export type SubscriptionDataInput = OverrideProperties<

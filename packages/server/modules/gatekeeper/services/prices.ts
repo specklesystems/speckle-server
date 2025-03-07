@@ -49,10 +49,13 @@ export const getFreshWorkspacePlanProductPricesFactory =
       if ('yearly' in planIds) {
         const { yearly } = planIds
         const yearlyPrice = productPrices.find((p) => p.id === yearly)
-        if (!yearlyPrice)
+        if (!yearlyPrice) {
+          console.log({ plan })
+          console.log({ yearlyPrice })
           throw new MisconfiguredEnvironmentError(
             `Price ${yearly} not found for plan ${plan}`
           )
+        }
         yearlyStruct = {
           amount: yearlyPrice.unitAmount / 100,
           currency: yearlyPrice.currency.toUpperCase()
