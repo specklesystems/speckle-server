@@ -452,7 +452,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
       - image: cimg/redis:7.2.4
       - image: 'speckle/speckle-postgres'
         environment:
@@ -630,7 +630,7 @@ jobs:
 
   test-frontend-2:
     docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+      - image: cimg/node:22.6.0-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -694,7 +694,7 @@ jobs:
 
   test-preview-service:
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0-browsers
       - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
@@ -851,7 +851,7 @@ jobs:
   ui-components-chromatic:
     resource_class: medium+
     docker: &docker-node-image
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.6.0
     steps:
       - checkout
       - restore_cache:
