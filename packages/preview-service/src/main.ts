@@ -69,7 +69,8 @@ const server = app.listen(port, async () => {
       userDataDir: USER_DATA_DIR,
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      protocolTimeout: PREVIEW_TIMEOUT
     })
   }
   logger.debug('Starting message queues')
@@ -77,10 +78,7 @@ const server = app.listen(port, async () => {
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
     try {
-      console.log('starting')
       jobDoneCallback = done
-
-      await wait(30000)
       const browser = await launchBrowser()
       const parseResult = jobPayload.safeParse(payload.data)
       if (!parseResult.success) {
@@ -123,9 +121,7 @@ const shutdown = async () => {
 
   // if there is a job currently running, cancell it with an error
   if (jobDoneCallback) {
-    console.log('canceling job')
     jobDoneCallback(new Error('Job cancelled due to perview-service shutdown'))
-    console.log('should be canceled')
   }
 
   logger.info('Received signal to shut down')

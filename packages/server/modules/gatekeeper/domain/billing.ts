@@ -3,7 +3,6 @@ import {
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
-  WorkspacePlanProductAndPriceIds,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
@@ -68,11 +67,21 @@ export type UpdateCheckoutSessionStatus = (args: {
   paymentStatus: SessionPaymentStatus
 }) => Promise<void>
 
-export type CreateCheckoutSession = (args: {
+// Remove with FF_WORKSPACES_NEW_PLANS_ENABLED
+export type CreateCheckoutSessionOld = (args: {
   workspaceId: string
   workspaceSlug: string
   seatCount: number
   guestCount: number
+  workspacePlan: PaidWorkspacePlans
+  billingInterval: WorkspacePlanBillingIntervals
+  isCreateFlow: boolean
+}) => Promise<CheckoutSession>
+export type CreateCheckoutSession = (args: {
+  workspaceId: string
+  workspaceSlug: string
+  editorsCount: number
+  viewersCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean
@@ -159,7 +168,16 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
+type Products = 'guest' | 'starter' | 'plus' | 'business' | 'viewer' | 'team' | 'pro'
+
+export type GetWorkspacePlanProductAndPriceIds = () => Omit<
+  Record<Products, { productId: string; monthly: string; yearly: string }>,
+  'viewer' | 'team' | 'pro'
+> & {
+  team?: { productId: string; monthly: string }
+  pro?: { productId: string; monthly: string; yearly: string }
+  viewer?: { productId: string; monthly: string; yearly: string }
+}
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
