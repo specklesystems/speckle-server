@@ -56,21 +56,15 @@
       <section>
         <div class="flex items-center justify-between">
           <h2 class="text-heading-sm text-foreground-2">Tutorials</h2>
-          <FormButton
-            color="outline"
-            size="sm"
-            to="https://www.speckle.systems/tutorials"
-            external
-            target="_blank"
-          >
-            View all
+          <FormButton color="outline" size="sm" :to="tutorialsRoute">
+            View more
           </FormButton>
         </div>
         <div
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-5"
         >
           <TutorialsCard
-            v-for="tutorialItem in tutorials"
+            v-for="tutorialItem in tutorials.slice(0, 4)"
             :key="tutorialItem.title"
             :tutorial-item="tutorialItem"
             source="dashboard"
@@ -94,7 +88,8 @@ import {
   docsPageUrl,
   forumPageUrl,
   homeRoute,
-  projectsRoute
+  projectsRoute,
+  tutorialsRoute
 } from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'

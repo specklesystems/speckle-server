@@ -28,6 +28,8 @@
             to="https://www.speckle.systems/tutorials"
             target="_blank"
             color="outline"
+            external
+            @click="trackViewAllClick"
           >
             View all tutorials
           </FormButton>
@@ -39,4 +41,11 @@
 
 <script setup lang="ts">
 import { tutorialItems } from '~/lib/dashboard/helpers/tutorials'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+
+const mixpanel = useMixpanel()
+
+const trackViewAllClick = () => {
+  mixpanel.track('View all tutorials clicked')
+}
 </script>

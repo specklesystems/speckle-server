@@ -2016,7 +2016,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: ProjectVisibility;
+  visibility: SimpleProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -3127,6 +3127,13 @@ export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Visbility without the "discoverable" option */
+export const SimpleProjectVisibility = {
+  Private: 'PRIVATE',
+  Unlisted: 'UNLISTED'
+} as const;
+
+export type SimpleProjectVisibility = typeof SimpleProjectVisibility[keyof typeof SimpleProjectVisibility];
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -4914,7 +4921,7 @@ export type CrossSyncProjectMetadataQueryVariables = Exact<{
 }>;
 
 
-export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
+export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: SimpleProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, createdAt: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
 
 export type CrossSyncClientTestQueryVariables = Exact<{ [key: string]: never; }>;
 
