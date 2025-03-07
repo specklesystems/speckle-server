@@ -942,6 +942,9 @@ export const updateStreamFactory =
       validUpdate.isPublic = true
     }
 
+    // Ignore discoverability for now
+    delete validUpdate['isDiscoverable']
+
     if (!Object.keys(validUpdate).length) return null
 
     const [updatedStream] = await tables
