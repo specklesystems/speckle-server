@@ -60,9 +60,7 @@
             View more
           </FormButton>
         </div>
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-5"
-        >
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
           <TutorialsCard
             v-for="tutorialItem in tutorials.slice(0, 4)"
             :key="tutorialItem.title"
