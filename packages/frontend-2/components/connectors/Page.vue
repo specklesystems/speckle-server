@@ -33,7 +33,7 @@
             name="categories"
             label="Categories"
             placeholder="All categories"
-            class="md:min-w-80"
+            class="md:w-80"
             allow-unset
             :items="categories"
             size="base"

@@ -14,106 +14,29 @@
         </div>
       </section>
       <section class="flex gap-4 flex-col">
-        <div class="flex-1 flex flex-col md:flex-row gap-2 md:gap-4">
-          <FormTextInput
-            name="modelsearch"
-            :show-label="false"
-            placeholder="Search tutorials..."
-            :custom-icon="MagnifyingGlassIcon"
-            color="foundation"
-            wrapper-classes="grow"
-            :show-clear="!!search"
-            v-bind="bind"
-            v-on="on"
-          />
-          <FormSelectBase
-            v-model="selectedProduct"
-            :label-id="labelId"
-            :button-id="buttonId"
-            name="products"
-            label="Products"
-            placeholder="All products"
-            class="md:min-w-80"
-            allow-unset
-            :items="products"
-            size="base"
-            color="foundation"
-            clearable
-          >
-            <template #something-selected="{ value }">
-              {{ isArray(value) ? value[0].name : value.name }}
-            </template>
-            <template #option="{ item }">
-              {{ item.name }}
-            </template>
-          </FormSelectBase>
-        </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <TutorialsCard
-            v-for="tutorial in filteredTutorials"
+            v-for="tutorial in tutorialItems"
             :key="tutorial.title"
             :tutorial-item="tutorial"
             source="tutorials"
           />
         </div>
-        <p
-          v-if="!filteredTutorials.length"
-          class="text-body-xs text-foreground text-center w-full my-4"
-        >
-          No results.
-        </p>
+        <div class="flex justify-center mt-4">
+          <FormButton
+            label="View all tutorials"
+            to="https://www.speckle.systems/tutorials"
+            target="_blank"
+            color="outline"
+          >
+            View all tutorials
+          </FormButton>
+        </div>
       </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { tutorialItems, tutorialProducts } from '~/lib/dashboard/helpers/tutorials'
-import type { TutorialItem, TutorialProduct } from '~/lib/dashboard/helpers/types'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
-import { useDebouncedTextInput } from '@speckle/ui-components'
-import { isArray } from 'lodash-es'
-
-type ProductFilter = {
-  id: TutorialProduct
-  name: (typeof tutorialProducts)[keyof typeof tutorialProducts]
-}
-
-const {
-  on,
-  bind,
-  value: search
-} = useDebouncedTextInput({
-  debouncedBy: 800
-})
-
-const labelId = useId()
-const buttonId = useId()
-
-const selectedProduct = ref<ProductFilter>()
-const tutorials = shallowRef<TutorialItem[]>(tutorialItems)
-const products = shallowRef(
-  Object.entries(tutorialProducts).map(([key, name]) => ({
-    id: key as TutorialProduct,
-    name
-  }))
-)
-
-const filteredTutorials = computed(() => {
-  let filteredItems = tutorials.value
-
-  if (selectedProduct.value) {
-    filteredItems = filteredItems.filter((item) =>
-      item.products?.includes(selectedProduct.value!.id)
-    )
-  }
-
-  if (search.value) {
-    filteredItems = filteredItems.filter((item) =>
-      item.title.toLowerCase().includes(search.value!.toLowerCase())
-    )
-  }
-
-  return filteredItems
-})
+import { tutorialItems } from '~/lib/dashboard/helpers/tutorials'
 </script>
