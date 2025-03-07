@@ -61,7 +61,7 @@ featureFlags:
   noPersonalEmailsEnabled: false
   ## @param featureFlags.workspacesNewPlanEnabled Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.
   workspacesNewPlanEnabled: false
-  ## @params featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
+  ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
   moveProjectRegionEnabled: false
 
 analytics:
