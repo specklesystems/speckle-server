@@ -46,6 +46,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 const mixpanel = useMixpanel()
 
 const trackViewAllClick = () => {
-  mixpanel.track('View all tutorials clicked')
+  mixpanel.track('View All Tutorials Button Clicked')
 }
 </script>
