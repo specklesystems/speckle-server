@@ -16768,6 +16768,7 @@ __metadata:
     pino-http: "npm:^8.6.1"
     pino-pretty: "npm:^9.1.1"
     prettier: "npm:^2.5.1"
+    prom-client: "npm:^14.0.1"
     puppeteer: "npm:^23.9.0"
     rimraf: "npm:^6.0.1"
     ts-node: "npm:^10.9.2"

@@ -58,9 +58,11 @@ describe('Observability', () => {
         'process_cpu_user_seconds_total_high_frequency',
         'process_cpu_system_seconds_total_high_frequency',
         'process_cpu_seconds_total_high_frequency',
-        // preview service
+        // previews module
         'speckle_server_preview_jobs_queue_pending',
-        'speckle_server_preview_jobs_count',
+        'speckle_server_preview_jobs_request_waiting_count',
+        'speckle_server_preview_jobs_request_active_count',
+        'speckle_server_preview_jobs_request_completed_count',
         'speckle_server_preview_jobs_request_failed_count',
         'speckle_server_preview_jobs_processed_duration_seconds'
       ]
