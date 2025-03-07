@@ -2,7 +2,7 @@
   <div class="flex flex-col items-center">
     <div
       class="w-full relative"
-      :class="isEmbedEnabled ? 'px-2 py-1' : 'px-3 md:px-4 py-2'"
+      :class="isEmbedEnabled ? 'px-2 py-1' : 'px-3 md:px-0 md:pl-4 py-2'"
     >
       <div class="flex items-center space-x-2">
         <UserAvatar
