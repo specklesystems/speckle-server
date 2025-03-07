@@ -252,6 +252,7 @@ const { ellipsis, controls } = useAnimatingEllipsis()
 const applyState = useApplySerializedState()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
+const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
 
