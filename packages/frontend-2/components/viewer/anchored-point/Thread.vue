@@ -346,12 +346,15 @@ const threadStyle = computed(() => {
       : (props.modelValue.style.y as number) - threadHeight / 2
 
   // Constrain to viewport boundaries with 10px padding
-  const padding = 10
+  const padding = isEmbedEnabled.value ? 5 : 10
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
 
   // Use 58px top padding when not in embed mode (to account for the top bar)
   const topPadding = isEmbedEnabled.value ? padding : 58
+
+  // Use 62px bottom padding when in embed mode (to account for the bottom controls)
+  const bottomPadding = isEmbedEnabled.value ? 62 : padding
 
   // Ensure the element stays within the viewport
   const constrainedX = Math.min(
@@ -360,7 +363,7 @@ const threadStyle = computed(() => {
   )
   const constrainedY = Math.min(
     Math.max(topPadding, yOffset),
-    viewportHeight - threadHeight - padding
+    viewportHeight - threadHeight - bottomPadding
   )
 
   const transition = isDragged.value ? 'none' : props.modelValue.style.transition
