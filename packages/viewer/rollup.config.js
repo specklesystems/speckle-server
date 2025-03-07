@@ -9,7 +9,7 @@ import image from '@rollup/plugin-image'
 
 const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
-const skipMinification = process.env.SKIP_VIEWER_MINIFICATION === 'true'
+const skipMinification = process.env.SKIP_LIBRARY_MINIFICATION === 'true'
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
