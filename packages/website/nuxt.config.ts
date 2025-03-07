@@ -17,6 +17,7 @@ export default defineNuxtConfig({
   image: {
     inject: true
   },
+  // NOTE: this should be extracted out
   sanity: {
     projectId: '6kukgozu',
     useCdn: false

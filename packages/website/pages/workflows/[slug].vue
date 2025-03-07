@@ -38,7 +38,8 @@
       </div>
     </div>
     <article v-if="workflow" class="my-20 prose dark:prose-invert mx-auto px-2 md:px-0">
-      <PortableText :value="workflow.content" :components="myPortableTextComponents" />
+      <!-- <PortableText :value="workflow.content" :components="myPortableTextComponents" /> -->
+      <CommonPortableText :value="workflow.content" />
     </article>
   </div>
 </template>
