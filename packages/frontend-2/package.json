@@ -20,7 +20,8 @@
     "lint:ci": "yarn lint:tsc && yarn lint:css",
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
-    "eslint:inspect": "eslint-config-inspector"
+    "eslint:inspect": "eslint-config-inspector",
+    "datadog:publish-sourcemaps:dev": "DATADOG_SITE=\"datadoghq.eu\" datadog-ci sourcemaps upload ./.output/public/_nuxt --service=\"fe2-dev/test\" --release-version=\"unknown\" --minified-path-prefix=/_nuxt"
   },
   "dependencies": {
     "@apollo/client": "^3.12.4",
