@@ -96,7 +96,7 @@ export const buildMultiregionQueue = (queueName: string) =>
         delay: 1000 * 60 * 5
       },
       removeOnComplete: isProdEnv(),
-      removeOnFail: isProdEnv()
+      removeOnFail: false
     }
   })
 
