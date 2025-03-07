@@ -6,7 +6,7 @@
       <NuxtImg
         :src="tutorialItem.image"
         :alt="tutorialItem.title"
-        class="h-32 w-full object-cover"
+        class="aspect-video w-full object-cover"
         width="400"
         height="225"
       />
@@ -27,12 +27,14 @@ const mixpanel = useMixpanel()
 
 const props = defineProps<{
   tutorialItem: TutorialItem
+  source: 'tutorials' | 'dashboard'
 }>()
 
 const trackClick = () => {
   mixpanel.track('Tutorial clicked', {
     title: props.tutorialItem.title,
-    url: props.tutorialItem.url
+    url: props.tutorialItem.url,
+    source: props.source
   })
 }
 </script>
