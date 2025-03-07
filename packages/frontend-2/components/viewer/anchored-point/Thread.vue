@@ -45,7 +45,7 @@
           >
             <div
               class="relative w-full flex justify-between items-center border-b border-outline-2"
-              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:p-4'"
+              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:px-4'"
             >
               <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
@@ -79,12 +79,12 @@
                   @click="isDragged = false"
                 />
               </div>
-              <div class="flex gap-x-1.5">
+              <div class="flex gap-x-0.5">
                 <FormButton
                   v-tippy="'Copy link'"
                   :icon-left="LinkIcon"
                   hide-text
-                  color="outline"
+                  color="subtle"
                   size="sm"
                   @click="onCopyLink"
                 />
@@ -93,14 +93,14 @@
                   :icon-left="CheckIcon"
                   hide-text
                   :disabled="!canArchiveOrUnarchive"
-                  color="outline"
+                  color="subtle"
                   size="sm"
                   @click="toggleCommentResolvedStatus()"
                 />
                 <FormButton
                   :icon-left="XMarkIcon"
                   hide-text
-                  color="outline"
+                  color="subtle"
                   size="sm"
                   @click="changeExpanded(false)"
                 />

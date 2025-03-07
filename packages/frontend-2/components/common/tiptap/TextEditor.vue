@@ -172,8 +172,7 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply border-outline-2 border;
-    @apply text-foreground text-body-2xs rounded inline-block px-2 py-1 mr-1;
+    @apply text-foreground text-body-2xs font-semibold;
   }
 }
 
