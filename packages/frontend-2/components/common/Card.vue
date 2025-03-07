@@ -31,7 +31,7 @@
           v-bind="button.props || {}"
           :disabled="button.props?.disabled || button.disabled"
           :submit="button.props?.submit || button.submit"
-          target="_blank"
+          :target="`${isExternalRoute ? '_blank' : '_self'}`"
           external
           size="sm"
           color="outline"
@@ -47,10 +47,16 @@
 <script lang="ts" setup>
 import type { LayoutDialogButton } from '@speckle/ui-components'
 
-defineProps<{
-  title?: string
-  description?: string
-  buttons?: LayoutDialogButton[]
-  badge?: string
-}>()
+withDefaults(
+  defineProps<{
+    title?: string
+    isExternalRoute?: boolean
+    description?: string
+    buttons?: LayoutDialogButton[]
+    badge?: string
+  }>(),
+  {
+    isExternalRoute: false
+  }
+)
 </script>
