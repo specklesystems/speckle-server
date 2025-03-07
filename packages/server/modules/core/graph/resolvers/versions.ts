@@ -5,7 +5,10 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getServerOrigin,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -16,11 +19,7 @@ import {
   markCommitReceivedAndNotifyFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   createCommitFactory,
   deleteCommitsFactory,
@@ -50,6 +49,10 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Project: {
@@ -169,10 +172,10 @@ export = {
         projectId: args.input.projectId
       })
 
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'COMMIT_CREATE',
+        source: ctx.userId!
+      })
 
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
 

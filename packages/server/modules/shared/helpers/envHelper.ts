@@ -455,3 +455,7 @@ export function enableImprovedKnexTelemetryStackTraces() {
 export function disablePreviews() {
   return getBooleanFromEnv('DISABLE_PREVIEWS')
 }
+
+export const isRateLimiterEnabled = (): boolean => {
+  return getBooleanFromEnv('RATELIMITER_ENABLED', true)
+}
