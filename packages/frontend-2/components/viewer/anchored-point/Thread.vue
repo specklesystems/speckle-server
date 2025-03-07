@@ -255,13 +255,14 @@ const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
 
 onClickOutside(threadContainer, (event) => {
-  // Don't close if clicking on the thread activator button
-  if (threadActivator.value && threadActivator.value.contains(event.target as Node)) {
-    return
-  }
+  const viewerElement = document.getElementById('viewer')
 
-  // Only close if the thread is expanded
-  if (isExpanded.value) {
+  if (
+    isExpanded.value &&
+    viewerElement &&
+    (event.target === viewerElement || viewerElement.contains(event.target as Node)) &&
+    !(threadActivator.value && threadActivator.value.contains(event.target as Node))
+  ) {
     changeExpanded(false)
   }
 })
@@ -350,13 +351,16 @@ const threadStyle = computed(() => {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
 
-  // Ensure the element stays within the viewport with padding
+  // Use 58px top padding when not in embed mode (to account for the top bar)
+  const topPadding = isEmbedEnabled.value ? padding : 58
+
+  // Ensure the element stays within the viewport
   const constrainedX = Math.min(
     Math.max(padding, xOffset),
     viewportWidth - threadWidth - padding
   )
   const constrainedY = Math.min(
-    Math.max(padding, yOffset),
+    Math.max(topPadding, yOffset),
     viewportHeight - threadHeight - padding
   )
 
@@ -368,12 +372,6 @@ const threadStyle = computed(() => {
     transform: `translate(${constrainedX}px,${constrainedY}px)`
   }
 })
-
-// // TODO: will be used
-// const threadEmoji = computed(() => {
-//   const cleanVal = props.modelValue.rawText.trim()
-//   return emojis.includes(cleanVal) ? cleanVal : undefined
-// })
 
 const threadAuthors = computed(() => {
   const authors = [props.modelValue.author]

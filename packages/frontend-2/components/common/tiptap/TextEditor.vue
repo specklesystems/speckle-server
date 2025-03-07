@@ -172,8 +172,8 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply border-foreground border;
-    @apply label label--light rounded inline-block px-1 py-[0.5px];
+    @apply border-outline-2 border;
+    @apply text-foreground text-body-2xs rounded inline-block px-2 py-1 mr-1;
   }
 }
 
@@ -182,10 +182,6 @@ onBeforeUnmount(() => {
     word-break: break-word;
     background-color: unset !important;
     box-shadow: unset !important;
-
-    .editor-mention {
-      /* cursor: pointer; TODO: Reenable once mentions are clickable again */
-    }
   }
 }
 </style>

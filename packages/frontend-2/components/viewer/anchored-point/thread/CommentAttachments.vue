@@ -4,9 +4,11 @@
       <CommonTextLink
         v-for="attachment in attachmentList"
         :key="attachment.id"
+        class="!text-foreground hover:!text-foreground-2"
         @click="() => onAttachmentClick(attachment)"
       >
-        <span class="truncate relative text-body-2xs text-foreground">
+        <PaperClipIcon class="w-4 h-4 mr-1" />
+        <span class="truncate relative text-body-2xs">
           {{ attachment.fileName }}
         </span>
       </CommonTextLink>
@@ -45,7 +47,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowDownTrayIcon,
+  ExclamationTriangleIcon,
+  PaperClipIcon
+} from '@heroicons/vue/24/solid'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
