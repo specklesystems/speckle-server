@@ -453,6 +453,7 @@ function createLink(params: {
     wsClient.use([
       {
         applyMiddleware: (_opt, next) => {
+          registerError()
           if (isErrorState.value) {
             return // never invokes next() - essentially stuck
           }
