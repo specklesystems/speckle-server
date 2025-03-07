@@ -107,7 +107,7 @@
               </div>
             </div>
             <div
-              class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
+              class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-2 md:pb-4 sm:pb-0"
             >
               <div
                 ref="commentsContainer"
