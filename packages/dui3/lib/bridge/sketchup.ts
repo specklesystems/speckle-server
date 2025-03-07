@@ -201,6 +201,13 @@ export class SketchupBridge extends BaseBridge {
     })
 
     if (currentBatch === totalBatch) {
+      this.emit('setModelProgress', {
+        modelCardId,
+        progress: {
+          status: 'Uploading',
+          progress: null
+        }
+      } as unknown as string)
       const args = [eventPayload.modelCardId, referencedObjectId]
       await this.runMethod('afterSendObjects', args as unknown as unknown[])
     }
