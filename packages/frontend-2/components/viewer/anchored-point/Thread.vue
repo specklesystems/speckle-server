@@ -114,7 +114,7 @@
                 class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2 sm:pr-3"
               >
                 <div
-                  v-if="isThreadResourceLoaded"
+                  v-if="!isThreadResourceLoaded"
                   class="pl-2.5 pr-1.5 py-1 flex items-center justify-between text-body-2xs text-foreground border border-outline-2 rounded-md ml-2 mr-1 md:-mr-1 bg-foundation-page dark:bg-foundation"
                 >
                   <span>Conversation started in a different version</span>
