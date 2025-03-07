@@ -4,7 +4,10 @@ import type { Vector3 } from 'three'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { IntersectionQuery, PointQuery } from '@speckle/viewer'
 import { isArray, round } from 'lodash-es'
-import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import {
+  useViewerCameraTracker,
+  useOnViewerLoadComplete
+} from '~~/lib/viewer/composables/viewer'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
 export function useViewerAnchoredPointCalculator(params: {
@@ -146,6 +149,13 @@ export function useViewerAnchoredPoints<
   // TODO: disabling throttle cause of jitteriness caused by (?) viewer queries, this needs to be looked at
   useViewerCameraTracker(() => updatePositions(), { throttleWait: 0 })
   useWindowResizeHandler(() => updatePositions(), { wait: 0 })
+
+  useOnViewerLoadComplete(
+    () => {
+      updatePositions()
+    },
+    { initialOnly: true, waitForBusyOver: true }
+  )
 
   watch(
     points,
