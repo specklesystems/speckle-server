@@ -44,6 +44,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isEmailEnabled = serverInfoData?.serverInfo.configuration.isEmailEnabled
 
   // 1. Email verification redirect
+  // Self hosters may not have emails enabled, so we skip the redirect
   if (isEmailEnabled) {
     const isVerifyEmailPage = to.path === verifyEmailRoute
     const hasUnverifiedEmails = userData.activeUser.emails.some(
@@ -58,6 +59,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 2. Segmentation questions redirect
+  // isOnboardingFinished is set to true when the user has finished the onboarding process, or presses skip (if available)
   const isSegmentationFinished = userData.activeUser.isOnboardingFinished
   const isGoingToSegmentation = to.path === onboardingRoute
 
@@ -75,6 +77,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!isWorkspacesEnabled.value || !isWorkspaceNewPlansEnabled.value) return
 
+  // This query will throw an error if workspaces FF are not enabled, so check for that first
   const { data: workspaceData } = await client
     .query({
       query: activeUserWorkspaceExistenceCheckQuery
@@ -83,14 +86,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isMemberOfWorkspace =
     (workspaceData?.activeUser?.workspaces?.totalCount ?? 0) > 0
-  const hasLegacyProjects = (workspaceData?.activeUser?.versions?.totalCount ?? 0) > 0
   const hasDiscoverableWorkspaces =
     (workspaceData?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
     (workspaceData?.activeUser?.workspaceJoinRequests?.totalCount ?? 0) > 0
+  // If user has existing projects, we consider these legacy projects, and don't block app access yet
+  const hasLegacyProjects = (workspaceData?.activeUser?.versions?.totalCount ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
 
+  // If user has discoverable workspaces, or has pending requests, go to join. Otherwise, we go to create.
   if (!isMemberOfWorkspace && !hasLegacyProjects) {
     if (
       hasDiscoverableWorkspaces &&
