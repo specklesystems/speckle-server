@@ -185,13 +185,6 @@ export class SketchupBridge extends BaseBridge {
       currentBatch,
       referencedObjectId
     } = eventPayload
-    this.emit('setModelProgress', {
-      modelCardId,
-      progress: {
-        status: 'Uploading',
-        progress: currentBatch / totalBatch
-      }
-    } as unknown as string)
     const formData = new FormData()
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
     await fetch(`${serverUrl}/objects/${projectId}`, {
@@ -200,14 +193,15 @@ export class SketchupBridge extends BaseBridge {
       body: formData
     })
 
+    this.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: currentBatch / totalBatch
+      }
+    } as unknown as string)
+
     if (currentBatch === totalBatch) {
-      this.emit('setModelProgress', {
-        modelCardId,
-        progress: {
-          status: 'Uploading',
-          progress: null
-        }
-      } as unknown as string)
       const args = [eventPayload.modelCardId, referencedObjectId]
       await this.runMethod('afterSendObjects', args as unknown as unknown[])
     }
