@@ -4,7 +4,7 @@
       <template #title>Selection info</template>
       <template #actions>
         <div class="flex flex-col divide-y divide-outline-3">
-          <div class="flex py-1.5 pl-3 pr-1.5 gap-x-2 items-center">
+          <div class="flex py-1.5 pl-3 pr-1.5 gap-x-1.5 items-center">
             <FormButton
               size="sm"
               color="outline"

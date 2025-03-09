@@ -66,11 +66,10 @@
         <FormButton
           color="danger"
           size="sm"
-          class="rounded-full"
+          hide-text
+          :icon-left="XMarkIcon"
           @click="$emit('remove', props.model.id)"
-        >
-          <XMarkIcon class="h-5 w-5" />
-        </FormButton>
+        />
       </div>
     </Transition>
     <div
