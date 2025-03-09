@@ -17,7 +17,7 @@
     >
       <div
         v-if="$slots.title"
-        class="flex items-center py-2.5 px-3 border-b border-outline-2 sticky top-0 z-50 bg-foundation"
+        class="flex items-center py-2 px-2 border-b border-outline-2 sticky top-0 z-50 bg-foundation"
       >
         <div class="flex items-center text-body-2xs text-foreground font-medium">
           <span class="truncate flex-1">

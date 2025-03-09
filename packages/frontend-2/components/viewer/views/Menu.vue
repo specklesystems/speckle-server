@@ -4,6 +4,7 @@
     <template #trigger-icon>
       <IconViews class="w-5 h-5" />
     </template>
+    <template #title>Views</template>
     <div
       class="w-32 sm:w-40 max-h-64 simple-scrollbar overflow-y-auto flex flex-col p-1.5"
       @mouseenter="cancelCloseTimer"
