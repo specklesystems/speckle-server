@@ -19,21 +19,18 @@
         <div class="flex divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
-            text
             size="sm"
-            class="flex gap-1 pr-2"
+            color="outline"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            <ArrowPathIcon class="h-4 w-4" />
             Reset
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
-            class="pl-2"
             size="sm"
             color="subtle"
             text
@@ -101,7 +98,6 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'

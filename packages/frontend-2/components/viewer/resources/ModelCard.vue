@@ -3,11 +3,7 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`rounded-md border-l-4  ${
-        showVersions
-          ? 'border-primary max-h-96 shadow-md'
-          : 'hover:border-primary border-transparent'
-      }`"
+      :class="`rounded-md overflow-hidden ${showVersions ? 'max-h-96 shadow-md' : ''}`"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
       @focusin="highlightObject"
@@ -17,27 +13,25 @@
       <div
         :class="`${
           showVersions ? 'bg-primary' : 'bg-foundation hover:bg-foundation-2'
-        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-16 min-w-0 max-w-full items-center justify-between space-x-2 px-2 py-1 select-none`"
+        } group sticky cursor-pointer top-0 z-20 flex min-w-0 max-w-full items-center justify-between space-x-2 pr-2 pl-1.5 py-1 select-none`"
         @click="showVersions = !showVersions"
       >
         <div>
-          <UserAvatar :user="loadedVersion?.authorUser" />
+          <UserAvatar :user="loadedVersion?.authorUser" class="!w-7 !h-7" />
         </div>
         <div class="flex min-w-0 flex-grow flex-col">
           <div
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } text-heading-sm truncate min-w-0`"
+            } text-body-xs truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
-          <div class="truncate -mt-1">
+          <div class="truncate -mt-1.5">
             <span
               v-tippy="createdAtFormatted.full"
-              :class="`${
-                showVersions ? 'text-foundation' : ''
-              } text-body-2xs opacity-70`"
+              :class="`${showVersions ? 'text-foundation' : ''} text-body-3xs`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
             </span>
@@ -45,9 +39,9 @@
         </div>
         <div
           v-if="!showVersions"
-          class="flex flex-none items-center space-x-1 text-xs font-medium"
+          class="flex flex-none items-center space-x-1.5 text-foreground-2 text-body-2xs font-medium"
         >
-          <IconVersions class="h-4 w-4" />
+          <IconVersions class="h-3 w-3" />
           <span>{{ model.versions?.totalCount }}</span>
         </div>
         <div

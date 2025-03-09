@@ -13,9 +13,21 @@
       v-if="open"
       ref="menuContent"
       v-keyboard-clickable
-      class="absolute left-10 sm:left-12 -top-0 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col"
+      class="absolute left-10 sm:left-[46px] -top-0 bg-foundation rounded-md border border-outline-2 flex flex-col overflow-hidden"
     >
-      <slot />
+      <div
+        v-if="$slots.title"
+        class="flex items-center py-2.5 px-3 border-b border-outline-2 sticky top-0 z-50 bg-foundation"
+      >
+        <div class="flex items-center text-body-2xs text-foreground font-medium">
+          <span class="truncate flex-1">
+            <slot name="title"></slot>
+          </span>
+        </div>
+      </div>
+      <div class="max-h-64 simple-scrollbar overflow-y-auto">
+        <slot />
+      </div>
     </div>
   </div>
 </template>
