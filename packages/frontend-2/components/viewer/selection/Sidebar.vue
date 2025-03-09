@@ -52,7 +52,7 @@
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
           <FormButton size="sm" text full-width @click="itemCount += 10">
-            View More ({{ objects.length - itemCount }})
+            View more ({{ objects.length - itemCount }})
           </FormButton>
         </div>
       </div>

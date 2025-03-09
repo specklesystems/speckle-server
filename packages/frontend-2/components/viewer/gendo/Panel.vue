@@ -72,9 +72,7 @@
         </div>
       </div>
 
-      <div class="border-t border-outline-2 px-3 pt-3">
-        <ViewerGendoList @reuse-prompt="prompt = $event" />
-      </div>
+      <ViewerGendoList @reuse-prompt="prompt = $event" />
 
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"

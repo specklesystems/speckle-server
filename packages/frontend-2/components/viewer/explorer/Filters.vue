@@ -4,7 +4,6 @@
     <template #actions>
       <div class="flex justify-between items-center w-full">
         <FormButton
-          v-tippy="'Change filter'"
           text
           color="subtle"
           size="sm"
@@ -43,9 +42,9 @@
       </div>
     </template>
     <div
-      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible py-1'
-      } transition-[height] border-b-2 border-primary-muted`"
+      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden ${
+        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible'
+      } transition-[height] border-b border-outline-2`"
     >
       <div class="sticky top-0 bg-foundation p-2 pb-1">
         <FormTextInput
@@ -53,7 +52,9 @@
           name="filter search"
           placeholder="Search for a property"
           size="sm"
+          color="foundation"
           :show-clear="!!searchString"
+          class="!text-body-2xs"
         />
       </div>
       <div>
@@ -61,25 +62,25 @@
           v-for="(filter, index) in relevantFiltersLimited"
           :key="index"
           v-tippy="filter.key"
-          class="text-xs"
+          class="text-body-2xs"
         >
           <button
-            class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
+            class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
             @click="
               ;(showAllFilters = false),
                 setPropertyFilter(filter),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            <span class="text-foreground text-body-2xs">
+            <span class="text-foreground text-body-3xs">
               {{ getPropertyName(filter.key) }}
             </span>
             <span class="truncate">{{ filter.key }}</span>
           </button>
         </div>
-        <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-          <FormButton size="sm" text full-width @click="itemCount += 30">
-            View More ({{ relevantFiltersSearched.length - itemCount }})
+        <div v-if="itemCount < relevantFiltersSearched.length" class="px-4">
+          <FormButton size="sm" text @click="itemCount += 30">
+            View more ({{ relevantFiltersSearched.length - itemCount }})
           </FormButton>
         </div>
       </div>
