@@ -7,7 +7,7 @@
       <span class="text-body-3xs">Reloading will delete all measurements</span>
     </div>
     <template #actions>
-      <FormButton size="sm" color="outline" @click="clearMeasurements">
+      <FormButton class="my-1" size="sm" color="outline" @click="clearMeasurements">
         Delete all measurements
       </FormButton>
     </template>
