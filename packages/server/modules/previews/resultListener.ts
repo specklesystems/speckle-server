@@ -73,12 +73,18 @@ export const consumePreviewResultFactory =
     const priority = 0
     const previewStatus = 2
     const log = logger.child({
-      ...previewResult,
+      jobId: previewResult.jobId,
+      status: previewResult.status,
+      durationSeconds: previewResult.result.durationSeconds,
       projectId: streamId
     })
 
+    const previewMessage =
+      'Consumed preview generation {status} message payload for {jobId}.'
+
     switch (previewResult.status) {
       case 'error':
+        log.error(previewMessage)
         await upsertObjectPreview({
           objectPreview: {
             objectId,
@@ -89,13 +95,10 @@ export const consumePreviewResultFactory =
             previewStatus
           }
         })
-
-        log.error('Preview generation failed for {jobId}.')
-        // store preview error in the db
         break
 
       case 'success':
-        log.info('Consumed preview generation {status} message payload for {jobId}.')
+        log.info(previewMessage)
         const preview: Record<string, string> = {}
         const allImgsArr: Buffer[] = []
         let i = 0

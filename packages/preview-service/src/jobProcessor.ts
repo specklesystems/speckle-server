@@ -35,28 +35,22 @@ export const jobProcessor = async ({
   port,
   timeout
 }: JobArgs): Promise<PreviewResultPayload> => {
-  const jobId = job.jobId
-  const jobLogger = logger.child({ jobId, serverUrl: job.url })
   const start = new Date()
-  jobLogger.info('Picked up job {jobId} for {serverUrl}')
+  logger.info('Picked up job {jobId} for {serverUrl}')
 
+  const jobMessage =
+    'Processed job {jobId} with result {status}. It took {elapsed} seconds.'
   let page: Page | undefined = undefined
   try {
     page = await browser.newPage()
 
-    const result = await pageFunction({ page, job, logger: jobLogger, port, timeout })
+    const result = await pageFunction({ page, job, logger, port, timeout })
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    jobLogger.info(
-      { status: result.status, elapsed },
-      'Processes job {jobId} with result {status}. It took {elapsed} seconds.'
-    )
+    logger.info({ status: result.status, elapsed }, jobMessage)
     return result
   } catch (err) {
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    jobLogger.error(
-      { err, elapsed },
-      'Failed to process {jobId} job. It took {elapsed} seconds'
-    )
+    logger.error({ err, elapsed }, jobMessage)
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()
@@ -90,14 +84,10 @@ const pageFunction = async ({
   })
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
-  // page.setDefaultTimeout(deps.timeoutMilliseconds)
-  const previewResult = await Promise.race([
-    page.evaluate(async (job: JobPayload) => {
-      await window.load(job)
-      return await window.takeScreenshot()
-    }, job),
-    timeoutAt(timeout)
-  ])
+  const previewResult = await page.evaluate(async (job: JobPayload) => {
+    await window.load(job)
+    return await window.takeScreenshot()
+  }, job)
 
   return { jobId: job.jobId, status: 'success', result: previewResult }
 }
