@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`bg-foundation text-foreground shadow-md rounded-lg w-8 md:w-10 flex flex-col justify-center md:gap-1 py-1`"
+    class="bg-foundation text-foreground rounded-lg w-8 md:w-10 flex flex-col justify-center items-center md:gap-1 border border-outline-2"
   >
     <slot></slot>
   </div>

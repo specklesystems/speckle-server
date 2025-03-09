@@ -5,10 +5,10 @@
         <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
       <div class="flex-1">
-        <h3 v-if="hasTitle" class="text-body-xs font-medium">
+        <h3 v-if="hasTitle" :class="titleClasses">
           <slot name="title">Title</slot>
         </h3>
-        <div v-if="hasDescription" class="text-body-xs">
+        <div v-if="hasDescription" :class="descriptionClasses">
           <slot name="description">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid pariatur,
             ipsum similique veniam.
@@ -57,7 +57,7 @@ import type {
   AlertColor
 } from '~~/src/helpers/common/components'
 
-type Size = 'default' | 'xs'
+type Size = 'default' | 'xs' | '2xs'
 
 defineEmits<{ (e: 'dismiss'): void }>()
 
@@ -101,6 +101,7 @@ const containerClasses = computed(() => {
   const classParts: string[] = ['rounded-lg text-foreground border border-outline-2']
 
   switch (props.size) {
+    case '2xs':
     case 'xs':
       classParts.push('p-2')
       break
@@ -135,6 +136,7 @@ const subcontainerClasses = computed(() => {
   const classParts: string[] = ['flex items-center w-full']
 
   switch (props.size) {
+    case '2xs':
     case 'xs':
       classParts.push('gap-x-1.5')
       break
@@ -151,9 +153,11 @@ const iconClasses = computed(() => {
   const classParts: string[] = []
 
   switch (props.size) {
+    case '2xs':
+      classParts.push('h-4 w-4')
+      break
     case 'xs':
       classParts.push('h-5 w-5')
-      classParts.push(hasDescription.value ? 'mt-0.5' : '')
       break
     case 'default':
     default:
@@ -176,6 +180,38 @@ const iconClasses = computed(() => {
       break
     case 'neutral':
       classParts.push('text-foreground-2')
+      break
+  }
+
+  return classParts.join(' ')
+})
+
+const titleClasses = computed(() => {
+  const classParts: string[] = ['font-medium']
+
+  switch (props.size) {
+    case '2xs':
+      classParts.push('text-body-2xs')
+      break
+    case 'default':
+    default:
+      classParts.push('text-body-xs')
+      break
+  }
+
+  return classParts.join(' ')
+})
+
+const descriptionClasses = computed(() => {
+  const classParts: string[] = []
+
+  switch (props.size) {
+    case '2xs':
+      classParts.push('text-body-2xs pt-0.5')
+      break
+    case 'default':
+    default:
+      classParts.push('text-body-xs')
       break
   }
 

@@ -15,59 +15,57 @@
     <div class="flex flex-col">
       <div
         v-show="showVisibilityOptions"
-        class="sticky top-10 px-2 py-2 flex flex-col justify-start text-left border-b-2 border-primary-muted bg-foundation"
+        class="sticky top-10 px-2 py-1.5 flex flex-col gap-y-0.5 border-b border-outline-2 bg-foundation"
       >
-        <div>
-          <FormButton
-            size="sm"
-            :icon-left="!hideBubbles ? CheckCircleIcon : CheckCircleIconOutlined"
-            text
-            @click="hideBubbles = !hideBubbles"
-          >
-            Show in 3D model
-          </FormButton>
-        </div>
-        <div>
-          <FormButton
-            size="sm"
-            :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
-            text
-            :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
-            @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
-          >
-            {{ includeArchived ? 'Hide' : 'Show' }} Resolved ({{
-              commentThreadsMetadata?.totalArchivedCount
-            }})
-          </FormButton>
-        </div>
-        <div>
-          <FormButton
-            size="sm"
-            :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
-            text
-            class="!text-left"
-            @click="
-              loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
-            "
-          >
-            Exclude threads from other versions
-          </FormButton>
-        </div>
-      </div>
-      <ViewerCommentsListItem
-        v-for="thread in commentThreads"
-        :key="thread.id"
-        :thread="thread"
-      />
-      <div v-if="commentThreads.length === 0" class="pb-4">
-        <ProjectPageLatestItemsCommentsEmptyState
-          small
-          :show-button="canPostComment && hasSelectedObjects"
-          :text="
-            hasSelectedObjects ? undefined : 'Select an object to start collaborating'
+        <FormButton
+          size="sm"
+          :icon-left="!hideBubbles ? CheckCircleIcon : CheckCircleIconOutlined"
+          text
+          class="!text-foreground"
+          @click="hideBubbles = !hideBubbles"
+        >
+          Show in 3D model
+        </FormButton>
+
+        <FormButton
+          size="sm"
+          :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
+          text
+          :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
+          class="!text-foreground"
+          @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
+        >
+          Show resolved ({{ commentThreadsMetadata?.totalArchivedCount }})
+        </FormButton>
+
+        <FormButton
+          size="sm"
+          :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
+          text
+          class="!text-foreground"
+          @click="
+            loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
           "
-          @new-discussion="onNewDiscussion"
+        >
+          Exclude threads from other versions
+        </FormButton>
+      </div>
+      <div class="flex flex-col gap-y-1 p-1">
+        <ViewerCommentsListItem
+          v-for="thread in commentThreads"
+          :key="thread.id"
+          :thread="thread"
         />
+        <div v-if="commentThreads.length === 0" class="pb-4">
+          <ProjectPageLatestItemsCommentsEmptyState
+            small
+            :show-button="canPostComment && hasSelectedObjects"
+            :text="
+              hasSelectedObjects ? undefined : 'Select an object to start collaborating'
+            "
+            @new-discussion="onNewDiscussion"
+          />
+        </div>
       </div>
       <!-- TODO: new thread on click in centre of screen, I can't figure out how -->
       <!-- <div class="py-2 text-center">
