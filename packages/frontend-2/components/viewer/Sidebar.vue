@@ -8,7 +8,7 @@
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
         ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[3.8rem] sm:h-[calc(100dvh-3.8rem)]'
+        : 'sm:top-[3.7rem] sm:h-[calc(100dvh-3.8rem)]'
     ]"
   >
     <div
@@ -32,7 +32,7 @@
         ></div>
       </div>
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg shadow"
       >
         <!-- Header -->
         <div

@@ -23,7 +23,7 @@
         </FormButton>
       </div>
     </template>
-    <div class="flex flex-col space-y-2 px-1 py-2">
+    <div class="flex flex-col space-y-2 px-1 py-1">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"

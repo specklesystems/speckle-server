@@ -13,7 +13,7 @@
       v-if="open"
       ref="menuContent"
       v-keyboard-clickable
-      class="absolute left-10 sm:left-[46px] -top-0 bg-foundation rounded-md border border-outline-2 flex flex-col overflow-hidden"
+      class="absolute left-10 sm:left-[46px] -top-0 bg-foundation rounded-md border border-outline-2 flex flex-col overflow-hidden shadow"
     >
       <div
         v-if="$slots.title"
