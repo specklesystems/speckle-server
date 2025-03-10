@@ -28,6 +28,16 @@ export const createObjectPreviewFactory =
     // there is always an owner, this is safe
     const userId = owners[0].id
 
+    // use the database as a lock to prevent multiple jobs being created
+    const storedObjectPreviewResult = await storeObjectPreview({
+      streamId,
+      objectId,
+      priority
+    })
+    if (!storedObjectPreviewResult.success) {
+      return
+    }
+
     // we're running the preview generation in the name of a project owner
     const token = await createAppToken({
       appId: DefaultAppIds.Web,
@@ -46,6 +56,6 @@ export const createObjectPreviewFactory =
       `/projects/${streamId}/models/${objectId}`,
       serverOrigin
     ).toString()
+
     await requestObjectPreview({ jobId: `${streamId}.${objectId}`, token, url })
-    await storeObjectPreview({ streamId, objectId, priority })
   }

@@ -15,7 +15,9 @@ export type ObjectPreviewInput = Pick<
   ObjectPreview,
   'streamId' | 'objectId' | 'priority'
 >
-export type StoreObjectPreview = (params: ObjectPreviewInput) => Promise<void>
+export type StoreObjectPreview = (
+  params: ObjectPreviewInput
+) => Promise<{ success: true } | { success: false; error: unknown }>
 export type UpsertObjectPreview = (params: {
   objectPreview: ObjectPreview
 }) => Promise<void>
