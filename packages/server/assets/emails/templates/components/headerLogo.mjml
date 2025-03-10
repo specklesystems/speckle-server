@@ -2,7 +2,7 @@
   <mj-column>
     <mj-image
       width="40px"
-      src="<%- params.serverInfo.canonicalUrl -%>/static/speckle-email-logo.png"
+      src="<%- params.serverInfo.canonicalUrl -%>/static/speckle-email-logo?v=1.png"
       alt="Speckle"
     />
   </mj-column>
