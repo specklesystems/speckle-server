@@ -50,8 +50,6 @@ export const getFreshWorkspacePlanProductPricesFactory =
         const { yearly } = planIds
         const yearlyPrice = productPrices.find((p) => p.id === yearly)
         if (!yearlyPrice) {
-          console.log({ plan })
-          console.log({ yearlyPrice })
           throw new MisconfiguredEnvironmentError(
             `Price ${yearly} not found for plan ${plan}`
           )
