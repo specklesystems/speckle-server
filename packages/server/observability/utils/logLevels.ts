@@ -4,7 +4,6 @@ import { ApolloError } from '@apollo/client/core'
 import { ensureError } from '@speckle/shared'
 import { GraphQLError } from 'graphql'
 import type { Logger } from 'pino'
-
 interface LogFn {
   (logger: Logger, e: unknown, obj?: unknown, msg?: string, ...args: unknown[]): void
 }
