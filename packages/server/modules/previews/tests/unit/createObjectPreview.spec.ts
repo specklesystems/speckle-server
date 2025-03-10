@@ -37,6 +37,7 @@ describe('object preview @previews', () => {
         },
         storeObjectPreview: async (objectPreview) => {
           objectPreviewInput = objectPreview
+          return { success: true }
         },
         requestObjectPreview: async (previewRequest) => {
           objectPreviewRequest = previewRequest
