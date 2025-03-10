@@ -31,7 +31,9 @@
           <div class="truncate -mt-1.5">
             <span
               v-tippy="createdAtFormatted.full"
-              :class="`${showVersions ? 'text-foundation' : ''} text-body-3xs`"
+              :class="`${
+                showVersions ? 'text-foundation' : 'text-foreground-2'
+              } text-body-3xs`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
             </span>
