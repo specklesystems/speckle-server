@@ -45,18 +45,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 1. Email verification redirect
   // Self hosters may not have emails enabled, so we skip the redirect
-  if (isEmailEnabled) {
-    const isVerifyEmailPage = to.path === verifyEmailRoute
-    const hasUnverifiedEmails = userData.activeUser.emails.some(
-      (email) => !email.verified
-    )
+  const isVerifyEmailPage = to.path === verifyEmailRoute
+  const hasUnverifiedEmails = userData.activeUser.emails.some(
+    (email) => !email.verified
+  )
 
+  if (isEmailEnabled) {
     if (hasUnverifiedEmails) {
       if (!isVerifyEmailPage) {
         return navigateTo(verifyEmailRoute)
       }
     }
   }
+
+  if (hasUnverifiedEmails) return
 
   // 2. Segmentation questions redirect
   // isOnboardingFinished is set to true when the user has finished the onboarding process, or presses skip (if available)
@@ -70,6 +72,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isGoingToSegmentation && isSegmentationFinished) {
     return navigateTo(homeRoute)
   }
+
+  if (!isSegmentationFinished) return
 
   // 3. Workspace join/create redirect
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
