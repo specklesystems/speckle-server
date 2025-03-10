@@ -35,7 +35,7 @@
         style="display: inline-block; vertical-align: middle"
       >
         <img
-          src="<%- params.serverInfo.canonicalUrl -%>/static/social/linkedin.svg"
+          src="https://app.speckle.systems/static/social/linkedin.svg"
           width="16"
           height="16"
           alt="LinkedIn"
@@ -48,7 +48,7 @@
         style="display: inline-block; vertical-align: middle"
       >
         <img
-          src="<%- params.serverInfo.canonicalUrl -%>/static/social/x.svg"
+          src="https://app.speckle.systems/static/social/x.svg"
           width="16"
           height="16"
           alt="X"
@@ -61,7 +61,7 @@
         style="display: inline-block; vertical-align: middle"
       >
         <img
-          src="<%- params.serverInfo.canonicalUrl -%>/static/social/instagram.svg"
+          src="https://app.speckle.systems/static/social/instagram.svg"
           width="16"
           height="16"
           alt="Instagram"
@@ -74,7 +74,7 @@
         style="display: inline-block; vertical-align: middle"
       >
         <img
-          src="<%- params.serverInfo.canonicalUrl -%>/static/social/youtube.svg"
+          src="https://app.speckle.systems/static/social/youtube.svg"
           width="16"
           height="16"
           alt="YouTube"
