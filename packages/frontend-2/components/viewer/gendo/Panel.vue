@@ -39,7 +39,7 @@
             <template #title>Out of credits</template>
             <template #description>Credits reset on {{ formattedResetDate }}</template>
           </CommonAlert>
-          <div class="flex flex-col gap-y-3">
+          <div class="flex flex-col gap-y-2">
             <FormTextArea
               v-model="prompt"
               name="prompt"
@@ -51,19 +51,19 @@
             />
             <div class="flex justify-between gap-2 items-center text-foreground-2">
               <FormButton
-                color="outline"
+                color="subtle"
                 size="sm"
                 external
                 to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
                 target="_blank"
               >
-                <div class="flex items-center gap-1 text-foreground-2 font-normal">
+                <div class="flex items-center gap-1 text-foreground font-normal">
                   <span>Learn to prompt</span>
                   <ArrowTopRightOnSquareIcon class="h-3 w-3" />
                 </div>
               </FormButton>
               <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
-                <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
+                <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
                   Generate
                 </FormButton>
               </div>
