@@ -522,7 +522,8 @@ isMultiRegionTestMode()
       const adminUser: BasicTestUser = {
         id: '',
         name: 'John Speckle',
-        email: createRandomEmail()
+        email: createRandomEmail(),
+        role: Roles.Server.Admin
       }
 
       const testWorkspace: SetOptional<BasicTestWorkspace, 'slug'> = {
