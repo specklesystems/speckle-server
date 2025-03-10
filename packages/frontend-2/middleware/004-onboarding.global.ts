@@ -55,10 +55,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo(verifyEmailRoute)
       }
     }
+    // Don't run any other checks if the user has unverified emails
+    if (hasUnverifiedEmails) return
   }
-
-  // Don't run any other checks if the user has unverified emails
-  if (hasUnverifiedEmails) return
 
   // 2. Segmentation questions redirect
   // isOnboardingFinished is set to true when the user has finished the onboarding process, or presses skip (if available)
