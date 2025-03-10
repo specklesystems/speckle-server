@@ -13,7 +13,7 @@ import { OverrideProperties, SetOptional } from 'type-fest'
 /**
  * This includes the pricing plans (Stripe products) a customer can sub to
  */
-export type WorkspacePricingProducts = PaidWorkspacePlans | 'guest' | 'viewer'
+export type WorkspacePricingProducts = PaidWorkspacePlans | 'guest'
 
 type BaseWorkspacePlan = {
   workspaceId: string
