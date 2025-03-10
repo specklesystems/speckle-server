@@ -28,6 +28,58 @@
       <a href="https://speckle.community/" target="_blank">Community forum</a>
       <br />
       <br />
+      <span style="display: block; margin-bottom: 5px">Follow us</span>
+      <a
+        href="https://www.linkedin.com/company/specklesystems/"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/linkedin.svg"
+          width="16"
+          height="16"
+          alt="LinkedIn"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://x.com/SpeckleSystems"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/x.svg"
+          width="16"
+          height="16"
+          alt="X"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://www.instagram.com/specklesystems/"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/instagram.svg"
+          width="16"
+          height="16"
+          alt="Instagram"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://www.youtube.com/c/SpeckleSystems"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/youtube.svg"
+          width="16"
+          height="16"
+          alt="YouTube"
+        />
+      </a>
     </mj-text>
   </mj-column>
 </mj-section>
