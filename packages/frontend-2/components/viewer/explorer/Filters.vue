@@ -15,7 +15,7 @@
             {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex divide-x divide-outline-3">
+        <div class="flex gap-x-1">
           <FormButton
             v-if="title !== 'Object Type'"
             size="sm"
