@@ -40,11 +40,6 @@ const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
     monthly: 'price_business_monthly',
     yearly: 'price_business_yearly'
   },
-  viewer: {
-    productId: 'prod_viewer',
-    monthly: 'price_viewer_monthly',
-    yearly: 'price_viewer_yearly'
-  },
   [PaidWorkspacePlans.Team]: {
     productId: 'prod_team',
     monthly: 'price_team_monthly'
