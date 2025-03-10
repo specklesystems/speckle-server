@@ -12,6 +12,7 @@ import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/s
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { ExecuteHooks } from '@/modules/core/hooks'
+import { pipeline } from 'stream'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 
@@ -419,6 +420,6 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
       requestDropped = true
     })
 
-    req.pipe(busboy)
+    pipeline(req, busboy)
   })
 }

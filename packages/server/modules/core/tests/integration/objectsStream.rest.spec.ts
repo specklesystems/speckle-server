@@ -47,6 +47,7 @@ import { expect } from 'chai'
 import { parse, Parser } from 'csv-parse'
 import { createReadStream } from 'fs'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
+import { pipeline } from 'stream'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -183,12 +184,14 @@ describe('Objects streaming REST @core', () => {
     )}`
 
     // import CSV file
-    const csvStream = createReadStream(
-      //FIXME this relies on running this test from `packages/server` directory
-      `${process.cwd()}/test/assets/failing-streaming-model-f547dc4e88.csv`
-    )
+    const csvStream = pipeline(
+      createReadStream(
+        //FIXME this relies on running this test from `packages/server` directory
+        `${process.cwd()}/test/assets/failing-streaming-model-f547dc4e88.csv`
+      ),
       // eslint-disable-next-line camelcase
-      .pipe(parse({ delimiter: ',', from_line: 2 }))
+      parse({ delimiter: ',', from_line: 2 })
+    )
 
     function csvParserAsPromise(
       stream: Parser

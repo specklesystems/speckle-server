@@ -8,6 +8,7 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
+import { pipeline } from 'stream'
 
 export default (app: Application) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
@@ -65,6 +66,6 @@ export default (app: Application) => {
     gzip.write(JSON.stringify(response))
     gzip.flush()
     gzip.end()
-    gzip.pipe(res)
+    pipeline(gzip, res)
   })
 }
