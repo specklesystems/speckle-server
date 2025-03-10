@@ -62,13 +62,13 @@ function buildEmailTemplateMjml(
   const { stream } = state
 
   return {
-    bodyStart: `<mj-text>
+    bodyStart: `<mj-text align="center" line-height="2" >
 Hello,<br/>
 <br/>
 You have just been granted access to the <b>${stream.name}</b> project. Check it out below:
 </mj-text>
 `,
-    bodyEnd: `<mj-text>
+    bodyEnd: `<mj-text align="center" line-height="2" >
 You received this email because you requested access to this project
 </mj-text>`
   }

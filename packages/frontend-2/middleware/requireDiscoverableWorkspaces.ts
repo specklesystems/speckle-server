@@ -1,13 +1,14 @@
 import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
+import { homeRoute, workspaceCreateRoute } from '~~/lib/common/helpers/route'
 
 /**
  * Redirect user to /workspaces/actions/create, if they have no discoverable workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
+  const isNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
   if (!isWorkspacesEnabled.value) return
 
@@ -22,9 +23,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
     (data?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
     (data?.activeUser?.workspaceJoinRequests?.totalCount ?? 0) > 0
 
+  const isMemberOfWorkspace = (data?.activeUser?.workspaces?.totalCount ?? 0) > 0
+
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
 
   if (!hasDiscoverableWorkspaces && !isGoingToCreateWorkspace) {
     return navigateTo(workspaceCreateRoute())
+  }
+
+  if (isNewPlansEnabled && isMemberOfWorkspace) {
+    return navigateTo(homeRoute)
   }
 })
