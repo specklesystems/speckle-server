@@ -1,11 +1,17 @@
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
-import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import {
+  CreateWorkspaceSeat,
+  GetWorkspaceUserSeat
+} from '@/modules/gatekeeper/domain/operations'
 import { NotFoundError } from '@/modules/shared/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   AssignWorkspaceSeat,
+  EnsureValidWorkspaceRoleSeat,
   GetWorkspaceRoleForUser
 } from '@/modules/workspaces/domain/operations'
 import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { z } from 'zod'
 
@@ -52,30 +58,50 @@ export const isWorkspaceRoleWorkspaceSeatTypeValid = ({
   }).success
 }
 
+export const ensureValidWorkspaceRoleSeatFactory =
+  (deps: {
+    createWorkspaceSeat: CreateWorkspaceSeat
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+  }): EnsureValidWorkspaceRoleSeat =>
+  async (params) => {
+    const workspaceSeat = await deps.getWorkspaceUserSeat({
+      workspaceId: params.workspaceId,
+      userId: params.userId
+    })
+    if (
+      workspaceSeat &&
+      isWorkspaceRoleWorkspaceSeatTypeValid({
+        workspaceRole: params.role,
+        workspaceSeatType: workspaceSeat.type
+      })
+    ) {
+      return workspaceSeat
+    }
+
+    // Upsert default seat type assignment
+    return await deps.createWorkspaceSeat({
+      workspaceId: params.workspaceId,
+      userId: params.userId,
+      type: getDefaultWorkspaceSeatTypeByWorkspaceRole({ workspaceRole: params.role })
+    })
+  }
+
 export const assignWorkspaceSeatFactory =
   ({
     createWorkspaceSeat,
-    getWorkspaceRoleForUser
+    getWorkspaceRoleForUser,
+    emit
   }: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    emit: EventBusEmit
   }): AssignWorkspaceSeat =>
   async ({ workspaceId, userId, type }) => {
     const workspaceAcl = await getWorkspaceRoleForUser({ workspaceId, userId })
     if (!workspaceAcl) {
       throw new NotFoundError('User does not have a role in the workspace')
     }
-    if (!type) {
-      return await createWorkspaceSeat({
-        workspaceId,
-        userId,
-        type: type
-          ? type
-          : getDefaultWorkspaceSeatTypeByWorkspaceRole({
-              workspaceRole: workspaceAcl.role
-            })
-      })
-    }
+
     if (
       !isWorkspaceRoleWorkspaceSeatTypeValid({
         workspaceRole: workspaceAcl.role,
@@ -93,9 +119,16 @@ export const assignWorkspaceSeatFactory =
       )
     }
 
-    return await createWorkspaceSeat({
+    const seat = await createWorkspaceSeat({
       workspaceId,
       userId,
       type
     })
+
+    await emit({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: { acl: workspaceAcl, seatType: seat.type }
+    })
+
+    return seat
   }

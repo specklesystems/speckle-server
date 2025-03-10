@@ -186,7 +186,7 @@ export type SubscriptionDataInput = OverrideProperties<
 
 export type ReconcileSubscriptionData = (args: {
   subscriptionData: SubscriptionDataInput
-  applyProrotation: boolean
+  prorationBehavior: 'always_invoice' | 'create_prorations' | 'none'
 }) => Promise<void>
 
 export const WorkspaceSeatType = <const>{

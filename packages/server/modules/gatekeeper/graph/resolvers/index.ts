@@ -4,7 +4,8 @@ import { authorizeResolver } from '@/modules/shared'
 import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -34,7 +35,8 @@ import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOn
 import {
   calculateSubscriptionSeats,
   CreateCheckoutSession,
-  CreateCheckoutSessionOld
+  CreateCheckoutSessionOld,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
@@ -51,7 +53,12 @@ import {
   startCheckoutSessionFactoryNew,
   startCheckoutSessionFactoryOld
 } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
-import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  countSeatsByTypeInWorkspaceFactory,
+  createWorkspaceSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -143,6 +150,16 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
         }
       },
+      WorkspaceCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders
+            .gatekeeper!.getUserWorkspaceSeatType.forWorkspace(parent.workspaceId)
+            .load(parent.id)
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
       ServerWorkspacesInfo: {
         planPrices: async () => {
           const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
@@ -160,7 +177,26 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         }
       },
       WorkspaceMutations: {
-        billing: () => ({})
+        billing: () => ({}),
+        updateSeatType: async (_parent, args, ctx) => {
+          const { workspaceId, userId, seatType } = args.input
+
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const assignSeat = assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            emit: getEventBus().emit
+          })
+          await assignSeat({ workspaceId, userId, type: seatType })
+
+          return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
+        }
       },
       WorkspaceBillingMutations: {
         cancelCheckoutSession: async (_parent, args, ctx) => {
