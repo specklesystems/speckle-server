@@ -13,7 +13,7 @@
     </template>
     <div class="p-2 px-3 flex flex-col gap-2 border-b border-outline-2">
       <div>
-        <h6 class="text-body-2xs font-semibold mb-2.5">Measurement type</h6>
+        <h6 class="text-body-2xs font-medium mb-2.5">Measurement type</h6>
         <FormRadio
           v-for="option in measurementTypeOptions"
           :key="option.value"
@@ -35,11 +35,11 @@
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="text-body-2xs font-semibold">Snap to vertices</span>
+      <span class="text-body-2xs font-medium">Snap to vertices</span>
     </div>
     <div class="pb-3 flex flex-col">
       <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
-        <h6 class="text-body-2xs font-semibold">Units</h6>
+        <h6 class="text-body-2xs font-medium">Units</h6>
         <ViewerMeasurementsUnitSelect
           v-model="selectedUnit"
           mount-menu-on-body
@@ -48,7 +48,7 @@
         />
       </div>
       <div class="flex flex-col gap-1.5 px-3 pt-2 border-t border-outline-2">
-        <label class="text-body-2xs font-semibold" for="precision">Precision</label>
+        <label class="text-body-2xs font-medium" for="precision">Precision</label>
         <div class="flex gap-2 items-center">
           <input
             id="precision"

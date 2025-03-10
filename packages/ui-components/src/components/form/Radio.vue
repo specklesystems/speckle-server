@@ -39,7 +39,7 @@
           />
         </div>
         <div class="flex flex-col">
-          <span class="font-semibold">{{ title }}</span>
+          <span class="font-medium">{{ title }}</span>
           <p
             v-if="descriptionText && !inlineDescription"
             :id="descriptionId"
