@@ -18,15 +18,20 @@ describe('Observability', () => {
         metricsPageBody = await metricsResponse.text()
       })
       const testCases = [
+        // Apollo server
         'speckle_server_apollo_calls',
+        // express-prom-bundle
         'speckle_server_request_duration',
+        // Express (error handling middleware)
         'speckle_server_request_errors',
+        // http server
         'speckle_server_active_connections',
+        // apollo subscriptions
         'speckle_server_apollo_connect',
         'speckle_server_apollo_clients',
         'speckle_server_apollo_graphql_total_subscription_operations',
         'speckle_server_apollo_graphql_total_subscription_responses',
-        'speckle_server_active_connections',
+        // knex
         'speckle_server_knex_free',
         'speckle_server_knex_used',
         'speckle_server_knex_pending',
@@ -39,6 +44,7 @@ describe('Observability', () => {
         'speckle_server_knex_connection_acquisition_errors',
         'speckle_server_knex_connection_usage_duration',
         'speckle_server_knex_connection_pool_reaping_duration',
+        // high frequency metrics
         'nodejs_heap_size_total_bytes_high_frequency',
         'nodejs_heap_size_used_bytes_high_frequency',
         'nodejs_external_memory_bytes_high_frequency',
@@ -51,7 +57,12 @@ describe('Observability', () => {
         'knex_remaining_capacity_high_frequency',
         'process_cpu_user_seconds_total_high_frequency',
         'process_cpu_system_seconds_total_high_frequency',
-        'process_cpu_seconds_total_high_frequency'
+        'process_cpu_seconds_total_high_frequency',
+        // preview service
+        'speckle_server_preview_jobs_queue_pending',
+        'speckle_server_preview_jobs_count',
+        'speckle_server_preview_jobs_request_failed_count',
+        'speckle_server_preview_jobs_processed_duration_seconds'
       ]
 
       testCases.forEach((testCase) =>

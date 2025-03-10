@@ -518,7 +518,7 @@
                               font-size: 14px;
                               line-height: 1;
                               text-align: center;
-                              color: #999999;
+                              color: #626263;
                             "
                           >
                             Sent from <%= params.server.name || 'Speckle Server' %> at
@@ -528,7 +528,8 @@
                             >
                               <%= params.server.url %>
                             </a>
-                            , deployed and managed by <%= params.server.company %>. Your
+                            <span>,</span>
+                            deployed and managed by <%= params.server.company %>. Your
                             admin contact is <%= params.server.contact %>.
                           </div>
                         </td>

@@ -153,7 +153,7 @@ const toggleCommentResolvedStatus = async () => {
     status: !props.thread.archived
   })
   triggerNotification({
-    description: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
+    title: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
   })
 }

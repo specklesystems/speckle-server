@@ -379,9 +379,10 @@ export = {
     },
 
     async visibility(parent) {
-      const { isPublic, isDiscoverable } = parent
-      if (!isPublic) return ProjectVisibility.Private
-      return isDiscoverable ? ProjectVisibility.Public : ProjectVisibility.Unlisted
+      const { isPublic } = parent
+
+      // Ignore discoverability for now
+      return isPublic ? ProjectVisibility.Unlisted : ProjectVisibility.Private
     }
   },
   PendingStreamCollaborator: {
