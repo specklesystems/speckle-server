@@ -3,6 +3,7 @@ import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helper
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
@@ -72,11 +73,33 @@ import {
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { Roles } from '@speckle/shared'
+import { Roles, retry } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
+
+const tables = {
+  projects: (db: Knex) => db.table<StreamRecord>('streams')
+}
+
+const assertProjectRegion = async (
+  projectId: string,
+  regionKey: string
+): Promise<void> => {
+  const project = await tables.projects(db).select('*').where('id', projectId).first()
+
+  if (!project || project.regionKey !== regionKey) {
+    expect.fail('Project is not in expected region.')
+  }
+}
+
+const ensureProjectRegion = async (
+  projectId: string,
+  regionKey: string
+): Promise<void> => {
+  await retry(async () => assertProjectRegion(projectId, regionKey), 20, 10)
+}
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -624,6 +647,8 @@ isMultiRegionTestMode()
           projectId: testProject.id
         })
         testBlobId = testBlob.blobId
+
+        await assertProjectRegion(testProject.id, regionKey1)
       })
 
       it('moves project record to target regional db', async () => {
@@ -632,6 +657,8 @@ isMultiRegionTestMode()
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
 
         const resB = await apollo.execute(GetProjectDocument, {
           id: testProject.id
@@ -648,6 +675,8 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
 
+        await ensureProjectRegion(testProject.id, regionKey2)
+
         const resB = await apollo.execute(GetRegionalProjectModelDocument, {
           projectId: testProject.id,
           modelId: testModel.id
@@ -663,6 +692,8 @@ isMultiRegionTestMode()
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
 
         const resB = await apollo.execute(GetRegionalProjectVersionDocument, {
           projectId: testProject.id,
@@ -683,6 +714,8 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
 
+        await ensureProjectRegion(testProject.id, regionKey2)
+
         const resB = await apollo.execute(GetRegionalProjectObjectDocument, {
           projectId: testProject.id,
           objectId: testVersion.objectId
@@ -698,6 +731,8 @@ isMultiRegionTestMode()
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
 
         const resB = await apollo.execute(GetRegionalProjectAutomationDocument, {
           projectId: testProject.id,
@@ -721,6 +756,8 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
 
+        await ensureProjectRegion(testProject.id, regionKey2)
+
         const resB = await apollo.execute(GetRegionalProjectCommentDocument, {
           projectId: testProject.id,
           commentId: testComment.id
@@ -736,6 +773,8 @@ isMultiRegionTestMode()
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
 
         const resB = await apollo.execute(GetRegionalProjectWebhookDocument, {
           projectId: testProject.id,
@@ -753,21 +792,7 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
 
-        const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
-          projectId: testProject.id,
-          blobId: testBlobId
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.blob).to.not.be.undefined
-      })
-
-      it('moves project files and associated blobs to target regional db and object storage', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
+        await ensureProjectRegion(testProject.id, regionKey2)
 
         const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
           projectId: testProject.id,

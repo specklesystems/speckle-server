@@ -37,15 +37,15 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isArray } from 'lodash-es'
+import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: ProjectVisibility): void
+  (e: 'update:modelValue', v: SimpleProjectVisibility): void
 }>()
 
 const props = defineProps<{
-  modelValue: ProjectVisibility
+  modelValue: SimpleProjectVisibility
   showLabel?: boolean
   name?: string
   disabled?: boolean
@@ -55,22 +55,17 @@ const labelId = useId()
 const buttonId = useId()
 const items = ref<
   Record<
-    ProjectVisibility,
-    { id: ProjectVisibility; description: string; title: string }
+    SimpleProjectVisibility,
+    { id: SimpleProjectVisibility; description: string; title: string }
   >
 >({
-  [ProjectVisibility.Public]: {
-    id: ProjectVisibility.Public,
-    description: 'Project is visible to everyone',
-    title: 'Discoverable'
-  },
-  [ProjectVisibility.Unlisted]: {
-    id: ProjectVisibility.Unlisted,
+  [SimpleProjectVisibility.Unlisted]: {
+    id: SimpleProjectVisibility.Unlisted,
     description: 'Anyone with the link can view',
     title: 'Link shareable'
   },
-  [ProjectVisibility.Private]: {
-    id: ProjectVisibility.Private,
+  [SimpleProjectVisibility.Private]: {
+    id: SimpleProjectVisibility.Private,
     description: 'Only collaborators can access',
     title: 'Private'
   }
