@@ -3,7 +3,7 @@
     class="relative flex space-x-2 mb-2 last:mb-0"
     :class="description && inlineDescription ? 'items-start' : 'items-center'"
   >
-    <div class="flex items-center" :class="size === 'sm' ? 'h-4' : 'h-4'">
+    <div class="flex items-center" :class="size === 'sm' ? 'h-4' : 'h-6'">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
         :id="finalId"
