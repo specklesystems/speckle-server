@@ -51,7 +51,7 @@
             />
             <div class="flex justify-between gap-2 items-center text-foreground-2">
               <FormButton
-                color="subtle"
+                color="outline"
                 size="sm"
                 external
                 to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
