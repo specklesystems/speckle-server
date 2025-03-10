@@ -1096,12 +1096,8 @@ preview_service:
   ##
   image: ''
 
-  ## @param preview_service.port The port on which the Preview Service will run. This is not exposed, but used within its own local network within the pod.
+  ## @param preview_service.port The port on which the Preview Service will expose Prometheus metrics.
   port: '3001'
-
-  monitoring:
-    ## @param preview_service.monitoring.metricsPort The port on which the metrics server will be exposed.
-    metricsPort: '9094'
 
   ## @param preview_service.postgresMaxConnections The maximum number of connections that the Preview Service postgres client will make to the Postgres database.
   ##

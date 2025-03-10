@@ -25,7 +25,7 @@ spec:
 
         ports:
           - name: metrics
-            containerPort: {{ .Values.preview_service.monitoring.metricsPort }}
+            containerPort: {{ .Values.preview_service.port }}
             protocol: TCP
 
         livenessProbe:
@@ -59,21 +59,13 @@ spec:
 
         env:
           - name: HOST
-            value: '127.0.0.1' # Only accept connections from localhost, as preview service does not need to be exposed outside the container.
-          - name: METRICS_HOST
             value: '0.0.0.0' # Expose metrics outside of the container so it can be scraped by Prometheus
           - name: PORT
             value: {{ .Values.preview_service.port | quote }}
 
-          - name: PROMETHEUS_METRICS_PORT
-            value: {{ .Values.preview_service.monitoring.metricsPort | quote }}
-
-
-
-
           # *** Redis ***
           {{- if .Values.preview_service.dedicatedPreviewsQueue }}
-          - name: REDIS_URL 
+          - name: REDIS_URL
             valueFrom:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
