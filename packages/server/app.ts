@@ -165,7 +165,7 @@ export function buildApolloSubscriptionServer(params: {
         try {
           const headers = getHeaders({ connContext, connectionParams })
           const requestId = headers['x-request-id'] || `ws-${randomUUID()}`
-          enterNewRequestContext({ reqId: requestId })
+          enterNewRequestContext({ reqId: requestId, logger })
 
           logger.debug(
             { requestId, headers: sanitizeHeaders(headers) },
@@ -350,7 +350,7 @@ export async function init() {
     app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 
   // Initialize default modules, including rest api handlers
-  await ModulesSetup.init(app)
+  await ModulesSetup.init({ app, metricsRegister: prometheusClient.register })
 
   // Initialize healthchecks
   const healthchecks = await healthchecksInitFactory()(app, true)

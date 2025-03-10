@@ -1,4 +1,4 @@
-<mj-section>
+<mj-section padding-bottom="0">
   <mj-column>
     <mj-image
       width="150px"

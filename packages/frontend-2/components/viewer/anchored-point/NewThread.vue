@@ -25,19 +25,19 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           v-if="modelValue.isExpanded && !isEmbedEnabled"
-          class="bg-foundation px-2 py-2 text-sm text-primary sm:hidden font-medium flex justify-between items-center"
+          class="bg-foundation p-3 text-body-2xs text-foreground font-semibold sm:hidden flex justify-between items-center"
         >
           Add Comment
           <button v-tippy="'Close'" @click="onThreadClick">
-            <PlusIcon class="w-5 h-5 text-primary rotate-45" />
+            <PlusIcon class="w-5 h-5 text-foreground-2 rotate-45" />
           </button>
         </div>
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] bg-foundation sm:rounded-lg shadow-md"
+          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
         >
-          <div class="relative">
+          <div class="relative p-3 px-2 pr-1 sm:p-3 sm:pr-2">
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"
@@ -48,14 +48,14 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex p-2 justify-between">
+            <div class="w-full flex justify-between items-center pr-1 pt-4">
               <FormButton
                 v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
-                text
-                class="sm:px-1"
                 :disabled="isPostingNewThread"
+                color="subtle"
+                class="!bg-foundation-page dark:!bg-foundation"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
@@ -137,9 +137,6 @@ const onThreadClick = () => {
   })
 }
 
-// NOTE: will be used later, keep
-// const submitEmoji = (emoji: string) =>
-//   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
 const mp = useMixpanel()
 
 const onSubmit = (comment?: CommentEditorValue) => {
@@ -159,6 +156,12 @@ const onSubmit = (comment?: CommentEditorValue) => {
 
       // switch to new thread
       await open(threadId)
+
+      // Close the new thread bubble after successful submission
+      emit('update:modelValue', {
+        ...props.modelValue,
+        isExpanded: false
+      })
     })
     .finally(() => {
       isPostingNewThread.value = false
