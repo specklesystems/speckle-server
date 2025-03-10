@@ -187,7 +187,7 @@
     "@types/zxcvbn": "^4.4.5",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
-    "axios": "^1.7.4",
+    "axios": "^1.8.2",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.2",
     "chai-http": "^4.3.0",
