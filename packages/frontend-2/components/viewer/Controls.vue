@@ -72,7 +72,7 @@
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-mt-28 md:mt-0 bg-foundation md:bg-transparent md:gap-2 flex flex-col rounded-md transition-all"
+          class="-mt-28 md:mt-0 bg-foundation md:bg-transparent gap-1 md:gap-2 flex flex-col rounded-md transition-all"
           :class="[
             activePanel === 'mobileOverflow' ? '' : '-translate-x-24 md:translate-x-0'
           ]"
