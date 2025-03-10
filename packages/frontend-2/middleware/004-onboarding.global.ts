@@ -49,7 +49,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const hasUnverifiedEmails = userData.activeUser.emails.some(
     (email) => !email.verified
   )
-
   if (isEmailEnabled) {
     if (hasUnverifiedEmails) {
       if (!isVerifyEmailPage) {
@@ -58,6 +57,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
+  // Don't run any other checks if the user has unverified emails
   if (hasUnverifiedEmails) return
 
   // 2. Segmentation questions redirect
@@ -68,11 +68,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!isSegmentationFinished && !isGoingToSegmentation) {
     return navigateTo(onboardingRoute)
   }
-
   if (isGoingToSegmentation && isSegmentationFinished) {
     return navigateTo(homeRoute)
   }
-
+  // Don't run any other checks if the user has not finished the onboarding process
   if (!isSegmentationFinished) return
 
   // 3. Workspace join/create redirect
