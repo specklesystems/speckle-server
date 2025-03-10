@@ -203,7 +203,14 @@ class ObjectLoader {
      *  But doing string gymnastics in order to get closure length is going to be the same
      *  if not even more memory constly
      */
-    const rootObj = JSON.parse(rootObjJson)
+    let rootObj
+    try {
+      rootObj = JSON.parse(rootObjJson)
+    } catch (e) {
+      throw new Error(
+        `Error parsing root object. "${e.message}". Root object: '${rootObjJson}'`
+      )
+    }
     const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
     return totalChildrenCount
   }
