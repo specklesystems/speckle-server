@@ -12,7 +12,6 @@ import {
   createAuthorizationCodeFactory
 } from '@/modules/auth/repositories/apps'
 import setupStrategiesFactory from '@/modules/auth/strategies'
-import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -26,10 +25,11 @@ import {
 import authRestApi from '@/modules/auth/rest/index'
 import authScopes from '@/modules/auth/scopes'
 import { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
-import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
-import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
-import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
-import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
+import { azureAdStrategyBuilderFactory } from '@/modules/auth/strategies/azureAd'
+import { githubStrategyBuilderFactory } from '@/modules/auth/strategies/github'
+import { googleStrategyBuilderFactory } from '@/modules/auth/strategies/google'
+import { localStrategyBuilderFactory } from '@/modules/auth/strategies/local'
+import { oidcStrategyBuilderFactory } from '@/modules/auth/strategies/oidc'
 import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
