@@ -134,7 +134,7 @@
 
                 <div
                   ref="optionsContainer"
-                  class="overflow-auto simple-scrollbar max-h-60 gap-1 flex flex-col"
+                  class="overflow-auto simple-scrollbar max-h-60 xl:max-h-80 gap-1 flex flex-col"
                 >
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
