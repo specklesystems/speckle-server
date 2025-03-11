@@ -39,7 +39,7 @@ export const getObjectPreviewInfoFactory =
   }
 
 /**
- * @description This will return { success: false } if the object preview already exists or there is some other conflict
+ * @throws {Error} if the preview already exists
  */
 export const storeObjectPreviewFactory =
   ({ db }: { db: Knex }): StoreObjectPreview =>
@@ -57,12 +57,7 @@ export const storeObjectPreviewFactory =
       }
     const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
-    try {
-      await sqlQuery
-      return { success: true }
-    } catch (e) {
-      return { success: false, error: e }
-    }
+    await sqlQuery
   }
 
 export const storePreviewFactory =

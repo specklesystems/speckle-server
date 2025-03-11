@@ -29,13 +29,14 @@ export const createObjectPreviewFactory =
     const userId = owners[0].id
 
     // use the database as a lock to prevent multiple jobs being created
-    const storedObjectPreviewResult = await storeObjectPreview({
-      streamId,
-      objectId,
-      priority
-    })
-    if (!storedObjectPreviewResult.success) {
-      return
+    try {
+      await storeObjectPreview({
+        streamId,
+        objectId,
+        priority
+      })
+    } catch {
+      return false
     }
 
     // we're running the preview generation in the name of a project owner
@@ -58,4 +59,5 @@ export const createObjectPreviewFactory =
     ).toString()
 
     await requestObjectPreview({ jobId: `${streamId}.${objectId}`, token, url })
+    return true
   }
