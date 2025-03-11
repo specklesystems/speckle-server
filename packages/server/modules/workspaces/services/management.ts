@@ -57,7 +57,7 @@ import {
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
@@ -291,13 +291,15 @@ export const deleteWorkspaceFactory =
     deleteProject,
     queryAllWorkspaceProjects,
     deleteAllResourceInvites,
-    deleteSsoProvider
+    deleteSsoProvider,
+    emitWorkspaceEvent
   }: {
     deleteWorkspace: DeleteWorkspace
     deleteProject: DeleteStreamRecord
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
+    emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
     // Delete workspace SSO provider, if present
@@ -328,6 +330,10 @@ export const deleteWorkspaceFactory =
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
     }
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Deleted,
+      payload: { workspaceId }
+    })
   }
 
 type WorkspaceRoleDeleteArgs = {

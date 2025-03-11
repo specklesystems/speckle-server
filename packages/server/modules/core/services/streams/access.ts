@@ -1,8 +1,4 @@
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
   AddOrUpdateStreamCollaborator,
   GetStream,
@@ -18,8 +14,10 @@ import {
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
+import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
 
 /**
@@ -93,9 +91,7 @@ export const removeStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     isStreamCollaborator: IsStreamCollaborator
     revokeStreamPermissions: RevokeStreamPermissions
-    addStreamPermissionsRevokedActivity: ReturnType<
-      typeof addStreamPermissionsRevokedActivityFactory
-    >
+    emitEvent: EventBusEmit
   }): RemoveStreamCollaborator =>
   async (streamId, userId, removedById, removerResourceAccessRules) => {
     if (userId !== removedById) {
@@ -119,11 +115,13 @@ export const removeStreamCollaboratorFactory =
       throw new LogicError('Stream not found')
     }
 
-    await deps.addStreamPermissionsRevokedActivity({
-      streamId,
-      activityUserId: removedById,
-      removedUserId: userId,
-      stream
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsRevoked,
+      payload: {
+        project: stream,
+        activityUserId: removedById,
+        removedUserId: userId
+      }
     })
 
     return stream
@@ -144,12 +142,7 @@ export const addOrUpdateStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
-    addStreamInviteAcceptedActivity: ReturnType<
-      typeof addStreamInviteAcceptedActivityFactory
-    >
-    addStreamPermissionsAddedActivity: ReturnType<
-      typeof addStreamPermissionsAddedActivityFactory
-    >
+    emitEvent: EventBusEmit
   }): AddOrUpdateStreamCollaborator =>
   async (
     streamId,
@@ -184,6 +177,17 @@ export const addOrUpdateStreamCollaboratorFactory =
         throw new BadRequestError('Server guests cannot own streams')
     }
 
+    // Allows for dynamic extra validation
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsBeingAdded,
+      payload: {
+        activityUserId: addedById,
+        targetUserId: userId,
+        role: role as StreamRoles,
+        projectId: streamId
+      }
+    })
+
     const stream = (await deps.grantStreamPermissions({
       streamId,
       userId,
@@ -191,20 +195,23 @@ export const addOrUpdateStreamCollaboratorFactory =
     })) as StreamRecord // validateStreamAccess already checked that it exists
 
     if (fromInvite) {
-      await deps.addStreamInviteAcceptedActivity({
-        streamId,
-        inviterId: addedById,
-        inviteTargetId: userId,
-        role: role as StreamRoles,
-        stream
+      await deps.emitEvent({
+        eventName: ServerInvitesEvents.Finalized,
+        payload: {
+          invite: fromInvite,
+          finalizerUserId: addedById,
+          accept: true
+        }
       })
     } else {
-      await deps.addStreamPermissionsAddedActivity({
-        streamId,
-        activityUserId: addedById,
-        targetUserId: userId,
-        role: role as StreamRoles,
-        stream
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsAdded,
+        payload: {
+          project: stream,
+          activityUserId: addedById,
+          targetUserId: userId,
+          role: role as StreamRoles
+        }
       })
     }
 

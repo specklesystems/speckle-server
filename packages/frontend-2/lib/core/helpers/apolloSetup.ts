@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import type { Optional } from '@speckle/shared'
 import type { FieldMergeFunction } from '@apollo/client/core'
 

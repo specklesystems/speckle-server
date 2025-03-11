@@ -42,6 +42,8 @@
           <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
             Copy this code to embed your model in a webpage or document.
           </p>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
+          <FormClipboardInput class="mb-4" :value="updatedUrl" />
           <LayoutDialogSection border-b border-t title="Options">
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-for="option in embedDialogOptions" :key="option.id">
@@ -86,10 +88,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ProjectVisibility,
-  type ProjectsModelPageEmbed_ProjectFragment
-} from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -183,7 +183,7 @@ const iframeCode = computed(() => {
 })
 
 const isPrivate = computed(() => {
-  return props.project.visibility === ProjectVisibility.Private
+  return props.project.visibility === SimpleProjectVisibility.Private
 })
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
@@ -231,7 +231,7 @@ const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
 }
 
-const handleChangeVisibility = (newVisibility: ProjectVisibility) => {
+const handleChangeVisibility = (newVisibility: SimpleProjectVisibility) => {
   projectVisibility.value = newVisibility
 }
 

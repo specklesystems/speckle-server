@@ -41,6 +41,7 @@ class ObjectLoader {
     }>
   })
 
+  static createFromObjects(objects: object[]): ObjectLoader
   static createFromJSON(input: string): ObjectLoader
   async getRootObject(): Promise<SpeckleObject>
   async getTotalObjectCount(): Promise<number>

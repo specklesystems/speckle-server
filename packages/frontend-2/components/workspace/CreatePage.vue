@@ -1,30 +1,47 @@
 <template>
-  <div class="bg-foundation-page">
-    <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div class="flex items-center justify-between h-full w-screen py-4 px-3 sm:px-4">
-        <HeaderLogoBlock
-          :active="false"
-          class="min-w-40 cursor-pointer"
-          no-link
-          @click="onCancelClick"
-        />
-        <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
-      </div>
-    </nav>
-    <div class="h-dvh w-dvh overflow-hidden flex flex-col">
-      <div class="h-12 w-full shrink-0" />
-      <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
-        <div class="container mx-auto px-6 md:px-12">
-          <WorkspaceWizard :workspace-id="workspaceId" />
+  <HeaderWithEmptyPage empty-header>
+    <template #header-left>
+      <HeaderLogoBlock
+        :active="false"
+        class="min-w-40 cursor-pointer"
+        no-link
+        @click="onCancelClick"
+      />
+    </template>
+    <template #header-right>
+      <FormButton
+        v-if="requiresWorkspaceCreation"
+        size="sm"
+        color="outline"
+        @click="logout()"
+      >
+        Sign out
+      </FormButton>
+      <FormButton v-else size="sm" color="outline" @click="onCancelClick">
+        Cancel
+      </FormButton>
+    </template>
 
-          <WorkspaceWizardCancelDialog
-            v-model:open="isCancelDialogOpen"
-            :workspace-id="workspaceId"
-          />
-        </div>
-      </main>
+    <WorkspaceWizard :workspace-id="workspaceId" />
+
+    <div
+      v-if="requiresWorkspaceCreation && isFirstStep"
+      class="w-full max-w-sm mx-auto mt-4"
+    >
+      <CommonAlert color="neutral" size="xs" hide-icon>
+        <template #title>Why am I seeing this?</template>
+        <template #description>
+          This server now requires you to be a member of a workspace. Please create a
+          new workspace to continue.
+        </template>
+      </CommonAlert>
     </div>
-  </div>
+
+    <WorkspaceWizardCancelDialog
+      v-model:open="isCancelDialogOpen"
+      :workspace-id="workspaceId"
+    />
+  </HeaderWithEmptyPage>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +49,9 @@ import { workspacesRoute } from '~~/lib/common/helpers/route'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useAuthManager } from '~/lib/auth/composables/auth'
+import { useQuery } from '@vue/apollo-composable'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
 defineProps<{
   workspaceId?: string
@@ -39,10 +59,25 @@ defineProps<{
 
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
+const { logout } = useAuthManager()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery)
 
 const isCancelDialogOpen = ref(false)
 
 const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
+
+const requiresWorkspaceCreation = computed(() => {
+  return (
+    isWorkspacesEnabled.value &&
+    isWorkspaceNewPlansEnabled.value &&
+    (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
+    // Legacy projects
+    (result.value?.activeUser?.versions.totalCount || 0) === 0
+  )
+})
 
 const onCancelClick = () => {
   if (isFirstStep.value) {

@@ -12,7 +12,7 @@ import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { knex as mainDb } from '@/db/knex'
 import { init, startHttp, shutdown } from '@/app'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
-import { logger } from '@/logging/logging'
+import { testLogger as logger } from '@/observability/logging'
 import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
@@ -199,19 +199,20 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
-    await wait(500)
+    // If we do not wait, the following call occasionally fails because a replication slot is still in use.
+    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
-    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
   }
 
   // Drop all subs
-  // (concurrently, cause it seems possible and we have those delays there)
-  await Promise.all(subscriptions.rows.map(dropSubs))
+  for (const sub of subscriptions.rows) {
+    await dropSubs(sub)
+  }
 
   // Drop all pubs
   for (const pub of publications.rows) {

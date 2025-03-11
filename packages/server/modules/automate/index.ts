@@ -1,4 +1,4 @@
-import { automateLogger, moduleLogger } from '@/logging/logging'
+import { automateLogger, moduleLogger } from '@/observability/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   onModelVersionCreateFactory,
@@ -14,10 +14,10 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { isNonNullable, Scopes, throwUncoveredError } from '@speckle/shared'
+import { isNonNullable, Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import {
-  getFunction,
+  getFunctionFactory,
   triggerAutomationRun
 } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
@@ -49,7 +49,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   isVersionCreatedTriggerManifest,
-  RunTriggerSource,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import { isFinished } from '@/modules/automate/domain/logic'
@@ -59,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { maybeLoggerWithContext } from '@/logging/requestContext'
+import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -178,7 +177,7 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { manifests, run, automation } }) => {
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const validatedManifests = manifests
           .map((manifest) => {
             if (isVersionCreatedTriggerManifest(manifest)) {
@@ -268,7 +267,7 @@ const initializeEventListeners = () => {
       AutomationRunEvents.StatusUpdated,
       async ({ payload: { run, functionRun, automationId, projectId } }) => {
         if (!isFinished(run.status)) return
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const projectDb = await getProjectDbClient({ projectId })
         const project = await getProjectFactory({ db: projectDb })({ projectId })
 
@@ -290,7 +289,7 @@ const initializeEventListeners = () => {
 
         const fn = isTestEnv()
           ? null
-          : await getFunction({ functionId: functionRun.functionId })
+          : await getFunctionFactory({ logger })({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
@@ -322,7 +321,7 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { automation, run: automationRun, source, manifests } }) => {
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const manifest = manifests.at(0)
         if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
           logger.error(
@@ -338,36 +337,27 @@ const initializeEventListeners = () => {
           projectId: manifest.projectId
         })
 
-        // all triggers, that are automatic result of an action are in a need to be tracked
-        switch (source) {
-          case RunTriggerSource.Automatic: {
-            const userEmail = await getUserEmailFromAutomationRunFactory({
-              getFullAutomationRevisionMetadata:
-                getFullAutomationRevisionMetadataFactory({ db: projectDb }),
-              getFullAutomationRunById: getFullAutomationRunByIdFactory({
-                db: projectDb
-              }),
-              getCommit: getCommitFactory({ db: projectDb }),
-              getUser: legacyGetUserFactory({ db: projectDb })
-            })(automationRun, automation.projectId)
-            const mp = mixpanel({ userEmail, req: undefined })
-            await mp.track('Automation Run Triggered', {
-              automationId: automation.id,
-              automationName: automation.name,
-              automationRunId: automationRun.id,
-              projectId: automation.projectId,
-              source,
-              /* eslint-disable-next-line camelcase */
-              workspace_id: project?.workspaceId
-            })
-            break
-          }
-          // runs created from a user interaction are tracked in the frontend
-          case RunTriggerSource.Manual:
-            return
-          default:
-            throwUncoveredError(source)
-        }
+        const userEmail = await getUserEmailFromAutomationRunFactory({
+          getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
+            db: projectDb
+          }),
+          getFullAutomationRunById: getFullAutomationRunByIdFactory({
+            db: projectDb
+          }),
+          getCommit: getCommitFactory({ db: projectDb }),
+          getUser: legacyGetUserFactory({ db: projectDb })
+        })(automationRun, automation.projectId)
+
+        const mp = mixpanel({ userEmail, req: undefined })
+        await mp.track('Automation Run Triggered', {
+          automationId: automation.id,
+          automationName: automation.name,
+          automationRunId: automationRun.id,
+          projectId: automation.projectId,
+          source,
+          /* eslint-disable-next-line camelcase */
+          workspace_id: project?.workspaceId
+        })
       }
     )
   ]
@@ -378,7 +368,7 @@ const initializeEventListeners = () => {
 }
 
 const automateModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     moduleLogger.info('⚙️  Init automate module')
 

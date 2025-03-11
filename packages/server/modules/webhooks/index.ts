@@ -1,6 +1,6 @@
 import cron from 'node-cron'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { activitiesLogger, moduleLogger } from '@/observability/logging'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,

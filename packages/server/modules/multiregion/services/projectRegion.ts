@@ -1,12 +1,17 @@
+import { Stream } from '@/modules/core/domain/streams/types'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   AsyncRegionKeyStore,
+  CachedRegionKeyDelete,
   CachedRegionKeyLookup,
   RegionKeyLookupResult,
   StorageRegionKeyLookup,
+  StorageRegionKeyUpdate,
   SyncRegionKeyLookup,
   SyncRegionKeyStore
 } from '@/modules/multiregion/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
 
 export type GetProjectRegionKey = (args: {
@@ -45,6 +50,41 @@ export const getProjectRegionKeyFactory =
     writeRegionToMemory({ projectId, regionKey })
     await writeRegionKeyToCache({ projectId, regionKey })
     return regionKey
+  }
+
+export type UpdateProjectRegionKey = (args: {
+  projectId: string
+  regionKey: string
+}) => Promise<Stream>
+
+export const updateProjectRegionKeyFactory =
+  (deps: {
+    upsertProjectRegionKey: StorageRegionKeyUpdate
+    cacheDeleteRegionKey: CachedRegionKeyDelete
+    emitEvent: EventBusEmit
+  }): UpdateProjectRegionKey =>
+  async ({ projectId, regionKey }) => {
+    const project = await deps.upsertProjectRegionKey({
+      projectId,
+      regionKey
+    })
+
+    if (!project) {
+      throw new ProjectNotFoundError()
+    }
+
+    // TODO: Immediately set to new region?
+    await deps.cacheDeleteRegionKey({ projectId })
+
+    await deps.emitEvent({
+      eventName: 'multiregion.project-region-updated',
+      payload: {
+        projectId,
+        regionKey
+      }
+    })
+
+    return project
   }
 
 export type GetRegionDb = (args: { regionKey: string }) => Promise<Knex>

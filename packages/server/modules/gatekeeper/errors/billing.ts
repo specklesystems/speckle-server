@@ -48,9 +48,9 @@ export class WorkspaceNotPaidPlanError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspacePlanDowngradeError extends BaseError {
-  static defaultMessage = 'Workspace plan cannot be downgraded to a smaller plan'
-  static code = 'WORKSPACE_PLAN_DOWNGRADE_ERROR'
+export class WorkspacePlanUpgradeError extends BaseError {
+  static defaultMessage = 'An issue occurred while upgrading workspace plan'
+  static code = 'WORKSPACE_PLAN_UPGRADE_ERROR'
   static statusCode = 400
 }
 
@@ -58,4 +58,16 @@ export class WorkspaceReadOnlyError extends BaseError {
   static defaultMessage = 'Workspace is read-only'
   static code = 'WORKSPACE_READ_ONLY_ERROR'
   static statusCode = 403
+}
+
+export class InvalidWorkspacePlanUpgradeError extends BaseError {
+  static defaultMessage = 'Cannot upgrade to the specified workspace plan'
+  static code = 'INVALID_WORKSPACE_PLAN_UPGRADE_ERROR'
+  static statusCode = 403
+}
+
+export class InvalidBillingIntervalError extends BaseError {
+  static defaultMessage = 'Invalid billing interval'
+  static code = 'INVALID_BILLING_INTERVAL'
+  static statusCode = 400
 }

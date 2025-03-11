@@ -1,5 +1,6 @@
-import { GetWorkspacePlan, WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { throwUncoveredError } from '@speckle/shared'
 

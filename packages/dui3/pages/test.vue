@@ -155,7 +155,7 @@ const tests = ref([
           }
         ).sayHi('Speckle', 0) // note, invalid on purpose, it looks long because ts needs to be happy
         return 'not ok'
-      } catch (e) {
+      } catch {
         return 'ok'
       }
     },

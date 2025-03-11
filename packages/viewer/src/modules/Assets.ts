@@ -71,11 +71,11 @@ export class Assets {
           },
           undefined,
           (error: ErrorEvent) => {
-            reject(`Loading asset ${asset.id} failed ${error.message}`)
+            reject(new Error(`Loading asset ${asset.id} failed ${error.message}`))
           }
         )
       } else {
-        reject(`Loading asset ${asset.id} failed`)
+        reject(new Error(`Loading asset ${asset.id} failed`))
       }
     })
   }
@@ -97,7 +97,7 @@ export class Assets {
           resolve(texture)
         }
         image.onerror = (ev) => {
-          reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
+          reject(new Error(`Loading asset ${asset.id} failed with ${ev.toString()}`))
         }
       } else {
         const loader = Assets.getLoader(asset.src, asset.type)
@@ -110,11 +110,11 @@ export class Assets {
             },
             undefined,
             (error: ErrorEvent) => {
-              reject(`Loading asset ${asset.id} failed ${error.message}`)
+              reject(new Error(`Loading asset ${asset.id} failed ${error.message}`))
             }
           )
         } else {
-          reject(`Loading asset ${asset.id} failed`)
+          reject(new Error(`Loading asset ${asset.id} failed`))
         }
       }
     })
@@ -134,13 +134,13 @@ export class Assets {
 
     return new Promise<Font>((resolve, reject) => {
       new FontLoader().load(
-        srcUrl as string,
+        srcUrl,
         (font: Font) => {
           resolve(font)
         },
         undefined,
         (error: ErrorEvent) => {
-          reject(`Loading asset ${srcUrl} failed ${error.message}`)
+          reject(new Error(`Loading asset ${srcUrl} failed ${error.message}`))
         }
       )
     })

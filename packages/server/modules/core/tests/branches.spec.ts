@@ -24,10 +24,6 @@ import {
   getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
 import {
-  addBranchUpdatedActivityFactory,
-  addBranchDeletedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   createStreamFactory,
   markBranchStreamUpdatedFactory,
@@ -61,9 +57,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getUsersFactory,
   getUserFactory,
@@ -103,20 +96,13 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  eventEmit: getEventBus().emit
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db: knex }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
@@ -130,11 +116,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -209,7 +191,7 @@ const createObject = createObjectFactory({
 describe('Branches @core-branches', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie4342@gmail.com',
+    email: 'didimitrie4342@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

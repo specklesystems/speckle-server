@@ -1,7 +1,9 @@
 import { omit } from 'lodash-es'
-import { baseConfigs, globals, getESMDirname } from '../../eslint.config.mjs'
+import { baseConfigs, globals } from '../../eslint.config.mjs'
 import withNuxt from './.nuxt/eslint.config.mjs'
 import pluginVueA11y from 'eslint-plugin-vuejs-accessibility'
+
+// const configs = withNuxt()
 
 const configs = withNuxt([
   {
@@ -20,14 +22,15 @@ const configs = withNuxt([
     }
   },
   {
-    files: ['**/*.{ts,vue}'],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.eslint.json'],
-        extraFileExtensions: ['.vue'],
-        tsconfigRootDir: getESMDirname(import.meta.url)
-      }
-    }
+    files: ['**/*.{ts,vue}']
+    // TYPE-AWARE RULES DISABLED DUE TO PERFORMANCE IMPACT
+    // languageOptions: {
+    //   parserOptions: {
+    //     project: ['./tsconfig.eslint.json'],
+    //     extraFileExtensions: ['.vue'],
+    //     tsconfigRootDir: getESMDirname(import.meta.url)
+    //   }
+    // }
   },
   {
     files: ['**/*.test.{ts,js}'],
@@ -48,24 +51,25 @@ const configs = withNuxt([
   {
     files: ['**/*.{ts,tsx,vue}'],
     rules: {
-      '@typescript-eslint/no-explicit-any': ['error'],
-      '@typescript-eslint/no-unsafe-argument': ['error'],
-      '@typescript-eslint/no-unsafe-assignment': 'error',
-      '@typescript-eslint/no-unsafe-call': 'error',
-      '@typescript-eslint/no-unsafe-member-access': 'error',
-      '@typescript-eslint/no-unsafe-return': 'error',
-      '@typescript-eslint/no-for-in-array': ['error'],
-      '@typescript-eslint/restrict-plus-operands': ['error'],
-      '@typescript-eslint/await-thenable': ['warn'],
-      '@typescript-eslint/ban-types': ['warn'],
+      // TYPE-AWARE RULES DISABLED DUE TO PERFORMANCE IMPACT
+      // '@typescript-eslint/no-explicit-any': ['error'],
+      // '@typescript-eslint/no-unsafe-argument': ['error'],
+      // '@typescript-eslint/no-unsafe-assignment': 'error',
+      // '@typescript-eslint/no-unsafe-call': 'error',
+      // '@typescript-eslint/no-unsafe-member-access': 'error',
+      // '@typescript-eslint/no-unsafe-return': 'error',
+      // '@typescript-eslint/no-for-in-array': ['error'],
+      // '@typescript-eslint/restrict-plus-operands': ['error'],
+      // '@typescript-eslint/await-thenable': ['warn'],
+      // '@typescript-eslint/no-restricted-types': ['warn'],
       'require-await': 'off',
-      '@typescript-eslint/require-await': 'error',
+      // '@typescript-eslint/require-await': 'error',
       'no-undef': 'off',
-
       '@typescript-eslint/unified-signatures': 'off', // DX sucks in vue event definitions
       '@typescript-eslint/no-dynamic-delete': 'off', // too restrictive
       '@typescript-eslint/restrict-template-expressions': 'off', // too restrictive
-      '@typescript-eslint/no-invalid-void-type': 'off' // too restrictive
+      '@typescript-eslint/no-invalid-void-type': 'off', // too restrictive
+      '@typescript-eslint/no-empty-object-type': 'off' // too restrictive
     }
   },
   ...pluginVueA11y.configs['flat/recommended'].map((c) => ({
@@ -107,7 +111,7 @@ const configs = withNuxt([
     rules: {
       'no-var': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/ban-types': 'off'
+      '@typescript-eslint/no-restricted-types': 'off'
     }
   }
 ]).prepend([

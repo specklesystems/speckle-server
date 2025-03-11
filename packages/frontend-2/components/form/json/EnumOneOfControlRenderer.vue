@@ -6,7 +6,7 @@
   />
 </template>
 <script setup lang="ts">
-import { type ControlElement } from '@jsonforms/core'
+import type { ControlElement } from '@jsonforms/core'
 import { rendererProps, useJsonFormsOneOfEnumControl } from '@jsonforms/vue'
 
 const props = defineProps({

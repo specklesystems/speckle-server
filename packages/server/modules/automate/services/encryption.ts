@@ -7,7 +7,7 @@ import { Nullable, Optional } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { AutomationFunctionInputEncryptionError } from '@/modules/automate/errors/management'
 import { KeyPair, buildDecryptor } from '@/modules/shared/utils/libsodium'
-import { AutomateRevisionFunctionRecord } from '@/modules/automate/helpers/types'
+import { AutomationRevisionFunctionRecord } from '@/modules/automate/helpers/types'
 import { AutomationRevisionFunctionGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
 import { FunctionReleaseSchemaType } from '@/modules/automate/helpers/executionEngine'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
@@ -118,7 +118,7 @@ export type GetFunctionInputsForFrontendDeps = {
 } & GetFunctionInputDecryptorDeps
 
 export type AutomationRevisionFunctionForInputRedaction = Merge<
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   { release: FunctionReleaseSchemaType }
 >
 

@@ -14,8 +14,7 @@ import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/gra
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useZapier } from '~/lib/core/composables/zapier'
-import { defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment BillingActions_Workspace on Workspace {
@@ -49,9 +48,8 @@ export const useBillingActions = () => {
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
     settingsBillingCancelCheckoutSessionMutation
   )
-  const { sendWebhook } = useZapier()
 
-  const billingPortalRedirect = async (workspaceId?: string) => {
+  const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
     if (!workspaceId) return
 
     mixpanel.track('Workspace Billing Portal Button Clicked', {
@@ -188,9 +186,7 @@ export const useBillingActions = () => {
     })
   }
 
-  const validateCheckoutSession = async (
-    workspace: BillingActions_WorkspaceFragment
-  ) => {
+  const validateCheckoutSession = (workspace: BillingActions_WorkspaceFragment) => {
     const sessionIdQuery = route.query?.session_id
     const paymentStatusQuery = route.query?.payment_status
 
@@ -218,19 +214,6 @@ export const useBillingActions = () => {
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
         })
-
-        if (import.meta.server) {
-          await sendWebhook(defaultZapierWebhookUrl, {
-            workspaceId: workspace.id,
-            workspaceName: workspace.name,
-            plan: workspace.plan?.name ?? '',
-            cycle: workspace.subscription?.billingInterval ?? '',
-            status: WorkspacePlanStatuses.Valid,
-            invitedTeamCount: workspace.invitedTeam?.length ?? 0,
-            teamCount: workspace.team?.totalCount ?? 0,
-            defaultRegion: workspace.defaultRegion?.name ?? ''
-          })
-        }
       }
 
       const currentQueryParams = { ...route.query }

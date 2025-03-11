@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { logger, moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
@@ -59,7 +59,6 @@ const scheduleWorkspaceSubscriptionDownscale = ({
   const stripe = getStripeClient()
 
   const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
-    logger,
     downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
       countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
@@ -76,8 +75,8 @@ const scheduleWorkspaceSubscriptionDownscale = ({
   return scheduleExecution(
     cronExpression,
     'WorkspaceSubscriptionDownscale',
-    async () => {
-      await manageSubscriptionDownscale()
+    async (_scheduledTime, { logger }) => {
+      await manageSubscriptionDownscale({ logger })
     }
   )
 }
@@ -98,36 +97,41 @@ const scheduleWorkspaceTrialEmails = ({
   // const cronExpression = '*/5 * * * * *'
   // every day at noon
   const cronExpression = '0 12 * * *'
-  return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
-    const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
-    const trialValidForDays = 31
-    const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
-      daysTillExpiry: 3,
-      planValidFor: trialValidForDays,
-      plan: 'starter',
-      status: 'trial'
-    })
-    if (trialWorkspacesExpireIn3Days.length) {
-      await Promise.all(
-        trialWorkspacesExpireIn3Days.map((workspace) =>
-          sendWorkspaceTrialEmail({ workspace, expiresInDays: 3 })
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceTrialEmails',
+    async (_scheduledTime, { logger }) => {
+      logger.info('Sending workspace trial emails.')
+      const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
+      const trialValidForDays = 31
+      const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
+        daysTillExpiry: 3,
+        planValidFor: trialValidForDays,
+        plan: 'starter',
+        status: 'trial'
+      })
+      if (trialWorkspacesExpireIn3Days.length) {
+        await Promise.all(
+          trialWorkspacesExpireIn3Days.map((workspace) =>
+            sendWorkspaceTrialEmail({ workspace, expiresInDays: 3 })
+          )
         )
-      )
-    }
-    const trialWorkspacesExpireToday = await getWorkspacesByPlanAge({
-      daysTillExpiry: 0,
-      planValidFor: trialValidForDays,
-      plan: 'starter',
-      status: 'trial'
-    })
-    if (trialWorkspacesExpireToday.length) {
-      await Promise.all(
-        trialWorkspacesExpireToday.map((workspace) =>
-          sendWorkspaceTrialEmail({ workspace, expiresInDays: 0 })
+      }
+      const trialWorkspacesExpireToday = await getWorkspacesByPlanAge({
+        daysTillExpiry: 0,
+        planValidFor: trialValidForDays,
+        plan: 'starter',
+        status: 'trial'
+      })
+      if (trialWorkspacesExpireToday.length) {
+        await Promise.all(
+          trialWorkspacesExpireToday.map((workspace) =>
+            sendWorkspaceTrialEmail({ workspace, expiresInDays: 0 })
+          )
         )
-      )
+      }
     }
-  })
+  )
 }
 
 const scheduleWorkspaceTrialExpiry = ({
@@ -139,31 +143,35 @@ const scheduleWorkspaceTrialExpiry = ({
 }) => {
   const changeExpiredStatuses = changeExpiredTrialWorkspacePlanStatusesFactory({ db })
   const cronExpression = '*/5 * * * *'
-  return scheduleExecution(cronExpression, 'WorkspaceTrialExpiry', async () => {
-    const expiredWorkspacePlans = await changeExpiredStatuses({ numberOfDays: 31 })
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceTrialExpiry',
+    async (_scheduledTime, { logger }) => {
+      const expiredWorkspacePlans = await changeExpiredStatuses({ numberOfDays: 31 })
 
-    if (expiredWorkspacePlans.length) {
-      logger.info(
-        { workspaceIds: expiredWorkspacePlans.map((p) => p.workspaceId) },
-        'Workspace trial expired for {workspaceIds}.'
-      )
-      await Promise.all(
-        expiredWorkspacePlans.map(async (plan) => {
-          emit({
-            eventName: 'gatekeeper.workspace-trial-expired',
-            payload: { workspaceId: plan.workspaceId }
+      if (expiredWorkspacePlans.length) {
+        logger.info(
+          { workspaceIds: expiredWorkspacePlans.map((p) => p.workspaceId) },
+          'Workspace trial expired for {workspaceIds}.'
+        )
+        await Promise.all(
+          expiredWorkspacePlans.map(async (plan) => {
+            emit({
+              eventName: 'gatekeeper.workspace-trial-expired',
+              payload: { workspaceId: plan.workspaceId }
+            })
           })
-        })
-      )
+        )
+      }
     }
-  })
+  )
 }
 
 let scheduledTasks: cron.ScheduledTask[] = []
 let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     await initScopes()
     if (!FF_GATEKEEPER_MODULE_ENABLED) return
 

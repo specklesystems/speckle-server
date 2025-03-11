@@ -57,6 +57,8 @@ const configs = [
       '@typescript-eslint/no-unsafe-enum-comparison': 'off', // too restrictive
       '@typescript-eslint/require-await': 'off', // too restrictive
       '@typescript-eslint/unbound-method': 'off', // too restrictive
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
 
       // TODO: Can we re-enable these? Only disabled because of the amount of errors
       '@typescript-eslint/no-unsafe-call': 'off',

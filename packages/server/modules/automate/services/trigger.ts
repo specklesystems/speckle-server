@@ -25,7 +25,7 @@ import {
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import {
@@ -46,6 +46,7 @@ import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -105,7 +106,8 @@ export const onModelVersionCreateFactory =
               projectId,
               modelId: triggeringId,
               triggerType
-            }
+            },
+            source: RunTriggerSource.Automatic
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -130,7 +132,7 @@ type CreateAutomationRunDataDeps = {
   getFunctionInputDecryptor: FunctionInputDecryptor
 }
 
-const createAutomationRunDataFactory =
+export const createAutomationRunDataFactory =
   (deps: CreateAutomationRunDataDeps) =>
   async (params: {
     manifests: BaseTriggerManifest[]
@@ -226,7 +228,7 @@ export const triggerAutomationRevisionRunFactory =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    source?: RunTriggerSource
+    source: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const {
       automateRunTrigger,
@@ -237,7 +239,7 @@ export const triggerAutomationRevisionRunFactory =
       getFullAutomationRevisionMetadata,
       getCommit
     } = deps
-    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
+    const { revisionId, manifest, source } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -413,7 +415,7 @@ type ComposeTriggerDataDeps = {
   getBranchLatestCommits: GetBranchLatestCommits
 }
 
-const composeTriggerDataFactory =
+export const composeTriggerDataFactory =
   (deps: ComposeTriggerDataDeps) =>
   async (params: {
     projectId: string
@@ -545,6 +547,7 @@ export type CreateTestAutomationRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
+  emitEvent: EventBusEmit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -560,7 +563,8 @@ export const createTestAutomationRunFactory =
       getFullAutomationRevisionMetadata,
       upsertAutomationRun,
       validateStreamAccess,
-      getBranchLatestCommits
+      getBranchLatestCommits,
+      emitEvent
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -572,7 +576,7 @@ export const createTestAutomationRunFactory =
       throw new TriggerAutomationError('Automation not found')
     }
 
-    if (!automationRecord.isTestAutomation) {
+    if (!isTestEnv() && !automationRecord.isTestAutomation) {
       throw new TriggerAutomationError(
         'Automation is not a test automation and cannot create test function runs'
       )
@@ -623,6 +627,17 @@ export const createTestAutomationRunFactory =
       automationWithRevision: automationRevisionRecord
     })
     await upsertAutomationRun(automationRunRecord)
+
+    await emitEvent({
+      eventName: 'automationRuns.created',
+      payload: {
+        automation: automationRevisionRecord,
+        run: automationRunRecord,
+        source: RunTriggerSource.Test,
+        manifests: triggerManifests,
+        triggerType: VersionCreationTriggerType
+      }
+    })
 
     // TODO: Test functions only support one function run per automation
     const functionRunId = automationRunRecord.functionRuns[0].id
