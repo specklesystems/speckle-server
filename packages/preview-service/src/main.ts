@@ -2,6 +2,7 @@ import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
 import {
   REDIS_URL,
+  HOST,
   PORT,
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
@@ -13,10 +14,10 @@ import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
-import { wait } from '@speckle/shared'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 
 const app = express()
+const host = HOST
 const port = PORT
 
 // serve the preview-frontend
@@ -60,7 +61,7 @@ const jobQueue = new Bull('preview-service-jobs', opts)
 // store this callback, so on shutdown we can error the job
 let jobDoneCallback: Bull.DoneCallback | undefined = undefined
 
-const server = app.listen(port, async () => {
+const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
 
   const launchBrowser = async (): Promise<Browser> => {
