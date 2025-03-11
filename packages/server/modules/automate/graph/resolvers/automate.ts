@@ -3,13 +3,13 @@ import {
   createFunctionWithoutVersion,
   triggerAutomationRun,
   updateFunction as execEngineUpdateFunction,
-  getFunction,
-  getFunctionRelease,
-  getPublicFunctions,
-  getFunctionReleases,
+  getFunctionFactory,
+  getFunctionReleaseFactory,
+  getPublicFunctionsFactory,
+  getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
-  getUserFunctions
+  getUserFunctionsFactory
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -124,6 +124,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -287,7 +288,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const branch = await ctx.loaders
             .forRegion({ db: projectDb })
             .commits.getCommitBranch.load(versionId)
-          if (!branch) throw Error('Invalid version Id')
+          if (!branch) throw new BranchNotFoundError('Invalid version Id')
 
           const projectId = branch.streamId
           const modelId = branch.id
@@ -458,10 +459,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       AutomateFunction: {
-        async releases(parent, args) {
+        async releases(parent, args, context) {
           try {
             // TODO: Replace w/ dataloader batch call, when/if possible
-            const fn = await getFunction({
+            const fn = await getFunctionFactory({
+              logger: context.log
+            })({
               functionId: parent.id,
               releases:
                 args?.cursor || args?.filter?.search || args?.limit
@@ -472,6 +475,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                     }
                   : {}
             })
+
+            if (!fn) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             return {
               cursor: fn.versionCursor,
@@ -547,17 +558,22 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 origin: getServerOrigin()
               },
               functionName: args.input.name,
-              description: args.input.description
+              description: args.input.description,
+              repositoryUrl:
+                'https://github.com/specklesystems/speckle_automate_python_example',
+              supportedSourceApps: [],
+              tags: []
             }
           })
         },
         async updateFunction(_parent, args, ctx) {
           const update = updateFunctionFactory({
             updateFunction: execEngineUpdateFunction,
-            getFunction,
+            getFunction: getFunctionFactory({ logger: ctx.log }),
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
-            })
+            }),
+            logger: ctx.log
           })
           return await update({ input: args.input, userId: ctx.userId! })
         }
@@ -608,12 +624,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomation: getAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-            getFunctionRelease,
+            getFunctionRelease: getFunctionReleaseFactory({ logger: ctx.log }),
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
-            getFunctionReleases,
+            getFunctionReleases: getFunctionReleasesFactory({ logger: ctx.log }),
             eventEmit: getEventBus().emit,
             validateStreamAccess
           })
@@ -666,7 +682,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const create = createTestAutomationFactory({
             getEncryptionKeyPair,
-            getFunction,
+            getFunction: getFunctionFactory({ logger: ctx.log }),
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
@@ -705,6 +721,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getBranchLatestCommits: getBranchLatestCommitsFactory({
               db: projectDb
             }),
+            emitEvent: getEventBus().emit,
             validateStreamAccess
           })
 
@@ -716,15 +733,20 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       Query: {
-        async automateValidateAuthCode(_parent, args) {
+        async automateValidateAuthCode(_parent, args, ctx) {
           const validate = validateStoredAuthCodeFactory({
             redis: getGenericRedis(),
-            emit: getEventBus().emit
+            emit: getEventBus().emit,
+            logger: ctx.log
           })
           const payload = removeNullOrUndefinedKeys(args.payload)
+          const resources = removeNullOrUndefinedKeys(args.resources ?? {})
           return await validate({
-            ...payload,
-            action: args.payload.action as AuthCodePayloadAction
+            payload: {
+              ...payload,
+              action: args.payload.action as AuthCodePayloadAction
+            },
+            resources
           })
         },
         async automateFunction(_parent, { id }, ctx) {
@@ -737,9 +759,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           return convertFunctionToGraphQLReturn(fn)
         },
-        async automateFunctions(_parent, args) {
+        async automateFunctions(_parent, args, ctx) {
           try {
-            const res = await getPublicFunctions({
+            const res = await getPublicFunctionsFactory({
+              logger: ctx.log
+            })({
               query: {
                 query: args.filter?.search || undefined,
                 cursor: args.cursor || undefined,
@@ -748,6 +772,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   args.filter?.functionsWithoutReleases || undefined
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.items.map(convertFunctionToGraphQLReturn)
 
@@ -783,7 +815,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               action: AuthCodePayloadAction.ListUserFunctions
             })
 
-            const res = await getUserFunctions({
+            const res = await getUserFunctionsFactory({
+              logger: context.log
+            })({
               userId: context.userId!,
               query: {
                 query: args.filter?.search || undefined,
@@ -797,6 +831,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 

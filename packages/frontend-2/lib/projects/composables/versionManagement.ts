@@ -85,10 +85,12 @@ export function useProjectVersionUpdateTracking(
     const event = res.data.projectVersionsUpdated
     const version = event.version
     if (
-      [
-        ProjectVersionsUpdatedMessageType.Created,
-        ProjectVersionsUpdatedMessageType.Updated
-      ].includes(event.type) &&
+      (
+        [
+          ProjectVersionsUpdatedMessageType.Created,
+          ProjectVersionsUpdatedMessageType.Updated
+        ] as string[]
+      ).includes(event.type) &&
       version
     ) {
       // Added new model w/ versions OR updated model that now has versions (it might not have had them previously)

@@ -40,6 +40,7 @@ import {
   UpsertWorkspaceArgs
 } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
@@ -77,6 +78,15 @@ const buildCreateWorkspaceWithTestContext = (
       context.eventData.isCalled = true
       context.eventData.eventName = eventName
       context.eventData.payload = payload
+    },
+    ensureValidWorkspaceRoleSeat: async () => {
+      return {
+        type: 'editor',
+        workspaceId: 'test',
+        userId: 'test',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
     },
     ...dependencyOverrides
   }
@@ -116,7 +126,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(() => {
         validateWorkspaceSlug(cryptoRandomString({ length: 31 }))
       })
-      expect(err.message).to.contain('slug must not exceed')
+      expect(err.message).to.contain('must not exceed')
     })
     it('throws for invalid start', async () => {
       const err = await expectToThrow(() => {
@@ -563,8 +573,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
-          const { userId } =
-            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
+          const {
+            acl: { userId }
+          } = payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -609,8 +620,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
-          const { userId } =
-            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
+          const {
+            acl: { userId }
+          } = payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -629,25 +641,34 @@ const buildUpdateWorkspaceRoleAndTestContext = (
           }
 
           for (const project of context.workspaceProjects) {
-            const projectRole = mapping[workspaceRole.role]
+            const projectRole = mapping[workspaceRole.acl.role]
 
             if (!projectRole) {
               continue
             }
 
             const streamAcl: StreamAclRecord = {
-              userId: workspaceRole.userId,
+              userId: workspaceRole.acl.userId,
               role: projectRole,
               resourceId: project.id
             }
 
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
-              (acl) => acl.userId !== workspaceRole.userId
+              (acl) => acl.userId !== workspaceRole.acl.userId
             )
             context.workspaceProjectRoles.push(streamAcl)
           }
           break
         }
+      }
+    },
+    ensureValidWorkspaceRoleSeat: async () => {
+      return {
+        type: 'editor',
+        workspaceId: 'test',
+        userId: 'test',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     },
     ...dependencyOverrides
@@ -699,7 +720,7 @@ describe('Workspace role services', () => {
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal(role)
+      expect(context.eventData.payload).to.deep.equal({ acl: role })
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -790,7 +811,7 @@ describe('Workspace role services', () => {
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
-      expect(payload).to.deep.equal(role)
+      expect(payload).to.deep.equal({ acl: role, seatType: WorkspaceSeatType.Editor })
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })

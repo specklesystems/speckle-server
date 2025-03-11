@@ -14,10 +14,15 @@ import {
   upsertWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
-  assignRegionFactory,
+  assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { Roles } from '@speckle/shared'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import { scheduleJob } from '@/modules/multiregion/services/queue'
+
+const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
 export default {
   Workspace: {
@@ -37,7 +42,7 @@ export default {
 
       const regionDb = await getDb({ regionKey: args.regionKey })
 
-      const assignRegion = assignRegionFactory({
+      const assignRegion = assignWorkspaceRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -52,6 +57,28 @@ export default {
       await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
 
       return await ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
+    }
+  },
+  WorkspaceProjectMutations: {
+    moveToRegion: async (_parent, args, context) => {
+      if (!FF_MOVE_PROJECT_REGION_ENABLED && !isTestEnv()) {
+        throw new WorkspacesNotYetImplementedError()
+      }
+
+      await authorizeResolver(
+        context.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
+
+      return await scheduleJob({
+        type: 'move-project-region',
+        payload: {
+          projectId: args.projectId,
+          regionKey: args.regionKey
+        }
+      })
     }
   }
 } as Resolvers

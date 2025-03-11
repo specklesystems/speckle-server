@@ -92,6 +92,7 @@ export type ServerInfo = ServerConfigRecord & {
   configuration: {
     objectSizeLimitBytes: number
     objectMultipartUploadSizeLimitBytes: number
+    isEmailEnabled: boolean
   }
 }
 
@@ -133,13 +134,6 @@ export type ObjectRecord = {
   totalChildrenCountByDepth: Nullable<Record<string, unknown>>
   createdAt: Date
   data: Nullable<Record<string, unknown>>
-  streamId: string
-}
-
-export type ObjectChildrenClosureRecord = {
-  parent: string
-  child: string
-  minDepth: number
   streamId: string
 }
 

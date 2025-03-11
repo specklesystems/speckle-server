@@ -8,12 +8,12 @@ import { values, merge, camelCase, reduce, intersection } from 'lodash'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { isNonNullable } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { Express } from 'express'
+import type { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions } from '@apollo/server'
 import {
@@ -23,6 +23,7 @@ import {
 import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LogicError } from '@/modules/shared/errors'
+import type { Registry } from 'prom-client'
 
 /**
  * Cached speckle module requires
@@ -39,17 +40,19 @@ function autoloadFromDirectory(dirPath: string) {
   if (!fs.existsSync(dirPath)) return
 
   const results: Record<string, any> = {}
-  fs.readdirSync(dirPath).forEach((file) => {
+  const files = fs.readdirSync(dirPath)
+  for (const file of files) {
     const pathToFile = path.join(dirPath, file)
     const stat = fs.statSync(pathToFile)
     if (stat.isFile()) {
       const ext = path.extname(file)
       if (['.js', '.ts'].includes(ext)) {
         const name = camelCase(path.basename(file, ext))
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         results[name] = require(pathToFile)
       }
     }
-  })
+  }
 
   return results
 }
@@ -79,13 +82,15 @@ const getEnabledModuleNames = () => {
     'stats',
     'webhooks',
     'workspacesCore',
+    'gatekeeperCore',
     'multiregion'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
-  if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
+  // the order of the event listeners matters
   if (FF_GATEKEEPER_MODULE_ENABLED) moduleNames.push('gatekeeper')
+  if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
   return moduleNames
 }
 
@@ -107,18 +112,19 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-export const init = async (app: Express) => {
+export const init = async (params: { app: Express; metricsRegister: Registry }) => {
+  const { app, metricsRegister } = params
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
   // Stage 1: initialise all modules
   for (const module of modules) {
-    await module.init?.(app, isInitial)
+    await module.init?.({ app, isInitial, metricsRegister })
   }
 
   // Stage 2: finalize init all modules
   for (const module of modules) {
-    await module.finalize?.(app, isInitial)
+    await module.finalize?.({ app, isInitial, metricsRegister })
   }
 
   hasInitializationOccurred = true

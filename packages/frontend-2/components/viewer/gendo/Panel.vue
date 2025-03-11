@@ -15,54 +15,65 @@
         </CommonBadge>
       </div>
     </template>
+
+    <template v-if="!loading && limits" #actions>
+      <div class="text-body-2xs">
+        {{ limits.used }}/{{ limits.limit }} free renders used
+        <span class="hidden-under-250">this month</span>
+      </div>
+    </template>
+
     <div class="pt-3">
-      <div class="px-3 flex flex-col gap-y-3">
-        <CommonAlert v-if="!activeUser" color="danger" size="xs">
-          <template #title>Sign in required</template>
-        </CommonAlert>
-        <CommonAlert v-else-if="!canContribute" color="danger" size="xs">
-          <template #title>You do not have permission</template>
-        </CommonAlert>
-        <CommonAlert v-else-if="!limits" color="neutral" size="xs">
-          <template #title>No credits available</template>
-        </CommonAlert>
-        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
-          <template #title>Out of credits</template>
-          <template #description>Credits reset on {{ formattedResetDate }}</template>
-        </CommonAlert>
-        <div class="flex flex-col gap-y-3">
-          <FormTextArea
-            v-model="prompt"
-            name="prompt"
-            size="lg"
-            :placeholder="randomPlaceholder"
-            color="foundation"
-            :disabled="textAreaDisabled"
-            textarea-classes="sm:!min-h-24"
-            @keypress.enter.prevent="!buttonDisabled && enqueMagic()"
-          />
-          <div class="flex justify-between gap-2 items-center text-foreground-2">
-            <FormButton
-              color="outline"
-              size="sm"
-              external
-              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
-              target="_blank"
-            >
-              <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span>Learn to prompt</span>
-                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
-            <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
-              <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
-                Generate
+      <div class="px-3 pb-3">
+        <div class="flex flex-col gap-y-2">
+          <CommonAlert v-if="!activeUser" color="danger" size="2xs">
+            <template #title>Sign in required</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="!canContribute" color="danger" size="2xs">
+            <template #title>You do not have permission</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="!limits" color="neutral" size="2xs">
+            <template #title>No credits available</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="2xs">
+            <template #title>Out of credits</template>
+            <template #description>Credits reset on {{ formattedResetDate }}</template>
+          </CommonAlert>
+          <div class="flex flex-col gap-y-2">
+            <FormTextArea
+              v-model="prompt"
+              name="prompt"
+              :placeholder="randomPlaceholder"
+              color="foundation"
+              :disabled="textAreaDisabled"
+              textarea-classes="sm:!min-h-24 !text-body-xs !leading-snug"
+              @keypress.enter.prevent="!buttonDisabled && enqueMagic()"
+            />
+            <div class="flex justify-between gap-2 items-center text-foreground-2">
+              <FormButton
+                color="outline"
+                size="sm"
+                external
+                to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
+                target="_blank"
+              >
+                <div class="flex items-center gap-1 text-foreground font-normal">
+                  <span>Learn to prompt</span>
+                  <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+                </div>
               </FormButton>
+              <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+                <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
+                  Generate
+                </FormButton>
+              </div>
             </div>
           </div>
         </div>
-        <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
+
+      <ViewerGendoList @reuse-prompt="prompt = $event" />
+
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
@@ -84,12 +95,7 @@
         </FormButton>
       </div>
     </div>
-    <template v-if="!loading && limits" #actions>
-      <div class="text-body-2xs p-1">
-        {{ limits.used }}/{{ limits.limit }} free renders used
-        <span class="hidden-under-250">this month</span>
-      </div>
-    </template>
+
     <FeedbackDialog
       v-model:open="isFeedbackOpen"
       intro="Help us improve Gendo AI renders. What did you like or dislike? How could we improve the experience for you and your workflow?"
@@ -191,7 +197,7 @@ const isOutOfCredits = computed(() => {
 
 const formattedResetDate = computed(() => {
   if (!limits.value?.resetDate) return ''
-  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
+  return dayjs(limits.value.resetDate).format('D MMMM YYYY')
 })
 
 const enqueMagic = async () => {

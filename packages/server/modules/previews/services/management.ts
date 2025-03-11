@@ -1,7 +1,6 @@
-import { logger } from '@/logging/logging'
-import { GetFormattedObject } from '@/modules/core/domain/objects/operations'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import {
+import type { GetFormattedObject } from '@/modules/core/domain/objects/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type {
   CheckStreamPermissions,
   CreateObjectPreview,
   GetObjectPreviewBufferOrFilepath,
@@ -11,7 +10,9 @@ import {
 } from '@/modules/previews/domain/operations'
 import { makeOgImage } from '@/modules/previews/ogImage'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
+import type { Logger } from 'pino'
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -23,12 +24,13 @@ export const getObjectPreviewBufferOrFilepathFactory =
     getObjectPreviewInfo: GetObjectPreviewInfo
     createObjectPreview: CreateObjectPreview
     getPreviewImage: GetPreviewImage
+    logger: Logger
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
     angle = angle || defaultAngle
-    const boundLogger = logger.child({ streamId, objectId, angle })
+    const boundLogger = deps.logger.child({ streamId, objectId, angle })
 
-    if (process.env.DISABLE_PREVIEWS) {
+    if (disablePreviews()) {
       return {
         type: 'file',
         file: noPreviewImage
@@ -49,7 +51,12 @@ export const getObjectPreviewBufferOrFilepathFactory =
     // Get existing preview metadata
     const previewInfo = await deps.getObjectPreviewInfo({ streamId, objectId })
     if (!previewInfo) {
-      await deps.createObjectPreview({ streamId, objectId, priority: 0 })
+      const objPreviewQueued = await deps.createObjectPreview({
+        streamId,
+        objectId,
+        priority: 0
+      })
+      if (!objPreviewQueued) return { type: 'file', file: noPreviewImage }
     }
 
     if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {

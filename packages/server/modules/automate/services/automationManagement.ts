@@ -7,9 +7,9 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunction,
-  getFunctionRelease,
-  getFunctionReleases
+  getFunctionFactory,
+  getFunctionReleaseFactory,
+  getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
@@ -139,7 +139,7 @@ export const createAutomationFactory =
 
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunction: typeof getFunction
+  getFunction: ReturnType<typeof getFunctionFactory>
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
@@ -183,16 +183,16 @@ export const createTestAutomationFactory =
     )
 
     // Get latest release for specified function
-    const { functionVersions: functionReleases } = await getFunction({ functionId })
+    const fn = await getFunction({ functionId })
 
-    if (!functionReleases || functionReleases.length === 0) {
+    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
       // TODO: This should probably be okay for test automations
       throw new AutomationCreationError(
         'The specified function does not have any releases'
       )
     }
 
-    const latestFunctionRelease = functionReleases[0]
+    const latestFunctionRelease = fn.functionVersions[0]
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
@@ -356,7 +356,7 @@ const validateNewTriggerDefinitions =
   }
 
 type ValidateNewRevisionFunctionsDeps = {
-  getFunctionRelease: typeof getFunctionRelease
+  getFunctionRelease: ReturnType<typeof getFunctionReleaseFactory>
 }
 
 const validateNewRevisionFunctions =
@@ -380,7 +380,7 @@ const validateNewRevisionFunctions =
       ),
       (r) =>
         updateId({
-          functionReleaseId: r.functionVersionId,
+          functionReleaseId: r?.functionVersionId ?? '',
           functionId: r.functionId
         })
     )
@@ -399,7 +399,7 @@ export type CreateAutomationRevisionDeps = {
   storeAutomationRevision: StoreAutomationRevision
   getEncryptionKeyPair: GetEncryptionKeyPair
   getFunctionInputDecryptor: FunctionInputDecryptor
-  getFunctionReleases: typeof getFunctionReleases
+  getFunctionReleases: ReturnType<typeof getFunctionReleasesFactory>
   validateStreamAccess: ValidateStreamAccess
   eventEmit: EventBusEmit
 } & ValidateNewTriggerDefinitionsDeps &

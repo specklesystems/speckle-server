@@ -12,14 +12,19 @@ export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const ssoLoginRoute = '/authn/sso'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
-export const onboardingRoute = '/onboarding'
+export const verifyEmailRoute = '/verify-email'
+export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
+export const connectorsRoute = '/connectors'
+export const tutorialsRoute = '/tutorials'
 export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
 export const forumPageUrl = 'https://speckle.community/'
 export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
+
+export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {
   profile: '/settings/user/profile',
@@ -43,6 +48,18 @@ export const settingsWorkspaceRoutes = {
   members: {
     name: 'settings-workspaces-slug-members',
     route: (slug: string) => `/settings/workspaces/${slug}/members`
+  },
+  membersGuests: {
+    name: 'settings-workspaces-slug-members-guests',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/guests`
+  },
+  membersInvites: {
+    name: 'settings-workspaces-slug-members-invites',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/invites`
+  },
+  membersRequests: {
+    name: 'settings-workspaces-slug-members-requests',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/requests`
   },
   projects: {
     name: 'settings-workspaces-slug-projects',
@@ -112,16 +129,18 @@ export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
   }`
 }
 
-export const automationFunctionsRoute = '/functions'
+export const publicAutomateFunctionsRoute = '/functions'
 
-export const automationFunctionRoute = (functionId: string) =>
-  `${automationFunctionsRoute}/${functionId}`
+export const automateFunctionRoute = (functionId: string) =>
+  `${publicAutomateFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
 export const workspaceCreateRoute = (slug?: string) =>
-  slug ? `/workspaces/${slug}/create` : '/workspaces/create'
+  slug ? `/workspaces/${slug}/create` : '/workspaces/actions/create'
+
+export const workspaceJoinRoute = '/workspaces/actions/join'
 
 export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 

@@ -1,15 +1,14 @@
 <mj-section padding="0">
-  <mj-column>
+  <mj-column padding="0">
     <mj-button
+      padding="0"
       mj-class="bgblue"
       border-radius="8px"
       color="white"
       href="<%- params.cta.url -%>"
       title="<%- params.cta.altTitle || params.cta.title -%>"
       rel="notrack"
-      inner-padding="25px 55px"
-      text-transform="uppercase"
-      font-weight="bold"
+      inner-padding="12px 40px"
     >
       <%- params.cta.title -%>
     </mj-button>

@@ -13,7 +13,6 @@ export const useJsonFormsChangeHandler = (params: {
   const event = ref<JsonFormsChangeEvent>()
 
   const value = computed(() =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     formatJsonFormSchemaInputs(event.value?.data, unref(schema))
   )
   const hasErrors = computed(() =>

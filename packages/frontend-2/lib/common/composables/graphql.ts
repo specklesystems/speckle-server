@@ -12,7 +12,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
-import { type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 
 export const useApolloClientIfAvailable = () => {

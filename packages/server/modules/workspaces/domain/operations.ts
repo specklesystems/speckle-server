@@ -29,6 +29,7 @@ import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 /** Workspace */
 
@@ -68,7 +69,7 @@ export type GetWorkspaceBySlugOrId = (args: {
 }) => Promise<Workspace | null>
 
 export type GetWorkspaces = (args: {
-  workspaceIds: string[]
+  workspaceIds?: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
@@ -283,7 +284,7 @@ export type GetAvailableRegions = (params: {
   workspaceId: string
 }) => Promise<ServerRegion[]>
 
-export type AssignRegion = (params: {
+export type AssignWorkspaceRegion = (params: {
   workspaceId: string
   regionKey: string
 }) => Promise<void>
@@ -342,3 +343,73 @@ export type ApproveWorkspaceJoinRequest = (
 export type DenyWorkspaceJoinRequest = (
   params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
 ) => Promise<boolean>
+
+/**
+ * Project regions
+ */
+
+/**
+ * Updates project region and moves all regional data to target regional db
+ */
+export type UpdateProjectRegion = (params: {
+  projectId: string
+  regionKey: string
+}) => Promise<Stream>
+
+/**
+ * Given a count of objects successfully copied to another region, confirm that these counts
+ * match the current state of the source project in its original region.
+ */
+export type ValidateProjectRegionCopy = (params: {
+  projectId: string
+  copiedRowCount: {
+    models: number
+    versions: number
+    objects: number
+    automations: number
+    comments: number
+    webhooks: number
+  }
+}) => Promise<boolean>
+
+export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
+export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
+export type CopyProjectModels = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectVersions = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectObjects = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectAutomations = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type AssignWorkspaceSeat = (
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type: WorkspaceSeatType }
+) => Promise<WorkspaceSeat>
+
+export type EnsureValidWorkspaceRoleSeat = (params: {
+  workspaceId: string
+  userId: string
+  role: WorkspaceRoles
+}) => Promise<WorkspaceSeat>
+
+export type CopyProjectComments = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectWebhooks = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type SetUserActiveWorkspace = (args: {
+  userId: string
+  workspaceSlug: string | null
+  /** Is the user in a "personal project" outside of a workspace? */
+  isProjectsActive?: boolean
+}) => Promise<void>

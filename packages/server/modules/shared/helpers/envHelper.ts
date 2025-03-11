@@ -50,6 +50,10 @@ export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
 }
 
+export function isCompressionEnabled() {
+  return getBooleanFromEnv('COMPRESSION')
+}
+
 export function getServerVersion() {
   return process.env.SPECKLE_SERVER_VERSION || 'dev'
 }
@@ -66,15 +70,12 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
-export function getMaximumObjectSizeMB() {
-  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
+export function getMaximumRequestBodySizeMB() {
+  return getIntFromEnv('MAX_REQUEST_BODY_SIZE_MB', '100')
 }
 
-/**
- * Whether the server is supposed to serve frontend 2.0
- */
-export function useNewFrontend() {
-  return getBooleanFromEnv('USE_FRONTEND_2')
+export function getMaximumObjectSizeMB() {
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
 export function enableNewFrontendMessaging() {
@@ -83,6 +84,10 @@ export function enableNewFrontendMessaging() {
 
 export function getRedisUrl() {
   return getStringFromEnv('REDIS_URL')
+}
+
+export const getPreviewServiceRedisUrl = (): string | undefined => {
+  return process.env['PREVIEW_SERVICE_REDIS_URL']
 }
 
 export function getOidcDiscoveryUrl() {
@@ -177,13 +182,12 @@ export function shouldDisableNotificationsConsumption() {
 /**
  * Get frontend app origin/base URL
  */
-export function getFrontendOrigin(forceFe2?: boolean) {
-  const envKey = useNewFrontend() || forceFe2 ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
-  const trimmedOrigin = trimEnd(process.env[envKey], '/')
+export function getFrontendOrigin() {
+  const trimmedOrigin = trimEnd(process.env['FRONTEND_ORIGIN'], '/')
 
   if (!trimmedOrigin) {
     throw new MisconfiguredEnvironmentError(
-      `Frontend origin env var (${envKey}) not configured!`
+      `Frontend origin env var (FRONTEND_ORIGIN) not configured!`
     )
   }
 
@@ -206,7 +210,7 @@ export function getServerOrigin() {
     const err = ensureError(e)
     if (e instanceof TypeError && e.message === 'Invalid URL') {
       throw new MisconfiguredEnvironmentError(
-        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${err.message}`,
+        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${process.env.CANONICAL_URL} ${err.message}`,
         {
           cause: e,
           info: {
@@ -305,7 +309,7 @@ export function getOnboardingStreamUrl() {
   try {
     // validating that the URL is valid
     return new URL(val).toString()
-  } catch (e) {
+  } catch {
     // suppress
   }
 
@@ -446,4 +450,8 @@ export const asyncRequestContextEnabled = () => {
 
 export function enableImprovedKnexTelemetryStackTraces() {
   return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
+}
+
+export function disablePreviews() {
+  return getBooleanFromEnv('DISABLE_PREVIEWS')
 }

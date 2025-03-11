@@ -2,7 +2,6 @@
   <FormSelectBase
     v-model="selectedValue"
     :items="roles"
-    :multiple="multiple"
     :clearable="clearable"
     name="projectRoles"
     label="Project roles"
@@ -14,9 +13,7 @@
     :allow-unset="allowUnset"
     :disabled="disabled"
   >
-    <template #nothing-selected>
-      {{ multiple ? 'Select roles' : 'Select role' }}
-    </template>
+    <template #nothing-selected>Select role</template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
         <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
@@ -63,9 +60,9 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  multiple?: boolean
   modelValue?: ValueType
   clearable?: boolean
+  hiddenItems?: StreamRoles[]
   disabledItems?: StreamRoles[]
   disabledItemsTooltip?: string
   allowUnset?: boolean
@@ -84,7 +81,9 @@ const { selectedValue, firstItem, isMultiItemArrayValue, hiddenSelectedItemCount
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => Object.values(Roles.Stream))
+const roles = computed(() =>
+  Object.values(Roles.Stream).filter((role) => !props.hiddenItems?.includes(role))
+)
 
 const disabledItemPredicate = (item: StreamRoles) =>
   props.disabledItems && props.disabledItems.length > 0

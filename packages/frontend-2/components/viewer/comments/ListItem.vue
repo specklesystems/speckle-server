@@ -2,13 +2,41 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
-      ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
+    :class="`p-1.5 pb-1 flex flex-col rounded-md cursor-pointer hover:bg-highlight-3
+      ${isOpenInViewer ? 'bg-highlight-2' : ''}
     `"
     @click="open(thread.id)"
   >
-    <div class="flex justify-between items-center">
-      <UserAvatarGroup :users="threadAuthors" />
+    <div class="flex w-full items-center">
+      <div class="flex-1 flex flex-col gap-y-1.5">
+        <div class="flex items-center space-x-1.5">
+          <UserAvatarGroup :users="threadAuthors" size="sm" />
+          <span class="grow truncate text-body-2xs text-foreground">
+            {{ thread.author.name }}
+            <span v-if="threadAuthors.length !== 1">
+              & {{ thread.replyAuthors.totalCount }} others
+            </span>
+          </span>
+        </div>
+        <div class="truncate text-body-2xs text-foreground dark:text-foreground-2">
+          {{ thread.rawText }}
+        </div>
+        <div class="text-body-3xs flex items-center space-x-3 text-foreground-2 mb-1">
+          <span
+            v-if="!isThreadResourceLoaded"
+            v-tippy="'Conversation started in a different version.'"
+          >
+            <ExclamationCircleIcon class="w-4 h-4" />
+          </span>
+          <span>
+            {{ thread.replies.totalCount }}
+            {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+          </span>
+          <span v-tippy="createdAt.full">
+            {{ createdAt.relative }}
+          </span>
+        </div>
+      </div>
       <FormButton
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
@@ -16,37 +44,7 @@
         hide-text
         :disabled="!canArchiveOrUnarchive"
         @click.stop="toggleCommentResolvedStatus()"
-      ></FormButton>
-    </div>
-    <div class="flex items-center space-x-1">
-      <span class="grow truncate text-body-xs font-medium text-foreground-2">
-        {{ thread.author.name }}
-        <span v-if="threadAuthors.length !== 1">
-          & {{ thread.replyAuthors.totalCount }} others
-        </span>
-      </span>
-    </div>
-    <div class="truncate text-body-xs mb-1">
-      {{ thread.rawText }}
-    </div>
-    <div
-      :class="`text-xs font-medium flex items-center space-x-2 ${
-        thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
-      } mb-1`"
-    >
-      <span
-        v-if="!isThreadResourceLoaded"
-        v-tippy="'Conversation started in a different version.'"
-      >
-        <ExclamationCircleIcon class="w-4 h-4" />
-      </span>
-      <span>
-        {{ thread.replies.totalCount }}
-        {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
-      </span>
-      <span v-tippy="createdAt.full" class="text-foreground-2 text-body-2xs">
-        {{ createdAt.relative }}
-      </span>
+      />
     </div>
   </div>
 </template>
@@ -153,7 +151,7 @@ const toggleCommentResolvedStatus = async () => {
     status: !props.thread.archived
   })
   triggerNotification({
-    description: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
+    title: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
   })
 }

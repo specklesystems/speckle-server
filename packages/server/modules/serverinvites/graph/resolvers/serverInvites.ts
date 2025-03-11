@@ -57,11 +57,6 @@ import {
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
 import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamInviteDeclinedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
@@ -71,8 +66,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getStreamFactory,
   grantStreamPermissionsFactory
@@ -84,7 +77,6 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 const getUser = getUserFactory({ db })
@@ -93,14 +85,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const getServerInfo = getServerInfoFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -321,10 +306,6 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish
-            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
@@ -470,10 +451,6 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish
-            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),

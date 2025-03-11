@@ -294,7 +294,7 @@ export const authPipelineCreator = (
     }
     // validate auth result a bit...
     if (authResult.authorized && authHasFailed(authResult))
-      throw new Error('Auth failure')
+      throw new UnauthorizedError('Auth failure')
     return { context, authResult }
   }
   return pipeline
@@ -306,6 +306,7 @@ export const streamWritePermissionsPipelineFactory = (
   validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
   validateRequiredStreamFactory(deps),
+
   validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
@@ -337,7 +338,7 @@ export const throwForNotHavingServerRoleFactory =
       authResult: { authorized: false }
     })
     if (authHasFailed(authResult))
-      throw authResult.error ?? new Error('Auth failed without an error')
+      throw authResult.error ?? new ForbiddenError('Auth failed without an error')
     return true
   }
 

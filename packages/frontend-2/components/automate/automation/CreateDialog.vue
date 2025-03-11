@@ -223,7 +223,9 @@ const buttons = computed((): LayoutDialogButton[] => {
             disabled: !selectedFunction.value
           },
           onClick: () => {
-            mixpanel.track('Automate Select Function')
+            mixpanel.track('Automate Select Function', {
+              functionId: selectedFunction?.value?.id
+            })
             step.value++
           }
         }
@@ -232,7 +234,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'fnParamsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -242,7 +244,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsNext',
           text: 'Next',
           onClick: () => {
-            mixpanel.track('Automate Set Function Parameters ')
+            mixpanel.track('Automate Set Function Parameters', {
+              functionId: selectedFunction?.value?.id
+            })
           },
           props: {
             disabled: hasParameterErrors.value
@@ -254,7 +258,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -264,7 +268,9 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsCreate',
           text: 'Create',
           onClick: () => {
-            mixpanel.track('Automate Set Automation Details')
+            mixpanel.track('Automate Set Automation Details', {
+              functionId: selectedFunction?.value?.id
+            })
           },
           submit: true,
           disabled: creationLoading.value
@@ -420,7 +426,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
               parameters: encryptedParams
             }
           ],
-          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          triggerDefinitions: {
             version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
             definitions: [
               {
@@ -428,7 +434,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
                 modelId: model.id
               }
             ]
-          }
+          } as Automate.AutomateTypes.TriggerDefinitionsSchema
         }
       },
       { hideSuccessToast: true }

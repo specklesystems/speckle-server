@@ -11,7 +11,8 @@ import {
   GetWorkspaceDomains,
   UpdateWorkspace,
   GetWorkspaceBySlug,
-  UpdateWorkspaceRole
+  UpdateWorkspaceRole,
+  EnsureValidWorkspaceRoleSeat
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -57,7 +58,7 @@ import {
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
@@ -126,13 +127,15 @@ export const createWorkspaceFactory =
     upsertWorkspaceRole,
     generateValidSlug,
     validateSlug,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    ensureValidWorkspaceRoleSeat
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     validateSlug: ValidateWorkspaceSlug
     generateValidSlug: GenerateValidSlug
     emitWorkspaceEvent: EventBus['emit']
+    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
   }) =>
   async ({
     userId,
@@ -166,12 +169,19 @@ export const createWorkspaceFactory =
       discoverabilityEnabled: false
     }
     await upsertWorkspace({ workspace })
+
     // assign the creator as workspace administrator
+    const role = Roles.Workspace.Admin
     await upsertWorkspaceRole({
       userId,
-      role: Roles.Workspace.Admin,
+      role,
       workspaceId: workspace.id,
       createdAt: new Date()
+    })
+    await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId: workspace.id,
+      role
     })
 
     // emit a workspace created event
@@ -291,13 +301,15 @@ export const deleteWorkspaceFactory =
     deleteProject,
     queryAllWorkspaceProjects,
     deleteAllResourceInvites,
-    deleteSsoProvider
+    deleteSsoProvider,
+    emitWorkspaceEvent
   }: {
     deleteWorkspace: DeleteWorkspace
     deleteProject: DeleteStreamRecord
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
+    emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
     // Delete workspace SSO provider, if present
@@ -328,6 +340,10 @@ export const deleteWorkspaceFactory =
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
     }
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Deleted,
+      payload: { workspaceId }
+    })
   }
 
 type WorkspaceRoleDeleteArgs = {
@@ -364,7 +380,7 @@ export const deleteWorkspaceRoleFactory =
     // Emit deleted role
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleDeleted,
-      payload: deletedRole
+      payload: { acl: deletedRole }
     })
 
     return deletedRole
@@ -390,13 +406,15 @@ export const updateWorkspaceRoleFactory =
     getWorkspaceWithDomains,
     findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    ensureValidWorkspaceRoleSeat
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
+    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
   }): UpdateWorkspaceRole =>
   async ({
     workspaceId,
@@ -459,13 +477,21 @@ export const updateWorkspaceRoleFactory =
       role: nextWorkspaceRole,
       createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
+    const { type } = await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId,
+      role: nextWorkspaceRole
+    })
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
       payload: {
-        userId,
-        workspaceId,
-        role: nextWorkspaceRole,
+        acl: {
+          userId,
+          workspaceId,
+          role: nextWorkspaceRole
+        },
+        seatType: type,
         flags: {
           skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
         }

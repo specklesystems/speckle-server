@@ -20,6 +20,13 @@
       :key="thread.id"
       :model-value="thread"
       :class="openThread?.id === thread.id ? 'z-[12]' : 'z-[11]'"
+      :has-previous="
+        allThreadsChronologicalOrder.findIndex((t) => t.id === thread.id) > 0
+      "
+      :has-next="
+        allThreadsChronologicalOrder.findIndex((t) => t.id === thread.id) <
+        allThreadsChronologicalOrder.length - 1
+      "
       @update:model-value="onThreadUpdate"
       @update:expanded="onThreadExpandedChange"
       @next="(model) => openNextThread(model)"

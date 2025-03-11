@@ -23,3 +23,7 @@ export const MultiRegionBlobStorageSelectorMock = mockRequireModule<
 export const MultiRegionConfigMock = mockRequireModule<
   typeof import('@/modules/multiregion/regionConfig')
 >(['@/modules/multiregion/regionConfig'])
+
+export const StripeClientMock = mockRequireModule<
+  typeof import('@/modules/gatekeeper/clients/stripe')
+>(['@/modules/gatekeeper/clients/stripe'])

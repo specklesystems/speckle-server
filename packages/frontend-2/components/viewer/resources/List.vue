@@ -2,28 +2,28 @@
   <ViewerLayoutPanel @close="$emit('close')">
     <template #title>Models</template>
     <template #actions>
-      <FormButton
-        size="sm"
-        color="primary"
-        text
-        :icon-left="PlusIcon"
-        :disabled="showRemove"
-        @click="open = true"
-      >
-        Add
-      </FormButton>
-      <FormButton
-        size="sm"
-        color="subtle"
-        text
-        :icon-left="showRemove ? CheckIcon : MinusIcon"
-        :disabled="!removeEnabled"
-        @click="showRemove = !showRemove"
-      >
-        {{ showRemove ? 'Done' : 'Remove' }}
-      </FormButton>
+      <div class="flex gap-x-1.5">
+        <FormButton
+          size="sm"
+          color="outline"
+          :icon-left="PlusIcon"
+          :disabled="showRemove"
+          @click="open = true"
+        >
+          Add
+        </FormButton>
+        <FormButton
+          size="sm"
+          color="outline"
+          :icon-left="showRemove ? CheckIcon : MinusIcon"
+          :disabled="!removeEnabled"
+          @click="showRemove = !showRemove"
+        >
+          {{ showRemove ? 'Done' : 'Remove' }}
+        </FormButton>
+      </div>
     </template>
-    <div class="flex flex-col space-y-2 px-1 py-2">
+    <div class="flex flex-col space-y-2 px-1 py-1">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"

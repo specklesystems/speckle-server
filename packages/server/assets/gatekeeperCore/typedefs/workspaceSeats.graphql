@@ -1,0 +1,20 @@
+enum WorkspaceSeatType {
+  editor
+  viewer
+}
+
+extend type WorkspaceCollaborator {
+  seatType: WorkspaceSeatType!
+}
+
+input WorkspaceUpdateSeatTypeInput {
+  userId: String!
+  workspaceId: String!
+  seatType: WorkspaceSeatType!
+}
+
+extend type WorkspaceMutations {
+  updateSeatType(input: WorkspaceUpdateSeatTypeInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
+}

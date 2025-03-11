@@ -1,50 +1,14 @@
 import {
-  TrialWorkspacePlans,
-  PaidWorkspacePlans,
-  UnpaidWorkspacePlans,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+  PaidWorkspacePlan,
+  TrialWorkspacePlan,
+  UnpaidWorkspacePlan,
+  WorkspacePlan,
+  WorkspacePlanProductPrices,
+  WorkspacePricingProducts
+} from '@/modules/gatekeeperCore/domain/billing'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
-
-export type UnpaidWorkspacePlanStatuses = 'valid'
-
-export type PaidWorkspacePlanStatuses =
-  | UnpaidWorkspacePlanStatuses
-  // | 'paymentNeeded' // unsure if this is needed
-  | 'paymentFailed'
-  | 'cancelationScheduled'
-  | 'canceled'
-
-export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
-
-export type PlanStatuses =
-  | PaidWorkspacePlanStatuses
-  | TrialWorkspacePlanStatuses
-  | UnpaidWorkspacePlanStatuses
-
-type BaseWorkspacePlan = {
-  workspaceId: string
-  createdAt: Date
-}
-
-export type PaidWorkspacePlan = BaseWorkspacePlan & {
-  name: PaidWorkspacePlans
-  status: PaidWorkspacePlanStatuses
-}
-
-export type TrialWorkspacePlan = BaseWorkspacePlan & {
-  name: TrialWorkspacePlans
-  status: TrialWorkspacePlanStatuses
-}
-
-export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
-  name: UnpaidWorkspacePlans
-  status: UnpaidWorkspacePlanStatuses
-}
-
-export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string
@@ -103,11 +67,20 @@ export type UpdateCheckoutSessionStatus = (args: {
   paymentStatus: SessionPaymentStatus
 }) => Promise<void>
 
-export type CreateCheckoutSession = (args: {
+// Remove with FF_WORKSPACES_NEW_PLANS_ENABLED
+export type CreateCheckoutSessionOld = (args: {
   workspaceId: string
   workspaceSlug: string
   seatCount: number
   guestCount: number
+  workspacePlan: PaidWorkspacePlans
+  billingInterval: WorkspacePlanBillingIntervals
+  isCreateFlow: boolean
+}) => Promise<CheckoutSession>
+export type CreateCheckoutSession = (args: {
+  workspaceId: string
+  workspaceSlug: string
+  editorsCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean
@@ -185,14 +158,24 @@ export type GetSubscriptionData = (args: {
   subscriptionId: string
 }) => Promise<SubscriptionData>
 
-export type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+export type GetWorkspacePlanPriceId = (args: {
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
 }) => string
+
+type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
+
+export type GetWorkspacePlanProductAndPriceIds = () => Omit<
+  Record<Products, { productId: string; monthly: string; yearly: string }>,
+  'team' | 'pro'
+> & {
+  team?: { productId: string; monthly: string }
+  pro?: { productId: string; monthly: string; yearly: string }
+}
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
@@ -203,5 +186,31 @@ export type SubscriptionDataInput = OverrideProperties<
 
 export type ReconcileSubscriptionData = (args: {
   subscriptionData: SubscriptionDataInput
-  applyProrotation: boolean
+  prorationBehavior: 'always_invoice' | 'create_prorations' | 'none'
 }) => Promise<void>
+
+export const WorkspaceSeatType = <const>{
+  Viewer: 'viewer',
+  Editor: 'editor'
+}
+export type WorkspaceSeatType =
+  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
+  createdAt: Date
+  updatedAt: Date
+}
+// Prices
+export type GetRecurringPrices = () => Promise<
+  {
+    id: string
+    currency: string
+    unitAmount: number
+    productId: string
+  }[]
+>
+
+export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>

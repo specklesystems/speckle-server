@@ -5,10 +5,7 @@ const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 
 const { Roles, Scopes } = require('@speckle/shared')
-const {
-  getUserActivityFactory,
-  saveActivityFactory
-} = require('@/modules/activitystream/repositories')
+const { getUserActivityFactory } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 const {
   validateStreamAccessFactory,
@@ -16,11 +13,6 @@ const {
 } = require('@/modules/core/services/streams/access')
 const { authorizeResolver } = require('@/modules/shared')
 const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
-const {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUserFactory,
   storeUserFactory,
@@ -61,27 +53,18 @@ const {
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 const {
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const findEmail = findEmailFactory({ db })
@@ -121,8 +104,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 let server

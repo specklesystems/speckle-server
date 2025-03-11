@@ -21,7 +21,7 @@ import {
   Branches,
   ServerAcl
 } from '@/modules/core/dbSchema'
-import { InvalidArgumentError } from '@/modules/shared/errors'
+import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   StreamAclRecord,
@@ -44,6 +44,7 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import {
   StreamAccessUpdateError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -941,6 +942,9 @@ export const updateStreamFactory =
       validUpdate.isPublic = true
     }
 
+    // Ignore discoverability for now
+    delete validUpdate['isDiscoverable']
+
     if (!Object.keys(validUpdate).length) return null
 
     const [updatedStream] = await tables
@@ -961,7 +965,7 @@ export const updateProjectFactory =
     const updatedStream = await updateStreamFactory({ db })(projectUpdate)
 
     if (!updatedStream) {
-      throw new StreamUpdateError()
+      throw new StreamUpdateError('Stream was not updated.')
     }
 
     return updatedStream
@@ -1160,7 +1164,7 @@ export const markOnboardingBaseStreamFactory =
   async (streamId: string, version: string) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
-      throw new Error(`Stream ${streamId} not found`)
+      throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
     await updateStreamFactory(deps)({
       id: streamId,
@@ -1238,7 +1242,9 @@ export const legacyGetStreamsFactory =
 
     if (visibility && visibility !== 'all') {
       if (!['private', 'public'].includes(visibility))
-        throw new Error('Stream visibility should be either private, public or all')
+        throw new LogicError(
+          'Stream visibility should be either private, public or all'
+        )
       const isPublic = visibility === 'public'
       const publicFunc: Knex.QueryCallback = function () {
         this.where({ isPublic })

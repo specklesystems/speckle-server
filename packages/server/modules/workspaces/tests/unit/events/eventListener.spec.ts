@@ -58,7 +58,8 @@ describe('Event handlers', () => {
 
       await onProjectCreated({
         project: { workspaceId, id: projectId } as StreamRecord,
-        ownerId: cryptoRandomString({ length: 10 })
+        ownerId: cryptoRandomString({ length: 10 }),
+        input: { name: 'test' }
       })
 
       expect(projectRoles.length).to.equal(2)
@@ -85,9 +86,11 @@ describe('Event handlers', () => {
           expect.fail()
         }
       })({
-        role: Roles.Workspace.Guest,
-        userId: cryptoRandomString({ length: 10 }),
-        workspaceId: cryptoRandomString({ length: 10 })
+        acl: {
+          role: Roles.Workspace.Guest,
+          userId: cryptoRandomString({ length: 10 }),
+          workspaceId: cryptoRandomString({ length: 10 })
+        }
       })
 
       expect(isDeleteCalled).to.be.true
@@ -124,9 +127,11 @@ describe('Event handlers', () => {
           return {} as StreamRecord
         }
       })({
-        role: Roles.Workspace.Member,
-        userId,
-        workspaceId: cryptoRandomString({ length: 10 })
+        acl: {
+          role: Roles.Workspace.Member,
+          userId,
+          workspaceId: cryptoRandomString({ length: 10 })
+        }
       })
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))

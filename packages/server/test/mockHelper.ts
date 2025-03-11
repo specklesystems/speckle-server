@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-var-requires */
+import { Factory, FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash'
 import mock from 'mock-require'
@@ -28,6 +28,9 @@ export function mockRequireModule<
   type MockTypeFunctionsOnly = ConditionalPick<MockType, MockedFunctionImplementation>
   type MockTypeFunctionProp = keyof MockTypeFunctionsOnly
 
+  type MockTypeFactoriesOnly = ConditionalPick<MockTypeFunctionsOnly, Factory>
+  type MockTypeFactoryProp = keyof MockTypeFactoriesOnly
+
   type MockedFunc<F extends MockTypeFunctionProp> = (
     ...args: Parameters<MockTypeFunctionsOnly[F]>
   ) => ReturnType<MockTypeFunctionsOnly[F]>
@@ -41,6 +44,7 @@ export function mockRequireModule<
     Record<MockTypeFunctionProp, MockedFunc<MockTypeFunctionProp>>
   > = {}
 
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const originalModule = require(modulePaths[0]) as MockType
   const mockDefinition = new Proxy<MockType>(originalModule, {
     get(target, prop) {
@@ -175,6 +179,61 @@ export function mockRequireModule<
           return returnVal
         }
       )
+
+      return {
+        /**
+         * Arguments that were used to call the mocked function. Each entry in this array is an array of arguments, so use the first array dimension to choose
+         * the invocation and the 2nd dimension to choose the specific argument.
+         */
+        args: collectedArgs,
+        /**
+         * Return values that were returned from the mocked function.
+         */
+        returns: collectedReturns,
+        /**
+         * Get the amount of invocations
+         */
+        length: () => collectedArgs.length
+      }
+    },
+    /**
+     * Simplification of hijackFunction for factories
+     */
+    hijackFactoryFunction<F extends MockTypeFactoryProp>(
+      functionName: F,
+      implementation: FactoryResultOf<MockTypeFactoriesOnly[F]>,
+      params: { times: number } = { times: 1 }
+    ) {
+      const { times } = params
+      if (!isFunction(implementation))
+        throw new Error('Implementation must be a function')
+
+      const collectedReturns: Array<
+        ReturnType<FactoryResultOf<MockTypeFactoriesOnly[F]>>
+      > = []
+      const collectedArgs: Array<
+        Parameters<FactoryResultOf<MockTypeFactoriesOnly[F]>>
+      > = []
+
+      core.enable()
+      core.mockFunction(functionName, (() => {
+        let localTimes = times
+
+        return (...args: Parameters<FactoryResultOf<MockTypeFactoriesOnly[F]>>) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+          const returnVal = (implementation as Function).apply({}, args)
+          localTimes--
+
+          if (localTimes <= 0) {
+            core.resetMockedFunction(functionName)
+          }
+
+          collectedArgs.push(args)
+          collectedReturns.push(returnVal)
+
+          return returnVal
+        }
+      }) as ReturnType<MockTypeFunctionsOnly[F]>)
 
       return {
         /**

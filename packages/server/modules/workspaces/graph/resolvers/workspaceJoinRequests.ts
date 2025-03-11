@@ -5,7 +5,12 @@ import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmail
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { commandFactory } from '@/modules/shared/command'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import {
@@ -14,8 +19,10 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   countAdminWorkspaceJoinRequestsFactory,
+  countWorkspaceJoinRequestsFactory,
   getAdminWorkspaceJoinRequestsFactory,
   getWorkspaceJoinRequestFactory,
+  getWorkspaceJoinRequestsFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import {
@@ -28,122 +35,170 @@ import {
   approveWorkspaceJoinRequestFactory,
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 const eventBus = getEventBus()
 
-export default {
-  Workspace: {
-    adminWorkspacesJoinRequests: async (parent, args, ctx) => {
-      const { filter, cursor, limit } = args
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-      return await getPaginatedItemsFactory<
-        {
-          limit: number
-          cursor?: string
-          filter: {
-            workspaceId: string
-            userId: string
-            status?: WorkspaceJoinRequestStatus | null
-          }
-        },
-        WorkspaceJoinRequestGraphQLReturn
-      >({
-        getItems: getAdminWorkspaceJoinRequestsFactory({ db }),
-        getTotalCount: countAdminWorkspaceJoinRequestsFactory({ db })
-      })({
-        filter: {
-          workspaceId: parent.id,
-          status: filter?.status ?? undefined,
-          userId: ctx.userId! // This is the worskpace admin, not the request userId
-        },
-        cursor: cursor ?? undefined,
-        limit
-      })
-    }
-  },
-  WorkspaceJoinRequest: {
-    id: async (parent) => {
-      return parent.userId + parent.workspaceId
-    },
-    user: async (parent, _args, ctx) => {
-      return await ctx.loaders.users.getUser.load(parent.userId)
-    },
-    workspace: async (parent, _args, ctx) => {
-      return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
-    }
-  },
-  Mutation: {
-    workspaceJoinRequestMutations: () => ({})
-  },
-  WorkspaceJoinRequestMutations: {
-    approve: async (_parent, args) => {
-      const approveWorkspaceJoinRequest = commandFactory<ApproveWorkspaceJoinRequest>({
-        db,
-        eventBus,
-        operationFactory: ({ db, emit }) => {
-          const updateWorkspaceJoinRequestStatus =
-            updateWorkspaceJoinRequestStatusFactory({
-              db
-            })
-          const sendWorkspaceJoinRequestApprovedEmail =
-            sendWorkspaceJoinRequestApprovedEmailFactory({
-              renderEmail,
-              sendEmail,
-              getServerInfo: getServerInfoFactory({ db }),
-              getUserEmails: findEmailsByUserIdFactory({ db })
-            })
-          return approveWorkspaceJoinRequestFactory({
-            updateWorkspaceJoinRequestStatus,
-            sendWorkspaceJoinRequestApprovedEmail,
-            getUserById: getUserFactory({ db }),
-            getWorkspace: getWorkspaceFactory({ db }),
-            getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
-              db
-            }),
-            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emit
+export default FF_WORKSPACES_MODULE_ENABLED
+  ? ({
+      Workspace: {
+        adminWorkspacesJoinRequests: async (parent, args, ctx) => {
+          const { filter, cursor, limit } = args
+
+          return await getPaginatedItemsFactory<
+            {
+              limit: number
+              cursor?: string
+              filter: {
+                workspaceId: string
+                userId: string
+                status?: WorkspaceJoinRequestStatus | null
+              }
+            },
+            WorkspaceJoinRequestGraphQLReturn
+          >({
+            getItems: getAdminWorkspaceJoinRequestsFactory({ db }),
+            getTotalCount: countAdminWorkspaceJoinRequestsFactory({ db })
+          })({
+            filter: {
+              workspaceId: parent.id,
+              status: filter?.status ?? undefined,
+              userId: ctx.userId! // This is the worskpace admin, not the request userId
+            },
+            cursor: cursor ?? undefined,
+            limit
           })
         }
-      })
-      return await approveWorkspaceJoinRequest({
-        userId: args.input.userId,
-        workspaceId: args.input.workspaceId
-      })
-    },
-    deny: async (_parent, args) => {
-      const denyWorkspaceJoinRequest = commandFactory<DenyWorkspaceJoinRequest>({
-        db,
-        operationFactory: ({ db }) => {
-          const updateWorkspaceJoinRequestStatus =
-            updateWorkspaceJoinRequestStatusFactory({
-              db
-            })
-          const sendWorkspaceJoinRequestDeniedEmail =
-            sendWorkspaceJoinRequestDeniedEmailFactory({
-              renderEmail,
-              sendEmail,
-              getServerInfo: getServerInfoFactory({ db }),
-              getUserEmails: findEmailsByUserIdFactory({ db })
-            })
+      },
+      WorkspaceJoinRequest: {
+        id: async (parent) => {
+          return parent.userId + parent.workspaceId
+        },
+        user: async (parent, _args, ctx) => {
+          return await ctx.loaders.users.getUser.load(parent.userId)
+        },
+        workspace: async (parent, _args, ctx) => {
+          return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
+        }
+      },
+      LimitedWorkspaceJoinRequest: {
+        id: async (parent) => {
+          return parent.userId + parent.workspaceId
+        },
+        user: async (parent, _args, ctx) => {
+          return await ctx.loaders.users.getUser.load(parent.userId)
+        },
+        workspace: async (parent, _args, ctx) => {
+          return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
+        }
+      },
+      User: {
+        workspaceJoinRequests: async (parent, args) => {
+          const { filter, cursor, limit } = args
 
-          return denyWorkspaceJoinRequestFactory({
-            updateWorkspaceJoinRequestStatus,
-            sendWorkspaceJoinRequestDeniedEmail,
-            getUserById: getUserFactory({ db }),
-            getWorkspace: getWorkspaceFactory({ db }),
-            getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
-              db
-            })
+          return await getPaginatedItemsFactory<
+            {
+              limit: number
+              cursor?: string
+              filter: {
+                userId: string
+                status?: WorkspaceJoinRequestStatus | null
+              }
+            },
+            WorkspaceJoinRequestGraphQLReturn
+          >({
+            getItems: getWorkspaceJoinRequestsFactory({ db }),
+            getTotalCount: countWorkspaceJoinRequestsFactory({ db })
+          })({
+            filter: {
+              userId: parent.id,
+              status: filter?.status ?? undefined
+            },
+            cursor: cursor ?? undefined,
+            limit
           })
         }
-      })
+      },
+      Mutation: {
+        workspaceJoinRequestMutations: () => ({})
+      },
+      WorkspaceJoinRequestMutations: {
+        approve: async (_parent, args) => {
+          const approveWorkspaceJoinRequest =
+            commandFactory<ApproveWorkspaceJoinRequest>({
+              db,
+              eventBus,
+              operationFactory: ({ db, emit }) => {
+                const updateWorkspaceJoinRequestStatus =
+                  updateWorkspaceJoinRequestStatusFactory({
+                    db
+                  })
+                const sendWorkspaceJoinRequestApprovedEmail =
+                  sendWorkspaceJoinRequestApprovedEmailFactory({
+                    renderEmail,
+                    sendEmail,
+                    getServerInfo: getServerInfoFactory({ db }),
+                    getUserEmails: findEmailsByUserIdFactory({ db })
+                  })
+                return approveWorkspaceJoinRequestFactory({
+                  updateWorkspaceJoinRequestStatus,
+                  sendWorkspaceJoinRequestApprovedEmail,
+                  getUserById: getUserFactory({ db }),
+                  getWorkspace: getWorkspaceFactory({ db }),
+                  getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
+                    db
+                  }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
+                })
+              }
+            })
+          return await approveWorkspaceJoinRequest({
+            userId: args.input.userId,
+            workspaceId: args.input.workspaceId
+          })
+        },
+        deny: async (_parent, args) => {
+          const denyWorkspaceJoinRequest = commandFactory<DenyWorkspaceJoinRequest>({
+            db,
+            operationFactory: ({ db }) => {
+              const updateWorkspaceJoinRequestStatus =
+                updateWorkspaceJoinRequestStatusFactory({
+                  db
+                })
+              const sendWorkspaceJoinRequestDeniedEmail =
+                sendWorkspaceJoinRequestDeniedEmailFactory({
+                  renderEmail,
+                  sendEmail,
+                  getServerInfo: getServerInfoFactory({ db }),
+                  getUserEmails: findEmailsByUserIdFactory({ db })
+                })
 
-      return await denyWorkspaceJoinRequest({
-        userId: args.input.userId,
-        workspaceId: args.input.workspaceId
-      })
-    }
-  }
-} as Resolvers
+              return denyWorkspaceJoinRequestFactory({
+                updateWorkspaceJoinRequestStatus,
+                sendWorkspaceJoinRequestDeniedEmail,
+                getUserById: getUserFactory({ db }),
+                getWorkspace: getWorkspaceFactory({ db }),
+                getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
+                  db
+                })
+              })
+            }
+          })
+
+          return await denyWorkspaceJoinRequest({
+            userId: args.input.userId,
+            workspaceId: args.input.workspaceId
+          })
+        }
+      }
+    } as Resolvers)
+  : {}

@@ -53,7 +53,7 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   GetWorkspace,
   GetWorkspaceBySlug,
@@ -326,7 +326,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const mjml = {
       bodyStart: `
-  <mj-text>
+  <mj-text align="center" line-height="2">
   Hello!
   <br />
   <br />
@@ -334,7 +334,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
   </mj-text>
   `,
       bodyEnd:
-        '<mj-text>Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
+        '<mj-text align="center" line-height="2">Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
     }
     const text = {
       bodyStart: `Hello!

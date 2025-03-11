@@ -4,7 +4,10 @@ import type { Vector3 } from 'three'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { IntersectionQuery, PointQuery } from '@speckle/viewer'
 import { isArray, round } from 'lodash-es'
-import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import {
+  useViewerCameraTracker,
+  useOnViewerLoadComplete
+} from '~~/lib/viewer/composables/viewer'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
 export function useViewerAnchoredPointCalculator(params: {
@@ -28,36 +31,44 @@ export function useViewerAnchoredPointCalculator(params: {
    */
   const calculate = (target: Vector3) => {
     let targetLoc: Nullable<{ x: number; y: number }> = null
+    let inFrustum: boolean | undefined = false
     if (parentEl.value) {
       const targetProjectionResult = viewer.query<PointQuery>({
         point: target,
         operation: 'Project'
       })
-      targetLoc = viewer.Utils.NDCToScreen(
-        targetProjectionResult.x,
-        targetProjectionResult.y,
-        parentEl.value.clientWidth,
-        parentEl.value.clientHeight
-      )
+      inFrustum ||= targetProjectionResult.inFrustum
+      /** If not in camera's frustum, don't bother projecting */
+      if (inFrustum)
+        targetLoc = viewer.Utils.NDCToScreen(
+          targetProjectionResult.x,
+          targetProjectionResult.y,
+          parentEl.value.clientWidth,
+          parentEl.value.clientHeight
+        )
 
       // round it out
       if (targetLoc) {
         targetLoc.x = round(targetLoc.x)
         targetLoc.y = round(targetLoc.y)
       }
-
       // logger.debug(targetLoc, targetProjectionResult, target, new Date().toISOString())
     }
 
-    const targetOcclusionRes = viewer.query<IntersectionQuery>({
-      point: target,
-      tolerance: 0.001,
-      operation: 'Occlusion'
-    })
+    let isOccluded: boolean | undefined = true
+    /** If not in camera's frustum don't bother intersecting */
+    if (inFrustum) {
+      const targetOcclusionRes = viewer.query<IntersectionQuery>({
+        point: target,
+        tolerance: 0.001,
+        operation: 'Occlusion'
+      })
+      isOccluded = !!targetOcclusionRes.objects?.length
+    }
 
     return {
       screenLocation: targetLoc?.x && targetLoc?.y ? targetLoc : null,
-      isOccluded: !!targetOcclusionRes.objects?.length,
+      isOccluded,
       style: <Partial<CSSProperties>>{
         ...(targetLoc?.x && targetLoc?.y
           ? {
@@ -138,6 +149,13 @@ export function useViewerAnchoredPoints<
   // TODO: disabling throttle cause of jitteriness caused by (?) viewer queries, this needs to be looked at
   useViewerCameraTracker(() => updatePositions(), { throttleWait: 0 })
   useWindowResizeHandler(() => updatePositions(), { wait: 0 })
+
+  useOnViewerLoadComplete(
+    () => {
+      updatePositions()
+    },
+    { initialOnly: true, waitForBusyOver: true }
+  )
 
   watch(
     points,

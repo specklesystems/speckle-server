@@ -5,7 +5,12 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction, Handler } from 'express'
+import {
+  Request,
+  RequestHandler,
+  raw as expressRawBodyParser,
+  json as expressJsonBodyParser
+} from 'express'
 import {
   ForbiddenError,
   NotFoundError,
@@ -28,7 +33,7 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
-import { subscriptionLogger } from '@/logging/logging'
+import { subscriptionLogger } from '@/observability/logging'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { validateTokenFactory } from '@/modules/core/services/tokens'
 import {
@@ -41,11 +46,15 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import compression from 'compression'
 
-export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
+export const authMiddlewareCreator = (
+  steps: AuthPipelineFunction[]
+): RequestHandler => {
   const pipeline = authPipelineCreator(steps)
 
-  const middleware = async (req: Request, res: Response, next: NextFunction) => {
+  return async (req, res, next) => {
     const { authResult } = await pipeline({
       context: req.context,
       params: req.params as AuthParams,
@@ -64,7 +73,6 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
     }
     return next()
   }
-  return middleware
 }
 
 export const getTokenFromRequest = (req: Request | null | undefined): string | null => {
@@ -120,11 +128,7 @@ export async function createAuthContextFromToken(
   }
 }
 
-export async function authContextMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export const authContextMiddleware: RequestHandler = async (req, res, next) => {
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
     getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -230,8 +234,8 @@ export async function buildContext({
  * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
  */
 export const mixpanelTrackerHelperMiddlewareFactory =
-  (deps: { getUser: GetUser }): Handler =>
-  async (req: Request, _res: Response, next: NextFunction) => {
+  (deps: { getUser: GetUser }): RequestHandler =>
+  async (req, _res, next) => {
     const ctx = req.context
     const user = ctx.userId ? await deps.getUser(ctx.userId) : null
     const mp = mixpanel({ userEmail: user?.email, req })
@@ -248,11 +252,11 @@ const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
  * @param _res HTTP response object
  * @param next Express middleware-compatible next function
  */
-export async function determineClientIpAddressMiddleware(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) {
+export const determineClientIpAddressMiddleware: RequestHandler = async (
+  req,
+  _res,
+  next
+) => {
   const ip = getIpFromRequest(req)
   if (ip) {
     try {
@@ -263,9 +267,82 @@ export async function determineClientIpAddressMiddleware(
         const mask = new Netmask(`${ip}/24`)
         req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
       }
-    } catch (e) {
+    } catch {
       req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip || 'ip-parse-error'
     }
   }
+  next()
+}
+
+//TODO ideally these should be identified alongside the route handlers
+const RAW_BODY_PATH_PREFIXES = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+
+export const requestBodyParsingMiddlewareFactory =
+  (deps: { maximumRequestBodySizeMb: number }): RequestHandler =>
+  async (req, res, next) => {
+    const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
+
+    const nextWithWrappedError = (err: unknown) => {
+      if (!err) {
+        next()
+        return
+      }
+
+      next(
+        new UserInputError('Invalid request body', {
+          cause: ensureError(err, 'Unknown error parsing request body')
+        })
+      )
+      return
+    }
+
+    try {
+      if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
+        expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
+          req,
+          res,
+          nextWithWrappedError
+        )
+
+        // expressRawBodyParser calls `next` internally, so we cannot call it again here
+        return
+      }
+
+      //default
+      expressJsonBodyParser({ limit: maxRequestBodySize })(
+        req,
+        res,
+        nextWithWrappedError
+      )
+
+      // expressJsonBodyParser calls `next` internally, so we cannot call it again here
+      return
+    } catch (err) {
+      // something blew up, so let's wrap it and pass it to the error handler
+      const e = new UserInputError(
+        'Error unexpectedly encountered when parsing the request body',
+        {
+          info: { cause: ensureError(err, 'Unknown error parsing request body') }
+        }
+      )
+      next(e)
+      return
+    }
+  }
+
+export function compressionMiddlewareFactory(deps: {
+  isCompressionEnabled: boolean
+}): RequestHandler {
+  if (deps.isCompressionEnabled) return compression()
+  return (_req, _res, next) => next()
+}
+
+export const setContentSecurityPolicyHeaderMiddleware: RequestHandler = (
+  _req,
+  res,
+  next
+) => {
+  if (res.headersSent) return next()
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
   next()
 }

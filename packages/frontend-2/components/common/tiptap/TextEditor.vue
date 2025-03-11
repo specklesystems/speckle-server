@@ -4,11 +4,11 @@
   >
     <EditorContent
       ref="editorContentRef"
-      class="simple-scrollbar"
+      class="simple-scrollbar flex flex-1"
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
-      @keydown="onKeyDownHandler"
+      @keydown.stop="onKeyDownHandler"
     />
     <div v-if="$slots.actions && !readonly">
       <slot name="actions" />
@@ -156,6 +156,8 @@ onBeforeUnmount(() => {
 }
 
 .ProseMirror {
+  flex: 1;
+
   & p:last-of-type {
     margin-bottom: 0;
   }
@@ -170,8 +172,7 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply border-foreground border;
-    @apply label label--light rounded inline-block px-1 py-[0.5px];
+    @apply text-foreground text-body-2xs font-semibold;
   }
 }
 
@@ -180,10 +181,6 @@ onBeforeUnmount(() => {
     word-break: break-word;
     background-color: unset !important;
     box-shadow: unset !important;
-
-    .editor-mention {
-      /* cursor: pointer; TODO: Reenable once mentions are clickable again */
-    }
   }
 }
 </style>

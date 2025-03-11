@@ -139,7 +139,7 @@ async function getOrderedUserIds() {
 describe('[Admin users list]', () => {
   const me = {
     name: 'Mr Server Admin Dude',
-    email: 'adminuserguy@gmail.com',
+    email: 'adminuserguy@example.org',
     password: 'sn3aky-1337-b1m',
     id: undefined as Optional<string>,
     verified: false
@@ -197,7 +197,7 @@ describe('[Admin users list]', () => {
         name: `User #${i} - ${
           remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
         }`,
-        email: `speckleuser${i}@gmail.com`,
+        email: `speckleuser${i}@example.org`,
         password: 'sn3aky-1337-b1m',
         verified: false
       })
@@ -225,7 +225,7 @@ describe('[Admin users list]', () => {
         {
           email: `randominvitee${i}.${
             remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-          }@gmail.com`
+          }@example.org`
         },
         randomEl(userIds)
       )
@@ -237,7 +237,7 @@ describe('[Admin users list]', () => {
       const { id: streamId, ownerId } = randomEl(streamData)
       const email = `streamrandominvitee${i}.${
         remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-      }@gmail.com`
+      }@example.org`
 
       await createInviteDirectly(
         {
