@@ -2,6 +2,7 @@ import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
 import {
   REDIS_URL,
+  HOST,
   PORT,
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
@@ -13,13 +14,15 @@ import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
-import { wait } from '@speckle/shared'
+import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 
 const app = express()
+const host = HOST
 const port = PORT
 
 // serve the preview-frontend
 app.use(express.static('public'))
+await initMetrics({ app, registry: initPrometheusRegistry() })
 
 let client: Redis
 let subscriber: Redis
@@ -58,7 +61,7 @@ const jobQueue = new Bull('preview-service-jobs', opts)
 // store this callback, so on shutdown we can error the job
 let jobDoneCallback: Bull.DoneCallback | undefined = undefined
 
-const server = app.listen(port, async () => {
+const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
 
   const launchBrowser = async (): Promise<Browser> => {
@@ -77,31 +80,38 @@ const server = app.listen(port, async () => {
 
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
+    let jobLogger = logger.child({ payloadId: payload.id })
     try {
       jobDoneCallback = done
       const browser = await launchBrowser()
       const parseResult = jobPayload.safeParse(payload.data)
       if (!parseResult.success) {
-        logger.error({ parseError: parseResult.error }, 'Invalid job payload')
+        jobLogger.error(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          { parseError: parseResult.error, payload: payload.data },
+          'Invalid job payload'
+        )
         return done(parseResult.error)
       }
       const job = parseResult.data
+      jobLogger = jobLogger.child({ jobId: job.jobId, serverUrl: job.url })
+      const resultsQueue = new Bull(job.responseQueue, opts)
+
       const result = await jobProcessor({
-        logger,
+        logger: jobLogger,
         browser,
         job: parseResult.data,
         port: PORT,
         timeout: PREVIEW_TIMEOUT
       })
 
-      const resultsQueue = new Bull(job.responseQueue, opts)
       // with removeOnComplete, the job response potentially containing a large images,
       // is cleared from the response queue
       await resultsQueue.add(result, { removeOnComplete: true })
       await browser.close()
       done()
     } catch (err) {
-      logger.error({ err }, 'Job processing failed')
+      jobLogger.error({ err }, 'Processing {jobId} failed')
       if (err instanceof Error) {
         done(err)
       } else {

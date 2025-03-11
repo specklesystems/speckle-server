@@ -15,13 +15,14 @@
       <div class="flex flex-col-reverse lg:flex-col gap-y-12">
         <section>
           <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-5">
             <CommonCard
-              v-for="quickStartItem in quickStartItems"
-              :key="quickStartItem.title"
-              :title="quickStartItem.title"
-              :description="quickStartItem.description"
-              :buttons="quickStartItem.buttons"
+              v-for="useCase in useCaseItems"
+              :key="useCase.title"
+              :title="useCase.title"
+              :description="useCase.description"
+              :buttons="useCase.buttons"
+              is-external-route
             />
           </div>
         </section>
@@ -49,6 +50,19 @@
               title="Create your first project"
               description="Projects are the place where your models and their versions live."
               :buttons="createProjectButton"
+            />
+          </div>
+        </section>
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Highlighted workflows</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
+            <CommonCard
+              v-for="workflowItem in workflowItems"
+              :key="workflowItem.title"
+              :title="workflowItem.title"
+              :description="workflowItem.description"
+              :buttons="workflowItem.buttons"
+              is-external-route
             />
           </div>
         </section>
@@ -83,15 +97,12 @@ import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
-  docsPageUrl,
-  forumPageUrl,
   homeRoute,
   projectsRoute,
-  tutorialsRoute
+  tutorialsRoute,
+  connectorsRoute,
+  forumPageUrl
 } from '~~/lib/common/helpers/route'
-import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
-import { downloadManager } from '~~/lib/common/utils/downloadManager'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
 import { tutorialItems } from '~/lib/dashboard/helpers/tutorials'
@@ -107,37 +118,93 @@ const { result: workspacesResult } = useQuery(
     enabled: isWorkspacesEnabled.value
   })
 )
-const { triggerNotification } = useGlobalToast()
+
 const { isGuest } = useActiveUser()
 const router = useRouter()
 useUserProjectsUpdatedTracking()
 
 const promoBanners = ref<PromoBanner[]>()
 const openNewProject = ref(false)
-const quickStartItems = shallowRef<QuickStartItem[]>([
+
+const workflowItems = shallowRef<QuickStartItem[]>([
   {
-    title: 'Install Speckle manager',
-    description: 'Use our Manager to install and manage Connectors with ease.',
+    title: 'Design Coordination',
+    description:
+      "The smoothest design coordination for AEC! Ditch files. Share only what's needed and catch changes instantly.",
     buttons: [
       {
-        text: 'Download for Windows',
-        onClick: () => onDownloadManager('exe')
-      },
-      {
-        text: 'Download for Mac',
-        onClick: () => onDownloadManager('dmg')
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/design-coordination' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Design Coordination'
+          })
+        }
       }
     ]
   },
   {
-    title: "Don't know where to start?",
-    description: "We'll walk you through some of most common usage scenarios.",
+    title: 'Business Intelligence',
+    description:
+      'Get from boring BIM data to insightful dashboards! Swap guesswork for informed decisions.',
     buttons: [
       {
-        text: 'Open documentation',
-        props: { to: docsPageUrl }
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/business-intelligence' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Business Intelligence'
+          })
+        }
       }
     ]
+  },
+  {
+    title: 'Online Collaboration',
+    description:
+      'View, share, and brainstorm on 3D models online! Share with anyone—no desktop apps, no licenses, no hassle.',
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/online-collaboration' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Online Collaboration'
+          })
+        }
+      }
+    ]
+  },
+  {
+    title: 'Automation',
+    description:
+      'Goodbye, repetitive tasks! Kick into high gear with pre-built automations for your workflows.',
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/automate' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Automation'
+          })
+        }
+      }
+    ]
+  }
+])
+
+const useCaseItems = shallowRef<QuickStartItem[]>([
+  {
+    title: 'Install Connectors',
+    description:
+      'Extract and exchange data in real time between the most popular AEC applications using our tailored connectors.',
+    buttons: [
+      {
+        text: 'Install connectors',
+        props: { to: connectorsRoute }
+      }
+    ],
+    isExternalRoute: false
   },
   {
     title: 'Have a question you need answered?',
@@ -161,19 +228,4 @@ const createProjectButton = shallowRef<LayoutDialogButton[]>([
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
-
-const onDownloadManager = (extension: ManagerExtension) => {
-  try {
-    downloadManager(extension)
-
-    mixpanel.track('Manager Download', {
-      os: extension === 'exe' ? 'win' : 'mac'
-    })
-  } catch {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Download failed'
-    })
-  }
-}
 </script>
