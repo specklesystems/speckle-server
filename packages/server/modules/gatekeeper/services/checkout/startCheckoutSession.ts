@@ -255,17 +255,16 @@ export const startCheckoutSessionFactoryNew =
       }
     }
 
-    const [editorsCount, viewersCount] = await Promise.all([
-      countSeatsByTypeInWorkspace({ workspaceId, type: 'editor' }),
-      countSeatsByTypeInWorkspace({ workspaceId, type: 'viewer' })
-    ])
+    const editorsCount = await countSeatsByTypeInWorkspace({
+      workspaceId,
+      type: 'editor'
+    })
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,
       workspaceSlug,
       billingInterval,
       workspacePlan,
-      viewersCount,
       editorsCount,
       isCreateFlow
     })

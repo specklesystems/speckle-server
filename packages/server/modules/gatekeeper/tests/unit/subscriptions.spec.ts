@@ -451,7 +451,6 @@ describe('subscriptions @gatekeeper', () => {
               case 'plus':
               case 'team':
               case 'pro':
-              case 'viewer':
                 expect.fail()
               case 'guest':
                 return priceId
@@ -517,7 +516,6 @@ describe('subscriptions @gatekeeper', () => {
                 case 'guest':
                 case 'team':
                 case 'pro':
-                case 'viewer':
                   expect.fail()
                 case 'starter':
                   return priceId
@@ -596,7 +594,6 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'team':
               case 'pro':
-              case 'viewer':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -670,7 +667,6 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'team':
               case 'pro':
-              case 'viewer':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -1426,8 +1422,6 @@ describe('subscriptions @gatekeeper', () => {
               return 'teamProduct'
             case 'pro':
               return 'proProduct'
-            case 'viewer':
-              return 'viewerProduct'
           }
         },
         getWorkspacePlanPriceId: () => {

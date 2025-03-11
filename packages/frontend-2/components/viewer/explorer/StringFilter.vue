@@ -1,5 +1,5 @@
 <template>
-  <div class="pr-3 pl-2 flex flex-col space-y-2 pb-2">
+  <div class="pr-3 p-2 flex flex-col space-y-2">
     <ViewerExplorerStringFilterItem
       v-for="(vg, index) in groupsLimited"
       :key="index"

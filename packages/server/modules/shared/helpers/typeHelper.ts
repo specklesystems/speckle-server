@@ -29,7 +29,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
     init?: (params: {
       app: Express
       isInitial: boolean
-      metricsRegister?: Registry
+      metricsRegister: Registry
     }) => MaybeAsync<void>
     /**
      * Finalize initialization. This is only invoked once all of the other modules' `init()`
@@ -41,7 +41,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
     finalize?: (params: {
       app: Express
       isInitial: boolean
-      metricsRegister?: Registry
+      metricsRegister: Registry
     }) => MaybeAsync<void>
 
     /**
