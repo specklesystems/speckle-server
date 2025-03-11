@@ -111,6 +111,24 @@
               </div>
             </div>
             <div
+              v-if="isOutOfContext"
+              class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
+            >
+              <div class="text-body-2xs text-foreground-2 font-medium">
+                References multiple models
+              </div>
+              <div class="-mr-1 flex">
+                <FormButton
+                  :icon-right="ArrowTopRightOnSquareIcon"
+                  size="sm"
+                  color="outline"
+                  :to="fullContextUrl || undefined"
+                >
+                  Full context
+                </FormButton>
+              </div>
+            </div>
+            <div
               class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
             >
               <div
@@ -202,6 +220,7 @@ import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubble
 import {
   useArchiveComment,
   useCheckViewerCommentingAccess,
+  useCommentModelContext,
   useMarkThreadViewed
 } from '~~/lib/viewer/composables/commentManagement'
 import {
@@ -251,7 +270,6 @@ const {
 const { projectId } = useInjectedViewerState()
 const canReply = useCheckViewerCommentingAccess()
 const { disableTextSelection } = useDisableGlobalTextSelection()
-
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
@@ -261,6 +279,8 @@ const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
+
+const { isOutOfContext, fullContextUrl } = useCommentModelContext(props.modelValue)
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')

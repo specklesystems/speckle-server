@@ -29,6 +29,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
+import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -236,4 +237,38 @@ export function useCheckViewerCommentingAccess() {
 
     return hasRole || allowPublicComments
   })
+}
+
+export function useCommentModelContext(thread: MaybeRef<CommentBubbleModel>) {
+  const { resources, projectId } = useInjectedViewerState()
+
+  const loadedModelIds = computed(() => {
+    const modelsAndVersions = resources.response.modelsAndVersionIds.value || []
+    return modelsAndVersions.map((r) => r.model.id)
+  })
+
+  const commentModelIds = computed(() => {
+    const threadValue = unref(thread)
+    return threadValue.viewerResources.map((r) => r.modelId).filter(Boolean) as string[]
+  })
+
+  const isOutOfContext = computed(() =>
+    commentModelIds.value.some((id) => !loadedModelIds.value.includes(id))
+  )
+
+  const fullContextUrl = computed(() => {
+    const threadValue = unref(thread)
+    if (!commentModelIds.value.length) return null
+
+    // Join all model IDs with commas
+    const modelIdsString = commentModelIds.value.join(',')
+    return `/projects/${projectId.value}/models/${modelIdsString}#threadId=${threadValue.id}`
+  })
+
+  return {
+    isOutOfContext,
+    commentModelIds,
+    loadedModelIds,
+    fullContextUrl
+  }
 }
