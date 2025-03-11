@@ -471,8 +471,11 @@ describe('subscriptions @gatekeeper', () => {
             if (args.workspacePlan !== 'guest') expect.fail()
             return productId
           },
-          reconcileSubscriptionData: async ({ applyProrotation, subscriptionData }) => {
-            if (!applyProrotation) expect.fail()
+          reconcileSubscriptionData: async ({
+            prorationBehavior,
+            subscriptionData
+          }) => {
+            if (prorationBehavior !== 'create_prorations') expect.fail()
             reconciledSubscriptionData = subscriptionData
           },
           countSeatsByTypeInWorkspace: async () => 0
@@ -539,10 +542,10 @@ describe('subscriptions @gatekeeper', () => {
               return productId
             },
             reconcileSubscriptionData: async ({
-              applyProrotation,
+              prorationBehavior,
               subscriptionData
             }) => {
-              if (!applyProrotation) expect.fail()
+              if (prorationBehavior !== 'create_prorations') expect.fail()
               reconciledSubscriptionData = subscriptionData
             },
             countSeatsByTypeInWorkspace: async () => 0
@@ -618,8 +621,11 @@ describe('subscriptions @gatekeeper', () => {
             if (args.workspacePlan !== workspacePlan.name) expect.fail()
             return productId
           },
-          reconcileSubscriptionData: async ({ applyProrotation, subscriptionData }) => {
-            if (!applyProrotation) expect.fail()
+          reconcileSubscriptionData: async ({
+            prorationBehavior,
+            subscriptionData
+          }) => {
+            if (prorationBehavior !== 'create_prorations') expect.fail()
             reconciledSubscriptionData = subscriptionData
           },
           countSeatsByTypeInWorkspace: async () => 0
