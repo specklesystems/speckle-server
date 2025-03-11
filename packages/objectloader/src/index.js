@@ -616,10 +616,15 @@ class ObjectLoader {
     const cachedRootObject = await this.cacheGetObjects([this.objectId])
     if (cachedRootObject[this.objectId]) return cachedRootObject[this.objectId]
     const response = await this.fetch(this.requestUrlRootObj, { headers: this.headers })
-    const responseText = await response.text()
-    if ([401, 403].includes(response.status)) {
-      throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+    if (!response.ok) {
+      if ([401, 403].includes(response.status)) {
+        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+      }
+      throw new ObjectLoaderRuntimeError(
+        `Failed to fetch root object: ${response.status} ${response.statusText})`
+      )
     }
+    const responseText = await response.text()
 
     this.cacheStoreObjects([`${this.objectId}\t${responseText}`])
     return responseText
