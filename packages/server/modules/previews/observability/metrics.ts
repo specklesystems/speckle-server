@@ -1,3 +1,4 @@
+import { TIME } from '@speckle/shared'
 import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 
@@ -107,8 +108,10 @@ export const initializeMetrics = (params: {
   )
   const previewJobsProcessedSummary = new Summary<'status'>({
     name: 'speckle_server_preview_jobs_processed_duration_seconds',
-    help: 'Duration of preview job processing, in seconds',
-    labelNames: ['status']
+    help: 'Duration of preview job processing, in seconds, as sampled over a period of 1 minute.',
+    labelNames: ['status'],
+    maxAgeSeconds: 1 * TIME.minute,
+    ageBuckets: 5
   })
 
   return { previewJobsProcessedSummary }
