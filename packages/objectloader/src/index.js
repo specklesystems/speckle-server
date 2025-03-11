@@ -197,12 +197,14 @@ class ObjectLoader {
   }
 
   async getTotalObjectCount() {
+    const rootObj = await this.getRootObject()
+    const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
+    return totalChildrenCount
+  }
+
+  async getRootObject() {
     /** This is fine, because it gets cached */
     const rootObjJson = await this.getRawRootObject()
-    /** Ideally we shouldn't to a `parse` here since it's going to pointlessly allocate
-     *  But doing string gymnastics in order to get closure length is going to be the same
-     *  if not even more memory constly
-     */
     let rootObj
     try {
       rootObj = JSON.parse(rootObjJson)
@@ -211,13 +213,7 @@ class ObjectLoader {
         `Error parsing root object. "${e.message}". Root object: '${rootObjJson}'`
       )
     }
-    const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
-    return totalChildrenCount
-  }
-
-  async getRootObject() {
-    const rootObjJson = await this.getRawRootObject()
-    return JSON.parse(rootObjJson)
+    return rootObj
   }
 
   /**
