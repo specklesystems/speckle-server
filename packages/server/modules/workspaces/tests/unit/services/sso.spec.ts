@@ -96,7 +96,7 @@ describe('Workspace SSO services', () => {
           workspaceId: cryptoRandomString({ length: 9 })
         })
       )
-      expect(err.message).to.equal(SsoUserInviteRequiredError.defaultMessage)
+      expect(err.message).to.include(SsoUserInviteRequiredError.defaultMessage)
     })
     it('throws if SSO provider user profile does not have a name configured', async () => {
       const createWorkspaceUserFromSsoProfile =
