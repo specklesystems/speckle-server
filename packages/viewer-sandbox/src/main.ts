@@ -475,7 +475,8 @@ const getStream = () => {
     // Custom normals
     // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
 
-    'https://app.speckle.systems/projects/edccdee0fd/models/944c475581'
+    // 'https://app.speckle.systems/projects/edccdee0fd/models/944c475581'
+    'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
   )
 }
 
