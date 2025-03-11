@@ -2,6 +2,12 @@ import { TIME } from '@speckle/shared'
 import Bull from 'bull'
 import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 
+export const PreviewJobDurationStep = {
+  TOTAL: 'total',
+  LOAD: 'load',
+  RENDER: 'render'
+} as const
+
 export const initializeMetrics = (params: {
   registers: Registry[]
   previewRequestQueue: Bull.Queue
@@ -106,10 +112,10 @@ export const initializeMetrics = (params: {
   registers.forEach((r) =>
     r.removeSingleMetric('speckle_server_preview_jobs_processed_duration_seconds')
   )
-  const previewJobsProcessedSummary = new Summary<'status'>({
+  const previewJobsProcessedSummary = new Summary<'status' | 'step'>({
     name: 'speckle_server_preview_jobs_processed_duration_seconds',
-    help: 'Duration of preview job processing, in seconds, as sampled over a period of 1 minute.',
-    labelNames: ['status'],
+    help: 'Duration of preview job processing, in seconds, as sampled over a moving window of 1 minute.',
+    labelNames: ['status', 'step'],
     maxAgeSeconds: 1 * TIME.minute,
     ageBuckets: 5
   })

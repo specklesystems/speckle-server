@@ -18,14 +18,18 @@ const previewPageResult = z.object({
   screenshots: z.record(z.string(), z.string())
 })
 
-const previewJobResult = previewPageResult.extend({
+const durationDetail = z.object({
   loadDurationSeconds: z
     .number()
-    .describe('Duration to load the object from the server in seconds'),
+    .describe('Duration to load the object from the server in seconds')
+    .optional(),
   renderDurationSeconds: z
     .number()
     .describe('Duration to render the preview images in seconds')
+    .optional()
 })
+
+const previewJobResult = previewPageResult.merge(durationDetail)
 
 export type PreviewPageResult = z.infer<typeof previewPageResult>
 export type PreviewJobResult = z.infer<typeof previewJobResult>
@@ -43,11 +47,13 @@ const previewErrorPayload = job.merge(
   z.object({
     status: z.literal('error'),
     reason: z.string(),
-    result: z.object({
-      durationSeconds: z
-        .number()
-        .describe('Duration spent processing the job before erroring, in seconds')
-    })
+    result: z
+      .object({
+        durationSeconds: z
+          .number()
+          .describe('Duration spent processing the job before erroring, in seconds')
+      })
+      .merge(durationDetail)
   })
 )
 
