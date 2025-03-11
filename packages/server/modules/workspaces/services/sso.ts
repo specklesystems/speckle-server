@@ -140,7 +140,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
     const email = getEmailFromOidcProfile(args.ssoProfile)
 
     // Check if user has email-based invite to given workspace
-    // TODO: Use invite token instead of searching by email. Providers may return
+    // TODO: Use invite token instead of searching by email. Enterprise providers may return an email different from the one we sent an invite to.
     const invite = await findInvite({
       target: email.toLowerCase(),
       resourceFilter: {
