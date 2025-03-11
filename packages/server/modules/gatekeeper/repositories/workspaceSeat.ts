@@ -3,6 +3,7 @@ import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import {
   CountSeatsByTypeInWorkspace,
   CreateWorkspaceSeat,
+  DeleteWorkspaceSeat,
   GetWorkspaceUserSeat,
   GetWorkspaceUserSeats
 } from '@/modules/gatekeeper/domain/operations'
@@ -32,16 +33,28 @@ export const countSeatsByTypeInWorkspaceFactory =
 
 export const createWorkspaceSeatFactory =
   ({ db }: { db: Knex }): CreateWorkspaceSeat =>
-  async ({ userId, workspaceId, type }) => {
-    await tables
+  async ({ userId, workspaceId, type }, { skipIfExists } = {}) => {
+    const qBase = tables
       .workspaceSeats(db)
-      .insert({
-        workspaceId,
-        userId,
-        type
-      })
+      .insert(
+        {
+          workspaceId,
+          userId,
+          type
+        },
+        '*'
+      )
       .onConflict(['workspaceId', 'userId'])
-      .merge()
+    const q = skipIfExists ? qBase.ignore() : qBase.merge()
+
+    const [seat] = await q
+    return seat
+  }
+
+export const deleteWorkspaceSeatFactory =
+  (deps: { db: Knex }): DeleteWorkspaceSeat =>
+  async ({ userId, workspaceId }) => {
+    await tables.workspaceSeats(deps.db).where({ userId, workspaceId }).delete()
   }
 
 export const getWorkspaceUserSeatsFactory =

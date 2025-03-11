@@ -34,7 +34,14 @@ export type GetWorkspacePlanByProjectId = ({
 }) => Promise<WorkspacePlan | null>
 
 export type CreateWorkspaceSeat = (
-  args: Pick<WorkspaceSeat, 'workspaceId' | 'userId' | 'type'>
+  args: Pick<WorkspaceSeat, 'workspaceId' | 'userId' | 'type'>,
+  options?: Partial<{
+    skipIfExists: boolean
+  }>
+) => Promise<WorkspaceSeat>
+
+export type DeleteWorkspaceSeat = (
+  args: Pick<WorkspaceSeat, 'workspaceId' | 'userId'>
 ) => Promise<void>
 
 export type CountSeatsByTypeInWorkspace = (

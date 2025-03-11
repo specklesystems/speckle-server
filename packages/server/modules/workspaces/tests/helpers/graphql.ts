@@ -376,3 +376,20 @@ export const updateWorkspaceProjectRoleMutation = gql`
 
   ${basicProjectFieldsFragment}
 `
+
+export const updateWorkspaceSeatTypeMutation = gql`
+  mutation UpdateWorkspaceSeatType($input: WorkspaceUpdateSeatTypeInput!) {
+    workspaceMutations {
+      updateSeatType(input: $input) {
+        id
+        team {
+          items {
+            id
+            role
+            seatType
+          }
+        }
+      }
+    }
+  }
+`

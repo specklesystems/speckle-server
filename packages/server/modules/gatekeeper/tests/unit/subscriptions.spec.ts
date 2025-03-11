@@ -2,6 +2,7 @@ import { testLogger as logger } from '@/observability/logging'
 import {
   SubscriptionData,
   SubscriptionDataInput,
+  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
@@ -304,11 +305,13 @@ describe('subscriptions @gatekeeper', () => {
           },
           reconcileSubscriptionData: async () => {
             expect.fail()
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        seatType: WorkspaceSeatType.Editor
       })
       expect(true).to.be.true
     })
@@ -334,11 +337,13 @@ describe('subscriptions @gatekeeper', () => {
           },
           reconcileSubscriptionData: async () => {
             expect.fail()
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        seatType: WorkspaceSeatType.Editor
       })
     })
     it('throws if a non paid plan, has a subscription', async () => {
@@ -368,12 +373,14 @@ describe('subscriptions @gatekeeper', () => {
           },
           reconcileSubscriptionData: async () => {
             expect.fail()
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       const err = await expectToThrow(async () => {
         await addWorkspaceSubscriptionSeatIfNeeded({
           workspaceId,
-          role: 'workspace:admin'
+          role: 'workspace:admin',
+          seatType: WorkspaceSeatType.Editor
         })
       })
       expect(err.message).to.equal(new WorkspacePlanMismatchError().message)
@@ -405,11 +412,13 @@ describe('subscriptions @gatekeeper', () => {
           },
           reconcileSubscriptionData: async () => {
             expect.fail()
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:admin'
+        role: 'workspace:admin',
+        seatType: WorkspaceSeatType.Editor
       })
     })
     it('uses the guest count, guest product and price id if the new role is workspace:guest', async () => {
@@ -462,14 +471,19 @@ describe('subscriptions @gatekeeper', () => {
             if (args.workspacePlan !== 'guest') expect.fail()
             return productId
           },
-          reconcileSubscriptionData: async ({ applyProrotation, subscriptionData }) => {
-            if (!applyProrotation) expect.fail()
+          reconcileSubscriptionData: async ({
+            prorationBehavior,
+            subscriptionData
+          }) => {
+            if (prorationBehavior !== 'create_prorations') expect.fail()
             reconciledSubscriptionData = subscriptionData
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:guest'
+        role: 'workspace:guest',
+        seatType: WorkspaceSeatType.Viewer
       })
       expect(reconciledSubscriptionData!.products).deep.equalInAnyOrder([
         { productId, priceId, quantity: roleCount }
@@ -528,16 +542,18 @@ describe('subscriptions @gatekeeper', () => {
               return productId
             },
             reconcileSubscriptionData: async ({
-              applyProrotation,
+              prorationBehavior,
               subscriptionData
             }) => {
-              if (!applyProrotation) expect.fail()
+              if (prorationBehavior !== 'create_prorations') expect.fail()
               reconciledSubscriptionData = subscriptionData
-            }
+            },
+            countSeatsByTypeInWorkspace: async () => 0
           })
         await addWorkspaceSubscriptionSeatIfNeeded({
           workspaceId,
-          role
+          role,
+          seatType: WorkspaceSeatType.Editor
         })
         expect(reconciledSubscriptionData!.products).deep.equalInAnyOrder([
           { productId, priceId, quantity: 2 * roleCount }
@@ -605,14 +621,19 @@ describe('subscriptions @gatekeeper', () => {
             if (args.workspacePlan !== workspacePlan.name) expect.fail()
             return productId
           },
-          reconcileSubscriptionData: async ({ applyProrotation, subscriptionData }) => {
-            if (!applyProrotation) expect.fail()
+          reconcileSubscriptionData: async ({
+            prorationBehavior,
+            subscriptionData
+          }) => {
+            if (prorationBehavior !== 'create_prorations') expect.fail()
             reconciledSubscriptionData = subscriptionData
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:member'
+        role: 'workspace:member',
+        seatType: WorkspaceSeatType.Editor
       })
       expect(reconciledSubscriptionData!.products).deep.equalInAnyOrder([
         { productId, priceId, quantity: 2 * roleCount, subscriptionItemId }
@@ -680,11 +701,13 @@ describe('subscriptions @gatekeeper', () => {
           },
           reconcileSubscriptionData: async () => {
             expect.fail()
-          }
+          },
+          countSeatsByTypeInWorkspace: async () => 0
         })
       await addWorkspaceSubscriptionSeatIfNeeded({
         workspaceId,
-        role: 'workspace:member'
+        role: 'workspace:member',
+        seatType: WorkspaceSeatType.Editor
       })
     })
   })
