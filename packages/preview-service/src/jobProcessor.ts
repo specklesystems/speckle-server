@@ -82,11 +82,18 @@ const pageFunction = async ({
     logger.error({ err }, 'Page crashed')
     throw err
   })
+  const start = new Date().getTime()
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
+    const loadDone = new Date().getTime()
+    const loadDurationSeconds = loadDone - start
+    // measure here before load
     await window.load(job)
-    return await window.takeScreenshot()
+    const renderDurationSeconds = new Date().getTime() - loadDone
+    // measure here
+    const renderResult = await window.takeScreenshot()
+    return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
   }, job)
 
   return { jobId: job.jobId, status: 'success', result: previewResult }
