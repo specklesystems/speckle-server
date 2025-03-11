@@ -13,7 +13,6 @@ import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
-import { pipeline } from 'stream'
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -102,7 +101,7 @@ export const fileuploadRouterFactory = (): Router => {
         }
       })
 
-      pipeline(req, newFileStreamProcessor)
+      req.pipe(newFileStreamProcessor)
     }
   )
 

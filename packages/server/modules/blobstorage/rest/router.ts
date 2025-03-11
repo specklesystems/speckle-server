@@ -32,7 +32,6 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
-import { pipeline } from 'node:stream'
 
 export const blobStorageRouterFactory = (): Router => {
   const createStreamWritePermissions = () =>
@@ -83,7 +82,7 @@ export const blobStorageRouterFactory = (): Router => {
             )
         }
       })
-      pipeline(req, newFileStreamProcessor)
+      req.pipe(newFileStreamProcessor)
     }
   )
 
@@ -143,7 +142,7 @@ export const blobStorageRouterFactory = (): Router => {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${fileName}"`
       })
-      pipeline(fileStream, res)
+      fileStream.pipe(res)
     }
   )
 
