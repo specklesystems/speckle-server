@@ -1,7 +1,12 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  ensureError,
+  PaidWorkspacePlansNew,
+  Roles,
+  throwUncoveredError
+} from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory
@@ -29,7 +34,6 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
   calculateSubscriptionSeats,
@@ -37,7 +41,7 @@ import {
   CreateCheckoutSessionOld
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
@@ -52,6 +56,10 @@ import {
   startCheckoutSessionFactoryOld
 } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  upgradeWorkspaceSubscriptionFactoryNew,
+  upgradeWorkspaceSubscriptionFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -253,9 +261,6 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         },
         upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
-          if (isNewPlanType(workspacePlan)) {
-            throw new NotImplementedError()
-          }
 
           await authorizeResolver(
             ctx.userId,
@@ -265,21 +270,46 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
           const stripe = getStripeClient()
 
-          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
-            db
+          const currentPlan = await getWorkspacePlan({ workspaceId })
+          const upgradeWorkspaceSubscription =
+            currentPlan && isNewPlanType(currentPlan.name)
+              ? upgradeWorkspaceSubscriptionFactoryNew({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+              : upgradeWorkspaceSubscriptionFactoryOld({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+          await upgradeWorkspaceSubscription({
+            workspaceId,
+            targetPlan: workspacePlan as PaidWorkspacePlansNew, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            billingInterval
           })
-          await upgradeWorkspaceSubscriptionFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe
-            }),
-            countWorkspaceRole,
-            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            getWorkspacePlanPriceId,
-            getWorkspacePlanProductId,
-            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-            updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-          })({ workspaceId, targetPlan: workspacePlan, billingInterval })
           return true
         }
       }
