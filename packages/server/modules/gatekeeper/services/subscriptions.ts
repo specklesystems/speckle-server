@@ -1,7 +1,7 @@
 import type { Logger } from '@/observability/logging'
 import {
   GetWorkspacePlan,
-  GetWorkspacePlanPrice,
+  GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
@@ -119,14 +119,14 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspaceSubscription,
     countWorkspaceRole,
     getWorkspacePlanProductId,
-    getWorkspacePlanPrice,
+    getWorkspacePlanPriceId,
     reconcileSubscriptionData
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
     countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
     getWorkspacePlanProductId: GetWorkspacePlanProductId
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     reconcileSubscriptionData: ReconcileSubscriptionData
   }) =>
   async ({ workspaceId, role }: { workspaceId: string; role: WorkspaceRoles }) => {
@@ -166,7 +166,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       case 'workspace:guest':
         roleCount = await countWorkspaceRole({ workspaceId, workspaceRole: role })
         productId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
-        priceId = getWorkspacePlanPrice({
+        priceId = getWorkspacePlanPriceId({
           workspacePlan: 'guest',
           billingInterval: workspaceSubscription.billingInterval
         })
@@ -180,7 +180,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
           ])
         )
         productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
-        priceId = getWorkspacePlanPrice({
+        priceId = getWorkspacePlanPriceId({
           workspacePlan: workspacePlan.name,
           billingInterval: workspaceSubscription.billingInterval
         })
@@ -371,7 +371,7 @@ export const upgradeWorkspaceSubscriptionFactory =
   ({
     getWorkspacePlan,
     getWorkspacePlanProductId,
-    getWorkspacePlanPrice,
+    getWorkspacePlanPriceId,
     getWorkspaceSubscription,
     reconcileSubscriptionData,
     updateWorkspaceSubscription,
@@ -380,7 +380,7 @@ export const upgradeWorkspaceSubscriptionFactory =
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspacePlanProductId: GetWorkspacePlanProductId
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     getWorkspaceSubscription: GetWorkspaceSubscription
     reconcileSubscriptionData: ReconcileSubscriptionData
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
@@ -523,7 +523,7 @@ export const upgradeWorkspaceSubscriptionFactory =
         subscriptionData.products.push({
           quantity: guestCount,
           productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
-          priceId: getWorkspacePlanPrice({
+          priceId: getWorkspacePlanPriceId({
             workspacePlan: 'guest',
             billingInterval
           }),
@@ -544,7 +544,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     subscriptionData.products.push({
       quantity: memberCount + adminCount,
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
-      priceId: getWorkspacePlanPrice({
+      priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
         billingInterval
       }),

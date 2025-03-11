@@ -17,7 +17,7 @@ const scopes = [
   }
 ]
 
-export const init: SpeckleModule['init'] = async (_app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('💌 Init invites module')
 
   const registerFunc = registerOrUpdateScopeFactory({ db })

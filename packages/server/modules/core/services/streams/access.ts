@@ -177,6 +177,17 @@ export const addOrUpdateStreamCollaboratorFactory =
         throw new BadRequestError('Server guests cannot own streams')
     }
 
+    // Allows for dynamic extra validation
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsBeingAdded,
+      payload: {
+        activityUserId: addedById,
+        targetUserId: userId,
+        role: role as StreamRoles,
+        projectId: streamId
+      }
+    })
+
     const stream = (await deps.grantStreamPermissions({
       streamId,
       userId,

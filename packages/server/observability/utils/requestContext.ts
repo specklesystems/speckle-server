@@ -10,6 +10,7 @@ type StorageType = {
     totalDuration: number
     totalCount: number
   }
+  logger: Logger
 }
 
 const storage = asyncRequestContextEnabled()
@@ -20,8 +21,9 @@ export const enterNewRequestContext = (params: {
   reqId?: string
   taskId?: string
   taskName?: string
+  logger: Logger
 }) => {
-  const { reqId } = params
+  const { reqId, logger } = params
   const store: StorageType = {
     requestId: reqId,
     taskId: params.taskId,
@@ -29,12 +31,14 @@ export const enterNewRequestContext = (params: {
     dbMetrics: {
       totalCount: 0,
       totalDuration: 0
-    }
+    },
+    logger
   }
   storage?.enterWith(store)
 }
 
 export const getRequestContext = () => storage?.getStore()
+export const getRequestLogger = () => getRequestContext()?.logger
 
 export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
   const reqCtx = getRequestContext()

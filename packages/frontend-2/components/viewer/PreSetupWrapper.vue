@@ -29,6 +29,7 @@
         <ClientOnly>
           <!-- Viewer host -->
           <div
+            id="viewer"
             class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
             :class="
               isEmbedEnabled

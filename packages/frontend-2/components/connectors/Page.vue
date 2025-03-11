@@ -10,6 +10,15 @@
           <p class="text-body-sm text-foreground-2">
             Extract and exchange data between the most popular AEC applications using
             our tailored connectors.
+            <span class="italic">
+              Looking for V2 connectors? Get them
+              <NuxtLink
+                class="text-foreground hover:text-primary"
+                to="https://releases.speckle.systems"
+              >
+                here.
+              </NuxtLink>
+            </span>
           </p>
         </div>
       </section>
@@ -33,11 +42,12 @@
             name="categories"
             label="Categories"
             placeholder="All categories"
-            class="md:min-w-80"
+            class="md:w-80"
             allow-unset
             :items="categories"
             size="base"
             color="foundation"
+            clearable
           >
             <template #something-selected="{ value }">
               {{ isArray(value) ? value[0].name : value.name }}
@@ -47,7 +57,7 @@
             </template>
           </FormSelectBase>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ConnectorsCard
             v-for="connector in filteredConnectors"
             :key="connector.title"

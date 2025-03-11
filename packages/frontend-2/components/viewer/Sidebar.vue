@@ -8,7 +8,7 @@
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
         ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[3.8rem] sm:h-[calc(100dvh-3.8rem)]'
+        : 'sm:top-[3.7rem] sm:h-[calc(100dvh-3.8rem)]'
     ]"
   >
     <div
@@ -32,46 +32,37 @@
         ></div>
       </div>
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden shadow-lg rounded-b-md"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg shadow"
       >
         <!-- Header -->
         <div
-          class="h-[4.5rem] absolute z-10 top-0 w-full left-0 bg-foundation shadow-md sm:rounded-t-md"
+          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2 sm:rounded-t-md"
         >
           <div
-            class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
+            class="flex items-center justify-between py-1.5 pl-3 pr-1 border-b border-outline-2"
           >
-            <div
-              v-if="$slots.title"
-              class="text-heading-sm text-foreground font-medium"
-            >
+            <div v-if="$slots.title" class="text-body-xs text-foreground font-semibold">
               <slot name="title"></slot>
             </div>
-            <div class="flex items-center gap-0.5">
-              <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
-                <XMarkIcon class="size-4" />
-              </button>
-            </div>
+
+            <FormButton
+              hide-text
+              :icon-left="XMarkIcon"
+              size="sm"
+              color="subtle"
+              @click="onClose"
+            />
           </div>
-          <div v-if="$slots.actions" class="w-full px-3 h-8">
-            <div class="flex items-center justify-end md:justify-start gap-2 h-full">
-              <slot name="actions"></slot>
-            </div>
+          <div v-if="$slots.actions" class="w-full">
+            <slot name="actions"></slot>
           </div>
         </div>
-        <div class="w-full" :class="$slots.actions ? 'h-[4.5rem]' : 'h-10'"></div>
+        <div class="w-full" :class="$slots.actions ? 'h-[7rem]' : 'h-10'"></div>
         <div
           class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
         >
           <slot></slot>
         </div>
-        <div
-          v-if="$slots.footer"
-          class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition sm:rounded-b-md"
-        >
-          <slot name="footer"></slot>
-        </div>
-        <div v-if="$slots.footer" class="h-8"></div>
       </div>
     </div>
   </div>

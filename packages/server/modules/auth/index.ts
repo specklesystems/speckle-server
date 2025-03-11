@@ -143,7 +143,7 @@ const setupStrategies = setupStrategiesFactory({
 
 let authStrategies: AuthStrategyMetadata[]
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies

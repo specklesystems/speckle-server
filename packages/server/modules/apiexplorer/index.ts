@@ -14,7 +14,7 @@ async function getExplorerHtml() {
   )
 }
 
-export const init: SpeckleModule['init'] = (app) => {
+export const init: SpeckleModule['init'] = ({ app }) => {
   moduleLogger.info('💅 Init graphql api explorer module')
 
   // sweet and simple

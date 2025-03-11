@@ -8,6 +8,6 @@ export const initiateRequestContextMiddleware: express.RequestHandler = (
   next
 ) => {
   const reqId = req.id || req.headers[REQUEST_ID_HEADER] || 'unknown'
-  enterNewRequestContext({ reqId: reqId as string })
+  enterNewRequestContext({ reqId: reqId as string, logger: req.log })
   next()
 }

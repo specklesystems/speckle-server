@@ -368,7 +368,7 @@ const initializeEventListeners = () => {
 }
 
 const automateModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     moduleLogger.info('⚙️  Init automate module')
 

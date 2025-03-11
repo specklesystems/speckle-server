@@ -5,7 +5,7 @@ import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
 import { getRequestContext } from '@/observability/utils/requestContext'
-import { collectLongTrace } from '@speckle/shared'
+import { collectLongTrace, TIME } from '@speckle/shared'
 
 let metricQueryDuration: Summary<string>
 let metricQueryErrors: Counter<string>
@@ -134,7 +134,9 @@ export const initKnexPrometheusMetrics = async (params: {
       registers,
       labelNames: ['sqlMethod', 'sqlNumberBindings', 'region'],
       name: 'speckle_server_knex_query_duration',
-      help: 'Summary of the DB query durations in seconds'
+      help: 'Summary of the DB query durations in seconds, as computed over the last 1 minute.',
+      maxAgeSeconds: 1 * TIME.minute,
+      ageBuckets: 5
     })
 
     registers.forEach((r) => r.removeSingleMetric('speckle_server_knex_query_errors'))
