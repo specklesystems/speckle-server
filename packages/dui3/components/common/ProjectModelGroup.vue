@@ -1,5 +1,5 @@
 <template>
-  <div v-if="projectDetails && !projectError" class="px-[2px] rounded-md">
+  <div v-if="projectDetails" class="px-[2px] rounded-md">
     <!-- <div
       v-if="isProjectReadOnly"
       class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
@@ -96,10 +96,7 @@
       />
     </div>
   </div>
-  <div
-    v-if="projectError"
-    class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
-  >
+  <div v-else class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow">
     <CommonAlert
       color="danger"
       with-dismiss
@@ -110,15 +107,6 @@
         <code>{{ project.projectId }}</code>
         is inaccessible.
       </template>
-      <template #description>
-        Apollo error:
-        <code>{{ projectError }}</code>
-
-        <div v-if="!hasAccountMatch" class="my-4">
-          This might have happened because you do not have a valid account that can
-          access it.
-        </div>
-      </template>
     </CommonAlert>
     <LayoutDialog v-model:open="askDismissProjectQuestionDialog" fullscreen="none">
       <template #header>Remove Project</template>
@@ -127,11 +115,8 @@
         <FormButton size="sm" full-width @click="removeProjectModels">Yes</FormButton>
         <FormButton
           size="sm"
-          color="secondary"
           full-width
-          @click="
-            ;(askDismissProjectQuestionDialog = false), (projectError = undefined)
-          "
+          @click="askDismissProjectQuestionDialog = false"
         >
           Hide error
         </FormButton>
@@ -152,7 +137,6 @@ import {
   projectUpdatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import type { ApolloError } from '@apollo/client/errors'
 
 const { trackEvent } = useMixpanel()
 const accountStore = useAccountStore()
@@ -167,21 +151,13 @@ const showModels = ref(true)
 const askDismissProjectQuestionDialog = ref(false)
 const writeAccessRequested = ref(false)
 
-const hasAccountMatch = computed(() =>
-  accountStore.isAccountExistsById(props.project.accountId)
-)
-
 const projectAccount = computed(() =>
   accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
 )
 
 const clientId = projectAccount.value.accountInfo.id
 
-const {
-  result: projectDetailsResult,
-  onError,
-  refetch: refetchProjectDetails
-} = useQuery(
+const { result: projectDetailsResult, refetch: refetchProjectDetails } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
   () => ({ clientId })
@@ -192,10 +168,6 @@ const removeProjectModels = async () => {
   askDismissProjectQuestionDialog.value = false
 }
 
-const projectError = ref<string>()
-onError((err: ApolloError) => {
-  projectError.value = err.message
-})
 const projectDetails = computed(() => projectDetailsResult.value?.project)
 
 const isProjectReadOnly = computed(() => {
@@ -250,7 +222,6 @@ projectUpdated((res) => {
   // TODO: FIX needed: whenever project visibility changed from "discoverable" to "private", we can't get message if the `clientId` is not part of the team
   // validated with Fabians this is a current behavior.
   if (!res.data) return
-  projectError.value = undefined // clean error, refetch will set it if any
   refetchProjectDetails()
 })
 

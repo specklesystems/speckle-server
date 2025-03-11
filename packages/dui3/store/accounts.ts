@@ -120,17 +120,17 @@ export const useAccountStore = defineStore('accountStore', () => {
             })
           }
 
-          const messages: string[] = []
-          res.graphQLErrors.forEach(({ message, path }) => {
-            messages.push(`${message},\n Path: ${path}`)
-          })
+          // const messages: string[] = []
+          // res.graphQLErrors.forEach(({ message, path }) => {
+          //   messages.push(`${message},\n Path: ${path}`)
+          // })
 
-          const notification: ToastNotification = {
-            type: ToastNotificationType.Danger,
-            title: 'Graphql Error',
-            description: messages.join('\n')
-          }
-          hostAppStore.setNotification(notification)
+          // const notification: ToastNotification = {
+          //   type: ToastNotificationType.Danger,
+          //   title: 'Graphql Error',
+          //   description: messages.join('\n')
+          // }
+          // hostAppStore.setNotification(notification)
         }
 
         if (res.networkError) {
@@ -151,6 +151,17 @@ export const useAccountStore = defineStore('accountStore', () => {
         link: from([errorLink, link]),
         headers: {
           Authorization: 'Bearer ' + acc.token
+        },
+        defaultOptions: {
+          query: {
+            errorPolicy: 'all'
+          },
+          mutate: {
+            errorPolicy: 'all'
+          },
+          watchQuery: {
+            errorPolicy: 'all'
+          }
         }
       })
 

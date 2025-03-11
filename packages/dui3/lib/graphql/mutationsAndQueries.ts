@@ -315,6 +315,7 @@ export const projectDetailsQuery = graphql(`
       role
       name
       workspace {
+        name
         slug
         readOnly
       }
