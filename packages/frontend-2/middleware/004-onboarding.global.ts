@@ -49,14 +49,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const hasUnverifiedEmails = userData.activeUser.emails.some(
     (email) => !email.verified
   )
-  if (isEmailEnabled) {
-    if (hasUnverifiedEmails) {
-      if (!isVerifyEmailPage) {
-        return navigateTo(verifyEmailRoute)
-      }
+  if (isEmailEnabled && hasUnverifiedEmails) {
+    // Redirect to verification page if not already there
+    if (!isVerifyEmailPage) {
+      return navigateTo(verifyEmailRoute)
     }
+
     // Don't run any other checks if the user has unverified emails
-    if (hasUnverifiedEmails) return
+    return
   }
 
   // 2. Segmentation questions redirect
