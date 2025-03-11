@@ -8,7 +8,6 @@ import {
   getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
-import { Server } from 'node:http'
 import { db } from '@/db/knex'
 import {
   createCommitByBranchIdFactory,
@@ -49,9 +48,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -93,11 +89,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -194,8 +186,7 @@ describe('Server stats services @stats-services', function () {
 })
 
 describe('Server stats api @stats-api', function () {
-  let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
+  let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -233,7 +224,6 @@ describe('Server stats api @stats-api', function () {
   before(async function () {
     this.timeout(15000)
     const ctx = await beforeEachContext()
-    server = ctx.server
     ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
@@ -261,10 +251,6 @@ describe('Server stats api @stats-api', function () {
     )}`
 
     await seedDb(params)
-  })
-
-  after(async function () {
-    await server.close()
   })
 
   it('Should not get stats if user is not admin', async () => {

@@ -1,7 +1,7 @@
 ﻿using System.CommandLine;
 using System.Text.Json;
+using Speckle.Importers.Ifc;
 using Speckle.Sdk.Common;
-using Speckle.WebIfc.Importer;
 
 var filePathArgument = new Argument<string>(name: "filePath");
 var outputPathArgument = new Argument<string>("outputPath");

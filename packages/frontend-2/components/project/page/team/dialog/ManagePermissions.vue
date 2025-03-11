@@ -10,8 +10,8 @@
 
 <script setup lang="ts">
 import type {
-  ProjectVisibility,
-  ProjectsPageTeamDialogManagePermissions_ProjectFragment
+  ProjectsPageTeamDialogManagePermissions_ProjectFragment,
+  SimpleProjectVisibility
 } from '~~/lib/common/generated/gql/graphql'
 import { useTeamManagePermissionsInternals } from '~~/lib/projects/composables/team'
 import { graphql } from '~~/lib/common/generated/gql/gql'
@@ -29,7 +29,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'changedVisibility', newVisibility: ProjectVisibility): void
+  (e: 'changedVisibility', newVisibility: SimpleProjectVisibility): void
 }>()
 
 const projectRef = toRef(props, 'project')

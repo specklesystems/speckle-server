@@ -1,4 +1,4 @@
-import { Logger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 import {
   InsertableSpeckleObject,
   RawSpeckleObject,
@@ -13,6 +13,8 @@ export type GetStreamObjects = (
   streamId: string,
   objectIds: string[]
 ) => Promise<SpeckleObject[]>
+
+export type GetStreamObjectCount = (params: { streamId: string }) => Promise<number>
 
 export type GetObject = (
   objectId: string,

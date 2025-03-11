@@ -12,3 +12,13 @@ extend type WorkspaceMutations {
   """
   setDefaultRegion(workspaceId: String!, regionKey: String!): Workspace!
 }
+
+extend type WorkspaceProjectMutations {
+  """
+  Schedule a job that will:
+  - Move all regional data to target region
+  - Update project region key
+  - TODO: Eventually delete data in previous region
+  """
+  moveToRegion(projectId: String!, regionKey: String!): String!
+}

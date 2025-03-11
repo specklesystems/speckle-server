@@ -19,7 +19,8 @@ import {
   getWorkspaceWithDomainsFactory,
   getWorkspaceDomainsFactory,
   storeWorkspaceDomainFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -64,7 +65,7 @@ import {
 import { SetOptional } from 'type-fest'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
-  assignRegionFactory,
+  assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -74,7 +75,10 @@ import {
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
-import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -184,7 +188,7 @@ export const createTestWorkspace = async (
 
   if (useRegion) {
     const regionDb = await getDb({ regionKey })
-    const assignRegion = assignRegionFactory({
+    const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
         canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -244,12 +248,9 @@ export const createTestWorkspace = async (
 export const assignToWorkspace = async (
   workspace: BasicTestWorkspace,
   user: BasicTestUser,
-  role?: WorkspaceRoles
+  role?: WorkspaceRoles,
+  seatType?: WorkspaceSeatType
 ) => {
-  if (!FF_WORKSPACES_MODULE_ENABLED) {
-    return // Just skip
-  }
-
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
@@ -257,12 +258,26 @@ export const assignToWorkspace = async (
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
+  const assignWorkspaceSeat = assignWorkspaceSeatFactory({
+    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+    getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
+  })
+
+  role = role || Roles.Workspace.Member
 
   await updateWorkspaceRole({
     userId: user.id,
     workspaceId: workspace.id,
-    role: role || Roles.Workspace.Member
+    role
   })
+
+  if (seatType) {
+    await assignWorkspaceSeat({
+      userId: user.id,
+      workspaceId: workspace.id,
+      type: seatType
+    })
+  }
 }
 
 export const unassignFromWorkspace = async (

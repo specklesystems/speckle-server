@@ -22,9 +22,10 @@ const {
   isTestEnv,
   isApolloMonitoringEnabled,
   getApolloServerVersion,
-  getServerVersion
-} = require('./modules/shared/helpers/envHelper')
-const { logger } = require('@/logging/logging')
+  getServerVersion,
+  isDevEnv
+} = require('@/modules/shared/helpers/envHelper')
+const { logger } = require('@/observability/logging')
 
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
   process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
@@ -43,13 +44,23 @@ if (isTestEnv()) {
   }
 }
 
+// Custom inspector init, when debugging doesn't work any other way
+// (e.g. due to various child processes capturing the --inspect flag)
+const startDebugger = process.env.START_DEBUGGER
+if ((isTestEnv() || isDevEnv()) && startDebugger) {
+  const inspector = require('node:inspector')
+  if (!inspector.url()) {
+    inspector.open(undefined, undefined, true)
+  }
+}
+
 dotenv.config({ path: `${packageRoot}/.env` })
 
 // knex is a singleton controlled by module so can't wait til app init
-const { initOpenTelemetry } = require('./otel')
+const { initOpenTelemetry } = require('@/observability/otel')
 initOpenTelemetry()
 
-const { patchKnex } = require('./modules/core/patches/knex')
+const { patchKnex } = require('@/modules/core/patches/knex')
 patchKnex()
 
 module.exports = {

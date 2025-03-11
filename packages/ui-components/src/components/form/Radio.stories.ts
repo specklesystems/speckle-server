@@ -51,6 +51,7 @@ const toggleRadioPlayFunction: VuePlayFunction = async (params) => {
   // expect(radio.checked).toBeFalsy()
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const defaultArgs = {
   name: 'test1',
   label: 'Example Radio',

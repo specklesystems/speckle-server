@@ -2,6 +2,7 @@ import { mainDb } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { NotImplementedError } from '@/modules/shared/errors'
 import { isNonNullable } from '@speckle/shared'
 import { keyBy } from 'lodash'
 
@@ -16,6 +17,22 @@ export = {
 
       const blobsById = keyBy(blobs, (b) => b.id)
       return blobIds.map((blobId) => blobsById[blobId] || null).filter(isNonNullable)
+    }
+  },
+  Price: {
+    currencySymbol(parent) {
+      switch (parent.currency) {
+        case 'USD':
+          return '$'
+        case 'EUR':
+          return '€'
+        case 'GBP':
+          return '£'
+        default:
+          throw new NotImplementedError(
+            `Currency symbol for ${parent.currency} not implemented`
+          )
+      }
     }
   }
 } as Resolvers

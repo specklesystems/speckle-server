@@ -10,7 +10,7 @@
       <CommonCard class="bg-foundation !p-3 my-2">
         <p class="font-medium">Workspace {{ startCase(plan) }} plan</p>
         <p>
-          £{{ seatPrice }}/seat/month, billed
+          {{ seatPrice }}/seat/month, billed
           {{ billingInterval === BillingInterval.Yearly ? 'annually' : 'monthly' }}
         </p>
       </CommonCard>
@@ -22,33 +22,36 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import {
-  type WorkspacePlans,
   BillingInterval,
   type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { formatPrice } from '~/lib/billing/helpers/prices'
 
 const props = defineProps<{
-  plan: WorkspacePlans
+  plan: PaidWorkspacePlansOld
   billingInterval: BillingInterval
   workspaceId: string
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { upgradePlan } = useBillingActions()
+const { prices } = useWorkspacePlanPrices()
 
 const seatPrice = computed(() => {
   if (isPaidPlan(props.plan)) {
-    const planConfig =
-      pricingPlansConfig.plans[props.plan as unknown as PaidWorkspacePlans]
-    return planConfig.cost[props.billingInterval][Roles.Workspace.Member]
+    const planPrices = prices.value?.[props.plan]
+    const price = planPrices?.[props.billingInterval]?.[Roles.Workspace.Member]
+
+    return formatPrice(price)
   }
 
-  return 0
+  return `£0`
 })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {

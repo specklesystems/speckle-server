@@ -163,12 +163,13 @@ const githubStrategyBuilderFactory =
             case UserInputError:
             case InviteNotFoundError:
             case UnverifiedEmailSSOLoginError:
-              logger.info(err)
-              return done(null, false, { message: e.message })
+              logger.info({ err: e }, 'Auth error for GitHub strategy')
+              // note; passportjs suggests that err should be null for user input errors.
+              // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+              return done(e, false, { message: e.message })
             default:
-              logger.error(err)
-              // Only when the server is operating abnormally should err be set, to indicate an internal error.
-              return done(err, false, { message: e.message })
+              logger.error({ err: e }, 'Auth error for GitHub strategy')
+              return done(e, false, { message: e.message })
           }
         }
       }

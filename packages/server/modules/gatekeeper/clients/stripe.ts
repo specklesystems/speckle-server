@@ -1,91 +1,14 @@
 /* eslint-disable camelcase */
+import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
 import {
-  CreateCheckoutSession,
+  GetRecurringPrices,
   GetSubscriptionData,
   ReconcileSubscriptionData,
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import { EnvironmentResourceError, LogicError } from '@/modules/shared/errors'
+import { LogicError } from '@/modules/shared/errors'
+import { isString } from 'lodash'
 import { Stripe } from 'stripe'
-
-type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
-  billingInterval: WorkspacePlanBillingIntervals
-}) => string
-
-const getResultUrl = ({
-  frontendOrigin,
-  workspaceId,
-  workspaceSlug
-}: {
-  frontendOrigin: string
-  workspaceSlug: string
-  workspaceId: string
-}) => new URL(`${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}`)
-
-export const createCheckoutSessionFactory =
-  ({
-    stripe,
-    frontendOrigin,
-    getWorkspacePlanPrice
-  }: {
-    stripe: Stripe
-    frontendOrigin: string
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
-  }): CreateCheckoutSession =>
-  async ({
-    seatCount,
-    guestCount,
-    workspacePlan,
-    billingInterval,
-    workspaceSlug,
-    workspaceId,
-    isCreateFlow
-  }) => {
-    const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
-    const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
-    const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-      { price, quantity: seatCount }
-    ]
-    if (guestCount > 0)
-      costLineItems.push({
-        price: getWorkspacePlanPrice({
-          workspacePlan: 'guest',
-          billingInterval
-        }),
-        quantity: guestCount
-      })
-
-    const cancel_url = isCreateFlow
-      ? `${frontendOrigin}/workspaces/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
-      : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-
-      line_items: costLineItems,
-
-      success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url
-    })
-
-    if (!session.url)
-      throw new EnvironmentResourceError('Failed to create an active checkout session')
-    return {
-      id: session.id,
-      url: session.url,
-      billingInterval,
-      workspacePlan,
-      workspaceId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      paymentStatus: 'unpaid'
-    }
-  }
 
 export const createCustomerPortalUrlFactory =
   ({
@@ -205,4 +128,20 @@ export const reconcileWorkspaceSubscriptionFactory =
       items,
       proration_behavior: applyProrotation ? 'create_prorations' : 'none'
     })
+  }
+
+export const getRecurringPricesFactory =
+  (deps: { stripe: Stripe }): GetRecurringPrices =>
+  async () => {
+    const results = await deps.stripe.prices.list({
+      type: 'recurring',
+      limit: 100,
+      active: true
+    })
+    return results.data.map((p) => ({
+      id: p.id,
+      currency: p.currency,
+      unitAmount: p.unit_amount!,
+      productId: isString(p.product) ? p.product : p.product.id
+    }))
   }

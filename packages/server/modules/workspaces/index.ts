@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
@@ -26,7 +26,7 @@ const initRoles = async () => {
 }
 
 const workspacesModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     const isWorkspaceLicenseValid = await validateModuleLicense({
       requiredModules: ['workspaces']

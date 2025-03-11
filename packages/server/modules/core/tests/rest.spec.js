@@ -573,3 +573,14 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(response).to.have.status(400)
   })
 })
+
+describe('Express @core-rest', () => {
+  let app
+  before(async () => {
+    ;({ app } = await beforeEachContext())
+  })
+  it('Should return 400 for broken JSON', async () => {
+    const res = await request(app).post('/graphql').send('{b0rken json}')
+    expect(res).to.have.status(400)
+  })
+})

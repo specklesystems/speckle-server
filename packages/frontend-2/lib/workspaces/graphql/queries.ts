@@ -123,3 +123,29 @@ export const workspaceWizardRegionQuery = graphql(`
     }
   }
 `)
+
+export const discoverableWorkspacesQuery = graphql(`
+  query DiscoverableWorkspaces {
+    activeUser {
+      id
+      ...DiscoverableList_Discoverable
+    }
+  }
+`)
+
+export const discoverableWorkspacesRequestsQuery = graphql(`
+  query DiscoverableWorkspacesRequests {
+    activeUser {
+      id
+      ...DiscoverableList_Requests
+    }
+  }
+`)
+
+export const workspacePlanQuery = graphql(`
+  query WorkspacePlan($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacesPlan_Workspace
+    }
+  }
+`)

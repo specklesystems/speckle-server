@@ -19,7 +19,7 @@
 
     <div
       v-if="buttons"
-      class="flex flex-col flex-wrap md:flex-row gap-y-2 md:gap-x-2 gap-y-0 mt-3"
+      class="flex flex-col flex-wrap md:flex-row gap-y-2 md:gap-x-2 md:gap-y-0 mt-3"
     >
       <div
         v-for="(button, index) in buttons"
@@ -31,7 +31,7 @@
           v-bind="button.props || {}"
           :disabled="button.props?.disabled || button.disabled"
           :submit="button.props?.submit || button.submit"
-          target="_blank"
+          :target="`${isExternalRoute ? '_blank' : '_self'}`"
           external
           size="sm"
           color="outline"
@@ -45,12 +45,18 @@
 </template>
 
 <script lang="ts" setup>
-import { type LayoutDialogButton } from '@speckle/ui-components'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
-defineProps<{
-  title?: string
-  description?: string
-  buttons?: LayoutDialogButton[]
-  badge?: string
-}>()
+withDefaults(
+  defineProps<{
+    title?: string
+    isExternalRoute?: boolean
+    description?: string
+    buttons?: LayoutDialogButton[]
+    badge?: string
+  }>(),
+  {
+    isExternalRoute: false
+  }
+)
 </script>

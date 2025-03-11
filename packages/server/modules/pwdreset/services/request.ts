@@ -62,9 +62,9 @@ function buildResetLink(token: PasswordResetTokenRecord) {
 }
 
 function buildMjmlBody() {
-  const bodyStart = `<mj-text>Hello,<br/><br/>You have just requested a password reset a few moments ago for your Speckle account. Please click on the button below to complete the process:</mj-text>`
+  const bodyStart = `<mj-text align="center" line-height="2" >Hello,<br/><br/>You have just requested a password reset a few moments ago for your Speckle account. Please click on the button below to complete the process:</mj-text>`
 
-  const bodyEnd = `<mj-text>The link above is valid for <strong>1 hour</strong>. If you didn't request a password reset, feel free to ignore this email - nothing will happen, and your account is secure.</mj-text>`
+  const bodyEnd = `<mj-text align="center" line-height="2" >The link above is valid for <strong>1 hour</strong>. If you didn't request a password reset, feel free to ignore this email - nothing will happen, and your account is secure.</mj-text>`
 
   return {
     bodyStart,

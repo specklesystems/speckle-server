@@ -1,4 +1,4 @@
-import { type Logger } from '@/logging/logging'
+import { type Logger } from '@/observability/logging'
 import { StreamRecord } from '@/modules/core/helpers/types'
 
 export type DownloadCommit = (

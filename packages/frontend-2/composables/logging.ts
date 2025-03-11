@@ -20,7 +20,7 @@ export const useStrictLogger = async (
   let nuxtApp: Optional<NuxtApp> = undefined
   try {
     nuxtApp = useNuxtApp()
-  } catch (e) {
+  } catch {
     // suppress 'nuxt is not available'
   }
 

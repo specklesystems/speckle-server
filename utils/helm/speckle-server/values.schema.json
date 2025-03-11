@@ -89,6 +89,16 @@
           "type": "boolean",
           "description": "Forces onboarding for all users",
           "default": false
+        },
+        "noPersonalEmailsEnabled": {
+          "type": "boolean",
+          "description": "Disables the ability sign up with personal email addresses",
+          "default": false
+        },
+        "workspacesNewPlanEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.",
+          "default": false
         }
       }
     },
@@ -476,6 +486,21 @@
             }
           }
         },
+        "previewServiceConnectionString": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+              "default": ""
+            }
+          }
+        },
         "networkPolicy": {
           "type": "object",
           "properties": {
@@ -814,6 +839,96 @@
                 }
               }
             },
+            "workspaceStarterSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.",
+                  "default": "workspaceStarterSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyStarterSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyStarterSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyStarterSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyStarterSeatStripePriceId"
+                }
+              }
+            },
+            "workspacePlusSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.",
+                  "default": "workspacePlusSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyPlusSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyPlusSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyPlusSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyPlusSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceBusinessSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.",
+                  "default": "workspaceBusinessSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyBusinessSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyBusinessSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyBusinessSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyBusinessSeatStripePriceId"
+                }
+              }
+            },
             "workspaceTeamSeatStripeProductId": {
               "type": "object",
               "properties": {
@@ -871,36 +986,6 @@
                   "type": "string",
                   "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
                   "default": "workspaceYearlyProSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceBusinessSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.",
-                  "default": "workspaceBusinessSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyBusinessSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyBusinessSeatStripePriceId"
                 }
               }
             }
@@ -1664,103 +1749,6 @@
         }
       }
     },
-    "frontend": {
-      "type": "object",
-      "properties": {
-        "replicas": {
-          "type": "number",
-          "description": "The number of instances of the Frontend pod to be deployed within the cluster.",
-          "default": 1
-        },
-        "logLevel": {
-          "type": "string",
-          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
-          "default": "info"
-        },
-        "logPretty": {
-          "type": "boolean",
-          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
-          "default": false
-        },
-        "image": {
-          "type": "string",
-          "description": "The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
-          "default": ""
-        },
-        "requests": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string",
-              "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "250m"
-            },
-            "memory": {
-              "type": "string",
-              "description": "The Memory that should be available on a node when scheduling this pod.",
-              "default": "256Mi"
-            }
-          }
-        },
-        "limits": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string",
-              "description": "The maximum CPU that will be made available to the frontend Pod in a given period.",
-              "default": "1000m"
-            },
-            "memory": {
-              "type": "string",
-              "description": "The maximum Memory that will be made available to the frontend Pod.",
-              "default": "512Mi"
-            }
-          }
-        },
-        "networkPolicy": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.",
-              "default": false
-            }
-          }
-        },
-        "affinity": {
-          "type": "object",
-          "description": "Affinity for Speckle frontend pod scheduling",
-          "default": {}
-        },
-        "nodeSelector": {
-          "type": "object",
-          "description": "Node labels for Speckle frontend pods scheduling",
-          "default": {}
-        },
-        "tolerations": {
-          "type": "array",
-          "description": "Tolerations for Speckle frontend pods scheduling",
-          "default": [],
-          "items": {}
-        },
-        "topologySpreadConstraints": {
-          "type": "array",
-          "description": "Spread Constraints for Speckle frontend pod scheduling",
-          "default": [],
-          "items": {}
-        },
-        "serviceAccount": {
-          "type": "object",
-          "properties": {
-            "create": {
-              "type": "boolean",
-              "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
-              "default": true
-            }
-          }
-        }
-      }
-    },
     "frontend_2": {
       "type": "object",
       "properties": {
@@ -1808,11 +1796,6 @@
               "default": "7000"
             }
           }
-        },
-        "enabled": {
-          "type": "boolean",
-          "description": "Feature flag to enable running the new web application frontend.",
-          "default": true
         },
         "replicas": {
           "type": "number",
@@ -1896,6 +1879,11 @@
     "preview_service": {
       "type": "object",
       "properties": {
+        "dedicatedPreviewsQueue": {
+          "type": "boolean",
+          "description": "Allows using a dedicated redis url for the preview service job queue",
+          "default": false
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
@@ -1918,18 +1906,8 @@
         },
         "port": {
           "type": "string",
-          "description": "The port on which the Preview Service will run. This is not exposed, but used within its own local network within the pod.",
+          "description": "The port on which the Preview Service will expose Prometheus metrics.",
           "default": "3001"
-        },
-        "monitoring": {
-          "type": "object",
-          "properties": {
-            "metricsPort": {
-              "type": "string",
-              "description": "The port on which the metrics server will be exposed.",
-              "default": "9094"
-            }
-          }
         },
         "postgresMaxConnections": {
           "type": "number",

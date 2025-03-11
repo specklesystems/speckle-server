@@ -5,12 +5,8 @@
       "name": "🖥️ server"
     },
     {
-      "path": "packages/frontend",
-      "name": "🪟 frontend"
-    },
-    {
       "path": "packages/frontend-2",
-      "name": "🏬 frontend 2.0"
+      "name": "🏬 frontend"
     },
     {
       "path": "packages/dui3",
@@ -26,7 +22,11 @@
     },
     {
       "path": "packages/preview-service",
-      "name": "🖼️ preview-service"
+      "name": "🏃 preview-service"
+    },
+    {
+      "path": "packages/preview-frontend",
+      "name": "🖼️ preview-frontend"
     },
     {
       "path": "packages/viewer",
