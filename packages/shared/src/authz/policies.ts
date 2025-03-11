@@ -3,7 +3,7 @@ import { GetProject, GetProjectRole } from './domain/projects/operations.js'
 import { AuthPolicies } from './domain/types.js'
 import { GetWorkspaceRole } from './domain/workspaces/operations.js'
 import { pipelineBuilder } from './pipeline/builder.js'
-import { continueIfFalse, continueIfTrue } from './pipeline/helpers.js'
+import { continueIfFalse, continueIfTrue, skip, skipIf } from './pipeline/helpers.js'
 import { requireExactServerRole } from './pipeline/steps/core.js'
 import {
   requireExactProjectVisibility,
@@ -11,15 +11,20 @@ import {
 } from './pipeline/steps/projects.js'
 import {
   requireAnyWorkspaceRole,
-  requireMinimumWorkspaceRole
+  requireExactWorkspaceRole,
+  requireMinimumWorkspaceRoleFactory
 } from './pipeline/steps/workspaces.js'
 
-type AuthPoliciesContext = {
-  adminOverrideEnabled: boolean
-  workspacesEnabled: boolean
-}
+// type AuthPoliciesContext = {
+//   adminOverrideEnabled: boolean
+//   workspacesEnabled: boolean
+// }
 
 type AuthPoliciesDependencies = {
+  loadEnvOrSomething: () => {
+    FF_ADMIN_OVERRIDE_ENABLED: boolean
+    FF_WORKSPACES_MODULE_ENABLED: boolean
+  }
   getProject: GetProject
   getProjectRole: GetProjectRole
   getServerRole: GetServerRole
@@ -27,13 +32,13 @@ type AuthPoliciesDependencies = {
 }
 
 export const authPoliciesFactory = ({
-  globalContext: context,
+  // globalContext: context,
   globalDependencies: deps
 }: {
-  globalContext: AuthPoliciesContext
-  globalDependencies: AuthPoliciesDependencies
+  // globalContext: AuthPoliciesContext // this can be just context
+  globalDependencies: AuthPoliciesDependencies // this can be just deps or loaders
 }): AuthPolicies => {
-  const { adminOverrideEnabled, workspacesEnabled } = context
+  const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = deps.loadEnvOrSomething()
 
   return {
     canReadProject: async ({ userId, projectId }) => {
@@ -48,21 +53,46 @@ export const authPoliciesFactory = ({
 
       const { workspaceId } = project
 
-      const adminOverrideChecks = adminOverrideEnabled
+
+      const isWorkspaceProject = workspaceId !== null
+
+      const userWorkspaceRole = isWorkspaceProject ? await deps.getWorkspaceRole({ userId, workspaceId }) : null
+      const isSsoEnabledWorkspace = isWorkspaceProject ? true : false
+
+      const adminOverrideChecks = FF_ADMIN_OVERRIDE_ENABLED
         ? [continueIfFalse(requireExactServerRole({ role: 'server:admin' }, deps))]
         : []
       const workspaceProjectChecks =
-        workspacesEnabled && workspaceId !== null
+        FF_WORKSPACES_MODULE_ENABLED && isWorkspaceProject
           ? [
-              continueIfTrue(requireAnyWorkspaceRole({ workspaceId }, deps)),
-              continueIfFalse(
-                requireMinimumWorkspaceRole(
-                  { workspaceId, role: 'workspace:member' },
-                  deps
-                )
+            continueIfTrue(requireAnyWorkspaceRole({ workspaceId }, deps)),
+            continueIfFalse(
+              requireMinimumWorkspaceRole({ workspaceId, role: 'workspace:member' })
+
+              requireMinimumWorkspaceRoleFactory(deps)(
+                { workspaceId, role: 'workspace:member' },
+                deps
               )
-            ]
+            )
+          ]
           : []
+      const workspaceSsoChecks =
+        FF_WORKSPACES_MODULE_ENABLED && isSsoEnabledWorkspace
+          ? [
+            userWorkspaceRole === 'workspace:guest' ? skip() : requireValidSsoSession()
+          ]
+          : []
+
+      requireMinimumWorkspaceRole(
+        { workspaceId, role: 'workspace:member' },
+        deps
+      )
+
+      const result = requireAnyWorkspaceRole()
+
+      if (!result.authorized) {
+        return result
+      }
 
       const authPipeline = pipelineBuilder([
         continueIfFalse(
@@ -71,14 +101,23 @@ export const authPoliciesFactory = ({
             deps
           )
         ),
-        continueIfFalse(
+        continueIfUnauthorizedByTheCheckHere(
           requireExactProjectVisibility(
             { projectId, projectVisibility: 'linkShareable' },
             deps
           )
         ),
-        ...adminOverrideChecks,
-        ...workspaceProjectChecks,
+        onlyDoSomethingIf(allConditions, theThing)
+
+        // skipIf({
+        //   condition: true,
+        //   steps: [
+
+        //   ]
+        // }),
+        // ...adminOverrideChecks,
+        // ...workspaceProjectChecks,
+        // ...workspaceSsoChecks,
         requireMinimumProjectRole({ projectId, role: 'stream:reviewer' }, deps)
       ])
 
@@ -86,3 +125,11 @@ export const authPoliciesFactory = ({
     }
   }
 }
+
+const canReadProject = canReadProjectPolicyFactory({
+  requireMinimumWorkspaceRole: requireMinimumWorkspaceRoleFactory({
+    getWorkspaceRole: () => { }
+  })
+}: {
+
+})

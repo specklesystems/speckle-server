@@ -10,4 +10,5 @@ export type ProjectRole =
   | 'stream:contributor'
   | 'stream:reviewer'
   | 'stream:guest'
+
 export type ProjectVisibility = 'public' | 'linkShareable' | 'private'
