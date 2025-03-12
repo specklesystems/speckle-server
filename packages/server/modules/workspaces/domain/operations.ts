@@ -20,10 +20,7 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import {
-  WorkspaceCreationState,
-  WorkspaceRoleToDefaultProjectRoleMapping
-} from '@/modules/workspaces/domain/types'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -202,9 +199,18 @@ export type UpdateWorkspaceRole = (
   }
 ) => Promise<void>
 
-export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
+export type GetWorkspaceRolesAllowedProjectRolesFactory = (params: {
   workspaceId: string
-}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+}) => Promise<{
+  defaultProjectRole: (args: {
+    workspaceRole: WorkspaceRoles
+    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
+  }) => StreamRoles | null
+  allowedProjectRoles: (args: {
+    workspaceRole: WorkspaceRoles
+    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
+  }) => StreamRoles[]
+}>
 
 /** Workspace Projects */
 
