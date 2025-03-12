@@ -5,8 +5,15 @@
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
         <div class="w-[17rem]">
-          <!-- <HeaderLogoBlock :active="false" to="/" class="hidden lg:flex lg:min-w-40" /> -->
-          <HeaderWorkspaceSwitcher />
+          <HeaderWorkspaceSwitcher
+            v-if="isWorkspacesEnabled && isWorkspaceNewPlansEnabled"
+          />
+          <HeaderLogoBlock
+            v-else
+            :active="false"
+            to="/"
+            class="hidden lg:flex lg:min-w-40"
+          />
         </div>
         <div class="flex items-center truncate">
           <ClientOnly>
@@ -44,6 +51,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const { activeUser } = useActiveUser()
 const route = useRoute()
 const router = useRouter()

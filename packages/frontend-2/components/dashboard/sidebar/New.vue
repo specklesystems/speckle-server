@@ -32,16 +32,6 @@
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <template v-if="!isWorkspacesEnabled">
-                <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
-                  <LayoutSidebarMenuGroupItem
-                    label="Dashboard"
-                    :active="isActive(homeRoute)"
-                  >
-                    <template #icon>
-                      <HomeIcon class="size-4 stroke-[1.5px]" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
                 <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Projects"
@@ -69,7 +59,11 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink v-else :to="projectsRoute" @click="isOpenMobile = false">
+              <NuxtLink
+                v-else-if="isProjectsActive"
+                :to="projectsRoute"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem
                   label="Projects"
                   :active="isActive(projectsRoute)"
@@ -86,7 +80,18 @@
                   :active="isActive(connectorsRoute)"
                 >
                   <template #icon>
-                    <IconConnectors class="size-4 ml-px text-foreground-2" />
+                    <IconConnectors class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
+
+              <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
+                <LayoutSidebarMenuGroupItem
+                  label="Tutorials"
+                  :active="isActive(tutorialsRoute)"
+                >
+                  <template #icon>
+                    <IconTutorials class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
@@ -154,10 +159,10 @@ import {
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
 import {
-  homeRoute,
   projectsRoute,
   connectorsRoute,
-  workspaceRoute
+  workspaceRoute,
+  tutorialsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -167,7 +172,7 @@ import { useNavigation } from '~~/lib/navigation/composables/navigation'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug } = useNavigation()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
