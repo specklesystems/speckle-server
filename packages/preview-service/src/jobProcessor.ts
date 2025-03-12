@@ -80,13 +80,13 @@ const pageFunction = async ({
     logger.error({ err }, 'Page crashed')
     throw err
   })
-  const start = new Date().getTime()
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
     // ====================
-    // This code runs in the browser context
+    // This code runs in the browser context and has no access to the outer scope
     // ====================
+    const start = new Date().getTime()
     let loadDone = 0
     let loadDurationSeconds = 0
     try {
