@@ -13,17 +13,31 @@ export const jobPayload = job.merge(
 )
 export type JobPayload = z.infer<typeof jobPayload>
 
-const previewResult = z.object({
+const previewPageResult = z.object({
   durationSeconds: z.number().describe('Duration to generate the preview, in seconds'),
   screenshots: z.record(z.string(), z.string())
 })
 
-export type PreviewResult = z.infer<typeof previewResult>
+const durationDetail = z.object({
+  loadDurationSeconds: z
+    .number()
+    .describe('Duration to load the object from the server in seconds')
+    .optional(),
+  renderDurationSeconds: z
+    .number()
+    .describe('Duration to render the preview images in seconds')
+    .optional()
+})
+
+const previewJobResult = previewPageResult.merge(durationDetail)
+
+export type PreviewPageResult = z.infer<typeof previewPageResult>
+export type PreviewJobResult = z.infer<typeof previewJobResult>
 
 const previewSuccessPayload = job.merge(
   z.object({
     status: z.literal('success'),
-    result: previewResult
+    result: previewJobResult
   })
 )
 
@@ -33,11 +47,13 @@ const previewErrorPayload = job.merge(
   z.object({
     status: z.literal('error'),
     reason: z.string(),
-    result: z.object({
-      durationSeconds: z
-        .number()
-        .describe('Duration spent processing the job before erroring, in seconds')
-    })
+    result: z
+      .object({
+        durationSeconds: z
+          .number()
+          .describe('Duration spent processing the job before erroring, in seconds')
+      })
+      .merge(durationDetail)
   })
 )
 
