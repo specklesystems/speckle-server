@@ -1,6 +1,7 @@
 import { GetServerRole } from './core/operations.js'
 import { GetProject, GetProjectRole } from './projects/operations.js'
 import {
+  GetEnv,
   GetWorkspace,
   GetWorkspaceRole,
   GetWorkspaceSsoProvider,
@@ -12,10 +13,7 @@ export type ChuckContext<LoaderKeys extends keyof ChuckContextLoaders> = {
 }
 
 export type ChuckContextLoaders = {
-  getEnv: () => {
-    FF_ADMIN_OVERRIDE_ENABLED: boolean
-    FF_WORKSPACES_MODULE_ENABLED: boolean
-  }
+  getEnv: GetEnv
   getProject: GetProject
   getProjectRole: GetProjectRole
   getServerRole: GetServerRole

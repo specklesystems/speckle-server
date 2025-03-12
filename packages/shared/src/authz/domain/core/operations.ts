@@ -1,3 +1,3 @@
-import { ServerRole } from './types.js'
+import { ServerRoles } from '../../../core/constants.js'
 
-export type GetServerRole = (args: { userId: string }) => Promise<ServerRole | null>
+export type GetServerRole = (args: { userId: string }) => Promise<ServerRoles | null>

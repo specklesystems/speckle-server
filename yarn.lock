@@ -16969,6 +16969,7 @@ __metadata:
     "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
+    crypto-random-string: "npm:^5.0.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     knex: "npm:^2.5.1"

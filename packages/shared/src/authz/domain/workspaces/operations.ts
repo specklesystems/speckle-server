@@ -1,3 +1,4 @@
+import { FeatureFlags } from '../../../environment/index.js'
 import {
   Workspace,
   WorkspaceRole,
@@ -20,3 +21,5 @@ export type GetWorkspaceSsoSession = (args: {
   userId: string
   workspaceId: string
 }) => Promise<WorkspaceSsoSession | null>
+
+export type GetEnv = () => FeatureFlags
