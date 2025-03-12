@@ -9,7 +9,11 @@ export function ensureError(
   fallbackMessage?: string
 ): Error | UnexpectedErrorStructureError {
   if (e instanceof Error) return e
-  return new UnexpectedErrorStructureError(fallbackMessage)
+  return new UnexpectedErrorStructureError(
+    `${fallbackMessage}${
+      e !== null && e !== undefined ? `Cause: ${JSON.stringify(e)}` : ''
+    }`
+  )
 }
 
 // this makes sure that a case is breaking in typing and in runtime too
