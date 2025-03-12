@@ -5,9 +5,7 @@
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
         <div class="w-[17rem]">
-          <HeaderWorkspaceSwitcher
-            v-if="isWorkspacesEnabled && isWorkspaceNewPlansEnabled"
-          />
+          <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
           <HeaderLogoBlock
             v-else
             :active="false"
@@ -66,5 +64,10 @@ const loginUrl = computed(() =>
       token: token.value || undefined
     }
   })
+)
+
+const showWorkspaceSwitcher = computed(
+  () =>
+    isWorkspacesEnabled.value && isWorkspaceNewPlansEnabled.value && activeUser.value
 )
 </script>

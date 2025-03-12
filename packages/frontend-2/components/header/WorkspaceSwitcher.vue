@@ -160,7 +160,7 @@ const activeWorkspace = computed(() => {
   return workspaceData.value
 })
 
-const displayName = computed(() => activeWorkspace.value?.name || 'Legacy projects')
+const displayName = computed(() => activeWorkspace.value?.name || 'Personal projects')
 
 const displayLogo = computed(() => {
   if (isProjectsActive.value) return null

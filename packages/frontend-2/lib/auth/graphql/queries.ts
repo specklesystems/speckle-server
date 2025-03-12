@@ -98,3 +98,17 @@ export const activeUserActiveWorkspaceCheckQuery = graphql(`
     }
   }
 `)
+
+export const projectWorkspaceAccessCheckQuery = graphql(`
+  query projectWorkspaceAccessCheck($projectId: String!) {
+    project(id: $projectId) {
+      id
+      role
+      workspace {
+        id
+        slug
+        role
+      }
+    }
+  }
+`)

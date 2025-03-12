@@ -19,7 +19,8 @@ import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import {
   activeUserWorkspaceExistenceCheckQuery,
-  activeUserActiveWorkspaceCheckQuery
+  activeUserActiveWorkspaceCheckQuery,
+  projectWorkspaceAccessCheckQuery
 } from '~/lib/auth/graphql/queries'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
@@ -31,7 +32,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
-  const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+  const {
+    activeWorkspaceSlug,
+    isProjectsActive,
+    mutateActiveWorkspaceSlug,
+    mutateIsProjectsActive
+  } = useNavigation()
+
+  // Use Nuxt's useState to track if this is the initial load
+  const isAppInitialized = useState<boolean>('app-initialized', () => false)
 
   // Fetch required data
   const { data: serverInfoData } = await client
@@ -126,9 +135,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // If there is an active workspace slug or legacy projects if active, we don't need to do anything
   if (activeWorkspaceSlug.value || isProjectsActive.value) return
 
-  // Use Nuxt's useState to track if this is the initial load
-  const isAppInitialized = useState<boolean>('app_initialized', () => false)
-
   // Skip workspace/project navigation logic if it's not the initial load
   if (isAppInitialized.value) return
 
@@ -144,6 +150,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const activeUserIsProjectsActive = navigationCheckData?.activeUser?.isProjectsActive
   const activeUserActiveWorkspaceSlug =
     navigationCheckData?.activeUser?.activeWorkspace?.slug
+  const belongsToWorkspace = (slug: string) =>
+    workspaces.find((workspace) => workspace.slug === slug)
 
   // 4.2 If going to legacy projects, set it active
   if (to.path === projectsRoute) {
@@ -160,12 +168,34 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 4.3 If going to workspace, set it active
   if (to.path.startsWith('/workspaces/')) {
-    const belongsToWorkspace = workspaces.find(
-      (workspace) => workspace.slug === to.params.slug
-    )
-    if (belongsToWorkspace) {
-      const slug = to.params.slug as string
+    const slug = to.params.slug as string
+    if (slug && belongsToWorkspace(slug)) {
       activeWorkspaceSlug.value = slug
+    }
+    return
+  }
+
+  // 4.4 If going to a project route, check access
+  if (to.path.startsWith('/projects/')) {
+    const { data: projectCheckData } = await client
+      .query({
+        query: projectWorkspaceAccessCheckQuery,
+        variables: {
+          projectId: to.params.id as string
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    const project = projectCheckData?.project
+
+    if (project) {
+      // If the project is part of a workspace set it as active if the user has access
+      if (project.workspace && project.workspace.role) {
+        mutateActiveWorkspaceSlug(project.workspace.slug)
+      } else if (project.role) {
+        // Else set projects active
+        mutateIsProjectsActive(true)
+      }
     }
     return
   }
