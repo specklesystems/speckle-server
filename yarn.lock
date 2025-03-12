@@ -10526,6 +10526,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@godaddy/terminus@npm:^4.12.1":
+  version: 4.12.1
+  resolution: "@godaddy/terminus@npm:4.12.1"
+  dependencies:
+    stoppable: "npm:^1.1.0"
+  checksum: 10/e1b6e0a079db5748c71211e22d2fc1ab76ee20763bb552e9e2b6003330c0b19fee10b20b1dd961218a402c6aadd3a8ecf7f03ecdfaa2c65ed072b2479eb9b517
+  languageName: node
+  linkType: hard
+
 "@godaddy/terminus@npm:^4.9.0":
   version: 4.10.2
   resolution: "@godaddy/terminus@npm:4.10.2"
@@ -16752,6 +16761,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/preview-service@workspace:packages/preview-service"
   dependencies:
+    "@godaddy/terminus": "npm:^4.12.1"
     "@speckle/shared": "workspace:^"
     "@swc/cli": "npm:^0.5.1"
     "@swc/core": "npm:^1.9.3"

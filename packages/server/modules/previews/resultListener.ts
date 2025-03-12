@@ -84,7 +84,7 @@ export const consumePreviewResultFactory =
 
     switch (previewResult.status) {
       case 'error':
-        log.error(previewMessage)
+        log.error({ reason: previewResult.reason }, previewMessage)
         await upsertObjectPreview({
           objectPreview: {
             objectId,
