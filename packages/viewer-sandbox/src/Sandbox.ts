@@ -57,7 +57,6 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import ObjectLoader from '@speckle/objectloader'
 import ObjectLoader2 from '@speckle/objectloader2'
 
 export default class Sandbox {
@@ -1332,16 +1331,9 @@ export default class Sandbox {
     const streamId = segments[2]
     const objectId = segments[4]
     console.log('you can use the new one too', ObjectLoader2)
-    const loader = new ObjectLoader({
-      serverUrl,
-      token,
-      streamId,
-      objectId,
-
-      options: { enableCaching }
-    })
+    const loader = new ObjectLoader2(serverUrl, streamId, objectId, token)
     for await (const obj of loader.getObjectIterator()) {
-      // console.log('Loaded -> ', obj)
+      console.log('Loaded -> ', obj)
     }
     console.log('Done')
   }

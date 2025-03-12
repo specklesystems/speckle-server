@@ -1,19 +1,21 @@
 import { BaseDatabaseOptions } from './index.js'
-import { Base, isString, Item } from './types.js'
+import { Base, CustomLogger, isString, Item } from './types.js'
 import { isSafari } from '@speckle/shared'
 
 export class BaseDatabase {
   private static _databaseName: string = 'speckle-object-cache'
   private static _storeName: string = 'objects'
   private _options: BaseDatabaseOptions
+  private _logger: CustomLogger
 
   private _cacheDB?: IDBDatabase
 
-  constructor(options?: BaseDatabaseOptions) {
+  constructor(logger: CustomLogger, options?: BaseDatabaseOptions) {
+    this._logger = logger
     this._options = options || new BaseDatabaseOptions()
   }
 
-  openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
+  private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(dbName, 1)
 
@@ -34,11 +36,11 @@ export class BaseDatabase {
     })
   }
 
-  supportsCache(): boolean {
+  private supportsCache(): boolean {
     return !!(this._options.enableCaching && globalThis.indexedDB)
   }
 
-  async setupCacheDb(): Promise<void> {
+  private async setupCacheDb(): Promise<void> {
     if (!this.supportsCache() || this._cacheDB !== null) return
 
     // Initialize
@@ -47,6 +49,30 @@ export class BaseDatabase {
       BaseDatabase._databaseName,
       BaseDatabase._storeName
     )
+  }
+
+  async cacheStoreObjects(objects: Item[]): Promise<void> {
+    if (!this.supportsCache()) {
+      return
+    }
+
+    if (this._cacheDB === null) {
+      await this.setupCacheDb()
+    }
+
+    try {
+      const store = this._cacheDB!.transaction(
+        BaseDatabase._storeName,
+        'readwrite'
+      ).objectStore(BaseDatabase._storeName)
+      for (const obj of objects) {
+        store.put(obj.obj, obj.id)
+      }
+      return this.promisifyIDBTransaction(store.transaction)
+    } catch (e) {
+      this._logger(e instanceof Error ? e.message : String(e))
+    }
+    return Promise.resolve()
   }
 
   async cacheGetObjects(ids: string[]): Promise<Record<string, Base>> {
@@ -89,8 +115,19 @@ export class BaseDatabase {
 
     return ret
   }
+  private promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
+    return new Promise((resolve, reject) => {
+      request.oncomplete = () => resolve()
+      request.onerror = () =>
+        reject(
+          request.error instanceof Error
+            ? request.error
+            : new Error(String(request.error))
+        )
+    })
+  }
 
-  promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
+  private promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
       request.onerror = () =>

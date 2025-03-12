@@ -7,6 +7,7 @@ export interface Item {
 
 export interface Base {
   id: string
+  __closure?: string[]
 }
 
 export function isString(value: unknown): value is string {

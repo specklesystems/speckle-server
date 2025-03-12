@@ -20,7 +20,7 @@ class ObjectLoader2 {
 
   private _database: BaseDatabase
   private _requestUrlRootObj: string
-  private _requestUrlChildren: string
+  //private _requestUrlChildren: string
 
   private _headers: HeadersInit
 
@@ -38,7 +38,7 @@ class ObjectLoader2 {
 
     this._logger = options?.customLogger || console.log
 
-    this._database = new BaseDatabase()
+    this._database = new BaseDatabase(console.error)
 
     this._headers = {
       Accept: 'text/plain'
@@ -49,12 +49,12 @@ class ObjectLoader2 {
     }
 
     this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
-    this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
+    //this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
 
     this._logger('Object loader constructor called!')
   }
 
-  async getRawRootObject() {
+  async getRawRootObject(): Promise<Base> {
     const cachedRootObject = await this._database.cacheGetObjects([this._objectId])
     if (cachedRootObject[this._objectId]) return cachedRootObject[this._objectId]
     const response = await fetch(this._requestUrlRootObj, {
@@ -69,12 +69,18 @@ class ObjectLoader2 {
       )
     }
     const responseText = await response.text()
+    const rootObj = JSON.parse(responseText) as Base
 
-    //this.cacheStoreObjects([`${this._objectId}\t${responseText}`])
-    return responseText
+    await this._database.cacheStoreObjects([{ id: this._objectId, obj: rootObj }])
+    return rootObj
   }
 
-  async *getRawObjectIterator(): AsyncGenerator<string> {}
+  async *getRawObjectIterator(): AsyncGenerator<Item> {
+    const rootBase = await this.getRawRootObject()
+
+    yield { id: this._objectId, obj: rootBase }
+    if (!rootBase.__closure) return
+  }
 
   processLine(chunk: string): Item {
     const pieces = chunk.split('\t')
@@ -96,11 +102,10 @@ class ObjectLoader2 {
   async *getObjectIterator(): AsyncGenerator<Base> {
     const t0 = Date.now()
     let count = 0
-    for await (const line of this.getRawObjectIterator()) {
-      const { id, obj } = this.processLine(line)
-      this._buffer[id] = obj
+    for await (const item of this.getRawObjectIterator()) {
+      this._buffer[item.id] = item.obj
       count += 1
-      yield obj
+      yield item.obj
     }
     this._logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
