@@ -1,11 +1,4 @@
-import {
-  DoubleSide,
-  Material,
-  NearestFilter,
-  NoBlending,
-  RGBADepthPacking,
-  Texture
-} from 'three'
+import { DoubleSide, NearestFilter, NoBlending, RGBADepthPacking, Texture } from 'three'
 import { Pipeline } from '../Pipelines/Pipeline.js'
 import {
   DefaultDepthNormalPassOptions,
@@ -21,7 +14,6 @@ export const DefaultDepthNormalIdPassOptions: Required<DepthNormalIdPassOptions>
 }
 
 export class DepthNormalIdPass extends DepthNormalPass {
-  protected depthNormalIdMaterial: SpeckleDepthNormalIdMaterial
   public _options: Required<DepthNormalPassOptions> = Object.assign(
     {},
     DefaultDepthNormalIdPassOptions
@@ -29,10 +21,6 @@ export class DepthNormalIdPass extends DepthNormalPass {
 
   get displayName(): string {
     return 'DEPTH-NORMAL-ID'
-  }
-
-  get overrideMaterial(): Material {
-    return this.depthNormalIdMaterial
   }
 
   get idTexture(): Texture {
@@ -51,7 +39,7 @@ export class DepthNormalIdPass extends DepthNormalPass {
       magFilter: NearestFilter
     })
 
-    this.depthNormalIdMaterial = new SpeckleDepthNormalIdMaterial(
+    this.depthNormalMaterial = new SpeckleDepthNormalIdMaterial(
       {
         depthPacking: RGBADepthPacking
       },
