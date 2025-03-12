@@ -5,7 +5,6 @@ import {
   PreviewResultPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
 import { Logger } from 'pino'
-import { ensureError } from '@speckle/shared'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -85,6 +84,9 @@ const pageFunction = async ({
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
+    // ====================
+    // This code runs in the browser context
+    // ====================
     let loadDone = 0
     let loadDurationSeconds = 0
     try {
@@ -93,11 +95,13 @@ const pageFunction = async ({
       loadDurationSeconds = loadDone - start
     } catch (e) {
       const loadErrored = new Date().getTime()
+      const err =
+        e instanceof Error
+          ? e
+          : new Error('Unknown error in preview generation while loading the object')
+
       return {
-        reason: ensureError(
-          e,
-          'Unknown error in preview generation while loading the object'
-        ).message,
+        reason: err.message,
         screenshots: {},
         loadDurationSeconds: loadErrored - start,
         durationSeconds: loadErrored - start
@@ -109,17 +113,21 @@ const pageFunction = async ({
       const renderDurationSeconds = new Date().getTime() - loadDone
       return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
     } catch (e) {
+      const err =
+        e instanceof Error
+          ? e
+          : new Error('Unknown error in preview generation while loading the object')
       return {
-        reason: ensureError(
-          e,
-          'Unknown error in preview generation while taking screenshot'
-        ).message,
+        reason: err.message,
         screenshots: {},
         loadDurationSeconds,
         renderDurationSeconds: new Date().getTime() - loadDone,
         durationSeconds: new Date().getTime() - start
       }
     }
+    // ====================
+    // The code above runs in the browser context
+    // ====================
   }, job)
 
   if (previewResult.reason) {
