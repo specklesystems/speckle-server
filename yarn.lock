@@ -16683,6 +16683,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/objectloader2@workspace:^, @speckle/objectloader2@workspace:packages/objectloader2":
+  version: 0.0.0-use.local
+  resolution: "@speckle/objectloader2@workspace:packages/objectloader2"
+  dependencies:
+    "@speckle/shared": "workspace:^"
+    "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
+    "@typescript-eslint/parser": "npm:^7.12.0"
+    eslint: "npm:^9.4.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    prettier: "npm:^3.3.2"
+    tshy: "npm:^3.0.2"
+    typescript: "npm:^5.2.2"
+    vitest: "npm:^3.0.7"
+  languageName: unknown
+  linkType: soft
+
 "@speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
   version: 0.0.0-use.local
   resolution: "@speckle/objectloader@workspace:packages/objectloader"
@@ -17101,6 +17117,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox"
   dependencies:
+    "@speckle/objectloader2": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@tweakpane/core": "npm:^1.0.9"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
@@ -42838,6 +42855,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"polite-json@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "polite-json@npm:5.0.0"
+  checksum: 10/2faeff490c14a88e08f336e13b39f7e8c80dbfda06b96b5cf858ea295a7392f3c857cac0582ef6a1dd989a2dc81b74a6e01e41017453336b382eff8afcb84f9a
+  languageName: node
+  linkType: hard
+
 "portal-vue@npm:^3.0.0":
   version: 3.0.0
   resolution: "portal-vue@npm:3.0.0"
@@ -46043,6 +46067,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-import@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "resolve-import@npm:2.0.0"
+  dependencies:
+    glob: "npm:^11.0.0"
+    walk-up-path: "npm:^4.0.0"
+  checksum: 10/42806adf37f4bf916334ae7ac95ce0814100e5d9c23e072022bab706d056fe9c7809f45f5a4815db9d216b6ad5d81143643acfc2a50190fada0252cf12460827
+  languageName: node
+  linkType: hard
+
 "resolve-path@npm:^1.4.0":
   version: 1.4.0
   resolution: "resolve-path@npm:1.4.0"
@@ -46368,7 +46402,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:^6.0.1":
+"rimraf@npm:^6.0.0, rimraf@npm:^6.0.1":
   version: 6.0.1
   resolution: "rimraf@npm:6.0.1"
   dependencies:
@@ -49045,6 +49079,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sync-content@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "sync-content@npm:2.0.1"
+  dependencies:
+    glob: "npm:^11.0.0"
+    mkdirp: "npm:^3.0.1"
+    path-scurry: "npm:^2.0.0"
+    rimraf: "npm:^6.0.0"
+    tshy: "npm:^3.0.0"
+  bin:
+    sync-content: dist/esm/bin.mjs
+  checksum: 10/43d7afcc3a706c6a254960c6c210ed9cdaeb88c07f5578c1d4f33ce7ae338be637456a28ff4311eeaf74cae7aaeb060af3cff6013d997589c7586fa32daa8a2b
+  languageName: node
+  linkType: hard
+
 "synckit@npm:^0.9.1":
   version: 0.9.2
   resolution: "synckit@npm:0.9.2"
@@ -50113,6 +50162,27 @@ __metadata:
   bin:
     tshy: dist/esm/index.js
   checksum: 10/a27ba190bbc6fdf91a0ecb0f9fc114a4d1e7ddf9cb081f2de6b824e4c2d5dbb1704da7e1466cf0bfd4995c9420bc1f8e9886de455f02f4affd0537a36c1885d0
+  languageName: node
+  linkType: hard
+
+"tshy@npm:^3.0.0, tshy@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "tshy@npm:3.0.2"
+  dependencies:
+    chalk: "npm:^5.3.0"
+    chokidar: "npm:^3.6.0"
+    foreground-child: "npm:^3.1.1"
+    minimatch: "npm:^10.0.0"
+    mkdirp: "npm:^3.0.1"
+    polite-json: "npm:^5.0.0"
+    resolve-import: "npm:^2.0.0"
+    rimraf: "npm:^6.0.0"
+    sync-content: "npm:^2.0.1"
+    typescript: "npm:^5.5.3"
+    walk-up-path: "npm:^4.0.0"
+  bin:
+    tshy: dist/esm/index.js
+  checksum: 10/48ae27425cd1bc37fe07323e9d3ca120e53c7ff5de57a1d189e72bffdc573193abd3ba283009777b08653445615c31e42445006c5648765331d27780a8930f30
   languageName: node
   linkType: hard
 
@@ -52826,6 +52896,13 @@ __metadata:
   version: 3.0.1
   resolution: "walk-up-path@npm:3.0.1"
   checksum: 10/9ffca02fe30fb65f6db531260582988c5e766f4c739cf86a6109380a7f791236b5d0b92b1dce37a6f73e22dca6bc9d93bf3700413e16251b2bd6bbd1ca2be316
+  languageName: node
+  linkType: hard
+
+"walk-up-path@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "walk-up-path@npm:4.0.0"
+  checksum: 10/6a230b20e5de296895116dc12b09dafaec1f72b8060c089533d296e241aff059dfaebe0d015c77467f857e4b40c78e08f7481add76f340233a1f34fa8af9ed63
   languageName: node
   linkType: hard
 

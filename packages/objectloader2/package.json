@@ -1,11 +1,11 @@
 {
   "name": "@speckle/objectloader2",
   "version": "1.0.0",
-  "description": "Simple API helper to serialize and send objects to the server.",
-  "main": "dist/objectloader2.cjs",
-  "module": "dist/objectloader2.js",
+  "description": "TODO",
+  "main": "./dist/commonjs/index.js",
+  "module": "./dist/esm/index.js",
   "homepage": "https://speckle.systems",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/commonjs/index.d.ts",
   "type": "module",
   "repository": {
     "type": "git",
@@ -16,10 +16,14 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "lint": "eslint .",
-    "dev": "vite",
-    "build": "tsc build",
-    "prepack": "yarn build"
+    "lint:eslint": "eslint .",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "yarn lint:eslint && yarn lint:tsc",
+    "lint:ci": "yarn lint:tsc",
+    "build": "NODE_ENV=production tshy",
+    "dev": "tshy --watch",
+    "test": "vitest",
+    "test:single-run": "vitest run"
   },
   "keywords": [
     "speckle",
@@ -37,24 +41,30 @@
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.2",
-    "typescript": "^5.2.2"
+    "tshy": "^3.0.2",
+    "typescript": "^5.2.2",
+    "vitest": "^3.0.7"
   },
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/objectsender.js"
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/objectsender.cjs"
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
       }
     }
   },
-  "imports": {
-    "#lodash": {
-      "require": "lodash",
-      "import": "lodash-es"
+  "tshy": {
+    "exclude": [
+      "**/*.spec.ts"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
     }
   }
 }

@@ -1,6 +1,6 @@
-import { BaseDatabase } from './BaseDatabase'
-import { Base, CustomLogger, Item } from './types'
-import { ObjectLoaderRuntimeError } from './errors'
+import { BaseDatabase } from './BaseDatabase.js'
+import { Base, CustomLogger, Item } from './types.js'
+import { ObjectLoaderRuntimeError } from './errors.js'
 
 class ObjectLoader2Options {
   customLogger?: CustomLogger

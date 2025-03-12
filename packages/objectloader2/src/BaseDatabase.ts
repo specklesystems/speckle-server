@@ -1,5 +1,6 @@
-import { BaseDatabaseOptions } from '.'
-import { Base, isString, Item } from './types'
+import { BaseDatabaseOptions } from './index.js'
+import { Base, isString, Item } from './types.js'
+import { isSafari } from '@speckle/shared'
 
 export class BaseDatabase {
   private static _databaseName: string = 'speckle-object-cache'
@@ -106,13 +107,8 @@ export class BaseDatabase {
    * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
    */
   async safariFix(): Promise<void> {
-    const isSafari =
-      !navigator.userAgentData &&
-      /Safari\//.test(navigator.userAgent) &&
-      !/Chrom(e|ium)\//.test(navigator.userAgent)
-
     // No point putting other browsers or older versions of Safari through this mess.
-    if (!isSafari || !indexedDB.databases) return Promise.resolve()
+    if (!isSafari() || !indexedDB.databases) return Promise.resolve()
 
     let intervalId: ReturnType<typeof setInterval>
 

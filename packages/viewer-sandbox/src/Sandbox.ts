@@ -58,6 +58,7 @@ import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader from '@speckle/objectloader'
+import ObjectLoader2 from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1330,6 +1331,7 @@ export default class Sandbox {
     const serverUrl = url.origin
     const streamId = segments[2]
     const objectId = segments[4]
+    console.log('you can use the new one too', ObjectLoader2)
     const loader = new ObjectLoader({
       serverUrl,
       token,

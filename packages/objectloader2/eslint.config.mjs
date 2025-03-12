@@ -23,7 +23,9 @@ const configs = [
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),
-        project: './tsconfig.eslint.json'
+        projectService: {
+          allowDefaultProject: ['*.ts']
+        }
       }
     },
     rules: {
@@ -42,6 +44,12 @@ const configs = [
       globals: {
         ...globals.node
       }
+    }
+  },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-expressions': 'off'
     }
   }
 ]
