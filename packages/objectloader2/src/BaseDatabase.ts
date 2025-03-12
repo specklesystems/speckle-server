@@ -21,7 +21,7 @@ export default class BaseDatabase {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
         if (!db.objectStoreNames.contains(storeName)) {
-          db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true })
+          db.createObjectStore(storeName)
         }
       }
 
@@ -39,8 +39,8 @@ export default class BaseDatabase {
     return !!(this._options.enableCaching && globalThis.indexedDB)
   }
 
-  private async setupCacheDb(): Promise<void> {
-    if (!this.supportsCache() || this._cacheDB !== null) return
+  private async setupCacheDb(): Promise<boolean> {
+    if (this._cacheDB !== undefined && !this.supportsCache()) return false
 
     // Initialize
     await this.safariFix()
@@ -48,17 +48,13 @@ export default class BaseDatabase {
       BaseDatabase._databaseName,
       BaseDatabase._storeName
     )
+    return true
   }
 
   async cacheStoreObjects(objects: Item[]): Promise<void> {
-    if (!this.supportsCache()) {
+    if (!(await this.setupCacheDb())) {
       return
     }
-
-    if (this._cacheDB === null) {
-      await this.setupCacheDb()
-    }
-
     try {
       const store = this._cacheDB!.transaction(
         BaseDatabase._storeName,
@@ -74,13 +70,9 @@ export default class BaseDatabase {
     return Promise.resolve()
   }
 
-  async cacheGetObjects(ids: string[]): Promise<Record<string, Base>> {
-    if (!this.supportsCache()) {
-      return {}
-    }
-
-    if (this._cacheDB === null) {
-      await this.setupCacheDb()
+  async cacheGetObjects(ids: string[]): Promise<Record<string, Base> | null> {
+    if (!(await this.setupCacheDb())) {
+      return null
     }
 
     const ret: Record<string, Base> = {}
@@ -99,13 +91,11 @@ export default class BaseDatabase {
       )
       const cachedData = await Promise.all(idbChildrenPromises)
 
-      // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
       for (const cachedObj of cachedData) {
         if (
           !cachedObj.obj ||
           (isString(cachedObj.obj) && (cachedObj.obj as string).startsWith('<html'))
         ) {
-          // non-existent/invalid objects are retrieved with `undefined` data
           continue
         }
         ret[cachedObj.id] = cachedObj.obj

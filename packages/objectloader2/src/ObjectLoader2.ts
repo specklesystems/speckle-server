@@ -46,8 +46,13 @@ export default class ObjectLoader2 {
     this._logger('Object loader constructor called!')
   }
 
-  async getRawRootObject(): Promise<Base> {
+  async getRawRootObject(): Promise<Base | null> {
     const cachedRootObject = await this._database.cacheGetObjects([this._objectId])
+    if (cachedRootObject === null) {
+      this._logger('No cached root object found!')
+      return null
+    }
+    this._logger(`Cached root object: ${JSON.stringify(cachedRootObject)}`)
     if (cachedRootObject[this._objectId]) return cachedRootObject[this._objectId]
     const response = await fetch(this._requestUrlRootObj, {
       headers: this._headers
@@ -69,7 +74,10 @@ export default class ObjectLoader2 {
 
   async *getRawObjectIterator(): AsyncGenerator<Item> {
     const rootBase = await this.getRawRootObject()
-
+    if (rootBase === null) {
+      this._logger('No root object found!')
+      return
+    }
     yield { id: this._objectId, obj: rootBase }
     if (!rootBase.__closure) return
   }

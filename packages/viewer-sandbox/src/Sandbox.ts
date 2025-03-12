@@ -1329,8 +1329,7 @@ export default class Sandbox {
 
     const serverUrl = url.origin
     const streamId = segments[2]
-    const objectId = segments[4]
-    console.log('you can use the new one too', ObjectLoader2)
+    const objectId = segments[4]  
     const loader = new ObjectLoader2(serverUrl, streamId, objectId, token)
     for await (const obj of loader.getObjectIterator()) {
       console.log('Loaded -> ', obj)

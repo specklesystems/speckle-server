@@ -18,5 +18,5 @@ export class ObjectLoader2Options {
   customLogger?: CustomLogger
 }
 export class BaseDatabaseOptions {
-  enableCaching: boolean = false
+  enableCaching: boolean = true
 }
