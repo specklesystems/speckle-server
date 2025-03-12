@@ -38,6 +38,9 @@ export const getObjectPreviewInfoFactory =
       .first()
   }
 
+/**
+ * @throws {Error} if the preview already exists
+ */
 export const storeObjectPreviewFactory =
   ({ db }: { db: Knex }): StoreObjectPreview =>
   async ({
@@ -52,11 +55,7 @@ export const storeObjectPreviewFactory =
         priority,
         previewStatus: 0
       }
-    const sqlQuery = tables
-      .objectPreview(db)
-      .insert(insertionObject)
-      .onConflict()
-      .ignore()
+    const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
     await sqlQuery
   }
