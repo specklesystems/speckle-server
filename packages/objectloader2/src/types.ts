@@ -13,3 +13,10 @@ export interface Base {
 export function isString(value: unknown): value is string {
   return typeof value === 'string'
 }
+
+export class ObjectLoader2Options {
+  customLogger?: CustomLogger
+}
+export class BaseDatabaseOptions {
+  enableCaching: boolean = false
+}

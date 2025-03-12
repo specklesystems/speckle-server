@@ -1,8 +1,7 @@
-import { BaseDatabaseOptions } from './index.js'
-import { Base, CustomLogger, isString, Item } from './types.js'
+import { Base, CustomLogger, isString, Item, BaseDatabaseOptions } from './types.js'
 import { isSafari } from '@speckle/shared'
 
-export class BaseDatabase {
+export default class BaseDatabase {
   private static _databaseName: string = 'speckle-object-cache'
   private static _storeName: string = 'objects'
   private _options: BaseDatabaseOptions
