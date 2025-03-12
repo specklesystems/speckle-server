@@ -1,69 +1,56 @@
-import { ChuckContextLoaders } from "../domain/loaders.js"
-import { AuthFunction } from "../domain/types.js"
+import { ChuckContext } from '../domain/loaders.js'
+import { CheckResult } from '../domain/types.js'
+import { isMinimumWorkspaceRole } from '../domain/workspaces/logic.js'
+import { WorkspaceRole } from '../domain/workspaces/types.js'
+import { checkResult } from '../helpers/result.js'
 
 export const requireAnyWorkspaceRole =
-  ({
-    context: {
-      workspaceId: string
-    },
-    deps: Pick<ChuckContextLoaders, 'getWorkspaceRole'>
-  }): AuthFunction =>
-async ({ userId }) => {
-  const { workspaceId } = context
+  ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
+  async (args: { userId: string; workspaceId: string }): Promise<CheckResult> => {
+    const { userId, workspaceId } = args
 
-  const userWorkspaceRole = await deps.getWorkspaceRole({ userId, workspaceId })
+    const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
 
-  return userWorkspaceRole === null
-    ? {
-      authorized: false,
-      reason: `User does not have role in workspace \`${workspaceId}\``
-    }
-    : { authorized: true }
-}
+    return userWorkspaceRole === null
+      ? checkResult.pass()
+      : checkResult.fail(`User does not have role in workspace \`${workspaceId}\``)
+  }
 
 export const requireExactWorkspaceRole =
-  (
-    context: {
-      workspaceId: string
-      role: WorkspaceRole
-    },
-    deps: {
-      getWorkspaceRole: GetWorkspaceRole
-    }
-  ): AuthFunctionWrapper =>
-    async ({ userId }) => {
-      const { workspaceId, role: requiredWorkspaceRole } = context
+  ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
+  async (args: {
+    userId: string
+    workspaceId: string
+    role: WorkspaceRole
+  }): Promise<CheckResult> => {
+    const { userId, workspaceId, role: requiredWorkspaceRole } = args
 
-      const userWorkspaceRole = await deps.getWorkspaceRole({ userId, workspaceId })
+    const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
 
-      return userWorkspaceRole === requiredWorkspaceRole
-        ? { authorized: true }
-        : {
-          authorized: false,
-          reason: `User does not have role \`${requiredWorkspaceRole}\` in workspace \`${workspaceId}\``
-        }
-    }
+    return userWorkspaceRole === requiredWorkspaceRole
+      ? checkResult.pass()
+      : checkResult.fail(
+          `User does not have role \`${requiredWorkspaceRole}\` in workspace \`${workspaceId}\``
+        )
+  }
 
 export const requireMinimumWorkspaceRole =
-  (context: { workspaceId: string; role: WorkspaceRole }, deps: { getWorkspaceRole: GetWorkspaceRole }): AuthFunction =>
-    async ({ userId }) => {
-      const { workspaceId, role: requiredWorkspaceRole } = context
+  ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
+  async (args: {
+    userId: string
+    workspaceId: string
+    role: WorkspaceRole
+  }): Promise<CheckResult> => {
+    const { userId, workspaceId, role: requiredWorkspaceRole } = args
 
-      const userWorkspaceRole = await deps.getWorkspaceRole({ userId, workspaceId })
+    const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
 
-      if (!userWorkspaceRole) {
-        return {
-          authorized: false,
-          reason: `User does not have role in workspace \`${workspaceId}\``
-        }
-      }
+    if (!userWorkspaceRole)
+      return checkResult.fail(`User does not have role in workspace \`${workspaceId}\``)
 
-      return isMinimumWorkspaceRole(userWorkspaceRole, requiredWorkspaceRole)
-        ? {
-          authorized: true
-        }
-        : {
-          authorized: false,
-          reason: `User does not have minimum role \`${requiredWorkspaceRole}\` in workspace \`${workspaceId}\``
-        }
-    }
+    return isMinimumWorkspaceRole(userWorkspaceRole, requiredWorkspaceRole)
+      ? checkResult.pass()
+      : checkResult.fail(
+          `User does not have minimum role \`${requiredWorkspaceRole}\` in workspace \`${workspaceId}\``
+        )
+  }

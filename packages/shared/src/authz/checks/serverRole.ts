@@ -1,24 +1,18 @@
-import { ServerRole } from "../domain/core/types.js"
-import { ChuckContextLoaders } from "../domain/loaders.js"
-import { AuthFunction } from "../domain/types.js"
+import { ServerRole } from '../domain/core/types.js'
+import { ChuckContext } from '../domain/loaders.js'
+import { CheckResult } from '../domain/types.js'
+import { checkResult } from '../helpers/result.js'
 
 export const requireExactServerRole =
-  (
-    context: {
-      role: ServerRole
-    },
-    deps: Pick<ChuckContextLoaders, 'getServerRole'>
-  ): AuthFunction =>
-    async ({ userId }) => {
-      const userServerRole = await deps.getServerRole({ userId })
-      const requiredServerRole = context.role
+  ({ loaders }: ChuckContext<'getServerRole'>) =>
+  async (args: { userId: string; role: ServerRole }): Promise<CheckResult> => {
+    const { userId, role: requiredServerRole } = args
 
-      return userServerRole === requiredServerRole
-        ? {
-          authorized: true
-        }
-        : {
-          authorized: false,
-          reason: `User does not have required server role \`${requiredServerRole}\``
-        }
-    }
+    const userServerRole = await loaders.getServerRole({ userId })
+
+    return userServerRole === requiredServerRole
+      ? checkResult.pass()
+      : checkResult.fail(
+          `User does not have required server role \`${requiredServerRole}\``
+        )
+  }
