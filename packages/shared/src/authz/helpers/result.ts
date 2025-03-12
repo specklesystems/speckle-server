@@ -14,8 +14,6 @@ export const checkResult = {
 export const authResult = {
   authorized: (): AuthResult => ({
     authorized: true,
-    status: null,
-    statusMessage: null
   }),
   unauthorized: (statusMessage: string): AuthResult => ({
     authorized: false,

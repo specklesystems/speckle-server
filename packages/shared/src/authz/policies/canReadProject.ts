@@ -13,7 +13,7 @@ import { authResult } from '../helpers/result.js'
 import { requireExactServerRole } from '../checks/serverRole.js'
 import { requireValidWorkspaceSsoSession } from '../checks/workspaceSso.js'
 
-export const canReadProjectPolicyFactory =
+export const canQueryProjectPolicyFactory =
   (
     loaders: Pick<
       ChuckContextLoaders,
@@ -26,123 +26,120 @@ export const canReadProjectPolicyFactory =
       | 'getWorkspaceSsoSession'
     >
   ) =>
-  async ({ userId, projectId }: UserContext & ProjectContext): Promise<AuthResult> => {
-    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
+    async ({ userId, projectId }: UserContext & ProjectContext): Promise<AuthResult> => {
+      const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
 
-    const project = await loaders.getProject({ projectId })
-    if (!project) return authResult.unauthorized('Project not found.')
+      const project = await loaders.getProject({ projectId })
+      if (!project) return authResult.unauthorized('Project not found.')
 
-    // All users may read public projects
-    const isPublicResult = await requireExactProjectVisibility({ loaders })({
-      projectId,
-      projectVisibility: 'public'
-    })
-    if (isPublicResult.ok) {
-      return authResult.authorized()
-    }
-
-    // All users may read link-shareable projects
-    const isLinkShareableResult = await requireExactProjectVisibility({ loaders })({
-      projectId,
-      projectVisibility: 'linkShareable'
-    })
-    if (isLinkShareableResult.ok) {
-      return authResult.authorized()
-    }
-
-    // When G O D M O D E is enabled
-    if (FF_ADMIN_OVERRIDE_ENABLED) {
-      // Server admins may read all project data
-      const isServerAdminResult = await requireExactServerRole({ loaders })({
-        userId,
-        role: 'server:admin'
+      // All users may read public projects
+      const isPublicResult = await requireExactProjectVisibility({ loaders })({
+        projectId,
+        projectVisibility: 'public'
       })
-      if (isServerAdminResult.ok) {
+      if (isPublicResult.ok) {
         return authResult.authorized()
       }
-    }
 
-    const { workspaceId } = project
-
-    // When a project belongs to a workspace
-    if (FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
-      // User must have a workspace role to read project data
-      const hasWorkspaceRoleResult = await requireAnyWorkspaceRole({ loaders })({
-        userId,
-        workspaceId
+      // All users may read link-shareable projects
+      const isLinkShareableResult = await requireExactProjectVisibility({ loaders })({
+        projectId,
+        projectVisibility: 'linkShareable'
       })
-      if (!hasWorkspaceRoleResult.ok) {
-        return authResult.unauthorized(hasWorkspaceRoleResult.reason)
+      if (isLinkShareableResult.ok) {
+        return authResult.authorized()
       }
 
-      // When a workspace has SSO configured
-      const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
-        workspaceId
-      })
-      if (!!workspaceSsoProvider) {
-        // When the user is not a workspace guest
-        const userWorkspaceRole = await loaders.getWorkspaceRole({
+      // When G O D M O D E is enabled
+      if (FF_ADMIN_OVERRIDE_ENABLED) {
+        // Server admins may read all project data
+        const isServerAdminResult = await requireExactServerRole({ loaders })({
           userId,
-          workspaceId
+          role: 'server:admin'
         })
-        if (userWorkspaceRole !== 'workspace:guest') {
-          // User must be a workspace member or admin to read project data
-          // TODO: This check is strictly redundant but is useful for policy legibility. Remove?
-          const hasMinimumWorkspaceRoleResult = await requireMinimumWorkspaceRole({
-            loaders
-          })({
-            userId,
-            workspaceId,
-            role: 'workspace:member'
-          })
-          if (!hasMinimumWorkspaceRoleResult.ok) {
-            return authResult.unauthorized(hasMinimumWorkspaceRoleResult.reason)
-          }
-
-          // User must have a valid SSO session to read project data
-          const hasValidSsoSessionResult = await requireValidWorkspaceSsoSession({
-            loaders
-          })({
-            userId,
-            workspaceId
-          })
-          if (!hasValidSsoSessionResult.ok) {
-            return authResult.unauthorized(hasValidSsoSessionResult.reason)
-          }
+        if (isServerAdminResult.ok) {
+          return authResult.authorized()
         }
       }
 
-      // When a workspace does not have SSO configured
-      if (!workspaceSsoProvider) {
-        // Workspace members and admins may read project data
-        const hasMinimumWorkspaceRoleResult = await requireMinimumWorkspaceRole({
+      const { workspaceId } = project
+
+      // When a project belongs to a workspace
+      if (FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
+        // User must have a workspace role to read project data
+        const hasWorkspaceRoleResult = await requireAnyWorkspaceRole({ loaders })({
+          userId,
+          workspaceId
+        })
+        if (!hasWorkspaceRoleResult.ok) {
+          return authResult.unauthorized(hasWorkspaceRoleResult.reason)
+        }
+
+
+        const hasMinimumMemberRole = await requireMinimumWorkspaceRole({
           loaders
         })({
           userId,
           workspaceId,
           role: 'workspace:member'
         })
-        if (hasMinimumWorkspaceRoleResult.ok) {
+
+
+        if (hasMinimumMemberRole.ok) {
+          const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
+            workspaceId
+          })
+          if (!!workspaceSsoProvider) {
+            // Member and admin user must have a valid SSO session to read project data
+            const hasValidSsoSessionResult = await requireValidWorkspaceSsoSession({
+              loaders
+            })({
+              userId,
+              workspaceId
+            })
+            if (!hasValidSsoSessionResult.ok) {
+              return authResult.unauthorized(hasValidSsoSessionResult.reason)
+            }
+          }
+
+          // Workspace members get to go through without an explicit project role
           return authResult.authorized()
+        } else {
+          // just fall through to the generic project role check for workspace:guest-s
         }
       }
+
+      // User must have at least stream reviewer role to read project data
+      const hasMinimumProjectRoleResult = await requireMinimumProjectRole({ loaders })({
+        userId,
+        projectId,
+        role: 'stream:reviewer'
+      })
+      if (!hasMinimumProjectRoleResult.ok) {
+        return authResult.unauthorized(hasMinimumProjectRoleResult.reason)
+      }
+
+      return authResult.authorized()
     }
 
-    // User must have at least stream reviewer role to read project data
-    const hasMinimumProjectRoleResult = await requireMinimumProjectRole({ loaders })({
-      userId,
-      projectId,
-      role: 'stream:reviewer'
-    })
-    if (!hasMinimumProjectRoleResult.ok) {
-      return authResult.unauthorized(hasMinimumProjectRoleResult.reason)
-    }
-
-    return authResult.authorized()
-  }
 
 export const authPolicyFactory = (loaders: ChuckContextLoaders) => ({
-  canReadProject: canReadProjectPolicyFactory(loaders)
+  project: {
+    query: canQueryProjectPolicyFactory(loaders),
+    createComment: canQueryProjectPolicyFactory(loaders),
+  }
 })
+
+const policies = {} as AuthPolices
+
+const readProject = await policies.project.query({ userId: '', projectId: '' })
+if (!readProject.authorized) {
+  console.log(readProject.statusMessage)
+}
+
+const canComment = await policies.project.createComment({ userId: '', projectId: "" })
+if (!canComment.authorized) {
+  console.log(canComment.statusMessage)
+}
 
 export type AuthPolices = ReturnType<typeof authPolicyFactory>
