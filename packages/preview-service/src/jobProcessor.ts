@@ -4,7 +4,7 @@ import {
   JobPayload,
   PreviewResultPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -48,7 +48,7 @@ export const jobProcessor = async ({
     return result
   } catch (err: unknown) {
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.error({ err, elapsed }, jobMessage)
+    logger.error({ err, elapsed, status: 'error' }, jobMessage)
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()
