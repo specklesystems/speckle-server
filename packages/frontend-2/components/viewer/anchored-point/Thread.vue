@@ -111,20 +111,26 @@
               </div>
             </div>
             <div
-              v-if="isOutOfContext"
+              v-if="isOutOfContext || hasClickedFullContext"
               class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
             >
               <div class="text-body-2xs text-foreground-2 font-medium">
-                References multiple models
+                {{
+                  hasClickedFullContext
+                    ? 'Viewing full context'
+                    : 'References multiple models'
+                }}
               </div>
               <div class="-mr-1 flex">
                 <FormButton
-                  :icon-right="ArrowTopRightOnSquareIcon"
+                  :icon-right="
+                    hasClickedFullContext ? ArrowLeftIcon : ArrowTopRightOnSquareIcon
+                  "
                   size="sm"
                   color="outline"
-                  :to="fullContextUrl || undefined"
+                  @click="handleContextNavigation"
                 >
-                  Full context
+                  {{ hasClickedFullContext ? 'Back' : 'Full context' }}
                 </FormButton>
               </div>
             </div>
@@ -208,7 +214,8 @@ import {
   XMarkIcon,
   CheckIcon,
   ArrowTopRightOnSquareIcon,
-  ArrowDownCircleIcon
+  ArrowDownCircleIcon,
+  ArrowLeftIcon
 } from '@heroicons/vue/24/outline'
 import { ensureError, Roles } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
@@ -280,7 +287,8 @@ const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
 
-const { isOutOfContext, fullContextUrl } = useCommentModelContext(props.modelValue)
+const { isOutOfContext, hasClickedFullContext, handleContextNavigation } =
+  useCommentModelContext(props.modelValue)
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')

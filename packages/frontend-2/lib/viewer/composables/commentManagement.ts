@@ -30,6 +30,9 @@ import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
 import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
+import { modelRoute } from '~~/lib/common/helpers/route'
+import { useRouter, useRoute } from 'vue-router'
+import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -241,6 +244,11 @@ export function useCheckViewerCommentingAccess() {
 
 export function useCommentModelContext(thread: MaybeRef<CommentBubbleModel>) {
   const { resources, projectId } = useInjectedViewerState()
+  const router = useRouter()
+  const route = useRoute()
+  const { zoom } = useCameraUtilities()
+
+  const previousUrl = ref<string | null>(null)
 
   const loadedModelIds = computed(() => {
     const modelsAndVersions = resources.response.modelsAndVersionIds.value || []
@@ -256,19 +264,41 @@ export function useCommentModelContext(thread: MaybeRef<CommentBubbleModel>) {
     commentModelIds.value.some((id) => !loadedModelIds.value.includes(id))
   )
 
+  const hasClickedFullContext = computed(() => !!previousUrl.value)
+
   const fullContextUrl = computed(() => {
     const threadValue = unref(thread)
     if (!commentModelIds.value.length) return null
 
-    // Join all model IDs with commas
     const modelIdsString = commentModelIds.value.join(',')
-    return `/projects/${projectId.value}/models/${modelIdsString}#threadId=${threadValue.id}`
+    return modelRoute(projectId.value, modelIdsString, { threadId: threadValue.id })
   })
+
+  const isInFullContext = computed(() => {
+    if (!fullContextUrl.value) return false
+    return window.location.href.includes(fullContextUrl.value)
+  })
+
+  const handleContextNavigation = () => {
+    if (previousUrl.value) {
+      router.push(previousUrl.value)
+      previousUrl.value = null
+      zoom()
+    } else {
+      previousUrl.value = route.fullPath
+      if (fullContextUrl.value) {
+        router.push(fullContextUrl.value)
+      }
+    }
+  }
 
   return {
     isOutOfContext,
     commentModelIds,
     loadedModelIds,
-    fullContextUrl
+    fullContextUrl,
+    isInFullContext,
+    hasClickedFullContext,
+    handleContextNavigation
   }
 }
