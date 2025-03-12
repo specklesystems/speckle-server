@@ -18,7 +18,7 @@ export function ensureError(
     }
   }
   return new UnexpectedErrorStructureError(
-    `${fallbackMessage}${stringifiedError !== '' ? `Cause: ${stringifiedError}` : ''}`
+    `${fallbackMessage}${stringifiedError !== '' ? `. Cause: ${stringifiedError}` : ''}`
   )
 }
 
