@@ -24,14 +24,18 @@ import {
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
-import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
-import { modelRoute } from '~~/lib/common/helpers/route'
-import { useRouter, useRoute } from 'vue-router'
-import { useCameraUtilities } from '~/lib/viewer/composables/ui'
+import {
+  useStateSerialization,
+  useApplySerializedState,
+  StateApplyMode
+} from '~~/lib/viewer/composables/serialization'
+import { useRouter } from 'vue-router'
+
+type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -241,70 +245,94 @@ export function useCheckViewerCommentingAccess() {
   })
 }
 
-type CommentModelContext = {
-  id: string
-  viewerResources: Array<{
-    modelId?: string | null
-  }>
-}
-
-export function useCommentModelContext(thread: MaybeRef<CommentModelContext>) {
-  const { resources, projectId } = useInjectedViewerState()
+export const useCommentContext = () => {
+  const applyState = useApplySerializedState()
+  const state = useInjectedViewerState()
   const router = useRouter()
-  const route = useRoute()
-  const { zoom } = useCameraUtilities()
 
-  const previousUrl = ref<string | null>(null)
+  const previousState = ref<SerializedViewerState | null>(null)
+  const previousRoute = ref<string | null>(null)
 
-  const loadedModelIds = computed(() => {
-    const modelsAndVersions = resources.response.modelsAndVersionIds.value || []
-    return modelsAndVersions.map((r) => r.model.id)
-  })
+  const thread = computed(() => state.ui.threads.openThread.thread.value)
 
-  const commentModelIds = computed(() => {
-    const threadValue = unref(thread)
-    return threadValue.viewerResources.map((r) => r.modelId).filter(Boolean) as string[]
-  })
+  const threadResourceStatus = computed(() => {
+    const loadedResources = state.resources.response.resourceItems.value
+    const resourceLinks = thread.value?.resources
 
-  const isOutOfContext = computed(() =>
-    commentModelIds.value.some((id) => !loadedModelIds.value.includes(id))
-  )
-
-  const hasClickedFullContext = computed(() => !!previousUrl.value)
-
-  const fullContextUrl = computed(() => {
-    const threadValue = unref(thread)
-    if (!commentModelIds.value.length) return null
-
-    const modelIdsString = commentModelIds.value.join(',')
-    return modelRoute(projectId.value, modelIdsString, { threadId: threadValue.id })
-  })
-
-  const isInFullContext = computed(() => {
-    if (!fullContextUrl.value) return false
-    return window.location.href.includes(fullContextUrl.value)
-  })
-
-  const handleContextNavigation = () => {
-    if (previousUrl.value) {
-      router.push(previousUrl.value)
-      previousUrl.value = null
-      zoom()
-    } else {
-      previousUrl.value = route.fullPath
-      if (fullContextUrl.value) {
-        router.push(fullContextUrl.value)
-      }
+    if (!resourceLinks) {
+      return { isLoaded: false }
     }
+
+    // Check if any of the thread's objects are loaded
+    const objectLinks = resourceLinks
+      .filter((l) => l.resourceType === 'object')
+      .map((l) => l.resourceId)
+    const commitLinks = resourceLinks
+      .filter((l) => l.resourceType === 'commit')
+      .map((l) => l.resourceId)
+
+    const hasLoadedObjects = loadedResources.some((lr) =>
+      objectLinks.includes(lr.objectId)
+    )
+    const hasLoadedVersions = loadedResources.some(
+      (lr) => lr.versionId && commitLinks.includes(lr.versionId)
+    )
+
+    // Resource is loaded, check versions and federation
+    const currentModels = state.resources.response.modelsAndVersionIds.value
+    const threadModels = thread.value.viewerResources.filter(
+      (r): r is typeof r & { modelId: string; versionId: string } =>
+        r.modelId !== null && r.versionId !== null
+    )
+
+    // Check if any thread models are not in current view (federated)
+    const hasFederatedModels = threadModels.some(
+      (threadModel) => !currentModels.some((m) => m.model.id === threadModel.modelId)
+    )
+
+    // For models that exist in both states, check version differences
+    const hasDifferentVersions = threadModels.some((threadModel) => {
+      const currentModel = currentModels.find((m) => m.model.id === threadModel.modelId)
+      return currentModel && currentModel.versionId !== threadModel.versionId
+    })
+
+    return {
+      isLoaded: hasLoadedObjects || hasLoadedVersions,
+      isDifferentVersion: hasDifferentVersions,
+      isFederatedModel: hasFederatedModels
+    }
+  })
+
+  const loadContext = async (
+    mode: StateApplyMode.TheadFullContextOpen | StateApplyMode.FederatedContext
+  ) => {
+    const state = thread.value?.viewerState
+    if (!state) return
+    previousRoute.value = router.currentRoute.value.fullPath
+    previousState.value = state
+    await applyState(state, mode)
+  }
+
+  const onLoadThreadVersionContext = () =>
+    loadContext(StateApplyMode.TheadFullContextOpen)
+  const onLoadFederatedContext = () => loadContext(StateApplyMode.FederatedContext)
+
+  const goBack = async () => {
+    if (!previousRoute.value) {
+      return
+    }
+
+    await router.push(previousRoute.value)
+
+    previousState.value = null
+    previousRoute.value = null
   }
 
   return {
-    isOutOfContext,
-    commentModelIds,
-    loadedModelIds,
-    fullContextUrl,
-    isInFullContext,
-    hasClickedFullContext,
-    handleContextNavigation
+    threadResourceStatus,
+    onLoadThreadVersionContext,
+    onLoadFederatedContext,
+    goBack,
+    hasClickedFullContext: computed(() => previousState.value !== null)
   }
 }

@@ -111,26 +111,20 @@
               </div>
             </div>
             <div
-              v-if="isOutOfContext || hasClickedFullContext"
+              v-if="showBanner"
               class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
             >
               <div class="text-body-2xs text-foreground-2 font-medium">
-                {{
-                  hasClickedFullContext
-                    ? 'Viewing full context'
-                    : 'References multiple models'
-                }}
+                {{ bannerText }}
               </div>
               <div class="-mr-1 flex">
                 <FormButton
-                  :icon-right="
-                    hasClickedFullContext ? ArrowLeftIcon : ArrowTopRightOnSquareIcon
-                  "
+                  :icon-right="bannerButton.icon"
                   size="sm"
                   color="outline"
-                  @click="handleContextNavigation"
+                  @click="bannerButton.action"
                 >
-                  {{ hasClickedFullContext ? 'Back' : 'Full context' }}
+                  {{ bannerButton.text }}
                 </FormButton>
               </div>
             </div>
@@ -141,22 +135,6 @@
                 ref="commentsContainer"
                 class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2 sm:pr-3"
               >
-                <div
-                  v-if="!isThreadResourceLoaded"
-                  class="pl-2.5 pr-1.5 py-1 flex items-center justify-between text-body-2xs text-foreground border border-outline-2 rounded-md ml-2 mr-1 md:-mr-1 bg-foundation-page dark:bg-foundation"
-                >
-                  <span>Conversation started in a different version</span>
-                  <FormButton
-                    v-tippy="'Load thread context'"
-                    size="sm"
-                    text
-                    @click="onLoadThreadContext"
-                  >
-                    <ArrowDownCircleIcon
-                      class="w-5 h-5 text-foreground-2 hover:text-foreground"
-                    />
-                  </FormButton>
-                </div>
                 <ViewerAnchoredPointThreadComment
                   v-for="comment in comments"
                   :key="comment.id"
@@ -214,7 +192,6 @@ import {
   XMarkIcon,
   CheckIcon,
   ArrowTopRightOnSquareIcon,
-  ArrowDownCircleIcon,
   ArrowLeftIcon
 } from '@heroicons/vue/24/outline'
 import { ensureError, Roles } from '@speckle/shared'
@@ -227,25 +204,18 @@ import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubble
 import {
   useArchiveComment,
   useCheckViewerCommentingAccess,
-  useCommentModelContext,
-  useMarkThreadViewed
+  useMarkThreadViewed,
+  useCommentContext
 } from '~~/lib/viewer/composables/commentManagement'
-import {
-  useInjectedViewerLoadedResources,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import {
-  StateApplyMode,
-  useApplySerializedState
-} from '~~/lib/viewer/composables/serialization'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { ArrowUpRightIcon } from '@heroicons/vue/24/solid'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -280,15 +250,19 @@ const { disableTextSelection } = useDisableGlobalTextSelection()
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
-const applyState = useApplySerializedState()
+const {
+  onLoadThreadVersionContext,
+  hasClickedFullContext,
+  onLoadFederatedContext,
+  goBack
+} = useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
 
-const { isOutOfContext, hasClickedFullContext, handleContextNavigation } =
-  useCommentModelContext(props.modelValue)
+const { threadResourceStatus } = useCommentContext()
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')
@@ -438,27 +412,6 @@ const canArchiveOrUnarchive = computed(
       project.value?.role === Roles.Stream.Owner)
 )
 
-const { resourceItems } = useInjectedViewerLoadedResources()
-
-const isThreadResourceLoaded = computed(() => {
-  const thread = props.modelValue
-  const loadedResources = resourceItems.value
-  const resourceLinks = thread.resources
-
-  const objectLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Object)
-    .map((l) => l.resourceId)
-  const commitLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Commit)
-    .map((l) => l.resourceId)
-
-  if (loadedResources.some((lr) => objectLinks.includes(lr.objectId))) return true
-  if (loadedResources.some((lr) => lr.versionId && commitLinks.includes(lr.versionId)))
-    return true
-
-  return false
-})
-
 const toggleCommentResolvedStatus = async () => {
   await archiveComment({
     commentId: props.modelValue.id,
@@ -493,13 +446,6 @@ const onCommentMounted = () => {
 
 const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
-}
-
-const onLoadThreadContext = async () => {
-  const state = props.modelValue.viewerState
-  if (!state) return
-
-  await applyState(state, StateApplyMode.TheadFullContextOpen)
 }
 
 const onCopyLink = async () => {
@@ -573,6 +519,44 @@ onMounted(() => {
     emit('update:expanded', true)
   }
 })
+
+const showBanner = computed(
+  () =>
+    threadResourceStatus.value.isDifferentVersion ||
+    threadResourceStatus.value.isFederatedModel ||
+    hasClickedFullContext.value
+)
+
+const bannerText = computed(() => {
+  if (hasClickedFullContext.value) return 'Viewing full context'
+  if (threadResourceStatus.value.isDifferentVersion)
+    return 'Conversation started in a different version'
+  if (threadResourceStatus.value.isFederatedModel) return 'References multiple models'
+  return ''
+})
+
+const bannerButton = computed(() => {
+  if (hasClickedFullContext.value) {
+    return {
+      text: 'Back',
+      icon: ArrowLeftIcon,
+      action: goBack
+    }
+  }
+  return {
+    text: 'Full context',
+    icon: ArrowUpRightIcon,
+    action: handleContextClick
+  }
+})
+
+const handleContextClick = () => {
+  if (threadResourceStatus.value.isDifferentVersion) {
+    onLoadThreadVersionContext()
+  } else {
+    onLoadFederatedContext()
+  }
+}
 </script>
 <style scoped>
 @media (max-width: 640px) {

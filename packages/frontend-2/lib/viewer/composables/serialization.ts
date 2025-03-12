@@ -131,7 +131,8 @@ export enum StateApplyMode {
   Spotlight,
   ThreadOpen,
   TheadFullContextOpen,
-  Reset
+  Reset,
+  FederatedContext
 }
 
 export function useApplySerializedState() {
@@ -256,10 +257,25 @@ export function useApplySerializedState() {
       }
     }
 
+    // Handle resource string updates
     if (
       [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
     ) {
       await resourceIdString.update(state.resources.request.resourceIdString)
+    } else if (mode === StateApplyMode.FederatedContext) {
+      // For federated context, append only model IDs (without versions) to show latest
+      const currentResourceString = resourceIdString.value
+      const newModels = state.resources.request.resourceIdString
+        .split(',')
+        .map((resource) => resource.split('@')[0]) // Extract just the model IDs
+        .filter((modelId) => !currentResourceString.includes(modelId)) // Only add models we don't already have
+        .join(',')
+
+      if (newModels) {
+        const newResourceString =
+          currentResourceString + (currentResourceString ? ',' : '') + newModels
+        await resourceIdString.update(newResourceString)
+      }
     }
 
     if ([StateApplyMode.Spotlight].includes(mode)) {
