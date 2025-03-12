@@ -92,7 +92,7 @@ const pageFunction = async ({
     try {
       await window.load(job)
       loadDone = new Date().getTime()
-      loadDurationSeconds = loadDone - start
+      loadDurationSeconds = (loadDone - start) / 1000
     } catch (e) {
       const loadErrored = new Date().getTime()
       const err =
@@ -103,16 +103,17 @@ const pageFunction = async ({
       return {
         reason: err.message,
         screenshots: {},
-        loadDurationSeconds: loadErrored - start,
-        durationSeconds: loadErrored - start
+        loadDurationSeconds: (loadErrored - start) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
       }
     }
 
     try {
       const renderResult = await window.takeScreenshot()
-      const renderDurationSeconds = new Date().getTime() - loadDone
+      const renderDurationSeconds = (new Date().getTime() - loadDone) / 1000
       return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
     } catch (e) {
+      const loadErrored = new Date().getTime()
       const err =
         e instanceof Error
           ? e
@@ -121,8 +122,8 @@ const pageFunction = async ({
         reason: err.message,
         screenshots: {},
         loadDurationSeconds,
-        renderDurationSeconds: new Date().getTime() - loadDone,
-        durationSeconds: new Date().getTime() - start
+        renderDurationSeconds: (loadErrored - loadDone) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
       }
     }
     // ====================
