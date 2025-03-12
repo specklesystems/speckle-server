@@ -213,7 +213,12 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       subscriptionItemId: undefined
     })
 
-    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+    await reconcileSubscriptionData({
+      subscriptionData,
+      prorationBehavior: isNewPlanType(targetPlan)
+        ? 'always_invoice'
+        : 'create_prorations'
+    })
     await upsertWorkspacePlan({
       workspacePlan: {
         status: workspacePlan.status,
@@ -251,7 +256,7 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
     billingInterval
   }: {
     workspaceId: string
-    targetPlan: PaidWorkspacePlansNew
+    targetPlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
   }) => {
     const workspacePlan = await getWorkspacePlan({
@@ -302,7 +307,9 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
     if (
       !isUpgradeWorkspacePlanValid({ current: workspacePlan.name, upgrade: targetPlan })
     ) {
-      if (planOrder[workspacePlan.name] > planOrder[targetPlan]) {
+      if (
+        planOrder[workspacePlan.name] > planOrder[targetPlan as PaidWorkspacePlansNew]
+      ) {
         throw new WorkspacePlanUpgradeError("Can't upgrade to a less expensive plan")
       }
       throw new InvalidWorkspacePlanUpgradeError(null, {
@@ -358,7 +365,10 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       subscriptionItemId: undefined
     })
 
-    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+    await reconcileSubscriptionData({
+      subscriptionData,
+      prorationBehavior: 'always_invoice'
+    })
     await upsertWorkspacePlan({
       workspacePlan: {
         status: workspacePlan.status,

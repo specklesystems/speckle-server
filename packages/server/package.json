@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "build:watch": "tsc -p ./tsconfig.build.json -w",
-    "run:watch": "cross-env NODE_ENV=development LOG_PRETTY=true nodemon --inspect ./bin/www --watch ./dist --watch ./assets --watch ./bin/www --watch .env --watch multiregion.json -e js,ts,graphql,env,gql",
+    "run:watch": "cross-env NODE_ENV=development LOG_PRETTY=true nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www --watch .env --watch multiregion.json -e js,ts,graphql,env,gql",
     "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\" \"yarn gqlgen:watch\" -n tsc,server,gqlgen",
     "build:clean": "rimraf ./dist && yarn build",
     "dev:clean": "yarn build:clean && yarn dev",

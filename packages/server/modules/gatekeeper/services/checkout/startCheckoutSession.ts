@@ -237,6 +237,9 @@ export const startCheckoutSessionFactoryNew =
       workspaceId,
       type: 'editor'
     })
+    if (!editorsCount) {
+      throw new InvalidWorkspacePlanUpgradeError('Workspace has no seats')
+    }
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,

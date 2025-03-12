@@ -10,15 +10,15 @@
           <p class="text-body-sm text-foreground-2">
             Extract and exchange data between the most popular AEC applications using
             our tailored connectors.
-            <span class="italic">
-              Looking for V2 connectors? Get them
-              <NuxtLink
-                class="text-foreground hover:text-primary"
-                to="https://releases.speckle.systems"
-              >
-                here.
-              </NuxtLink>
-            </span>
+          </p>
+          <p class="text-body-xs text-foreground-3 leading-none">
+            Looking for V2 connectors? Get them
+            <NuxtLink
+              class="text-foreground-3 hover:text-foreground-2 underline"
+              to="https://releases.speckle.systems"
+            >
+              here.
+            </NuxtLink>
           </p>
         </div>
       </section>

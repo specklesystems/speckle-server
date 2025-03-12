@@ -4398,6 +4398,7 @@ export type WorkspaceCollaborator = {
   id: Scalars['ID']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
+  seatType: WorkspaceSeatType;
   user: LimitedUser;
 };
 
@@ -4588,6 +4589,7 @@ export type WorkspaceMutations = {
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
   updateRole: Workspace;
+  updateSeatType: Workspace;
 };
 
 
@@ -4654,6 +4656,11 @@ export type WorkspaceMutationsUpdateCreationStateArgs = {
 
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
+};
+
+
+export type WorkspaceMutationsUpdateSeatTypeArgs = {
+  input: WorkspaceUpdateSeatTypeInput;
 };
 
 export const WorkspacePaymentMethod = {
@@ -4805,6 +4812,12 @@ export type WorkspaceRoleUpdateInput = {
   workspaceId: Scalars['String']['input'];
 };
 
+export const WorkspaceSeatType = {
+  Editor: 'editor',
+  Viewer: 'viewer'
+} as const;
+
+export type WorkspaceSeatType = typeof WorkspaceSeatType[keyof typeof WorkspaceSeatType];
 export type WorkspaceSso = {
   __typename?: 'WorkspaceSso';
   /** If null, the workspace does not have SSO configured */
@@ -4858,6 +4871,12 @@ export type WorkspaceUpdateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceUpdateSeatTypeInput = {
+  seatType: WorkspaceSeatType;
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdatedMessage = {
@@ -8479,6 +8498,7 @@ export type WorkspaceCollaboratorFieldArgs = {
   id: {},
   projectRoles: {},
   role: {},
+  seatType: {},
   user: {},
 }
 export type WorkspaceCollaboratorCollectionFieldArgs = {
@@ -8539,6 +8559,7 @@ export type WorkspaceMutationsFieldArgs = {
   update: WorkspaceMutationsUpdateArgs,
   updateCreationState: WorkspaceMutationsUpdateCreationStateArgs,
   updateRole: WorkspaceMutationsUpdateRoleArgs,
+  updateSeatType: WorkspaceMutationsUpdateSeatTypeArgs,
 }
 export type WorkspacePlanFieldArgs = {
   createdAt: {},

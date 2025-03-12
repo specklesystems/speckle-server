@@ -65,7 +65,7 @@ export const useBillingActions = () => {
     })
 
     if (result.data?.workspace.customerPortalUrl) {
-      window.location.href = result.data.workspace.customerPortalUrl
+      window.open(result.data.workspace.customerPortalUrl, '_blank')
     }
   }
 

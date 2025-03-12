@@ -3,192 +3,40 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { NotFoundError } from '@/modules/shared/errors'
-import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
-import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
-import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
-  createTestWorkspace
+  createTestWorkspace,
+  unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import { beforeEachContext } from '@/test/hooks'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
 describe('Workspace workspaceSeat services', () => {
   describe('assignWorkspaceSeatFactory', () => {
-    it('should throw an error if user is not a member of the workspace', async () => {
-      const workspaceAdmin: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.Admin,
-        verified: true
-      }
+    const workspaceAdmin: BasicTestUser = {
+      id: createRandomString(),
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.Admin,
+      verified: true
+    }
+
+    before(async () => {
+      await beforeEachContext()
       await createTestUser(workspaceAdmin)
-
-      const workspace: BasicTestWorkspace = {
-        id: createRandomString(),
-        slug: createRandomString(),
-        ownerId: workspaceAdmin.id,
-        name: cryptoRandomString({ length: 6 }),
-        description: cryptoRandomString({ length: 12 })
-      }
-      await createTestWorkspace(workspace, workspaceAdmin)
-
-      const user: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.User,
-        verified: true
-      }
-      await createTestUser(user)
-
-      const err = await expectToThrow(() =>
-        assignWorkspaceSeatFactory({
-          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-        })({ userId: user.id, workspaceId: workspace.id, type: 'editor' })
-      )
-
-      expect(err.name).to.eq(NotFoundError.name)
     })
-    it('should assign a workspace seat with the default type if none is provided', async () => {
-      const workspaceAdmin: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.Admin,
-        verified: true
-      }
-      await createTestUser(workspaceAdmin)
 
-      const workspace: BasicTestWorkspace = {
-        id: createRandomString(),
-        slug: createRandomString(),
-        ownerId: workspaceAdmin.id,
-        name: cryptoRandomString({ length: 6 }),
-        description: cryptoRandomString({ length: 12 })
-      }
-      await createTestWorkspace(workspace, workspaceAdmin)
-
-      const user: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.User,
-        verified: true
-      }
-      await createTestUser(user)
-
-      await assignToWorkspace(workspace, user, Roles.Workspace.Member)
-
-      await assignWorkspaceSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-      })({ userId: user.id, workspaceId: workspace.id })
-
-      const workspaceSeat = await db('workspace_seats')
-        .where({ userId: user.id, workspaceId: workspace.id })
-        .first()
-
-      expect(workspaceSeat.type).to.eq('viewer')
-    })
-    it('should assign a workspace seat with the provided type', async () => {
-      const workspaceAdmin: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.Admin,
-        verified: true
-      }
-      await createTestUser(workspaceAdmin)
-
-      const workspace: BasicTestWorkspace = {
-        id: createRandomString(),
-        slug: createRandomString(),
-        ownerId: workspaceAdmin.id,
-        name: cryptoRandomString({ length: 6 }),
-        description: cryptoRandomString({ length: 12 })
-      }
-      await createTestWorkspace(workspace, workspaceAdmin)
-
-      const user: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.User,
-        verified: true
-      }
-      await createTestUser(user)
-
-      await assignToWorkspace(workspace, user, Roles.Workspace.Member)
-
-      await assignWorkspaceSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-      })({ userId: user.id, workspaceId: workspace.id, type: 'editor' })
-
-      const workspaceSeat = await db('workspace_seats')
-        .where({ userId: user.id, workspaceId: workspace.id })
-        .first()
-
-      expect(workspaceSeat.type).to.eq('editor')
-    })
-    it('should throw an error if seat type is not compatible with workspace role', async () => {
-      const workspaceAdmin: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.Admin,
-        verified: true
-      }
-      await createTestUser(workspaceAdmin)
-
-      const workspace: BasicTestWorkspace = {
-        id: createRandomString(),
-        slug: createRandomString(),
-        ownerId: workspaceAdmin.id,
-        name: cryptoRandomString({ length: 6 }),
-        description: cryptoRandomString({ length: 12 })
-      }
-      await createTestWorkspace(workspace, workspaceAdmin)
-
-      const user: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.User,
-        verified: true
-      }
-      await createTestUser(user)
-
-      await assignToWorkspace(workspace, user, Roles.Workspace.Admin)
-
-      const err = await expectToThrow(() =>
-        assignWorkspaceSeatFactory({
-          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-        })({ userId: user.id, workspaceId: workspace.id, type: 'viewer' })
-      )
-
-      expect(err.name).to.eq(InvalidWorkspaceSeatTypeError.name)
-    })
     it('should update seat type on role change', async () => {
-      const workspaceAdmin: BasicTestUser = {
-        id: createRandomString(),
-        name: createRandomString(),
-        email: createRandomEmail(),
-        role: Roles.Server.Admin,
-        verified: true
-      }
-      await createTestUser(workspaceAdmin)
-
       const workspace: BasicTestWorkspace = {
         id: createRandomString(),
         slug: createRandomString(),
@@ -222,6 +70,97 @@ describe('Workspace workspaceSeat services', () => {
         .first()
 
       expect(workspaceSeatUpdated.type).to.eq('editor')
+    })
+  })
+
+  describe('ensureValidWorkspaceRoleSeatFactory', () => {
+    const workspaceAdmin: BasicTestUser = {
+      id: '',
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.Admin,
+      verified: true
+    }
+    const testUser: BasicTestUser = {
+      id: '',
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.User,
+      verified: true
+    }
+    const workspace: BasicTestWorkspace = {
+      ownerId: '',
+      id: '',
+      slug: '',
+      name: cryptoRandomString({ length: 6 }),
+      description: cryptoRandomString({ length: 12 })
+    }
+
+    before(async () => {
+      await createTestUsers([workspaceAdmin, testUser])
+      await createTestWorkspace(workspace, workspaceAdmin)
+    })
+
+    afterEach(async () => {
+      // remove testUsers from workspace
+      await unassignFromWorkspace(workspace, testUser)
+    })
+
+    const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
+    const createWorkspaceSeat = createWorkspaceSeatFactory({ db })
+    const sut = ensureValidWorkspaceRoleSeatFactory({
+      createWorkspaceSeat,
+      getWorkspaceUserSeat
+    })
+
+    it('should create a new seat if none exists', async () => {
+      const workspaceSeat = await sut({
+        userId: testUser.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Member
+      })
+
+      expect(workspaceSeat).to.be.ok
+      expect(workspaceSeat?.type).to.eq(WorkspaceSeatType.Viewer)
+    })
+
+    it('should update seat type, if invalid one set', async () => {
+      await assignToWorkspace(workspace, testUser, Roles.Workspace.Member)
+      const oldSeat = await getWorkspaceUserSeat({
+        userId: testUser.id,
+        workspaceId: workspace.id
+      })
+
+      const workspaceSeat = await sut({
+        userId: testUser.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Admin
+      })
+
+      expect(oldSeat?.type).to.eq(WorkspaceSeatType.Viewer)
+      expect(workspaceSeat).to.be.ok
+      expect(workspaceSeat?.type).to.eq(WorkspaceSeatType.Editor)
+    })
+
+    it('should do nothing if valid seat type already exists', async () => {
+      await assignToWorkspace(workspace, testUser, Roles.Workspace.Admin)
+      const oldSeat = await getWorkspaceUserSeat({
+        userId: testUser.id,
+        workspaceId: workspace.id
+      })
+
+      const workspaceSeat = await sut({
+        userId: testUser.id,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Admin
+      })
+
+      expect(oldSeat?.type).to.eq(WorkspaceSeatType.Editor)
+      expect(workspaceSeat).to.be.ok
+      expect(workspaceSeat?.type).to.eq(WorkspaceSeatType.Editor)
+      expect(workspaceSeat?.updatedAt.toISOString()).to.eq(
+        oldSeat?.updatedAt.toISOString()
+      )
     })
   })
 })
