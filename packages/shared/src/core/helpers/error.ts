@@ -9,10 +9,16 @@ export function ensureError(
   fallbackMessage?: string
 ): Error | UnexpectedErrorStructureError {
   if (e instanceof Error) return e
+  let stringifiedError = ''
+  if (e !== null && e !== undefined) {
+    try {
+      stringifiedError = JSON.stringify(e)
+    } catch {
+      //ignore
+    }
+  }
   return new UnexpectedErrorStructureError(
-    `${fallbackMessage}${
-      e !== null && e !== undefined ? `Cause: ${JSON.stringify(e)}` : ''
-    }`
+    `${fallbackMessage}${stringifiedError !== '' ? `Cause: ${stringifiedError}` : ''}`
   )
 }
 
