@@ -192,7 +192,8 @@ import {
   XMarkIcon,
   CheckIcon,
   ArrowTopRightOnSquareIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  ArrowUpRightIcon
 } from '@heroicons/vue/24/outline'
 import { ensureError, Roles } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
@@ -215,7 +216,6 @@ import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { ArrowUpRightIcon } from '@heroicons/vue/24/solid'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -254,6 +254,7 @@ const {
   onLoadThreadVersionContext,
   hasClickedFullContext,
   onLoadFederatedContext,
+  threadResourceStatus,
   goBack
 } = useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
@@ -261,8 +262,6 @@ const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
-
-const { threadResourceStatus } = useCommentContext()
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')

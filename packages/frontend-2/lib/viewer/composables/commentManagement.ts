@@ -35,8 +35,6 @@ import {
 } from '~~/lib/viewer/composables/serialization'
 import { useRouter } from 'vue-router'
 
-type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
-
 export function useViewerCommentUpdateTracking(
   params: {
     projectId: MaybeRef<string>
@@ -246,6 +244,8 @@ export function useCheckViewerCommentingAccess() {
 }
 
 export const useCommentContext = () => {
+  type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
+
   const applyState = useApplySerializedState()
   const state = useInjectedViewerState()
   const router = useRouter()
