@@ -1,0 +1,60 @@
+{
+  "name": "@speckle/objectloader2",
+  "version": "1.0.0",
+  "description": "Simple API helper to serialize and send objects to the server.",
+  "main": "dist/objectloader2.cjs",
+  "module": "dist/objectloader2.js",
+  "homepage": "https://speckle.systems",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/objectloader2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "dev": "vite",
+    "build": "tsc build",
+    "prepack": "yarn build"
+  },
+  "keywords": [
+    "speckle",
+    "aec",
+    "speckle api"
+  ],
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@speckle/shared": "workspace:^"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.2.2"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/objectsender.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/objectsender.cjs"
+      }
+    }
+  },
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es"
+    }
+  }
+}
