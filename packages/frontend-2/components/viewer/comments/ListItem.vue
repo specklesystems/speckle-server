@@ -21,10 +21,16 @@
         <div class="truncate text-body-2xs text-foreground dark:text-foreground-2">
           {{ thread.rawText }}
         </div>
-        <div class="text-body-3xs flex items-center space-x-3 text-foreground-2 mb-1">
+        <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <span
             v-if="!isThreadResourceLoaded"
             v-tippy="'Conversation started in a different version.'"
+          >
+            <ExclamationCircleIcon class="w-4 h-4" />
+          </span>
+          <span
+            v-if="isOutOfContext"
+            v-tippy="'References models not currently loaded.'"
           >
             <ExclamationCircleIcon class="w-4 h-4" />
           </span>
@@ -60,7 +66,10 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useArchiveComment,
+  useCommentModelContext
+} from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -155,4 +164,6 @@ const toggleCommentResolvedStatus = async () => {
     type: ToastNotificationType.Info
   })
 }
+
+const { isOutOfContext } = useCommentModelContext(props.thread)
 </script>

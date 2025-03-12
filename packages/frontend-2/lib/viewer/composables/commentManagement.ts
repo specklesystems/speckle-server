@@ -29,7 +29,6 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
-import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { useRouter, useRoute } from 'vue-router'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
@@ -242,7 +241,14 @@ export function useCheckViewerCommentingAccess() {
   })
 }
 
-export function useCommentModelContext(thread: MaybeRef<CommentBubbleModel>) {
+type CommentModelContext = {
+  id: string
+  viewerResources: Array<{
+    modelId?: string | null
+  }>
+}
+
+export function useCommentModelContext(thread: MaybeRef<CommentModelContext>) {
   const { resources, projectId } = useInjectedViewerState()
   const router = useRouter()
   const route = useRoute()
