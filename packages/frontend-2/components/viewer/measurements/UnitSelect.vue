@@ -8,6 +8,7 @@
     :allow-unset="false"
     :label-id="labelId"
     :button-id="buttonId"
+    size="sm"
   >
     <template #something-selected>
       <div>{{ fullUnitName }}</div>

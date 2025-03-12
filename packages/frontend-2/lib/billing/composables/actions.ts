@@ -14,6 +14,7 @@ import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/gra
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment BillingActions_Workspace on Workspace {
@@ -48,7 +49,7 @@ export const useBillingActions = () => {
     settingsBillingCancelCheckoutSessionMutation
   )
 
-  const billingPortalRedirect = async (workspaceId?: string) => {
+  const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
     if (!workspaceId) return
 
     mixpanel.track('Workspace Billing Portal Button Clicked', {
@@ -64,7 +65,7 @@ export const useBillingActions = () => {
     })
 
     if (result.data?.workspace.customerPortalUrl) {
-      window.location.href = result.data.workspace.customerPortalUrl
+      window.open(result.data.workspace.customerPortalUrl, '_blank')
     }
   }
 

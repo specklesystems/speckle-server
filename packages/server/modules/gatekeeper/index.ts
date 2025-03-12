@@ -71,7 +71,7 @@ const scheduleWorkspaceSubscriptionDownscale = ({
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 
-  const cronExpression = '*/5 * * * *'
+  const cronExpression = '*/5 * * * *' // every 5 minutes
   return scheduleExecution(
     cronExpression,
     'WorkspaceSubscriptionDownscale',
@@ -171,7 +171,7 @@ let scheduledTasks: cron.ScheduledTask[] = []
 let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     await initScopes()
     if (!FF_GATEKEEPER_MODULE_ENABLED) return
 

@@ -4,7 +4,6 @@
     <template #actions>
       <div class="flex justify-between items-center w-full">
         <FormButton
-          v-tippy="'Change filter'"
           text
           color="subtle"
           size="sm"
@@ -16,24 +15,21 @@
             {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex divide-x divide-outline-3">
+        <div class="flex gap-x-1">
           <FormButton
             v-if="title !== 'Object Type'"
-            text
             size="sm"
-            class="flex gap-1 pr-2"
+            color="outline"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            <ArrowPathIcon class="h-4 w-4" />
             Reset
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
-            class="pl-2"
             size="sm"
             color="subtle"
             text
@@ -46,9 +42,9 @@
       </div>
     </template>
     <div
-      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible py-1'
-      } transition-[height] border-b-2 border-primary-muted`"
+      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden ${
+        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible'
+      } transition-[height] border-b border-outline-2`"
     >
       <div class="sticky top-0 bg-foundation p-2 pb-1">
         <FormTextInput
@@ -56,29 +52,35 @@
           name="filter search"
           placeholder="Search for a property"
           size="sm"
+          color="foundation"
           :show-clear="!!searchString"
+          class="!text-body-2xs"
         />
       </div>
       <div>
         <div
           v-for="(filter, index) in relevantFiltersLimited"
           :key="index"
-          class="text-xs"
+          v-tippy="filter.key"
+          class="text-body-2xs"
         >
           <button
-            class="block w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2"
+            class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
             @click="
               ;(showAllFilters = false),
                 setPropertyFilter(filter),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            {{ getPropertyName(filter.key) }}
+            <span class="text-foreground text-body-3xs">
+              {{ getPropertyName(filter.key) }}
+            </span>
+            <span class="truncate">{{ filter.key }}</span>
           </button>
         </div>
-        <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-          <FormButton size="sm" text full-width @click="itemCount += 30">
-            View More ({{ relevantFiltersSearched.length - itemCount }})
+        <div v-if="itemCount < relevantFiltersSearched.length" class="px-4">
+          <FormButton size="sm" text @click="itemCount += 30">
+            View more ({{ relevantFiltersSearched.length - itemCount }})
           </FormButton>
         </div>
       </div>
@@ -97,7 +99,6 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -265,11 +266,11 @@ const getPropertyName = (key: string): string => {
       (f) => f.key === key.replace('.value', '.name')
     )
     if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-      return correspondingProperty.valueGroups[0]?.value || key
+      return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
     }
   }
 
-  // Return the key as is for non-Revit properties
-  return key
+  // For all other properties, just return the last part of the path
+  return key.split('.').pop() || key
 }
 </script>
