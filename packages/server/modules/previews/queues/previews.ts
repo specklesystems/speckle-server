@@ -1,5 +1,7 @@
-import { RequestObjectPreview } from '@/modules/previews/domain/operations'
-import type { Queue } from 'bull'
+import type { RequestObjectPreview } from '@/modules/previews/domain/operations'
+import type { Logger } from '@/observability/logging'
+import type { Queue, Job } from 'bull'
+import type { EventEmitter } from 'stream'
 
 export const requestObjectPreviewFactory =
   ({
@@ -13,3 +15,32 @@ export const requestObjectPreviewFactory =
     const payload = { jobId, token, url, responseQueue }
     await queue.add(payload, { removeOnComplete: true, attempts: 3 })
   }
+
+interface QueueEventEmitter extends EventEmitter {}
+
+export const addRequestQueueListeners = (params: {
+  logger: Logger
+  previewRequestQueue: QueueEventEmitter
+}) => {
+  const { logger, previewRequestQueue } = params
+
+  const requestErrorHandler = (err: Error) => {
+    logger.error({ err }, 'Preview generation failed')
+  }
+  previewRequestQueue.removeListener('error', requestErrorHandler)
+  previewRequestQueue.on('error', requestErrorHandler)
+
+  const requestFailedHandler = (job: Job, err: Error) => {
+    const jobId = 'jobId' in job.data ? job.data.jobId : undefined
+    logger.error({ err, jobId }, 'Preview job {jobId} failed.')
+  }
+  previewRequestQueue.removeListener('failed', requestFailedHandler)
+  previewRequestQueue.on('failed', requestFailedHandler)
+
+  const requestActiveHandler = (job: Job) => {
+    const jobId = 'jobId' in job.data ? job.data.jobId : undefined
+    logger.info({ jobId }, 'Preview job {jobId} processing started.')
+  }
+  previewRequestQueue.removeListener('active', requestActiveHandler)
+  previewRequestQueue.on('active', requestActiveHandler)
+}
