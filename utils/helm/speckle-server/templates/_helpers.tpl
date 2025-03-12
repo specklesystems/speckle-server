@@ -679,6 +679,43 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceTeamSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceProSeatStripeProductId.secretKey }}
+
+- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceMonthlyProSeatStripePriceId.secretKey }}
+
+- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
+  valueFrom:
+    secretKeyRef:
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.workspaceYearlyProSeatStripePriceId.secretKey }}
+
 {{- end }}
 
 {{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
@@ -765,6 +802,15 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
       key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+
+
+{{- if .Values.preview_service.dedicatedPreviewsQueue }}
+- name: PREVIEW_SERVICE_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
+      key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
+{{- end }}
 
 # *** PostgreSQL Database ***
 - name: POSTGRES_URL

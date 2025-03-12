@@ -63,6 +63,17 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
+
+              <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
+                <LayoutSidebarMenuGroupItem
+                  label="Tutorials"
+                  :active="isActive(tutorialsRoute)"
+                >
+                  <template #icon>
+                    <IconTutorials class="size-4 ml-px text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup
@@ -178,7 +189,8 @@ import {
   workspaceRoute,
   workspacesRoute,
   workspaceCreateRoute,
-  connectorsRoute
+  connectorsRoute,
+  tutorialsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

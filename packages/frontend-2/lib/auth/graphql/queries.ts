@@ -71,12 +71,29 @@ export const activeUserWorkspaceExistenceCheckQuery = graphql(`
       }
       workspaces(limit: 0) {
         totalCount
+        items {
+          id
+          slug
+        }
       }
       discoverableWorkspaces {
         id
       }
       workspaceJoinRequests(limit: 0) {
         totalCount
+      }
+    }
+  }
+`)
+
+export const activeUserActiveWorkspaceCheckQuery = graphql(`
+  query ActiveUserActiveWorkspaceCheck {
+    activeUser {
+      id
+      isProjectsActive
+      activeWorkspace {
+        id
+        slug
       }
     }
   }

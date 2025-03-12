@@ -486,6 +486,21 @@
             }
           }
         },
+        "previewServiceConnectionString": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+              "default": ""
+            }
+          }
+        },
         "networkPolicy": {
           "type": "object",
           "properties": {
@@ -911,6 +926,66 @@
                   "type": "string",
                   "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
                   "default": "workspaceYearlyBusinessSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceTeamSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
+                  "default": "workspaceTeamSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceProSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
+                  "default": "workspaceProSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyProSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyProSeatStripePriceId"
                 }
               }
             }
@@ -1804,6 +1879,11 @@
     "preview_service": {
       "type": "object",
       "properties": {
+        "dedicatedPreviewsQueue": {
+          "type": "boolean",
+          "description": "Allows using a dedicated redis url for the preview service job queue",
+          "default": false
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
@@ -1826,18 +1906,8 @@
         },
         "port": {
           "type": "string",
-          "description": "The port on which the Preview Service will run. This is not exposed, but used within its own local network within the pod.",
+          "description": "The port on which the Preview Service will expose Prometheus metrics.",
           "default": "3001"
-        },
-        "monitoring": {
-          "type": "object",
-          "properties": {
-            "metricsPort": {
-              "type": "string",
-              "description": "The port on which the metrics server will be exposed.",
-              "default": "9094"
-            }
-          }
         },
         "postgresMaxConnections": {
           "type": "number",

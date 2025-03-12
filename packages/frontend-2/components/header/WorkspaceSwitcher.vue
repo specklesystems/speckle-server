@@ -4,15 +4,13 @@
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open workspace menu</span>
         <div class="flex items-center gap-2 p-0.5 hover:bg-highlight-2 rounded">
-          <WorkspaceAvatar
-            :name="
-              (isProjectsActive ? 'Personal projects' : activeWorkspace?.name) || ''
-            "
-            :logo="activeWorkspace?.logo"
-          />
-          <p class="text-body-xs text-foreground">
-            {{ isProjectsActive ? 'Personal projects' : activeWorkspace?.name }}
-          </p>
+          <template v-if="activeWorkspaceSlug || isProjectsActive">
+            <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
+            <p class="text-body-xs text-foreground">
+              {{ displayName }}
+            </p>
+          </template>
+          <HeaderLogoBlock v-else no-link />
           <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
         </div>
       </MenuButton>
@@ -27,18 +25,15 @@
         <MenuItems
           class="absolute left-4 top-14 w-64 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
-          <div class="p-2 pb-3 flex flex-col gap-y-4">
+          <div
+            v-if="activeWorkspaceSlug || isProjectsActive"
+            class="p-2 pb-3 flex flex-col gap-y-4"
+          >
             <div class="flex gap-x-2 items-center">
-              <WorkspaceAvatar
-                :name="
-                  (isProjectsActive ? 'Personal projects' : activeWorkspace?.name) || ''
-                "
-                :logo="activeWorkspace?.logo"
-                size="lg"
-              />
+              <WorkspaceAvatar :name="displayName" :logo="displayLogo" size="lg" />
               <div class="flex flex-col space-between">
                 <p class="text-body-xs text-foreground">
-                  {{ isProjectsActive ? 'Personal projects' : activeWorkspace?.name }}
+                  {{ displayName }}
                 </p>
                 <p
                   v-if="activeWorkspace"
@@ -112,7 +107,6 @@
     </Menu>
 
     <InviteDialogWorkspace
-      v-if="activeWorkspace"
       v-model:open="showInviteDialog"
       :workspace="activeWorkspace"
     />
@@ -129,13 +123,9 @@ import {
   projectsRoute
 } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import {
-  useUserWorkspaces,
-  useUserDiscoverableWorkspaces
-} from '~/lib/user/composables/workspaces'
+import { useUserWorkspaces } from '~/lib/user/composables/workspaces'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { graphql } from '~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
-import { headerWorkspaceSwitcherQuery } from '~~/lib/navigation/graphql/queries'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 graphql(`
@@ -153,39 +143,42 @@ graphql(`
   }
 `)
 
-const route = useRoute()
 const { isGuest } = useActiveUser()
 const menuButtonId = useId()
 const mixpanel = useMixpanel()
-const { workspaces, hasWorkspaces } = useUserWorkspaces()
-const { hasDiscoverableWorkspaces, discoverableWorkspacesCount } =
-  useUserDiscoverableWorkspaces()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
-const { result } = useQuery(
-  headerWorkspaceSwitcherQuery,
-  () => ({
-    slug: activeWorkspaceSlug.value || ''
-  }),
-  () => ({
-    enabled: !!activeWorkspaceSlug.value
-  })
-)
+const {
+  activeWorkspaceSlug,
+  isProjectsActive,
+  mutateActiveWorkspaceSlug,
+  mutateIsProjectsActive,
+  workspaceData
+} = useNavigation()
 
 const showInviteDialog = ref(false)
 
 const activeWorkspace = computed(() => {
-  return result.value?.workspaceBySlug
+  return workspaceData.value
 })
+
+const displayName = computed(() => activeWorkspace.value?.name || 'Legacy projects')
+
+const displayLogo = computed(() => {
+  if (isProjectsActive.value) return null
+  return activeWorkspace.value?.logo
+})
+
+const route = useRoute()
+const { workspaces, hasWorkspaces } = useUserWorkspaces()
+const { hasDiscoverableWorkspaces, discoverableWorkspacesCount } =
+  useDiscoverableWorkspaces()
 
 const onWorkspaceSelect = (slug: string) => {
   navigateTo(workspaceRoute(slug))
-  isProjectsActive.value = false
-  activeWorkspaceSlug.value = slug
+  mutateActiveWorkspaceSlug(slug)
 }
 
 const onProjectsSelect = () => {
-  activeWorkspaceSlug.value = null
-  isProjectsActive.value = true
+  mutateIsProjectsActive(true)
   navigateTo(projectsRoute)
 }
 

@@ -11,7 +11,8 @@ import {
   GetWorkspaceDomains,
   UpdateWorkspace,
   GetWorkspaceBySlug,
-  UpdateWorkspaceRole
+  UpdateWorkspaceRole,
+  EnsureValidWorkspaceRoleSeat
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -126,13 +127,15 @@ export const createWorkspaceFactory =
     upsertWorkspaceRole,
     generateValidSlug,
     validateSlug,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    ensureValidWorkspaceRoleSeat
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     validateSlug: ValidateWorkspaceSlug
     generateValidSlug: GenerateValidSlug
     emitWorkspaceEvent: EventBus['emit']
+    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
   }) =>
   async ({
     userId,
@@ -166,12 +169,19 @@ export const createWorkspaceFactory =
       discoverabilityEnabled: false
     }
     await upsertWorkspace({ workspace })
+
     // assign the creator as workspace administrator
+    const role = Roles.Workspace.Admin
     await upsertWorkspaceRole({
       userId,
-      role: Roles.Workspace.Admin,
+      role,
       workspaceId: workspace.id,
       createdAt: new Date()
+    })
+    await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId: workspace.id,
+      role
     })
 
     // emit a workspace created event
@@ -370,7 +380,7 @@ export const deleteWorkspaceRoleFactory =
     // Emit deleted role
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleDeleted,
-      payload: deletedRole
+      payload: { acl: deletedRole }
     })
 
     return deletedRole
@@ -396,13 +406,15 @@ export const updateWorkspaceRoleFactory =
     getWorkspaceWithDomains,
     findVerifiedEmailsByUserId,
     upsertWorkspaceRole,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    ensureValidWorkspaceRoleSeat
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceWithDomains: GetWorkspaceWithDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
+    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
   }): UpdateWorkspaceRole =>
   async ({
     workspaceId,
@@ -465,13 +477,21 @@ export const updateWorkspaceRoleFactory =
       role: nextWorkspaceRole,
       createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
+    const { type } = await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId,
+      role: nextWorkspaceRole
+    })
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
       payload: {
-        userId,
-        workspaceId,
-        role: nextWorkspaceRole,
+        acl: {
+          userId,
+          workspaceId,
+          role: nextWorkspaceRole
+        },
+        seatType: type,
         flags: {
           skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
         }

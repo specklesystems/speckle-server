@@ -68,7 +68,10 @@
               />
             </NuxtLink>
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
+          <LayoutSidebarMenuGroup
+            v-if="showWorkspaceSettings"
+            title="Workspace settings"
+          >
             <template v-if="isWorkspaceNewPlansEnabled" #title-icon>
               <IconWorkspaces class="size-4" />
             </template>
@@ -221,12 +224,12 @@ graphql(`
   }
 `)
 
-const { activeWorkspaceSlug } = useNavigation()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { activeWorkspaceSlug } = useNavigation()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin } = useActiveUser()
 const route = useRoute()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: computed(() => isWorkspacesEnabled.value)
 })
@@ -262,5 +265,11 @@ const exitSettingsRoute = computed(() => {
     return homeRoute
   }
   return settingsMenuState.value.previousRoute
+})
+
+const showWorkspaceSettings = computed(() => {
+  if (!isWorkspacesEnabled.value) return false
+  if (isWorkspaceNewPlansEnabled.value) return !!activeWorkspaceSlug.value
+  return true
 })
 </script>

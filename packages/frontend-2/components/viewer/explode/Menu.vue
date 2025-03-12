@@ -7,10 +7,11 @@
     <template #trigger-icon>
       <IconExplode
         class="h-4 w-4 sm:h-5 sm:w-5"
-        :class="{ 'text-foreground-2': !isActive }"
+        :class="{ 'text-foreground': !isActive }"
       />
     </template>
-    <div class="w-56 p-2 flex flex-col space-y-2">
+    <template #title>Explode</template>
+    <div class="w-56 px-2 py-2.5 flex flex-col space-y-2">
       <div class="flex items-center space-x-1">
         <input
           id="intensity"
@@ -22,7 +23,7 @@
           max="1"
           step="0.01"
         />
-        <label class="text-body-xs text-foreground-2" for="intensity">Intensity</label>
+        <label class="text-body-2xs" for="intensity">Intensity</label>
       </div>
     </div>
   </ViewerMenu>
