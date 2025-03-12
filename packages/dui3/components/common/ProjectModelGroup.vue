@@ -96,7 +96,10 @@
       />
     </div>
   </div>
-  <div v-else class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow">
+  <div
+    v-if="projectIsAccesible && !projectIsAccesible"
+    class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
+  >
     <CommonAlert
       color="danger"
       with-dismiss
@@ -150,6 +153,7 @@ const props = defineProps<{
 const showModels = ref(true)
 const askDismissProjectQuestionDialog = ref(false)
 const writeAccessRequested = ref(false)
+const projectIsAccesible = ref(undefined)
 
 const projectAccount = computed(() =>
   accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
@@ -169,6 +173,10 @@ const removeProjectModels = async () => {
 }
 
 const projectDetails = computed(() => projectDetailsResult.value?.project)
+
+watch(projectDetails, (newValue) => {
+  projectIsAccesible.value = newValue !== undefined
+})
 
 const isProjectReadOnly = computed(() => {
   if (!projectDetails.value) return true
