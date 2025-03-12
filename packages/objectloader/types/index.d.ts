@@ -49,7 +49,7 @@ class ObjectLoader {
     onProgress: (e: { stage: ProgressStage; current: number; total: number }) => void
   ): SpeckleObject | SpeckleObject[]
 
-  async *getObjectIterator(): Generator<SpeckleObject, SpeckleObject>
+  async *getObjectIterator(): AsyncGenerator<SpeckleObject, SpeckleObject>
   async getObject(id: string): Promise<Record<string, unknown>>
   dispose(): void
 }
