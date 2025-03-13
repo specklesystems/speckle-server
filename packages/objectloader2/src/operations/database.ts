@@ -1,13 +1,12 @@
-import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import {
   Base,
   CustomLogger,
   isString,
   Item,
   BaseDatabaseOptions,
-  isBase
+  asBase
 } from '../types/types.js'
-import { isSafari } from '@speckle/shared'
+import { ensureError, isSafari } from '@speckle/shared'
 
 type ReadBatchFuture = {
   key: string
@@ -53,12 +52,8 @@ export default class CacheDatabase {
       }
 
       request.onsuccess = () => resolve(request.result)
-      request.onerror = () =>
-        reject(
-          request.error instanceof Error
-            ? request.error
-            : new Error(String(request.error))
-        )
+      request.onerror = (e) =>
+        reject(ensureError(e, 'Failed to open IndexedDB database'))
     })
   }
 
@@ -119,11 +114,7 @@ export default class CacheDatabase {
       const cachedData = await Promise.all(idbChildrenPromises)
 
       for (const cachedObj of cachedData) {
-        if (
-          !cachedObj.obj ||
-          (isString(cachedObj.obj) &&
-            (cachedObj.obj as unknown as string).startsWith('<html'))
-        ) {
+        if (isString(cachedObj.obj)) {
           continue
         }
         ret[cachedObj.id] = cachedObj.obj
@@ -153,15 +144,12 @@ export default class CacheDatabase {
     const request = store.get(future.key)
     request.onsuccess = () => {
       this._activeReaders--
-      if (!isBase(request.result)) {
-        throw new ObjectLoaderRuntimeError('json is not a base')
-      }
-      future.resolve(request.result as Base)
+      future.resolve(asBase(request.result))
       this.processReadQueue() // Process the next request
     }
 
-    request.onerror = () => {
-      console.error('IndexedDB Read Error:', request.error)
+    request.onerror = (e) => {
+      console.error('IndexedDB Read Error:', e)
       this._activeReaders--
       future.error(null)
       this.processReadQueue()
@@ -206,24 +194,16 @@ export default class CacheDatabase {
   private promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
     return new Promise((resolve, reject) => {
       request.oncomplete = () => resolve()
-      request.onerror = () =>
-        reject(
-          request.error instanceof Error
-            ? request.error
-            : new Error(String(request.error))
-        )
+      request.onerror = (e) =>
+        reject(ensureError(e, 'Failed to open Transaction for database'))
     })
   }
 
   private promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
-      request.onerror = () =>
-        reject(
-          request.error instanceof Error
-            ? request.error
-            : new Error(String(request.error))
-        )
+      request.onerror = (e) =>
+        reject(ensureError(e, 'Failed to open request for database'))
     })
   }
 

@@ -1,3 +1,5 @@
+import { ObjectLoaderRuntimeError } from './errors.js'
+
 export type CustomLogger = (message?: string, ...optionalParams: unknown[]) => void
 
 export interface Item {
@@ -10,7 +12,7 @@ export interface Base {
   __closure?: Record<string, number>
 }
 
-export function isString(value: unknown): boolean {
+export function isString(value?: unknown): boolean {
   return typeof value === 'string'
 }
 
@@ -31,11 +33,18 @@ export function chunk<T>(array: T[], size: number): T[][] {
   return result
 }
 
-export function isBase(maybeBase: unknown): boolean {
+export function isBase(maybeBase?: unknown): boolean {
   return (
     maybeBase !== null &&
     typeof maybeBase === 'object' &&
     'id' in maybeBase &&
     typeof maybeBase.id === 'string'
   )
+}
+
+export function asBase(maybeBase?: unknown): Base {
+  if (!isBase(maybeBase)) {
+    throw new ObjectLoaderRuntimeError('maybeBase is not a base')
+  }
+  return maybeBase as Base
 }

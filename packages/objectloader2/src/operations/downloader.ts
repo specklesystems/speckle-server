@@ -1,7 +1,7 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { Base, CustomLogger, isBase, Item } from '../types/types.js'
+import { asBase, Base, CustomLogger, Item } from '../types/types.js'
 
 export default class Downloader {
   private _logger: CustomLogger
@@ -70,11 +70,7 @@ export default class Downloader {
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
     }
-    if (!isBase(obj)) {
-      throw new ObjectLoaderRuntimeError('root is not a base')
-    }
-    const objBase = obj as Base
-    return { id: id, obj: objBase }
+    return { id: id, obj: asBase(obj) }
   }
 
   static async downloadBatch(
