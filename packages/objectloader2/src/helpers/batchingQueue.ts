@@ -1,4 +1,4 @@
-export class BatchProcessor<T> {
+export default class BatchingQueue<T> {
   private queue: T[] = []
   private batchSize: number
   private batchTime: number
@@ -19,7 +19,9 @@ export class BatchProcessor<T> {
     if (this.queue.length >= this.batchSize) {
       await this.flush()
     } else if (!this.timeout) {
-      this.timeout = window.setTimeout(() => this.flush(), this.batchTime)
+      this.timeout = window.setTimeout(() => {
+        void this.flush()
+      }, this.batchTime)
     }
   }
   async add(item: T): Promise<void> {

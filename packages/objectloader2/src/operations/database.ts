@@ -1,4 +1,10 @@
-import { Base, CustomLogger, isString, Item, BaseDatabaseOptions } from './types.js'
+import {
+  Base,
+  CustomLogger,
+  isString,
+  Item,
+  BaseDatabaseOptions
+} from '../types/types.js'
 import { isSafari } from '@speckle/shared'
 
 type ReadBatchFuture = {
@@ -13,7 +19,7 @@ type WriteBatchFuture = {
   error: (reason?: unknown) => void
 }
 
-export default class BaseDatabase {
+export default class CacheDatabase {
   private static _databaseName: string = 'speckle-object-cache'
   private static _storeName: string = 'objects'
   private _options: BaseDatabaseOptions
@@ -64,8 +70,8 @@ export default class BaseDatabase {
     // Initialize
     await this.safariFix()
     this._cacheDB = await this.openDatabase(
-      BaseDatabase._databaseName,
-      BaseDatabase._storeName
+      CacheDatabase._databaseName,
+      CacheDatabase._storeName
     )
     return true
   }
@@ -76,9 +82,9 @@ export default class BaseDatabase {
     }
     try {
       const store = this._cacheDB!.transaction(
-        BaseDatabase._storeName,
+        CacheDatabase._storeName,
         'readwrite'
-      ).objectStore(BaseDatabase._storeName)
+      ).objectStore(CacheDatabase._storeName)
       for (const obj of objects) {
         store.put(obj.obj, obj.id)
       }
@@ -100,9 +106,9 @@ export default class BaseDatabase {
       const idsChunk = ids.slice(i, i + 500)
 
       const store = this._cacheDB!.transaction(
-        BaseDatabase._storeName,
+        CacheDatabase._storeName,
         'readonly'
-      ).objectStore(BaseDatabase._storeName)
+      ).objectStore(CacheDatabase._storeName)
       const idbChildrenPromises = idsChunk.map<Promise<Item>>((id) =>
         this.promisifyIdbRequest(store.get(id)).then(
           (obj: Base) => ({ id, obj } as Item)
@@ -139,8 +145,8 @@ export default class BaseDatabase {
     const future = this._readQueue.shift()
     if (future === undefined) return
 
-    const transaction = this._cacheDB!.transaction(BaseDatabase._storeName, 'readonly')
-    const store = transaction.objectStore(BaseDatabase._storeName)
+    const transaction = this._cacheDB!.transaction(CacheDatabase._storeName, 'readonly')
+    const store = transaction.objectStore(CacheDatabase._storeName)
     const request = store.get(future.key)
     request.onsuccess = () => {
       this._activeReaders--
@@ -171,8 +177,11 @@ export default class BaseDatabase {
     const future = this._writeQueue.shift()
     if (future === undefined) return
 
-    const transaction = this._cacheDB!.transaction(BaseDatabase._storeName, 'readwrite')
-    const store = transaction.objectStore(BaseDatabase._storeName)
+    const transaction = this._cacheDB!.transaction(
+      CacheDatabase._storeName,
+      'readwrite'
+    )
+    const store = transaction.objectStore(CacheDatabase._storeName)
     store.put(future.obj)
 
     transaction.oncomplete = () => {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import ObjectLoader2 from './ObjectLoader2.js'
+import ObjectLoader2 from './operations/objectLoader2.js'
 
 describe('random test examples', () => {
   test('run fine', () => {

@@ -1,8 +1,8 @@
-import AsyncBuffer from './AsyncBuffer.js'
-import { BatchProcessor } from './BatchProcessor.js'
-import { Base, CustomLogger, Item } from './types.js'
+import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import BatchingQueue from '../helpers/batchingQueue.js'
+import { Base, CustomLogger, Item } from '../types/types.js'
 
-export default class BaseDownloader {
+export default class Downloader {
   private _logger: CustomLogger
 
   private _serverUrl: string
@@ -11,14 +11,14 @@ export default class BaseDownloader {
   private _requestUrlChildren: string
   private _headers: HeadersInit
 
-  private _idQueue: BatchProcessor<string>
+  private _idQueue: BatchingQueue<string>
   //private _activeReaders = 0
   //private _readerPoolSize = 5
 
-  private _results: AsyncBuffer<Item>
+  private _results: AsyncGeneratorQueue<Item>
 
   constructor(
-    results: AsyncBuffer<Item>,
+    results: AsyncGeneratorQueue<Item>,
     logger: CustomLogger,
     serverUrl: string,
     streamId: string,
@@ -30,8 +30,8 @@ export default class BaseDownloader {
     this._serverUrl = serverUrl
     this._streamId = streamId
     this._token = token
-    this._idQueue = new BatchProcessor<string>(200, 1000, (batch: string[]) =>
-      BaseDownloader.downloadBatch(
+    this._idQueue = new BatchingQueue<string>(200, 1000, (batch: string[]) =>
+      Downloader.downloadBatch(
         batch,
         this._requestUrlChildren,
         this._headers,
@@ -61,7 +61,7 @@ export default class BaseDownloader {
     idBatch: string[],
     url: string,
     headers: HeadersInit,
-    results: AsyncBuffer<Item>
+    results: AsyncGeneratorQueue<Item>
   ): Promise<void> {
     const response = await fetch(url, {
       method: 'POST',
@@ -85,9 +85,9 @@ export default class BaseDownloader {
       buffer += decoder.decode(value, { stream: true })
 
       // Try to process JSON objects from the buffer
-      let boundary = buffer.indexOf('\n')
+      const boundary = buffer.indexOf('\n')
       if (boundary !== -1) {
-        let jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
+        const jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
         buffer = buffer.substring(boundary + 1) // Keep the rest for the next chunk
 
         try {

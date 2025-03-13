@@ -1,8 +1,8 @@
-import AsyncBuffer from './AsyncBuffer.js'
-import BaseDatabase from './BaseDatabase.js'
-import BaseDownloader from './BaseDownloader.js'
-import { ObjectLoaderRuntimeError } from './errors.js'
-import { CustomLogger, Base, Item, ObjectLoader2Options } from './types.js'
+import AsyncBuffer from '../helpers/asyncGeneratorQueue.js'
+import BaseDatabase from './database.js'
+import BaseDownloader from './downloader.js'
+import { ObjectLoaderRuntimeError } from '../types/errors.js'
+import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
 
 export default class ObjectLoader2 {
   private _serverUrl: string

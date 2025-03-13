@@ -1,4 +1,4 @@
-export default class AsyncBuffer<T> {
+export default class AsyncGeneratorQueue<T> {
   private buffer: T[] = []
   private resolveQueue: ((value: T) => void)[] = []
 
