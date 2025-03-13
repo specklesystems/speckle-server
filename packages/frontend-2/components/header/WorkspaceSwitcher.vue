@@ -94,13 +94,22 @@
               </div>
             </LayoutSidebarMenuGroup>
           </div>
-          <MenuItem v-if="hasDiscoverableWorkspaces" class="p-3">
-            <NuxtLink class="flex justify-between items-center">
-              <p class="text-body-xs text-foreground">Join existing workspaces</p>
-              <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
-                {{ discoverableWorkspacesCount }}
-              </CommonBadge>
-            </NuxtLink>
+          <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
+            <div class="p-2">
+              <NuxtLink
+                class="flex justify-between items-center cursor-pointer hover:bg-highlight-1 py-1 px-2 rounded"
+                @click="showDiscoverableWorkspacesModal = true"
+              >
+                <p class="text-body-xs text-foreground">Join existing workspaces</p>
+                <CommonBadge
+                  v-if="hasDiscoverableWorkspaces"
+                  color-classes="bg-foundation-2 text-foreground-2"
+                  rounded
+                >
+                  {{ discoverableWorkspacesCount }}
+                </CommonBadge>
+              </NuxtLink>
+            </div>
           </MenuItem>
         </MenuItems>
       </Transition>
@@ -109,6 +118,10 @@
     <InviteDialogWorkspace
       v-model:open="showInviteDialog"
       :workspace="activeWorkspace"
+    />
+
+    <WorkspaceDiscoverableWorkspacesModal
+      v-model:open="showDiscoverableWorkspacesModal"
     />
   </div>
 </template>
@@ -155,6 +168,7 @@ const {
 } = useNavigation()
 
 const showInviteDialog = ref(false)
+const showDiscoverableWorkspacesModal = ref(false)
 
 const activeWorkspace = computed(() => {
   return workspaceData.value
@@ -169,8 +183,11 @@ const displayLogo = computed(() => {
 
 const route = useRoute()
 const { workspaces, hasWorkspaces } = useUserWorkspaces()
-const { hasDiscoverableWorkspaces, discoverableWorkspacesCount } =
-  useDiscoverableWorkspaces()
+const {
+  hasDiscoverableWorkspaces,
+  discoverableWorkspacesCount,
+  hasDiscoverableWorkspacesOrJoinRequests
+} = useDiscoverableWorkspaces()
 
 const onWorkspaceSelect = (slug: string) => {
   navigateTo(workspaceRoute(slug))
