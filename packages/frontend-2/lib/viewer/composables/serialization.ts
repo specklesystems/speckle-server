@@ -130,7 +130,7 @@ export function useStateSerialization() {
 export enum StateApplyMode {
   Spotlight,
   ThreadOpen,
-  TheadFullContextOpen,
+  ThreadFullContextOpen,
   Reset,
   FederatedContext
 }
@@ -259,7 +259,7 @@ export function useApplySerializedState() {
 
     // Handle resource string updates
     if (
-      [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
+      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
       await resourceIdString.update(state.resources.request.resourceIdString)
     } else if (mode === StateApplyMode.FederatedContext) {

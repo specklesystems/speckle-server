@@ -278,12 +278,17 @@ export const useCommentContext = () => {
       .filter((l) => l.resourceType === 'commit')
       .map((l) => l.resourceId)
 
-    const hasLoadedObjects = loadedResources.some((lr) =>
-      objectLinks.includes(lr.objectId)
-    )
-    const hasLoadedVersions = loadedResources.some(
-      (lr) => lr.versionId && commitLinks.includes(lr.versionId)
-    )
+    // Check if ALL of the thread's objects are loaded (not just any)
+    const hasLoadedObjects =
+      objectLinks.length > 0 &&
+      objectLinks.every((objId) => loadedResources.some((lr) => lr.objectId === objId))
+
+    // Check if ALL of the thread's commits are loaded (not just any)
+    const hasLoadedVersions =
+      commitLinks.length > 0 &&
+      commitLinks.every((commitId) =>
+        loadedResources.some((lr) => lr.versionId && lr.versionId === commitId)
+      )
 
     // Resource is loaded, check versions and federation
     const currentModels = state.resources.response.modelsAndVersionIds.value
@@ -315,7 +320,7 @@ export const useCommentContext = () => {
   )
 
   const loadContext = async (
-    mode: StateApplyMode.TheadFullContextOpen | StateApplyMode.FederatedContext
+    mode: StateApplyMode.ThreadFullContextOpen | StateApplyMode.FederatedContext
   ) => {
     const state = thread.value?.viewerState
     if (!state) return
@@ -325,7 +330,7 @@ export const useCommentContext = () => {
   }
 
   const onLoadThreadVersionContext = () =>
-    loadContext(StateApplyMode.TheadFullContextOpen)
+    loadContext(StateApplyMode.ThreadFullContextOpen)
   const onLoadFederatedContext = () => loadContext(StateApplyMode.FederatedContext)
 
   const goBack = async () => {

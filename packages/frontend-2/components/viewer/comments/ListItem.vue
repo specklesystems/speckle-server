@@ -26,7 +26,7 @@
             v-if="itemStatus.isDifferentVersion"
             v-tippy="'Conversation started in a different version.'"
           >
-            <ExclamationCircleIcon class="w-4 h-4" />
+            <ArrowLeftCircleIcon class="w-4 h-4" />
           </span>
           <span
             v-if="itemStatus.isFederatedModel"
@@ -55,7 +55,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon, ArrowLeftCircleIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
