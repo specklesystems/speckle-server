@@ -26,7 +26,10 @@ import {
   upsertObjectPreviewFactory
 } from '@/modules/previews/repository/previews'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
-import { initializeMetrics } from '@/modules/previews/observability/metrics'
+import {
+  initializeMetrics,
+  PreviewJobDurationStep
+} from '@/modules/previews/observability/metrics'
 
 const getPreviewQueues = (params: { responseQueueName: string }) => {
   const { responseQueueName } = params
@@ -131,6 +134,10 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
           { payload: payload.data, reason: parsedMessage.error },
           'Failed to parse previewResult payload'
         )
+
+        // as we can't parse the response we neither have a job ID nor a duration,
+        // we cannot get a duration to populate previewJobsProcessedSummary.observe
+
         done(parsedMessage.error)
         return
       }
@@ -151,9 +158,21 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
       })
 
       previewJobsProcessedSummary.observe(
-        { status: parsedMessage.data.status },
+        { status: parsedMessage.data.status, step: PreviewJobDurationStep.TOTAL },
         parsedMessage.data.result.durationSeconds * TIME.second
       )
+      if (parsedMessage.data.result.loadDurationSeconds) {
+        previewJobsProcessedSummary.observe(
+          { status: parsedMessage.data.status, step: PreviewJobDurationStep.LOAD },
+          parsedMessage.data.result.loadDurationSeconds * TIME.second
+        )
+      }
+      if (parsedMessage.data.result.renderDurationSeconds) {
+        previewJobsProcessedSummary.observe(
+          { status: parsedMessage.data.status, step: PreviewJobDurationStep.RENDER },
+          parsedMessage.data.result.renderDurationSeconds * TIME.second
+        )
+      }
 
       done()
     })

@@ -2,11 +2,9 @@ import { Page, Browser } from 'puppeteer'
 import { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
 import {
   JobPayload,
-  PreviewResultPayload,
-  PreviewSuccessPayload
+  PreviewResultPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
-import { Logger } from 'pino'
-import { timeoutAt } from '@speckle/shared'
+import type { Logger } from 'pino'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -48,13 +46,13 @@ export const jobProcessor = async ({
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
     logger.info({ status: result.status, elapsed }, jobMessage)
     return result
-  } catch (err) {
+  } catch (err: unknown) {
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.error({ err, elapsed }, jobMessage)
+    logger.error({ err, elapsed, status: 'error' }, jobMessage)
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()
-        : err instanceof Object
+        : typeof err === 'object' && err !== null
         ? err.toString()
         : 'unknown error'
 
@@ -77,7 +75,7 @@ const pageFunction = async ({
   port,
   timeout,
   logger
-}: PageArgs): Promise<PreviewSuccessPayload> => {
+}: PageArgs): Promise<PreviewResultPayload> => {
   page.on('error', (err) => {
     logger.error({ err }, 'Page crashed')
     throw err
@@ -85,9 +83,62 @@ const pageFunction = async ({
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
-    await window.load(job)
-    return await window.takeScreenshot()
+    // ====================
+    // This code runs in the browser context and has no access to the outer scope
+    // ====================
+    const start = new Date().getTime()
+    let loadDone = 0
+    let loadDurationSeconds = 0
+    try {
+      await window.load(job)
+      loadDone = new Date().getTime()
+      loadDurationSeconds = (loadDone - start) / 1000
+    } catch (e) {
+      const loadErrored = new Date().getTime()
+      const err =
+        e instanceof Error
+          ? e
+          : new Error('Unknown error in preview generation while loading the object')
+
+      return {
+        reason: err.message,
+        screenshots: {},
+        loadDurationSeconds: (loadErrored - start) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
+      }
+    }
+
+    try {
+      const renderResult = await window.takeScreenshot()
+      const renderDurationSeconds = (new Date().getTime() - loadDone) / 1000
+      return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
+    } catch (e) {
+      const loadErrored = new Date().getTime()
+      const err =
+        e instanceof Error
+          ? e
+          : new Error('Unknown error in preview generation while loading the object')
+      return {
+        reason: err.message,
+        screenshots: {},
+        loadDurationSeconds,
+        renderDurationSeconds: (loadErrored - loadDone) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
+      }
+    }
+    // ====================
+    // The code above runs in the browser context
+    // ====================
   }, job)
+
+  if (previewResult.reason) {
+    return {
+      jobId: job.jobId,
+      status: 'error',
+      reason: previewResult.reason,
+      result: previewResult
+    }
+  }
 
   return { jobId: job.jobId, status: 'success', result: previewResult }
 }
