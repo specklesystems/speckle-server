@@ -184,7 +184,11 @@ export default class SpeckleInstancedMesh extends Group {
     this.tas.refit()
   }
 
-  public updateDrawGroups(transformBuffer: Float32Array, gradientBuffer: Float32Array) {
+  public updateDrawGroups(
+    transformBuffer: Float32Array,
+    gradientBuffer: Float32Array,
+    objectIndexBuffer?: Float32Array
+  ) {
     this.instances.forEach((value: InstancedMesh) => {
       this.remove(value)
       value.customDepthMaterial?.dispose()
@@ -220,6 +224,18 @@ export default class SpeckleInstancedMesh extends Group {
           INSTANCE_GRADIENT_BUFFER_STRIDE
         )
       )
+      if (objectIndexBuffer)
+        group.geometry.setAttribute(
+          'objIndex',
+          new InstancedBufferAttribute(
+            objectIndexBuffer.subarray(
+              this.groups[k].start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
+              (this.groups[k].start + this.groups[k].count) /
+                INSTANCE_TRANSFORM_BUFFER_STRIDE
+            ),
+            INSTANCE_GRADIENT_BUFFER_STRIDE
+          )
+        )
       group.count = this.groups[k].count / INSTANCE_TRANSFORM_BUFFER_STRIDE
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)

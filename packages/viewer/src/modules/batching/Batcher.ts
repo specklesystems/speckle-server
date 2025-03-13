@@ -1,4 +1,4 @@
-import { MathUtils } from 'three'
+import { MathUtils, WebGLCapabilities } from 'three'
 import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
@@ -36,20 +36,18 @@ type BatchTypeMap = {
 }
 
 export default class Batcher {
-  private maxHardwareUniformCount = 0
-  private floatTextures = false
+  private caps: WebGLCapabilities
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   private minInstancedBatchVertices = 10000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
-  public constructor(maxUniformCount: number, floatTextures: boolean) {
-    this.maxHardwareUniformCount = maxUniformCount
+  public constructor(caps: WebGLCapabilities) {
+    this.caps = caps
     this.maxBatchObjects = Math.floor(
-      (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
+      (this.caps.maxVertexUniforms - Materials.UNIFORM_VECTORS_USED) / 4
     )
-    this.floatTextures = floatTextures
     this.materials = new Materials()
     void this.materials.createDefaultMaterials()
   }
@@ -299,7 +297,12 @@ export default class Batcher {
     const matRef = renderViews[0].renderData.renderMaterial
     const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
     const batchID = MathUtils.generateUUID()
-    const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
+    const geometryBatch = new InstancedMeshBatch(
+      batchID,
+      renderTree.id,
+      renderViews,
+      this.caps.isWebGL2
+    )
     geometryBatch.setBatchMaterial(material)
     await geometryBatch.buildBatch()
 
@@ -355,7 +358,7 @@ export default class Batcher {
           batchID,
           renderTree.id,
           renderViews,
-          this.floatTextures
+          this.caps.floatVertexTextures
             ? TransformStorage.VERTEX_TEXTURE
             : TransformStorage.UNIFORM_ARRAY
         )

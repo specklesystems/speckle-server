@@ -26,7 +26,7 @@ float getDepth( const in ivec2 screenPosition ) {
 	  return unpackRGBAToDepth( texelFetch( tDepth, screenPosition, 0 ) );
   #else
     vec2 cUv = vec2(0.5/size.x, 0.5/size.y);
-    return unpackRGBAToDepth( texture2D( tDepth, vec2(screenPosition/size) + cUv ) );
+    return unpackRGBAToDepth( texture2D( tDepth, vec2(screenPosition)/size + cUv ) );
   #endif
 
 }

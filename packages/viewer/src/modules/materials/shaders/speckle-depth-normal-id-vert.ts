@@ -8,8 +8,11 @@ export const speckleDepthNormalIdVert = /* glsl */ `
     uniform mat4 rteModelViewMatrix;
 #endif
 
-#ifdef TRANSFORM_STORAGE
+#if defined( TRANSFORM_STORAGE ) || ( defined( USE_INSTANCING ) && __VERSION__ == 100)
     attribute float objIndex;
+#endif
+
+#ifdef TRANSFORM_STORAGE
     #if TRANSFORM_STORAGE == 0
         #if __VERSION__ == 300
             #define TRANSFORM_STRIDE 4
@@ -23,10 +26,8 @@ export const speckleDepthNormalIdVert = /* glsl */ `
     #endif
 #endif
 
-#if defined( TRANSFORM_STORAGE ) || ( defined( USE_INSTANCING ) && __VERSION__ == 300 )
-    varying vec3 vIdColor;
-    uniform uint batchIndex;
-#endif
+varying vec3 vIdColor;
+uniform int batchIndex;
 
 #ifdef LINEAR_DEPTH
     varying vec4 vViewPosition;
@@ -135,35 +136,58 @@ varying vec2 vHighPrecisionZW;
     }
 #endif
 
-vec3 hashColor(uint id) {
-    // A simple integer hash function
-    id = (id ^ 61u) ^ (id >> 16u);
-    id = id * 9u;
-    id = id ^ (id >> 4u);
-    id = id * 0x27d4eb2du;
-    id = id ^ (id >> 15u);
 
-    return vec3(
-        float((id >> 16u) & 0xFFu) / 255.0,
-        float((id >> 8u) & 0xFFu) / 255.0,
-        float(id & 0xFFu) / 255.0
-    );
+/** Original glsl100 and glsl300 has functions. Good outputs but maybe a bit slow? */
+/*
+#if __VERSION__ == 300
+    vec3 hashColor(uint id) {
+        // A simple integer hash function
+        id = (id ^ 61u) ^ (id >> 16u);
+        id = id * 9u;
+        id = id ^ (id >> 4u);
+        id = id * 0x27d4eb2du;
+        id = id ^ (id >> 15u);
+
+        return vec3(
+            float((id >> 16u) & 0xFFu) / 255.0,
+            float((id >> 8u) & 0xFFu) / 255.0,
+            float(id & 0xFFu) / 255.0
+        );
+    }
+#elif __VERSION__ == 100
+    vec3 hashColor(float id) {
+        // Step 1: Simulate XOR by using mod and floating-point arithmetic
+        id = mod(id + 61.0, 4294967296.0);
+        id = mod(id - floor(id / 65536.0), 4294967296.0); // Approximate id ^ (id >> 16)
+        // Step 2: Multiply by 9 (same as original)
+        id = mod(id * 9.0, 4294967296.0);
+        // Step 3: Simulate XOR with division/mod trick
+        id = mod(id - floor(id / 16.0), 4294967296.0); // Approximate id ^ (id >> 4)
+        // Step 4: Multiply by large prime
+        id = mod(id * 666083407.0, 4294967296.0); // Approximate * 0x27d4eb2dU
+        // Step 5: Simulate final XOR
+        id = mod(id - floor(id / 32768.0), 4294967296.0); // Approximate id ^ (id >> 15)
+        // Convert hash to RGB by extracting "fake" bit shifts
+        return vec3(
+            mod(floor(id / 65536.0), 256.0) / 255.0, // Simulates (id >> 16) & 0xFF
+            mod(floor(id / 256.0), 256.0) / 255.0,   // Simulates (id >> 8) & 0xFF
+            mod(id, 256.0) / 255.0                   // Simulates id & 0xFF
+        );
+    }
+#endif
+*/
+
+/** Simpler hash function works on both glsl versions */
+highp vec3 hashColor(float id) {
+    // Large prime multipliers
+    highp float r = mod(id * 127.1, 256.0) / 255.0;
+    highp float g = mod(id * 987.654, 256.0) / 255.0;
+    highp float b = mod(id * 4321.123, 256.0) / 255.0;
+    
+    return vec3(r, g, b);
 }
 
-vec3 hsvToRgb(vec3 c) {
-    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-/** Not sure about this... */
-vec3 goldenRatioColor(uint id) {
-    float goldenRatioConjugate = 0.61803398875; // 1/phi
-    float hue = fract(float(id) * goldenRatioConjugate + 0.3); // Offset to avoid clustering
-    return hsvToRgb(vec3(hue, 0.7, 0.9)); // Convert to RGB
-}
-
-uint szudzikHash(uint x, uint y) {
+int szudzikHash(int x, int y) {
     return (x >= y) ? (x * x + x + y) : (y * y + x);
 }
 
@@ -224,10 +248,16 @@ void main() {
     vNormal = normalize( transformedNormal );
     
     #ifdef TRANSFORM_STORAGE
-        vIdColor = hashColor(szudzikHash(uint(objIndex), batchIndex));
+        vIdColor = hashColor(float(szudzikHash(int(objIndex), batchIndex)));
     #else
-        #if defined( USE_INSTANCING ) && __VERSION__ == 300
-            vIdColor = hashColor(szudzikHash(uint(gl_InstanceID), batchIndex));
+        #if defined( USE_INSTANCING ) 
+            #if __VERSION__ == 300
+                vIdColor = hashColor(float(szudzikHash(int(gl_InstanceID), batchIndex)));
+            #elif __VERSION__ == 100
+                vIdColor = hashColor(float(szudzikHash(int(objIndex), batchIndex)));
+            #endif
+        #else
+            vIdColor = vec3(0.);
         #endif
     #endif
 

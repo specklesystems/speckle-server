@@ -234,7 +234,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.systems/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.systems/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.systems/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.systems/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://app.speckle.systems/streams/7ce9010d71/commits/afda4ffdf8'
@@ -480,6 +480,8 @@ const getStream = () => {
 
     // Engine thing with outlines
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
+
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
   )
 }
 
