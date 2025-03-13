@@ -85,6 +85,7 @@ export default class Downloader implements Queue<string> {
       body: JSON.stringify({ objects: JSON.stringify(idBatch) })
     })
 
+    console.log('downloading ' + idBatch.length)
     if (!response.body) {
       throw new Error('ReadableStream not supported or response has no body.')
     }

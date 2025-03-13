@@ -105,9 +105,13 @@ export default class CacheDatabase {
         count++
         if (base === undefined) {
           notFound.add(id)
-          this._logger(`Object ${count} not found in cache`)
+          if (count % 1000 === 0) {
+            this._logger(`Object ${count} not found in cache`)
+          }
         } else {
-          this._logger(`Object ${count} found in cache`)
+          if (count % 1000 === 0) {
+            this._logger(`Object ${count} found in cache`)
+          }
           found.add({ id, obj: asBase(base) })
         }
       })
@@ -136,8 +140,8 @@ export default class CacheDatabase {
     return { id, obj: asBase(b) }
   }
 
-  write(obj: Item): void {
-    this._writeQueue.add(obj)
+  async write(obj: Item): Promise<void> {
+    await this._writeQueue.add(obj)
   }
 
   static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {

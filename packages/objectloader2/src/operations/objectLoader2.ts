@@ -26,7 +26,7 @@ export default class ObjectLoader2 {
 
     this._logger = options?.customLogger || console.log
 
-    this._database = new CacheDatabase(console.error)
+    this._database = new CacheDatabase(console.log)
     this._downloader = new Downloader(
       this._database,
       this._gathered,
@@ -58,7 +58,7 @@ export default class ObjectLoader2 {
     }
     yield rootItem
     if (!rootItem.obj.__closure) return
-    await this._database.cacheGetObjects(
+    const getPromise = this._database.cacheGetObjects(
       Object.keys(rootItem.obj.__closure),
       this._gathered,
       this._downloader
@@ -66,6 +66,7 @@ export default class ObjectLoader2 {
     for await (const item of this._gathered.consume()) {
       yield item
     }
+    await getPromise
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
@@ -74,7 +75,7 @@ export default class ObjectLoader2 {
     for await (const item of this.getRawObjectIterator()) {
       this._buffer[item.id] = item.obj
       count++
-      if (count % 100 === 0) {
+      if (count % 1000 === 0) {
         this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
       }
       yield item.obj
