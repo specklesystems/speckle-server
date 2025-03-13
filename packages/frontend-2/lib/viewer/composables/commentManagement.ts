@@ -23,7 +23,10 @@ import {
   markCommentViewedMutation
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerState,
+  type LoadedCommentThread
+} from '~~/lib/viewer/composables/setup'
 import type { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
@@ -34,6 +37,7 @@ import {
   StateApplyMode
 } from '~~/lib/viewer/composables/serialization'
 import { useRouter } from 'vue-router'
+import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -255,9 +259,12 @@ export const useCommentContext = () => {
 
   const thread = computed(() => state.ui.threads.openThread.thread.value)
 
-  const threadResourceStatus = computed(() => {
+  const calculateThreadResourceStatus = (
+    threadData: LoadedCommentThread | CommentBubbleModel | null | undefined
+  ) => {
+    if (!threadData) return { isLoaded: false }
     const loadedResources = state.resources.response.resourceItems.value
-    const resourceLinks = thread.value?.resources
+    const resourceLinks = threadData?.resources
 
     if (!resourceLinks) {
       return { isLoaded: false }
@@ -280,7 +287,7 @@ export const useCommentContext = () => {
 
     // Resource is loaded, check versions and federation
     const currentModels = state.resources.response.modelsAndVersionIds.value
-    const threadModels = thread.value.viewerResources.filter(
+    const threadModels = threadData.viewerResources.filter(
       (r): r is typeof r & { modelId: string; versionId: string } =>
         r.modelId !== null && r.versionId !== null
     )
@@ -301,7 +308,11 @@ export const useCommentContext = () => {
       isDifferentVersion: hasDifferentVersions,
       isFederatedModel: hasFederatedModels
     }
-  })
+  }
+
+  const threadResourceStatus = computed(() =>
+    calculateThreadResourceStatus(thread.value)
+  )
 
   const loadContext = async (
     mode: StateApplyMode.TheadFullContextOpen | StateApplyMode.FederatedContext
@@ -330,6 +341,7 @@ export const useCommentContext = () => {
 
   return {
     threadResourceStatus,
+    calculateThreadResourceStatus,
     onLoadThreadVersionContext,
     onLoadFederatedContext,
     goBack,

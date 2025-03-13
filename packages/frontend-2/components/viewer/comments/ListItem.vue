@@ -23,13 +23,13 @@
         </div>
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <span
-            v-if="threadResourceStatus.isDifferentVersion"
+            v-if="itemStatus.isDifferentVersion"
             v-tippy="'Conversation started in a different version.'"
           >
             <ExclamationCircleIcon class="w-4 h-4" />
           </span>
           <span
-            v-if="threadResourceStatus.isFederatedModel"
+            v-if="itemStatus.isFederatedModel"
             v-tippy="'References models not currently loaded.'"
           >
             <ExclamationCircleIcon class="w-4 h-4" />
@@ -102,7 +102,8 @@ const open = (id: string) => {
   })
 }
 
-const { threadResourceStatus } = useCommentContext()
+const { calculateThreadResourceStatus } = useCommentContext()
+const itemStatus = computed(() => calculateThreadResourceStatus(props.thread))
 
 const createdAt = computed(() => {
   return {
