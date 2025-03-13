@@ -97,7 +97,7 @@
               </MenuItem>
             </div>
           </div>
-          <div class="p-2 pt-1 max-h-98 overflow-y-auto simple-scrollbar">
+          <div class="p-2 pt-1 max-h-96 overflow-y-auto simple-scrollbar">
             <LayoutSidebarMenuGroup
               title="Workspaces"
               :icon-click="isGuest ? undefined : handlePlusClick"
