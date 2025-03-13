@@ -3,7 +3,7 @@
 const { ensureError } = require('@speckle/shared')
 const fs = require('fs')
 const path = require('node:path')
-const { finished } = require('node:stream/promises')
+const { pipeline } = require('node:stream/promises')
 
 module.exports = {
   async downloadFile({ fileId, streamId, token, destination, logger }) {
@@ -18,14 +18,21 @@ module.exports = {
       }
     )
     const writer = fs.createWriteStream(destination)
-    await finished(response.body.pipe(writer), (err) => {
-      if (err) {
-        logger.error(
-          ensureError(err, 'Unknown error while downloading file'),
-          `Error downloading file ${fileId}`
-        )
-      }
+
+    //handle errors
+    writer.on('error', (err) => {
+      logger.error(ensureError(err), `Error writing file ${destination}`)
     })
+    response.body.on('error', (err) => {
+      logger.error(ensureError(err), `Error reading from response body`)
+    })
+
+    //handle completion
+    writer.on('finish', () => {
+      logger.info(`File written to ${destination}`)
+    })
+
+    await pipeline(response.body, writer, { end: true })
   },
   async getFileInfoByName({ fileName, streamId, token }) {
     const response = await fetch(
