@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Speckle.Importers.Ifc;
 using Speckle.Sdk.Common;
+using Speckle.Sdk.Models.Extensions;
 
 var filePathArgument = new Argument<string>(name: "filePath");
 var outputPathArgument = new Argument<string>("outputPath");
@@ -31,9 +32,11 @@ rootCommand.SetHandler(
     }
     catch (Exception e)
     {
+      Console.WriteLine($"IFC Importer failed with exception {e.ToFormattedString()}");
+
       File.WriteAllText(
         outputPath,
-        JsonSerializer.Serialize(new { success = false, error = e.ToString() })
+        JsonSerializer.Serialize(new { success = false, error = e.ToFormattedString() })
       );
     }
   },
