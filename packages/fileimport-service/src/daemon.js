@@ -121,12 +121,16 @@ async function doTask(mainDb, regionName, taskDb, task) {
     })
     tempUserToken = token
 
+    taskLogger.info('Downloading file {fileId}')
+
     await downloadFile({
       fileId: info.id,
       streamId: info.streamId,
       token,
       destination: TMP_FILE_PATH
     })
+
+    taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
       if (FF_FILEIMPORT_IFC_DOTNET_ENABLED) {
@@ -243,7 +247,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
       [commitId, task.id]
     )
   } catch (err) {
-    taskLogger.error(err)
+    taskLogger.error(err, 'error while doing task')
     await taskDb.raw(
       `
       UPDATE file_uploads

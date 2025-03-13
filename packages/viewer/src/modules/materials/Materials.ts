@@ -425,6 +425,8 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).resolution = new Vector2()
     ;(<SpeckleLineMaterial>this.lineGhostMaterial).toneMapped = false
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).opacity = 0.1
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).transparent = true
 
     this.lineColoredMaterial = new SpeckleLineMaterial(
       {
