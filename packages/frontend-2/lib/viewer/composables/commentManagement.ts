@@ -329,9 +329,17 @@ export const useCommentContext = () => {
     await applyState(state, mode)
   }
 
-  const onLoadThreadVersionContext = () =>
+  const loadThreadVersionContext = () =>
     loadContext(StateApplyMode.ThreadFullContextOpen)
-  const onLoadFederatedContext = () => loadContext(StateApplyMode.FederatedContext)
+  const loadFederatedContext = () => loadContext(StateApplyMode.FederatedContext)
+
+  const handleContextClick = () => {
+    if (threadResourceStatus.value.isDifferentVersion) {
+      loadThreadVersionContext()
+    } else {
+      loadFederatedContext()
+    }
+  }
 
   const goBack = async () => {
     if (!previousRoute.value) {
@@ -347,8 +355,7 @@ export const useCommentContext = () => {
   return {
     threadResourceStatus,
     calculateThreadResourceStatus,
-    onLoadThreadVersionContext,
-    onLoadFederatedContext,
+    handleContextClick,
     goBack,
     hasClickedFullContext: computed(() => previousState.value !== null)
   }

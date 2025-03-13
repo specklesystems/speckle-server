@@ -250,13 +250,8 @@ const { disableTextSelection } = useDisableGlobalTextSelection()
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
-const {
-  onLoadThreadVersionContext,
-  hasClickedFullContext,
-  onLoadFederatedContext,
-  threadResourceStatus,
-  goBack
-} = useCommentContext()
+const { threadResourceStatus, hasClickedFullContext, goBack, handleContextClick } =
+  useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
@@ -548,14 +543,6 @@ const bannerButton = computed(() => {
     action: handleContextClick
   }
 })
-
-const handleContextClick = () => {
-  if (threadResourceStatus.value.isDifferentVersion) {
-    onLoadThreadVersionContext()
-  } else {
-    onLoadFederatedContext()
-  }
-}
 </script>
 <style scoped>
 @media (max-width: 640px) {
