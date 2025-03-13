@@ -251,6 +251,7 @@ export const useCommentContext = () => {
   type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
   const applyState = useApplySerializedState()
+  const { serialize } = useStateSerialization()
   const state = useInjectedViewerState()
   const router = useRouter()
 
@@ -324,8 +325,11 @@ export const useCommentContext = () => {
   ) => {
     const state = thread.value?.viewerState
     if (!state) return
+
+    // Store current state before applying new one
+    previousState.value = serialize()
     previousRoute.value = router.currentRoute.value.fullPath
-    previousState.value = state
+
     await applyState(state, mode)
   }
 
@@ -342,11 +346,15 @@ export const useCommentContext = () => {
   }
 
   const goBack = async () => {
-    if (!previousRoute.value) {
+    if (!previousState.value) {
       return
     }
 
-    await router.push(previousRoute.value)
+    await applyState(previousState.value, StateApplyMode.ThreadFullContextOpen)
+
+    if (previousRoute.value) {
+      await router.push(previousRoute.value)
+    }
 
     previousState.value = null
     previousRoute.value = null
