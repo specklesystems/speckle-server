@@ -195,14 +195,32 @@ export class ServerAPI {
   prepInsertionClosureBatch(
     batch: Array<{ parent: string | undefined; child: string | undefined }>
   ) {
-    batch.sort((a, b) =>
-      a.parent && b.parent && a.parent > b.parent
+    batch.sort((a, b) => {
+      return this.hasParent(a) && this.hasParent(b) && a.parent > b.parent
         ? 1
         : a.parent === b.parent
-        ? a.child && b.child && a.child > b.child
+        ? this.hasChild(a) && this.hasChild(b) && a.child > b.child
           ? 1
           : -1
         : -1
+    })
+  }
+
+  hasParent(maybeHasParent: unknown): maybeHasParent is { parent: string } {
+    return (
+      !!maybeHasParent &&
+      typeof maybeHasParent === 'object' &&
+      'parent' in maybeHasParent &&
+      typeof maybeHasParent.parent === 'string'
+    )
+  }
+
+  hasChild(maybeHasChild: unknown): maybeHasChild is { child: string } {
+    return (
+      !!maybeHasChild &&
+      typeof maybeHasChild === 'object' &&
+      'child' in maybeHasChild &&
+      typeof maybeHasChild.child === 'string'
     )
   }
 
