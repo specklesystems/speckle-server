@@ -52,7 +52,8 @@ module.exports = {
         fileId: file.id,
         streamId,
         token,
-        destination: path.join(destinationDir, mtlFile)
+        destination: path.join(destinationDir, mtlFile),
+        logger
       })
     }
   }

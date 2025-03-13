@@ -127,7 +127,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
       fileId: info.id,
       streamId: info.streamId,
       token,
-      destination: TMP_FILE_PATH
+      destination: TMP_FILE_PATH,
+      logger: taskLogger
     })
 
     taskLogger.info('Triggering importer for {fileType}')
