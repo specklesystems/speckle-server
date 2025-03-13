@@ -250,22 +250,9 @@ async function doTask(
 
     const output: unknown = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH, 'utf8'))
 
-    if (
-      !output ||
-      typeof output !== 'object' ||
-      !('success' in output) ||
-      !output.success ||
-      !('commitId' in output)
-    )
-      throw new Error(
-        output &&
-        typeof output === 'object' &&
-        'error' in output &&
-        output.error &&
-        typeof output.error === 'string'
-          ? output.error
-          : 'Unknown error'
-      )
+    if (!isSuccessOutput(output)) {
+      throw new Error(isErrorOutput(output) ? output.error : 'Unknown error')
+    }
 
     const commitId = output.commitId
 
@@ -317,6 +304,32 @@ async function doTask(
   if (mainServerApi && tempUserToken) {
     await mainServerApi.revokeTokenById(tempUserToken)
   }
+}
+
+function isSuccessOutput(
+  maybeSuccessOutput: unknown
+): maybeSuccessOutput is { success: true; commitId: string } {
+  return (
+    !!maybeSuccessOutput &&
+    typeof maybeSuccessOutput === 'object' &&
+    'success' in maybeSuccessOutput &&
+    typeof maybeSuccessOutput.success === 'boolean' &&
+    maybeSuccessOutput.success &&
+    'commitId' in maybeSuccessOutput &&
+    typeof maybeSuccessOutput.commitId === 'string'
+  )
+}
+
+function isErrorOutput(
+  maybeErrorOutput: unknown
+): maybeErrorOutput is { success: false; error: string } {
+  return (
+    !!maybeErrorOutput &&
+    typeof maybeErrorOutput === 'object' &&
+    'error' in maybeErrorOutput &&
+    typeof maybeErrorOutput.error === 'string' &&
+    !!maybeErrorOutput.error
+  )
 }
 
 function runProcessWithTimeout(
