@@ -5,7 +5,13 @@
         <span class="sr-only">Open workspace menu</span>
         <div class="flex items-center gap-2 p-0.5 hover:bg-highlight-2 rounded">
           <template v-if="activeWorkspaceSlug || isProjectsActive">
-            <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
+            <div class="relative">
+              <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
+              <div
+                v-if="hasDiscoverableWorkspaces"
+                class="absolute -top-[2px] -right-[2px] size-2.5 border border-foundation bg-primary rounded-full"
+              />
+            </div>
             <p class="text-body-xs text-foreground">
               {{ displayName }}
             </p>
@@ -63,6 +69,7 @@
                   full-width
                   color="outline"
                   size="sm"
+                  :disabled="activeWorkspace?.role !== Roles.Workspace.Admin"
                   @click="showInviteDialog = true"
                 >
                   Invite members
@@ -101,11 +108,7 @@
                 @click="showDiscoverableWorkspacesModal = true"
               >
                 <p class="text-body-xs text-foreground">Join existing workspaces</p>
-                <CommonBadge
-                  v-if="hasDiscoverableWorkspaces"
-                  color-classes="bg-foundation-2 text-foreground-2"
-                  rounded
-                >
+                <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
                   {{ discoverableWorkspacesCount }}
                 </CommonBadge>
               </NuxtLink>
@@ -140,6 +143,7 @@ import { useUserWorkspaces } from '~/lib/user/composables/workspaces'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { graphql } from '~/lib/common/generated/gql'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment HeaderWorkspaceSwitcher_Workspace on Workspace {
@@ -147,6 +151,7 @@ graphql(`
     id
     name
     logo
+    role
     plan {
       name
     }

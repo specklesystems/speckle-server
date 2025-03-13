@@ -4,11 +4,13 @@
     <p class="text-body-xs text-foreground-2 pb-3">
       Workspaces that match your email domain
     </p>
-    <WorkspaceDiscoverableWorkspacesCard
-      v-for="workspace in discoverableWorkspacesAndJoinRequests"
-      :key="workspace.id"
-      :workspace="workspace"
-    />
+    <div class="flex flex-col gap-y-3">
+      <WorkspaceDiscoverableWorkspacesCard
+        v-for="workspace in discoverableWorkspacesAndJoinRequests"
+        :key="workspace.id"
+        :workspace="workspace"
+      />
+    </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
