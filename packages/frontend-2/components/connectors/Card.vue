@@ -1,8 +1,6 @@
 <template>
   <div>
-    <CommonCard
-      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
-    >
+    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3">
       <div class="flex gap-2 items-center">
         <img
           v-if="connector.image"
@@ -11,12 +9,6 @@
           class="w-[48px] -ml-1"
         />
         <div class="flex flex-col gap-y-1.5">
-          <p
-            v-if="connector.isComingSoon"
-            class="text-body-3xs text-foreground-2 leading-none"
-          >
-            Coming soon
-          </p>
           <h2 class="text-body-xs text-foreground font-medium leading-none">
             {{ connector.title }}
           </h2>
@@ -25,7 +17,7 @@
       <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
         {{ connector.description }}
       </p>
-      <div class="space-x-2 mt-2">
+      <div class="space-x-1 mt-2">
         <FormButton
           color="outline"
           size="sm"
@@ -38,13 +30,12 @@
             })
           "
         >
-          {{ connector.isComingSoon ? 'Coming soon' : 'Install' }}
+          {{ connector.isComingSoon ? 'Coming soon' : 'Install for Windows' }}
         </FormButton>
         <FormButton
           v-if="connector.url"
-          color="outline"
+          color="subtle"
           size="sm"
-          text
           target="_blank"
           external
           :to="connector.url"
