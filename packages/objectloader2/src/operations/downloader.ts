@@ -70,7 +70,7 @@ export default class Downloader {
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
     }
-    if (isBase(obj)) {
+    if (!isBase(obj)) {
       throw new ObjectLoaderRuntimeError('root is not a base')
     }
     const objBase = obj as Base

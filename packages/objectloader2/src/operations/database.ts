@@ -153,7 +153,7 @@ export default class CacheDatabase {
     const request = store.get(future.key)
     request.onsuccess = () => {
       this._activeReaders--
-      if (isBase(request.result)) {
+      if (!isBase(request.result)) {
         throw new ObjectLoaderRuntimeError('json is not a base')
       }
       future.resolve(request.result as Base)
