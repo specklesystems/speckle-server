@@ -1,6 +1,6 @@
 import AsyncBuffer from '../helpers/asyncGeneratorQueue.js'
-import BaseDatabase from './database.js'
-import BaseDownloader from './downloader.js'
+import CacheDatabase from './database.js'
+import Downloader from './downloader.js'
 import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
 
 export default class ObjectLoader2 {
@@ -10,8 +10,8 @@ export default class ObjectLoader2 {
 
   private _buffer: Record<string, Base> = {}
 
-  private _database: BaseDatabase
-  private _downloader: BaseDownloader
+  private _database: CacheDatabase
+  private _downloader: Downloader
   //private _requestUrlChildren: string
   private _headers: HeadersInit
 
@@ -28,10 +28,10 @@ export default class ObjectLoader2 {
 
     this._logger = options?.customLogger || console.log
 
-    this._database = new BaseDatabase(console.error)
-    this._downloader = new BaseDownloader(
+    this._database = new CacheDatabase(console.error)
+    this._downloader = new Downloader(
+      this._database,
       this._gathered,
-      this._logger,
       serverUrl,
       streamId,
       this._objectId,
@@ -49,13 +49,11 @@ export default class ObjectLoader2 {
     this._logger('Object loader constructor called!')
   }
 
-  async getRawRootObject(): Promise<Base | null> {
-    const cachedRootObject = await this._database.cacheGetObjects([this._objectId])
-    if (cachedRootObject === null) {
-      this._logger('No cached root object found!')
-      return null
+  async getRawRootObject(): Promise<Item | undefined> {
+    const cachedRootObject = await this._database.cacheGetObject(this._objectId)
+    if (cachedRootObject) {
+      return cachedRootObject
     }
-    if (cachedRootObject[this._objectId]) return cachedRootObject[this._objectId]
     const rootItem = await this._downloader.downloadSingle()
 
     await this._database.cacheStoreObjects([rootItem])
@@ -63,14 +61,18 @@ export default class ObjectLoader2 {
   }
 
   async *getRawObjectIterator(): AsyncGenerator<Item> {
-    const rootBase = await this.getRawRootObject()
-    if (rootBase === null) {
+    const rootItem = await this.getRawRootObject()
+    if (rootItem === undefined) {
       this._logger('No root object found!')
       return
     }
-    yield { id: this._objectId, obj: rootBase }
-    if (!rootBase.__closure) return
-    await this._downloader.setItems(Object.keys(rootBase.__closure))
+    yield rootItem
+    if (!rootItem.obj.__closure) return
+    this._database.cacheGetObjects(
+      Object.keys(rootItem.obj.__closure),
+      this._gathered,
+      this._downloader
+    )
     for await (const item of this._gathered.consume()) {
       yield item
     }
@@ -82,6 +84,9 @@ export default class ObjectLoader2 {
     for await (const item of this.getRawObjectIterator()) {
       this._buffer[item.id] = item.obj
       count++
+      if (count % 100 === 0) {
+        this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
+      }
       yield item.obj
     }
     this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)

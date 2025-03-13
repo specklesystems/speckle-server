@@ -1,43 +1,31 @@
+import BatchingQueue from '../helpers/batchingQueue.js'
+import Queue from '../helpers/queue.js'
 import {
   Base,
   CustomLogger,
-  isString,
   Item,
   BaseDatabaseOptions,
   asBase
 } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 
-type ReadBatchFuture = {
-  key: string
-  resolve: (obj: Base) => void
-  error: (reason?: unknown) => void
-}
-
-type WriteBatchFuture = {
-  obj: Base
-  resolve: () => void
-  error: (reason?: unknown) => void
-}
-
 export default class CacheDatabase {
-  private static _databaseName: string = 'speckle-object-cache'
+  private static _databaseName: string = 'speckle-cache'
   private static _storeName: string = 'objects'
   private _options: BaseDatabaseOptions
   private _logger: CustomLogger
 
   private _cacheDB?: IDBDatabase
-  private _readQueue: ReadBatchFuture[] = []
-  private _activeReaders = 0
-  private _readerPoolSize = 5
 
-  private _writeQueue: WriteBatchFuture[] = []
-  private _activeWriters = 0
-  private _writerPoolSize = 5
+  private _writeQueue: BatchingQueue<Item>
+  private toWriteCount = 0
 
   constructor(logger: CustomLogger, options?: BaseDatabaseOptions) {
     this._logger = logger
     this._options = options || new BaseDatabaseOptions()
+    this._writeQueue = new BatchingQueue<Item>(500, 1000, (batch: Item[]) =>
+      CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
+    )
   }
 
   private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
@@ -85,20 +73,23 @@ export default class CacheDatabase {
       for (const obj of objects) {
         store.put(obj.obj, obj.id)
       }
-      return this.promisifyIDBTransaction(store.transaction)
+      return CacheDatabase.promisifyIDBTransaction(store.transaction)
     } catch (e) {
       this._logger(e instanceof Error ? e.message : String(e))
     }
     return Promise.resolve()
   }
 
-  async cacheGetObjects(ids: string[]): Promise<Record<string, Base> | null> {
+  async cacheGetObjects(
+    ids: string[],
+    found: Queue<Item>,
+    notFound: Queue<string>
+  ): Promise<void> {
     if (!(await this.setupCacheDb())) {
-      return null
+      return
     }
 
-    const ret: Record<string, Base> = {}
-
+    let count = 0
     for (let i = 0; i < ids.length; i += 500) {
       const idsChunk = ids.slice(i, i + 500)
 
@@ -106,92 +97,57 @@ export default class CacheDatabase {
         CacheDatabase._storeName,
         'readonly'
       ).objectStore(CacheDatabase._storeName)
-      const idbChildrenPromises = idsChunk.map<Promise<Item>>((id) =>
-        this.promisifyIdbRequest(store.get(id)).then(
-          (obj: Base) => ({ id, obj } as Item)
-        )
-      )
-      const cachedData = await Promise.all(idbChildrenPromises)
-
-      for (const cachedObj of cachedData) {
-        if (isString(cachedObj.obj)) {
-          continue
+      const idbChildrenPromises = idsChunk.map<Promise<void>>(async (id) => {
+        const base = await CacheDatabase.promisifyIdbRequest(store.get(id))
+        count++
+        if (base === undefined) {
+          await notFound.add(id)
+          this._logger(`Object ${count} not found in cache`)
+        } else {
+          this._logger(`Object ${count} found in cache`)
+          await found.add({ id, obj: asBase(base) })
         }
-        ret[cachedObj.id] = cachedObj.obj
-      }
-    }
-
-    return ret
-  }
-
-  async readCache(key: string): Promise<Base> {
-    return new Promise<Base>((resolve, error) => {
-      this._readQueue.push({ key, resolve, error })
-      this.processReadQueue()
-    })
-  }
-
-  private processReadQueue() {
-    if (this._activeReaders >= this._readerPoolSize || this._readQueue.length === 0)
-      return
-
-    this._activeReaders++
-    const future = this._readQueue.shift()
-    if (future === undefined) return
-
-    const transaction = this._cacheDB!.transaction(CacheDatabase._storeName, 'readonly')
-    const store = transaction.objectStore(CacheDatabase._storeName)
-    const request = store.get(future.key)
-    request.onsuccess = () => {
-      this._activeReaders--
-      future.resolve(asBase(request.result))
-      this.processReadQueue() // Process the next request
-    }
-
-    request.onerror = (e) => {
-      console.error('IndexedDB Read Error:', e)
-      this._activeReaders--
-      future.error(null)
-      this.processReadQueue()
+      })
+      await Promise.all(idbChildrenPromises)
     }
   }
 
-  async write(obj: Base): Promise<void> {
-    return new Promise<void>((resolve, error) => {
-      this._writeQueue.push({ obj, resolve, error })
-      this.processWriteQueue()
-    })
-  }
+  async cacheGetObject(id: string): Promise<Item | undefined> {
+    if (!(await this.setupCacheDb())) {
+      return undefined
+    }
 
-  private processWriteQueue() {
-    if (this._activeWriters >= this._writerPoolSize || this._writeQueue.length === 0)
-      return
-
-    this._activeWriters++
-    const future = this._writeQueue.shift()
-    if (future === undefined) return
-
-    const transaction = this._cacheDB!.transaction(
+    const store = this._cacheDB!.transaction(
       CacheDatabase._storeName,
-      'readwrite'
-    )
-    const store = transaction.objectStore(CacheDatabase._storeName)
-    store.put(future.obj)
-
-    transaction.oncomplete = () => {
-      this._activeWriters--
-      future.resolve()
-      this.processWriteQueue()
-    }
-
-    transaction.onerror = () => {
-      console.error('IndexedDB Write Error:', transaction.error)
-      this._activeWriters--
-      future.error()
-      this.processWriteQueue()
-    }
+      'readonly'
+    ).objectStore(CacheDatabase._storeName)
+    const b = await CacheDatabase.promisifyIdbRequest<Base>(store.get(id))
+    if (b === undefined) return undefined
+    return { id, obj: b }
   }
-  private promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
+
+  async write(obj: Item): Promise<void> {
+    this.toWriteCount++
+    await this._writeQueue.add(obj)
+    console.log('toWriteCount', this.toWriteCount)
+  }
+
+  static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
+    console.log('Saving batch to cache: ' + batch.length)
+    const transaction = cacheDB.transaction(CacheDatabase._storeName, 'readwrite')
+    const store = transaction.objectStore(CacheDatabase._storeName)
+    const promises: Promise<IDBValidKey>[] = []
+    for (let index = 0; index < batch.length; index++) {
+      const element = batch[index]
+      promises.push(
+        CacheDatabase.promisifyIdbRequest<IDBValidKey>(store.put(element, element.id))
+      )
+    }
+    await Promise.all(promises)
+    transaction.commit()
+    await CacheDatabase.promisifyIDBTransaction(transaction)
+  }
+  private static promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
     return new Promise((resolve, reject) => {
       request.oncomplete = () => resolve()
       request.onerror = (e) =>
@@ -199,7 +155,7 @@ export default class CacheDatabase {
     })
   }
 
-  private promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
+  private static promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
       request.onerror = (e) =>
@@ -211,7 +167,7 @@ export default class CacheDatabase {
    * Fixes a Safari bug where IndexedDB requests get lost and never resolve - invoke before you use IndexedDB
    * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
    */
-  async safariFix(): Promise<void> {
+  private async safariFix(): Promise<void> {
     // No point putting other browsers or older versions of Safari through this mess.
     if (!isSafari() || !indexedDB.databases) return Promise.resolve()
 

@@ -1,4 +1,6 @@
-export default class BatchingQueue<T> {
+import Queue from './queue.js'
+
+export default class BatchingQueue<T> implements Queue<T> {
   private queue: T[] = []
   private batchSize: number
   private batchTime: number

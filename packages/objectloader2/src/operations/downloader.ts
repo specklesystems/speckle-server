@@ -1,11 +1,11 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
+import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { asBase, Base, CustomLogger, Item } from '../types/types.js'
+import { asBase, Item } from '../types/types.js'
+import CacheDatabase from './database.js'
 
-export default class Downloader {
-  private _logger: CustomLogger
-
+export default class Downloader implements Queue<string> {
   private _serverUrl: string
   private _streamId: string
   private _objectId: string
@@ -14,19 +14,20 @@ export default class Downloader {
   private _requestUrlChildren: string
   private _headers: HeadersInit
 
+  private _database: CacheDatabase
   private _idQueue: BatchingQueue<string>
   private _results: AsyncGeneratorQueue<Item>
 
   constructor(
+    database: CacheDatabase,
     results: AsyncGeneratorQueue<Item>,
-    logger: CustomLogger,
     serverUrl: string,
     streamId: string,
     objectId: string,
     token?: string
   ) {
+    this._database = database
     this._results = results
-    this._logger = logger
 
     this._serverUrl = serverUrl
     this._streamId = streamId
@@ -37,6 +38,7 @@ export default class Downloader {
         batch,
         this._requestUrlChildren,
         this._headers,
+        this._database,
         this._results
       )
     )
@@ -60,23 +62,21 @@ export default class Downloader {
     await this._idQueue.add(id)
   }
 
-  static processLine(chunk: string): Item {
-    const pieces = chunk.split('\t')
-    const [id, unparsedObj] = pieces
-
-    let obj
+  static processJson(id: string, unparsedObj: string): Item {
+    let obj: unknown
     try {
       obj = JSON.parse(unparsedObj)
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
     }
-    return { id: id, obj: asBase(obj) }
+    return { id, obj: asBase(obj) }
   }
 
   static async downloadBatch(
     idBatch: string[],
     url: string,
     headers: HeadersInit,
+    database: CacheDatabase,
     results: AsyncGeneratorQueue<Item>
   ): Promise<void> {
     const response = await fetch(url, {
@@ -105,8 +105,11 @@ export default class Downloader {
       if (boundary !== -1) {
         const jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
         buffer = buffer.substring(boundary + 1) // Keep the rest for the next chunk
-        const item = Downloader.processLine(jsonString)
-        results.add(item)
+        const pieces = jsonString.split('\t')
+        const [id, unparsedObj] = pieces
+        const item = Downloader.processJson(id, unparsedObj)
+        await database.write(item)
+        await results.add(item)
       }
     } while (!allDone)
 
@@ -126,7 +129,7 @@ export default class Downloader {
       )
     }
     const responseText = await response.text()
-    const item = Downloader.processLine(responseText)
+    const item = Downloader.processJson(this._objectId, responseText)
     return item
   }
 }
