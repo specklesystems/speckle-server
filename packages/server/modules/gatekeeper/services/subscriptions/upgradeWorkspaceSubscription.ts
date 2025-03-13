@@ -11,6 +11,7 @@ import {
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
   InvalidWorkspacePlanUpgradeError,
+  UnsupportedWorkspacePlanError,
   WorkspaceNotPaidPlanError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
@@ -265,7 +266,9 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
 
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
     if (!isNewPlanType(workspacePlan.name) || !isNewPlanType(targetPlan)) {
-      throw new NotImplementedError()
+      throw new UnsupportedWorkspacePlanError(null, {
+        info: { currentPlan: workspacePlan.name, targetPlan }
+      })
     }
 
     switch (workspacePlan.name) {
