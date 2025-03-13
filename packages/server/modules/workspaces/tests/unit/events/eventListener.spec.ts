@@ -87,6 +87,7 @@ describe('Event handlers', () => {
   describe('onWorkspaceRoleUpdatedFactory creates a function, that', () => {
     it('assigns no project roles if the role mapping returns null', async () => {
       let isDeleteCalled = false
+      const fakeProject = { id: 'test' } as StreamRecord
 
       await onWorkspaceRoleUpdatedFactory({
         getWorkspaceRolesAllowedProjectRoles: async () => {
@@ -105,14 +106,19 @@ describe('Event handlers', () => {
           }
         },
         async *queryAllWorkspaceProjects() {
-          yield [{ id: 'test' } as StreamRecord]
+          yield [fakeProject as StreamRecord]
         },
-        deleteProjectRole: async () => {
-          isDeleteCalled = true
-          return undefined
+        getStreamsCollaboratorCounts: async () => {
+          return {}
         },
-        upsertProjectRole: async () => {
-          expect.fail()
+        setStreamCollaborator: async ({ role }) => {
+          if (!role) {
+            isDeleteCalled = true
+          } else {
+            expect.fail()
+          }
+
+          return fakeProject
         }
       })({
         acl: {
@@ -120,7 +126,8 @@ describe('Event handlers', () => {
           userId: cryptoRandomString({ length: 10 }),
           workspaceId: cryptoRandomString({ length: 10 })
         },
-        seatType: WorkspaceSeatType.Editor
+        seatType: WorkspaceSeatType.Editor,
+        updatedByUserId: cryptoRandomString({ length: 10 })
       })
 
       expect(isDeleteCalled).to.be.true
@@ -158,13 +165,21 @@ describe('Event handlers', () => {
             yield projIds.map((projId) => ({ id: projId } as unknown as StreamRecord))
           }
         },
-        deleteProjectRole: async () => {
-          expect.fail()
+        getStreamsCollaboratorCounts: async () => {
+          return {}
         },
-        upsertProjectRole: async (args, options) => {
-          storedRoles.push(args)
-          trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
-          return {} as StreamRecord
+        setStreamCollaborator: async (params, options) => {
+          if (!params.role) {
+            return expect.fail()
+          } else {
+            storedRoles.push({
+              userId: params.userId,
+              role: params.role,
+              projectId: params.streamId
+            })
+            trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
+            return {} as StreamRecord
+          }
         }
       })({
         acl: {
@@ -172,7 +187,8 @@ describe('Event handlers', () => {
           userId,
           workspaceId: cryptoRandomString({ length: 10 })
         },
-        seatType: WorkspaceSeatType.Editor
+        seatType: WorkspaceSeatType.Editor,
+        updatedByUserId: cryptoRandomString({ length: 10 })
       })
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))

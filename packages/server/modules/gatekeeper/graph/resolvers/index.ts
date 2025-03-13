@@ -193,7 +193,12 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
             emit: getEventBus().emit
           })
-          await assignSeat({ workspaceId, userId, type: seatType })
+          await assignSeat({
+            workspaceId,
+            userId,
+            type: seatType,
+            assignedByUserId: ctx.userId!
+          })
 
           return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
         }

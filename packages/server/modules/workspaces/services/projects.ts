@@ -64,7 +64,8 @@ export const queryAllWorkspaceProjectsFactory = ({
   getStreams: LegacyGetStreams
 }): QueryAllWorkspaceProjects =>
   async function* queryAllWorkspaceProjects({
-    workspaceId
+    workspaceId,
+    userId
   }): AsyncGenerator<StreamRecord[], void, unknown> {
     let cursor: Date | null = null
     let iterationCount = 0
@@ -75,11 +76,12 @@ export const queryAllWorkspaceProjectsFactory = ({
       const { streams, cursorDate } = await getStreams({
         cursor,
         orderBy: null,
-        limit: 1000,
+        limit: 100,
         visibility: null,
         searchQuery: null,
         streamIdWhitelist: null,
-        workspaceIdWhitelist: [workspaceId]
+        workspaceIdWhitelist: [workspaceId],
+        userId
       })
 
       yield streams
@@ -130,6 +132,7 @@ export const getWorkspaceProjectsFactory =
 type MoveProjectToWorkspaceArgs = {
   projectId: string
   workspaceId: string
+  movedByUserId: string
 }
 
 export const moveProjectToWorkspaceFactory =
@@ -152,7 +155,8 @@ export const moveProjectToWorkspaceFactory =
   }) =>
   async ({
     projectId,
-    workspaceId
+    workspaceId,
+    movedByUserId
   }: MoveProjectToWorkspaceArgs): Promise<StreamRecord> => {
     const project = await getProject({ projectId })
 
@@ -194,7 +198,10 @@ export const moveProjectToWorkspaceFactory =
                   createdAt: new Date()
                 }
 
-            await updateWorkspaceRole(nextWorkspaceRole)
+            await updateWorkspaceRole({
+              ...nextWorkspaceRole,
+              updatedByUserId: movedByUserId
+            })
 
             // Update project role. Prefer default workspace project role if more permissive.
             const defaultProjectRole =
@@ -212,6 +219,7 @@ export const moveProjectToWorkspaceFactory =
             )
             const nextProjectRole = orderByWeight(rolePicks, coreUserRoles)[0]
 
+            // TODO: Shouldn't this be the service call that also fires events?
             await upsertProjectRole({
               userId,
               projectId,

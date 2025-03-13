@@ -608,7 +608,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   })
                 })
             })
-            await updateWorkspaceRole({ userId, workspaceId, role })
+            await updateWorkspaceRole({
+              userId,
+              workspaceId,
+              role,
+              updatedByUserId: context.userId!
+            })
           }
 
           return await getWorkspaceFactory({ db })({
@@ -1027,7 +1032,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
           })
 
-          return await moveProjectToWorkspace({ projectId, workspaceId })
+          return await moveProjectToWorkspace({
+            projectId,
+            workspaceId,
+            movedByUserId: context.userId!
+          })
         }
       },
       Workspace: {

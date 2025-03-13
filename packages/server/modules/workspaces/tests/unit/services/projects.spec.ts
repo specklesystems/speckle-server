@@ -131,7 +131,8 @@ describe('Project management services', () => {
       const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
-          workspaceId: cryptoRandomString({ length: 6 })
+          workspaceId: cryptoRandomString({ length: 6 }),
+          movedByUserId: cryptoRandomString({ length: 10 })
         })
       )
       expect(err.message).to.equal(new ProjectNotFoundError().message)
@@ -166,7 +167,8 @@ describe('Project management services', () => {
       const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
-          workspaceId: cryptoRandomString({ length: 6 })
+          workspaceId: cryptoRandomString({ length: 6 }),
+          movedByUserId: cryptoRandomString({ length: 10 })
         })
       )
       expect(err instanceof WorkspaceInvalidProjectError).to.be.true
@@ -217,7 +219,7 @@ describe('Project management services', () => {
         }
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Workspace.Admin)
@@ -257,7 +259,7 @@ describe('Project management services', () => {
         }
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Workspace.Member)
@@ -298,7 +300,7 @@ describe('Project management services', () => {
         }
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Workspace.Guest)
@@ -338,7 +340,7 @@ describe('Project management services', () => {
         updateWorkspaceRole: async () => {}
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
@@ -378,7 +380,7 @@ describe('Project management services', () => {
         updateWorkspaceRole: async () => {}
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Stream.Contributor)
@@ -429,7 +431,7 @@ describe('Project management services', () => {
         updateWorkspaceRole: async () => {}
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
