@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@127.0.0.1/speckle NODE_ENV=development LOG_PRETTY=true SPECKLE_SERVER_URL=http://127.0.0.1:3000 nodemon --no-experimental-fetch ./src/daemon.js",
     "parse:ifc": "node --no-experimental-fetch ./ifc/import_file.js ./ifc/ifcs/steelplates.ifc 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
+    "downloadBlob": "node scripts/downloadBlob.js",
     "lint": "eslint ."
   },
   "bugs": {

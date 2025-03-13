@@ -6,11 +6,21 @@ const path = require('node:path')
 const { pipeline } = require('node:stream/promises')
 
 module.exports = {
-  async downloadFile({ fileId, streamId, token, destination, logger }) {
+  async downloadFile({
+    speckleServerUrl,
+    fileId,
+    streamId,
+    token,
+    destination,
+    logger
+  }) {
     fs.mkdirSync(path.dirname(destination), { recursive: true })
-    logger.info(`Downloading file ${fileId} to ${destination}`)
+    logger.info(
+      { destinationFile: destination },
+      'Downloading file {fileId} from {streamId} to {destinationFile}'
+    )
     const response = await fetch(
-      `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blob/${fileId}`,
+      `${speckleServerUrl}/api/stream/${streamId}/blob/${fileId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -22,9 +32,6 @@ module.exports = {
     //handle errors
     writer.on('error', (err) => {
       logger.error(ensureError(err), `Error writing file ${destination}`)
-    })
-    response.body.on('error', (err) => {
-      logger.error(ensureError(err), `Error reading from response body`)
     })
 
     //handle completion

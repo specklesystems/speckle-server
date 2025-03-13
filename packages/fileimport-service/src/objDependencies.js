@@ -49,6 +49,7 @@ module.exports = {
         continue
       }
       await downloadFile({
+        speckleServerUrl: process.env.SPECKLE_SERVER_URL,
         fileId: file.id,
         streamId,
         token,

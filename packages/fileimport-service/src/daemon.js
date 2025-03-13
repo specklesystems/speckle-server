@@ -124,6 +124,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
     taskLogger.info('Downloading file {fileId}')
 
     await downloadFile({
+      speckleServerUrl: process.env.SPECKLE_SERVER_URL,
       fileId: info.id,
       streamId: info.streamId,
       token,
