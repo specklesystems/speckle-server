@@ -6,6 +6,7 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
+  UnsupportedWorkspacePlanError,
   WorkspaceNotPaidPlanError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
@@ -22,7 +23,6 @@ import {
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
-import { NotImplementedError } from '@/modules/shared/errors'
 import { expectToThrow } from '@/test/assertionHelper'
 import { throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'
@@ -1509,7 +1509,7 @@ describe('subscriptions @gatekeeper', () => {
           })
         })
 
-        expect(err.message).to.equal(new NotImplementedError().message)
+        expect(err.message).to.equal(new UnsupportedWorkspacePlanError().message)
       })
     })
     ;(['team', 'pro'] as const).forEach((plan) => {
