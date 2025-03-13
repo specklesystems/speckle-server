@@ -3,7 +3,10 @@ import {
   discoverableWorkspacesQuery,
   discoverableWorkspacesRequestsQuery
 } from '../graphql/queries'
-import { dashboardRequestToJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
+import {
+  dashboardDismissDiscoverableWorkspaceMutation,
+  dashboardRequestToJoinWorkspaceMutation
+} from '~/lib/dashboard/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
@@ -55,11 +58,11 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
-    discoverableWorkspacesQuery,
-    undefined,
-    { enabled: isWorkspacesEnabled }
-  )
+  const {
+    result: discoverableResult,
+    refetch: refetchDiscoverableWorkspaces,
+    loading: discoverableLoading
+  } = useQuery(discoverableWorkspacesQuery, undefined, { enabled: isWorkspacesEnabled })
   const {
     result: requestsResult,
     refetch,
@@ -69,6 +72,9 @@ export const useDiscoverableWorkspaces = () => {
   })
 
   const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
+  const { mutate: dismissWorkspace } = useMutation(
+    dashboardDismissDiscoverableWorkspaceMutation
+  )
 
   const mixpanel = useMixpanel()
   const { triggerNotification } = useGlobalToast()
@@ -160,6 +166,27 @@ export const useDiscoverableWorkspaces = () => {
     }
   }
 
+  const dismissDiscoverableWorkspace = async (workspaceId: string) => {
+    const result = await dismissWorkspace({
+      input: { workspaceId }
+    }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      refetchDiscoverableWorkspaces()
+      triggerNotification({
+        title: 'Discoverable workspace dismissed',
+        type: ToastNotificationType.Info
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        title: 'Failed to dismiss workspace',
+        description: errorMessage,
+        type: ToastNotificationType.Danger
+      })
+    }
+  }
+
   const loading = computed(() => {
     return discoverableLoading.value || joinRequestsLoading.value
   })
@@ -172,6 +199,7 @@ export const useDiscoverableWorkspaces = () => {
     discoverableWorkspacesCount,
     discoverableWorkspacesAndJoinRequestsCount,
     discoverableWorkspaces,
+    dismissDiscoverableWorkspace,
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
     processRequest,
