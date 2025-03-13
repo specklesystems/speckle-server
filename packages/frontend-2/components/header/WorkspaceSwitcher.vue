@@ -12,12 +12,15 @@
                 class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-primary rounded-full"
               />
             </div>
-            <p class="text-body-xs text-foreground">
+            <p class="text-body-xs text-foreground truncate max-w-40">
               {{ displayName }}
             </p>
           </template>
           <HeaderLogoBlock v-else no-link />
-          <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
+          <ChevronDownIcon
+            :class="userOpen ? 'rotate-180' : ''"
+            class="h-3 w-3 flex-shrink-0"
+          />
         </div>
       </MenuButton>
       <Transition
@@ -36,21 +39,38 @@
             class="p-2 pb-3 flex flex-col gap-y-4"
           >
             <div class="flex gap-x-2 items-center">
-              <WorkspaceAvatar :name="displayName" :logo="displayLogo" size="lg" />
-              <div class="flex flex-col space-between">
-                <p class="text-body-xs text-foreground">
+              <MenuItem>
+                <NuxtLink
+                  :to="
+                    activeWorkspaceSlug
+                      ? workspaceRoute(activeWorkspaceSlug)
+                      : projectsRoute
+                  "
+                >
+                  <WorkspaceAvatar
+                    :name="displayName"
+                    :logo="displayLogo"
+                    size="lg"
+                    class="flex-shrink-0"
+                  />
+                </NuxtLink>
+              </MenuItem>
+              <div class="flex flex-col space-between min-w-0">
+                <p class="text-body-xs text-foreground truncate">
                   {{ displayName }}
                 </p>
                 <p
                   v-if="activeWorkspace"
-                  class="text-body-2xs text-foreground-2 capitalize"
+                  class="text-body-2xs text-foreground-2 capitalize truncate"
                 >
                   {{ activeWorkspace?.plan?.name }} ·
                   {{ activeWorkspace?.team?.totalCount }} member{{
                     activeWorkspace?.team?.totalCount > 1 ? 's' : ''
                   }}
                 </p>
-                <p v-else class="text-body-2xs text-foreground-2">2 projects to move</p>
+                <p v-else class="text-body-2xs text-foreground-2 truncate">
+                  2 projects to move
+                </p>
               </div>
             </div>
             <div v-if="activeWorkspaceSlug" class="flex gap-x-2">
@@ -83,7 +103,7 @@
               :icon-click="isGuest ? undefined : handlePlusClick"
               icon-text="Create workspace"
             >
-              <div v-if="hasWorkspaces">
+              <div v-if="hasWorkspaces" class="w-full">
                 <template v-for="item in workspaces" :key="`menu-item-${item.id}`">
                   <DashboardSidebarWorkspaceItem
                     :is-active="item.slug === activeWorkspaceSlug"

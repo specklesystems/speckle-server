@@ -4,7 +4,7 @@
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
-        <div class="w-[17rem] hidden lg:block">
+        <div class="hidden lg:block">
           <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
           <HeaderLogoBlock
             v-else

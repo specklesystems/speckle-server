@@ -50,6 +50,7 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
+  // Set state and mutate
   const mutateActiveWorkspaceSlug = async (newVal: string) => {
     state.value.activeWorkspaceSlug = newVal
     state.value.isProjectsActive = false

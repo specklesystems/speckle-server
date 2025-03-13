@@ -14,7 +14,7 @@
       <div class="flex items-center gap-3 lg:gap-4">
         <template v-if="isWorkspaceNewPlansEnabled">
           <h1 class="text-heading-sm md:text-heading line-clamp-2">
-            Good morning, {{ activeUser?.name }}
+            Hello, {{ activeUser?.name }}
           </h1>
         </template>
         <template v-else>
