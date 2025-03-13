@@ -2,7 +2,13 @@ import AsyncBuffer from '../helpers/asyncGeneratorQueue.js'
 import BaseDatabase from './database.js'
 import BaseDownloader from './downloader.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
+import {
+  CustomLogger,
+  Base,
+  Item,
+  ObjectLoader2Options,
+  isBase
+} from '../types/types.js'
 
 export default class ObjectLoader2 {
   private _serverUrl: string
@@ -76,9 +82,12 @@ export default class ObjectLoader2 {
       )
     }
     const responseText = await response.text()
-    const rootObj = JSON.parse(responseText) as Base
-
-    await this._database.cacheStoreObjects([{ id: this._objectId, obj: rootObj }])
+    const rootObj = JSON.parse(responseText)
+    if (isBase(rootObj)) {
+      throw new ObjectLoaderRuntimeError('root is not a base')
+    }
+    const rootBase = rootObj as Base
+    await this._database.cacheStoreObjects([{ id: this._objectId, obj: rootBase }])
     return rootObj
   }
 
@@ -100,16 +109,20 @@ export default class ObjectLoader2 {
     const pieces = chunk.split('\t')
     const [id, unparsedObj] = pieces
 
-    let obj: Base
+    let obj
     try {
-      obj = JSON.parse(unparsedObj) as Base
+      obj = JSON.parse(unparsedObj)
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
     }
+    if (isBase(obj)) {
+      throw new ObjectLoaderRuntimeError('root is not a base')
+    }
+    const objBase = obj as Base
 
     return {
       id,
-      obj
+      obj: objBase
     }
   }
 

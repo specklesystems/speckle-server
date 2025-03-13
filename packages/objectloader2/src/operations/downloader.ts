@@ -1,6 +1,7 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
-import { Base, CustomLogger, Item } from '../types/types.js'
+import { ObjectLoaderRuntimeError } from '../types/errors.js'
+import { Base, CustomLogger, isBase, Item } from '../types/types.js'
 
 export default class Downloader {
   private _logger: CustomLogger
@@ -92,8 +93,11 @@ export default class Downloader {
 
         try {
           const pair = jsonString.split('\t')
-          const json = JSON.parse(pair[1])
-          const b = json as Base
+          const obj = JSON.parse(pair[1])
+          if (isBase(obj)) {
+            throw new ObjectLoaderRuntimeError('json is not a base')
+          }
+          const b = obj as Base
           results.add({ id: b.id, obj: b })
         } catch (error) {
           console.warn('Partial JSON, waiting for more data...')

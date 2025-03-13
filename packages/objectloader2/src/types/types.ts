@@ -10,7 +10,7 @@ export interface Base {
   __closure?: Record<string, number>
 }
 
-export function isString(value: unknown): value is string {
+export function isString(value: unknown): boolean {
   return typeof value === 'string'
 }
 
@@ -29,4 +29,13 @@ export function chunk<T>(array: T[], size: number): T[][] {
     result.push(array.slice(i, i + size))
   }
   return result
+}
+
+export function isBase(maybeBase: unknown): boolean {
+  return (
+    maybeBase !== null &&
+    typeof maybeBase === 'object' &&
+    'id' in maybeBase &&
+    typeof maybeBase.id === 'string'
+  )
 }

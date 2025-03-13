@@ -1,9 +1,11 @@
+import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import {
   Base,
   CustomLogger,
   isString,
   Item,
-  BaseDatabaseOptions
+  BaseDatabaseOptions,
+  isBase
 } from '../types/types.js'
 import { isSafari } from '@speckle/shared'
 
@@ -119,7 +121,8 @@ export default class CacheDatabase {
       for (const cachedObj of cachedData) {
         if (
           !cachedObj.obj ||
-          (isString(cachedObj.obj) && (cachedObj.obj as string).startsWith('<html'))
+          (isString(cachedObj.obj) &&
+            (cachedObj.obj as unknown as string).startsWith('<html'))
         ) {
           continue
         }
@@ -150,6 +153,9 @@ export default class CacheDatabase {
     const request = store.get(future.key)
     request.onsuccess = () => {
       this._activeReaders--
+      if (isBase(request.result)) {
+        throw new ObjectLoaderRuntimeError('json is not a base')
+      }
       future.resolve(request.result as Base)
       this.processReadQueue() // Process the next request
     }
