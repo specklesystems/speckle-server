@@ -1,8 +1,8 @@
-import BaseDatabase from './BaseDatabase.js'
+import AsyncBuffer from './AsyncBuffer.js'
 import { BatchProcessor } from './BatchProcessor.js'
-import { chunk, CustomLogger, Item } from './types.js'
+import { Base, CustomLogger, Item } from './types.js'
 
-class BaseDownloader {
+export default class BaseDownloader {
   private _logger: CustomLogger
 
   private _serverUrl: string
@@ -15,18 +15,29 @@ class BaseDownloader {
   //private _activeReaders = 0
   //private _readerPoolSize = 5
 
+  private _results: AsyncBuffer<Item>
+
   constructor(
+    results: AsyncBuffer<Item>,
     logger: CustomLogger,
     serverUrl: string,
     streamId: string,
     token?: string
   ) {
+    this._results = results
     this._logger = logger
 
     this._serverUrl = serverUrl
     this._streamId = streamId
     this._token = token
-    this._idQueue = new BatchProcessor<string>(200, 1000, this.downloadBatch)
+    this._idQueue = new BatchProcessor<string>(200, 1000, (batch: string[]) =>
+      BaseDownloader.downloadBatch(
+        batch,
+        this._requestUrlChildren,
+        this._headers,
+        this._results
+      )
+    )
 
     this._headers = {
       Accept: 'text/plain'
@@ -38,14 +49,23 @@ class BaseDownloader {
     this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
   }
 
-  async add(id: string): Promise<void> {
-    this._idQueue.add(id)
+  async setItems(ids: string[]): Promise<void> {
+    await this._idQueue.setQueue(ids)
   }
 
-  async downloadBatch(idBatch: string[]): Promise<void> {
-    const response = await fetch(this._requestUrlChildren, {
+  async add(id: string): Promise<void> {
+    await this._idQueue.add(id)
+  }
+
+  static async downloadBatch(
+    idBatch: string[],
+    url: string,
+    headers: HeadersInit,
+    results: AsyncBuffer<Item>
+  ): Promise<void> {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { ...this._headers, 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ objects: JSON.stringify(idBatch) })
     })
 
@@ -57,27 +77,29 @@ class BaseDownloader {
     const decoder = new TextDecoder()
     let buffer = '' // Temporary buffer to store incoming chunks
 
-    while (true) {
+    let allDone = false
+    do {
       const { done, value } = await reader.read()
-      if (done) break
-
+      allDone = done
       // Decode the chunk and add to buffer
       buffer += decoder.decode(value, { stream: true })
 
       // Try to process JSON objects from the buffer
-      let boundary = buffer.lastIndexOf('}')
+      let boundary = buffer.indexOf('\n')
       if (boundary !== -1) {
         let jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
         buffer = buffer.substring(boundary + 1) // Keep the rest for the next chunk
 
         try {
-          const json = JSON.parse(jsonString)
-          this._logger('Parsed JSON:', json)
+          const pair = jsonString.split('\t')
+          const json = JSON.parse(pair[1])
+          const b = json as Base
+          results.add({ id: b.id, obj: b })
         } catch (error) {
           console.warn('Partial JSON, waiting for more data...')
         }
       }
-    }
+    } while (!allDone)
 
     console.log('Download and parsing complete.')
   }

@@ -3,7 +3,7 @@ export class BatchProcessor<T> {
   private batchSize: number
   private batchTime: number
   private processFunction: (batch: T[]) => Promise<void>
-  private timeoutId: NodeJS.Timeout | null = null
+  private timeout: number | null = null
 
   constructor(
     batchSize: number,
@@ -15,27 +15,44 @@ export class BatchProcessor<T> {
     this.processFunction = processFunction
   }
 
-  async add(item: T): Promise<void> {
-    this.queue.push(item)
-
+  private async checkTimeout(): Promise<void> {
     if (this.queue.length >= this.batchSize) {
       await this.flush()
-    } else if (!this.timeoutId) {
-      this.timeoutId = setTimeout(() => this.flush(), this.batchTime)
+    } else if (!this.timeout) {
+      this.timeout = window.setTimeout(() => this.flush(), this.batchTime)
     }
+  }
+  async add(item: T): Promise<void> {
+    this.queue.push(item)
+    await this.checkTimeout()
+  }
+
+  async addArray(items: T[]): Promise<void> {
+    this.queue.push(...items)
+    await this.checkTimeout()
+  }
+
+  async setQueue(items: T[]): Promise<void> {
+    this.queue = items
+    await this.checkTimeout()
   }
 
   private async flush(): Promise<void> {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId)
-      this.timeoutId = null
+    if (this.timeout) {
+      clearTimeout(this.timeout)
+      this.timeout = null
     }
 
     if (this.queue.length === 0) return
 
-    const batch = [...this.queue]
-    this.queue = []
-
-    await this.processFunction(batch)
+    if (this.batchSize < this.queue.length) {
+      const batch = this.queue.splice(0, this.batchSize)
+      await this.processFunction(batch)
+      await this.checkTimeout()
+    } else {
+      const batch = [...this.queue]
+      this.queue = []
+      await this.processFunction(batch)
+    }
   }
 }

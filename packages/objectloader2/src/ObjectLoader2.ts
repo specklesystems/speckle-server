@@ -1,4 +1,6 @@
+import AsyncBuffer from './AsyncBuffer.js'
 import BaseDatabase from './BaseDatabase.js'
+import BaseDownloader from './BaseDownloader.js'
 import { ObjectLoaderRuntimeError } from './errors.js'
 import { CustomLogger, Base, Item, ObjectLoader2Options } from './types.js'
 
@@ -13,9 +15,12 @@ export default class ObjectLoader2 {
   private _buffer: Record<string, Base> = {}
 
   private _database: BaseDatabase
+  private _downloader: BaseDownloader
   private _requestUrlRootObj: string
   //private _requestUrlChildren: string
   private _headers: HeadersInit
+
+  private _gathered: AsyncBuffer<Item> = new AsyncBuffer()
 
   constructor(
     serverUrl: string,
@@ -32,6 +37,13 @@ export default class ObjectLoader2 {
     this._logger = options?.customLogger || console.log
 
     this._database = new BaseDatabase(console.error)
+    this._downloader = new BaseDownloader(
+      this._gathered,
+      this._logger,
+      this._serverUrl,
+      this._streamId,
+      this._token
+    )
 
     this._headers = {
       Accept: 'text/plain'
@@ -42,7 +54,6 @@ export default class ObjectLoader2 {
     }
 
     this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
-    //this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
     this._logger('Object loader constructor called!')
   }
 
@@ -52,7 +63,6 @@ export default class ObjectLoader2 {
       this._logger('No cached root object found!')
       return null
     }
-    this._logger(`Cached root object: ${JSON.stringify(cachedRootObject)}`)
     if (cachedRootObject[this._objectId]) return cachedRootObject[this._objectId]
     const response = await fetch(this._requestUrlRootObj, {
       headers: this._headers
@@ -80,6 +90,10 @@ export default class ObjectLoader2 {
     }
     yield { id: this._objectId, obj: rootBase }
     if (!rootBase.__closure) return
+    await this._downloader.setItems(Object.keys(rootBase.__closure))
+    for await (const item of this._gathered.consume()) {
+      yield item
+    }
   }
 
   processLine(chunk: string): Item {
