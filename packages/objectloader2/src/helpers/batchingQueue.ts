@@ -7,6 +7,9 @@ export default class BatchingQueue<T> implements Queue<T> {
   private processFunction: (batch: T[]) => Promise<void>
   private name: string
 
+  private processingLoop: Promise<void>
+  private finished = false
+
   constructor(
     name: string,
     batchSize: number,
@@ -17,9 +20,12 @@ export default class BatchingQueue<T> implements Queue<T> {
     this.batchSize = batchSize
     this.batchTime = batchTime
     this.processFunction = processFunction
-    this.loop().catch((e) => {
-      throw e
-    })
+    this.processingLoop = this.loop()
+  }
+
+  async finish(): Promise<void> {
+    this.finished = true
+    await this.processingLoop
   }
 
   add(item: T): void {
@@ -28,7 +34,7 @@ export default class BatchingQueue<T> implements Queue<T> {
 
   private async loop(): Promise<void> {
     console.log('Starting loop for ' + this.name)
-    while (true) {
+    while (!this.finished) {
       if (this.batchSize < this.queue.length) {
         const batch = this.queue.splice(0, this.batchSize)
         await this.processFunction(batch)

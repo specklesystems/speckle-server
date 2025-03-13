@@ -1339,5 +1339,6 @@ export default class Sandbox {
       count++
     }
     console.log('Done ' + count)
+    await loader.finish()
   }
 }

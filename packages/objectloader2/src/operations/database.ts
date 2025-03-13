@@ -24,6 +24,10 @@ export default class CacheDatabase {
     )
   }
 
+  async finish(): Promise<void> {
+    await this._writeQueue.finish()
+  }
+
   private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(dbName, 1)

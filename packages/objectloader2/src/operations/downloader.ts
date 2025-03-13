@@ -35,7 +35,7 @@ export default class Downloader implements Queue<string> {
     this._token = token
     this._idQueue = new BatchingQueue<string>(
       'download',
-      500,
+      1000,
       1000,
       (batch: string[]) =>
         Downloader.downloadBatch(
@@ -60,6 +60,10 @@ export default class Downloader implements Queue<string> {
 
   add(id: string): void {
     this._idQueue.add(id)
+  }
+
+  async finish(): Promise<void> {
+    await this._idQueue.finish()
   }
 
   static processJson(id: string, unparsedObj: string): Item {

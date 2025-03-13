@@ -39,7 +39,11 @@ export default class ObjectLoader2 {
     this._logger('Object loader constructor called!')
   }
 
-  async getRawRootObject(): Promise<Item | undefined> {
+  async finish(): Promise<void> {
+    await Promise.all([this._database.finish(), this._downloader.finish()])
+  }
+
+  private async getRawRootObject(): Promise<Item | undefined> {
     const cachedRootObject = await this._database.cacheGetObject(this._objectId)
     if (cachedRootObject) {
       return cachedRootObject
