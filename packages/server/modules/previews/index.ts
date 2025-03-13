@@ -70,7 +70,10 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
 
   // previews are requested on this queue
   const previewRequestQueue = new Bull('preview-service-jobs', opts)
-  addRequestQueueListeners({ logger, previewRequestQueue })
+  addRequestQueueListeners({
+    logger,
+    previewRequestQueue
+  })
 
   // rendered previews are sent back on this queue
   const previewResponseQueue = new Bull(responseQueueName, opts)
