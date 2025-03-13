@@ -32,6 +32,7 @@ import {
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import Logger from '../utils/Logger.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
+import { ExtendedInstancedMesh } from './ExtendedInstancedMesh.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -70,7 +71,6 @@ export default class SpeckleInstancedMesh extends Group {
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects: BatchObject[]
-  private _batchIndex: number
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
@@ -85,15 +85,10 @@ export default class SpeckleInstancedMesh extends Group {
     return this._batchObjects
   }
 
-  public get batchIndex(): number {
-    return this._batchIndex
-  }
-
   constructor(geometry: BufferGeometry) {
     super()
     this.instanceGeometry = geometry
     this.userData.raycastChildren = false
-    this._batchIndex = getNextBatchIndex()
   }
 
   public setBatchMaterial(material: Material) {
@@ -201,10 +196,11 @@ export default class SpeckleInstancedMesh extends Group {
       const materialIndex = this.groups[k].materialIndex
       const material = this.materials[materialIndex]
 
-      const group = new InstancedMesh(
+      const group = new ExtendedInstancedMesh(
         this.getInstanceGeometryShallowCopy(),
         material,
-        0
+        0,
+        getNextBatchIndex()
       )
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(

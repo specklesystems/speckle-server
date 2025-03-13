@@ -20,11 +20,11 @@ import { ObjectLayers } from '../../IViewer.js'
 import Logger from '../utils/Logger.js'
 
 export class MeshBatch extends PrimitiveBatch {
-  protected primitive!: SpeckleMesh
+  protected primitive: SpeckleMesh
   protected transformStorage: TransformStorage
 
-  private indexBuffer0!: BufferAttribute
-  private indexBuffer1!: BufferAttribute
+  private indexBuffer0: BufferAttribute
+  private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
 
   protected drawRanges: DrawRanges = new DrawRanges()

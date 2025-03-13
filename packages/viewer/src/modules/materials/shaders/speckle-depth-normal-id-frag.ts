@@ -22,7 +22,7 @@ export const speckleDepthNormalIdFrag = /* glsl */ `
 varying vec2 vHighPrecisionZW;
 varying vec3 vNormal;
 
-#ifdef TRANSFORM_STORAGE
+#if defined( TRANSFORM_STORAGE ) || __VERSION__ == 300 
     varying vec3 vIdColor;
 #endif
 

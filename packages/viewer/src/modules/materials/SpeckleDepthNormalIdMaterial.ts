@@ -4,8 +4,8 @@ import { speckleDepthNormalIdFrag } from './shaders/speckle-depth-normal-id-frag
 import { speckleDepthNormalIdVert } from './shaders/speckle-depth-normal-id-vert.js'
 import SpeckleDepthNormalMaterial from './SpeckleDepthNormalMaterial.js'
 import SpeckleMesh from '../objects/SpeckleMesh.js'
-import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh.js'
 import { Uniforms } from './SpeckleMaterial.js'
+import { ExtendedInstancedMesh } from '../objects/ExtendedInstancedMesh.js'
 
 class SpeckleDepthNormalIdMaterial extends SpeckleDepthNormalMaterial {
   protected get vertexProgram(): string {
@@ -34,7 +34,7 @@ class SpeckleDepthNormalIdMaterial extends SpeckleDepthNormalMaterial {
       this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
     }
 
-    if (object instanceof SpeckleMesh || object instanceof SpeckleInstancedMesh) {
+    if (object instanceof SpeckleMesh || object instanceof ExtendedInstancedMesh) {
       this.userData.batchIndex.value = object.batchIndex
     }
 

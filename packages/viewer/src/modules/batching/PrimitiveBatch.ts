@@ -22,13 +22,13 @@ export abstract class Primitive<
 }
 
 export abstract class PrimitiveBatch implements Batch {
-  public id!: string
-  public subtreeId!: string
-  public renderViews!: NodeRenderView[]
-  public batchMaterial!: Material
+  public id: string
+  public subtreeId: string
+  public renderViews: NodeRenderView[]
+  public batchMaterial: Material
 
   protected abstract primitive: Primitive
-  protected gradientIndexBuffer!: BufferAttribute
+  protected gradientIndexBuffer: BufferAttribute
   protected needsShuffle: boolean = false
 
   abstract get geometryType(): GeometryType

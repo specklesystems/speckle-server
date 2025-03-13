@@ -10,8 +10,6 @@ export const speckleDepthNormalIdVert = /* glsl */ `
 
 #ifdef TRANSFORM_STORAGE
     attribute float objIndex;
-    varying vec3 vIdColor;
-    uniform uint batchIndex;
     #if TRANSFORM_STORAGE == 0
         #if __VERSION__ == 300
             #define TRANSFORM_STRIDE 4
@@ -23,6 +21,11 @@ export const speckleDepthNormalIdVert = /* glsl */ `
     #elif TRANSFORM_STORAGE == 1
         uniform mat4 uTransforms[OBJ_COUNT];
     #endif
+#endif
+
+#if defined( TRANSFORM_STORAGE ) || ( defined( USE_INSTANCING ) && __VERSION__ == 300 )
+    varying vec3 vIdColor;
+    uniform uint batchIndex;
 #endif
 
 #ifdef LINEAR_DEPTH
@@ -222,7 +225,12 @@ void main() {
     
     #ifdef TRANSFORM_STORAGE
         vIdColor = hashColor(szudzikHash(uint(objIndex), batchIndex));
+    #else
+        #if defined( USE_INSTANCING ) && __VERSION__ == 300
+            vIdColor = hashColor(szudzikHash(uint(gl_InstanceID), batchIndex));
+        #endif
     #endif
+
 
     gl_Position = projectionMatrix * mvPosition;
 	#include <logdepthbuf_vertex>

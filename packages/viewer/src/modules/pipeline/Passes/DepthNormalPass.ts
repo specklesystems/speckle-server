@@ -25,7 +25,7 @@ export const DefaultDepthNormalPassOptions: Required<DepthNormalPassOptions> = {
 }
 
 export class DepthNormalPass extends BaseGPass {
-  protected depthNormalMaterial: SpeckleDepthNormalMaterial
+  protected mrtMaterial: SpeckleDepthNormalMaterial
   protected mrt: WebGLMultipleRenderTargets
 
   public _options: Required<DepthNormalPassOptions> = Object.assign(
@@ -38,7 +38,7 @@ export class DepthNormalPass extends BaseGPass {
   }
 
   get overrideMaterial(): Material {
-    return this.depthNormalMaterial
+    return this.mrtMaterial
   }
 
   get depthTexture(): Texture {
@@ -60,14 +60,14 @@ export class DepthNormalPass extends BaseGPass {
 
   protected set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
-      if (this.depthNormalMaterial.defines) {
-        this.depthNormalMaterial.defines['LINEAR_DEPTH'] = ' '
+      if (this.mrtMaterial.defines) {
+        this.mrtMaterial.defines['LINEAR_DEPTH'] = ' '
       } else {
-        if (this.depthNormalMaterial.defines) {
-          delete this.depthNormalMaterial.defines['LINEAR_DEPTH']
+        if (this.mrtMaterial.defines) {
+          delete this.mrtMaterial.defines['LINEAR_DEPTH']
         }
       }
-    this.depthNormalMaterial.needsUpdate = true
+    this.mrtMaterial.needsUpdate = true
   }
 
   constructor() {
@@ -78,25 +78,25 @@ export class DepthNormalPass extends BaseGPass {
       magFilter: NearestFilter
     })
 
-    this.depthNormalMaterial = new SpeckleDepthNormalMaterial(
+    this.mrtMaterial = new SpeckleDepthNormalMaterial(
       {
         depthPacking: RGBADepthPacking
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
-    this.depthNormalMaterial.blending = NoBlending
-    this.depthNormalMaterial.side = DoubleSide
+    this.mrtMaterial.blending = NoBlending
+    this.mrtMaterial.side = DoubleSide
     this.depthType = this._options.depthType
   }
 
   public setClippingPlanes(planes: Plane[]) {
-    this.depthNormalMaterial.clippingPlanes = planes
+    this.mrtMaterial.clippingPlanes = planes
   }
 
   public update(camera: PerspectiveCamera | OrthographicCamera) {
-    this.depthNormalMaterial.userData.near.value = camera.near
-    this.depthNormalMaterial.userData.far.value = camera.far
-    this.depthNormalMaterial.needsUpdate = true
+    this.mrtMaterial.userData.near.value = camera.near
+    this.mrtMaterial.userData.far.value = camera.far
+    this.mrtMaterial.needsUpdate = true
   }
 
   public render(

@@ -39,14 +39,14 @@ export class DepthNormalIdPass extends DepthNormalPass {
       magFilter: NearestFilter
     })
 
-    this.depthNormalMaterial = new SpeckleDepthNormalIdMaterial(
+    this.mrtMaterial = new SpeckleDepthNormalIdMaterial(
       {
         depthPacking: RGBADepthPacking
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
-    this.depthNormalMaterial.blending = NoBlending
-    this.depthNormalMaterial.side = DoubleSide
+    this.mrtMaterial.blending = NoBlending
+    this.mrtMaterial.side = DoubleSide
     this.depthType = this._options.depthType
   }
 }
