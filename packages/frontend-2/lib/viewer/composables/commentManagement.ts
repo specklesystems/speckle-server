@@ -9,7 +9,8 @@ import type {
   ArchiveCommentInput,
   CommentContentInput,
   CreateCommentReplyInput,
-  OnViewerCommentsUpdatedSubscription
+  OnViewerCommentsUpdatedSubscription,
+  ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -294,7 +295,7 @@ export const useCommentContext = () => {
     // Resource is loaded, check versions and federation
     const currentModels = state.resources.response.modelsAndVersionIds.value
     const threadModels = threadData.viewerResources.filter(
-      (r): r is typeof r & { modelId: string; versionId: string } =>
+      (r): r is ViewerResourceItem & { modelId: string; versionId: string } =>
         r.modelId !== null && r.versionId !== null
     )
 
