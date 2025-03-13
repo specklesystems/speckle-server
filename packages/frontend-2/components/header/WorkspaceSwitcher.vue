@@ -3,7 +3,7 @@
     <Menu as="div" class="flex items-center">
       <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open workspace menu</span>
-        <div class="flex items-center gap-2 p-0.5 hover:bg-highlight-2 rounded">
+        <div class="flex items-center gap-2 p-0.5 pr-1.5 hover:bg-highlight-2 rounded">
           <template v-if="activeWorkspaceSlug || isProjectsActive">
             <div class="relative">
               <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
