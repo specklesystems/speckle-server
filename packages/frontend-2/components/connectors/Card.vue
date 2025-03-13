@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3">
+    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full">
       <div class="flex gap-2 items-center">
         <img
           v-if="connector.image"
