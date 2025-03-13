@@ -388,8 +388,15 @@ export type CopyProjectAutomations = (params: {
 }) => Promise<Record<string, number>>
 
 export type AssignWorkspaceSeat = (
-  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type?: WorkspaceSeatType }
-) => Promise<void>
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type: WorkspaceSeatType }
+) => Promise<WorkspaceSeat>
+
+export type EnsureValidWorkspaceRoleSeat = (params: {
+  workspaceId: string
+  userId: string
+  role: WorkspaceRoles
+}) => Promise<WorkspaceSeat>
+
 export type CopyProjectComments = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>

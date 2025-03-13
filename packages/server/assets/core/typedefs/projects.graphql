@@ -13,6 +13,14 @@ enum ProjectVisibility {
 }
 
 """
+Visbility without the "discoverable" option
+"""
+enum SimpleProjectVisibility {
+  PRIVATE
+  UNLISTED
+}
+
+"""
 Any values left null will be ignored, so only set the properties that you want updated
 """
 input ProjectUpdateInput {
@@ -170,7 +178,7 @@ type Project {
   id: ID!
   name: String!
   description: String
-  visibility: ProjectVisibility!
+  visibility: SimpleProjectVisibility!
   allowPublicComments: Boolean!
   """
   Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.

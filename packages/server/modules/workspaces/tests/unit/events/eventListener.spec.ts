@@ -84,12 +84,13 @@ describe('Event handlers', () => {
         },
         upsertProjectRole: async () => {
           expect.fail()
-        },
-        assignWorkspaceSeat: async () => undefined
+        }
       })({
-        role: Roles.Workspace.Guest,
-        userId: cryptoRandomString({ length: 10 }),
-        workspaceId: cryptoRandomString({ length: 10 })
+        acl: {
+          role: Roles.Workspace.Guest,
+          userId: cryptoRandomString({ length: 10 }),
+          workspaceId: cryptoRandomString({ length: 10 })
+        }
       })
 
       expect(isDeleteCalled).to.be.true
@@ -124,12 +125,13 @@ describe('Event handlers', () => {
           storedRoles.push(args)
           trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
           return {} as StreamRecord
-        },
-        assignWorkspaceSeat: async () => undefined
+        }
       })({
-        role: Roles.Workspace.Member,
-        userId,
-        workspaceId: cryptoRandomString({ length: 10 })
+        acl: {
+          role: Roles.Workspace.Member,
+          userId,
+          workspaceId: cryptoRandomString({ length: 10 })
+        }
       })
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))

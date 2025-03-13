@@ -1,24 +1,30 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  ensureError,
+  PaidWorkspacePlansNew,
+  Roles,
+  throwUncoveredError
+} from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
-  createCheckoutSessionFactory,
   createCustomerPortalUrlFactory,
+  getRecurringPricesFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getStripeClient,
-  getWorkspacePlanProductId
+  getWorkspacePlanProductId,
+  getWorkspacePlanProductAndPriceIds
 } from '@/modules/gatekeeper/stripe'
-import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
@@ -29,20 +35,48 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
-import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
+import {
+  calculateSubscriptionSeats,
+  CreateCheckoutSession,
+  CreateCheckoutSessionOld,
+  WorkspaceSeatType
+} from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
 import { OperationName, OperationStatus } from '@/observability/domain/fields'
 import { logWithErr } from '@/observability/utils/logLevels'
+import {
+  createCheckoutSessionFactoryNew,
+  createCheckoutSessionFactoryOld
+} from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
+import {
+  startCheckoutSessionFactoryNew,
+  startCheckoutSessionFactoryOld
+} from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
+import {
+  upgradeWorkspaceSubscriptionFactoryNew,
+  upgradeWorkspaceSubscriptionFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
+import {
+  countSeatsByTypeInWorkspaceFactory,
+  createWorkspaceSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
+
+async function shouldUseNewCheckoutFlow(workspaceId: string) {
+  const workspacePlan = await getWorkspacePlan({ workspaceId })
+  return workspacePlan && isNewPlanType(workspacePlan.name)
+}
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
@@ -124,11 +158,56 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
         }
       },
+      WorkspaceCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders
+            .gatekeeper!.getUserWorkspaceSeatType.forWorkspace(parent.workspaceId)
+            .load(parent.id)
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
+      ServerWorkspacesInfo: {
+        planPrices: async () => {
+          const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
+            getRecurringPrices: getRecurringPricesFactory({
+              stripe: getStripeClient()
+            }),
+            getWorkspacePlanProductAndPriceIds
+          })
+          const prices = await getWorkspacePlanPrices.fresh()
+          return Object.entries(prices).map(([plan, price]) => ({
+            id: plan,
+            monthly: price.monthly,
+            yearly: 'yearly' in price ? price.yearly : null
+          }))
+        }
+      },
       WorkspaceMutations: {
-        billing: () => ({})
+        billing: () => ({}),
+        updateSeatType: async (_parent, args, ctx) => {
+          const { workspaceId, userId, seatType } = args.input
+
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const assignSeat = assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            emit: getEventBus().emit
+          })
+          await assignSeat({ workspaceId, userId, type: seatType })
+
+          return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
+        }
       },
       WorkspaceBillingMutations: {
-        cancelCheckoutSession: async (parent, args, ctx) => {
+        cancelCheckoutSession: async (_parent, args, ctx) => {
           const { workspaceId, sessionId } = args.input
 
           await authorizeResolver(
@@ -140,7 +219,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           await deleteCheckoutSessionFactory({ db })({ checkoutSessionId: sessionId })
           return true
         },
-        createCheckoutSession: async (parent, args, ctx) => {
+        createCheckoutSession: async (_parent, args, ctx) => {
           let logger = extendLoggerComponent(
             ctx.log,
             'gatekeeper',
@@ -160,25 +239,40 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-
-          const createCheckoutSession = createCheckoutSessionFactory({
-            stripe: getStripeClient(),
-            frontendOrigin: getFrontendOrigin(),
-            getWorkspacePlanPrice
-          })
-
+          const createCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
+            ? createCheckoutSessionFactoryNew({
+                stripe: getStripeClient(),
+                frontendOrigin: getFrontendOrigin(),
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
+              })
+            : createCheckoutSessionFactoryOld({
+                stripe: getStripeClient(),
+                frontendOrigin: getFrontendOrigin(),
+                getWorkspacePlanPrice: getWorkspacePlanPriceId
+              })
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
+          const startCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
+            ? startCheckoutSessionFactoryNew({
+                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+                getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
+                createCheckoutSession: createCheckoutSession as CreateCheckoutSession,
+                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+              })
+            : startCheckoutSessionFactoryOld({
+                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+                getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                countRole,
+                createCheckoutSession:
+                  createCheckoutSession as CreateCheckoutSessionOld,
+                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+              })
 
           try {
             logger.info(OperationStatus.start, '[{operationName} ({operationStatus})]')
-            const session = await startCheckoutSessionFactory({
-              getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-              getWorkspacePlan: getWorkspacePlanFactory({ db }),
-              countRole,
-              createCheckoutSession,
-              saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-              deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-            })({
+            const session = await startCheckoutSession({
               workspacePlan,
               workspaceId,
               workspaceSlug: workspace.slug,
@@ -203,9 +297,6 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         },
         upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
-          if (isNewPlanType(workspacePlan)) {
-            throw new NotImplementedError()
-          }
 
           await authorizeResolver(
             ctx.userId,
@@ -215,21 +306,46 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
           const stripe = getStripeClient()
 
-          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
-            db
+          const currentPlan = await getWorkspacePlan({ workspaceId })
+          const upgradeWorkspaceSubscription =
+            currentPlan && isNewPlanType(currentPlan.name)
+              ? upgradeWorkspaceSubscriptionFactoryNew({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+              : upgradeWorkspaceSubscriptionFactoryOld({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+          await upgradeWorkspaceSubscription({
+            workspaceId,
+            targetPlan: workspacePlan as PaidWorkspacePlansNew, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            billingInterval
           })
-          await upgradeWorkspaceSubscriptionFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe
-            }),
-            countWorkspaceRole,
-            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            getWorkspacePlanPrice,
-            getWorkspacePlanProductId,
-            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-            updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-          })({ workspaceId, targetPlan: workspacePlan, billingInterval })
           return true
         }
       }

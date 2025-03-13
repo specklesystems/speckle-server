@@ -83,6 +83,7 @@ generates:
         ServerInfoMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ServerRegionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ServerRegionItem: '@/modules/multiregion/helpers/graphTypes#ServerRegionItemGraphQLReturn'
+        Price: '@/modules/gatekeeperCore/helpers/graphTypes#PriceGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

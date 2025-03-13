@@ -1,7 +1,7 @@
 import type { Logger } from '@/observability/logging'
 import {
   GetWorkspacePlan,
-  GetWorkspacePlanPrice,
+  GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
@@ -11,31 +11,26 @@ import {
   SubscriptionDataInput,
   UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
+  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  WorkspaceNotPaidPlanError,
-  WorkspacePlanUpgradeError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { isNewPlanType, isOldPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
-import { LogicError, NotImplementedError } from '@/modules/shared/errors'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { NotImplementedError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import {
-  PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
-  WorkspacePlanBillingIntervals,
-  WorkspaceRoles,
-  xor
+  WorkspaceRoles
 } from '@speckle/shared'
 import { cloneDeep, isEqual, sum } from 'lodash'
-
-const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
+import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
+import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
+import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -119,29 +114,40 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     getWorkspaceSubscription,
     countWorkspaceRole,
     getWorkspacePlanProductId,
-    getWorkspacePlanPrice,
-    reconcileSubscriptionData
+    getWorkspacePlanPriceId,
+    reconcileSubscriptionData,
+    countSeatsByTypeInWorkspace
   }: {
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
     countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
     getWorkspacePlanProductId: GetWorkspacePlanProductId
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspacePlanPriceId: GetWorkspacePlanPriceId
     reconcileSubscriptionData: ReconcileSubscriptionData
+    countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
   }) =>
-  async ({ workspaceId, role }: { workspaceId: string; role: WorkspaceRoles }) => {
+  async ({
+    workspaceId,
+    role,
+    seatType
+  }: {
+    workspaceId: string
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }) => {
     const workspacePlan = await getWorkspacePlan({ workspaceId })
     // if (!workspacePlan) throw new WorkspacePlanNotFoundError()
     if (!workspacePlan) return
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) return
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
+    const isNewPaidPlan = isNewPaidPlanType(workspacePlan.name)
 
     switch (workspacePlan.name) {
       case 'team':
       case 'pro':
-        // Cause seat types matter, a future issue. ProductId should change based on seat type
-        throw new NotImplementedError()
+        // If viewer seat type, we don't need to do anything
+        if (seatType === WorkspaceSeatType.Viewer) return
       case 'starter':
       case 'plus':
       case 'business':
@@ -161,32 +167,44 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
 
     let productId: string
     let priceId: string
-    let roleCount: number
-    switch (role) {
-      case 'workspace:guest':
-        roleCount = await countWorkspaceRole({ workspaceId, workspaceRole: role })
-        productId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
-        priceId = getWorkspacePlanPrice({
-          workspacePlan: 'guest',
-          billingInterval: workspaceSubscription.billingInterval
-        })
-        break
-      case 'workspace:admin':
-      case 'workspace:member':
-        roleCount = sum(
-          await Promise.all([
-            countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' }),
-            countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' })
-          ])
-        )
-        productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
-        priceId = getWorkspacePlanPrice({
-          workspacePlan: workspacePlan.name,
-          billingInterval: workspaceSubscription.billingInterval
-        })
-        break
-      default:
-        throwUncoveredError(role)
+    let productAmount: number
+
+    if (isNewPaidPlan) {
+      // New logic, only based on seat types
+      productAmount = await countSeatsByTypeInWorkspace({ workspaceId, type: seatType })
+      productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
+      priceId = getWorkspacePlanPriceId({
+        workspacePlan: workspacePlan.name,
+        billingInterval: workspaceSubscription.billingInterval
+      })
+    } else {
+      // Old logic for old plans - based on roles
+      switch (role) {
+        case 'workspace:guest':
+          productAmount = await countWorkspaceRole({ workspaceId, workspaceRole: role })
+          productId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
+          priceId = getWorkspacePlanPriceId({
+            workspacePlan: 'guest',
+            billingInterval: workspaceSubscription.billingInterval
+          })
+          break
+        case 'workspace:admin':
+        case 'workspace:member':
+          productAmount = sum(
+            await Promise.all([
+              countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' }),
+              countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' })
+            ])
+          )
+          productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
+          priceId = getWorkspacePlanPriceId({
+            workspacePlan: workspacePlan.name,
+            billingInterval: workspaceSubscription.billingInterval
+          })
+          break
+        default:
+          throwUncoveredError(role)
+      }
     }
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
@@ -197,61 +215,17 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       (product) => product.productId === productId
     )
     if (!currentPlanProduct) {
-      subscriptionData.products.push({ productId, priceId, quantity: roleCount })
+      subscriptionData.products.push({ productId, priceId, quantity: productAmount })
     } else {
       // if there is enough seats, we do not have to do anything
-      if (currentPlanProduct.quantity >= roleCount) return
-      currentPlanProduct.quantity = roleCount
+      if (currentPlanProduct.quantity >= productAmount) return
+      currentPlanProduct.quantity = productAmount
     }
-    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+    await reconcileSubscriptionData({
+      subscriptionData,
+      prorationBehavior: isNewPaidPlan ? 'always_invoice' : 'create_prorations'
+    })
   }
-
-const mutateSubscriptionDataWithNewValidSeatNumbers = ({
-  seatCount,
-  workspacePlan,
-  getWorkspacePlanProductId,
-  subscriptionData
-}: {
-  seatCount: number
-  workspacePlan: WorkspacePricingProducts
-  getWorkspacePlanProductId: GetWorkspacePlanProductId
-  subscriptionData: SubscriptionDataInput
-}): void => {
-  const productId = getWorkspacePlanProductId({ workspacePlan })
-  const product = subscriptionData.products.find(
-    (product) => product.productId === productId
-  )
-  if (seatCount < 0) throw new LogicError('Invalid seat count, cannot be negative')
-
-  if (seatCount === 0 && product === undefined) return
-  if (seatCount === 0 && product !== undefined) {
-    const prodIndex = subscriptionData.products.indexOf(product)
-    subscriptionData.products.splice(prodIndex, 1)
-  } else if (product !== undefined && product.quantity >= seatCount) {
-    product.quantity = seatCount
-  } else {
-    throw new LogicError('Invalid subscription state')
-  }
-}
-
-const calculateNewBillingCycleEnd = ({
-  workspaceSubscription
-}: {
-  workspaceSubscription: WorkspaceSubscription
-}): Date => {
-  const newBillingCycleEnd = new Date(workspaceSubscription.currentBillingCycleEnd)
-  switch (workspaceSubscription.billingInterval) {
-    case 'monthly':
-      newBillingCycleEnd.setMonth(newBillingCycleEnd.getMonth() + 1)
-      break
-    case 'yearly':
-      newBillingCycleEnd.setFullYear(newBillingCycleEnd.getFullYear() + 1)
-      break
-    default:
-      throwUncoveredError(workspaceSubscription.billingInterval)
-  }
-  return newBillingCycleEnd
-}
 
 type DownscaleWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -320,7 +294,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     })
 
     if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
-      await reconcileSubscriptionData({ subscriptionData, applyProrotation: false })
+      await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
       return true
     }
     return false
@@ -365,200 +339,4 @@ export const manageSubscriptionDownscaleFactory =
       })
       log.info({ updatedWorkspaceSubscription }, 'Updated workspace billing cycle end')
     }
-  }
-
-export const upgradeWorkspaceSubscriptionFactory =
-  ({
-    getWorkspacePlan,
-    getWorkspacePlanProductId,
-    getWorkspacePlanPrice,
-    getWorkspaceSubscription,
-    reconcileSubscriptionData,
-    updateWorkspaceSubscription,
-    countWorkspaceRole,
-    upsertWorkspacePlan
-  }: {
-    getWorkspacePlan: GetWorkspacePlan
-    getWorkspacePlanProductId: GetWorkspacePlanProductId
-    getWorkspacePlanPrice: GetWorkspacePlanPrice
-    getWorkspaceSubscription: GetWorkspaceSubscription
-    reconcileSubscriptionData: ReconcileSubscriptionData
-    updateWorkspaceSubscription: UpsertWorkspaceSubscription
-    countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
-    upsertWorkspacePlan: UpsertPaidWorkspacePlan
-  }) =>
-  async ({
-    workspaceId,
-    targetPlan,
-    billingInterval
-  }: {
-    workspaceId: string
-    targetPlan: PaidWorkspacePlans
-    billingInterval: WorkspacePlanBillingIntervals
-  }) => {
-    const workspacePlan = await getWorkspacePlan({ workspaceId })
-
-    if (!workspacePlan) throw new WorkspacePlanNotFoundError()
-    switch (workspacePlan.name) {
-      case 'unlimited':
-      case 'academia':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
-      case 'free': // TODO: Don't we want to allow upgrades from free to paid?
-        throw new WorkspaceNotPaidPlanError()
-      case 'starter':
-      case 'plus':
-      case 'business':
-      case 'team':
-      case 'pro':
-        break
-      default:
-        throwUncoveredError(workspacePlan)
-    }
-
-    switch (workspacePlan.status) {
-      case 'canceled':
-      case 'cancelationScheduled':
-      case 'paymentFailed':
-      case 'trial':
-      case 'expired':
-        throw new WorkspaceNotPaidPlanError()
-      case 'valid':
-        break
-      default:
-        throwUncoveredError(workspacePlan)
-    }
-
-    const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
-    if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
-
-    const planOrder: Record<PaidWorkspacePlans, number> = {
-      // old
-      business: 3,
-      plus: 2,
-      starter: 1,
-      // new
-      team: 1,
-      pro: 2
-    }
-
-    if (
-      !FF_WORKSPACES_NEW_PLANS_ENABLED &&
-      (isNewPlanType(workspacePlan.name) || isNewPlanType(targetPlan))
-    ) {
-      throw new NotImplementedError()
-    }
-
-    const planCheckers = [isNewPlanType, isOldPaidPlanType]
-    for (const isSpecificPlanType of planCheckers) {
-      const oldPlanFitsSchema = isSpecificPlanType(workspacePlan.name)
-      const newPlanFitsSchema = isSpecificPlanType(targetPlan)
-      if (xor(oldPlanFitsSchema, newPlanFitsSchema)) {
-        throw new WorkspacePlanUpgradeError(
-          'Attempting to switch between incompatible plan types'
-        )
-      }
-    }
-
-    if (isNewPlanType(targetPlan) || isNewPlanType(workspacePlan.name)) {
-      // Needs custom logic below for seats
-      throw new NotImplementedError()
-    }
-
-    if (
-      planOrder[workspacePlan.name] === planOrder[targetPlan] &&
-      workspaceSubscription.billingInterval === billingInterval
-    )
-      throw new WorkspacePlanUpgradeError("Can't upgrade to the same plan")
-
-    if (planOrder[workspacePlan.name] > planOrder[targetPlan])
-      throw new WorkspacePlanUpgradeError("Can't upgrade to a less expensive plan")
-
-    switch (billingInterval) {
-      case 'monthly':
-        if (workspaceSubscription.billingInterval === 'yearly')
-          throw new WorkspacePlanUpgradeError(
-            "Can't upgrade from yearly to monthly billing cycle"
-          )
-      case 'yearly':
-        break
-      default:
-        throwUncoveredError(billingInterval)
-    }
-
-    const subscriptionData: SubscriptionDataInput = cloneDeep(
-      workspaceSubscription.subscriptionData
-    )
-
-    const product = subscriptionData.products.find(
-      (p) =>
-        p.productId === getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
-    )
-    if (!product) throw new WorkspacePlanMismatchError()
-
-    const [guestCount, memberCount, adminCount] = await Promise.all([
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' }),
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' })
-    ])
-
-    workspaceSubscription.updatedAt = new Date()
-    if (workspaceSubscription.billingInterval !== billingInterval) {
-      workspaceSubscription.billingInterval = billingInterval
-      workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
-        workspaceSubscription
-      })
-      const guestProduct = subscriptionData.products.find(
-        (p) => p.productId === getWorkspacePlanProductId({ workspacePlan: 'guest' })
-      )
-      if (guestProduct) {
-        mutateSubscriptionDataWithNewValidSeatNumbers({
-          seatCount: 0,
-          getWorkspacePlanProductId,
-          subscriptionData,
-          workspacePlan: 'guest'
-        })
-
-        subscriptionData.products.push({
-          quantity: guestCount,
-          productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
-          priceId: getWorkspacePlanPrice({
-            workspacePlan: 'guest',
-            billingInterval
-          }),
-          subscriptionItemId: undefined
-        })
-      }
-    }
-
-    // set current plan seat count to 0
-    mutateSubscriptionDataWithNewValidSeatNumbers({
-      seatCount: 0,
-      getWorkspacePlanProductId,
-      subscriptionData,
-      workspacePlan: workspacePlan.name
-    })
-
-    // set target plan seat count to current seat count
-    subscriptionData.products.push({
-      quantity: memberCount + adminCount,
-      productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
-      priceId: getWorkspacePlanPrice({
-        workspacePlan: targetPlan,
-        billingInterval
-      }),
-      subscriptionItemId: undefined
-    })
-
-    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
-    await upsertWorkspacePlan({
-      workspacePlan: {
-        status: workspacePlan.status,
-        workspaceId,
-        name: targetPlan,
-        createdAt: new Date()
-      }
-    })
-    await updateWorkspaceSubscription({ workspaceSubscription })
   }

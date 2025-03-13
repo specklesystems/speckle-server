@@ -1,9 +1,10 @@
-/* istanbul ignore file */
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
-  CreateObjectPreview,
   GetObjectPreviewInfo,
-  GetPreviewImage
+  GetPreviewImage,
+  StoreObjectPreview,
+  StorePreview,
+  UpsertObjectPreview
 } from '@/modules/previews/domain/operations'
 import {
   ObjectPreview as ObjectPreviewRecord,
@@ -37,8 +38,11 @@ export const getObjectPreviewInfoFactory =
       .first()
   }
 
-export const createObjectPreviewFactory =
-  ({ db }: { db: Knex }): CreateObjectPreview =>
+/**
+ * @throws {Error} if the preview already exists
+ */
+export const storeObjectPreviewFactory =
+  ({ db }: { db: Knex }): StoreObjectPreview =>
   async ({
     streamId,
     objectId,
@@ -51,11 +55,25 @@ export const createObjectPreviewFactory =
         priority,
         previewStatus: 0
       }
-    const sqlQuery =
-      tables.objectPreview(db).insert(insertionObject).toString() +
-      ' on conflict do nothing'
+    const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
-    await db.raw(sqlQuery)
+    await sqlQuery
+  }
+
+export const storePreviewFactory =
+  ({ db }: { db: Knex }): StorePreview =>
+  async ({ preview }) => {
+    await tables.previews(db).insert(preview).onConflict().ignore()
+  }
+
+export const upsertObjectPreviewFactory =
+  ({ db }: { db: Knex }): UpsertObjectPreview =>
+  async ({ objectPreview }) => {
+    await tables
+      .objectPreview(db)
+      .insert(objectPreview)
+      .onConflict(['streamId', 'objectId'])
+      .merge()
   }
 
 export const getPreviewImageFactory =

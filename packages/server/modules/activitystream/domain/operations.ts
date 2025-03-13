@@ -149,7 +149,7 @@ export type GetUserActivity = ({
   limit
 }: {
   userId: string
-  actionType: StreamActionType
+  actionType?: StreamActionType
   after?: Date
   before?: Date
   cursor?: Date

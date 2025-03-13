@@ -14,7 +14,7 @@ import {
   createAutomationRevisionFactory
 } from '@/modules/automate/services/automationManagement'
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
-import { createInmemoryRedisClient } from '@/test/redisHelper'
+import { getInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
@@ -71,7 +71,7 @@ export const buildAutomationCreate = (
   const { dbClient = db, overrides } = params
 
   const create = createAutomationFactory({
-    createAuthCode: createStoredAuthCodeFactory({ redis: createInmemoryRedisClient() }),
+    createAuthCode: createStoredAuthCodeFactory({ redis: getInmemoryRedisClient() }),
     automateCreateAutomation:
       overrides?.createDbAutomation ||
       (async () => ({

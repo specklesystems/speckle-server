@@ -140,12 +140,16 @@ async function doTask(
     })
     tempUserToken = token
 
+    taskLogger.info('Downloading file {fileId}')
+
     await downloadFile({
       fileId: info.id,
       streamId: info.streamId,
       token,
       destination: TMP_FILE_PATH
     })
+
+    taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
       if (FF_FILEIMPORT_IFC_DOTNET_ENABLED) {
@@ -349,7 +353,7 @@ function runProcessWithTimeout(
         error: rejectionReason
       }
       fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
-      reject(rejectionReason)
+      reject(new Error(rejectionReason))
     }, timeoutMs)
 
     childProc.on('close', (code) => {
@@ -364,7 +368,7 @@ function runProcessWithTimeout(
       if (code === 0) {
         resolve()
       } else {
-        reject(`Parser exited with code ${code}`)
+        reject(new Error(`Parser exited with code ${code}`))
       }
     })
   })

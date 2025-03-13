@@ -100,8 +100,7 @@ import {
   getWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory,
-  updateWorkspaceProjectRoleFactory
+  queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -204,6 +203,11 @@ import {
   AuthCodePayloadAction,
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -442,7 +446,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           })
 
           const workspace = await createWorkspace({
@@ -591,7 +599,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                  emitWorkspaceEvent: emit
+                  emitWorkspaceEvent: emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
                 })
             })
             await updateWorkspaceRole({ userId, workspaceId, role })
@@ -677,7 +689,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
           return await getWorkspaceFactory({ db })({
@@ -856,7 +872,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: getEventBus().emit
+                emitWorkspaceEvent: getEventBus().emit,
+                ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                })
               })
             }),
             findEmail: findEmailFactory({ db }),
@@ -945,19 +965,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return project
         },
         updateRole: async (_parent, args, context) => {
-          const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
-            getStream,
-            updateStreamRoleAndNotify,
-            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-          })
-
-          return await updateWorkspaceProjectRole({
-            role: args.input,
-            updater: {
-              userId: context.userId!,
-              resourceAccessRules: context.resourceAccessRules
-            }
-          })
+          await authorizeResolver(
+            context.userId,
+            args.input.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+          return await updateStreamRoleAndNotify(
+            args.input,
+            context.userId!,
+            context.resourceAccessRules
+          )
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
@@ -998,7 +1016,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  emitWorkspaceEvent: emit
+                  emitWorkspaceEvent: emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
                 })
               })
           })

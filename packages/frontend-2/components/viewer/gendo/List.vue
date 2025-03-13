@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="renders.length"
-    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar mb-3"
+    class="border-t border-outline-2 px-3 pt-3 flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar mb-3"
   >
     <ViewerGendoItem
       v-for="render in renders"

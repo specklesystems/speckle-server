@@ -19,77 +19,64 @@
         <MenuItems
           class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="border-b border-outline-3 py-1 mb-1">
+          <div class="pt-1">
+            <MenuItem v-if="activeUser" v-slot="{ active }">
+              <NuxtLink
+                :to="settingsUserRoutes.profile"
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+              >
+                Settings
+              </NuxtLink>
+            </MenuItem>
+            <MenuItem v-if="isAdmin" v-slot="{ active }">
+              <NuxtLink
+                :to="settingsServerRoutes.general"
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+              >
+                Server settings
+              </NuxtLink>
+            </MenuItem>
             <MenuItem v-slot="{ active }">
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-xs flex px-2 py-1 text-primary cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
-                target="_blank"
-                external
-                :href="downloadManagerUrl"
+                @click="toggleTheme"
               >
-                Connector downloads
+                {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
+              </NuxtLink>
+            </MenuItem>
+            <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
+              <NuxtLink
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+                @click="toggleInviteDialog"
+              >
+                Invite to Speckle
+              </NuxtLink>
+            </MenuItem>
+            <MenuItem v-slot="{ active }">
+              <NuxtLink
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+                class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
+                @click="openFeedbackDialog"
+              >
+                Feedback
               </NuxtLink>
             </MenuItem>
           </div>
-          <MenuItem v-if="activeUser" v-slot="{ active }">
-            <NuxtLink
-              :to="settingsUserRoutes.profile"
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-            >
-              Settings
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-if="isAdmin" v-slot="{ active }">
-            <NuxtLink
-              :to="settingsServerRoutes.general"
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-            >
-              Server settings
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-              @click="toggleTheme"
-            >
-              {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-              @click="toggleInviteDialog"
-            >
-              Invite to Speckle
-            </NuxtLink>
-          </MenuItem>
-          <MenuItem v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-highlight-1' : '',
-                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-              ]"
-              class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
-              @click="openFeedbackDialog"
-            >
-              Feedback
-            </NuxtLink>
-          </MenuItem>
           <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
               <NuxtLink
@@ -135,11 +122,7 @@ import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import {
-  downloadManagerUrl,
-  settingsUserRoutes,
-  settingsServerRoutes
-} from '~/lib/common/helpers/route'
+import { settingsUserRoutes, settingsServerRoutes } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { useServerInfo } from '~/lib/core/composables/server'
 
