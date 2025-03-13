@@ -5,58 +5,55 @@ export default class BatchingQueue<T> implements Queue<T> {
   private batchSize: number
   private batchTime: number
   private processFunction: (batch: T[]) => Promise<void>
-  private timeout: number | null = null
+  private count = 0
+  private name: string
+  private processed = 0
 
   constructor(
+    name: string,
     batchSize: number,
     batchTime: number,
     processFunction: (batch: T[]) => Promise<void>
   ) {
+    this.name = name
     this.batchSize = batchSize
     this.batchTime = batchTime
     this.processFunction = processFunction
+    this.loop().then()
   }
 
-  private async checkTimeout(): Promise<void> {
-    if (this.queue.length >= this.batchSize) {
-      await this.flush()
-    } else if (!this.timeout) {
-      this.timeout = window.setTimeout(() => {
-        void this.flush()
-      }, this.batchTime)
-    }
-  }
   async add(item: T): Promise<void> {
     this.queue.push(item)
-    await this.checkTimeout()
+    this.count++
+    console.log('Added ' + this.count + ' for ' + this.name)
+    return Promise.resolve()
   }
 
   async addArray(items: T[]): Promise<void> {
     this.queue.push(...items)
-    await this.checkTimeout()
+    return Promise.resolve()
   }
 
-  async setQueue(items: T[]): Promise<void> {
-    this.queue = items
-    await this.checkTimeout()
+  private async loop(): Promise<void> {
+    while (true) {
+      if (this.batchSize < this.queue.length) {
+        const batch = this.queue.splice(0, this.batchSize)
+        await this.processFunction(batch)
+        this.processed += batch.length
+        console.log('Processed ' + this.processed + ' for ' + this.name)
+      } else if (this.queue.length > 0) {
+        const batch = [...this.queue]
+        this.queue = []
+        this.processed += batch.length
+        console.log('Processed ' + this.processed + ' for ' + this.name)
+        await this.processFunction(batch)
+      } else {
+        await this.delay(this.batchTime)
+      }
+    }
   }
 
-  private async flush(): Promise<void> {
-    if (this.timeout) {
-      clearTimeout(this.timeout)
-      this.timeout = null
-    }
-
-    if (this.queue.length === 0) return
-
-    if (this.batchSize < this.queue.length) {
-      const batch = this.queue.splice(0, this.batchSize)
-      await this.processFunction(batch)
-      await this.checkTimeout()
-    } else {
-      const batch = [...this.queue]
-      this.queue = []
-      await this.processFunction(batch)
-    }
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

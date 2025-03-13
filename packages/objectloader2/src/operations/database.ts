@@ -18,13 +18,15 @@ export default class CacheDatabase {
   private _cacheDB?: IDBDatabase
 
   private _writeQueue: BatchingQueue<Item>
-  private toWriteCount = 0
 
   constructor(logger: CustomLogger, options?: BaseDatabaseOptions) {
     this._logger = logger
     this._options = options || new BaseDatabaseOptions()
-    this._writeQueue = new BatchingQueue<Item>(500, 1000, (batch: Item[]) =>
-      CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
+    this._writeQueue = new BatchingQueue<Item>(
+      'save cache',
+      500,
+      1000,
+      (batch: Item[]) => CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
     )
   }
 
@@ -98,7 +100,13 @@ export default class CacheDatabase {
         'readonly'
       ).objectStore(CacheDatabase._storeName)
       const idbChildrenPromises = idsChunk.map<Promise<void>>(async (id) => {
-        const base = await CacheDatabase.promisifyIdbRequest(store.get(id))
+        var getItem = new Promise((resolve, reject) => {
+          const request = store.get(id)
+
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+        const base = await getItem
         count++
         if (base === undefined) {
           await notFound.add(id)
@@ -121,27 +129,34 @@ export default class CacheDatabase {
       CacheDatabase._storeName,
       'readonly'
     ).objectStore(CacheDatabase._storeName)
-    const b = await CacheDatabase.promisifyIdbRequest<Base>(store.get(id))
+    var getItem = new Promise<unknown>((resolve, reject) => {
+      const request = store.get(id)
+
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    const b = await getItem
     if (b === undefined) return undefined
-    return { id, obj: b }
+    return { id, obj: asBase(b) }
   }
 
   async write(obj: Item): Promise<void> {
-    this.toWriteCount++
     await this._writeQueue.add(obj)
-    console.log('toWriteCount', this.toWriteCount)
   }
 
   static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
     console.log('Saving batch to cache: ' + batch.length)
     const transaction = cacheDB.transaction(CacheDatabase._storeName, 'readwrite')
     const store = transaction.objectStore(CacheDatabase._storeName)
-    const promises: Promise<IDBValidKey>[] = []
+    const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
-      promises.push(
-        CacheDatabase.promisifyIdbRequest<IDBValidKey>(store.put(element, element.id))
-      )
+      var putItem = new Promise<void>((resolve, reject) => {
+        const request = store.put(element, element.id)
+        request.onsuccess = () => resolve()
+        request.onerror = () => reject(request.error)
+      })
+      promises.push(putItem)
     }
     await Promise.all(promises)
     transaction.commit()
@@ -152,14 +167,6 @@ export default class CacheDatabase {
       request.oncomplete = () => resolve()
       request.onerror = (e) =>
         reject(ensureError(e, 'Failed to open Transaction for database'))
-    })
-  }
-
-  private static promisifyIdbRequest<T>(request: IDBRequest<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = (e) =>
-        reject(ensureError(e, 'Failed to open request for database'))
     })
   }
 

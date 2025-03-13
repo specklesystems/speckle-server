@@ -33,14 +33,18 @@ export default class Downloader implements Queue<string> {
     this._streamId = streamId
     this._objectId = objectId
     this._token = token
-    this._idQueue = new BatchingQueue<string>(200, 1000, (batch: string[]) =>
-      Downloader.downloadBatch(
-        batch,
-        this._requestUrlChildren,
-        this._headers,
-        this._database,
-        this._results
-      )
+    this._idQueue = new BatchingQueue<string>(
+      'download',
+      500,
+      1000,
+      (batch: string[]) =>
+        Downloader.downloadBatch(
+          batch,
+          this._requestUrlChildren,
+          this._headers,
+          this._database,
+          this._results
+        )
     )
 
     this._headers = {
@@ -52,10 +56,6 @@ export default class Downloader implements Queue<string> {
     }
     this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
     this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
-  }
-
-  async setItems(ids: string[]): Promise<void> {
-    await this._idQueue.setQueue(ids)
   }
 
   async add(id: string): Promise<void> {
@@ -93,27 +93,31 @@ export default class Downloader implements Queue<string> {
     const decoder = new TextDecoder()
     let buffer = '' // Temporary buffer to store incoming chunks
 
-    let allDone = false
-    do {
+    let count = 0
+    while (true) {
       const { done, value } = await reader.read()
-      allDone = done
+      if (done) break
       // Decode the chunk and add to buffer
       buffer += decoder.decode(value, { stream: true })
 
       // Try to process JSON objects from the buffer
-      const boundary = buffer.indexOf('\n')
-      if (boundary !== -1) {
-        const jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
-        buffer = buffer.substring(boundary + 1) // Keep the rest for the next chunk
-        const pieces = jsonString.split('\t')
-        const [id, unparsedObj] = pieces
-        const item = Downloader.processJson(id, unparsedObj)
-        await database.write(item)
-        await results.add(item)
+      let boundary = buffer.indexOf('\n')
+      while (boundary !== -1) {
+        const jsonString = buffer.slice(0, boundary)
+        buffer = buffer.slice(boundary + 1)
+        boundary = buffer.indexOf('\n')
+        if (jsonString) {
+          const pieces = jsonString.split('\t')
+          const [id, unparsedObj] = pieces
+          const item = Downloader.processJson(id, unparsedObj)
+          await database.write(item)
+          await results.add(item)
+          console.log('In download, processed: ' + count++)
+        }
       }
-    } while (!allDone)
+    }
 
-    console.log('Download and parsing complete.')
+    console.log('Download and parsing complete for ' + idBatch.length + ' objects')
   }
 
   async downloadSingle(): Promise<Item> {

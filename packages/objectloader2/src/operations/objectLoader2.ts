@@ -1,4 +1,4 @@
-import AsyncBuffer from '../helpers/asyncGeneratorQueue.js'
+import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import CacheDatabase from './database.js'
 import Downloader from './downloader.js'
 import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
@@ -15,7 +15,7 @@ export default class ObjectLoader2 {
   //private _requestUrlChildren: string
   private _headers: HeadersInit
 
-  private _gathered: AsyncBuffer<Item> = new AsyncBuffer()
+  private _gathered: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue()
 
   constructor(
     serverUrl: string,
