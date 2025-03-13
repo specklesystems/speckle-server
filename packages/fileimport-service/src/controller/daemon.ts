@@ -270,10 +270,7 @@ async function doTask(
     )
   } catch (err) {
     taskLogger.error(err, 'Error processing task')
-    const errorForDatabase =
-      err && (typeof err === 'string' || err instanceof Error)
-        ? err.toString()
-        : 'Unknown error'
+    const errorForDatabase = maybeErrorToString(err)
     await taskDb.raw(
       `
       UPDATE file_uploads
@@ -303,6 +300,18 @@ async function doTask(
 
   if (mainServerApi && tempUserToken) {
     await mainServerApi.revokeTokenById(tempUserToken)
+  }
+}
+
+function maybeErrorToString(error: unknown): string {
+  const unknownError = 'Unknown error'
+  if (!error) return unknownError
+  if (typeof error === 'string') return error
+  if (error instanceof Error) return error.message
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return unknownError
   }
 }
 
