@@ -60,10 +60,17 @@ export default {
     }
   },
   WorkspaceProjectMutations: {
-    moveToRegion: async (_parent, args) => {
+    moveToRegion: async (_parent, args, context) => {
       if (!FF_MOVE_PROJECT_REGION_ENABLED) {
         throw new WorkspacesNotYetImplementedError()
       }
+
+      await authorizeResolver(
+        context.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
 
       return await scheduleJob({
         type: 'move-project-region',

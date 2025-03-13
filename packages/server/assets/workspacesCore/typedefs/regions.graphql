@@ -22,4 +22,5 @@ extend type WorkspaceProjectMutations {
   """
   moveToRegion(projectId: String!, regionKey: String!): String!
     @hasServerRole(role: SERVER_ADMIN)
+    @hasStreamRole(role: STREAM_OWNER)
 }
