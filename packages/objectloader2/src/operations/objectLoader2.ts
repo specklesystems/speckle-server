@@ -1,19 +1,9 @@
 import AsyncBuffer from '../helpers/asyncGeneratorQueue.js'
 import BaseDatabase from './database.js'
 import BaseDownloader from './downloader.js'
-import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import {
-  CustomLogger,
-  Base,
-  Item,
-  ObjectLoader2Options,
-  isBase
-} from '../types/types.js'
+import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
 
 export default class ObjectLoader2 {
-  private _serverUrl: string
-  private _streamId: string
-  private _token?: string
   private _objectId: string
 
   private _logger: CustomLogger
@@ -22,7 +12,6 @@ export default class ObjectLoader2 {
 
   private _database: BaseDatabase
   private _downloader: BaseDownloader
-  private _requestUrlRootObj: string
   //private _requestUrlChildren: string
   private _headers: HeadersInit
 
@@ -35,9 +24,6 @@ export default class ObjectLoader2 {
     token?: string,
     options?: ObjectLoader2Options
   ) {
-    this._serverUrl = serverUrl
-    this._streamId = streamId
-    this._token = token
     this._objectId = objectId
 
     this._logger = options?.customLogger || console.log
@@ -46,20 +32,20 @@ export default class ObjectLoader2 {
     this._downloader = new BaseDownloader(
       this._gathered,
       this._logger,
-      this._serverUrl,
-      this._streamId,
-      this._token
+      serverUrl,
+      streamId,
+      this._objectId,
+      token
     )
 
     this._headers = {
       Accept: 'text/plain'
     }
 
-    if (this._token) {
-      this._headers['Authorization'] = `Bearer ${this._token}`
+    if (token) {
+      this._headers['Authorization'] = `Bearer ${token}`
     }
 
-    this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
     this._logger('Object loader constructor called!')
   }
 
@@ -70,25 +56,10 @@ export default class ObjectLoader2 {
       return null
     }
     if (cachedRootObject[this._objectId]) return cachedRootObject[this._objectId]
-    const response = await fetch(this._requestUrlRootObj, {
-      headers: this._headers
-    })
-    if (!response.ok) {
-      if ([401, 403].includes(response.status)) {
-        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
-      }
-      throw new ObjectLoaderRuntimeError(
-        `Failed to fetch root object: ${response.status} ${response.statusText})`
-      )
-    }
-    const responseText = await response.text()
-    const rootObj = JSON.parse(responseText)
-    if (isBase(rootObj)) {
-      throw new ObjectLoaderRuntimeError('root is not a base')
-    }
-    const rootBase = rootObj as Base
-    await this._database.cacheStoreObjects([{ id: this._objectId, obj: rootBase }])
-    return rootObj
+    const rootItem = await this._downloader.downloadSingle()
+
+    await this._database.cacheStoreObjects([rootItem])
+    return rootItem
   }
 
   async *getRawObjectIterator(): AsyncGenerator<Item> {
@@ -102,27 +73,6 @@ export default class ObjectLoader2 {
     await this._downloader.setItems(Object.keys(rootBase.__closure))
     for await (const item of this._gathered.consume()) {
       yield item
-    }
-  }
-
-  processLine(chunk: string): Item {
-    const pieces = chunk.split('\t')
-    const [id, unparsedObj] = pieces
-
-    let obj
-    try {
-      obj = JSON.parse(unparsedObj)
-    } catch (e: unknown) {
-      throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
-    }
-    if (isBase(obj)) {
-      throw new ObjectLoaderRuntimeError('root is not a base')
-    }
-    const objBase = obj as Base
-
-    return {
-      id,
-      obj: objBase
     }
   }
 

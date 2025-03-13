@@ -8,14 +8,13 @@ export default class Downloader {
 
   private _serverUrl: string
   private _streamId: string
+  private _objectId: string
   private _token?: string
+  private _requestUrlRootObj: string
   private _requestUrlChildren: string
   private _headers: HeadersInit
 
   private _idQueue: BatchingQueue<string>
-  //private _activeReaders = 0
-  //private _readerPoolSize = 5
-
   private _results: AsyncGeneratorQueue<Item>
 
   constructor(
@@ -23,6 +22,7 @@ export default class Downloader {
     logger: CustomLogger,
     serverUrl: string,
     streamId: string,
+    objectId: string,
     token?: string
   ) {
     this._results = results
@@ -30,6 +30,7 @@ export default class Downloader {
 
     this._serverUrl = serverUrl
     this._streamId = streamId
+    this._objectId = objectId
     this._token = token
     this._idQueue = new BatchingQueue<string>(200, 1000, (batch: string[]) =>
       Downloader.downloadBatch(
@@ -48,6 +49,7 @@ export default class Downloader {
       this._headers['Authorization'] = `Bearer ${this._token}`
     }
     this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
+    this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
   }
 
   async setItems(ids: string[]): Promise<void> {
@@ -56,6 +58,23 @@ export default class Downloader {
 
   async add(id: string): Promise<void> {
     await this._idQueue.add(id)
+  }
+
+  static processLine(chunk: string): Item {
+    const pieces = chunk.split('\t')
+    const [id, unparsedObj] = pieces
+
+    let obj
+    try {
+      obj = JSON.parse(unparsedObj)
+    } catch (e: unknown) {
+      throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
+    }
+    if (isBase(obj)) {
+      throw new ObjectLoaderRuntimeError('root is not a base')
+    }
+    const objBase = obj as Base
+    return { id: id, obj: objBase }
   }
 
   static async downloadBatch(
@@ -90,21 +109,28 @@ export default class Downloader {
       if (boundary !== -1) {
         const jsonString = buffer.substring(0, boundary + 1) // Extract complete JSON part
         buffer = buffer.substring(boundary + 1) // Keep the rest for the next chunk
-
-        try {
-          const pair = jsonString.split('\t')
-          const obj = JSON.parse(pair[1])
-          if (isBase(obj)) {
-            throw new ObjectLoaderRuntimeError('json is not a base')
-          }
-          const b = obj as Base
-          results.add({ id: b.id, obj: b })
-        } catch (error) {
-          console.warn('Partial JSON, waiting for more data...')
-        }
+        const item = Downloader.processLine(jsonString)
+        results.add(item)
       }
     } while (!allDone)
 
     console.log('Download and parsing complete.')
+  }
+
+  async downloadSingle(): Promise<Item> {
+    const response = await fetch(this._requestUrlRootObj, {
+      headers: this._headers
+    })
+    if (!response.ok) {
+      if ([401, 403].includes(response.status)) {
+        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+      }
+      throw new ObjectLoaderRuntimeError(
+        `Failed to fetch root object: ${response.status} ${response.statusText})`
+      )
+    }
+    const responseText = await response.text()
+    const item = Downloader.processLine(responseText)
+    return item
   }
 }
