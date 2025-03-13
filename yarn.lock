@@ -16512,7 +16512,6 @@ __metadata:
     pino-pretty: "npm:^9.1.1"
     prettier: "npm:^2.5.1"
     prom-client: "npm:^14.0.1"
-    undici: "npm:^5.28.4"
     valid-filename: "npm:^3.1.0"
     web-ifc: "npm:^0.0.36"
     znv: "npm:^0.4.0"
