@@ -39,7 +39,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     mutateIsProjectsActive
   } = useNavigation()
 
-  // Use Nuxt's useState to track if this is the initial load
+  // Track if this is the initial load
   const isAppInitialized = useState<boolean>('app-initialized', () => false)
 
   // Fetch required data
@@ -156,10 +156,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // 4.2 If going to legacy projects, set it active
   if (to.path === projectsRoute) {
     if (hasLegacyProjects) {
-      isProjectsActive.value = true
+      mutateIsProjectsActive(true)
     } else {
       if (hasWorkspaces) {
-        activeWorkspaceSlug.value = workspaces[0].slug
+        mutateActiveWorkspaceSlug(workspaces[0].slug)
         navigateTo(workspaceRoute(workspaces[0].slug))
       }
     }
@@ -170,7 +170,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path.startsWith('/workspaces/')) {
     const slug = to.params.slug as string
     if (slug && belongsToWorkspace(slug)) {
-      activeWorkspaceSlug.value = slug
+      mutateActiveWorkspaceSlug(slug)
     }
     return
   }
