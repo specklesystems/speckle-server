@@ -9,7 +9,7 @@
               <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
               <div
                 v-if="hasDiscoverableWorkspaces"
-                class="absolute -top-[2px] -right-[2px] size-2.5 border border-foundation bg-primary rounded-full"
+                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-primary rounded-full"
               />
             </div>
             <p class="text-body-xs text-foreground">

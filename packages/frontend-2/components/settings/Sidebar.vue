@@ -186,7 +186,12 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { homeRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import {
+  homeRoute,
+  projectsRoute,
+  settingsWorkspaceRoutes,
+  workspaceRoute
+} from '~/lib/common/helpers/route'
 import {
   WorkspacePlanStatuses,
   type SettingsMenu_WorkspaceFragment
@@ -261,9 +266,13 @@ const needsSsoSession = (
 }
 
 const exitSettingsRoute = computed(() => {
-  if (import.meta.server || !settingsMenuState.value.previousRoute) {
-    return homeRoute
+  if (import.meta.server) return homeRoute
+  if (!settingsMenuState.value.previousRoute) {
+    return activeWorkspaceSlug.value
+      ? workspaceRoute(activeWorkspaceSlug.value)
+      : projectsRoute
   }
+
   return settingsMenuState.value.previousRoute
 })
 
