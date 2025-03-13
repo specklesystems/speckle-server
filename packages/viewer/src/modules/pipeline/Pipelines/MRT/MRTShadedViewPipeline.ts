@@ -10,24 +10,24 @@ import { TAAPass } from '../../Passes/TAAPass.js'
 import { ViewportPass } from '../../Passes/ViewportPass.js'
 import { ProgressivePipeline } from '../ProgressivePipeline.js'
 import defaultMatcap from '../../../../assets/matcap.png'
-import { DepthNormalPass } from '../../Passes/DepthNormalPass.js'
+import { DepthNormalIdPass } from '../../Passes/DepthNormalIdPass.js'
 
 export class MRTShadedViewPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthNormalPass = new DepthNormalPass()
-    depthNormalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthNormalPass.setVisibility(ObjectVisibility.DEPTH)
-    depthNormalPass.setJitter(true)
-    depthNormalPass.setClearColor(0x000000, 1)
-    depthNormalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthNormalIdPass = new DepthNormalIdPass()
+    depthNormalIdPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthNormalIdPass.setVisibility(ObjectVisibility.DEPTH)
+    depthNormalIdPass.setJitter(true)
+    depthNormalIdPass.setClearColor(0x000000, 1)
+    depthNormalIdPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const depthPassNormalDynamic = new DepthNormalPass()
-    depthPassNormalDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassNormalDynamic.setVisibility(ObjectVisibility.DEPTH)
-    depthPassNormalDynamic.setClearColor(0x000000, 1)
-    depthPassNormalDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthPassNormalIdDynamic = new DepthNormalIdPass()
+    depthPassNormalIdDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthPassNormalIdDynamic.setVisibility(ObjectVisibility.DEPTH)
+    depthPassNormalIdDynamic.setClearColor(0x000000, 1)
+    depthPassNormalIdDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const viewportPass = new ViewportPass()
     viewportPass.setLayers([
@@ -51,12 +51,14 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
     shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
 
     const edgesPass = new EdgePass()
-    edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
-    edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
+    edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
+    edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
+    edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
 
     const edgesPassDynamic = new EdgePass()
-    edgesPassDynamic.setTexture('tDepth', depthPassNormalDynamic.depthTexture)
-    edgesPassDynamic.setTexture('tNormal', depthPassNormalDynamic.normalTexture)
+    edgesPassDynamic.setTexture('tDepth', depthPassNormalIdDynamic.depthTexture)
+    edgesPassDynamic.setTexture('tNormal', depthPassNormalIdDynamic.normalTexture)
+    edgesPassDynamic.setTexture('tId', depthPassNormalIdDynamic.idTexture)
 
     const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
@@ -88,7 +90,7 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
-      depthPassNormalDynamic,
+      depthPassNormalIdDynamic,
       edgesPassDynamic,
       stencilPass,
       shadowcatcherPass,
@@ -99,7 +101,7 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
       overlayPass
     )
     this.progressiveStage.push(
-      depthNormalPass,
+      depthNormalIdPass,
       edgesPass,
       taaPass,
       stencilPass,
