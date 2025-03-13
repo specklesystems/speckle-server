@@ -1,6 +1,18 @@
 import { Base, CustomLogger, isString, Item, BaseDatabaseOptions } from './types.js'
 import { isSafari } from '@speckle/shared'
 
+type ReadBatchFuture = {
+  key: string
+  resolve: (obj: Base) => void
+  error: (reason?: unknown) => void
+}
+
+type WriteBatchFuture = {
+  obj: Base
+  resolve: () => void
+  error: (reason?: unknown) => void
+}
+
 export default class BaseDatabase {
   private static _databaseName: string = 'speckle-object-cache'
   private static _storeName: string = 'objects'
@@ -8,6 +20,13 @@ export default class BaseDatabase {
   private _logger: CustomLogger
 
   private _cacheDB?: IDBDatabase
+  private _readQueue: ReadBatchFuture[] = []
+  private _activeReaders = 0
+  private _readerPoolSize = 5
+
+  private _writeQueue: WriteBatchFuture[] = []
+  private _activeWriters = 0
+  private _writerPoolSize = 5
 
   constructor(logger: CustomLogger, options?: BaseDatabaseOptions) {
     this._logger = logger
@@ -103,6 +122,71 @@ export default class BaseDatabase {
     }
 
     return ret
+  }
+
+  async readCache(key: string): Promise<Base> {
+    return new Promise<Base>((resolve, error) => {
+      this._readQueue.push({ key, resolve, error })
+      this.processReadQueue()
+    })
+  }
+
+  private processReadQueue() {
+    if (this._activeReaders >= this._readerPoolSize || this._readQueue.length === 0)
+      return
+
+    this._activeReaders++
+    const future = this._readQueue.shift()
+    if (future === undefined) return
+
+    const transaction = this._cacheDB!.transaction(BaseDatabase._storeName, 'readonly')
+    const store = transaction.objectStore(BaseDatabase._storeName)
+    const request = store.get(future.key)
+    request.onsuccess = () => {
+      this._activeReaders--
+      future.resolve(request.result as Base)
+      this.processReadQueue() // Process the next request
+    }
+
+    request.onerror = () => {
+      console.error('IndexedDB Read Error:', request.error)
+      this._activeReaders--
+      future.error(null)
+      this.processReadQueue()
+    }
+  }
+
+  async write(obj: Base): Promise<void> {
+    return new Promise<void>((resolve, error) => {
+      this._writeQueue.push({ obj, resolve, error })
+      this.processWriteQueue()
+    })
+  }
+
+  private processWriteQueue() {
+    if (this._activeWriters >= this._writerPoolSize || this._writeQueue.length === 0)
+      return
+
+    this._activeWriters++
+    const future = this._writeQueue.shift()
+    if (future === undefined) return
+
+    const transaction = this._cacheDB!.transaction(BaseDatabase._storeName, 'readwrite')
+    const store = transaction.objectStore(BaseDatabase._storeName)
+    store.put(future.obj)
+
+    transaction.oncomplete = () => {
+      this._activeWriters--
+      future.resolve()
+      this.processWriteQueue()
+    }
+
+    transaction.onerror = () => {
+      console.error('IndexedDB Write Error:', transaction.error)
+      this._activeWriters--
+      future.error()
+      this.processWriteQueue()
+    }
   }
   private promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
     return new Promise((resolve, reject) => {
