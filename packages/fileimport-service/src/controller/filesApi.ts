@@ -18,7 +18,7 @@ export async function downloadFile({
   await stream(
     `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blob/${fileId}`,
     {
-      method: 'POST',
+      method: 'GET',
       opaque: fs.createWriteStream(destination),
       headers: {
         Authorization: `Bearer ${token}`
