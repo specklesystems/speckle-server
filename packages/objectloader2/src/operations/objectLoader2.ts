@@ -12,8 +12,6 @@ export default class ObjectLoader2 {
 
   private _database: CacheDatabase
   private _downloader: Downloader
-  //private _requestUrlChildren: string
-  private _headers: HeadersInit
 
   private _gathered: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue()
 
@@ -38,14 +36,6 @@ export default class ObjectLoader2 {
       token
     )
 
-    this._headers = {
-      Accept: 'text/plain'
-    }
-
-    if (token) {
-      this._headers['Authorization'] = `Bearer ${token}`
-    }
-
     this._logger('Object loader constructor called!')
   }
 
@@ -68,7 +58,7 @@ export default class ObjectLoader2 {
     }
     yield rootItem
     if (!rootItem.obj.__closure) return
-    this._database.cacheGetObjects(
+    await this._database.cacheGetObjects(
       Object.keys(rootItem.obj.__closure),
       this._gathered,
       this._downloader

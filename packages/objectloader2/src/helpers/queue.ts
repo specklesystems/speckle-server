@@ -1,3 +1,3 @@
 export default interface Queue<T> {
-  add(value: T): Promise<void>
+  add(value: T): void
 }

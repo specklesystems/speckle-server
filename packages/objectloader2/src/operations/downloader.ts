@@ -58,8 +58,8 @@ export default class Downloader implements Queue<string> {
     this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
   }
 
-  async add(id: string): Promise<void> {
-    await this._idQueue.add(id)
+  add(id: string): void {
+    this._idQueue.add(id)
   }
 
   static processJson(id: string, unparsedObj: string): Item {
@@ -93,7 +93,6 @@ export default class Downloader implements Queue<string> {
     const decoder = new TextDecoder()
     let buffer = '' // Temporary buffer to store incoming chunks
 
-    let count = 0
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -110,14 +109,11 @@ export default class Downloader implements Queue<string> {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = Downloader.processJson(id, unparsedObj)
-          await database.write(item)
-          await results.add(item)
-          console.log('In download, processed: ' + count++)
+          database.write(item)
+          results.add(item)
         }
       }
     }
-
-    console.log('Download and parsing complete for ' + idBatch.length + ' objects')
   }
 
   async downloadSingle(): Promise<Item> {

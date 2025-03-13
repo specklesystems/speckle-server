@@ -1,12 +1,6 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
-import {
-  Base,
-  CustomLogger,
-  Item,
-  BaseDatabaseOptions,
-  asBase
-} from '../types/types.js'
+import { CustomLogger, Item, BaseDatabaseOptions, asBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 
 export default class CacheDatabase {
@@ -100,20 +94,21 @@ export default class CacheDatabase {
         'readonly'
       ).objectStore(CacheDatabase._storeName)
       const idbChildrenPromises = idsChunk.map<Promise<void>>(async (id) => {
-        var getItem = new Promise((resolve, reject) => {
+        const getItem = new Promise((resolve, reject) => {
           const request = store.get(id)
 
           request.onsuccess = () => resolve(request.result)
-          request.onerror = () => reject(request.error)
+          request.onerror = () =>
+            reject(ensureError(request.error, 'Error trying to get a batch'))
         })
         const base = await getItem
         count++
         if (base === undefined) {
-          await notFound.add(id)
+          notFound.add(id)
           this._logger(`Object ${count} not found in cache`)
         } else {
           this._logger(`Object ${count} found in cache`)
-          await found.add({ id, obj: asBase(base) })
+          found.add({ id, obj: asBase(base) })
         }
       })
       await Promise.all(idbChildrenPromises)
@@ -129,32 +124,33 @@ export default class CacheDatabase {
       CacheDatabase._storeName,
       'readonly'
     ).objectStore(CacheDatabase._storeName)
-    var getItem = new Promise<unknown>((resolve, reject) => {
+    const getItem = new Promise<unknown>((resolve, reject) => {
       const request = store.get(id)
 
       request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
+      request.onerror = () =>
+        reject(ensureError(request.error, 'Error trying to get an item'))
     })
     const b = await getItem
     if (b === undefined) return undefined
     return { id, obj: asBase(b) }
   }
 
-  async write(obj: Item): Promise<void> {
-    await this._writeQueue.add(obj)
+  write(obj: Item): void {
+    this._writeQueue.add(obj)
   }
 
   static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
-    console.log('Saving batch to cache: ' + batch.length)
     const transaction = cacheDB.transaction(CacheDatabase._storeName, 'readwrite')
     const store = transaction.objectStore(CacheDatabase._storeName)
     const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
-      var putItem = new Promise<void>((resolve, reject) => {
+      const putItem = new Promise<void>((resolve, reject) => {
         const request = store.put(element, element.id)
         request.onsuccess = () => resolve()
-        request.onerror = () => reject(request.error)
+        request.onerror = () =>
+          reject(ensureError(request.error, 'Error trying to save a batch'))
       })
       promises.push(putItem)
     }

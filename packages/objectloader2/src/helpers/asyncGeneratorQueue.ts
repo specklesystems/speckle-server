@@ -4,7 +4,7 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
   private buffer: T[] = []
   private resolveQueue: ((value: T) => void)[] = []
 
-  add(value: T): Promise<void> {
+  add(value: T): void {
     if (this.resolveQueue.length > 0) {
       // If there's a pending consumer, resolve immediately
       const resolve = this.resolveQueue.shift()!
@@ -13,7 +13,6 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       // Otherwise, add to the buffer
       this.buffer.push(value)
     }
-    return Promise.resolve()
   }
 
   async *consume(): AsyncGenerator<T> {
