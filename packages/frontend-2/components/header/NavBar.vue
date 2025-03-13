@@ -4,7 +4,7 @@
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
-        <div class="w-[17rem]">
+        <div class="w-[17rem] hidden lg:block">
           <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
           <HeaderLogoBlock
             v-else
@@ -26,7 +26,7 @@
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
-          <div class="w-[17rem] flex justify-end">
+          <div class="flex justify-end">
             <FormButton
               v-if="!activeUser"
               :to="loginUrl.fullPath"
