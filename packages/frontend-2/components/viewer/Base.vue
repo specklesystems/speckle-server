@@ -1,5 +1,9 @@
 <template>
-  <div ref="rendererparent" class="absolute w-full h-full"></div>
+  <div
+    ref="rendererparent"
+    class="absolute w-full h-full"
+    data-dd-action-name="Viewer Canvas"
+  ></div>
 </template>
 <script setup lang="ts">
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
