@@ -13,8 +13,8 @@ import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer } from '@speckle/shared'
-import type { Nullable } from '@speckle/shared'
+import { SpeckleViewer, xor } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
@@ -82,8 +82,16 @@ export function useViewerUserActivityBroadcasting(
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
 
+  const isSameState = (
+    a: Optional<ViewerUserActivityMessageInput>,
+    b: Optional<ViewerUserActivityMessageInput>
+  ) => {
+    if (xor(a, b)) return false
+    if (!a || !b) return false
+    return JSON.stringify(a) === JSON.stringify(b)
+  }
+
   const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
-    if (!isLoggedIn.value || isEmbedEnabled.value) return false
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
@@ -98,14 +106,33 @@ export function useViewerUserActivityBroadcasting(
     return result.data?.broadcastViewerUserActivity || false
   }
 
+  let previousMessage: Optional<ViewerUserActivityMessageInput> = undefined
+  const invokeObservabilityEvent = async (message: ViewerUserActivityMessageInput) => {
+    const dd = window.DD_RUM
+    if (!dd || !('addAction' in dd)) return
+
+    if (isSameState(previousMessage, message)) return
+
+    previousMessage = message
+    dd.addAction('Viewer User Activity', { message })
+  }
+
+  const invoke = async (message: ViewerUserActivityMessageInput) => {
+    if (!isLoggedIn.value || isEmbedEnabled.value) return false
+    return await Promise.all([
+      invokeMutation(message),
+      invokeObservabilityEvent(message)
+    ])
+  }
+
   return {
     emitDisconnected: async () =>
-      invokeMutation({
+      await invoke({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Disconnected
       }),
     emitViewing: async () => {
-      await invokeMutation({
+      await invoke({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Viewing
       })
