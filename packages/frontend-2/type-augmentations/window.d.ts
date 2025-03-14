@@ -11,6 +11,7 @@ declare global {
     // Debug keys, don't need to type properly cause we only use them manually from dev tools
     VIEWER?: any
     VIEWER_STATE?: any
+    VIEWER_SERIALIZED_STATE?: any
     APPLY_VIEWER_STATE?: any
     APPLY_VIEWER_DD_EVENT?: any
   }

@@ -18,7 +18,6 @@ import {
   type VisualDiffMode,
   ViewMode
 } from '@speckle/viewer'
-import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
@@ -82,7 +81,7 @@ export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
-  projectId: ComputedRef<string>
+  projectId: AsyncWritableComputedRef<string>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -400,8 +399,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
-  const projectId = computed(() => unref(params.projectId))
-
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
@@ -412,7 +409,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const hasDoneInitialLoad = ref(false)
 
   return {
-    projectId,
+    projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -1030,7 +1027,7 @@ function setupInterfaceState(
   }
 }
 
-type UseSetupViewerParams = { projectId: MaybeRef<string> }
+type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on
