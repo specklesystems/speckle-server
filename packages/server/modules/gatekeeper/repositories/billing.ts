@@ -1,4 +1,4 @@
-import { Streams } from '@/modules/core/dbSchema'
+import { buildTableHelper, Streams } from '@/modules/core/dbSchema'
 import {
   CheckoutSession,
   GetCheckoutSession,
@@ -15,7 +15,8 @@ import {
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
   UpsertTrialWorkspacePlan,
-  UpsertUnpaidWorkspacePlan
+  UpsertUnpaidWorkspacePlan,
+  GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
 import {
   ChangeExpiredTrialWorkspacePlanStatuses,
@@ -23,18 +24,51 @@ import {
   GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
+import { omit } from 'lodash'
+
+const WorkspacePlans = buildTableHelper('workspace_plans', [
+  'workspaceId',
+  'name',
+  'status',
+  'createdAt',
+  'updatedAt'
+])
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
-  workspacePlans: (db: Knex) => db<WorkspacePlan>('workspace_plans'),
+  workspacePlans: (db: Knex) => db<WorkspacePlan>(WorkspacePlans.name),
   workspaceCheckoutSessions: (db: Knex) =>
     db<CheckoutSession>('workspace_checkout_sessions'),
   workspaceSubscriptions: (db: Knex) =>
     db<WorkspaceSubscription>('workspace_subscriptions')
 }
+
+export const getWorkspaceWithPlanFactory =
+  (deps: { db: Knex }): GetWorkspaceWithPlan =>
+  async ({ workspaceId }) => {
+    const q = tables
+      .workspaces(deps.db)
+      .select<Workspace & { plans: WorkspacePlan[] }>([
+        ...Workspaces.cols,
+        WorkspacePlans.groupArray('plans')
+      ])
+      .leftJoin(WorkspacePlans.name, WorkspacePlans.col.workspaceId, Workspaces.col.id)
+      .where(Workspaces.col.id, workspaceId)
+      .groupBy(Workspaces.col.id)
+      .first()
+
+    const workspace = await q
+    if (!workspace) return undefined
+
+    return {
+      ...omit(workspace, 'plans'),
+      plan: formatJsonArrayRecords(workspace.plans || [])[0] || null
+    }
+  }
 
 export const getWorkspacePlanFactory =
   ({ db }: { db: Knex }): GetWorkspacePlan =>
