@@ -82,13 +82,13 @@ export function useViewerUserActivityBroadcasting(
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
 
-  const isSameState = (
-    a: Optional<ViewerUserActivityMessageInput>,
-    b: Optional<ViewerUserActivityMessageInput>
+  const isSameMessage = (
+    previousSerializedMessage: Optional<string>,
+    newMessage: ViewerUserActivityMessageInput
   ) => {
-    if (xor(a, b)) return false
-    if (!a || !b) return false
-    return JSON.stringify(a) === JSON.stringify(b)
+    if (xor(previousSerializedMessage, newMessage)) return false
+    if (!previousSerializedMessage && !newMessage) return false
+    return previousSerializedMessage === JSON.stringify(newMessage)
   }
 
   const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
@@ -106,14 +106,14 @@ export function useViewerUserActivityBroadcasting(
     return result.data?.broadcastViewerUserActivity || false
   }
 
-  let previousMessage: Optional<ViewerUserActivityMessageInput> = undefined
+  let serializedPreviousMessage: Optional<string> = undefined
   const invokeObservabilityEvent = async (message: ViewerUserActivityMessageInput) => {
     const dd = window.DD_RUM
     if (!dd || !('addAction' in dd)) return
 
-    if (isSameState(previousMessage, message)) return
+    if (isSameMessage(serializedPreviousMessage, message)) return
 
-    previousMessage = message
+    serializedPreviousMessage = JSON.stringify(message)
     dd.addAction('Viewer User Activity', { message })
   }
 

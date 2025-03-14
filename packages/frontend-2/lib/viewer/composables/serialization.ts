@@ -138,6 +138,7 @@ export enum StateApplyMode {
 
 export function useApplySerializedState() {
   const {
+    projectId,
     ui: {
       camera: { position, target, isOrthoProjection },
       sectionBox,
@@ -171,6 +172,16 @@ export function useApplySerializedState() {
     if (mode === StateApplyMode.Reset) {
       resetState()
       return
+    }
+
+    if (state.projectId && state.projectId !== projectId.value) {
+      await projectId.update(state.projectId)
+    }
+
+    if (
+      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
+    ) {
+      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
     }
 
     position.value = new Vector3(
