@@ -233,7 +233,11 @@ export type LocalAuthRestApiHelpers = ReturnType<typeof localAuthRestApi>
 export const generateRegistrationParams = (): RegisterParams => ({
   challenge: faker.string.uuid(),
   user: {
-    email: faker.internet.email().toLowerCase(),
+    email: faker.internet
+      .email({
+        provider: 'example.org'
+      })
+      .toLowerCase(),
     password: faker.internet.password(),
     name: faker.person.fullName()
   }
