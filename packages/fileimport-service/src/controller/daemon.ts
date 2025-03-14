@@ -142,11 +142,15 @@ async function doTask(
 
     taskLogger.info('Downloading file {fileId}')
 
+    const speckleServerUrl = process.env.SPECKLE_SERVER_URL || 'http://127.0.0.1:3000'
+
     await downloadFile({
+      speckleServerUrl,
       fileId: info.id,
       streamId: info.streamId,
       token,
-      destination: TMP_FILE_PATH
+      destination: TMP_FILE_PATH,
+      logger: taskLogger
     })
 
     taskLogger.info('Triggering importer for {fileType}')
@@ -219,6 +223,7 @@ async function doTask(
       )
     } else if (info.fileType.toLowerCase() === 'obj') {
       await downloadDependencies({
+        speckleServerUrl,
         objFilePath: TMP_FILE_PATH,
         streamId: info.streamId,
         destinationDir: TMP_INPUT_DIR,

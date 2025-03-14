@@ -27,7 +27,8 @@
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint .",
     "start": "node --loader=./dist/src/aliasLoader.js ./bin/www.js",
-    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle"
+    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest run --sequence.shuffle",
+    "downloadBlob": "node scripts/downloadBlob.js"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
@@ -44,7 +45,6 @@
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "tarn": "^3.0.2",
-    "undici": "^5.28.4",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.36"
   },
