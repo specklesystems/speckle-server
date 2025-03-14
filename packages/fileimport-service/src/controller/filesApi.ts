@@ -73,16 +73,18 @@ export async function downloadFile({
   await pipeline(response.body, writer, { end: true })
 }
 export async function getFileInfoByName({
+  speckleServerUrl,
   fileName,
   streamId,
   token
 }: {
+  speckleServerUrl: string
   fileName: string
   streamId: string
   token: string
 }) {
   const response = await fetch(
-    `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blobs?fileName=${fileName}`,
+    `${speckleServerUrl}/api/stream/${streamId}/blobs?fileName=${fileName}`,
     {
       headers: {
         Authorization: `Bearer ${token}`

@@ -31,11 +31,13 @@ const getReferencedMtlFiles = async ({ objFilePath }: { objFilePath: string }) =
 }
 
 export async function downloadDependencies({
+  speckleServerUrl,
   objFilePath,
   streamId,
   destinationDir,
   token
 }: {
+  speckleServerUrl: string
   objFilePath: string
   streamId: string
   destinationDir: string
@@ -46,8 +48,9 @@ export async function downloadDependencies({
   logger.info(`Obj file depends on ${dependencies.join(', ')}`)
   for (const mtlFile of dependencies) {
     // there might be multiple files named with the same name, take the first...
-    const [file] = (await getFileInfoByName({ fileName: mtlFile, streamId, token }))
-      .blobs
+    const [file] = (
+      await getFileInfoByName({ speckleServerUrl, fileName: mtlFile, streamId, token })
+    ).blobs
     if (!file) {
       logger.info(`OBJ dependency file not found in stream: ${mtlFile}`)
       continue
@@ -57,10 +60,12 @@ export async function downloadDependencies({
       continue
     }
     await downloadFile({
+      speckleServerUrl: process.env.SPECKLE_SERVER_URL || 'http://127.0.0.1:3000',
       fileId: file.id,
       streamId,
       token,
-      destination: path.join(destinationDir, mtlFile)
+      destination: path.join(destinationDir, mtlFile),
+      logger
     })
   }
 }
