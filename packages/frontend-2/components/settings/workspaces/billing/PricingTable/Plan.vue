@@ -13,7 +13,7 @@
     </div>
     <p class="text-body mt-1">
       <span class="font-medium">
-        {{ formatPrice(finalPlanPrice) }}
+        {{ formatPrice(planPrice?.['workspace:member']) }}
       </span>
       per seat/month
     </p>
@@ -136,19 +136,7 @@ const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
-const planPrice = computed(
-  () =>
-    prices.value?.[props.plan]?.[props.yearlyIntervalSelected ? 'yearly' : 'monthly']
-)
-
-const finalPlanPrice = computed(() => {
-  const basePrice = prices.value?.[props.plan].monthly?.['workspace:member']
-  if (!basePrice) return undefined
-  return {
-    ...basePrice,
-    amount: props.yearlyIntervalSelected ? basePrice.amount * 0.8 : basePrice.amount
-  }
-})
+const planPrice = computed(() => prices.value?.[props.plan]?.monthly)
 
 const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {
