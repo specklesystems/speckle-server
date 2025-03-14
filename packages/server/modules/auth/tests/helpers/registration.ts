@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker'
 import { RelativeURL } from '@speckle/shared'
 import { expect } from 'chai'
 import type { Express } from 'express'
-import { has, isString, random } from 'lodash'
+import { has, isString } from 'lodash'
 import request from 'supertest'
 
 export const appId = 'spklwebapp' // same values as on FE
@@ -233,7 +233,7 @@ export type LocalAuthRestApiHelpers = ReturnType<typeof localAuthRestApi>
 export const generateRegistrationParams = (): RegisterParams => ({
   challenge: faker.string.uuid(),
   user: {
-    email: `${random(0, 1000)}@example.org`.toLowerCase(),
+    email: faker.internet.email().toLowerCase(),
     password: faker.internet.password(),
     name: faker.person.fullName()
   }
