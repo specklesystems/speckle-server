@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: utils/docker-compose-ingress/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-docker-compose-ingress:latest
+    image: speckle/speckle-docker-compose-ingress:local
     restart: always
     ports:
       - '0.0.0.0:80:8080'
