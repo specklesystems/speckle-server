@@ -247,12 +247,17 @@ export function useCheckViewerCommentingAccess() {
   })
 }
 
+const useActiveThreadContext = () => {
+  return useState<string | null>('current-context-thread', () => null)
+}
+
 export const useCommentContext = () => {
   type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
   const applyState = useApplySerializedState()
   const { serialize } = useStateSerialization()
   const state = useInjectedViewerState()
+  const currentContextThread = useActiveThreadContext()
 
   const previousState = ref<SerializedViewerState | null>(null)
 
@@ -277,12 +282,12 @@ export const useCommentContext = () => {
       .filter((l) => l.resourceType === 'commit')
       .map((l) => l.resourceId)
 
-    // Check if ALL of the thread's objects are loaded (not just any)
+    // Check if ALL of the thread's objects are loaded
     const hasLoadedObjects =
       objectLinks.length > 0 &&
       objectLinks.every((objId) => loadedResources.some((lr) => lr.objectId === objId))
 
-    // Check if ALL of the thread's commits are loaded (not just any)
+    // Check if ALL of the thread's commits are loaded
     const hasLoadedVersions =
       commitLinks.length > 0 &&
       commitLinks.every((commitId) =>
@@ -318,14 +323,21 @@ export const useCommentContext = () => {
     calculateThreadResourceStatus(thread.value)
   )
 
+  const hasClickedFullContext = computed(() => {
+    const threadId = thread.value?.id
+    return currentContextThread.value === threadId
+  })
+
   const loadContext = async (
     mode: StateApplyMode.ThreadFullContextOpen | StateApplyMode.FederatedContext
   ) => {
     const state = thread.value?.viewerState
+    const threadId = thread.value?.id ?? null
     if (!state) return
 
     // Store current state before applying new one
     previousState.value = serialize()
+    currentContextThread.value = threadId
 
     await applyState(state, mode)
   }
@@ -348,7 +360,7 @@ export const useCommentContext = () => {
     }
 
     await applyState(previousState.value, StateApplyMode.ThreadFullContextOpen)
-
+    currentContextThread.value = null
     previousState.value = null
   }
 
@@ -357,6 +369,6 @@ export const useCommentContext = () => {
     calculateThreadResourceStatus,
     handleContextClick,
     goBack,
-    hasClickedFullContext: computed(() => previousState.value !== null)
+    hasClickedFullContext
   }
 }
