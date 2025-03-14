@@ -22,18 +22,20 @@
           {{ thread.rawText }}
         </div>
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
-          <span
-            v-if="itemStatus.isDifferentVersion"
-            v-tippy="'Conversation started in a different version.'"
-          >
-            <ArrowLeftCircleIcon class="w-4 h-4" />
-          </span>
-          <span
-            v-if="itemStatus.isFederatedModel"
-            v-tippy="'References models not currently loaded.'"
-          >
-            <ExclamationCircleIcon class="w-4 h-4" />
-          </span>
+          <div class="flex items-center space-x-1">
+            <div
+              v-if="itemStatus.isDifferentVersion"
+              v-tippy="'Conversation started in a different version.'"
+            >
+              <ClockIcon class="w-4 h-4" />
+            </div>
+            <div
+              v-if="itemStatus.isFederatedModel"
+              v-tippy="'References models not currently loaded.'"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </div>
+          </div>
           <span>
             {{ thread.replies.totalCount }}
             {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
@@ -55,7 +57,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CheckCircleIcon, ArrowLeftCircleIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'

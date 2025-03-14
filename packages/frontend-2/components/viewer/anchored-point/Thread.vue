@@ -523,6 +523,11 @@ const showBanner = computed(
 
 const bannerText = computed(() => {
   if (hasClickedFullContext.value) return 'Viewing full context'
+  if (
+    threadResourceStatus.value.isDifferentVersion &&
+    threadResourceStatus.value.isFederatedModel
+  )
+    return 'References multiple models with different versions'
   if (threadResourceStatus.value.isDifferentVersion)
     return 'Conversation started in a different version'
   if (threadResourceStatus.value.isFederatedModel) return 'References multiple models'
