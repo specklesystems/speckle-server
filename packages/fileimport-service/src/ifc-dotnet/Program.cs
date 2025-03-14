@@ -41,8 +41,8 @@ rootCommand.SetHandler(
         Token = token
       };
 
-      var commitId = await Import.Ifc(args);
-      File.WriteAllText(outputPath, JsonSerializer.Serialize(new { success = true, commitId }));
+      var version = await Import.Ifc(args);
+      File.WriteAllText(outputPath, JsonSerializer.Serialize(new { success = true, commitId = version.id }));
     }
     catch (Exception e)
     {
