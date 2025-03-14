@@ -1,7 +1,7 @@
-const crypto = require('crypto')
-const WebIFC = require('web-ifc/web-ifc-api-node')
+import crypto from 'crypto'
+import WebIFC from 'web-ifc/web-ifc-api-node.js'
 
-const IfcElements = {
+export const IfcElements = {
   103090709: 'IFCPROJECT',
   4097777520: 'IFCSITE',
   4031249490: 'IFCBUILDING',
@@ -141,7 +141,7 @@ const IfcElements = {
   3009204131: 'IFCGRID'
 }
 
-const GeometryTypes = new Set([
+export const GeometryTypes = new Set([
   1123145078, 574549367, 1675464909, 2059837836, 3798115385, 32440307, 3125803723,
   3207858831, 2740243338, 2624227202, 4240577450, 3615266464, 3724593414, 220341763,
   477187591, 1878645084, 1300840506, 3303107099, 1607154358, 1878645084, 846575682,
@@ -163,7 +163,7 @@ const GeometryTypes = new Set([
   1682466193, 2519244187, 2839578677, 3958567839, 2513912981, 2830218821, 427810014
 ])
 
-const IfcTypesMap = {
+export const IfcTypesMap = {
   3821786052: 'IFCACTIONREQUEST',
   2296667514: 'IFCACTOR',
   3630933823: 'IFCACTORROLE',
@@ -982,7 +982,7 @@ const IfcTypesMap = {
   1033361043: 'IFCZONE'
 }
 
-const PropNames = {
+export const PropNames = {
   aggregates: {
     name: WebIFC.IFCRELAGGREGATES,
     relating: 'RelatingObject',
@@ -1015,14 +1015,6 @@ const PropNames = {
   }
 }
 
-const getHash = (obj) => {
+export const getHash = (obj) => {
   return crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex')
-}
-
-module.exports = {
-  IfcElements,
-  IfcTypesMap,
-  PropNames,
-  GeometryTypes,
-  getHash
 }

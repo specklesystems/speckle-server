@@ -1,22 +1,23 @@
-'use strict'
-
-const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
-const {
+import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import {
   initPrometheusMetrics,
   metricDuration,
   metricInputFileSize,
   metricOperationErrors
-} = require('./prometheusMetrics')
-const getDbClients = require('../knex')
+} from '@/controller/prometheusMetrics.js'
+import { getDbClients } from '@/knex.js'
 
-const { downloadFile } = require('./filesApi')
-const fs = require('fs')
-const { spawn } = require('child_process')
+import { downloadFile } from '@/controller/filesApi.js'
+import fs from 'fs'
+import { spawn } from 'child_process'
 
-const ServerAPI = require('./api')
-const objDependencies = require('./objDependencies')
-const { logger } = require('../observability/logging')
-const { Scopes, wait } = require('@speckle/shared')
+import { ServerAPI } from '@/controller/api.js'
+import { downloadDependencies } from '@/controller/objDependencies.js'
+import { logger } from '@/observability/logging.js'
+import { Nullable, Scopes, wait } from '@speckle/shared'
+import { Knex } from 'knex'
+import { Logger } from 'pino'
+
 const { FF_FILEIMPORT_IFC_DOTNET_ENABLED } = Environment.getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -29,11 +30,11 @@ let shouldExit = false
 
 let TIME_LIMIT = 10 * 60 * 1000
 
-const providedTimeLimit = parseInt(process.env.FILE_IMPORT_TIME_LIMIT_MIN)
+const providedTimeLimit = parseInt(process.env['FILE_IMPORT_TIME_LIMIT_MIN'] || '10')
 if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
 
-async function startTask(knex) {
-  const { rows } = await knex.raw(`
+async function startTask(knex: Knex) {
+  const { rows } = (await knex.raw(`
     UPDATE file_uploads
     SET
       "convertedStatus" = 1,
@@ -46,18 +47,23 @@ async function startTask(knex) {
     ) as task
     WHERE file_uploads."id" = task."id"
     RETURNING file_uploads."id"
-  `)
+  `)) satisfies { rows: { id: string }[] }
   return rows[0]
 }
 
-async function doTask(mainDb, regionName, taskDb, task) {
+async function doTask(
+  mainDb: Knex,
+  regionName: string,
+  taskDb: Knex,
+  task: { id: string }
+) {
   const taskId = task.id
 
   // Mark task as started
   await mainDb.raw(`NOTIFY file_import_started, '${task.id}'`)
 
   let taskLogger = logger.child({ taskId })
-  let tempUserToken = null
+  let tempUserToken: Nullable<string> = null
   let mainServerApi = null
   let taskServerApi = null
   let fileTypeForMetric = 'unknown'
@@ -65,11 +71,24 @@ async function doTask(mainDb, regionName, taskDb, task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   let newBranchCreated = false
-  let branchMetadata = { streamId: null, branchName: null }
+  let branchMetadata: { streamId: Nullable<string>; branchName: Nullable<string> } = {
+    streamId: null,
+    branchName: null
+  }
 
   try {
     taskLogger.info("Doing task '{taskId}'.")
-    const info = await taskDb('file_uploads').where({ id: taskId }).first()
+    const info = await taskDb<{
+      id: string
+      fileType: string
+      fileSize: string
+      fileName: string
+      userId: string
+      streamId: string
+      branchName: string
+    }>('file_uploads')
+      .where({ id: taskId })
+      .first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
@@ -116,7 +135,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
     const { token } = await mainServerApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
-      scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
       lifespan: 1000000
     })
     tempUserToken = token
@@ -138,7 +157,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',
           [
-            '/speckle-server/packages/fileimport-service/ifc-dotnet/ifc-converter.dll',
+            process.env['IFC_DOTNET_DLL_PATH'] ||
+              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.streamId,
@@ -158,7 +178,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
           process.env['NODE_BINARY_PATH'] || 'node',
           [
             '--no-experimental-fetch',
-            './ifc/import_file.js',
+            '--loader=./dist/src/aliasLoader.js',
+            './src/ifc/import_file.js',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.userId,
@@ -180,7 +201,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
         taskLogger,
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
-          './stl/import_file.py',
+          './src/stl/import_file.py',
           TMP_FILE_PATH,
           TMP_RESULTS_PATH,
           info.userId,
@@ -197,7 +218,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
         TIME_LIMIT
       )
     } else if (info.fileType.toLowerCase() === 'obj') {
-      await objDependencies.downloadDependencies({
+      await downloadDependencies({
         objFilePath: TMP_FILE_PATH,
         streamId: info.streamId,
         destinationDir: TMP_INPUT_DIR,
@@ -209,7 +230,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           '-u',
-          './obj/import_file.py',
+          './src/obj/import_file.py',
           TMP_FILE_PATH,
           TMP_RESULTS_PATH,
           info.userId,
@@ -229,9 +250,11 @@ async function doTask(mainDb, regionName, taskDb, task) {
       throw new Error(`File type ${info.fileType} is not supported`)
     }
 
-    const output = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH))
+    const output: unknown = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH, 'utf8'))
 
-    if (!output.success) throw new Error(output.error)
+    if (!isSuccessOutput(output)) {
+      throw new Error(isErrorOutput(output) ? output.error : 'Unknown error')
+    }
 
     const commitId = output.commitId
 
@@ -248,7 +271,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
       [commitId, task.id]
     )
   } catch (err) {
-    taskLogger.error(err, 'error while doing task')
+    taskLogger.error(err, 'Error processing task')
+    const errorForDatabase = maybeErrorToString(err)
     await taskDb.raw(
       `
       UPDATE file_uploads
@@ -259,7 +283,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
       WHERE "id" = ?
     `,
       // DB only accepts a varchar 255
-      [err.toString().substring(0, 254), task.id]
+      [errorForDatabase.substring(0, 254), task.id]
     )
     metricOperationErrors.labels(fileTypeForMetric).inc()
   } finally {
@@ -276,12 +300,56 @@ async function doTask(mainDb, regionName, taskDb, task) {
   fs.rmSync(TMP_INPUT_DIR, { force: true, recursive: true })
   if (fs.existsSync(TMP_RESULTS_PATH)) fs.unlinkSync(TMP_RESULTS_PATH)
 
-  if (tempUserToken) {
+  if (mainServerApi && tempUserToken) {
     await mainServerApi.revokeTokenById(tempUserToken)
   }
 }
 
-function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs) {
+function maybeErrorToString(error: unknown): string {
+  const unknownError = 'Unknown error'
+  if (!error) return unknownError
+  if (typeof error === 'string') return error
+  if (error instanceof Error) return error.message
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return unknownError
+  }
+}
+
+function isSuccessOutput(
+  maybeSuccessOutput: unknown
+): maybeSuccessOutput is { success: true; commitId: string } {
+  return (
+    !!maybeSuccessOutput &&
+    typeof maybeSuccessOutput === 'object' &&
+    'success' in maybeSuccessOutput &&
+    typeof maybeSuccessOutput.success === 'boolean' &&
+    maybeSuccessOutput.success &&
+    'commitId' in maybeSuccessOutput &&
+    typeof maybeSuccessOutput.commitId === 'string'
+  )
+}
+
+function isErrorOutput(
+  maybeErrorOutput: unknown
+): maybeErrorOutput is { success: false; error: string } {
+  return (
+    !!maybeErrorOutput &&
+    typeof maybeErrorOutput === 'object' &&
+    'error' in maybeErrorOutput &&
+    typeof maybeErrorOutput.error === 'string' &&
+    !!maybeErrorOutput.error
+  )
+}
+
+function runProcessWithTimeout(
+  processLogger: Logger,
+  cmd: string,
+  cmdArgs: string[],
+  extraEnv: Record<string, string>,
+  timeoutMs: number
+): Promise<void> {
   return new Promise((resolve, reject) => {
     let boundLogger = processLogger.child({ cmd, args: cmdArgs })
     boundLogger.info('Starting process.')
@@ -309,7 +377,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
         error: rejectionReason
       }
       fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
-      reject(rejectionReason)
+      reject(new Error(rejectionReason))
     }, timeoutMs)
 
     childProc.on('close', (code) => {
@@ -324,20 +392,20 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
       if (code === 0) {
         resolve()
       } else {
-        reject(`Parser exited with code ${code}`)
+        reject(new Error(`Parser exited with code ${code}`))
       }
     })
   })
 }
 
-function handleData(data, isErr, logger) {
+function handleData(data: unknown, isErr: boolean, logger: Logger) {
   try {
-    Buffer.isBuffer(data) && (data = data.toString())
-    data.split('\n').forEach((line) => {
+    if (!Buffer.isBuffer(data)) return
+    const dataAsString = data.toString()
+    dataAsString.split('\n').forEach((line) => {
       if (!line) return
       try {
         JSON.parse(line) // verify if the data is already in JSON format
-        process.stdout.write(line)
         process.stdout.write('\n')
       } catch {
         wrapLogLine(line, isErr, logger)
@@ -348,7 +416,7 @@ function handleData(data, isErr, logger) {
   }
 }
 
-function wrapLogLine(line, isErr, logger) {
+function wrapLogLine(line: string, isErr: boolean, logger: Logger) {
   if (isErr) {
     logger.error({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
     return
@@ -361,7 +429,7 @@ const doStuff = async () => {
   const mainDb = dbClients.main.public
   const dbClientsIterator = infiniteDbClientsIterator(dbClients)
   while (!shouldExit) {
-    const [regionName, taskDb] = dbClientsIterator.next().value
+    const [regionName, taskDb]: [string, Knex] = dbClientsIterator.next().value
     try {
       const task = await startTask(taskDb)
       fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
@@ -379,7 +447,7 @@ const doStuff = async () => {
   }
 }
 
-async function main() {
+export async function main() {
   logger.info('Starting FileUploads Service...')
   await initPrometheusMetrics()
 
@@ -392,7 +460,9 @@ async function main() {
   process.exit(0)
 }
 
-function* infiniteDbClientsIterator(dbClients) {
+function* infiniteDbClientsIterator(dbClients: {
+  [key: string]: { public: Knex }
+}): Generator<[string, Knex], [string, Knex], [string, Knex]> {
   let index = 0
   const dbClientEntries = [...Object.entries(dbClients)]
   const clientCount = dbClientEntries.length
@@ -404,5 +474,3 @@ function* infiniteDbClientsIterator(dbClients) {
     yield [regionName, dbConnection.public]
   }
 }
-
-main()

@@ -71,6 +71,8 @@ redis-data/
 .tshy-build
 obj/
 bin/
+!packages/fileimport-service/src/obj
+!packages/fileimport-service/bin
 !packages/monitor-deployment/bin
 !packages/preview-service/bin
 !packages/server/bin

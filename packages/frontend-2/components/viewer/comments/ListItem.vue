@@ -21,13 +21,24 @@
         <div class="truncate text-body-2xs text-foreground dark:text-foreground-2">
           {{ thread.rawText }}
         </div>
-        <div class="text-body-3xs flex items-center space-x-3 text-foreground-2 mb-1">
-          <span
-            v-if="!isThreadResourceLoaded"
-            v-tippy="'Conversation started in a different version.'"
+        <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
+          <div
+            v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
+            class="flex items-center space-x-1"
           >
-            <ExclamationCircleIcon class="w-4 h-4" />
-          </span>
+            <div
+              v-if="itemStatus.isDifferentVersion"
+              v-tippy="'Conversation started in a different version.'"
+            >
+              <ClockIcon class="w-4 h-4" />
+            </div>
+            <div
+              v-if="itemStatus.isFederatedModel"
+              v-tippy="'References models not currently loaded.'"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </div>
+          </div>
           <span>
             {{ thread.replies.totalCount }}
             {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
@@ -49,18 +60,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
 import {
   useInjectedViewerInterfaceState,
-  useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useArchiveComment,
+  useCommentContext
+} from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -70,7 +82,6 @@ const props = defineProps<{
   thread: LoadedCommentThread
 }>()
 
-const { resourceItems } = useInjectedViewerLoadedResources()
 const {
   threads: { openThread }
 } = useInjectedViewerInterfaceState()
@@ -96,30 +107,14 @@ const open = (id: string) => {
   })
 }
 
+const { calculateThreadResourceStatus } = useCommentContext()
+const itemStatus = computed(() => calculateThreadResourceStatus(props.thread))
+
 const createdAt = computed(() => {
   return {
     full: formattedFullDate(props.thread.createdAt),
     relative: formattedRelativeDate(props.thread.createdAt, { capitalize: true })
   }
-})
-
-const isThreadResourceLoaded = computed(() => {
-  const thread = props.thread
-  const loadedResources = resourceItems.value
-  const resourceLinks = thread.resources
-
-  const objectLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Object)
-    .map((l) => l.resourceId)
-  const commitLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Commit)
-    .map((l) => l.resourceId)
-
-  if (loadedResources.some((lr) => objectLinks.includes(lr.objectId))) return true
-  if (loadedResources.some((lr) => lr.versionId && commitLinks.includes(lr.versionId)))
-    return true
-
-  return false
 })
 
 const isOpenInViewer = computed(() => openThread.thread.value?.id === props.thread.id)

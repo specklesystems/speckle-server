@@ -1,4 +1,0 @@
-{
-  "extends": "../../jsconfig.base.json",
-  "include": ["src", "ifc"]
-}
