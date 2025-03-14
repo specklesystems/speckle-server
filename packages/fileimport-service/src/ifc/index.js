@@ -1,9 +1,9 @@
 import { performance } from 'perf_hooks'
 import { fetch } from 'undici'
-import { IFCParser } from './parser.js'
 import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { ServerAPI } from '../../dist/src/controller/api.js'
-import { logger as parentLogger } from '../../dist/src/observability/logging.js'
+import { ServerAPI } from '@/controller/api.js'
+import { logger as parentLogger } from '@/observability/logging.js'
+import { IFCParser } from './parser.js'
 
 export const parseAndCreateCommitFactory =
   ({ db }) =>

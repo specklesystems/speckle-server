@@ -1,9 +1,8 @@
 import fs from 'fs'
-import { logger as parentLogger } from '../../dist/src/observability/logging.js'
-
-import { parseAndCreateCommitFactory } from './index.js'
 import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { getDbClients } from '../../dist/src/knex.js'
+import { logger as parentLogger } from '@/observability/logging.js'
+import { getDbClients } from '@/knex.js'
+import { parseAndCreateCommitFactory } from './index.js'
 
 async function main() {
   const cmdArgs = process.argv.slice(2)
