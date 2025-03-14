@@ -75,6 +75,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.TransformToGeometryData(node)
       case SpeckleType.InstanceProxy:
         return this.InstanceProxyToGeometyData(node)
+      case SpeckleType.Region:
+        return this.RegionGeometyData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -229,6 +231,17 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   protected BrepToGeometryData(node: NodeData): GeometryData | null {
     /** Breps don't (currently) have inherent geometryic description in the viewer. They are replaced
      * by their mesh display values
+     */
+    node
+    return null
+  }
+
+  /**
+   * REGION
+   */
+  protected RegionGeometyData(node: NodeData): GeometryData | null {
+    /** Regions don't (currently) have inherent geometryic description in the viewer. They are replaced
+     * by their display values
      */
     node
     return null
