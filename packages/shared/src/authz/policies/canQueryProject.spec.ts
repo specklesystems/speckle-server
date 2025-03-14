@@ -98,7 +98,7 @@ describe('canQueryProjectPolicyFactory creates a function, that', () => {
   })
   it('allows server admins without project roles on private projects if admin override is enabled', async () => {
     const canQueryProject = canQueryProjectPolicyFactory({
-      getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
+      getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
       getServerRole: () => Promise.resolve(Roles.Server.Admin),
       getProjectRole: () => {
@@ -115,9 +115,31 @@ describe('canQueryProjectPolicyFactory creates a function, that', () => {
       }
     })
     const canQuery = await canQueryProject(canQueryProjectArgs())
+    expect(canQuery.authorized).toBe(true)
+  })
+
+  it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
+    const canQueryProject = canQueryProjectPolicyFactory({
+      getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
+      getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
+      getServerRole: () => Promise.resolve(Roles.Server.Admin),
+      getProjectRole: () => {
+        return Promise.resolve(null)
+      },
+      getWorkspaceRole: () => {
+        assert.fail()
+      },
+      getWorkspaceSsoSession: () => {
+        assert.fail()
+      },
+      getWorkspaceSsoProvider: () => {
+        assert.fail()
+      }
+    })
+    const canQuery = await canQueryProject(canQueryProjectArgs())
     expect(canQuery.authorized).toBe(false)
     if (!canQuery.authorized) {
-      expect(canQuery.reason).toBe('Unauthorized')
+      expect(canQuery.reason).toBe('NoAccessToProject')
     }
   })
 })

@@ -12,7 +12,6 @@ export const requireExactProjectVisibility =
     const { projectId, projectVisibility } = args
 
     const project = await loaders.getProject({ projectId })
-    // todo make this a proper error
     if (!project) throw new Error(`Project not found`)
 
     switch (projectVisibility) {
