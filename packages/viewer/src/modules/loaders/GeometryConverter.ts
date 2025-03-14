@@ -22,6 +22,7 @@ export enum SpeckleType {
   InstanceProxy = 'InstanceProxy',
   RenderMaterialProxy = 'RenderMaterialProxy',
   ColorProxy = 'ColorProxy',
+  Region = 'Region',
   Unknown = 'Unknown'
 }
 
@@ -38,7 +39,8 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
   SpeckleType.Circle,
   SpeckleType.Arc,
   SpeckleType.Ellipse,
-  SpeckleType.Text
+  SpeckleType.Text,
+  SpeckleType.Region
 ]
 
 export abstract class GeometryConverter {
