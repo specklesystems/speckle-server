@@ -265,23 +265,23 @@ export function useApplySerializedState() {
       await resourceIdString.update(state.resources?.request?.resourceIdString || '')
     } else if (mode === StateApplyMode.FederatedContext) {
       // For federated context, append only model IDs (without versions) to show latest
-      const currentResources = SpeckleViewer.ViewerRoute.parseUrlParameters(
-        resourceIdString.value
-      )
-      const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(
+      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
+        SpeckleViewer.ViewerRoute
+
+      const currentResources = parseUrlParameters(resourceIdString.value)
+      const newResources = parseUrlParameters(
         state.resources?.request?.resourceIdString ?? ''
       ).map((resource) => {
-        if (resource instanceof SpeckleViewer.ViewerRoute.ViewerModelResource) {
+        if (resource instanceof ViewerModelResource) {
           // Only keep model ID, drop version
-          return new SpeckleViewer.ViewerRoute.ViewerModelResource(resource.modelId)
+          return new ViewerModelResource(resource.modelId)
         }
         return resource
       })
 
       if (newResources.length) {
         const allResources = [...currentResources, ...newResources]
-        const newResourceString =
-          SpeckleViewer.ViewerRoute.createGetParamFromResources(allResources)
+        const newResourceString = createGetParamFromResources(allResources)
         await resourceIdString.update(newResourceString)
       }
     }
