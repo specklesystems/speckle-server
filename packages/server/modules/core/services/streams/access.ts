@@ -6,6 +6,7 @@ import {
   IsStreamCollaborator,
   RemoveStreamCollaborator,
   RevokeStreamPermissions,
+  SetStreamCollaborator,
   ValidateStreamAccess
 } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
@@ -17,6 +18,7 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
+import { DependenciesOf } from '@/modules/shared/helpers/factory'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
 
@@ -93,24 +95,26 @@ export const removeStreamCollaboratorFactory =
     revokeStreamPermissions: RevokeStreamPermissions
     emitEvent: EventBusEmit
   }): RemoveStreamCollaborator =>
-  async (streamId, userId, removedById, removerResourceAccessRules) => {
-    if (userId !== removedById) {
-      // User must be a stream owner to remove others
-      await deps.validateStreamAccess(
-        removedById,
-        streamId,
-        Roles.Stream.Owner,
-        removerResourceAccessRules
-      )
-    } else {
-      // User must have any kind of role to remove himself
-      const isCollaborator = await deps.isStreamCollaborator(userId, streamId)
-      if (!isCollaborator) {
-        throw new StreamAccessUpdateError('User is not a stream collaborator')
+  async (streamId, userId, removedById, removerResourceAccessRules, options) => {
+    if (!options?.skipAuthorization) {
+      if (userId !== removedById) {
+        // User must be a stream owner to remove others
+        await deps.validateStreamAccess(
+          removedById,
+          streamId,
+          Roles.Stream.Owner,
+          removerResourceAccessRules
+        )
+      } else {
+        // User must have any kind of role to remove himself
+        const isCollaborator = await deps.isStreamCollaborator(userId, streamId)
+        if (!isCollaborator) {
+          throw new StreamAccessUpdateError('User is not a stream collaborator')
+        }
       }
     }
 
-    const stream = await deps.revokeStreamPermissions({ streamId, userId })
+    const stream = await deps.revokeStreamPermissions({ streamId, userId }, options)
     if (!stream) {
       throw new LogicError('Stream not found')
     }
@@ -150,25 +154,27 @@ export const addOrUpdateStreamCollaboratorFactory =
     role,
     addedById,
     adderResourceAccessRules,
-    { fromInvite } = {}
+    { fromInvite, trackProjectUpdate, skipAuthorization } = {}
   ) => {
     const validRoles = Object.values(Roles.Stream) as string[]
     if (!validRoles.includes(role)) {
       throw new LogicError('Unexpected stream role')
     }
 
-    if (userId === addedById) {
-      throw new StreamInvalidAccessError(
-        'User cannot change their own stream access level'
+    if (!skipAuthorization) {
+      if (userId === addedById) {
+        throw new StreamInvalidAccessError(
+          'User cannot change their own stream access level'
+        )
+      }
+
+      await deps.validateStreamAccess(
+        addedById,
+        streamId,
+        Roles.Stream.Owner,
+        adderResourceAccessRules
       )
     }
-
-    await deps.validateStreamAccess(
-      addedById,
-      streamId,
-      Roles.Stream.Owner,
-      adderResourceAccessRules
-    )
 
     // make sure server guests cannot be stream owners
     if (role === Roles.Stream.Owner) {
@@ -188,11 +194,14 @@ export const addOrUpdateStreamCollaboratorFactory =
       }
     })
 
-    const stream = (await deps.grantStreamPermissions({
-      streamId,
-      userId,
-      role: role as StreamRoles
-    })) as StreamRecord // validateStreamAccess already checked that it exists
+    const stream = (await deps.grantStreamPermissions(
+      {
+        streamId,
+        userId,
+        role: role as StreamRoles
+      },
+      { trackProjectUpdate }
+    )) as StreamRecord // validateStreamAccess already checked that it exists
 
     if (fromInvite) {
       await deps.emitEvent({
@@ -216,4 +225,34 @@ export const addOrUpdateStreamCollaboratorFactory =
     }
 
     return stream
+  }
+
+export const setStreamCollaboratorFactory =
+  (
+    deps: DependenciesOf<typeof addOrUpdateStreamCollaboratorFactory> &
+      DependenciesOf<typeof removeStreamCollaboratorFactory>
+  ): SetStreamCollaborator =>
+  async (params, options) => {
+    const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory(deps)
+    const removeStreamCollaborator = removeStreamCollaboratorFactory(deps)
+
+    const { streamId, userId, role, setterResourceAccessRules, setByUserId } = params
+    if (role) {
+      return await addOrUpdateStreamCollaborator(
+        streamId,
+        userId,
+        role,
+        setByUserId,
+        setterResourceAccessRules,
+        options
+      )
+    } else {
+      return await removeStreamCollaborator(
+        streamId,
+        userId,
+        setByUserId,
+        setterResourceAccessRules,
+        options
+      )
+    }
   }

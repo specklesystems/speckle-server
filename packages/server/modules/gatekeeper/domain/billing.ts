@@ -6,13 +6,23 @@ import {
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Nullable,
+  Optional,
+  PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type GetWorkspaceWithPlan = (args: {
+  workspaceId: string
+}) => Promise<Optional<Workspace & { plan: Nullable<WorkspacePlan> }>>
 
 export type UpsertTrialWorkspacePlan = (args: {
   workspacePlan: TrialWorkspacePlan
@@ -214,3 +224,11 @@ export type GetRecurringPrices = () => Promise<
 >
 
 export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>
+
+export type GetWorkspaceRolesAndSeats = (params: { workspaceId: string }) => Promise<{
+  [userId: string]: {
+    role: WorkspaceAcl
+    seat: Nullable<WorkspaceSeat>
+    userId: string
+  }
+}>
