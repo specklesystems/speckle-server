@@ -33,7 +33,7 @@ function useDebugViewer() {
   const applyState = (
     state: SpeckleViewer.ViewerState.SerializedViewerState | string
   ) => {
-    return apply(ensureObj(state), StateApplyMode.TheadFullContextOpen)
+    return apply(ensureObj(state), StateApplyMode.ThreadFullContextOpen)
   }
 
   // Get current viewer instance

@@ -166,6 +166,7 @@ async function doTask(
             info.streamId,
             `File upload: ${info.fileName}`,
             existingBranch?.id || '',
+            info.branchName,
             regionName
           ],
           {
