@@ -32,6 +32,7 @@ module.exports = {
     //handle errors
     writer.on('error', (err) => {
       logger.error(ensureError(err), `Error writing file ${destination}`)
+      throw err
     })
 
     //handle completion
