@@ -248,18 +248,21 @@ export function useCheckViewerCommentingAccess() {
 }
 
 const useActiveThreadContext = () => {
-  return useState<string | null>('current-context-thread', () => null)
+  type ThreadContext = {
+    threadId: string | null
+    previousState: SpeckleViewer.ViewerState.SerializedViewerState | null
+  }
+  return useState<ThreadContext>('thread-context', () => ({
+    threadId: null,
+    previousState: null
+  }))
 }
 
 export const useCommentContext = () => {
-  type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
-
   const applyState = useApplySerializedState()
   const { serialize } = useStateSerialization()
   const state = useInjectedViewerState()
-  const currentContextThread = useActiveThreadContext()
-
-  const previousState = ref<SerializedViewerState | null>(null)
+  const threadContext = useActiveThreadContext()
 
   const thread = computed(() => state.ui.threads.openThread.thread.value)
 
@@ -325,7 +328,7 @@ export const useCommentContext = () => {
 
   const hasClickedFullContext = computed(() => {
     const threadId = thread.value?.id
-    return currentContextThread.value === threadId
+    return threadContext.value.threadId === threadId
   })
 
   const loadContext = async (
@@ -335,9 +338,11 @@ export const useCommentContext = () => {
     const threadId = thread.value?.id ?? null
     if (!state) return
 
-    // Store current state before applying new one
-    previousState.value = serialize()
-    currentContextThread.value = threadId
+    // Store both current state and thread ID
+    threadContext.value = {
+      threadId,
+      previousState: serialize()
+    }
 
     await applyState(state, mode)
   }
@@ -355,13 +360,25 @@ export const useCommentContext = () => {
   }
 
   const goBack = async () => {
-    if (!previousState.value) {
+    if (!threadContext.value.previousState) {
       return
     }
 
-    await applyState(previousState.value, StateApplyMode.ThreadFullContextOpen)
-    currentContextThread.value = null
-    previousState.value = null
+    await applyState(
+      threadContext.value.previousState,
+      StateApplyMode.ThreadFullContextOpen
+    )
+    threadContext.value = {
+      threadId: null,
+      previousState: null
+    }
+  }
+
+  const cleanupThreadContext = () => {
+    threadContext.value = {
+      threadId: null,
+      previousState: null
+    }
   }
 
   return {
@@ -369,6 +386,7 @@ export const useCommentContext = () => {
     calculateThreadResourceStatus,
     handleContextClick,
     goBack,
-    hasClickedFullContext
+    hasClickedFullContext,
+    cleanupThreadContext
   }
 }

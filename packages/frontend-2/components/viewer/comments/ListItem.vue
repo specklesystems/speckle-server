@@ -22,7 +22,10 @@
           {{ thread.rawText }}
         </div>
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
-          <div class="flex items-center space-x-1">
+          <div
+            v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
+            class="flex items-center space-x-1"
+          >
             <div
               v-if="itemStatus.isDifferentVersion"
               v-tippy="'Conversation started in a different version.'"
