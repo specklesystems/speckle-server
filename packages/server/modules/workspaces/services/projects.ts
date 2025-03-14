@@ -255,7 +255,11 @@ export const getWorkspaceRolesAllowedProjectRolesFactory =
 
       switch (workspaceRole) {
         case Roles.Workspace.Guest:
-          return [Roles.Stream.Reviewer, Roles.Stream.Contributor]
+          if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
+            return [Roles.Stream.Reviewer]
+          } else {
+            return [Roles.Stream.Reviewer, Roles.Stream.Contributor]
+          }
         case Roles.Workspace.Member:
           if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
             return [Roles.Stream.Reviewer]
