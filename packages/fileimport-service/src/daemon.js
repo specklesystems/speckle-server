@@ -144,6 +144,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
             info.streamId,
             `File upload: ${info.fileName}`,
             existingBranch?.id || '',
+            info.branchName,
             regionName
           ],
           {
