@@ -8,6 +8,10 @@ import {
 } from '@/modules/workspaces/events/eventListener'
 import { expect } from 'chai'
 import { chunk } from 'lodash'
+import {
+  GetWorkspaceRolesAndSeats,
+  WorkspaceSeatType
+} from '@/modules/gatekeeper/domain/billing'
 
 describe('Event handlers', () => {
   describe('onProjectCreatedFactory creates a function, that', () => {
@@ -38,13 +42,28 @@ describe('Event handlers', () => {
 
       const projectRoles: StreamAclRecord[] = []
 
+      // TODO: New plan support
       const onProjectCreated = onProjectCreatedFactory({
-        getWorkspaceRoles: async () => workspaceRoles,
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          [Roles.Workspace.Admin]: Roles.Stream.Owner,
-          [Roles.Workspace.Member]: Roles.Stream.Contributor,
-          [Roles.Workspace.Guest]: null
-        }),
+        getWorkspaceRolesAndSeats: async () =>
+          workspaceRoles.reduce((acc, role) => {
+            acc[role.userId] = { role, seat: null, userId: role.userId }
+            return acc
+          }, {} as Awaited<ReturnType<GetWorkspaceRolesAndSeats>>),
+        getWorkspaceRolesAllowedProjectRoles: async () => {
+          const mapping = {
+            [Roles.Workspace.Admin]: Roles.Stream.Owner,
+            [Roles.Workspace.Member]: Roles.Stream.Contributor,
+            [Roles.Workspace.Guest]: null
+          }
+          return {
+            defaultProjectRole: ({ workspaceRole }) => {
+              return mapping[workspaceRole]
+            },
+            allowedProjectRoles: ({ workspaceRole }) => {
+              return [mapping[workspaceRole] || Roles.Stream.Reviewer]
+            }
+          }
+        },
         upsertProjectRole: async ({ projectId, userId, role }) => {
           projectRoles.push({
             resourceId: projectId,
@@ -68,29 +87,47 @@ describe('Event handlers', () => {
   describe('onWorkspaceRoleUpdatedFactory creates a function, that', () => {
     it('assigns no project roles if the role mapping returns null', async () => {
       let isDeleteCalled = false
+      const fakeProject = { id: 'test' } as StreamRecord
 
       await onWorkspaceRoleUpdatedFactory({
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          [Roles.Workspace.Admin]: Roles.Stream.Owner,
-          [Roles.Workspace.Member]: Roles.Stream.Contributor,
-          [Roles.Workspace.Guest]: null
-        }),
+        getWorkspaceRolesAllowedProjectRoles: async () => {
+          const mapping = {
+            [Roles.Workspace.Admin]: Roles.Stream.Owner,
+            [Roles.Workspace.Member]: Roles.Stream.Contributor,
+            [Roles.Workspace.Guest]: null
+          }
+          return {
+            defaultProjectRole: ({ workspaceRole }) => {
+              return mapping[workspaceRole]
+            },
+            allowedProjectRoles: ({ workspaceRole }) => {
+              return [mapping[workspaceRole] || Roles.Stream.Reviewer]
+            }
+          }
+        },
         async *queryAllWorkspaceProjects() {
-          yield [{ id: 'test' } as StreamRecord]
+          yield [fakeProject as StreamRecord]
         },
-        deleteProjectRole: async () => {
-          isDeleteCalled = true
-          return undefined
+        getStreamsCollaboratorCounts: async () => {
+          return {}
         },
-        upsertProjectRole: async () => {
-          expect.fail()
+        setStreamCollaborator: async ({ role }) => {
+          if (!role) {
+            isDeleteCalled = true
+          } else {
+            expect.fail()
+          }
+
+          return fakeProject
         }
       })({
         acl: {
           role: Roles.Workspace.Guest,
           userId: cryptoRandomString({ length: 10 }),
           workspaceId: cryptoRandomString({ length: 10 })
-        }
+        },
+        seatType: WorkspaceSeatType.Editor,
+        updatedByUserId: cryptoRandomString({ length: 10 })
       })
 
       expect(isDeleteCalled).to.be.true
@@ -108,30 +145,50 @@ describe('Event handlers', () => {
       const storedRoles: { userId: string; role: StreamRoles; projectId: string }[] = []
       let trackProjectUpdate: boolean | undefined = false
       await onWorkspaceRoleUpdatedFactory({
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          [Roles.Workspace.Admin]: Roles.Stream.Owner,
-          [Roles.Workspace.Member]: projectRole,
-          [Roles.Workspace.Guest]: null
-        }),
+        getWorkspaceRolesAllowedProjectRoles: async () => {
+          const mapping = {
+            [Roles.Workspace.Admin]: Roles.Stream.Owner,
+            [Roles.Workspace.Member]: projectRole,
+            [Roles.Workspace.Guest]: null
+          }
+          return {
+            defaultProjectRole: ({ workspaceRole }) => {
+              return mapping[workspaceRole]
+            },
+            allowedProjectRoles: ({ workspaceRole }) => {
+              return [mapping[workspaceRole] || Roles.Stream.Reviewer]
+            }
+          }
+        },
         async *queryAllWorkspaceProjects() {
           for (const projIds of chunk(projectIds, 3)) {
             yield projIds.map((projId) => ({ id: projId } as unknown as StreamRecord))
           }
         },
-        deleteProjectRole: async () => {
-          expect.fail()
+        getStreamsCollaboratorCounts: async () => {
+          return {}
         },
-        upsertProjectRole: async (args, options) => {
-          storedRoles.push(args)
-          trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
-          return {} as StreamRecord
+        setStreamCollaborator: async (params, options) => {
+          if (!params.role) {
+            return expect.fail()
+          } else {
+            storedRoles.push({
+              userId: params.userId,
+              role: params.role,
+              projectId: params.streamId
+            })
+            trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
+            return {} as StreamRecord
+          }
         }
       })({
         acl: {
           role: Roles.Workspace.Member,
           userId,
           workspaceId: cryptoRandomString({ length: 10 })
-        }
+        },
+        seatType: WorkspaceSeatType.Editor,
+        updatedByUserId: cryptoRandomString({ length: 10 })
       })
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))

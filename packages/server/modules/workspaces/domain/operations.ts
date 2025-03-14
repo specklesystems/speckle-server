@@ -1,5 +1,4 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -20,12 +19,9 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import {
-  WorkspaceCreationState,
-  WorkspaceRoleToDefaultProjectRoleMapping
-} from '@/modules/workspaces/domain/types'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream } from '@/modules/core/domain/streams/types'
+import { Stream, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
@@ -199,22 +195,37 @@ export type UpdateWorkspaceRole = (
      * Only add or upgrade role, prevent downgrades
      */
     preventRoleDowngrade?: boolean
+
+    updatedByUserId: string
   }
 ) => Promise<void>
 
-export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
+export type GetWorkspaceRolesAllowedProjectRolesFactory = (params: {
   workspaceId: string
-}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+}) => Promise<{
+  defaultProjectRole: (args: {
+    workspaceRole: WorkspaceRoles
+    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
+  }) => StreamRoles | null
+  allowedProjectRoles: (args: {
+    workspaceRole: WorkspaceRoles
+    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
+  }) => StreamRoles[]
+}>
 
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
   workspaceId: string
+  /**
+   * Optionally get project roles for a specific user
+   */
+  userId?: string
 }
 
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
-) => AsyncGenerator<StreamRecord[], void, unknown>
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
 
 /** Workspace Project Roles */
 
@@ -337,7 +348,9 @@ export type GetWorkspaceJoinRequest = (
 ) => Promise<WorkspaceJoinRequest | undefined>
 
 export type ApproveWorkspaceJoinRequest = (
-  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'> & {
+    approvedByUserId: string
+  }
 ) => Promise<boolean>
 
 export type DenyWorkspaceJoinRequest = (
@@ -388,7 +401,10 @@ export type CopyProjectAutomations = (params: {
 }) => Promise<Record<string, number>>
 
 export type AssignWorkspaceSeat = (
-  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type: WorkspaceSeatType }
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
+    type: WorkspaceSeatType
+    assignedByUserId: string
+  }
 ) => Promise<WorkspaceSeat>
 
 export type EnsureValidWorkspaceRoleSeat = (params: {

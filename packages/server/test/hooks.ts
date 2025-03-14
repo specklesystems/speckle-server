@@ -23,6 +23,7 @@ import {
   MaybeNullOrUndefined,
   Nullable,
   Optional,
+  retry,
   wait
 } from '@speckle/shared'
 import * as mocha from 'mocha'
@@ -233,8 +234,11 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
     if (!tableNames.length) return // Nothing to truncate
 
     // We're deleting everything, so lets turn off triggers to avoid deadlocks/slowdowns
-    await deps.db.transaction(async (trx) => {
-      await trx.raw(`
+    // This still seems to randomly cause deadlocks, so adding a retry
+    await retry(
+      async () =>
+        await deps.db.transaction(async (trx) => {
+          await trx.raw(`
         -- Disable triggers and foreign key constraints for this session
         SET session_replication_role = replica;
 
@@ -243,7 +247,10 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
         -- Re-enable triggers and foreign key constraints
         SET session_replication_role = DEFAULT;
       `)
-    })
+        }),
+      3,
+      200
+    )
   } else {
     await deps.db.raw(`truncate table ${tableNames.join(',')} cascade`)
   }

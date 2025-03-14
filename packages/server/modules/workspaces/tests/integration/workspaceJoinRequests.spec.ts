@@ -250,7 +250,11 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             ensureValidWorkspaceRoleSeat: async () => {
               throw new Error('Should not happen')
             }
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('User not found')
@@ -270,7 +274,11 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             ensureValidWorkspaceRoleSeat: async () => {
               throw new Error('Should not happen')
             }
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal(WorkspaceNotFoundError.defaultMessage)
@@ -298,7 +306,11 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             ensureValidWorkspaceRoleSeat: async () => {
               throw new Error('Should not happen')
             }
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('Workspace join request not found')
@@ -364,7 +376,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               createdAt: new Date(),
               updatedAt: new Date()
             })
-          })({ workspaceId: workspace.id, userId: user.id })
+          })({ workspaceId: workspace.id, userId: user.id, approvedByUserId: user.id })
         ).to.equal(true)
 
         expect(

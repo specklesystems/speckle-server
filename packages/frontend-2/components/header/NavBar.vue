@@ -4,7 +4,15 @@
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
-        <HeaderLogoBlock :active="false" to="/" class="hidden lg:flex lg:min-w-40" />
+        <div class="hidden lg:block">
+          <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
+          <HeaderLogoBlock
+            v-else
+            :active="false"
+            to="/"
+            class="hidden lg:flex lg:min-w-40"
+          />
+        </div>
         <div class="flex items-center truncate">
           <ClientOnly>
             <PortalTarget name="mobile-navigation"></PortalTarget>
@@ -18,16 +26,18 @@
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
-          <FormButton
-            v-if="!activeUser"
-            :to="loginUrl.fullPath"
-            color="outline"
-            class="hidden md:flex"
-          >
-            Sign in
-          </FormButton>
-          <!-- Profile dropdown -->
-          <HeaderNavUserMenu :login-url="loginUrl" />
+          <div class="flex justify-end">
+            <FormButton
+              v-if="!activeUser"
+              :to="loginUrl.fullPath"
+              color="outline"
+              class="hidden md:flex"
+            >
+              Sign in
+            </FormButton>
+            <!-- Profile dropdown -->
+            <HeaderNavUserMenu :login-url="loginUrl" />
+          </div>
         </div>
       </div>
     </nav>
@@ -39,6 +49,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const { activeUser } = useActiveUser()
 const route = useRoute()
 const router = useRouter()
@@ -52,5 +64,10 @@ const loginUrl = computed(() =>
       token: token.value || undefined
     }
   })
+)
+
+const showWorkspaceSwitcher = computed(
+  () =>
+    isWorkspacesEnabled.value && isWorkspaceNewPlansEnabled.value && activeUser.value
 )
 </script>
