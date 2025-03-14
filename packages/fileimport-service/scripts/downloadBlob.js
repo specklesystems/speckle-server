@@ -1,5 +1,5 @@
-const { downloadFile } = require('../src/filesApi.js')
-const { logger } = require('../observability/logging')
+const { downloadFile } = require('../src/controller/filesApi.js')
+const { logger } = require('../src/observability/logging')
 
 //https://latest.speckle.systems/api/stream/c83a5b2d1f/blob/29fe85cffb
 const speckleServerUrl = 'https://latest.speckle.systems'

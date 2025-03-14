@@ -1,16 +1,16 @@
-const { performance } = require('perf_hooks')
-const WebIFC = require('web-ifc/web-ifc-api-node')
-const {
+import { performance } from 'perf_hooks'
+import WebIFC from 'web-ifc/web-ifc-api-node.js'
+import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import { logger as parentLogger } from '@/observability/logging.js'
+import {
   getHash,
   IfcElements,
   PropNames,
   GeometryTypes,
   IfcTypesMap
-} = require('./utils')
-const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
-const { logger: parentLogger } = require('../observability/logging')
+} from '@/ifc/utils.js'
 
-module.exports = class IFCParser {
+export class IFCParser {
   constructor({ serverApi, fileId, logger }) {
     this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
