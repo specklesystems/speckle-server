@@ -37,7 +37,6 @@ import {
   useApplySerializedState,
   StateApplyMode
 } from '~~/lib/viewer/composables/serialization'
-import { useRouter } from 'vue-router'
 import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
 
 export function useViewerCommentUpdateTracking(
@@ -254,10 +253,8 @@ export const useCommentContext = () => {
   const applyState = useApplySerializedState()
   const { serialize } = useStateSerialization()
   const state = useInjectedViewerState()
-  const router = useRouter()
 
   const previousState = ref<SerializedViewerState | null>(null)
-  const previousRoute = ref<string | null>(null)
 
   const thread = computed(() => state.ui.threads.openThread.thread.value)
 
@@ -329,7 +326,6 @@ export const useCommentContext = () => {
 
     // Store current state before applying new one
     previousState.value = serialize()
-    previousRoute.value = router.currentRoute.value.fullPath
 
     await applyState(state, mode)
   }
@@ -353,12 +349,7 @@ export const useCommentContext = () => {
 
     await applyState(previousState.value, StateApplyMode.ThreadFullContextOpen)
 
-    if (previousRoute.value) {
-      await router.push(previousRoute.value)
-    }
-
     previousState.value = null
-    previousRoute.value = null
   }
 
   return {
