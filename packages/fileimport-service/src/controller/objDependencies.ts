@@ -60,7 +60,7 @@ export async function downloadDependencies({
       continue
     }
     await downloadFile({
-      speckleServerUrl: process.env.SPECKLE_SERVER_URL || 'http://127.0.0.1:3000',
+      speckleServerUrl,
       fileId: file.id,
       streamId,
       token,
