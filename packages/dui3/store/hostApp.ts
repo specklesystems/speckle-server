@@ -218,7 +218,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         idMap
       }
 
-      await patchModel(modelCardId, { sendFilter: newFilter })
+      await patchModel(modelCardId, { sendFilter: newFilter }, false) // we do not necessarily need to updateModel in revit bc we already do it on .NET - otherwise it is leading cleanup on document store bc of deferred action when we switched to the another doc
     }
   )
 
