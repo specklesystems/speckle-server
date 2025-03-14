@@ -270,18 +270,13 @@ export function useApplySerializedState() {
       )
       const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(
         state.resources?.request?.resourceIdString ?? ''
-      )
-        .map((resource) => {
-          if (resource instanceof SpeckleViewer.ViewerRoute.ViewerModelResource) {
-            // Only keep model ID, drop version
-            return new SpeckleViewer.ViewerRoute.ViewerModelResource(resource.modelId)
-          }
-          return resource
-        })
-        .filter(
-          (resource) =>
-            !currentResources.some((cr) => cr.toString() === resource.toString())
-        )
+      ).map((resource) => {
+        if (resource instanceof SpeckleViewer.ViewerRoute.ViewerModelResource) {
+          // Only keep model ID, drop version
+          return new SpeckleViewer.ViewerRoute.ViewerModelResource(resource.modelId)
+        }
+        return resource
+      })
 
       if (newResources.length) {
         const allResources = [...currentResources, ...newResources]
