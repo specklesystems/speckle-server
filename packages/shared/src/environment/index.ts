@@ -6,10 +6,17 @@ const isDisableAllFFsMode = () =>
 const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
-const parseFeatureFlags = () => {
+export const parseFeatureFlags = (
+  input: Record<string, string | undefined>
+): FeatureFlags => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  const res = parseEnv(process.env, {
+  const res = parseEnv(input, {
+    // Enables the admin override feature
+    FF_ADMIN_OVERRIDE_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -93,9 +100,10 @@ const parseFeatureFlags = () => {
   return res
 }
 
-let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
+let parsedFlags: FeatureFlags | undefined
 
-export function getFeatureFlags(): {
+export type FeatureFlags = {
+  FF_ADMIN_OVERRIDE_ENABLED: boolean
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
@@ -110,7 +118,9 @@ export function getFeatureFlags(): {
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-} {
-  if (!parsedFlags) parsedFlags = parseFeatureFlags()
+}
+
+export function getFeatureFlags(): FeatureFlags {
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
   return parsedFlags
 }

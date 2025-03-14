@@ -3,11 +3,14 @@ import {
   UserStreamRole
 } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Roles } from '@/modules/core/helpers/mainConstants'
+import { RoleInfo } from '@speckle/shared'
+import { pick } from 'lodash'
 
 // Conventions:
 // "weight: 1000" => resource owner
 // "weight: 100" => resource viewer / basic user
 // Anything in between 100 and 1000 can be used for escalating privileges.
+const keysToPick = ['weight', 'description'] as const
 
 const coreUserRoles: Array<UserServerRole | UserStreamRole> = [
   /**
@@ -15,19 +18,16 @@ const coreUserRoles: Array<UserServerRole | UserStreamRole> = [
    */
   {
     name: Roles.Server.Admin,
-    description:
-      'Holds supreme autocratic authority, not restricted by written laws, legislature, or customs.',
+    ...pick(RoleInfo.Server[Roles.Server.Admin], keysToPick),
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 1000,
     public: false
   },
   {
     name: Roles.Server.User,
-    description: 'Has normal access to the server.',
+    ...pick(RoleInfo.Server[Roles.Server.User], keysToPick),
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 100,
     public: false
   },
   // TODO: should this be dynamically pushed if guest role is enabled?
@@ -36,18 +36,16 @@ const coreUserRoles: Array<UserServerRole | UserStreamRole> = [
   // can leave the guest users in a broken state
   {
     name: Roles.Server.Guest,
-    description: 'Has limited access to the server.',
+    ...pick(RoleInfo.Server[Roles.Server.Guest], keysToPick),
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 50,
     public: false
   },
   {
     name: Roles.Server.ArchivedUser,
-    description: 'No longer has access to the server.',
+    ...pick(RoleInfo.Server[Roles.Server.ArchivedUser], keysToPick),
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 10,
     public: false
   },
   /**
@@ -55,27 +53,23 @@ const coreUserRoles: Array<UserServerRole | UserStreamRole> = [
    */
   {
     name: Roles.Stream.Owner,
-    description: 'Owners have full access, including deletion rights & access control.',
+    ...pick(RoleInfo.Stream[Roles.Stream.Owner], keysToPick),
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 1000,
     public: true
   },
   {
     name: Roles.Stream.Contributor,
-    description:
-      'Contributors can create new branches and commits, but they cannot edit stream details or manage collaborators.',
+    ...pick(RoleInfo.Stream[Roles.Stream.Owner], keysToPick),
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 500,
     public: true
   },
   {
     name: Roles.Stream.Reviewer,
-    description: 'Reviewers can only view (read) the data from this stream.',
+    ...pick(RoleInfo.Stream[Roles.Stream.Owner], keysToPick),
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 100,
     public: true
   }
 ]
