@@ -177,6 +177,7 @@ async function doTask(
           process.env['NODE_BINARY_PATH'] || 'node',
           [
             '--no-experimental-fetch',
+            '--loader=./dist/src/aliasLoader.js',
             './src/ifc/import_file.js',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
