@@ -8,7 +8,6 @@ import { StencilMaskPass } from '../../Passes/StencilMaskPass.js'
 import { StencilPass } from '../../Passes/StencilPass.js'
 import { TAAPass } from '../../Passes/TAAPass.js'
 import { ProgressivePipeline } from '../ProgressivePipeline.js'
-import { DepthNormalPass } from '../../Passes/DepthNormalPass.js'
 import SpeckleStandardMaterial from '../../../materials/SpeckleStandardMaterial.js'
 import {
   DoubleSide,
@@ -18,31 +17,34 @@ import {
   Scene,
   WebGLRenderer
 } from 'three'
+import { DepthNormalIdPass } from '../../Passes/DepthNormalIdPass.js'
 
 export class MRTPenViewPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthNormalPass = new DepthNormalPass()
-    depthNormalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthNormalPass.setVisibility(ObjectVisibility.DEPTH)
-    depthNormalPass.setJitter(true)
-    depthNormalPass.setClearColor(0x000000, 1)
-    depthNormalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthNormalIdPass = new DepthNormalIdPass()
+    depthNormalIdPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthNormalIdPass.setVisibility(ObjectVisibility.DEPTH)
+    depthNormalIdPass.setJitter(true)
+    depthNormalIdPass.setClearColor(0x000000, 1)
+    depthNormalIdPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const depthPassNormalDynamic = new DepthNormalPass()
-    depthPassNormalDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassNormalDynamic.setVisibility(ObjectVisibility.DEPTH)
-    depthPassNormalDynamic.setClearColor(0x000000, 1)
-    depthPassNormalDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthNormalIdPassDynamic = new DepthNormalIdPass()
+    depthNormalIdPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthNormalIdPassDynamic.setVisibility(ObjectVisibility.DEPTH)
+    depthNormalIdPassDynamic.setClearColor(0x000000, 1)
+    depthNormalIdPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const edgesPass = new EdgePass()
-    edgesPass.setTexture('tDepth', depthNormalPass.depthTexture)
-    edgesPass.setTexture('tNormal', depthNormalPass.normalTexture)
+    edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
+    edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
+    edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
 
     const edgesPassDynamic = new EdgePass()
-    edgesPassDynamic.setTexture('tDepth', depthPassNormalDynamic.depthTexture)
-    edgesPassDynamic.setTexture('tNormal', depthPassNormalDynamic.normalTexture)
+    edgesPassDynamic.setTexture('tDepth', depthNormalIdPassDynamic.depthTexture)
+    edgesPassDynamic.setTexture('tNormal', depthNormalIdPassDynamic.normalTexture)
+    edgesPassDynamic.setTexture('tId', depthNormalIdPassDynamic.idTexture)
     edgesPassDynamic.outputTarget = null
 
     const taaPass = new TAAPass()
@@ -110,7 +112,7 @@ export class MRTPenViewPipeline extends ProgressivePipeline {
     outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
 
     this.dynamicStage.push(
-      depthPassNormalDynamic,
+      depthNormalIdPassDynamic,
       edgesPassDynamic,
       stencilPass,
       geometryPass,
@@ -118,7 +120,7 @@ export class MRTPenViewPipeline extends ProgressivePipeline {
       overlayPass
     )
     this.progressiveStage.push(
-      depthNormalPass,
+      depthNormalIdPass,
       edgesPass,
       taaPass,
       outputPass,

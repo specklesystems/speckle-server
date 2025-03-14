@@ -65,6 +65,7 @@ export class EdgePass extends BaseGPass {
       uniforms: {
         tDepth: { value: null },
         tNormal: { value: null },
+        tId: { value: null },
         size: { value: new Vector2(512, 512) },
 
         uDepthMultiplier: { value: this._options.depthMultiplier },
