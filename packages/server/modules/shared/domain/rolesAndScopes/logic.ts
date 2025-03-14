@@ -2,6 +2,9 @@ import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { AvailableRoles } from '@speckle/shared'
 import { isUndefined } from 'lodash'
 
+/**
+ * Order roles by weight in descending order (meaning - highest permission roles come first)
+ */
 export const orderByWeight = <T extends AvailableRoles>(
   roles: T[],
   definitions: UserRoleData<T>[]
