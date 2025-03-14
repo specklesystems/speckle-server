@@ -1,8 +1,6 @@
 <template>
   <div>
-    <CommonCard
-      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
-    >
+    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full">
       <div class="flex gap-2 items-center">
         <img
           v-if="connector.image"
@@ -11,12 +9,6 @@
           class="w-[48px] -ml-1"
         />
         <div class="flex flex-col gap-y-1.5">
-          <p
-            v-if="connector.isComingSoon"
-            class="text-body-3xs text-foreground-2 leading-none"
-          >
-            Coming soon
-          </p>
           <h2 class="text-body-xs text-foreground font-medium leading-none">
             {{ connector.title }}
           </h2>
@@ -25,11 +17,11 @@
       <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
         {{ connector.description }}
       </p>
-      <div class="space-x-2 mt-2">
+      <div class="space-x-1 mt-2">
         <FormButton
           color="outline"
           size="sm"
-          :disabled="isLoadingVersions"
+          :disabled="enableButton"
           external
           :to="latestAvailableVersion?.Url"
           @click="
@@ -38,13 +30,12 @@
             })
           "
         >
-          {{ connector.isComingSoon ? 'Coming soon' : 'Install' }}
+          {{ connector.isComingSoon ? 'Coming soon' : 'Install for Windows' }}
         </FormButton>
         <FormButton
           v-if="connector.url"
-          color="outline"
+          color="subtle"
           size="sm"
-          text
           target="_blank"
           external
           :to="connector.url"
@@ -70,32 +61,23 @@ const props = defineProps<{
 }>()
 
 const mixpanel = useMixpanel()
-
-const versions = ref<Version[]>([])
-const latestAvailableVersion = ref<Version | null>(null)
-const isLoadingVersions = ref(true)
-
-const getVersions = async () => {
-  const response = await fetch(
-    `https://releases.speckle.dev/manager2/feeds/${props.connector.slug}-v3.json`,
-    {
-      method: 'GET'
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch versions')
+const { data: versionData, status } = useFetch(
+  `https://releases.speckle.dev/manager2/feeds/${props.connector.slug}-v3.json`,
+  {
+    immediate: !props.connector.isComingSoon
   }
+)
 
-  const data = (await response.json()) as unknown as Versions
-  const sortedVersions = data.Versions.sort(function (a: Version, b: Version) {
-    return new Date(b.Date).getTime() - new Date(a.Date).getTime()
-  })
-  versions.value = sortedVersions
-  latestAvailableVersion.value = sortedVersions[0]
+const enableButton = computed(() => status.value !== 'success')
 
-  isLoadingVersions.value = false
-}
-
-void getVersions()
+const latestAvailableVersion = computed<Version | null>(() => {
+  if (versionData.value) {
+    const typedData = versionData.value as Versions
+    const sortedVersions = [...typedData.Versions].sort(
+      (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
+    )
+    return sortedVersions.length > 0 ? sortedVersions[0] : null
+  }
+  return null
+})
 </script>

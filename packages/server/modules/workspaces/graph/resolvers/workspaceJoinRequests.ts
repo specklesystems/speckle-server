@@ -5,6 +5,10 @@ import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmail
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { commandFactory } from '@/modules/shared/command'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -31,6 +35,7 @@ import {
   approveWorkspaceJoinRequestFactory,
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
@@ -122,7 +127,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
         workspaceJoinRequestMutations: () => ({})
       },
       WorkspaceJoinRequestMutations: {
-        approve: async (_parent, args) => {
+        approve: async (_parent, args, ctx) => {
           const approveWorkspaceJoinRequest =
             commandFactory<ApproveWorkspaceJoinRequest>({
               db,
@@ -148,13 +153,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  emit
+                  emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
                 })
               }
             })
           return await approveWorkspaceJoinRequest({
             userId: args.input.userId,
-            workspaceId: args.input.workspaceId
+            workspaceId: args.input.workspaceId,
+            approvedByUserId: ctx.userId!
           })
         },
         deny: async (_parent, args) => {

@@ -95,6 +95,12 @@ export class SsoUserInviteRequiredError extends BaseError {
   static defaultMessage = 'Cannot sign up with SSO without a valid workspace invite.'
   static code = 'SSO_USER_INVITE_REQUIRED_ERROR'
   static statusCode = 400
+
+  constructor(userEmail: string) {
+    super(
+      `Cannot sign up with SSO without a valid workspace invite. No invite found for ${userEmail}.`
+    )
+  }
 }
 
 export class OidcProviderMissingGrantTypeError extends BaseError {

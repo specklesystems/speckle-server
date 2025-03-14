@@ -39,8 +39,8 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
-import { Queue } from 'bull'
-import { Knex } from 'knex'
+import type { Queue } from 'bull'
+import type { Knex } from 'knex'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)

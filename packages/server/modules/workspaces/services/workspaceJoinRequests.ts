@@ -7,8 +7,10 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
+  ApproveWorkspaceJoinRequest,
   CreateWorkspaceJoinRequest,
   DenyWorkspaceJoinRequest,
+  EnsureValidWorkspaceRoleSeat,
   GetWorkspace,
   GetWorkspaceJoinRequest,
   GetWorkspaceWithDomains,
@@ -107,7 +109,8 @@ export const approveWorkspaceJoinRequestFactory =
     getWorkspace,
     getWorkspaceJoinRequest,
     upsertWorkspaceRole,
-    emit
+    emit,
+    ensureValidWorkspaceRoleSeat
   }: {
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
     sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
@@ -116,8 +119,9 @@ export const approveWorkspaceJoinRequestFactory =
     getWorkspaceJoinRequest: GetWorkspaceJoinRequest
     upsertWorkspaceRole: UpsertWorkspaceRole
     emit: EventBus['emit']
-  }) =>
-  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
+  }): ApproveWorkspaceJoinRequest =>
+  async ({ userId, workspaceId, approvedByUserId }) => {
     const requester = await getUserById(userId)
     if (!requester) {
       throw new NotFoundError('User not found')
@@ -145,11 +149,16 @@ export const approveWorkspaceJoinRequestFactory =
 
     const role = Roles.Workspace.Member
     await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
+    const { type } = await ensureValidWorkspaceRoleSeat({ userId, workspaceId, role })
 
     await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
     await emit({
       eventName: WorkspaceEvents.RoleUpdated,
-      payload: { workspaceId, userId, role }
+      payload: {
+        acl: { workspaceId, userId, role },
+        seatType: type,
+        updatedByUserId: approvedByUserId
+      }
     })
 
     await sendWorkspaceJoinRequestApprovedEmail({

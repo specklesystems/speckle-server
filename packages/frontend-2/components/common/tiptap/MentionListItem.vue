@@ -8,7 +8,7 @@
     ]"
     @click="($event) => $emit('click', $event)"
   >
-    <span class="truncate">{{ item.company ? item.company : item.name }}</span>
+    <span class="truncate">{{ item.name }}</span>
   </a>
 </template>
 <script setup lang="ts">
