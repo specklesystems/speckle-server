@@ -1,21 +1,10 @@
-import { ProjectRole } from './types.js'
-
-const projectRoleWeights: Record<ProjectRole, number> = {
-  'stream:owner': 1000,
-  'stream:contributor': 500,
-  'stream:reviewer': 100,
-  'stream:guest': 50
-}
+import { StreamRoles, RoleInfo } from '../../../core/constants.js'
 
 export const isMinimumProjectRole = (
-  role: ProjectRole,
-  targetRole: ProjectRole
+  role: StreamRoles,
+  targetRole: StreamRoles
 ): boolean => {
-  const roleWeight = projectRoleWeights[role]
-  const targetRoleWeight = projectRoleWeights[targetRole]
-
-  // TODO: BaseError in shared module?
-  if (!roleWeight || !targetRoleWeight) return false
-
+  const roleWeight = RoleInfo.Stream[role].weight
+  const targetRoleWeight = RoleInfo.Stream[targetRole].weight
   return roleWeight >= targetRoleWeight
 }

@@ -1,6 +1,6 @@
+import { WorkspaceRoles } from '../../core/constants.js'
 import { ChuckContext } from '../domain/loaders.js'
 import { isMinimumWorkspaceRole } from '../domain/workspaces/logic.js'
-import { WorkspaceRole } from '../domain/workspaces/types.js'
 
 export const requireAnyWorkspaceRole =
   ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
@@ -12,26 +12,26 @@ export const requireAnyWorkspaceRole =
     return userWorkspaceRole === null
   }
 
-export const requireExactWorkspaceRole =
-  ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
-  async (args: {
-    userId: string
-    workspaceId: string
-    role: WorkspaceRole
-  }): Promise<boolean> => {
-    const { userId, workspaceId, role: requiredWorkspaceRole } = args
+// export const requireExactWorkspaceRole =
+//   ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
+//   async (args: {
+//     userId: string
+//     workspaceId: string
+//     role: WorkspaceRoles
+//   }): Promise<boolean> => {
+//     const { userId, workspaceId, role: requiredWorkspaceRole } = args
 
-    const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
+//     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
 
-    return userWorkspaceRole === requiredWorkspaceRole
-  }
+//     return userWorkspaceRole === requiredWorkspaceRole
+//   }
 
 export const requireMinimumWorkspaceRole =
   ({ loaders }: ChuckContext<'getWorkspaceRole'>) =>
   async (args: {
     userId: string
     workspaceId: string
-    role: WorkspaceRole
+    role: WorkspaceRoles
   }): Promise<boolean> => {
     const { userId, workspaceId, role: requiredWorkspaceRole } = args
 

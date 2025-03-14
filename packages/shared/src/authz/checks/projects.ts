@@ -1,7 +1,7 @@
-import { throwUncoveredError } from '../../core/index.js'
+import { StreamRoles, throwUncoveredError } from '../../core/index.js'
 import { ChuckContext } from '../domain/loaders.js'
 import { isMinimumProjectRole } from '../domain/projects/logic.js'
-import { ProjectRole, ProjectVisibility } from '../domain/projects/types.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 export const requireExactProjectVisibility =
   ({ loaders }: ChuckContext<'getProject'>) =>
@@ -12,14 +12,16 @@ export const requireExactProjectVisibility =
     const { projectId, projectVisibility } = args
 
     const project = await loaders.getProject({ projectId })
+    // todo make this a proper error
+    if (!project) throw new Error(`Project not found`)
 
     switch (projectVisibility) {
       case 'linkShareable':
-        return project?.isDiscoverable === true
+        return project.isDiscoverable === true
       case 'public':
-        return project?.isPublic === true
+        return project.isPublic === true
       case 'private':
-        return project?.isPublic !== true
+        return project.isPublic !== true && project.isDiscoverable !== true
       default:
         throwUncoveredError(projectVisibility)
     }
@@ -30,7 +32,7 @@ export const requireMinimumProjectRole =
   async (args: {
     userId: string
     projectId: string
-    role: ProjectRole
+    role: StreamRoles
   }): Promise<boolean> => {
     const { userId, projectId, role: requiredProjectRole } = args
 

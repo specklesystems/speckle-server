@@ -1,17 +1,13 @@
+import { WorkspaceRoles } from '../../../core/constants.js'
 import { FeatureFlags } from '../../../environment/index.js'
-import {
-  Workspace,
-  WorkspaceRole,
-  WorkspaceSsoProvider,
-  WorkspaceSsoSession
-} from './types.js'
+import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
 
 export type GetWorkspace = (args: { workspaceId: string }) => Promise<Workspace | null>
 
 export type GetWorkspaceRole = (args: {
   userId: string
   workspaceId: string
-}) => Promise<WorkspaceRole | null>
+}) => Promise<WorkspaceRoles | null>
 
 export type GetWorkspaceSsoProvider = (args: {
   workspaceId: string

@@ -1,19 +1,11 @@
-import { WorkspaceRole } from './types.js'
-
-const workspaceRoleWeights: Record<WorkspaceRole, number> = {
-  'workspace:admin': 1000,
-  'workspace:member': 100,
-  'workspace:guest': 50
-}
+import { RoleInfo, WorkspaceRoles } from '../../../core/constants.js'
 
 export const isMinimumWorkspaceRole = (
-  role: WorkspaceRole,
-  targetRole: WorkspaceRole
+  role: WorkspaceRoles,
+  targetRole: WorkspaceRoles
 ): boolean => {
-  const roleWeight = workspaceRoleWeights[role]
-  const targetRoleWeight = workspaceRoleWeights[targetRole]
-
-  if (!roleWeight || !targetRoleWeight) return false
+  const roleWeight = RoleInfo.Workspace[role].weight
+  const targetRoleWeight = RoleInfo.Workspace[targetRole].weight
 
   return roleWeight >= targetRoleWeight
 }
