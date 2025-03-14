@@ -17,9 +17,8 @@ const props = defineProps<{
   workspace: LimitedWorkspace
 }>()
 
-const { processRequest } = useDiscoverableWorkspaces()
+const { processRequest, dismissDiscoverableWorkspace } = useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
-const { triggerNotification } = useGlobalToast()
 
 const invite = computed(() => ({
   workspace: {
@@ -39,15 +38,12 @@ const handleRequest = async (accept: boolean) => {
     emit('dismiss', props.workspace.id)
   } else {
     emit('dismiss', props.workspace.id)
+    await dismissDiscoverableWorkspace(props.workspace.id)
     mixpanel.track('Workspace Discovery Banner Dismissed', {
       workspaceId: props.workspace.id,
       location: 'discovery banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
-    })
-    triggerNotification({
-      title: 'Discoverable workspace dismissed',
-      type: ToastNotificationType.Info
     })
   }
 }
