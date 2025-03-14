@@ -2,7 +2,13 @@ import { performance } from 'perf_hooks'
 import WebIFC from 'web-ifc/web-ifc-api-node.js'
 import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { logger as parentLogger } from '@/observability/logging.js'
-import { getHash, IfcElements, PropNames, GeometryTypes, IfcTypesMap } from './utils.js'
+import {
+  getHash,
+  IfcElements,
+  PropNames,
+  GeometryTypes,
+  IfcTypesMap
+} from '@/ifc/utils.js'
 
 export class IFCParser {
   constructor({ serverApi, fileId, logger }) {

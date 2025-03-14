@@ -3,7 +3,7 @@ import { fetch } from 'undici'
 import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { ServerAPI } from '@/controller/api.js'
 import { logger as parentLogger } from '@/observability/logging.js'
-import { IFCParser } from './parser.js'
+import { IFCParser } from '@/ifc/parser.js'
 
 export const parseAndCreateCommitFactory =
   ({ db }) =>
