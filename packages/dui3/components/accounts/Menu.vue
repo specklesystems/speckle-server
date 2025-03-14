@@ -20,6 +20,7 @@
           :account="(acc as DUIAccount)"
           class="rounded-lg mb-2"
           @select="selectAccount(acc as DUIAccount)"
+          @remove="removeAccount(acc as DUIAccount)"
         />
         <div class="mt-4">
           <FormButton
@@ -67,7 +68,7 @@ const app = useNuxtApp()
 const { $openUrl } = useNuxtApp()
 const { pingDesktopService } = useDesktopService()
 
-const props = defineProps<{
+defineProps<{
   currentSelectedAccountId?: string
 }>()
 
@@ -91,7 +92,7 @@ watch(showAccountsDialog, (newVal) => {
 })
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, userSelectedAccount, isLoading } =
+const { accounts, activeAccount, userSelectedAccount, isLoading } =
   storeToRefs(accountStore)
 
 watch(accounts, (newVal, oldVal) => {
@@ -107,17 +108,27 @@ const selectAccount = (acc: DUIAccount) => {
   void trackEvent('DUI3 Action', { name: 'Account change' })
 }
 
+const removeAccount = async (acc: DUIAccount) => {
+  await accountStore.removeAccount(acc)
+  void trackEvent('DUI3 Action', { name: 'Account removed' })
+}
+
 const user = computed(() => {
-  if (!defaultAccount.value) return undefined
-  let acc = defaultAccount.value
-  if (props.currentSelectedAccountId) {
-    acc = accounts.value.find(
-      (acc) => acc.accountInfo.id === props.currentSelectedAccountId
-    ) as DUIAccount
-  }
+  // if (!defaultAccount.value) return undefined
+  // let acc = defaultAccount.value
+  // if (props.currentSelectedAccountId) {
+  //   const currentSelectedAccount = accounts.value.find(
+  //     (acc) => acc.accountInfo.id === props.currentSelectedAccountId
+  //   ) as DUIAccount
+  //   // currentSelectedAccount could be removed by user
+  //   if (currentSelectedAccount) {
+  //     acc = currentSelectedAccount
+  //   }
+  // }
+
   return {
-    name: acc.accountInfo.userInfo.name,
-    avatar: acc.accountInfo.userInfo.avatar
+    name: activeAccount.value.accountInfo.userInfo.name,
+    avatar: activeAccount.value.accountInfo.userInfo.avatar
   }
 })
 
