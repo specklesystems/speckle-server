@@ -38,7 +38,7 @@
         </span>
       </div>
     </div>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="openVersionsDialog"
       fullscreen="none"
       title="Change loaded version"
@@ -50,7 +50,7 @@
         :selected-version-id="modelCard.selectedVersionId"
         @next="handleVersionSelection"
       />
-    </LayoutDialog>
+    </CommonDialog>
     <template #states>
       <CommonModelNotification
         v-if="expiredNotification"
@@ -252,6 +252,7 @@ const { result: versionDetailsResult, refetch } = useQuery(
 const createdAgoUpdater = useInterval(10_000) // refresh the created ago, and latestversion etc. every 10s
 
 const createdAgo = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   createdAgoUpdater.value
   return dayjs(versionDetailsResult.value?.project.model.version.createdAt).from(
     dayjs()
@@ -259,6 +260,7 @@ const createdAgo = computed(() => {
 })
 
 const latestVersionCreatedAt = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   createdAgoUpdater.value
   return dayjs(props.modelCard.latestVersionCreatedAt).from(dayjs())
 })

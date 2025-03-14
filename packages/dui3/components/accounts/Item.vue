@@ -1,7 +1,7 @@
 <template>
   <button
     v-tippy="tip"
-    :class="`group block w-full p-2 text-left items-center space-x-2  select-none group transition hover:bg-primary-muted hover:cursor-pointer hover:text-primary ${
+    :class="`group block w-full p-1 text-left items-center space-x-2  select-none group transition hover:bg-primary-muted hover:cursor-pointer hover:text-primary ${
       !account.isValid
         ? 'text-danger bg-rose-500/10 cursor-not-allowed'
         : 'cursor-pointer'
@@ -14,7 +14,11 @@
     @click="$emit('select', account)"
   >
     <div class="flex items-center space-x-2">
-      <UserAvatar :user="userAvatar" :active="account.accountInfo.isDefault" />
+      <UserAvatar
+        :user="userAvatar"
+        :active="account.accountInfo.isDefault"
+        size="sm"
+      />
       <div class="min-w-0 grow">
         <div class="truncate overflow-hidden min-w-0 flex items-center space-x-2">
           <span>{{ account.accountInfo.serverInfo.name }}</span>

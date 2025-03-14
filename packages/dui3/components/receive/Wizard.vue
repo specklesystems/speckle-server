@@ -1,47 +1,12 @@
 <template>
-  <LayoutDialog
+  <CommonDialog
     v-model:open="showReceiveDialog"
     fullscreen="none"
+    :title="title"
+    :show-back-button="step !== 1"
+    @back="step--"
     @fully-closed="step = 1"
   >
-    <template #header>
-      <div class="flex items-center space-x-2 mb-0">
-        <div
-          class="text-xs mt-[3px] font-normal bg-primary-muted text-foreground-2 rounded-full justify-center items-center flex px-2"
-        >
-          {{ step }}/3
-        </div>
-        <div v-if="step === 1" class="h5 font-bold">Select project</div>
-        <div v-if="step === 2" class="h5 font-bold">Select model</div>
-        <div v-if="step === 3" class="h5 font-bold">Select version</div>
-      </div>
-      <!-- Step progress indicator: shows selected project and model -->
-      <div
-        v-if="selectedProject"
-        class="mt-2 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-6 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
-      >
-        <button
-          v-tippy="'Change project'"
-          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
-            step === 1 ? 'text-primary font-bold' : ''
-          }`"
-          @click="step = 1"
-        >
-          {{ selectedProject ? selectedProject.name : 'No project' }}
-        </button>
-        <ChevronRightIcon v-if="selectedModel" class="w-4 mt-[2px]" />
-        <button
-          v-if="selectedModel"
-          v-tippy="'Change model'"
-          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
-            step === 2 ? 'text-primary font-bold' : ''
-          }`"
-          @click="step = 2"
-        >
-          {{ selectedModel ? selectedModel.name : 'No model' }}
-        </button>
-      </div>
-    </template>
     <div>
       <div v-if="step === 1">
         <WizardProjectSelector
@@ -50,7 +15,7 @@
           @search-text-update="updateSearchText"
         />
       </div>
-      <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
+      <div v-if="step === 2 && selectedProject && selectedAccountId">
         <div>
           <WizardModelSelector
             :project="selectedProject"
@@ -60,7 +25,7 @@
           />
         </div>
       </div>
-      <div v-if="step === 3" class="mt-10">
+      <div v-if="step === 3">
         <WizardVersionSelector
           v-if="selectedProject && selectedModel"
           :account-id="selectedAccountId"
@@ -73,7 +38,7 @@
       </div>
     </div>
     <div v-if="urlParseError" class="p-2 text-xs text-danger">{{ urlParseError }}</div>
-  </LayoutDialog>
+  </CommonDialog>
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
@@ -84,7 +49,6 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useAddByUrl } from '~/lib/core/composables/addByUrl'
@@ -143,6 +107,13 @@ const selectModel = (model: ModelListModelItemFragment) => {
   selectedModel.value = model
   void trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'model selected' })
 }
+
+const title = computed(() => {
+  if (step.value === 1) return 'Select project'
+  if (step.value === 2) return 'Select model'
+  if (step.value === 3) return 'Select version'
+  return ''
+})
 
 // accountId, serverUrl,  ModelListModelItemFragment, VersionListItemFragment
 const selectVersionAndAddModel = async (

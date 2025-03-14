@@ -1,59 +1,61 @@
 <template>
-  <FormSelectBase
-    :model-value="modelValue"
-    :name="fieldName"
-    :rules="validator"
-    :label="control.label"
-    :items="control.options"
-    :multiple="multiple"
-    :help="control.description"
-    :allow-unset="false"
-    show-label
-    by="value"
-    button-style="tinted"
-    :validate-on-value-update="validateOnValueUpdate"
-    mount-menu-on-body
-    @update:model-value="handleChange"
-  >
-    <template #nothing-selected>
-      {{
-        appliedOptions['placeholder']
-          ? appliedOptions['placeholder']
-          : multiple
-          ? 'Select values'
-          : 'Select a value'
-      }}
-    </template>
-    <template #something-selected="{ value }">
-      <template v-if="isMultiItemArrayValue(value)">
-        <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
-          <div
-            ref="itemContainer"
-            class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
-          >
-            <div v-for="(item, i) in value" :key="item.value" class="text-foreground">
-              {{ item.label + (i < value.length - 1 ? ', ' : '') }}
+  <div>
+    <div class="text-foreground-2 text-body-2xs mb-1 pl-1">{{ control.label }}</div>
+    <FormSelectBase
+      :model-value="modelValue"
+      :name="fieldName"
+      :rules="validator"
+      :label="control.label"
+      :items="control.options"
+      :multiple="multiple"
+      :help="control.description"
+      :allow-unset="false"
+      by="value"
+      button-style="tinted"
+      :validate-on-value-update="validateOnValueUpdate"
+      mount-menu-on-body
+      @update:model-value="handleChange"
+    >
+      <template #nothing-selected>
+        {{
+          appliedOptions['placeholder']
+            ? appliedOptions['placeholder']
+            : multiple
+            ? 'Select values'
+            : 'Select a value'
+        }}
+      </template>
+      <template #something-selected="{ value }">
+        <template v-if="isMultiItemArrayValue(value)">
+          <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
+            <div
+              ref="itemContainer"
+              class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
+            >
+              <div v-for="(item, i) in value" :key="item.value" class="text-foreground">
+                {{ item.label + (i < value.length - 1 ? ', ' : '') }}
+              </div>
+            </div>
+            <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
+              +{{ hiddenSelectedItemCount }}
             </div>
           </div>
-          <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
-            +{{ hiddenSelectedItemCount }}
+        </template>
+        <template v-else>
+          <div class="flex items-center">
+            <span class="truncate text-foreground">
+              {{ (isArrayValue(value) ? value[0] : value).label }}
+            </span>
           </div>
+        </template>
+      </template>
+      <template #option="{ item }">
+        <div class="flex items-center text-foreground-2 text-body-2xs">
+          <span class="truncate">{{ item.label }}</span>
         </div>
       </template>
-      <template v-else>
-        <div class="flex items-center">
-          <span class="truncate text-foreground">
-            {{ (isArrayValue(value) ? value[0] : value).label }}
-          </span>
-        </div>
-      </template>
-    </template>
-    <template #option="{ item }">
-      <div class="flex items-center">
-        <span class="truncate">{{ item.label }}</span>
-      </div>
-    </template>
-  </FormSelectBase>
+    </FormSelectBase>
+  </div>
 </template>
 <script setup lang="ts">
 import type { ControlElement } from '@jsonforms/core'

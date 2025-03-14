@@ -7,7 +7,7 @@
         label="Selected filter"
         class="w-full"
         fixed-height
-        show-label
+        size="sm"
         :items="filterNames"
         :allow-unset="false"
         mount-menu-on-body

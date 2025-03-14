@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="text-body-2xs mb-2 ml-1">Project workspace</div>
     <FormSelectBase
       key="name"
       v-model="selectedWorkspace"
@@ -7,7 +8,6 @@
       label="Workspaces"
       placeholder="Nothing selected"
       name="Workspaces"
-      show-label
       :items="workspaces"
       :disabled-item-predicate="userCantCreateWorkspace"
       mount-menu-on-body
@@ -33,7 +33,7 @@
     </FormSelectBase>
     <div
       v-if="selectedWorkspace"
-      class="text-xs caption rounded p-2 bg-blue-500/10 my-2"
+      class="text-body-sm caption rounded p-2 bg-blue-500/10 my-2"
     >
       Project will be created in the selected workspace.
     </div>

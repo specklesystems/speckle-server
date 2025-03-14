@@ -1,10 +1,7 @@
 <template>
   <div>
-    <div class="space-y-4">
-      <div
-        v-if="latestVersion"
-        class="grid grid-cols-2 gap-3 max-[475px]:grid-cols-1 mb-4"
-      >
+    <div class="space-y-2">
+      <div v-if="latestVersion" class="grid grid-cols-2 gap-3 max-[275px]:grid-cols-1">
         <WizardListVersionCard
           v-for="(version, index) in versions"
           :key="version.id"
@@ -20,7 +17,12 @@
         />
       </div>
       <CommonLoadingBar v-if="loading" loading />
-      <FormButton color="invert" full-width :disabled="hasReachedEnd" @click="loadMore">
+      <FormButton
+        color="outline"
+        full-width
+        :disabled="hasReachedEnd"
+        @click="loadMore"
+      >
         {{ hasReachedEnd ? 'No older versions' : 'Show older versions' }}
       </FormButton>
     </div>
@@ -58,7 +60,7 @@ const {
     const payload = {
       projectId: props.projectId,
       modelId: props.modelId,
-      limit: 5,
+      limit: 6,
       filter: props.selectedVersionId
         ? { priorityIds: [props.selectedVersionId] }
         : undefined

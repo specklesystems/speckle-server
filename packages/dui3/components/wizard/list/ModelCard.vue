@@ -1,8 +1,8 @@
 <template>
   <button
-    class="group text-left relative bg-foundation-2 rounded p-2 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
+    class="group text-left relative bg-foundation-2 rounded p-1 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
   >
-    <div class="flex items-center space-x-4">
+    <div class="flex items-center space-x-2 max-[275px]:space-x-0">
       <div class="max-[275px]:hidden">
         <div v-if="model.previewUrl" class="h-12 w-12">
           <img
@@ -19,23 +19,24 @@
         </div>
       </div>
       <div class="min-w-0 w-full">
-        <div class="caption text-foreground-2 truncate" :title="model.name">
+        <div class="text-body-3xs text-foreground-2 truncate" :title="model.name">
           {{ folderPath }}
         </div>
 
         <div class="flex items-center justify-around space-x-2">
-          <div class="font-bold grow truncate text-ellipsis">
+          <div class="text-heading-sm grow truncate text-ellipsis">
             {{ model.displayName }}
           </div>
         </div>
 
-        <div class="caption text-foreground-2 truncate flex space-x-2">
+        <div class="text-body-3xs text-foreground-2 truncate flex space-x-2">
           <div>updated {{ updatedAgo }}</div>
         </div>
       </div>
-      <div class="space-y-2">
-        <div class="bg-neutral-500/10 rounded-full px-1 text-xs truncate shrink">
-          {{ model.versions.totalCount }} versions
+      <div class="space-y-2 max-[275px]:hidden">
+        <div class="rounded-full px-1 text-xs truncate shrink flex">
+          <div>{{ model.versions.totalCount }}</div>
+          <ClockIcon class="ml-1 w-3" />
         </div>
         <div class="text-right">
           <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
@@ -47,6 +48,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { CubeTransparentIcon } from '@heroicons/vue/20/solid'
+import { ClockIcon } from '@heroicons/vue/24/outline'
 import type { SourceAppName } from '@speckle/shared'
 import { SourceApps } from '@speckle/shared'
 import type { ModelListModelItemFragment } from '~/lib/common/generated/gql/graphql'

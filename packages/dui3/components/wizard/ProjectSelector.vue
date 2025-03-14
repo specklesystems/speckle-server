@@ -1,9 +1,8 @@
 <template>
   <div class="space-y-2">
-    <div class="flex items-center space-x-2"></div>
     <div class="space-y-2 relative">
-      <div class="sticky -top-4 bg-foundation z-10 py-2 border-b space-y-2">
-        <div class="flex items-center space-x-2 justify-between">
+      <div class="space-y-2">
+        <div class="flex items-center space-x-1 justify-between">
           <FormTextInput
             v-model="searchText"
             placeholder="Search your projects"
@@ -11,21 +10,23 @@
             autocomplete="off"
             :show-clear="!!searchText"
             full-width
-            size="lg"
             color="foundation"
           />
-          <FormButton
-            v-if="showNewProject"
-            v-tippy="'New project'"
-            @click="showNewProjectDialog = true"
-          >
-            <PlusIcon class="w-4" />
-          </FormButton>
-          <div class="mt-1">
-            <AccountsMenu
-              :current-selected-account-id="accountId"
-              @select="(e) => selectAccount(e)"
-            />
+          <div class="flex space-x-2">
+            <button
+              v-if="showNewProject"
+              v-tippy="'New project'"
+              class="p-1 hover:bg-primary-muted rounded text-foreground-2"
+              @click="showNewProjectDialog = true"
+            >
+              <PlusIcon class="w-4" />
+            </button>
+            <div class="mt-1">
+              <AccountsMenu
+                :current-selected-account-id="accountId"
+                @select="(e) => selectAccount(e)"
+              />
+            </div>
           </div>
         </div>
         <CommonLoadingBar v-if="loading" loading />
@@ -57,12 +58,13 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showNewProjectDialog"
       title="Create new project"
       fullscreen="none"
     >
       <form @submit="onSubmitCreateNewProject">
+        <div class="text-body-2xs mb-2 ml-1">Project name</div>
         <FormTextInput
           v-model="newProjectName"
           class="mb-4"
@@ -70,7 +72,6 @@
           autocomplete="off"
           name="name"
           label="Project name"
-          show-label
           color="foundation"
           :show-clear="!!newProjectName"
           :rules="[
@@ -83,12 +84,14 @@
           v-if="workspacesEnabled"
           @update:selected-workspace="(args) => setWorkspace(args as WorkspaceListWorkspaceItemFragment )"
         ></WizardWorkspaceSelector>
-        <div class="mt-4 flex justify-center items-center space-x-2">
-          <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
-          <FormButton submit>Create</FormButton>
+        <div class="mt-4 flex justify-end items-center space-x-2 w-full">
+          <FormButton size="sm" text @click="showNewProjectDialog = false">
+            Cancel
+          </FormButton>
+          <FormButton size="sm" submit>Create</FormButton>
         </div>
       </form>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -240,7 +243,7 @@ const {
 } = useQuery(
   projectsListQuery,
   () => ({
-    limit: 5,
+    limit: 10,
     filter: {
       search: (searchText.value || '').trim() || null
     }

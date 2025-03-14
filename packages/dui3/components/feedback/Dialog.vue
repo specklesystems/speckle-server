@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog
+  <CommonDialog
     v-model:open="isOpen"
     :title="dialogTitle"
     :buttons="dialogButtons"
@@ -30,7 +30,7 @@
         where we can chat and solve problems together.
       </p>
     </div>
-  </LayoutDialog>
+  </CommonDialog>
 </template>
 
 <script setup lang="ts">

@@ -1,55 +1,57 @@
 <template>
   <div>
     <button v-tippy="`Click to change the account.`" @click="showAccountsDialog = true">
-      <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect />
+      <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect size="sm" />
       <UserAvatar v-else hover-effect>
         <XMarkIcon class="w-6 h-6" />
       </UserAvatar>
     </button>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showAccountsDialog"
       title="Select account"
       fullscreen="none"
     >
-      <CommonLoadingBar :loading="isLoading" class="my-0" />
-      <AccountsItem
-        v-for="acc in accounts"
-        :key="acc.accountInfo.id"
-        :current-selected-account-id="currentSelectedAccountId"
-        :account="(acc as DUIAccount)"
-        class="rounded-lg mb-2"
-        @select="selectAccount(acc as DUIAccount)"
-      />
-      <div class="mt-4">
-        <FormButton
-          text
-          full-width
-          size="sm"
-          @click="showAddNewAccount = !showAddNewAccount"
-        >
-          Add a new account
-        </FormButton>
-        <LayoutDialog
-          v-model:open="showAddNewAccount"
-          title="Add a new account"
-          fullscreen="none"
-        >
-          <div>
-            <div v-if="isDesktopServiceAvailable">
-              <AccountsSignInFlow />
+      <div class="pb-2">
+        <CommonLoadingBar :loading="isLoading" class="my-0" />
+        <AccountsItem
+          v-for="acc in accounts"
+          :key="acc.accountInfo.id"
+          :current-selected-account-id="currentSelectedAccountId"
+          :account="(acc as DUIAccount)"
+          class="rounded-lg mb-2"
+          @select="selectAccount(acc as DUIAccount)"
+        />
+        <div class="mt-4">
+          <FormButton
+            text
+            full-width
+            size="sm"
+            @click="showAddNewAccount = !showAddNewAccount"
+          >
+            Add a new account
+          </FormButton>
+          <CommonDialog
+            v-model:open="showAddNewAccount"
+            title="Add a new account"
+            fullscreen="none"
+          >
+            <div>
+              <div v-if="isDesktopServiceAvailable">
+                <AccountsSignInFlow />
+              </div>
+              <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
+                <FormButton text @click="$openUrl(`speckle://accounts`)">
+                  Add account via Manager
+                </FormButton>
+                <FormButton text @click="accountStore.refreshAccounts()">
+                  Refresh accounts
+                </FormButton>
+              </div>
             </div>
-            <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
-              <FormButton text @click="$openUrl(`speckle://accounts`)">
-                Add account via Manager
-              </FormButton>
-              <FormButton text @click="accountStore.refreshAccounts()">
-                Refresh accounts
-              </FormButton>
-            </div>
-          </div>
-        </LayoutDialog>
+          </CommonDialog>
+        </div>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">

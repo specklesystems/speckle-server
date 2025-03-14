@@ -1,7 +1,7 @@
 <template>
   <div class="p-0">
     <slot name="activator" :toggle="toggleDialog"></slot>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showAutomateReportDialog"
       :title="`Automation Report`"
       fullscreen="none"
@@ -17,7 +17,7 @@
           :model-id="modelId"
         />
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 

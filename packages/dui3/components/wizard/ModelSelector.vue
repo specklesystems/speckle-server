@@ -1,28 +1,26 @@
 <template>
   <div class="space-y-2">
     <div class="space-y-2">
-      <div
-        class="flex items-center space-x-2 justify-between sticky top-4 bg-foundation z-10 py-2 border-b"
-      >
+      <div class="flex items-center space-x-2 justify-between">
         <FormTextInput
           v-model="searchText"
           :placeholder="
-            totalCount === 0 ? 'New model name' : 'Search models in ' + project.name
+            totalCount === 0 ? 'New model name' : 'Search in ' + project.name
           "
           name="search"
           autocomplete="off"
           :show-clear="!!searchText"
           full-width
-          size="lg"
           color="foundation"
         />
-        <FormButton
+        <button
           v-if="showNewModel"
           v-tippy="'New model'"
+          class="p-1 hover:bg-primary-muted rounded text-foreground-2"
           @click="showNewModelDialog = true"
         >
           <PlusIcon class="w-4" />
-        </FormButton>
+        </button>
       </div>
       <div class="relative grid grid-cols-1 gap-2">
         <CommonLoadingBar v-if="loading" loading />
@@ -34,7 +32,7 @@
           @click="handleModelSelect(model)"
         />
 
-        <LayoutDialog
+        <CommonDialog
           v-model:open="showSelectionHasProblemsDialog"
           title="Warning"
           fullscreen="none"
@@ -68,7 +66,7 @@
               Yes
             </FormButton>
           </template>
-        </LayoutDialog>
+        </CommonDialog>
 
         <FormButton
           v-if="searchText && hasReachedEnd && showNewModel"
@@ -89,7 +87,7 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showNewModelDialog"
       title="Create new model"
       fullscreen="none"
@@ -98,7 +96,7 @@
         <FormTextInput
           v-model="newModelName"
           :rules="rules"
-          placeholder="West facade, Level 1 layout..."
+          :placeholder="hostAppStore.documentInfo?.name"
           name="name"
           color="foundation"
           :show-clear="!!newModelName"
@@ -106,12 +104,14 @@
           autocomplete="off"
           size="lg"
         />
-        <div class="mt-4 flex justify-center items-center space-x-2">
-          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
-          <FormButton submit>Create</FormButton>
+        <div class="mt-4 flex justify-end items-center space-x-2 w-full">
+          <FormButton size="sm" text @click="showNewModelDialog = false">
+            Cancel
+          </FormButton>
+          <FormButton size="sm" submit>Create</FormButton>
         </div>
       </form>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
