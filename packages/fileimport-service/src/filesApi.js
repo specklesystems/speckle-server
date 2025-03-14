@@ -14,19 +14,41 @@ module.exports = {
     destination,
     logger
   }) {
-    fs.mkdirSync(path.dirname(destination), { recursive: true })
+    try {
+      fs.mkdirSync(path.dirname(destination), { recursive: true })
+    } catch (e) {
+      throw ensureError(e, 'Unknown error while creating directory')
+    }
+
     logger.info(
       { destinationFile: destination },
       'Downloading file {fileId} from {streamId} to {destinationFile}'
     )
-    const response = await fetch(
-      `${speckleServerUrl}/api/stream/${streamId}/blob/${fileId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+
+    let response
+    try {
+      response = await fetch(
+        `${speckleServerUrl}/api/stream/${streamId}/blob/${fileId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      }
-    )
+      )
+    } catch (e) {
+      throw ensureError(e, 'Unknown error while fetching file')
+    }
+
+    if (response === undefined || !response.ok) {
+      logger.error(
+        { status: response?.status, statusText: response?.statusText },
+        'Failed to download file {fileId}. HTTP {status}: {statusText}'
+      )
+      throw new Error(
+        `Failed to download file ${fileId}. HTTP ${response?.status}: ${response?.statusText}`
+      )
+    }
+
     const writer = fs.createWriteStream(destination)
 
     //handle errors
