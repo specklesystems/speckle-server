@@ -15,7 +15,7 @@
             Looking for V2 connectors? Get them
             <NuxtLink
               class="text-foreground-3 hover:text-foreground-2 underline"
-              to="https://releases.speckle.systems"
+              to="https://releases.speckle.systems/legacy-connectors"
             >
               here.
             </NuxtLink>
