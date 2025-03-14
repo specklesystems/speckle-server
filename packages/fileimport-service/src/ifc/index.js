@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { performance } from 'perf_hooks'
-import { fetch } from 'undici'
-import Parser from '@/ifc/parser.js'
-import { ServerAPI } from '@/controller/api.js'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { logger as parentLogger } from '@/observability/logging.js'
-import { Knex } from 'knex'
-import { Logger } from 'pino'
+const { performance } = require('perf_hooks')
+const { fetch } = require('undici')
+const Parser = require('./parser')
+const ServerAPI = require('../src/api.js')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
+const { logger: parentLogger } = require('../observability/logging')
 
-export const parseAndCreateCommitFactory =
-  ({ db }: { db: Knex }) =>
+const parseAndCreateCommitFactory =
+  ({ db }) =>
   async ({
     data,
     streamId,
@@ -19,15 +16,6 @@ export const parseAndCreateCommitFactory =
     fileId,
     branchId,
     logger
-  }: {
-    data: unknown
-    streamId: string
-    branchName: string
-    userId: string
-    message: string
-    fileId: string
-    branchId: string
-    logger: Logger
   }) => {
     if (!logger) {
       logger = Observability.extendLoggerComponent(
@@ -63,7 +51,7 @@ export const parseAndCreateCommitFactory =
       await serverApi.createBranch({
         name: branchName,
         streamId,
-        description: branchName === 'uploads' ? 'File upload branch' : '',
+        description: branchName === 'uploads' ? 'File upload branch' : null,
         authorId: userId
       })
     }
@@ -87,29 +75,10 @@ export const parseAndCreateCommitFactory =
       })
     })
 
-    if (!response.ok) {
-      throw new Error('Unable to create commit')
-    }
     const json = await response.json()
+    logger.info(json, 'Commit created')
 
-    if (isCommitCreateResponse(json)) {
-      logger.info(json, 'Commit created')
-
-      return json.data.commitCreate
-    }
-    throw new Error(`Unexpected response ${JSON.stringify(json)}`)
+    return json.data.commitCreate
   }
 
-const isCommitCreateResponse = (
-  maybeCommitCreateResponse: unknown
-): maybeCommitCreateResponse is { data: { commitCreate: string } } => {
-  return (
-    !!maybeCommitCreateResponse &&
-    typeof maybeCommitCreateResponse === 'object' &&
-    'data' in maybeCommitCreateResponse &&
-    !!maybeCommitCreateResponse.data &&
-    typeof maybeCommitCreateResponse.data === 'object' &&
-    'commitCreate' in maybeCommitCreateResponse.data &&
-    typeof maybeCommitCreateResponse.data.commitCreate === 'string'
-  )
-}
+module.exports = { parseAndCreateCommitFactory }

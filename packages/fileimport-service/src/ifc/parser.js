@@ -1,26 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-import { performance } from 'perf_hooks'
-import {
+const { performance } = require('perf_hooks')
+const WebIFC = require('web-ifc/web-ifc-api-node')
+const {
   getHash,
   IfcElements,
   PropNames,
   GeometryTypes,
   IfcTypesMap
-} from '@/ifc/utils.js'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { logger as parentLogger } from '@/observability/logging.js'
-import { IfcAPI } from 'web-ifc'
+} = require('./utils')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
+const { logger: parentLogger } = require('../observability/logging')
 
-export default class IFCParser {
+module.exports = class IFCParser {
   constructor({ serverApi, fileId, logger }) {
-    this.ifcapi = new IfcAPI()
+    this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
     this.fileId = fileId
@@ -146,7 +138,7 @@ export default class IFCParser {
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
       let cnode = this.createNode(child)
-      cnode = { ...cnode, ...this.getItemProperties(cnode.expressID) }
+      cnode = { ...cnode, ...(await this.getItemProperties(cnode.expressID)) }
       cnode.id = await this.populateSpatialNode(cnode, chunks, closures)
 
       for (const closure of closures) {
@@ -167,7 +159,7 @@ export default class IFCParser {
     }))
   }
 
-  getItemProperties(id) {
+  async getItemProperties(id) {
     if (this.propCache[id]) return this.propCache[id]
 
     let props = {}
@@ -333,7 +325,7 @@ export default class IFCParser {
     let count = 0
     const speckleMeshes = []
 
-    this.ifcapi.StreamAllMeshes(this.modelId, (mesh) => {
+    this.ifcapi.StreamAllMeshes(this.modelId, async (mesh) => {
       const placedGeometries = mesh.geometries
       geometryReferences[mesh.expressID] = []
       for (let i = 0; i < placedGeometries.size(); i++) {

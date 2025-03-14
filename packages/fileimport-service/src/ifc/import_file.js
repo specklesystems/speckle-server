@@ -1,11 +1,9 @@
-import fs from 'fs'
-import { logger as parentLogger } from '@/observability/logging.js'
+const fs = require('fs')
+const { logger: parentLogger } = require('../observability/logging')
 
-import { parseAndCreateCommitFactory } from '@/ifc/index.js'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { getDbClients } from '@/knex.js'
-import { Logger } from 'pino'
-import { ensureError } from '@speckle/shared/dist/esm/index.js'
+const { parseAndCreateCommitFactory } = require('./index')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
+const getDbClients = require('../knex')
 
 async function main() {
   const cmdArgs = process.argv.slice(2)
@@ -30,17 +28,7 @@ async function main() {
 
   const data = fs.readFileSync(filePath)
 
-  const ifcInput: {
-    branchName: string
-    data: unknown
-    streamId: string
-    userId: string
-    message: string
-    fileId: string
-    branchId: string
-    logger: Logger
-  } = {
-    branchName: '',
+  const ifcInput = {
     data,
     streamId,
     userId,
@@ -51,11 +39,10 @@ async function main() {
   }
   if (branchName) ifcInput.branchName = branchName
 
-  let output: { success: false; error: string } | { success: true; commitId: string } =
-    {
-      success: false,
-      error: 'Unknown error'
-    }
+  let output = {
+    success: false,
+    error: 'Unknown error'
+  }
 
   const dbClients = await getDbClients()
   const knex = dbClients[regionName].public
@@ -67,10 +54,9 @@ async function main() {
     }
   } catch (err) {
     logger.error(err, 'Error while parsing IFC file or creating commit.')
-    const e = ensureError(err, 'Error while parsing IFC file')
     output = {
       success: false,
-      error: e.message
+      error: err.toString()
     }
   }
 
@@ -79,4 +65,4 @@ async function main() {
   process.exit(0)
 }
 
-await main()
+main()

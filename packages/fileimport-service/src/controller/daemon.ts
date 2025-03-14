@@ -176,8 +176,8 @@ async function doTask(
           taskLogger,
           process.env['NODE_BINARY_PATH'] || 'node',
           [
-            '--loader=./dist/src/aliasLoader.js',
-            './src/ifc/ifc.js',
+            '--no-experimental-fetch',
+            './src/ifc/import_file.js',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.userId,

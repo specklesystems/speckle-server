@@ -69,8 +69,6 @@ def import_obj():
     ) = sys.argv[1:]
     LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
 
-    print(f"Size of file to import: {os.path.getsize(file_path)} bytes")
-
     # Parse input
     obj = ObjFile(file_path)
     LOG.info(

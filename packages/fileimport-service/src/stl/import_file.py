@@ -24,8 +24,6 @@ def import_stl():
     ) = sys.argv[1:]
     print(f"ImportSTL argv[1:]: {sys.argv[1:]}")
 
-    print(f"Size of file to import: {os.path.getsize(file_path)} bytes")
-
     # Parse input
     stl_mesh = stl.mesh.Mesh.from_file(file_path)
     print(
