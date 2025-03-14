@@ -126,16 +126,18 @@ export async function initPrometheusMetrics() {
 
   initDBPrometheusMetricsFactory({ db })()
 
-  const requestHandler = (req: IncomingMessage, res: http.OutgoingMessage) => {
+  const requestHandler = async (req: IncomingMessage, res: http.OutgoingMessage) => {
     if (req.url === '/metrics') {
       res.setHeader('Content-Type', prometheusClient.register.contentType)
-      res.end(Promise.resolve(prometheusClient.register.metrics()))
+      const metrics = await prometheusClient.register.metrics()
+      res.end(metrics)
     } else {
       res.end('Speckle FileImport Service - prometheus metrics')
     }
   }
 
   // Define the HTTP server
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const server = http.createServer(requestHandler)
   server.listen(Number(process.env.PROMETHEUS_METRICS_PORT) || 9093)
 }
