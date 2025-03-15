@@ -12,6 +12,7 @@ import {
 } from '@/modules/previews/domain/types'
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
+import { PreviewStatus } from '@/modules/previews/domain/consts'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -53,7 +54,7 @@ export const storeObjectPreviewFactory =
         streamId,
         objectId,
         priority,
-        previewStatus: 0
+        previewStatus: PreviewStatus.PENDING
       }
     const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
