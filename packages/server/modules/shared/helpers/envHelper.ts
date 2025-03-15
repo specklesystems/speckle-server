@@ -1,7 +1,7 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
 
 export function getStringFromEnv(
   envVarKey: string,
@@ -26,6 +26,32 @@ export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
 
 export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
   return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+}
+
+function mustGetUrlFromEnv(name: string, trimTrailingSlash: boolean = false): URL {
+  const url = getUrlFromEnv(name, trimTrailingSlash)
+  if (!url) throw new MisconfiguredEnvironmentError(`${name} env var not configured`)
+  return url
+}
+
+function getUrlFromEnv(
+  name: string,
+  trimTrailingSlash: boolean = false
+): Nullable<URL> {
+  const value = process.env[name]
+  if (!value) {
+    return null
+  }
+  try {
+    return new URL(trimTrailingSlash ? trimEnd(value, '/') : value)
+  } catch (e: unknown) {
+    const err = ensureError(e, 'Unknown error parsing URL')
+    if (err instanceof TypeError && err.message === 'Invalid URL')
+      throw new MisconfiguredEnvironmentError(`${name} has to be a valid URL`, {
+        cause: err
+      })
+    throw new MisconfiguredEnvironmentError(`Error parsing ${name} URL`, { cause: err })
+  }
 }
 
 export function getSessionSecret() {
@@ -198,29 +224,16 @@ export function getFrontendOrigin() {
  * Get server app origin/base URL
  */
 export function getServerOrigin() {
-  if (!process.env.CANONICAL_URL) {
-    throw new MisconfiguredEnvironmentError(
-      'Server origin environment variable (CANONICAL_URL) not configured'
-    )
-  }
+  return mustGetUrlFromEnv('CANONICAL_URL', true).origin
+}
 
+export function getPrivateServerOrigin() {
   try {
-    return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
-  } catch (e) {
-    const err = ensureError(e)
-    if (e instanceof TypeError && e.message === 'Invalid URL') {
-      throw new MisconfiguredEnvironmentError(
-        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${process.env.CANONICAL_URL} ${err.message}`,
-        {
-          cause: e,
-          info: {
-            value: process.env.CANONICAL_URL
-          }
-        }
-      )
-    }
-
-    throw err
+    const url = getUrlFromEnv('PRIVATE_SERVER_URL', true)
+    if (!url) return url
+    return url.origin
+  } catch {
+    return null
   }
 }
 
@@ -239,26 +252,12 @@ export function isSSLServer() {
   return /^https:\/\//.test(getServerOrigin())
 }
 
-function parseUrlVar(value: string, name: string) {
-  try {
-    return new URL(value)
-  } catch (err: unknown) {
-    if (err instanceof TypeError && err.message === 'Invalid URL')
-      throw new MisconfiguredEnvironmentError(`${name} has to be a valid URL`)
-    throw err
-  }
-}
-
 export function getServerMovedFrom() {
-  const value = process.env.MIGRATION_SERVER_MOVED_FROM
-  if (!value) return value
-  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_FROM')
+  return getUrlFromEnv('MIGRATION_SERVER_MOVED_FROM')
 }
 
 export function getServerMovedTo() {
-  const value = process.env.MIGRATION_SERVER_MOVED_TO
-  if (!value) return value
-  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_TO')
+  return getUrlFromEnv('MIGRATION_SERVER_MOVED_TO')
 }
 
 export function adminOverrideEnabled() {

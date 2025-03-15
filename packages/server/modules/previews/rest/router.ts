@@ -37,7 +37,10 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getPrivateServerOrigin,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
 import type { Knex } from 'knex'
@@ -61,7 +64,8 @@ const buildCreateObjectPreviewFunction = ({
       queue: previewRequestQueue,
       responseQueue: responseQueueName
     }),
-    serverOrigin: getServerOrigin(),
+    // use the private server origin if defined, otherwise use the public server origin
+    serverOrigin: getPrivateServerOrigin() || getServerOrigin(),
     storeObjectPreview: storeObjectPreviewFactory({ db: projectDb }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
     createAppToken: createAppTokenFactory({
