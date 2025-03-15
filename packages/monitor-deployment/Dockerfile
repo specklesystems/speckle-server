@@ -1,7 +1,7 @@
 # NOTE: Docker context must be the git root directory, to include the shared directory
 ARG NODE_ENV=production
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
+FROM node:18-bookworm-slim@sha256:a2169c129f5b02de0bc860d5db4de5d5ac8d5d9c204f0d3ace1022735217b2e7 AS build-stage
 
 WORKDIR /speckle-server
 
@@ -44,7 +44,7 @@ RUN yarn workspaces foreach -W run build
 WORKDIR /speckle-server/packages/monitor-deployment
 RUN yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:215b2815aa11a76ea2e9ebfabc3762401d60254fe2e4adf8e698e1a52311df6c AS production-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
