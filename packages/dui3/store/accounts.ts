@@ -57,8 +57,15 @@ export const useAccountStore = defineStore('accountStore', () => {
    * Returns either the default account or the last account the user has selected.
    */
   const activeAccount = computed(() => {
-    return userSelectedAccount.value || defaultAccount.value
+    return userSelectedAccount.value || accounts.value[0]
   })
+
+  const removeAccount = async (acc: DUIAccount) => {
+    await $accountBinding.removeAccount(acc.accountInfo.id)
+    await hostAppStore.removeAccountModels(acc.accountInfo.id)
+    // TODO: post clean up for model cards that belongs to that account
+    await refreshAccounts()
+  }
 
   const setUserSelectedAccount = (acc: DUIAccount) => {
     userSelectedAccount.value = acc
@@ -290,6 +297,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     activeAccount,
     userSelectedAccount,
     setUserSelectedAccount,
+    removeAccount,
     accountByServerUrl,
     isAccountExistsById,
     isAccountExistsByServer,

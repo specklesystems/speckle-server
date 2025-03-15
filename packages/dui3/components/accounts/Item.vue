@@ -27,20 +27,54 @@
           </span>
         </div>
       </div>
+      <button
+        class="flex hidden group-hover:block px-2 py-1 text-danger"
+        @click.stop="showRemoveAccountDialog = true"
+      >
+        <TrashIcon class="w-4 h-4" />
+      </button>
     </div>
   </button>
+  <CommonDialog v-model:open="showRemoveAccountDialog" fullscreen="none">
+    <template #header>Remove Account</template>
+    <div class="text-xs mb-4">
+      Removing the account will remove the related model cards from your file. Do you
+      want to remove the account?
+    </div>
+    <div class="flex justify-between center py-2 space-x-3">
+      <FormButton
+        size="sm"
+        color="outline"
+        full-width
+        @click="showRemoveAccountDialog = false"
+      >
+        No
+      </FormButton>
+      <FormButton size="sm" full-width @click="handleRemove(account)">
+        Remove
+      </FormButton>
+    </div>
+  </CommonDialog>
 </template>
 <script setup lang="ts">
 import type { DUIAccount } from '~~/store/accounts'
+import { TrashIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   account: DUIAccount
   currentSelectedAccountId?: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'select', account: DUIAccount): void
+  (e: 'remove', account: DUIAccount): void
 }>()
+
+const showRemoveAccountDialog = ref(false)
+
+const handleRemove = (account: DUIAccount) => {
+  emit('remove', account)
+}
 
 const userAvatar = computed(() => {
   return {
