@@ -13,54 +13,64 @@
         <ExclamationCircleIcon v-else class="w-4 text-warning" />
       </button>
     </slot>
-    <LayoutDialog v-model:open="showReportDialog" :title="`Report`" fullscreen="none">
-      <template #header>
-        <div class="flex mt-2 space-x-2 p-1">
-          <button
-            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-success"
-            :class="successToggle ? 'border-2 border-success' : ''"
-            @click="successToggle = !successToggle"
-          >
-            <CheckCircleIcon
-              class="w-4 mr-1 stroke-green-500 text-green-500"
-            ></CheckCircleIcon>
-            {{ numberOfSuccess }}
-          </button>
-          <button
-            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-warning"
-            :class="warningToggle ? 'border-2 border-warning' : ''"
-            @click="warningToggle = !warningToggle"
-          >
-            <ExclamationTriangleIcon
-              class="w-4 mr-1 stroke-warning-500 text-warning-500"
-            ></ExclamationTriangleIcon>
-            {{ numberOfWarning }}
-          </button>
-          <button
-            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-danger"
-            :class="failedToggle ? 'border-2 border-danger' : ''"
-            @click="failedToggle = !failedToggle"
-          >
-            <ExclamationCircleIcon
-              class="w-4 mr-1 stroke-red-500 text-red-500"
-            ></ExclamationCircleIcon>
-            {{ numberOfFailed }}
-          </button>
-        </div>
-      </template>
-      <div class="flex flex-col space-y-1">
+    <CommonDialog v-model:open="showReportDialog" :title="`Report`" fullscreen="none">
+      <div class="text-body-2xs">
+        {{ numberOfSuccess }} objects converted ok, {{ numberOfWarning }} warnings and
+        {{ numberOfFailed }} errors.
+      </div>
+      <div class="flex mt-2 space-x-2 text-body-2xs">
+        <span>Filter:</span>
+        <button
+          v-if="numberOfSuccess !== 0"
+          class="flex items-center justify-center border-success px-1 pb-1 text-success leading-none"
+          :class="successToggle ? 'border-b-2' : ''"
+          @click="successToggle = !successToggle"
+        >
+          <CheckCircleIcon
+            class="w-4 mr-1 stroke-green-500 text-green-500"
+          ></CheckCircleIcon>
+          {{ numberOfSuccess }}
+        </button>
+        <button
+          v-if="numberOfWarning !== 0"
+          class="flex items-center justify-center border-warning px-1 pb-1 text-warning leading-none"
+          :class="warningToggle ? 'border-b-2' : ''"
+          @click="warningToggle = !warningToggle"
+        >
+          <ExclamationTriangleIcon
+            class="w-4 mr-1 stroke-warning-500 text-warning-500"
+          ></ExclamationTriangleIcon>
+          {{ numberOfWarning }}
+        </button>
+        <button
+          v-if="numberOfFailed !== 0"
+          class="flex items-center justify-center border-danger px-1 pb-1 text-danger leading-none"
+          :class="failedToggle ? 'border-b-2' : ''"
+          @click="failedToggle = !failedToggle"
+        >
+          <ExclamationCircleIcon
+            class="w-4 mr-1 stroke-red-500 text-red-500"
+          ></ExclamationCircleIcon>
+          {{ numberOfFailed }}
+        </button>
+      </div>
+
+      <div class="flex flex-col space-y-1 py-2">
         <ReportItem
           v-for="(item, index) in reportLimited"
           :key="index"
           :report-item="item"
         />
+        <div v-if="reportLimited.length === 0" class="text-body-xs text-foreground-2">
+          No items found.
+        </div>
       </div>
       <div v-if="report.length > reportSlice">
-        <FormButton size="xs" full-width color="secondary" @click="reportSlice += 20">
+        <FormButton size="sm" full-width color="outline" @click="reportSlice += 20">
           Show more
         </FormButton>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -78,8 +88,8 @@ const props = defineProps<{
 
 const showReportDialog = ref(false)
 
-const successToggle = ref(false) // Status 1
-const warningToggle = ref(false) // Status 3
+const successToggle = ref(true) // Status 1
+const warningToggle = ref(true) // Status 3
 const failedToggle = ref(true) // Status 4
 
 const toggleDialog = () => {

@@ -2,7 +2,7 @@
 <template>
   <div class="p-0">
     <slot name="activator" :toggle="toggleDialog"></slot>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showAutomateDialog"
       :title="`Settings`"
       fullscreen="none"
@@ -68,7 +68,7 @@
       >
         Create
       </FormButton>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 

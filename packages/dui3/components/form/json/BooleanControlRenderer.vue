@@ -1,16 +1,20 @@
 <template>
-  <FormCheckbox
-    :name="fieldName"
-    :disabled="!control.enabled"
-    :model-value="modelValue"
-    :rules="validator"
-    :label="control.label"
-    :value="true"
-    :description="control.description"
-    show-label
-    :validate-on-value-update="validateOnValueUpdate"
-    @update:model-value="handleChange"
-  />
+  <div>
+    <div class="text-foreground-2 text-body-2xs mb-1 pl-1">{{ control.label }}</div>
+    <FormSwitch
+      :name="fieldName"
+      :disabled="!control.enabled"
+      :model-value="modelValue"
+      :rules="validator"
+      :label="control.label"
+      :value="true"
+      :description="control.description"
+      :show-label="false"
+      size="xl"
+      :validate-on-value-update="validateOnValueUpdate"
+      @update:model-value="handleChange"
+    />
+  </div>
 </template>
 <script setup lang="ts">
 import type { ControlElement } from '@jsonforms/core'

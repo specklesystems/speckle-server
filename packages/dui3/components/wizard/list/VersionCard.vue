@@ -1,18 +1,19 @@
 <template>
   <button
-    :class="`block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted overflow-hidden transition ${
-      index === 0 || (latestVersionId === version.id && !fromWizard)
-        ? 'outline outline-2 outline-primary'
-        : ''
-    }`"
+    :class="`relative block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted overflow-hidden transition `"
     :disabled="selectedVersionId === version.id && !fromWizard"
   >
     <div class="mb-2">
       <img :src="version.previewUrl" alt="version preview" />
     </div>
+    <UserAvatar
+      v-tippy="`Authored by ${version.authorUser?.name}`"
+      :user="version.authorUser"
+      size="sm"
+      class="absolute inset-1"
+    />
     <div class="mt-1 p-2 border-t dark:border-gray-700">
       <div class="flex space-x-2 items-center min-w-0">
-        <UserAvatar :user="version.authorUser" size="sm" />
         <SourceAppBadge
           :source-app="
                 SourceApps.find((sapp) =>
@@ -25,29 +26,25 @@
                 }
               "
         />
-        <span class="text-xs truncate">Created {{ createdAgo }}</span>
-      </div>
-      <div class="text-xs text-foreground-2 mt-1 line-clamp-1 hover:line-clamp-5">
-        <span>
-          {{ version.message || 'No message' }}
-        </span>
+        <span class="text-body-2xs text-foreground-2 truncate">{{ createdAgo }}</span>
       </div>
     </div>
-    <div
+    <CommonBadge
       v-if="latestVersionId === version.id && selectedVersionId !== latestVersionId"
-      class="w-full py-1 flex items-center text-xs justify-center bg-primary text-foreground-on-primary font-semibold"
+      dot
+      dot-icon-color-classes="animate-ping"
+      class="absolute top-1 right-1 shadow"
     >
-      Load latest version
-    </div>
-    <div
+      Latest
+    </CommonBadge>
+    <CommonBadge
       v-if="selectedVersionId === version.id"
-      class="w-full py-1 flex items-center text-xs justify-center bg-primary-muted text-primary font-semibold"
+      dot
+      color-classes="bg-foundation"
+      class="absolute top-1 right-1 shadow"
     >
-      <span v-if="!fromWizard">
-        Currently loaded version {{ latestVersionId === version.id ? '(latest)' : '' }}
-      </span>
-      <span v-else>Load this version</span>
-    </div>
+      Current
+    </CommonBadge>
     <!-- Warning if obj is coming from the v2 side -->
     <!-- <div v-if="!objectVersion" class="bottom-0 left-0">
       <div
@@ -57,7 +54,7 @@
         <FormButton size="sm" text @click.stop="showCompatWarning = true">
           read more
         </FormButton>
-        <LayoutDialog
+        <CommonDialog
           v-model:open="showCompatWarning"
           title="Compatibility warning"
           fullscreen="none"
@@ -78,7 +75,7 @@
               Understood
             </FormButton>
           </div>
-        </LayoutDialog>
+        </CommonDialog>
       </div>
     </div> -->
   </button>

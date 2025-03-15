@@ -25,6 +25,7 @@ export interface IBasicConnectorBinding
   highlightModel: (modelCardId: string) => Promise<void>
   highlightObjects: (objectIds: string[]) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>
+  removeModels: (models: IModelCard[]) => Promise<void>
 }
 
 export interface IBasicConnectorBindingHostEvents

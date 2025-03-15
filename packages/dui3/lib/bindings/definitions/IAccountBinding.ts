@@ -4,6 +4,7 @@ export const IAccountBindingKey = 'accountsBinding'
 
 export interface IAccountBinding extends IBinding<IAccountBindingEvents> {
   getAccounts: () => Promise<Account[]>
+  removeAccount: (accountId: string) => Promise<void>
 }
 
 // An almost 1-1 mapping of what we need from the Core accounts class.

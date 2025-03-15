@@ -6,7 +6,6 @@
     :readonly="readonly"
     @manual-publish-or-load="sendOrCancel"
   >
-    <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
     <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events vuejs-accessibility/no-static-element-interactions-->
     <div
       class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 pb-2 max-[275px]:space-y-2"
@@ -51,17 +50,13 @@
         </span>
       </div>
     </div>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="openFilterDialog"
       :title="`Change filter`"
       fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
-      <!-- <SendSettings
-        v-if="hasSendSettings"
-        :settings="modelCard.settings"
-        @update:settings="updateSettings"
-      ></SendSettings> -->
+
       <div class="mt-4 flex justify-end items-center space-x-2">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
         <FormButton size="sm" color="outline" @click.stop="saveFilter()">
@@ -71,7 +66,8 @@
           Save & Publish
         </FormButton>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
+
     <template #states>
       <CommonModelNotification
         v-if="expiredNotification"

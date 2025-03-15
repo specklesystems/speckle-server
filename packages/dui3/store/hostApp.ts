@@ -165,13 +165,25 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     )
   }
 
+  const removeAccountModels = async (accountId: string) => {
+    const modelsToRemove = documentModelStore.value.models.filter(
+      (item) => item.accountId === accountId
+    )
+    documentModelStore.value.models = documentModelStore.value.models.filter(
+      (item) => item.accountId !== accountId
+    )
+
+    if (modelsToRemove.length !== 0) {
+      await app.$baseBinding.removeModels(modelsToRemove)
+    }
+  }
+
   const removeProjectModels = async (projectId: string) => {
     const modelsToRemove = documentModelStore.value.models.filter(
       (item) => item.projectId === projectId
     )
-
-    for (const modelToRemove of modelsToRemove) {
-      await removeModel(modelToRemove)
+    if (modelsToRemove.length !== 0) {
+      await app.$baseBinding.removeModels(modelsToRemove)
     }
   }
 
@@ -660,6 +672,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     addModel,
     patchModel,
     removeModel,
+    removeAccountModels,
     removeProjectModels,
     sendModel,
     receiveModel,

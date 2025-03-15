@@ -6,7 +6,7 @@
     >
       <Cog6ToothIcon class="w-4" />
     </button>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="openModelCardActionsDialog"
       :title="`${modelName} actions`"
       fullscreen="none"
@@ -56,7 +56,7 @@
           </div>
         </button>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">

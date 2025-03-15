@@ -1,55 +1,58 @@
 <template>
   <div>
     <button v-tippy="`Click to change the account.`" @click="showAccountsDialog = true">
-      <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect />
+      <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect size="sm" />
       <UserAvatar v-else hover-effect>
         <XMarkIcon class="w-6 h-6" />
       </UserAvatar>
     </button>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showAccountsDialog"
       title="Select account"
       fullscreen="none"
     >
-      <CommonLoadingBar :loading="isLoading" class="my-0" />
-      <AccountsItem
-        v-for="acc in accounts"
-        :key="acc.accountInfo.id"
-        :current-selected-account-id="currentSelectedAccountId"
-        :account="(acc as DUIAccount)"
-        class="rounded-lg mb-2"
-        @select="selectAccount(acc as DUIAccount)"
-      />
-      <div class="mt-4">
-        <FormButton
-          text
-          full-width
-          size="sm"
-          @click="showAddNewAccount = !showAddNewAccount"
-        >
-          Add a new account
-        </FormButton>
-        <LayoutDialog
-          v-model:open="showAddNewAccount"
-          title="Add a new account"
-          fullscreen="none"
-        >
-          <div>
-            <div v-if="isDesktopServiceAvailable">
-              <AccountsSignInFlow />
+      <div class="pb-2">
+        <CommonLoadingBar :loading="isLoading" class="my-0" />
+        <AccountsItem
+          v-for="acc in accounts"
+          :key="acc.accountInfo.id"
+          :current-selected-account-id="currentSelectedAccountId"
+          :account="(acc as DUIAccount)"
+          class="rounded-lg mb-2"
+          @select="selectAccount(acc as DUIAccount)"
+          @remove="removeAccount(acc as DUIAccount)"
+        />
+        <div class="mt-4">
+          <FormButton
+            text
+            full-width
+            size="sm"
+            @click="showAddNewAccount = !showAddNewAccount"
+          >
+            Add a new account
+          </FormButton>
+          <CommonDialog
+            v-model:open="showAddNewAccount"
+            title="Add a new account"
+            fullscreen="none"
+          >
+            <div>
+              <div v-if="isDesktopServiceAvailable">
+                <AccountsSignInFlow />
+              </div>
+              <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
+                <FormButton text @click="$openUrl(`speckle://accounts`)">
+                  Add account via Manager
+                </FormButton>
+                <FormButton text @click="accountStore.refreshAccounts()">
+                  Refresh accounts
+                </FormButton>
+              </div>
             </div>
-            <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
-              <FormButton text @click="$openUrl(`speckle://accounts`)">
-                Add account via Manager
-              </FormButton>
-              <FormButton text @click="accountStore.refreshAccounts()">
-                Refresh accounts
-              </FormButton>
-            </div>
-          </div>
-        </LayoutDialog>
+          </CommonDialog>
+        </div>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -65,7 +68,7 @@ const app = useNuxtApp()
 const { $openUrl } = useNuxtApp()
 const { pingDesktopService } = useDesktopService()
 
-const props = defineProps<{
+defineProps<{
   currentSelectedAccountId?: string
 }>()
 
@@ -89,7 +92,7 @@ watch(showAccountsDialog, (newVal) => {
 })
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, userSelectedAccount, isLoading } =
+const { accounts, activeAccount, userSelectedAccount, isLoading } =
   storeToRefs(accountStore)
 
 watch(accounts, (newVal, oldVal) => {
@@ -105,17 +108,27 @@ const selectAccount = (acc: DUIAccount) => {
   void trackEvent('DUI3 Action', { name: 'Account change' })
 }
 
+const removeAccount = async (acc: DUIAccount) => {
+  await accountStore.removeAccount(acc)
+  void trackEvent('DUI3 Action', { name: 'Account removed' })
+}
+
 const user = computed(() => {
-  if (!defaultAccount.value) return undefined
-  let acc = defaultAccount.value
-  if (props.currentSelectedAccountId) {
-    acc = accounts.value.find(
-      (acc) => acc.accountInfo.id === props.currentSelectedAccountId
-    ) as DUIAccount
-  }
+  // if (!defaultAccount.value) return undefined
+  // let acc = defaultAccount.value
+  // if (props.currentSelectedAccountId) {
+  //   const currentSelectedAccount = accounts.value.find(
+  //     (acc) => acc.accountInfo.id === props.currentSelectedAccountId
+  //   ) as DUIAccount
+  //   // currentSelectedAccount could be removed by user
+  //   if (currentSelectedAccount) {
+  //     acc = currentSelectedAccount
+  //   }
+  // }
+
   return {
-    name: acc.accountInfo.userInfo.name,
-    avatar: acc.accountInfo.userInfo.avatar
+    name: activeAccount.value.accountInfo.userInfo.name,
+    avatar: activeAccount.value.accountInfo.userInfo.avatar
   }
 })
 

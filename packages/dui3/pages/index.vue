@@ -9,13 +9,13 @@
         >
           <LayoutPanel fancy-glow class="transition pointer-events-auto w-[90%]">
             <h1
-              class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+              class="text-heading-lg w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
             >
               Hello!
             </h1>
             <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
             <div v-if="!!store.documentInfo?.id">
-              <div class="text-foreground-2">
+              <div class="text-foreground-2 text-body-sm">
                 There are no Speckle models being published or loaded in this file yet.
               </div>
               <div
@@ -23,7 +23,7 @@
               >
                 <div v-if="app.$sendBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowUpCircleIcon"
+                    :icon-left="ArrowUpIcon"
                     full-width
                     @click="handleSendClick"
                   >
@@ -32,7 +32,7 @@
                 </div>
                 <div v-if="app.$receiveBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowDownCircleIcon"
+                    :icon-left="ArrowDownIcon"
                     full-width
                     @click="handleReceiveClick"
                   >
@@ -52,11 +52,11 @@
             <!-- TEMPORARY MESSAGE TO USER! will be deleted -->
             <div class="mt-2 bg-blue-500/10 rounded-md p-2">
               <h1
-                class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+                class="text-heading-sm w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
               >
                 Note: Beta Connector
               </h1>
-              <div class="text-foreground-2 text-sm">
+              <div class="text-foreground-2 text-body-xs">
                 This is a
                 <span class="font-bold">beta</span>
                 connector that will eventually replace the existing one.
@@ -65,7 +65,7 @@
                 While in beta, there will be some missing functionality and some rough
                 corners.
               </div>
-              <!-- TODO: replace with correct link -->
+
               <FormButton
                 text
                 link
@@ -90,24 +90,32 @@
         </div>
         <div
           v-if="!hasNoModelCards"
-          class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
+          class="z-20 fixed bottom-0 left-0 w-full bg-foundation shadow-inner rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
         >
           <div v-if="app.$sendBinding" class="grow">
             <FormButton
-              :icon-left="ArrowUpCircleIcon"
+              v-tippy="'Send a new set of objects to a new model in Speckle'"
+              :icon-left="ArrowUpIcon"
               full-width
+              size="sm"
+              color="outline"
               @click="handleSendClick"
             >
               Publish
+              <span class="max-[275px]:hidden">&nbsp;new model</span>
             </FormButton>
           </div>
           <div v-if="app.$receiveBinding" class="grow">
             <FormButton
-              :icon-left="ArrowDownCircleIcon"
+              v-tippy="'Load in this file a new model from Speckle'"
+              :icon-left="ArrowDownIcon"
               full-width
+              size="sm"
+              color="outline"
               @click="handleReceiveClick"
             >
               Load
+              <span class="max-[275px]:hidden">&nbsp;new model</span>
             </FormButton>
           </div>
         </div>
@@ -155,11 +163,7 @@
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import {
-  ArrowUpCircleIcon,
-  ArrowDownCircleIcon,
-  ArrowPathIcon
-} from '@heroicons/vue/24/solid'
+import { ArrowUpIcon, ArrowDownIcon, ArrowPathIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -170,7 +174,7 @@ const app = useNuxtApp()
 const accountStore = useAccountStore()
 await accountStore.refreshAccounts()
 
-const { accounts, isLoading } = storeToRefs(accountStore)
+const { accounts } = storeToRefs(accountStore)
 
 const store = useHostAppStore()
 const { trackEvent } = useMixpanel()

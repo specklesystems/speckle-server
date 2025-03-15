@@ -11,15 +11,15 @@
           <button
             v-if="!noWriteAccess"
             v-tippy="buttonTooltip"
-            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
+            class="z-10 shadow transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
             @click.stop="$emit('manual-publish-or-load')"
           >
             <template v-if="!modelCard.progress">
-              <ArrowUpCircleIcon v-if="isSender" class="w-8" />
-              <ArrowDownCircleIcon v-else class="w-8" />
+              <ArrowUpCircleIcon v-if="isSender" class="w-6" />
+              <ArrowDownCircleIcon v-else class="w-6" />
             </template>
             <template v-else>
-              <XCircleIcon class="w-8" />
+              <XCircleIcon class="w-6" />
             </template>
           </button>
 
@@ -27,22 +27,22 @@
             v-else
             class="z-10 transition rounded-full hover:shadow-md bg-foundation"
           >
-            <ArrowUpCircleIcon v-if="isSender" class="w-8 text-danger" />
-            <ArrowDownCircleIcon v-else class="w-8 text-danger" />
+            <ArrowUpCircleIcon v-if="isSender" class="w-6 text-danger" />
+            <ArrowDownCircleIcon v-else class="w-6 text-danger" />
           </button>
 
-          <UserAvatar
+          <!-- <UserAvatar
             :user="modelData.author"
             size="sm"
             class="z-0 max-[275px]:hidden"
-          />
+          /> -->
         </div>
 
-        <div class="grow min-w-0 py-1">
-          <div class="caption text-foreground-2 truncate">
+        <div class="grow min-w-0">
+          <div class="text-body-3xs text-foreground-2 truncate">
             {{ folderPath }}
           </div>
-          <div class="truncate font-bold text-foreground select-none -mt-[2px]">
+          <div class="text-heading-sm truncate text-foreground select-none leading-4">
             {{ modelData.displayName }}
           </div>
         </div>
@@ -100,7 +100,7 @@
         :loading="!!modelCard.progress"
         :progress="modelCard.progress ? modelCard.progress.progress : undefined"
       />
-      <div class="text-xs font-bold px-2 h-full flex items-center text-primary">
+      <div class="text-body-3xs px-2 h-full flex items-center text-primary">
         {{ modelCard.progress?.status || '...' }}
         {{
           modelCard.progress?.progress

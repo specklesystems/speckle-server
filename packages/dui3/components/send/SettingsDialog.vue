@@ -1,7 +1,7 @@
 <template>
   <div class="p-0">
     <slot name="activator" :toggle="toggleDialog"></slot>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showSettingsDialog"
       :title="`Settings`"
       fullscreen="none"
@@ -17,7 +17,7 @@
         </FormButton>
         <FormButton size="sm" @click="saveSettings()">Save</FormButton>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 

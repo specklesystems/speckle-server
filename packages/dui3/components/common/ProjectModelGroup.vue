@@ -1,58 +1,40 @@
 <template>
   <div v-if="projectDetails" class="px-[2px] rounded-md">
-    <!-- <div
-      v-if="isProjectReadOnly"
-      class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
-    >
-      <div v-if="writeAccessRequested">Write access request is pending...</div>
-      <div v-else class="flex w-full items-center justify-between">
-        You do not have write access to this project.
-        TODO: Enable later when FE2 is ready for accepting/denying requested accesses
-        <button
-          v-if="isProjectReadOnly"
-          v-tippy="'Request Write Access'"
-          class="hover:text-primary"
-        >
-          <LockClosedIcon
-            class="w-4"
-            @click.stop="
-              requestWriteAccess(),
-                trackEvent(
-                  'DUI3 Action',
-                  { name: 'Request Write Access' },
-                  projectAccount?.accountInfo.id
-                )
-            "
-          />
-        </button>
-      </div>
-    </div> -->
     <button
-      :class="`flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 ${
-        showModels ? '' : 'bg-blue-500/10'
+      :class="`flex w-full items-center text-foreground-2 justify-between hover:bg-foundation-2 ${
+        showModels ? '' : 'bg-foundation-2'
       } rounded-md transition group`"
       @click="showModels = !showModels"
     >
       <div class="flex items-center transition group-hover:text-primary h-8 min-w-0">
-        <ChevronDownIcon
-          :class="`w-4 ${showModels ? '' : '-rotate-90'} transition mt-1`"
+        <CommonIconsArrowFilled
+          :class="`w-5 ${showModels ? '' : '-rotate-90'} transition`"
         />
-        <div class="text-sm text-left truncate select-none flex items-center">
-          <div>{{ projectDetails.name }}</div>
-          <div v-if="!showModels" class="text-xs opacity-50 ml-2 pt-[1px]">
+        <div class="text-sm text-left truncate select-none flex items-center leading-1">
+          <div class="text-heading-sm">{{ projectDetails.name }}</div>
+          <div v-if="!showModels" class="text-body-3xs opacity-50 ml-2 pt-[1px]">
             {{ project.senders.length + project.receivers.length }}
           </div>
         </div>
       </div>
 
-      <div class="opacity-0 group-hover:opacity-100 transition">
+      <div class="opacity-0 group-hover:opacity-100 transition flex">
+        <!-- <button
+          v-tippy="'Open project in browser'"
+          class="hover:text-primary flex items-center space-x-2 p-2"
+        >
+          <PlusIcon
+            class="w-4"
+            @click.stop="
+              $openUrl(projectUrl),
+                trackEvent('DUI3 Action', { name: 'Project View' }, project.accountId)
+            "
+          />
+        </button> -->
         <button
           v-tippy="'Open project in browser'"
           class="hover:text-primary flex items-center space-x-2 p-2"
         >
-          <div class="text-xs text-left truncate select-none">
-            {{ projectDetails.role ? projectDetails.role.split(':')[1] : '' }}
-          </div>
           <ArrowTopRightOnSquareIcon
             class="w-4"
             @click.stop="
@@ -111,7 +93,7 @@
         is inaccessible.
       </template>
     </CommonAlert>
-    <LayoutDialog v-model:open="askDismissProjectQuestionDialog" fullscreen="none">
+    <CommonDialog v-model:open="askDismissProjectQuestionDialog" fullscreen="none">
       <template #header>Remove Project</template>
       <div class="text-xs mb-4">Do you want to remove the project from this file?</div>
       <div class="flex justify-between center py-2 space-x-3">
@@ -124,12 +106,12 @@
           Hide error
         </FormButton>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
-import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
