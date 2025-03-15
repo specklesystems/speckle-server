@@ -1884,6 +1884,11 @@
     "preview_service": {
       "type": "object",
       "properties": {
+        "deployInCluster": {
+          "type": "boolean",
+          "description": "If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.",
+          "default": true
+        },
         "dedicatedPreviewsQueue": {
           "type": "boolean",
           "description": "Allows using a dedicated redis url for the preview service job queue",

@@ -528,7 +528,6 @@ Retrieve the s3 parameters from ConfigMap if enabled, or default to retrieving t
 {{- end }}
 {{- end }}
 
-
 {{/*
 Generate the environment variables for Speckle server and Speckle objects deployments
 */}}
@@ -542,6 +541,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: PORT
   value: {{ include "server.port" $ | quote }}
+
+- name: PRIVATE_OBJECTS_SERVER_URL
+  value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
+
 - name: LOG_LEVEL
   value: {{ .Values.server.logLevel }}
 - name: LOG_PRETTY
@@ -797,6 +800,12 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_BURST_PERIOD_SECONDS
   value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
+{{- end }}
+
+# *** Preview service ***
+{{- if .Values.preview_service.deployInCluster }}
+- name: PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL
+  value: "true"
 {{- end }}
 
 # *** Redis ***
