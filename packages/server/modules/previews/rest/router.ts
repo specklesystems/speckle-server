@@ -38,8 +38,9 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import {
-  getPrivateServerOrigin,
-  getServerOrigin
+  getPrivateObjectsServerOrigin,
+  getServerOrigin,
+  previewServiceShouldUsePrivateObjectsServerUrl
 } from '@/modules/shared/helpers/envHelper'
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
 import type { Queue } from 'bull'
@@ -65,7 +66,9 @@ const buildCreateObjectPreviewFunction = ({
       responseQueue: responseQueueName
     }),
     // use the private server origin if defined, otherwise use the public server origin
-    serverOrigin: getPrivateServerOrigin() || getServerOrigin(),
+    serverOrigin: previewServiceShouldUsePrivateObjectsServerUrl()
+      ? getPrivateObjectsServerOrigin()
+      : getServerOrigin(),
     storeObjectPreview: storeObjectPreviewFactory({ db: projectDb }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
     createAppToken: createAppTokenFactory({

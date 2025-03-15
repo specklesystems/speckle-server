@@ -54,7 +54,7 @@ services:
       CANONICAL_URL: 'http://127.0.0.1'
       # This is the URL of the server as accessed by other Speckle services within this docker compose network, such as preview-service.
       # This will be the same value as NUXT_PUBLIC_BACKEND_API_ORIGIN as defined in the frontend-2 service.
-      PRIVATE_SERVER_URL: 'http://speckle-server:3000'
+      PRIVATE_OBJECTS_SERVER_URL: 'http://speckle-server:3000'
 
       # TODO: Change this to a unique secret for this server
       SESSION_SECRET: 'TODO:Replace'
@@ -71,6 +71,7 @@ services:
       POSTGRES_DB: 'speckle'
 
       REDIS_URL: 'redis://redis'
+      PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'

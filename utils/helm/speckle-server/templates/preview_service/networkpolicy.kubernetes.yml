@@ -1,3 +1,4 @@
+{{- if .Values.preview_service.deployInCluster }}
 {{- if (and (.Values.preview_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -38,4 +39,5 @@ spec:
           protocol: UDP
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
-{{- end -}}
+{{- end }}
+{{- end }}

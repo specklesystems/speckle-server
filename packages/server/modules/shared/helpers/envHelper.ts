@@ -112,6 +112,10 @@ export function getRedisUrl() {
   return getStringFromEnv('REDIS_URL')
 }
 
+export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
+}
+
 export const getPreviewServiceRedisUrl = (): string | undefined => {
   return process.env['PREVIEW_SERVICE_REDIS_URL']
 }
@@ -221,20 +225,19 @@ export function getFrontendOrigin() {
 }
 
 /**
- * Get server app origin/base URL
+ * Get server app origin/base URL.
+ * This is the public server URL, i.e. 'canonical url', used for external communication.
  */
 export function getServerOrigin() {
   return mustGetUrlFromEnv('CANONICAL_URL', true).origin
 }
 
-export function getPrivateServerOrigin() {
-  try {
-    const url = getUrlFromEnv('PRIVATE_SERVER_URL', true)
-    if (!url) return url
-    return url.origin
-  } catch {
-    return null
-  }
+/**
+ *
+ * @returns the private server origin, which is used for internal communication between services
+ */
+export function getPrivateObjectsServerOrigin() {
+  return mustGetUrlFromEnv('PRIVATE_OBJECTS_SERVER_URL', true).origin
 }
 
 export function getBindAddress(aDefault: string = '127.0.0.1') {

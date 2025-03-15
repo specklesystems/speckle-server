@@ -1,3 +1,4 @@
+{{- if .Values.preview_service.deployInCluster }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -121,4 +122,4 @@ spec:
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600
-
+{{- end }}
