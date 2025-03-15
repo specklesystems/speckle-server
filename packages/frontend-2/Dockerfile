@@ -40,7 +40,7 @@ RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u8 \
+     curl=7.88.1-10+deb12u12 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /tini \
     && chmod +x /tini \
     && apt-get remove -y curl \
