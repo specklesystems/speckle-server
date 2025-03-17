@@ -7,3 +7,11 @@ export const dashboardRequestToJoinWorkspaceMutation = graphql(`
     }
   }
 `)
+
+export const dashboardDismissDiscoverableWorkspaceMutation = graphql(`
+  mutation DashboardDismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`)
