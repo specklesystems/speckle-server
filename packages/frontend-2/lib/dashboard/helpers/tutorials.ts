@@ -1,6 +1,12 @@
 import type { TutorialItem } from '~/lib/dashboard/helpers/types'
 
-export const tutorials: TutorialItem[] = [
+export const tutorialItems: TutorialItem[] = [
+  {
+    title: 'Get Civil 3D Pipe Networks Into Revit as Families',
+    image:
+      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/67b8980920e42b89aff75a3f_C3d%20to%20Revit.jpg',
+    url: 'https://www.speckle.systems/tutorials/pipe-networks-civil3d-revit'
+  },
   {
     title: 'How To Get Data From Grasshopper Into Power BI',
     image:
@@ -42,11 +48,5 @@ export const tutorials: TutorialItem[] = [
     image:
       'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c50ac50a28b58fe0e10b_66e047f505114bd4a6854b6a_216-blocks-to-families%25400.5x.png',
     url: 'https://www.speckle.systems/tutorials/new-in-2-16-block-to-family-conversion'
-  },
-  {
-    title: 'SketchUp Connector for Mac',
-    image:
-      'https://cdn.prod.website-files.com/66c31b5a50432200dc753cc4/66f9c508c50a28b58fe0ddef_66e047f6aacfa88a6524a956_final-blog.jpeg',
-    url: 'https://www.speckle.systems/tutorials/sketchup-connector-for-mac'
   }
 ]

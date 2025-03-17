@@ -41,15 +41,17 @@ type MetricConfig = {
 }
 
 export const processCpuTotal = (
-  registry: Registry,
+  registers: Registry[],
   config: MetricConfig = {}
 ): Metric => {
-  const registers = registry ? [registry] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
   const buckets = { ...DEFAULT_CPU_TOTAL_BUCKETS, ...config.buckets }
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + PROCESS_CPU_USER_SECONDS)
+  })
   const cpuUserUsageHistogram = new Histogram({
     name: namePrefix + PROCESS_CPU_USER_SECONDS,
     help: 'Total user CPU time spent in seconds. This data is collected at a higher frequency than Prometheus scrapes, and is presented as a Histogram.',
@@ -57,12 +59,18 @@ export const processCpuTotal = (
     buckets: buckets.PROCESS_CPU_USER_SECONDS,
     registers
   })
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + PROCESS_CPU_SYSTEM_SECONDS)
+  })
   const cpuSystemUsageHistogram = new Histogram({
     name: namePrefix + PROCESS_CPU_SYSTEM_SECONDS,
     help: 'Total system CPU time spent in seconds. This data is collected at a higher frequency than Prometheus scrapes, and is presented as a Histogram.',
     registers,
     buckets: buckets.PROCESS_CPU_SYSTEM_SECONDS,
     labelNames
+  })
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + PROCESS_CPU_SECONDS)
   })
   const cpuUsageHistogram = new Histogram({
     name: namePrefix + PROCESS_CPU_SECONDS,

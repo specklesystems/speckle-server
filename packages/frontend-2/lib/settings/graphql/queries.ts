@@ -3,7 +3,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const settingsSidebarQuery = graphql(`
   query SettingsSidebar {
     activeUser {
-      ...SettingsDialog_User
+      ...SettingsSidebar_User
     }
   }
 `)
@@ -29,6 +29,15 @@ export const settingsWorkspaceBillingQuery = graphql(`
     workspaceBySlug(slug: $slug) {
       id
       ...SettingsWorkspacesBilling_Workspace
+    }
+  }
+`)
+
+// TODO: Remove old one post-migration
+export const settingsWorkspaceBillingQueryNew = graphql(`
+  query SettingsWorkspaceBillingNew($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      id
     }
   }
 `)

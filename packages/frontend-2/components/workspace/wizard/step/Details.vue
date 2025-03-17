@@ -1,5 +1,8 @@
 <template>
-  <WorkspaceWizardStep title="Create a workspace" description="Start with a good name">
+  <WorkspaceWizardStep
+    title="Create a workspace"
+    description="Workspaces are environments where you can safely collaborate with your team and manage guests."
+  >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
         id="workspace-name"

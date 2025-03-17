@@ -15,7 +15,8 @@ import {
   getServerMovedFrom,
   getServerMovedTo,
   getServerOrigin,
-  getServerVersion
+  getServerVersion,
+  isEmailEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { Knex } from 'knex'
 import { LRUCache } from 'lru-cache'
@@ -67,7 +68,8 @@ export const getServerInfoFactory =
       canonicalUrl: getServerOrigin(),
       configuration: {
         objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
-        objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024
+        objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024,
+        isEmailEnabled: isEmailEnabled()
       },
       ...(movedTo || movedFrom
         ? {

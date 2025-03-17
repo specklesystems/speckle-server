@@ -140,6 +140,8 @@ spec:
             value: {{ .Values.featureFlags.forceOnboarding | quote }}
           - name: NUXT_PUBLIC_FF_NO_PERSONAL_EMAILS_ENABLED
             value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLANS_ENABLED
+            value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}

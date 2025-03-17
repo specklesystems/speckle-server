@@ -14,6 +14,7 @@ import { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/helper
 import { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
+import { PriceGraphQLReturn } from '@/modules/gatekeeperCore/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -44,6 +45,7 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
 };
@@ -51,6 +53,12 @@ export type ActiveUserMutations = {
 
 export type ActiveUserMutationsFinishOnboardingArgs = {
   input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
+export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  isProjectsActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -262,6 +270,11 @@ export type AutomateAuthCodePayloadTest = {
   action: Scalars['String']['input'];
   code: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Additional resources to validate user access to. */
+export type AutomateAuthCodeResources = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1889,7 +1902,9 @@ export type OnboardingCompletionInput = {
 export const PaidWorkspacePlans = {
   Business: 'business',
   Plus: 'plus',
-  Starter: 'starter'
+  Pro: 'pro',
+  Starter: 'starter',
+  Team: 'team'
 } as const;
 
 export type PaidWorkspacePlans = typeof PaidWorkspacePlans[keyof typeof PaidWorkspacePlans];
@@ -1965,6 +1980,13 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Price = {
+  __typename?: 'Price';
+  amount: Scalars['Float']['output'];
+  currency: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
+};
+
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean']['output'];
@@ -2014,7 +2036,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: ProjectVisibility;
+  visibility: SimpleProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -2747,6 +2769,7 @@ export type QueryAutomateFunctionsArgs = {
 
 export type QueryAutomateValidateAuthCodeArgs = {
   payload: AutomateAuthCodePayloadTest;
+  resources?: InputMaybe<AutomateAuthCodeResources>;
 };
 
 
@@ -2952,6 +2975,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -3103,6 +3128,8 @@ export type ServerStats = {
 
 export type ServerWorkspacesInfo = {
   __typename?: 'ServerWorkspacesInfo';
+  /** Up-to-date prices for paid & non-invoiced Workspace plans */
+  planPrices: Array<WorkspacePlanPrice>;
   /**
    * This is a backend control variable for the workspaces feature set.
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
@@ -3120,6 +3147,13 @@ export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
 
+/** Visbility without the "discoverable" option */
+export const SimpleProjectVisibility = {
+  Private: 'PRIVATE',
+  Unlisted: 'UNLISTED'
+} as const;
+
+export type SimpleProjectVisibility = typeof SimpleProjectVisibility[keyof typeof SimpleProjectVisibility];
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -3715,6 +3749,8 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
+  /** The last-visited workspace for the given user */
+  activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3762,6 +3798,8 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
+  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
+  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;
@@ -4383,6 +4421,7 @@ export type WorkspaceCollaborator = {
   id: Scalars['ID']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
+  seatType: WorkspaceSeatType;
   user: LimitedUser;
 };
 
@@ -4573,6 +4612,7 @@ export type WorkspaceMutations = {
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
   updateRole: Workspace;
+  updateSeatType: Workspace;
 };
 
 
@@ -4641,6 +4681,11 @@ export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+
+export type WorkspaceMutationsUpdateSeatTypeArgs = {
+  input: WorkspaceUpdateSeatTypeInput;
+};
+
 export const WorkspacePaymentMethod = {
   Billing: 'billing',
   Invoice: 'invoice',
@@ -4654,6 +4699,13 @@ export type WorkspacePlan = {
   name: WorkspacePlans;
   paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
+};
+
+export type WorkspacePlanPrice = {
+  __typename?: 'WorkspacePlanPrice';
+  id: Scalars['String']['output'];
+  monthly?: Maybe<Price>;
+  yearly?: Maybe<Price>;
 };
 
 export const WorkspacePlanStatuses = {
@@ -4783,6 +4835,12 @@ export type WorkspaceRoleUpdateInput = {
   workspaceId: Scalars['String']['input'];
 };
 
+export const WorkspaceSeatType = {
+  Editor: 'editor',
+  Viewer: 'viewer'
+} as const;
+
+export type WorkspaceSeatType = typeof WorkspaceSeatType[keyof typeof WorkspaceSeatType];
 export type WorkspaceSso = {
   __typename?: 'WorkspaceSso';
   /** If null, the workspace does not have SSO configured */
@@ -4836,6 +4894,12 @@ export type WorkspaceUpdateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceUpdateSeatTypeInput = {
+  seatType: WorkspaceSeatType;
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdatedMessage = {
@@ -4940,6 +5004,7 @@ export type ResolversTypes = {
   ArchiveCommentInput: ArchiveCommentInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomateAuthCodePayloadTest: AutomateAuthCodePayloadTest;
+  AutomateAuthCodeResources: AutomateAuthCodeResources;
   AutomateFunction: ResolverTypeWrapper<AutomateFunctionGraphQLReturn>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
   AutomateFunctionRelease: ResolverTypeWrapper<AutomateFunctionReleaseGraphQLReturn>;
@@ -5051,6 +5116,7 @@ export type ResolversTypes = {
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
   PendingWorkspaceCollaborator: ResolverTypeWrapper<PendingWorkspaceCollaboratorGraphQLReturn>;
   PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
+  Price: ResolverTypeWrapper<PriceGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
   ProjectAccessRequestMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -5120,6 +5186,7 @@ export type ResolversTypes = {
   ServerWorkspacesInfo: ResolverTypeWrapper<GraphQLEmptyReturn>;
   SessionPaymentStatus: SessionPaymentStatus;
   SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
+  SimpleProjectVisibility: SimpleProjectVisibility;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValueGraphQLReturn>;
   SortDirection: SortDirection;
   Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
@@ -5206,6 +5273,7 @@ export type ResolversTypes = {
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspacePaymentMethod: WorkspacePaymentMethod;
   WorkspacePlan: ResolverTypeWrapper<WorkspacePlan>;
+  WorkspacePlanPrice: ResolverTypeWrapper<Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversTypes['Price']>, yearly?: Maybe<ResolversTypes['Price']> }>;
   WorkspacePlanStatuses: WorkspacePlanStatuses;
   WorkspacePlans: WorkspacePlans;
   WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
@@ -5218,6 +5286,7 @@ export type ResolversTypes = {
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
+  WorkspaceSeatType: WorkspaceSeatType;
   WorkspaceSso: ResolverTypeWrapper<WorkspaceSsoGraphQLReturn>;
   WorkspaceSsoProvider: ResolverTypeWrapper<WorkspaceSsoProvider>;
   WorkspaceSsoSession: ResolverTypeWrapper<WorkspaceSsoSession>;
@@ -5225,6 +5294,7 @@ export type ResolversTypes = {
   WorkspaceSubscriptionSeats: ResolverTypeWrapper<WorkspaceSubscriptionSeats>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceUpdateSeatTypeInput: WorkspaceUpdateSeatTypeInput;
   WorkspaceUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversTypes['Workspace'] }>;
 };
 
@@ -5253,6 +5323,7 @@ export type ResolversParentTypes = {
   ArchiveCommentInput: ArchiveCommentInput;
   AuthStrategy: AuthStrategy;
   AutomateAuthCodePayloadTest: AutomateAuthCodePayloadTest;
+  AutomateAuthCodeResources: AutomateAuthCodeResources;
   AutomateFunction: AutomateFunctionGraphQLReturn;
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
   AutomateFunctionRelease: AutomateFunctionReleaseGraphQLReturn;
@@ -5358,6 +5429,7 @@ export type ResolversParentTypes = {
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
   PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorGraphQLReturn;
   PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
+  Price: PriceGraphQLReturn;
   Project: ProjectGraphQLReturn;
   ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
   ProjectAccessRequestMutations: MutationsObjectGraphQLReturn;
@@ -5492,6 +5564,7 @@ export type ResolversParentTypes = {
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsGraphQLReturn;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspacePlan: WorkspacePlan;
+  WorkspacePlanPrice: Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversParentTypes['Price']>, yearly?: Maybe<ResolversParentTypes['Price']> };
   WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectMutations: WorkspaceProjectMutationsGraphQLReturn;
@@ -5507,6 +5580,7 @@ export type ResolversParentTypes = {
   WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeats;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceUpdateSeatTypeInput: WorkspaceUpdateSeatTypeInput;
   WorkspaceUpdatedMessage: Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversParentTypes['Workspace'] };
 };
 
@@ -5547,6 +5621,7 @@ export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContex
 export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActiveUserMutations'] = ResolversParentTypes['ActiveUserMutations']> = {
   emailMutations?: Resolver<ResolversTypes['UserEmailMutations'], ParentType, ContextType>;
   finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<ActiveUserMutationsFinishOnboardingArgs>>;
+  setActiveWorkspace?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<ActiveUserMutationsSetActiveWorkspaceArgs>>;
   update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -6248,6 +6323,13 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PriceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Price'] = ResolversParentTypes['Price']> = {
+  amount?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  currency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  currencySymbol?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;
@@ -6276,7 +6358,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ProjectVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
-  visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
+  visibility?: Resolver<ResolversTypes['SimpleProjectVisibility'], ParentType, ContextType>;
   webhooks?: Resolver<ResolversTypes['WebhookCollection'], ParentType, ContextType, Partial<ProjectWebhooksArgs>>;
   workspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
   workspaceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6526,6 +6608,7 @@ export type ServerAutomateInfoResolvers<ContextType = GraphQLContext, ParentType
 
 export type ServerConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerConfiguration'] = ResolversParentTypes['ServerConfiguration']> = {
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6620,6 +6703,7 @@ export type ServerStatsResolvers<ContextType = GraphQLContext, ParentType extend
 };
 
 export type ServerWorkspacesInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerWorkspacesInfo'] = ResolversParentTypes['ServerWorkspacesInfo']> = {
+  planPrices?: Resolver<Array<ResolversTypes['WorkspacePlanPrice']>, ParentType, ContextType>;
   workspacesEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -6758,6 +6842,7 @@ export type TriggeredAutomationsStatusResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+  activeWorkspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserActivityArgs, 'limit'>>;
   apiTokens?: Resolver<Array<ResolversTypes['ApiToken']>, ParentType, ContextType>;
   authorizedApps?: Resolver<Maybe<Array<ResolversTypes['ServerAppListItem']>>, ParentType, ContextType>;
@@ -6778,6 +6863,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  isProjectsActive?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
@@ -7003,6 +7089,7 @@ export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentT
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   projectRoles?: Resolver<Array<ResolversTypes['ProjectRole']>, ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  seatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7081,6 +7168,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateCreationState?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateCreationStateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
+  updateSeatType?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateSeatTypeArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7089,6 +7177,13 @@ export type WorkspacePlanResolvers<ContextType = GraphQLContext, ParentType exte
   name?: Resolver<ResolversTypes['WorkspacePlans'], ParentType, ContextType>;
   paymentMethod?: Resolver<ResolversTypes['WorkspacePaymentMethod'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['WorkspacePlanStatuses'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspacePlanPriceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePlanPrice'] = ResolversParentTypes['WorkspacePlanPrice']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  monthly?: Resolver<Maybe<ResolversTypes['Price']>, ParentType, ContextType>;
+  yearly?: Resolver<Maybe<ResolversTypes['Price']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7220,6 +7315,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   PendingWorkspaceCollaborator?: PendingWorkspaceCollaboratorResolvers<ContextType>;
+  Price?: PriceResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
   ProjectAccessRequest?: ProjectAccessRequestResolvers<ContextType>;
   ProjectAccessRequestMutations?: ProjectAccessRequestMutationsResolvers<ContextType>;
@@ -7304,6 +7400,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceJoinRequestMutations?: WorkspaceJoinRequestMutationsResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
   WorkspacePlan?: WorkspacePlanResolvers<ContextType>;
+  WorkspacePlanPrice?: WorkspacePlanPriceResolvers<ContextType>;
   WorkspaceProjectMutations?: WorkspaceProjectMutationsResolvers<ContextType>;
   WorkspaceProjectsUpdatedMessage?: WorkspaceProjectsUpdatedMessageResolvers<ContextType>;
   WorkspaceSso?: WorkspaceSsoResolvers<ContextType>;

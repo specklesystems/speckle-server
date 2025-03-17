@@ -18,11 +18,11 @@ import {
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { Roles } from '@speckle/shared'
-import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -59,23 +59,25 @@ export default {
       await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
 
       // Move existing workspace projects to new target region
-      const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
-      })
-      for await (const projects of queryAllWorkspaceProjects({
-        workspaceId: args.workspaceId
-      })) {
-        await Promise.all(
-          projects.map((project) =>
-            scheduleJob({
-              type: 'move-project-region',
-              payload: {
-                projectId: project.id,
-                regionKey: args.regionKey
-              }
-            })
+      if (FF_MOVE_PROJECT_REGION_ENABLED) {
+        const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+          getStreams: legacyGetStreamsFactory({ db })
+        })
+        for await (const projects of queryAllWorkspaceProjects({
+          workspaceId: args.workspaceId
+        })) {
+          await Promise.all(
+            projects.map((project) =>
+              scheduleJob({
+                type: 'move-project-region',
+                payload: {
+                  projectId: project.id,
+                  regionKey: args.regionKey
+                }
+              })
+            )
           )
-        )
+        }
       }
 
       return await ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
@@ -83,7 +85,7 @@ export default {
   },
   WorkspaceProjectMutations: {
     moveToRegion: async (_parent, args, context) => {
-      if (!FF_MOVE_PROJECT_REGION_ENABLED && !isTestEnv()) {
+      if (!FF_MOVE_PROJECT_REGION_ENABLED) {
         throw new WorkspacesNotYetImplementedError()
       }
 

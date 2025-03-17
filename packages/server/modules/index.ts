@@ -13,7 +13,7 @@ import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { isNonNullable } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { Express } from 'express'
+import type { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
 import { ApolloServerOptions } from '@apollo/server'
 import {
@@ -23,6 +23,7 @@ import {
 import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LogicError } from '@/modules/shared/errors'
+import type { Registry } from 'prom-client'
 
 /**
  * Cached speckle module requires
@@ -81,6 +82,7 @@ const getEnabledModuleNames = () => {
     'stats',
     'webhooks',
     'workspacesCore',
+    'gatekeeperCore',
     'multiregion'
   ]
 
@@ -110,18 +112,19 @@ async function getSpeckleModules() {
   return loadedModules
 }
 
-export const init = async (app: Express) => {
+export const init = async (params: { app: Express; metricsRegister: Registry }) => {
+  const { app, metricsRegister } = params
   const modules = await getSpeckleModules()
   const isInitial = !hasInitializationOccurred
 
   // Stage 1: initialise all modules
   for (const module of modules) {
-    await module.init?.(app, isInitial)
+    await module.init?.({ app, isInitial, metricsRegister })
   }
 
   // Stage 2: finalize init all modules
   for (const module of modules) {
-    await module.finalize?.(app, isInitial)
+    await module.finalize?.({ app, isInitial, metricsRegister })
   }
 
   hasInitializationOccurred = true

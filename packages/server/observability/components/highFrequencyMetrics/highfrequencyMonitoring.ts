@@ -24,23 +24,25 @@ type HighFrequencyMonitor = {
 }
 
 export const initHighFrequencyMonitoring = (params: {
-  register: Registry
+  registers: Registry[]
   collectionPeriodMilliseconds: number
   config: MetricConfig
 }): HighFrequencyMonitor => {
-  const { register, collectionPeriodMilliseconds } = params
+  const { registers, collectionPeriodMilliseconds } = params
   const config = params.config
-  const registers = register ? [register] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
 
   const metrics = [
-    processCpuTotal(register, config),
-    heapSizeAndUsed(register, config),
-    knexConnections(register, config)
+    processCpuTotal(registers, config),
+    heapSizeAndUsed(registers, config),
+    knexConnections(registers, config)
   ]
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + 'self_monitor_time_high_frequency')
+  })
   const selfMonitor = new Histogram({
     name: namePrefix + 'self_monitor_time_high_frequency',
     help: 'The time taken to collect all of the high frequency metrics, seconds.',

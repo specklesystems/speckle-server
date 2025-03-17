@@ -1,4 +1,4 @@
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
@@ -45,8 +45,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // If project is public or link shareable, allow access
   if (
-    data.project.visibility === ProjectVisibility.Public ||
-    data.project.visibility === ProjectVisibility.Unlisted
+    // data.project.visibility === SimpleProjectVisibility.Public ||
+    data.project.visibility === SimpleProjectVisibility.Unlisted
   ) {
     return
   }

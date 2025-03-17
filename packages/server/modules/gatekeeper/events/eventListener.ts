@@ -5,9 +5,10 @@ import {
   upsertTrialWorkspacePlanFactory,
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getWorkspacePlanProductId
 } from '@/modules/gatekeeper/stripe'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -32,12 +33,18 @@ export const initializeEventListenersFactory =
             countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
               db
             }),
-            getWorkspacePlanPrice,
+            getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe })
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
 
-        await addWorkspaceSubscriptionSeatIfNeeded(payload)
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.acl,
+          seatType: payload.seatType
+        })
       }),
       eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
         // TODO: based on a feature flag, we can force new workspaces into the free plan here

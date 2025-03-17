@@ -10,22 +10,22 @@
       <div ref="threadActivator" class="relative">
         <button
           :class="`
-        ${
-          modelValue.isOccluded && !isExpanded
-            ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
-            : ''
-        }
+        ${modelValue.isOccluded && !isExpanded ? 'opacity-60 hover:opacity-100' : ''}
         ${isExpanded ? 'outline outline-2 outline-primary' : ''}
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
           @click="onThreadClick"
         >
-          <!--
-            Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark.
-            Both optinos are viable, see below. Uncomment to test.
-          -->
-          <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
-          <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
+          <div
+            v-if="modelValue.archived"
+            class="w-7 h-7 flex items-center justify-center"
+          >
+            <div
+              class="w-6 h-6 flex items-center justify-center bg-primary rounded-full"
+            >
+              <CheckIcon class="w-3 h-3 text-foundation" />
+            </div>
+          </div>
         </button>
       </div>
     </div>
@@ -38,91 +38,103 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="thread-handle sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
+          class="thread-handle sm:p-1 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 h-full transition-all duration-200"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div
             :class="[
-              'relative bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
-              'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
+              'relative bg-foundation dark:bg-foundation-page border border-outline-2 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'group-[.is-dragging]:bg-foundation'
             ]"
           >
             <div
-              class="relative w-full flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full flex justify-between items-center border-b border-outline-2"
+              :class="isEmbedEnabled ? 'p-2' : 'p-3 md:px-4'"
             >
-              <div class="flex-grow flex items-center">
+              <div class="flex-grow flex items-center gap-x-1.5">
                 <FormButton
                   v-tippy="'Previous'"
                   :icon-left="ChevronLeftIcon"
-                  text
+                  color="outline"
                   hide-text
+                  size="sm"
+                  :disabled="!hasPrevious"
                   @click="emit('prev', modelValue)"
-                ></FormButton>
+                >
+                  <ChevronLeftIcon class="w-3 h-3" />
+                </FormButton>
                 <FormButton
                   v-tippy="'Next'"
                   :icon-left="ChevronRightIcon"
-                  text
+                  color="outline"
                   hide-text
+                  size="sm"
+                  :disabled="!hasNext"
                   @click="emit('next', modelValue)"
-                ></FormButton>
-                <div class="flex-grow"></div>
+                />
                 <FormButton
                   v-show="isDragged"
                   v-tippy="'Pop in'"
                   :icon-left="ArrowTopRightOnSquareIcon"
-                  text
                   hide-text
                   class="rotate-180"
+                  color="subtle"
+                  size="sm"
                   @click="isDragged = false"
-                ></FormButton>
+                />
               </div>
-              <div>
-                <FormButton
-                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                  :icon-left="
-                    modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
-                  "
-                  text
-                  hide-text
-                  :disabled="!canArchiveOrUnarchive"
-                  @click="toggleCommentResolvedStatus()"
-                ></FormButton>
+              <div class="flex gap-x-0.5">
                 <FormButton
                   v-tippy="'Copy link'"
                   :icon-left="LinkIcon"
-                  text
                   hide-text
+                  color="subtle"
+                  size="sm"
                   @click="onCopyLink"
-                ></FormButton>
+                />
+                <FormButton
+                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                  :icon-left="CheckIcon"
+                  hide-text
+                  :disabled="!canArchiveOrUnarchive"
+                  color="subtle"
+                  size="sm"
+                  @click="toggleCommentResolvedStatus()"
+                />
                 <FormButton
                   :icon-left="XMarkIcon"
-                  text
                   hide-text
+                  color="subtle"
+                  size="sm"
                   @click="changeExpanded(false)"
-                ></FormButton>
+                />
               </div>
             </div>
             <div
-              class="relative w-full pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
+              v-if="showBanner"
+              class="flex items-center justify-between gap-4 border-b border-outline-2 py-2 px-4 w-full"
+            >
+              <div class="text-body-2xs text-foreground-2 font-medium">
+                {{ bannerText }}
+              </div>
+              <div class="-mr-1 flex">
+                <FormButton
+                  :icon-right="bannerButton.icon"
+                  size="sm"
+                  color="outline"
+                  @click="bannerButton.action"
+                >
+                  {{ bannerButton.text }}
+                </FormButton>
+              </div>
+            </div>
+            <div
+              class="relative w-full md:pr-3 sm:w-80 flex flex-col flex-1 justify-between"
             >
               <div
                 ref="commentsContainer"
-                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[200px] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 py-2 sm:pr-3"
               >
-                <div
-                  v-if="!isThreadResourceLoaded"
-                  class="pl-3 pr-1 py-1 flex items-center justify-between text-xs text-primary bg-primary-muted"
-                >
-                  <span>Conversation started in a different version.</span>
-                  <FormButton
-                    v-tippy="'Load thread context'"
-                    size="sm"
-                    text
-                    @click="onLoadThreadContext"
-                  >
-                    <ArrowDownCircleIcon class="w-5 h-5" />
-                  </FormButton>
-                </div>
                 <ViewerAnchoredPointThreadComment
                   v-for="comment in comments"
                   :key="comment.id"
@@ -133,7 +145,7 @@
               </div>
               <div
                 v-if="isTypingMessage"
-                class="bg-foundation rounded-full w-full p-2 caption mt-2"
+                class="w-full px-3 md:px-4 pb-3 caption mt-1 text-body-2xs"
               >
                 {{ isTypingMessage }}
               </div>
@@ -143,22 +155,28 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
-            <div v-if="isEmbedEnabled" class="flex justify-between w-full gap-2 p-2">
+            <div
+              v-if="isEmbedEnabled"
+              class="flex justify-between w-full p-2 border-t border-outline-2"
+            >
               <FormButton
-                :icon-right="ArrowTopRightOnSquareIcon"
                 full-width
                 :to="getLinkToThread(projectId, props.modelValue)"
                 external
                 target="_blank"
+                size="sm"
+                color="outline"
               >
                 Reply in Speckle
               </FormButton>
             </div>
             <div
               v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
-              class="p-3 flex flex-col items-center justify-center bg-foundation-2"
+              class="flex justify-between w-full p-2 border-t border-outline-2"
             >
-              <FormButton full-width @click="$emit('login')">Reply</FormButton>
+              <FormButton full-width color="outline" size="sm" @click="$emit('login')">
+                Reply
+              </FormButton>
             </div>
           </div>
         </div>
@@ -172,14 +190,14 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
-  CheckCircleIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
+  CheckIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowLeftIcon,
+  ArrowUpRightIcon
+} from '@heroicons/vue/24/outline'
 import { ensureError, Roles } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
-import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
+import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
@@ -187,20 +205,13 @@ import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubble
 import {
   useArchiveComment,
   useCheckViewerCommentingAccess,
-  useMarkThreadViewed
+  useMarkThreadViewed,
+  useCommentContext
 } from '~~/lib/viewer/composables/commentManagement'
-import {
-  useInjectedViewerLoadedResources,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import {
-  StateApplyMode,
-  useApplySerializedState
-} from '~~/lib/viewer/composables/serialization'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
@@ -216,6 +227,8 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
+  hasPrevious?: boolean
+  hasNext?: boolean
 }>()
 
 const { isEmbedEnabled } = useEmbed()
@@ -223,8 +236,6 @@ const { isEmbedEnabled } = useEmbed()
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser, isLoggedIn } = useActiveUser()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
 const {
@@ -236,16 +247,29 @@ const {
 const { projectId } = useInjectedViewerState()
 const canReply = useCheckViewerCommentingAccess()
 const { disableTextSelection } = useDisableGlobalTextSelection()
-
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
-const applyState = useApplySerializedState()
+const { threadResourceStatus, hasClickedFullContext, goBack, handleContextClick } =
+  useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
+
+onClickOutside(threadContainer, (event) => {
+  const viewerElement = document.getElementById('viewer')
+
+  if (
+    isExpanded.value &&
+    viewerElement &&
+    (event.target === viewerElement || viewerElement.contains(event.target as Node)) &&
+    !(threadActivator.value && threadActivator.value.contains(event.target as Node))
+  ) {
+    changeExpanded(false)
+  }
+})
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
@@ -256,12 +280,7 @@ const comments = computed(() => [
 ])
 
 const showNewReplyComponent = computed(() => {
-  return (
-    !props.modelValue.archived &&
-    canReply.value &&
-    !isSmallerOrEqualSm.value &&
-    !isEmbedEnabled.value
-  )
+  return !props.modelValue.archived && canReply.value && !isEmbedEnabled.value
 })
 
 // Note: conflicted with dragging styles, so took it out temporarily
@@ -320,25 +339,41 @@ const threadStyle = computed(() => {
       ? x.value
       : (props.modelValue.style.x as number) + activatorRect.width + 20
   const threadHeight = threadContainer.value?.getBoundingClientRect().height || 0
+  const threadWidth = threadContainer.value?.getBoundingClientRect().width || 0
   const yOffset =
     isDragged.value && areDraggableCoordsInitialized
       ? y.value
       : (props.modelValue.style.y as number) - threadHeight / 2
+
+  // Constrain to viewport boundaries with 10px padding
+  const padding = isEmbedEnabled.value ? 5 : 10
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  // Use 58px top padding when not in embed mode (to account for the top bar)
+  const topPadding = isEmbedEnabled.value ? padding : 58
+
+  // Use 62px bottom padding when in embed mode (to account for the bottom controls)
+  const bottomPadding = isEmbedEnabled.value ? 62 : padding
+
+  // Ensure the element stays within the viewport
+  const constrainedX = Math.min(
+    Math.max(padding, xOffset),
+    viewportWidth - threadWidth - padding
+  )
+  const constrainedY = Math.min(
+    Math.max(topPadding, yOffset),
+    viewportHeight - threadHeight - bottomPadding
+  )
 
   const transition = isDragged.value ? 'none' : props.modelValue.style.transition
   return {
     ...props.modelValue.style,
     opacity: 1,
     transition,
-    transform: `translate(${xOffset}px,${yOffset}px)`
+    transform: `translate(${constrainedX}px,${constrainedY}px)`
   }
 })
-
-// // TODO: will be used
-// const threadEmoji = computed(() => {
-//   const cleanVal = props.modelValue.rawText.trim()
-//   return emojis.includes(cleanVal) ? cleanVal : undefined
-// })
 
 const threadAuthors = computed(() => {
   const authors = [props.modelValue.author]
@@ -371,27 +406,6 @@ const canArchiveOrUnarchive = computed(
       project.value?.role === Roles.Stream.Owner)
 )
 
-const { resourceItems } = useInjectedViewerLoadedResources()
-
-const isThreadResourceLoaded = computed(() => {
-  const thread = props.modelValue
-  const loadedResources = resourceItems.value
-  const resourceLinks = thread.resources
-
-  const objectLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Object)
-    .map((l) => l.resourceId)
-  const commitLinks = resourceLinks
-    .filter((l) => l.resourceType === ResourceType.Commit)
-    .map((l) => l.resourceId)
-
-  if (loadedResources.some((lr) => objectLinks.includes(lr.objectId))) return true
-  if (loadedResources.some((lr) => lr.versionId && commitLinks.includes(lr.versionId)))
-    return true
-
-  return false
-})
-
 const toggleCommentResolvedStatus = async () => {
   await archiveComment({
     commentId: props.modelValue.id,
@@ -404,7 +418,7 @@ const toggleCommentResolvedStatus = async () => {
     status: props.modelValue.archived
   })
   triggerNotification({
-    description: `Thread ${props.modelValue.archived ? 'reopened.' : 'resolved.'}`,
+    title: `Thread ${props.modelValue.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
   })
 }
@@ -426,13 +440,6 @@ const onCommentMounted = () => {
 
 const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
-}
-
-const onLoadThreadContext = async () => {
-  const state = props.modelValue.viewerState
-  if (!state) return
-
-  await applyState(state, StateApplyMode.TheadFullContextOpen)
 }
 
 const onCopyLink = async () => {
@@ -504,6 +511,41 @@ onMounted(() => {
   if (isExpanded.value) {
     // update won't emit if thread was mounted already expanded, so we emit this to close any open thread editors
     emit('update:expanded', true)
+  }
+})
+
+const showBanner = computed(
+  () =>
+    threadResourceStatus.value.isDifferentVersion ||
+    threadResourceStatus.value.isFederatedModel ||
+    hasClickedFullContext.value
+)
+
+const bannerText = computed(() => {
+  if (hasClickedFullContext.value) return 'Viewing full context'
+  if (
+    threadResourceStatus.value.isDifferentVersion &&
+    threadResourceStatus.value.isFederatedModel
+  )
+    return 'References multiple models with different versions'
+  if (threadResourceStatus.value.isDifferentVersion)
+    return 'Conversation started in a different version'
+  if (threadResourceStatus.value.isFederatedModel) return 'References multiple models'
+  return ''
+})
+
+const bannerButton = computed(() => {
+  if (hasClickedFullContext.value) {
+    return {
+      text: 'Back',
+      icon: ArrowLeftIcon,
+      action: goBack
+    }
+  }
+  return {
+    text: 'Full context',
+    icon: ArrowUpRightIcon,
+    action: handleContextClick
   }
 })
 </script>

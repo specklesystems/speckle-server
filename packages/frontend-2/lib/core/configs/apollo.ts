@@ -300,6 +300,9 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          subscription: {
+            merge: mergeAsObjectsFunction
           }
         }
       }

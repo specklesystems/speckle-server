@@ -164,6 +164,13 @@ export function useUserEmails() {
         navigateTo(settingsUserRoutes.emails)
       }
 
+      modifyObjectField(
+        apollo.cache,
+        getCacheId('User', activeUserId.value),
+        'discoverableWorkspaces',
+        ({ helpers: { evict } }) => evict()
+      )
+
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Email verified',

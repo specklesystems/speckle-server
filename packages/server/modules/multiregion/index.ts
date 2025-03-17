@@ -16,7 +16,7 @@ import {
 } from '@/modules/multiregion/services/queue'
 
 const multiRegion: SpeckleModule = {
-  async init(_, isInitial) {
+  async init({ isInitial }) {
     const isEnabled = isMultiRegionEnabled()
     if (!isEnabled) {
       return

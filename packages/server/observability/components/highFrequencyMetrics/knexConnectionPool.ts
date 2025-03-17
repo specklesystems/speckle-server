@@ -36,13 +36,18 @@ type MetricConfig = {
   >
 }
 
-export const knexConnections = (registry: Registry, config: MetricConfig): Metric => {
-  const registers = registry ? [registry] : undefined
+export const knexConnections = (
+  registers: Registry[],
+  config: MetricConfig
+): Metric => {
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
   const labelNames = [...Object.keys(labels), 'region']
   const buckets = { ...DEFAULT_KNEX_TOTAL_BUCKETS, ...config.buckets }
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_CONNECTIONS_FREE)
+  })
   const knexConnectionsFree = new Histogram({
     name: namePrefix + KNEX_CONNECTIONS_FREE,
     help: 'Number of free DB connections. This data is collected at a higher frequency than Prometheus scrapes, and is presented as a Histogram.',
@@ -51,6 +56,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
     labelNames
   })
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_CONNECTIONS_USED)
+  })
   const knexConnectionsUsed = new Histogram({
     name: namePrefix + KNEX_CONNECTIONS_USED,
     help: 'Number of used DB connections',
@@ -59,6 +67,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
     labelNames
   })
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_PENDING_ACQUIRES)
+  })
   const knexPendingAcquires = new Histogram({
     name: namePrefix + KNEX_PENDING_ACQUIRES,
     help: 'Number of pending DB connection aquires',
@@ -67,6 +78,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
     labelNames
   })
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_PENDING_CREATES)
+  })
   const knexPendingCreates = new Histogram({
     name: namePrefix + KNEX_PENDING_CREATES,
     help: 'Number of pending DB connection creates',
@@ -75,6 +89,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
     labelNames
   })
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_PENDING_VALIDATIONS)
+  })
   const knexPendingValidations = new Histogram({
     name: namePrefix + KNEX_PENDING_VALIDATIONS,
     help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
@@ -83,6 +100,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
     labelNames
   })
 
+  registers.forEach((r) => {
+    r.removeSingleMetric(namePrefix + KNEX_REMAINING_CAPACITY)
+  })
   const knexRemainingCapacity = new Histogram({
     name: namePrefix + KNEX_REMAINING_CAPACITY,
     help: 'Remaining capacity of the DB connection pool',

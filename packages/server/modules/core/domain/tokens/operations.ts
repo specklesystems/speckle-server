@@ -2,10 +2,10 @@ import {
   ApiToken,
   PersonalApiToken,
   TokenResourceAccessDefinition,
+  TokenResourceIdentifierType,
   TokenScope,
   UserServerAppToken
 } from '@/modules/core/domain/tokens/types'
-import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { NullableKeysToOptional, Optional, ServerScope } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
@@ -59,6 +59,11 @@ export type UpdateApiToken = (
   tokenId: string,
   token: Partial<ApiToken>
 ) => Promise<ApiToken>
+
+export type TokenResourceIdentifierInput = {
+  id: string
+  type: TokenResourceIdentifierType
+}
 
 export type CreateAndStoreUserToken = (params: {
   userId: string

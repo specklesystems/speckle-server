@@ -41,7 +41,7 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.GuestUsers]: {
     displayName: 'Guest users',
     description: (params: { price: number | string }) =>
-      `Give guests access to specific projects in the workspace at £${params.price}/month/guest`
+      `Give guests access to specific projects in the workspace at ${params.price}/month/guest`
   },
   [WorkspacePlanFeatures.PrivateAutomateFunctions]: {
     displayName: 'Private automate functions',

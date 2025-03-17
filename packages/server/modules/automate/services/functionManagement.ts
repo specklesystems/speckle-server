@@ -2,7 +2,7 @@ import {
   CreateFunctionBody,
   ExecutionEngineFunctionTemplateId,
   createFunction,
-  getFunction,
+  getFunctionFactory,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
 import {
@@ -43,7 +43,7 @@ import {
   speckleAutomateUrl
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
-import { automateLogger } from '@/observability/logging'
+import { automateLogger, Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
@@ -89,6 +89,14 @@ const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string>
 export const convertFunctionToGraphQLReturn = (
   fn: FunctionSchemaType
 ): AutomateFunctionGraphQLReturn => {
+  const functionCreator: FunctionSchemaType['functionCreator'] =
+    fn.functionCreatorSpeckleUserId && fn.functionCreatorSpeckleServerOrigin
+      ? {
+          speckleUserId: fn.functionCreatorSpeckleUserId,
+          speckleServerOrigin: fn.functionCreatorSpeckleServerOrigin
+        }
+      : fn.functionCreator
+
   const ret: AutomateFunctionGraphQLReturn = {
     id: fn.functionId,
     name: fn.functionName,
@@ -98,7 +106,7 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator,
+    functionCreator,
     workspaceIds: fn.workspaceIds
   }
 
@@ -187,17 +195,18 @@ export const createFunctionFromTemplateFactory =
 
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
-  getFunction: typeof getFunction
+  getFunction: ReturnType<typeof getFunctionFactory>
   createStoredAuthCode: CreateStoredAuthCode
+  logger: Logger
 }
 
 export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    const { updateFunction, createStoredAuthCode } = deps
+    const { updateFunction, createStoredAuthCode, logger } = deps
     const { input, userId } = params
 
-    const existingFn = await getFunction({ functionId: input.id })
+    const existingFn = await getFunctionFactory({ logger })({ functionId: input.id })
     if (!existingFn) {
       throw new AutomateFunctionUpdateError('Function not found')
     }

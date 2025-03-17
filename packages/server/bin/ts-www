@@ -11,8 +11,8 @@ const { logger } = require('../observability/logging')
 const { init, startHttp } = require('../app')
 
 init()
-  .then(({ app, graphqlServer, server, readinessCheck }) =>
-    startHttp({ app, graphqlServer, server, readinessCheck })
+  .then(({ app, graphqlServer, registers, server, readinessCheck }) =>
+    startHttp({ app, graphqlServer, registers, server, readinessCheck })
   )
   .catch((err) => {
     logger.error(err, 'Failed to start server. Exiting with non-zero exit code...')

@@ -1,3 +1,4 @@
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
@@ -26,11 +27,15 @@ type WorkspaceCreatedPayload = {
   createdByUserId: string
 }
 type WorkspaceUpdatedPayload = { workspace: Workspace }
-type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-type WorkspaceRoleUpdatedPayload = Pick<
-  WorkspaceAcl,
-  'userId' | 'workspaceId' | 'role'
-> & { flags?: { skipProjectRoleUpdatesFor: string[] } }
+type WorkspaceRoleDeletedPayload = {
+  acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+}
+type WorkspaceRoleUpdatedPayload = {
+  acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+  seatType: WorkspaceSeatType
+  flags?: { skipProjectRoleUpdatesFor: string[] }
+  updatedByUserId: string
+}
 type WorkspaceJoinedFromDiscoveryPayload = {
   userId: string
   workspaceId: string

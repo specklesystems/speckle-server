@@ -41,7 +41,7 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
@@ -98,10 +98,9 @@ import {
 import {
   createWorkspaceProjectFactory,
   getWorkspaceProjectsFactory,
-  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  getWorkspaceRolesAllowedProjectRolesFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory,
-  updateWorkspaceProjectRoleFactory
+  queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -169,20 +168,16 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
-import { getWorkspaceFunctions } from '@/modules/automate/clients/executionEngine'
+import { getFunctionsFactory } from '@/modules/automate/clients/executionEngine'
 import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import {
-  AuthCodePayloadAction,
-  createStoredAuthCodeFactory
-} from '@/modules/automate/services/authCode'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
+  getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
@@ -204,6 +199,19 @@ import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/worksp
 import { OperationTypeNode } from 'graphql'
 import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import { UsersMeta } from '@/modules/core/dbSchema'
+import { setUserActiveWorkspaceFactory } from '@/modules/workspaces/repositories/users'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCodeFactory
+} from '@/modules/automate/services/authCode'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceRolesAndSeatsFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -284,7 +292,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_MOVE_PROJECT_REGION_ENABLED } =
+  getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -442,7 +451,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           })
 
           const workspace = await createWorkspace({
@@ -591,10 +604,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                  emitWorkspaceEvent: emit
+                  emitWorkspaceEvent: emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
                 })
             })
-            await updateWorkspaceRole({ userId, workspaceId, role })
+            await updateWorkspaceRole({
+              userId,
+              workspaceId,
+              role,
+              updatedByUserId: context.userId!
+            })
           }
 
           return await getWorkspaceFactory({ db })({
@@ -677,7 +699,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit
+            emitWorkspaceEvent: getEventBus().emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+            })
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
           return await getWorkspaceFactory({ db })({
@@ -856,7 +882,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: getEventBus().emit
+                emitWorkspaceEvent: getEventBus().emit,
+                ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                })
               })
             }),
             findEmail: findEmailFactory({ db }),
@@ -945,19 +975,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return project
         },
         updateRole: async (_parent, args, context) => {
-          const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
-            getStream,
-            updateStreamRoleAndNotify,
-            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
-          })
-
-          return await updateWorkspaceProjectRole({
-            role: args.input,
-            updater: {
-              userId: context.userId!,
-              resourceAccessRules: context.resourceAccessRules
-            }
-          })
+          await authorizeResolver(
+            context.userId,
+            args.input.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+          return await updateStreamRoleAndNotify(
+            args.input,
+            context.userId!,
+            context.resourceAccessRules
+          )
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
@@ -986,10 +1014,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 updateProject: updateProjectFactory({ db }),
                 upsertProjectRole: upsertProjectRoleFactory({ db }),
                 getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
-                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                getWorkspaceRoleToDefaultProjectRoleMapping:
-                  getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-                    getWorkspace: getWorkspaceFactory({ db })
+                getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
+                getWorkspaceRolesAllowedProjectRoles:
+                  getWorkspaceRolesAllowedProjectRolesFactory({
+                    getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
                   }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -998,30 +1026,39 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  emitWorkspaceEvent: emit
+                  emitWorkspaceEvent: emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  })
                 })
               })
           })
 
           const updatedProject = await moveProjectToWorkspace({
             projectId,
-            workspaceId
+            workspaceId,
+            movedByUserId: context.userId!
           })
 
           // Trigger project region change, if necessary
-          const projectRegion = await getProjectRegionKey({
-            projectId: updatedProject.id
-          })
-          const workspaceRegion = await getDefaultRegionFactory({ db })({ workspaceId })
-
-          if (!!workspaceRegion && workspaceRegion.key !== projectRegion) {
-            await scheduleJob({
-              type: 'move-project-region',
-              payload: {
-                projectId,
-                regionKey: workspaceRegion.key
-              }
+          if (FF_MOVE_PROJECT_REGION_ENABLED) {
+            const projectRegion = await getProjectRegionKey({
+              projectId: updatedProject.id
             })
+            const workspaceRegion = await getDefaultRegionFactory({ db })({
+              workspaceId
+            })
+
+            if (!!workspaceRegion && workspaceRegion.key !== projectRegion) {
+              await scheduleJob({
+                type: 'move-project-region',
+                payload: {
+                  projectId,
+                  regionKey: workspaceRegion.key
+                }
+              })
+            }
           }
 
           return updatedProject
@@ -1102,6 +1139,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         automateFunctions: async (parent, args, context) => {
           try {
+            await authorizeResolver(
+              context.userId,
+              parent.id,
+              Roles.Workspace.Member,
+              context.resourceAccessRules
+            )
+
             const authCode = await createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })({
@@ -1109,14 +1153,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
               action: AuthCodePayloadAction.ListWorkspaceFunctions
             })
 
-            const res = await getWorkspaceFunctions({
-              workspaceId: parent.id,
-              query: removeNullOrUndefinedKeys(args),
-              body: {
-                speckleServerAuthenticationPayload: {
-                  ...authCode,
-                  origin: getServerOrigin()
-                }
+            const res = await getFunctionsFactory({
+              logger: context.log
+            })({
+              auth: authCode,
+              filters: {
+                query: args.filter?.search ?? undefined,
+                cursor: args.cursor ?? undefined,
+                limit: args.limit,
+                requireRelease: true,
+                includeFeatured: true,
+                includeWorkspaces: [parent.id],
+                includeUsers: []
               }
             })
 
@@ -1128,12 +1176,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
               }
             }
 
-            const items = res.functions.map(convertFunctionToGraphQLReturn)
+            const items = res.items.map(convertFunctionToGraphQLReturn)
 
             return {
-              cursor: undefined,
-              totalCount: res.functions.length,
-              items
+              items,
+              cursor: res.cursor,
+              totalCount: res.totalCount
             }
           } catch (e) {
             const isNotFound =
@@ -1319,6 +1367,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
 
           return await getInvites(parent.id)
+        },
+        async activeWorkspace(parent, _args, ctx) {
+          const metaVal = await ctx.loaders.users.getUserMeta.load({
+            userId: parent.id,
+            key: UsersMeta.metaKey.activeWorkspace
+          })
+
+          if (!metaVal?.value) return null
+
+          return await getWorkspaceBySlugFactory({ db })({
+            workspaceSlug: metaVal.value
+          })
+        },
+        async isProjectsActive(parent, _args, ctx) {
+          const metaVal = await ctx.loaders.users.getUserMeta.load({
+            userId: parent.id,
+            key: UsersMeta.metaKey.isProjectsActive
+          })
+
+          return !!metaVal?.value
         }
       },
       Project: {
@@ -1407,6 +1475,31 @@ export = FF_WORKSPACES_MODULE_ENABLED
             cursor: args.cursor ?? undefined
           })
           return team
+        }
+      },
+      ActiveUserMutations: {
+        async setActiveWorkspace(_parent, args, ctx) {
+          const userId = ctx.userId
+          if (!userId) return false
+
+          await Promise.all([
+            ctx.loaders.users.getUserMeta.clear({
+              userId,
+              key: UsersMeta.metaKey.activeWorkspace
+            }),
+            ctx.loaders.users.getUserMeta.clear({
+              userId,
+              key: UsersMeta.metaKey.isProjectsActive
+            })
+          ])
+
+          await setUserActiveWorkspaceFactory({ db })({
+            userId,
+            workspaceSlug: args.slug ?? null,
+            isProjectsActive: !!args.isProjectsActive
+          })
+
+          return true
         }
       },
       Subscription: {

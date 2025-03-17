@@ -124,6 +124,26 @@ const requestVerificationMutation = gql`
   }
 `
 
+export const getUserActiveResources = gql`
+  query UserActiveResources {
+    activeUser {
+      activeWorkspace {
+        id
+        name
+      }
+      isProjectsActive
+    }
+  }
+`
+
+export const setUserActiveWorkspaceMutation = gql`
+  mutation SetUserActiveWorkspace($slug: String, $isProjectsActive: Boolean) {
+    activeUserMutations {
+      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)
+    }
+  }
+`
+
 export const getActiveUser = (apollo: ExecuteOperationServer) =>
   executeOperation<GetActiveUserQuery, GetActiveUserQueryVariables>(
     apollo,

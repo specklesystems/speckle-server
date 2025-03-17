@@ -26,7 +26,7 @@ const initRoles = async () => {
 }
 
 const workspacesModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     const isWorkspaceLicenseValid = await validateModuleLicense({
       requiredModules: ['workspaces']

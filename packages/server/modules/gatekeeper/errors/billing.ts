@@ -59,3 +59,21 @@ export class WorkspaceReadOnlyError extends BaseError {
   static code = 'WORKSPACE_READ_ONLY_ERROR'
   static statusCode = 403
 }
+
+export class InvalidWorkspacePlanUpgradeError extends BaseError {
+  static defaultMessage = 'Cannot upgrade to the specified workspace plan'
+  static code = 'INVALID_WORKSPACE_PLAN_UPGRADE_ERROR'
+  static statusCode = 403
+}
+
+export class InvalidBillingIntervalError extends BaseError {
+  static defaultMessage = 'Invalid billing interval'
+  static code = 'INVALID_BILLING_INTERVAL'
+  static statusCode = 400
+}
+
+export class UnsupportedWorkspacePlanError extends BaseError {
+  static defaultMessage = 'Unsupported workspace plan'
+  static code = 'UNSUPPORTED_WORKSPACE_PLAN_ERROR'
+  static statusCode = 400
+}

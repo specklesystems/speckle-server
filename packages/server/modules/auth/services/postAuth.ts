@@ -1,5 +1,5 @@
 import { authLogger, type Logger } from '@/observability/logging'
-import { maybeLoggerWithContext } from '@/observability/components/express/requestContext'
+import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
 import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
@@ -16,7 +16,7 @@ import { mixpanel } from '@/modules/shared/utils/mixpanel'
 
 const onUserCreatedFactory =
   () => async (payload: EventPayload<typeof UserEvents.Created>) => {
-    const logger = maybeLoggerWithContext({ logger: authLogger })!
+    const logger = loggerWithMaybeContext({ logger: authLogger })
     const { user, signUpCtx } = payload.payload
 
     try {

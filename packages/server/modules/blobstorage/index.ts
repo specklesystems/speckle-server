@@ -94,7 +94,7 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
   }
 }
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   await ensureConditions()
   const createStreamWritePermissions = () =>
     streamWritePermissionsPipelineFactory({

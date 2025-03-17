@@ -3,7 +3,7 @@
   <div>
     <div
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2"
-      :class="!isEmbedEnabled ? 'pt-[3.8rem]' : isTransparent ? 'pt-2' : 'pt-2 pb-16'"
+      :class="!isEmbedEnabled ? 'pt-[3.6rem]' : isTransparent ? 'pt-2' : 'pt-2 pb-16'"
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -58,6 +58,7 @@
       >
         <IconMeasurements class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
+
       <div class="w-8 flex gap-2">
         <div class="md:hidden">
           <ViewerControlsButtonToggle
@@ -71,7 +72,7 @@
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-mt-28 md:mt-0 bg-foundation md:bg-transparent md:gap-2 shadow-md md:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:md:shadow-md *:md:py-2"
+          class="-mt-28 md:mt-0 bg-foundation md:bg-transparent gap-1 md:gap-2 flex flex-col rounded-md transition-all"
           :class="[
             activePanel === 'mobileOverflow' ? '' : '-translate-x-24 md:translate-x-0'
           ]"
@@ -157,16 +158,20 @@
         <!-- Standard viewer controls -->
       </div>
     </div>
+
     <div
       v-if="activePanel !== 'none'"
       ref="resizeHandle"
-      class="absolute max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
-      :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
+      :class="[
+        'absolute max-h-[calc(100dvh-4rem)] w-7 hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30',
+        isEmbedEnabled ? 'mt-[0.7rem]' : 'mt-[3.9rem]'
+      ]"
+      :style="`left:${resizeHandlePosition}px; height:${height ? height - 10 : 0}px`"
       @mousedown="startResizing"
     >
       <div
         class="relative z-30 w-1 mt-2 ml-1 h-full pt-[2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
-      ></div>
+      />
       <div
         class="w-7 h-8 mr-1 bg-transparent group-hover:bg-primary rounded-r -translate-x-1 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
       >
@@ -177,9 +182,9 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-3.5rem)] overflow-y-auto px-[2px] py-[2px] ${
+      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-3.5rem)] overflow-y-auto py-[1px] ${
         activePanel !== 'none' ? 'opacity-100' : 'opacity-0'
-      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
+      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.6rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <div v-if="activePanel === 'measurements'">
@@ -277,7 +282,8 @@ import {
   onKeyStroke,
   useEventListener,
   useResizeObserver,
-  useBreakpoints
+  useBreakpoints,
+  useWindowSize
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
@@ -303,6 +309,7 @@ type ActiveControl =
   | 'settings'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
+const { width: windowWidth } = useWindowSize()
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -474,7 +481,8 @@ onKeyStroke('Escape', () => {
 
 onMounted(() => {
   // Set initial panel state after component is mounted
-  activePanel.value = isSmallerOrEqualSm.value ? 'none' : 'models'
+  activePanel.value =
+    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
 })
 
 watch(isSmallerOrEqualSm, (newVal) => {
@@ -516,5 +524,11 @@ const explodeOpen = computed({
   set: (value) => {
     activeControl.value = value ? 'explode' : 'none'
   }
+})
+
+const resizeHandlePosition = computed(() => {
+  return windowWidth.value >= TailwindBreakpoints.md
+    ? width.value - 2
+    : width.value - 10
 })
 </script>

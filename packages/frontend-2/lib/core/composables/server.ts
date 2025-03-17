@@ -17,6 +17,9 @@ export const mainServerInfoDataQuery = graphql(`
       termsOfService
       version
       automateUrl
+      configuration {
+        isEmailEnabled
+      }
     }
   }
 `)

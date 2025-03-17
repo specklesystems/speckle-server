@@ -9,7 +9,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 let quitListeners: Optional<() => void> = undefined
 
 const ServerAccessRequestsModule: SpeckleModule = {
-  init(_, isInitial) {
+  init({ isInitial }) {
     moduleLogger.info('🔐 Init access request module')
 
     if (isInitial) {

@@ -1,13 +1,13 @@
 import { expect } from 'chai'
 import { isRedisAlive } from '@/healthchecks/redis'
-import { createInmemoryRedisClient } from '@/test/redisHelper'
+import { getInmemoryRedisClient } from '@/test/redisHelper'
 import Redis from 'ioredis'
 
 describe('Healthchecks @healthchecks', () => {
   describe('Redis health check @redis', () => {
     describe('isRedisAlive', () => {
       it('should return true if the redis connection is alive', async () => {
-        const client = createInmemoryRedisClient()
+        const client = getInmemoryRedisClient()
         const result = await isRedisAlive({ client })
         expect(result.isAlive).to.be.true
       })
