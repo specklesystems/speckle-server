@@ -9,9 +9,11 @@ import {
 } from '~/lib/dashboard/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type { CacheObjectReference } from '~~/lib/common/helpers/graphql'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  getCacheId
 } from '~~/lib/common/helpers/graphql'
 
 graphql(`
@@ -58,24 +60,25 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const {
-    result: discoverableResult,
-    refetch: refetchDiscoverableWorkspaces,
-    loading: discoverableLoading
-  } = useQuery(discoverableWorkspacesQuery, undefined, { enabled: isWorkspacesEnabled })
-  const {
-    result: requestsResult,
-    refetch,
-    loading: joinRequestsLoading
-  } = useQuery(discoverableWorkspacesRequestsQuery, undefined, {
-    enabled: isWorkspacesEnabled
-  })
+  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
+    discoverableWorkspacesQuery,
+    undefined,
+    { enabled: isWorkspacesEnabled }
+  )
+  const { result: requestsResult, loading: joinRequestsLoading } = useQuery(
+    discoverableWorkspacesRequestsQuery,
+    undefined,
+    {
+      enabled: isWorkspacesEnabled
+    }
+  )
 
   const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
   const { mutate: dismissWorkspace } = useMutation(
     dashboardDismissDiscoverableWorkspaceMutation
   )
 
+  const { activeUser } = useActiveUser()
   const mixpanel = useMixpanel()
   const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
@@ -131,6 +134,9 @@ export const useDiscoverableWorkspaces = () => {
 
   const processRequest = async (accept: boolean, workspaceId: string) => {
     const cache = apollo.cache
+    const activeUserId = activeUser.value?.id
+
+    if (!activeUserId) return
 
     if (accept) {
       const result = await requestToJoin({
@@ -138,10 +144,19 @@ export const useDiscoverableWorkspaces = () => {
       }).catch(convertThrowIntoFetchResult)
 
       if (result?.data) {
-        cache.evict({
-          id: getCacheId('LimitedWorkspace', workspaceId)
+        cache.modify({
+          id: getCacheId('User', activeUserId),
+          fields: {
+            discoverableWorkspaces(existingRefs = [], { readField }) {
+              return existingRefs.filter(
+                (ref: CacheObjectReference<'LimitedWorkspace'>) => {
+                  const id = readField('id', ref)
+                  return id !== workspaceId
+                }
+              )
+            }
+          }
         })
-        refetch()
 
         mixpanel.track('Workspace Join Request Sent', {
           workspaceId,
@@ -170,12 +185,29 @@ export const useDiscoverableWorkspaces = () => {
     const result = await dismissWorkspace({
       input: { workspaceId }
     }).catch(convertThrowIntoFetchResult)
+    const cache = apollo.cache
+    const activeUserId = activeUser.value?.id
+
+    if (!activeUserId) return
 
     if (result?.data) {
-      refetchDiscoverableWorkspaces()
       triggerNotification({
         title: 'Discoverable workspace dismissed',
         type: ToastNotificationType.Info
+      })
+
+      cache.modify({
+        id: getCacheId('User', activeUserId),
+        fields: {
+          discoverableWorkspaces(existingRefs = [], { readField }) {
+            return existingRefs.filter(
+              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
+                const id = readField('id', ref)
+                return id !== workspaceId
+              }
+            )
+          }
+        }
       })
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
@@ -203,7 +235,6 @@ export const useDiscoverableWorkspaces = () => {
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
     processRequest,
-    loading,
-    refetch
+    loading
   }
 }

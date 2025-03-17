@@ -13,23 +13,20 @@
         :invite="invite"
       />
       <WorkspaceInviteDiscoverableWorkspaceBanner
-        v-for="workspace in filteredDiscoverableWorkspaces"
+        v-for="workspace in discoverableWorkspaces"
         :key="workspace.id"
         :workspace="workspace"
-        @dismiss="handleDismiss"
       />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectsDashboardHeaderProjects_UserFragment,
   ProjectsDashboardHeaderWorkspaces_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { CookieKeys } from '~/lib/common/helpers/constants'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 graphql(`
@@ -53,35 +50,15 @@ const props = defineProps<{
   workspacesInvites: MaybeNullOrUndefined<ProjectsDashboardHeaderWorkspaces_UserFragment>
 }>()
 
-const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
-  CookieKeys.DismissedDiscoverableWorkspaces,
-  {
-    default: () => []
-  }
-)
-
 const { discoverableWorkspaces } = useDiscoverableWorkspaces()
 
 const workspaceInvites = computed(() => props.workspacesInvites?.workspaceInvites || [])
-const filteredDiscoverableWorkspaces = computed(
-  () =>
-    discoverableWorkspaces.value?.filter(
-      (workspace) => !dismissedDiscoverableWorkspaces.value.includes(workspace.id)
-    ) || []
-)
 
 const hasBanners = computed(() => {
   return (
     props.projectsInvites?.projectInvites?.length ||
     workspaceInvites.value.length ||
-    filteredDiscoverableWorkspaces.value.length
+    discoverableWorkspaces.value?.length
   )
 })
-
-const handleDismiss = (workspaceId: string) => {
-  dismissedDiscoverableWorkspaces.value = [
-    ...dismissedDiscoverableWorkspaces.value,
-    workspaceId
-  ]
-}
 </script>

@@ -28,16 +28,10 @@ const invite = computed(() => ({
   }
 }))
 
-const emit = defineEmits<{
-  (e: 'dismiss', workspaceId: string): void
-}>()
-
 const handleRequest = async (accept: boolean) => {
   if (accept) {
     await processRequest(true, props.workspace.id)
-    emit('dismiss', props.workspace.id)
   } else {
-    emit('dismiss', props.workspace.id)
     await dismissDiscoverableWorkspace(props.workspace.id)
     mixpanel.track('Workspace Discovery Banner Dismissed', {
       workspaceId: props.workspace.id,
