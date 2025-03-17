@@ -36,7 +36,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute left-3 top-14 w-full lg:w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
+          class="absolute left-2 lg:left-3 top-12 lg:top-14 w-full lg:w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
           <div
             v-if="activeWorkspaceSlug || isProjectsActive"
