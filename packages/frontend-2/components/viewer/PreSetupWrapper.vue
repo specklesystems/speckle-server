@@ -8,20 +8,17 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="project?.workspace.name"
+                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
                 :separator="false"
-              ></HeaderNavLink>
+              />
             </template>
             <HeaderNavLink
               v-else
               :to="projectsRoute"
               name="Projects"
               :separator="false"
-            ></HeaderNavLink>
-            <HeaderNavLink
-              :to="`/projects/${project?.id}`"
-              :name="project?.name"
-            ></HeaderNavLink>
+            />
+            <HeaderNavLink :to="`/projects/${project?.id}`" :name="project?.name" />
             <ViewerExplorerNavbarLink />
           </ViewerScope>
         </Portal>
@@ -140,6 +137,7 @@ const projectId = writableAsyncComputed({
   asyncRead: false
 })
 
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })

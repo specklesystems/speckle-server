@@ -1,9 +1,18 @@
 import { graphql } from '~/lib/common/generated/gql'
 
-export const headerWorkspaceSwitcherQuery = graphql(`
-  query HeaderWorkspaceSwitcher($slug: String!) {
+export const navigationActiveWorkspaceQuery = graphql(`
+  query NavigationActiveWorkspace($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      ...HeaderWorkspaceSwitcher_Workspace
+      ...UseNavigationActiveWorkspace_Workspace
+    }
+  }
+`)
+
+export const navigationWorkspaceListQuery = graphql(`
+  query NavigationWorkspaceList {
+    activeUser {
+      id
+      ...UseNavigationWorkspaceList_User
     }
   }
 `)

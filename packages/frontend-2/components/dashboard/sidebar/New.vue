@@ -30,6 +30,10 @@
           class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
         >
           <LayoutSidebarMenu>
+            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled && isMobile">
+              <HeaderWorkspaceSwitcher />
+            </LayoutSidebarMenuGroup>
+
             <LayoutSidebarMenuGroup>
               <template v-if="!isWorkspacesEnabled">
                 <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
@@ -168,11 +172,15 @@ import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
