@@ -98,7 +98,7 @@ import {
 import {
   createWorkspaceProjectFactory,
   getWorkspaceProjectsFactory,
-  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  getWorkspaceRolesAllowedProjectRolesFactory,
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
@@ -177,6 +177,7 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
+  getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
@@ -206,6 +207,7 @@ import {
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
+  getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 
@@ -606,7 +608,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   })
                 })
             })
-            await updateWorkspaceRole({ userId, workspaceId, role })
+            await updateWorkspaceRole({
+              userId,
+              workspaceId,
+              role,
+              updatedByUserId: context.userId!
+            })
           }
 
           return await getWorkspaceFactory({ db })({
@@ -1004,10 +1011,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 updateProject: updateProjectFactory({ db }),
                 upsertProjectRole: upsertProjectRoleFactory({ db }),
                 getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
-                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                getWorkspaceRoleToDefaultProjectRoleMapping:
-                  getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-                    getWorkspace: getWorkspaceFactory({ db })
+                getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
+                getWorkspaceRolesAllowedProjectRoles:
+                  getWorkspaceRolesAllowedProjectRolesFactory({
+                    getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
                   }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -1025,7 +1032,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
           })
 
-          return await moveProjectToWorkspace({ projectId, workspaceId })
+          return await moveProjectToWorkspace({
+            projectId,
+            workspaceId,
+            movedByUserId: context.userId!
+          })
         }
       },
       Workspace: {

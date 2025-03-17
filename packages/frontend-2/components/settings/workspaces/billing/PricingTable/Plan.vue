@@ -13,7 +13,7 @@
     </div>
     <p class="text-body mt-1">
       <span class="font-medium">
-        {{ formatPrice(planPrice?.[Roles.Workspace.Member]) }}
+        {{ formatPrice(finalPlanPrice) }}
       </span>
       per seat/month
     </p>
@@ -140,6 +140,15 @@ const planPrice = computed(
   () =>
     prices.value?.[props.plan]?.[props.yearlyIntervalSelected ? 'yearly' : 'monthly']
 )
+
+const finalPlanPrice = computed(() => {
+  const basePrice = prices.value?.[props.plan].monthly?.['workspace:member']
+  if (!basePrice) return undefined
+  return {
+    ...basePrice,
+    amount: props.yearlyIntervalSelected ? basePrice.amount * 0.8 : basePrice.amount
+  }
+})
 
 const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {
