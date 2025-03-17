@@ -308,14 +308,16 @@ export const assignToWorkspace = async (
   await updateWorkspaceRole({
     userId: user.id,
     workspaceId: workspace.id,
-    role
+    role,
+    updatedByUserId: workspace.ownerId
   })
 
   if (seatType) {
     await assignWorkspaceSeat({
       userId: user.id,
       workspaceId: workspace.id,
-      type: seatType
+      type: seatType,
+      assignedByUserId: workspace.ownerId
     })
   }
 }

@@ -34,6 +34,7 @@ type WorkspaceRoleUpdatedPayload = {
   acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
   seatType: WorkspaceSeatType
   flags?: { skipProjectRoleUpdatesFor: string[] }
+  updatedByUserId: string
 }
 type WorkspaceJoinedFromDiscoveryPayload = {
   userId: string

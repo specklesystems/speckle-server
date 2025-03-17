@@ -56,6 +56,10 @@ export const joinWorkspaceFactory =
     })
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleUpdated,
-      payload: { acl: { userId, workspaceId, role }, seatType: type }
+      payload: {
+        acl: { userId, workspaceId, role },
+        seatType: type,
+        updatedByUserId: userId
+      }
     })
   }

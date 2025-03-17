@@ -127,7 +127,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
         workspaceJoinRequestMutations: () => ({})
       },
       WorkspaceJoinRequestMutations: {
-        approve: async (_parent, args) => {
+        approve: async (_parent, args, ctx) => {
           const approveWorkspaceJoinRequest =
             commandFactory<ApproveWorkspaceJoinRequest>({
               db,
@@ -163,7 +163,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
             })
           return await approveWorkspaceJoinRequest({
             userId: args.input.userId,
-            workspaceId: args.input.workspaceId
+            workspaceId: args.input.workspaceId,
+            approvedByUserId: ctx.userId!
           })
         },
         deny: async (_parent, args) => {

@@ -18,7 +18,7 @@ import {
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { Roles } from '@speckle/shared'
-import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 
@@ -61,7 +61,7 @@ export default {
   },
   WorkspaceProjectMutations: {
     moveToRegion: async (_parent, args, context) => {
-      if (!FF_MOVE_PROJECT_REGION_ENABLED && !isTestEnv()) {
+      if (!FF_MOVE_PROJECT_REGION_ENABLED) {
         throw new WorkspacesNotYetImplementedError()
       }
 

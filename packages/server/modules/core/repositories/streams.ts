@@ -96,7 +96,8 @@ import {
   MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
-  GetStreamsCollaborators
+  GetStreamsCollaborators,
+  GetStreamsCollaboratorCounts
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 export type { StreamWithOptionalRole, StreamWithCommitId }
@@ -583,6 +584,33 @@ export const getDiscoverableStreamsPageFactory =
     }
 
     return await q
+  }
+
+export const getStreamsCollaboratorCountsFactory =
+  (deps: { db: Knex }): GetStreamsCollaboratorCounts =>
+  async ({ streamIds, type }) => {
+    if (!streamIds.length) return {}
+
+    const q = tables
+      .streamAcl(deps.db)
+      .whereIn(StreamAcl.col.resourceId, streamIds)
+      .groupBy(StreamAcl.col.resourceId, StreamAcl.col.role)
+      .select<Array<{ streamId: string; role: StreamRoles; count: string }>>([
+        StreamAcl.colAs('resourceId', 'streamId'),
+        StreamAcl.col.role,
+        knex.raw('COUNT(*) as count')
+      ])
+
+    if (type) {
+      q.andWhere(StreamAcl.col.role, type)
+    }
+
+    const res = await q
+    return res.reduce((acc, { streamId, role, count }) => {
+      acc[streamId] = acc[streamId] || {}
+      acc[streamId][role] = parseInt(count)
+      return acc
+    }, {} as Awaited<ReturnType<GetStreamsCollaboratorCounts>>)
   }
 
 /**
@@ -1087,8 +1115,9 @@ export const deleteProjectRoleFactory =
 
 export const revokeStreamPermissionsFactory =
   (deps: { db: Knex }): RevokeStreamPermissions =>
-  async (params: { streamId: string; userId: string }) => {
+  async (params, options) => {
     const { streamId, userId } = params
+    const { trackProjectUpdate = true } = options || {}
 
     const existingPermission = await tables
       .streamAcl(deps.db)
@@ -1147,12 +1176,14 @@ export const revokeStreamPermissionsFactory =
         })
     }
 
-    // update stream updated at
-    const [stream] = await tables
-      .streams(deps.db)
-      .where({ id: streamId })
-      .update({ updatedAt: knex.fn.now() }, '*')
+    // update stream updated at, if enabled
+    const streamQ = tables.streams(deps.db).where({ id: streamId })
 
+    if (trackProjectUpdate) {
+      streamQ.update({ updatedAt: knex.fn.now() }, '*')
+    }
+
+    const [stream] = await streamQ
     return stream
   }
 
@@ -1219,10 +1250,10 @@ export const legacyGetStreamsFactory =
     streamIdWhitelist,
     workspaceIdWhitelist,
     offset,
-    publicOnly
+    publicOnly,
+    userId
   }) => {
     const query = tables.streams(deps.db)
-    const countQuery = tables.streams(deps.db)
 
     if (searchQuery) {
       const whereFunc: Knex.QueryCallback = function () {
@@ -1233,7 +1264,6 @@ export const legacyGetStreamsFactory =
         )
       }
       query.where(whereFunc)
-      countQuery.where(whereFunc)
     }
 
     if (publicOnly) {
@@ -1250,20 +1280,33 @@ export const legacyGetStreamsFactory =
         this.where({ isPublic })
       }
       query.andWhere(publicFunc)
-      countQuery.andWhere(publicFunc)
     }
 
     if (streamIdWhitelist?.length) {
       query.whereIn('id', streamIdWhitelist)
-      countQuery.whereIn('id', streamIdWhitelist)
     }
 
     if (workspaceIdWhitelist?.length) {
       query.whereIn('workspaceId', workspaceIdWhitelist)
-      countQuery.whereIn('workspaceId', workspaceIdWhitelist)
     }
 
-    const [res] = await countQuery.count()
+    if (userId) {
+      query.select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+      ])
+      query.leftJoin(StreamAcl.name, function () {
+        this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+      query.groupBy(Streams.col.id)
+    }
+
+    const countQ = deps.db.from(query.clone().as('t1')).count()
+    const [res] = await countQ
     const count = parseInt(res.count + '')
 
     if (!count) return { streams: [], totalCount: 0, cursorDate: null }
