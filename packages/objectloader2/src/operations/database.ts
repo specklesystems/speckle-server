@@ -1,6 +1,7 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
-import { CustomLogger, Item, BaseDatabaseOptions, asBase } from '../types/types.js'
+import { ObjectLoaderRuntimeError } from '../types/errors.js'
+import { CustomLogger, Item, BaseDatabaseOptions, isBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 
 export default class CacheDatabase {
@@ -116,7 +117,11 @@ export default class CacheDatabase {
           if (count % 1000 === 0) {
             this._logger(`Object ${count} found in cache`)
           }
-          found.add({ id, obj: asBase(base) })
+          if (isBase(base)) {
+            found.add({ id, obj: base })
+          } else {
+            throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+          }
         }
       })
       await Promise.all(idbChildrenPromises)
@@ -139,13 +144,17 @@ export default class CacheDatabase {
       request.onerror = () =>
         reject(ensureError(request.error, 'Error trying to get an item'))
     })
-    const b = await getItem
-    if (b === undefined) return undefined
-    return { id, obj: asBase(b) }
+    const obj = await getItem
+    if (obj === undefined) return undefined
+    if (isBase(obj)) {
+      return { id, obj }
+    } else {
+      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+    }
   }
 
-  async write(obj: Item): Promise<void> {
-    await this._writeQueue.add(obj)
+  write(obj: Item): void {
+    this._writeQueue.add(obj)
   }
 
   static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {

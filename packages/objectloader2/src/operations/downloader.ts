@@ -2,7 +2,7 @@ import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { asBase, Item } from '../types/types.js'
+import { isBase, Item } from '../types/types.js'
 import CacheDatabase from './database.js'
 
 export default class Downloader implements Queue<string> {
@@ -73,7 +73,11 @@ export default class Downloader implements Queue<string> {
     } catch (e: unknown) {
       throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
     }
-    return { id, obj: asBase(obj) }
+    if (isBase(obj)) {
+      return { id, obj }
+    } else {
+      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+    }
   }
 
   static async downloadBatch(
