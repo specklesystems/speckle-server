@@ -7,7 +7,8 @@ const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 export const parseFeatureFlags = (
-  input: Record<string, string | undefined>
+  input: // | Record<string, string | undefined>
+  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>
 ): FeatureFlags => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
@@ -121,6 +122,7 @@ export type FeatureFlags = {
 }
 
 export function getFeatureFlags(): FeatureFlags {
+  //@ts-expect-error this way, the parse function typing is a lot better
   if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
   return parsedFlags
 }

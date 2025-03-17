@@ -8,13 +8,13 @@ import { Roles } from '../../core/constants.js'
 
 const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: T) =>
-    (overrides?: Partial<T>) =>
-      (): Promise<T> => {
-        if (overrides) {
-          return Promise.resolve(merge(defaults, overrides))
-        }
-        return Promise.resolve(defaults)
-      }
+  (overrides?: Partial<T>) =>
+  (): Promise<T> => {
+    if (overrides) {
+      return Promise.resolve(merge(defaults, overrides))
+    }
+    return Promise.resolve(defaults)
+  }
 
 const getProjectFake = fakeGetFactory<Project>({
   isPublic: false,
@@ -233,7 +233,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('does not allow project access without a workspace role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({ FF_WORKSPACE_MODULE_ENABLED: 'true' }),
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
         getProject: getProjectFake({
           isDiscoverable: false,
           isPublic: false,
