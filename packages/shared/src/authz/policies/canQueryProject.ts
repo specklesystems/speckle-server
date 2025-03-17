@@ -26,12 +26,22 @@ export const canQueryProjectPolicyFactory =
       | 'getWorkspaceSsoSession'
     >
   ) =>
-  async ({ userId, projectId }: UserContext & ProjectContext): Promise<AuthResult> => {
+  async ({
+    userId,
+    projectId
+  }: UserContext & ProjectContext): Promise<
+    AuthResult<
+      | 'ProjectNotFound'
+      | 'ProjectNoAccess'
+      | 'WorkspaceNoAccess'
+      | 'WorkspaceSsoSessionInvalid'
+    >
+  > => {
     const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
 
     const project = await loaders.getProject({ projectId })
     // hiding the project not found, to stop id brute force lookups
-    if (!project) return unauthorized('NoAccessToProject')
+    if (!project) return unauthorized('ProjectNoAccess')
 
     // All users may read public projects
     const isPublicResult = await requireExactProjectVisibility({ loaders })({
@@ -49,6 +59,10 @@ export const canQueryProjectPolicyFactory =
     })
     if (isLinkShareableResult) {
       return authorized()
+    }
+    // From this point on, you cannot pass as an unknown user
+    if (!userId) {
+      return unauthorized('ProjectNoAccess')
     }
 
     // When G O D M O D E is enabled
@@ -118,5 +132,5 @@ export const canQueryProjectPolicyFactory =
     if (hasMinimumProjectRoleResult) {
       return authorized()
     }
-    return unauthorized('NoAccessToProject')
+    return unauthorized('ProjectNoAccess')
   }

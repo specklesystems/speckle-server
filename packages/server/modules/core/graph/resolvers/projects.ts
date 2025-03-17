@@ -81,14 +81,26 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getUserServerRoleFactory } from '@/modules/shared/repositories/acl'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import {
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { authPolicyFactory } from '@speckle/shared/dist/commonjs/authz/policies/index'
 import { has } from 'lodash'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderRecordFactory
+} from '@/modules/workspaces/repositories/sso'
+import { throwUncoveredError } from '@speckle/shared'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -178,27 +190,71 @@ export = {
   Query: {
     async project(_parent, args, context) {
       const getStream = getStreamFactory({ db })
-      const stream = await getStream({
-        streamId: args.id,
+      const policeMan = authPolicyFactory({
+        getEnv: getFeatureFlags,
+        getProject: async ({ projectId }) => {
+          const project = await getStream({ streamId: projectId })
+          if (!project) return null
+          return { ...project, projectId: project.id }
+        },
+        getProjectRole: async ({ userId, projectId }) => {
+          const project = await getStream({ streamId: projectId, userId })
+          return project?.role ?? null
+        },
+        getServerRole: async ({ userId }) => {
+          const role = await getUserServerRoleFactory({ db })({ userId })
+          return role ?? null
+        },
+        getWorkspace: getWorkspaceFactory({ db }),
+        getWorkspaceRole: async ({ userId, workspaceId }) => {
+          const role = await getWorkspaceRoleForUserFactory({ db })({
+            userId,
+            workspaceId
+          })
+          return role?.role ?? null
+        },
+        getWorkspaceSsoSession: async ({ userId, workspaceId }) => {
+          const ssoSession = await getUserSsoSessionFactory({ db })({
+            userId,
+            workspaceId
+          })
+          return ssoSession ?? null
+        },
+        getWorkspaceSsoProvider: async ({ workspaceId }) => {
+          const ssoProvider = await getWorkspaceSsoProviderRecordFactory({ db })({
+            workspaceId
+          })
+          return ssoProvider ?? null
+        }
+      })
+
+      const canQuery = await policeMan.project.query({
+        projectId: args.id,
         userId: context.userId
       })
-      if (!stream) {
-        throw new StreamNotFoundError('Project not found')
+
+      if (!canQuery.authorized) {
+        switch (canQuery.reason) {
+          case 'ProjectNotFound':
+            throw new StreamNotFoundError()
+          case 'ProjectNoAccess':
+            // we should also include the reason in the error right?
+            throw new ForbiddenError(canQuery.message)
+          case 'WorkspaceNoAccess':
+          case 'WorkspaceSsoSessionInvalid':
+            throw new Error('asdf')
+          default:
+            throwUncoveredError(canQuery.reason)
+        }
       }
 
-      await authorizeResolver(
-        context.userId,
-        args.id,
-        Roles.Stream.Reviewer,
-        context.resourceAccessRules
-      )
+      const project = await getStream({ streamId: args.id })
 
-      if (!stream.isPublic) {
-        await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      if (!project?.isPublic || !project.isDiscoverable) {
         validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
-      return stream
+      return project
     }
   },
   Mutation: {
