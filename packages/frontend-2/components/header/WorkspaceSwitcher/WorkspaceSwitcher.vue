@@ -1,12 +1,16 @@
 <template>
   <div>
     <Menu as="div" class="flex items-center">
-      <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
+      <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }" class="w-full">
         <span class="sr-only">Open workspace menu</span>
         <div class="flex items-center gap-2 p-0.5 pr-1.5 hover:bg-highlight-2 rounded">
           <template v-if="activeWorkspaceSlug || isProjectsActive">
             <div class="relative">
-              <WorkspaceAvatar :name="displayName" :logo="displayLogo" />
+              <WorkspaceAvatar
+                :size="isMobile ? 'sm' : 'base'"
+                :name="displayName"
+                :logo="displayLogo"
+              />
               <div
                 v-if="hasDiscoverableWorkspaces"
                 class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-primary rounded-full"
@@ -32,7 +36,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute left-4 top-14 w-64 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
+          class="absolute left-3 top-14 w-full lg:w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
           <div
             v-if="activeWorkspaceSlug || isProjectsActive"
@@ -97,28 +101,29 @@
               </MenuItem>
             </div>
           </div>
-          <div class="p-2 pt-1 max-h-96 overflow-y-auto simple-scrollbar">
+          <div
+            class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar"
+          >
             <LayoutSidebarMenuGroup
               title="Workspaces"
               :icon-click="isGuest ? undefined : handlePlusClick"
               icon-text="Create workspace"
             >
-              <div v-if="hasWorkspaces" class="w-full">
-                <template v-for="item in workspaces" :key="`menu-item-${item.id}`">
-                  <DashboardSidebarWorkspaceItem
-                    :is-active="item.slug === activeWorkspaceSlug"
-                    :name="item.name"
-                    :logo="item.logo"
-                    @on-click="onWorkspaceSelect(item.slug)"
-                  />
-                </template>
-                <DashboardSidebarWorkspaceItem
-                  :is-active="route.path === projectsRoute"
-                  name="Personal projects"
-                  tag="LEGACY"
-                  @on-click="onProjectsSelect"
-                />
-              </div>
+              <HeaderWorkspaceSwitcherItem
+                v-for="item in workspaces"
+                :key="`menu-item-${item.id}`"
+                :is-active="item.slug === activeWorkspaceSlug"
+                :name="item.name"
+                :logo="item.logo"
+                :tag="getWorkspaceTag(item)"
+                @on-click="onWorkspaceSelect(item.slug)"
+              />
+              <HeaderWorkspaceSwitcherItem
+                :is-active="route.path === projectsRoute"
+                name="Personal projects"
+                tag="LEGACY"
+                @on-click="onProjectsSelect"
+              />
             </LayoutSidebarMenuGroup>
           </div>
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
@@ -159,14 +164,16 @@ import {
   projectsRoute
 } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useUserWorkspaces } from '~/lib/user/composables/workspaces'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { graphql } from '~/lib/common/generated/gql'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
+import type { HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
-  fragment HeaderWorkspaceSwitcher_Workspace on Workspace {
+  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
     ...InviteDialogWorkspace_Workspace
     id
     name
@@ -181,6 +188,22 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {
+    id
+    name
+    logo
+    role
+    slug
+    creationState {
+      completed
+    }
+    plan {
+      name
+    }
+  }
+`)
+
 const { isGuest } = useActiveUser()
 const menuButtonId = useId()
 const mixpanel = useMixpanel()
@@ -189,14 +212,23 @@ const {
   isProjectsActive,
   mutateActiveWorkspaceSlug,
   mutateIsProjectsActive,
-  workspaceData
+  activeWorkspaceData,
+  workspaceList: workspaces
 } = useNavigation()
+const route = useRoute()
+const {
+  hasDiscoverableWorkspaces,
+  discoverableWorkspacesCount,
+  hasDiscoverableWorkspacesOrJoinRequests
+} = useDiscoverableWorkspaces()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('lg')
 
 const showInviteDialog = ref(false)
 const showDiscoverableWorkspacesModal = ref(false)
 
 const activeWorkspace = computed(() => {
-  return workspaceData.value
+  return activeWorkspaceData.value
 })
 
 const displayName = computed(() => activeWorkspace.value?.name || 'Personal projects')
@@ -205,14 +237,6 @@ const displayLogo = computed(() => {
   if (isProjectsActive.value) return null
   return activeWorkspace.value?.logo
 })
-
-const route = useRoute()
-const { workspaces, hasWorkspaces } = useUserWorkspaces()
-const {
-  hasDiscoverableWorkspaces,
-  discoverableWorkspacesCount,
-  hasDiscoverableWorkspacesOrJoinRequests
-} = useDiscoverableWorkspaces()
 
 const onWorkspaceSelect = (slug: string) => {
   navigateTo(workspaceRoute(slug))
@@ -234,5 +258,12 @@ const handlePlusClick = () => {
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'navigation'
   })
+}
+
+const getWorkspaceTag = (
+  workspace: HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment
+) => {
+  if (workspace.role === Roles.Workspace.Guest) return 'GUEST'
+  if (workspace.plan?.name === WorkspacePlans.Free) return 'FREE'
 }
 </script>
