@@ -36,7 +36,7 @@ export const connectorItems: ConnectorItem[] = [
     title: 'Power BI',
     slug: 'powerbi',
     description:
-      'Load your models to Power BI to boost design coordination and business intelligence workflows.',
+      'Load your models into Power BI to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/power-bi',
     image: '/images/connectors/powerbi.png',
     categories: [ConnectorCategory.BusinessIntelligence]
