@@ -51,18 +51,32 @@ import knex from 'knex'
 import { omit } from 'lodash'
 
 const projectIds = [
-  'edbf5f099d'
-  // '0d2bab6b1b',
-  // '2d0431175f',
-  // '0d8ebc5d94',
-  // 'b171b7dea4',
-  // '10492ba7fe',
-  // 'e758c11540',
-  // '5b25d3c558',
-  // 'd1c23f9206',
-  // '83f005bbc8',
-  // 'f92268dfac',
-  // '97e8715da4'
+  // 'b8731935e4'
+  // '312b0f55ce',
+  'e2a7b596f2',
+  '94cd9c42b4',
+  // '5f8e5b8c0a',
+  'e18927673f',
+  '20127dbc10',
+  '95fc9ba100'
+  // '9e80c7d505',
+  // '1a5ebce50c',
+  // '405250164f'
+  // '6d1414ac7b'
+  // '6543b7fed0'
+  // '872b5e6927',
+  // 'f3aaaaab41'
+  // '690a5c85a6',
+  // '66c84de878'
+  // 'f8ae8c3692',
+  // '2a148a84aa'
+  // '3acf5745e4'
+  // '46c5302b6a',
+  // 'e8579f5a47',
+  // 'd3a1911417'
+  // 'a7f362c3ee',
+  // 'ce3e474b14'
+  // 'b7c6ae9022'
 ]
 
 // real
@@ -75,16 +89,18 @@ const projectIds = [
 // }
 
 const userIdMapping: Record<string, string> = {
-  '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
-  a8bbe5fd68: 'ee07689e6c', // Xintong Chen
-  a736ff389b: 'ee07689e6c', // Felipe Curado
-  '230687c24c': 'ee07689e6c', // Julian Höll
-  '02d31038bc': 'ee07689e6c' // DT
+  a39c788dd12: '651fa72ddf', //Sam
+  ea1b64fdd5: '4f74fd69a7', // Ed
+  bef3af50fa: '0c25350b56', // Liam
+  dd348f5f3f: 'e944b499a9', // Joshua -> fallback to Bruno
+  e05811b483: 'e944b499a9', // Molly -> fallback to Bruno
+  '198eec517e': 'e944b499a9' // Bruno
+  // ''
 }
 
 // real
 // const workspaceId = 'a1f85661a9'
-const workspaceId = '760fd72e88'
+const workspaceId = '14675306c8'
 
 const sourceDbConnection = getStringFromEnv('SOURCE_DB_CONNECTION')
 const sourceDb = knex(sourceDbConnection)
@@ -116,6 +132,7 @@ const main = async () => {
   })
 
   for (const sourceProject of sourceProjects) {
+    console.log(`Processing project ${sourceProject.id}`)
     // starting first trx here
     let regionTrx = await regionDb.transaction()
     const mainTrx = await mainDb.transaction()
@@ -174,6 +191,7 @@ const main = async () => {
         const branchesAuthorRemapped = branchBatch.map((b) => {
           branchIds.push(b.id)
           if (!b.authorId) return b
+          console.log(b)
           if (!(b.authorId in userIdMapping)) throw new Error('Unknown branch author')
           return {
             ...b,
