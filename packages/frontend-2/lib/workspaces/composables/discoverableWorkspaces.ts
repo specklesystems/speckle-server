@@ -132,52 +132,50 @@ export const useDiscoverableWorkspaces = () => {
     () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
   )
 
-  const processRequest = async (accept: boolean, workspaceId: string) => {
+  const requestToJoinWorkspace = async (workspaceId: string) => {
     const cache = apollo.cache
     const activeUserId = activeUser.value?.id
 
     if (!activeUserId) return
 
-    if (accept) {
-      const result = await requestToJoin({
-        input: { workspaceId }
-      }).catch(convertThrowIntoFetchResult)
+    const result = await requestToJoin({
+      input: { workspaceId }
+    }).catch(convertThrowIntoFetchResult)
 
-      if (result?.data) {
-        cache.modify({
-          id: getCacheId('User', activeUserId),
-          fields: {
-            discoverableWorkspaces(existingRefs = [], { readField }) {
-              return existingRefs.filter(
-                (ref: CacheObjectReference<'LimitedWorkspace'>) => {
-                  const id = readField('id', ref)
-                  return id !== workspaceId
-                }
-              )
-            }
+    if (result?.data) {
+      cache.modify({
+        id: getCacheId('User', activeUserId),
+        fields: {
+          discoverableWorkspaces(existingRefs = [], { readField }) {
+            return existingRefs.filter(
+              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
+                const id = readField('id', ref)
+                return id !== workspaceId
+              }
+            )
           }
-        })
+        }
+      })
 
-        mixpanel.track('Workspace Join Request Sent', {
-          workspaceId,
-          location: 'onboarding',
-          // eslint-disable-next-line camelcase
-          workspace_id: workspaceId
-        })
+      mixpanel.track('Workspace Join Request Sent', {
+        workspaceId,
+        location: 'onboarding',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
 
-        triggerNotification({
-          title: 'Request sent',
-          description: 'Your request to join the workspace has been sent.',
-          type: ToastNotificationType.Success
-        })
-      } else {
-        const errorMessage = getFirstErrorMessage(result?.errors)
-        triggerNotification({
-          title: 'Failed to send request',
-          description: errorMessage,
-          type: ToastNotificationType.Danger
-        })
-      }
+      triggerNotification({
+        title: 'Request sent',
+        description: 'Your request to join the workspace has been sent.',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        title: 'Failed to send request',
+        description: errorMessage,
+        type: ToastNotificationType.Danger
+      })
     }
   }
 
@@ -234,7 +232,7 @@ export const useDiscoverableWorkspaces = () => {
     dismissDiscoverableWorkspace,
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
-    processRequest,
+    requestToJoinWorkspace,
     loading
   }
 }

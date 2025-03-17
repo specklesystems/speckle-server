@@ -17,7 +17,8 @@ const props = defineProps<{
   workspace: LimitedWorkspace
 }>()
 
-const { processRequest, dismissDiscoverableWorkspace } = useDiscoverableWorkspaces()
+const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
+  useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
 
 const invite = computed(() => ({
@@ -30,7 +31,7 @@ const invite = computed(() => ({
 
 const handleRequest = async (accept: boolean) => {
   if (accept) {
-    await processRequest(true, props.workspace.id)
+    await requestToJoinWorkspace(props.workspace.id)
   } else {
     await dismissDiscoverableWorkspace(props.workspace.id)
     mixpanel.track('Workspace Discovery Banner Dismissed', {
