@@ -1,7 +1,7 @@
 {
   "name": "@speckle/objectloader2",
   "version": "1.0.0",
-  "description": "TODO",
+  "description": "This is an updated objectloader for the Speckle viewer written in typescript",
   "main": "./dist/commonjs/index.js",
   "module": "./dist/esm/index.js",
   "homepage": "https://speckle.systems",
