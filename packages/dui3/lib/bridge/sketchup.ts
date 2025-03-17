@@ -354,6 +354,7 @@ export class SketchupBridge extends BaseBridge {
   private receiveCommandsAndInitializeBridge(commandNamesString: string) {
     const commandNames = JSON.parse(commandNamesString) as string[]
     const hoistTarget = this as unknown as Record<string, unknown>
+    this.availableMethodNames = commandNames
     for (const commandName of commandNames) {
       hoistTarget[commandName] = (...args: unknown[]) =>
         this.runMethod(commandName, args)

@@ -8,9 +8,13 @@ import { createNanoEvents } from 'nanoevents'
  */
 export class BaseBridge {
   public emitter: Emitter
-
+  /**
+   * Holds a list of connector implemented or available methods in this binding.
+   */
+  public availableMethodNames: string[] = []
   constructor() {
     this.emitter = createNanoEvents()
+    this.availableMethodNames = []
     new BaseBridgeErrorHandler(this.emitter) // Where we set error to hostApp store
   }
 
