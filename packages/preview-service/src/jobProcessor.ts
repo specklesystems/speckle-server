@@ -33,7 +33,11 @@ export const jobProcessor = async ({
   port,
   timeout
 }: JobArgs): Promise<PreviewResultPayload> => {
-  const start = new Date()
+  const elapsed = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / 1000
+  })()
+
   logger.info('Picked up job {jobId} for {serverUrl}')
 
   const jobMessage =
@@ -43,12 +47,10 @@ export const jobProcessor = async ({
     page = await browser.newPage()
 
     const result = await pageFunction({ page, job, logger, port, timeout })
-    const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.info({ status: result.status, elapsed }, jobMessage)
+    logger.info({ status: result.status, elapsed: elapsed() }, jobMessage)
     return result
   } catch (err: unknown) {
-    const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.error({ err, elapsed, status: 'error' }, jobMessage)
+    logger.error({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()
@@ -60,7 +62,7 @@ export const jobProcessor = async ({
       jobId: job.jobId,
       status: 'error',
       result: {
-        durationSeconds: elapsed
+        durationSeconds: elapsed()
       },
       reason
     }

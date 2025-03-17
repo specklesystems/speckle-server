@@ -1,6 +1,6 @@
-import { ObjectPreview } from '@/modules/previews/domain/types'
-import { Nullable, Optional } from '@speckle/shared'
-import express from 'express'
+import type { ObjectPreview } from '@/modules/previews/domain/types'
+import type { Nullable, Optional, PartialBy } from '@speckle/shared'
+import type { Request, Response } from 'express'
 
 export type GetObjectPreviewInfo = (params: {
   streamId: string
@@ -17,7 +17,7 @@ export type ObjectPreviewInput = Pick<
 >
 export type StoreObjectPreview = (params: ObjectPreviewInput) => Promise<void>
 export type UpsertObjectPreview = (params: {
-  objectPreview: ObjectPreview
+  objectPreview: PartialBy<ObjectPreview, 'preview' | 'priority'>
 }) => Promise<void>
 
 export type ObjectPreviewRequest = {
@@ -54,13 +54,13 @@ export type GetObjectPreviewBufferOrFilepath = (params: {
 >
 
 export type SendObjectPreview = (
-  req: express.Request,
-  res: express.Response,
+  req: Request,
+  res: Response,
   streamId: string,
   objectId: string,
   angle?: string
 ) => Promise<void>
 
 export type CheckStreamPermissions = (
-  req: express.Request
+  req: Request
 ) => Promise<{ hasPermissions: boolean; httpErrorCode: number }>
