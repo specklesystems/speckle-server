@@ -1,18 +1,18 @@
-'use strict'
-
-const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
-const {
+import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import {
   loadMultiRegionsConfig,
   configureKnexClient
-} = require('@speckle/shared/dist/commonjs/environment/multiRegionConfig.js')
-const { logger } = require('./observability/logging')
+} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
+import { logger } from '@/observability/logging.js'
+import { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
 const isDevEnv = process.env.NODE_ENV !== 'production'
 
-let dbClients
-const getDbClients = async () => {
+type DbClient = { public: Knex; private?: Knex }
+let dbClients: { [key: string]: DbClient }
+export const getDbClients = async () => {
   if (dbClients) return dbClients
   const maxConnections = parseInt(
     process.env['POSTGRES_MAX_CONNECTIONS_FILE_IMPORT_SERVICE'] || '1'
@@ -49,7 +49,10 @@ const getDbClients = async () => {
   } else {
     const configPath = process.env.MULTI_REGION_CONFIG_PATH || 'multiregion.json'
     const config = await loadMultiRegionsConfig({ path: configPath })
-    const clients = [['main', configureKnexClient(config.main, configArgs)]]
+
+    const clients: [string, DbClient][] = [
+      ['main', configureKnexClient(config.main, configArgs)]
+    ]
     Object.entries(config.regions).map(([key, config]) => {
       clients.push([key, configureKnexClient(config, configArgs)])
     })
@@ -57,5 +60,3 @@ const getDbClients = async () => {
   }
   return dbClients
 }
-
-module.exports = getDbClients

@@ -131,8 +131,9 @@ export function useStateSerialization() {
 export enum StateApplyMode {
   Spotlight,
   ThreadOpen,
-  TheadFullContextOpen,
-  Reset
+  ThreadFullContextOpen,
+  Reset,
+  FederatedContext
 }
 
 export function useApplySerializedState() {
@@ -178,7 +179,7 @@ export function useApplySerializedState() {
     }
 
     if (
-      [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
+      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
       await resourceIdString.update(state.resources?.request?.resourceIdString || '')
     }
@@ -265,6 +266,34 @@ export function useApplySerializedState() {
     } else {
       if (filters.selectedObjectIds?.length) {
         setSelectionFromObjectIds(filters.selectedObjectIds)
+      }
+    }
+
+    // Handle resource string updates
+    if (
+      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
+    ) {
+      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
+    } else if (mode === StateApplyMode.FederatedContext) {
+      // For federated context, append only model IDs (without versions) to show latest
+      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
+        SpeckleViewer.ViewerRoute
+
+      const currentResources = parseUrlParameters(resourceIdString.value)
+      const newResources = parseUrlParameters(
+        state.resources?.request?.resourceIdString ?? ''
+      ).map((resource) => {
+        if (resource instanceof ViewerModelResource) {
+          // Only keep model ID, drop version
+          return new ViewerModelResource(resource.modelId)
+        }
+        return resource
+      })
+
+      if (newResources.length) {
+        const allResources = [...currentResources, ...newResources]
+        const newResourceString = createGetParamFromResources(allResources)
+        await resourceIdString.update(newResourceString)
       }
     }
 

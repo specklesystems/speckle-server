@@ -1,11 +1,11 @@
-const { performance } = require('perf_hooks')
-const { fetch } = require('undici')
-const Parser = require('./parser')
-const ServerAPI = require('../src/api.js')
-const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
-const { logger: parentLogger } = require('../observability/logging')
+import { performance } from 'perf_hooks'
+import { fetch } from 'undici'
+import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import { ServerAPI } from '@/controller/api.js'
+import { logger as parentLogger } from '@/observability/logging.js'
+import { IFCParser } from '@/ifc/parser.js'
 
-const parseAndCreateCommitFactory =
+export const parseAndCreateCommitFactory =
   ({ db }) =>
   async ({
     data,
@@ -24,7 +24,7 @@ const parseAndCreateCommitFactory =
       )
     }
     const serverApi = new ServerAPI({ db, streamId, logger })
-    const myParser = new Parser({ serverApi, fileId, logger })
+    const myParser = new IFCParser({ serverApi, fileId, logger })
 
     const start = performance.now()
     const { id, tCount } = await myParser.parse(data)
@@ -80,5 +80,3 @@ const parseAndCreateCommitFactory =
 
     return json.data.commitCreate
   }
-
-module.exports = { parseAndCreateCommitFactory }
