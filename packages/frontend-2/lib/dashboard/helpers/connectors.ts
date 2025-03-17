@@ -18,7 +18,7 @@ export const connectorItems: ConnectorItem[] = [
     title: 'Revit',
     slug: 'revit',
     description:
-      'Publish and load models to boost design coordination and business intelligence workflows.',
+      'Publish and load Revit models to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/revit',
     image: '/images/connectors/revit.png',
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
@@ -36,7 +36,7 @@ export const connectorItems: ConnectorItem[] = [
     title: 'Power BI',
     slug: 'powerbi',
     description:
-      'Load Power BI models to boost design coordination and business intelligence workflows.',
+      'Load your models to Power BI to boost design coordination and business intelligence workflows.',
     url: 'https://www.speckle.systems/connectors/power-bi',
     image: '/images/connectors/powerbi.png',
     categories: [ConnectorCategory.BusinessIntelligence]
@@ -139,7 +139,7 @@ export const connectorItems: ConnectorItem[] = [
   {
     title: 'Blender',
     slug: 'blender',
-    description: 'Load Blender models to boost design coordination workflows.',
+    description: 'Load models into Blender to boost design coordination workflows.',
     image: '/images/connectors/blender.png',
     categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling],
     isComingSoon: true
