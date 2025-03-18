@@ -1279,6 +1279,12 @@ fileimport_service:
   ##
   postgresMaxConnections: 1
 
+  inspect:
+    ## @param fileimport_service.inspect.enabled If enabled, indicates that the File Import service should be deployed with the nodejs inspect feature enabled
+    enabled: false
+    ## @param fileimport_service.inspect.port The port on which the nodejs inspect feature should be exposed
+    port: '7000'
+
   requests:
     ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/

@@ -74,4 +74,5 @@ ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dot
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js" ]
+CMD ["bin/www.js"]
