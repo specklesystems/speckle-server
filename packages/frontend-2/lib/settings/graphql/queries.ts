@@ -74,6 +74,7 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   query SettingsWorkspacesMembersTable($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersTable_Workspace
+      ...SettingsWorkspacesNewMembersTable_Workspace
     }
   }
 `)
