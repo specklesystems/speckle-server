@@ -8,7 +8,7 @@
             <div class="relative">
               <WorkspaceAvatar
                 :size="isMobile ? 'sm' : 'base'"
-                :name="displayName"
+                :name="displayName || ''"
                 :logo="displayLogo"
               />
               <div
