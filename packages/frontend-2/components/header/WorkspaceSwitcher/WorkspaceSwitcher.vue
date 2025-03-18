@@ -38,69 +38,15 @@
         <MenuItems
           class="absolute left-2 lg:left-3 top-12 lg:top-14 w-full lg:w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
-          <div
-            v-if="activeWorkspaceSlug || isProjectsActive"
-            class="p-2 pb-3 flex flex-col gap-y-4"
-          >
-            <div class="flex gap-x-2 items-center">
-              <MenuItem>
-                <NuxtLink
-                  :to="
-                    activeWorkspaceSlug
-                      ? workspaceRoute(activeWorkspaceSlug)
-                      : projectsRoute
-                  "
-                >
-                  <WorkspaceAvatar
-                    :name="displayName"
-                    :logo="displayLogo"
-                    size="lg"
-                    class="flex-shrink-0"
-                  />
-                </NuxtLink>
-              </MenuItem>
-              <div class="flex flex-col space-between min-w-0">
-                <p class="text-body-xs text-foreground truncate">
-                  {{ displayName }}
-                </p>
-                <p
-                  v-if="activeWorkspace"
-                  class="text-body-2xs text-foreground-2 capitalize truncate"
-                >
-                  {{ activeWorkspace?.plan?.name }} ·
-                  {{ activeWorkspace?.team?.totalCount }} member{{
-                    activeWorkspace?.team?.totalCount > 1 ? 's' : ''
-                  }}
-                </p>
-                <p v-else class="text-body-2xs text-foreground-2 truncate">
-                  2 projects to move
-                </p>
-              </div>
-            </div>
-            <div v-if="activeWorkspaceSlug" class="flex gap-x-2">
-              <MenuItem>
-                <FormButton
-                  color="outline"
-                  full-width
-                  size="sm"
-                  @click="goToSettingsRoute"
-                >
-                  Settings
-                </FormButton>
-              </MenuItem>
-              <MenuItem>
-                <FormButton
-                  full-width
-                  color="outline"
-                  size="sm"
-                  :disabled="activeWorkspace?.role !== Roles.Workspace.Admin"
-                  @click="showInviteDialog = true"
-                >
-                  Invite members
-                </FormButton>
-              </MenuItem>
-            </div>
-          </div>
+          <HeaderWorkspaceSwitcherHeaderSsoExpired
+            v-if="activeWorkspaceHasExpiredSsoSession"
+            :workspace="expiredSsoWorkspaceData"
+          />
+          <HeaderWorkspaceSwitcherHeaderProjects v-else-if="isProjectsActive" />
+          <HeaderWorkspaceSwitcherHeaderWorkspace
+            v-else-if="!!activeWorkspace"
+            :workspace="activeWorkspace"
+          />
           <div
             class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar"
           >
@@ -143,11 +89,6 @@
       </Transition>
     </Menu>
 
-    <InviteDialogWorkspace
-      v-model:open="showInviteDialog"
-      :workspace="activeWorkspace"
-    />
-
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
@@ -160,7 +101,6 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   workspaceCreateRoute,
   workspaceRoute,
-  settingsWorkspaceRoutes,
   projectsRoute
 } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -174,17 +114,10 @@ import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
-    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
-    role
-    plan {
-      name
-    }
-    team {
-      totalCount
-    }
+    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
   }
 `)
 
@@ -204,6 +137,22 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {
+    id
+    expiredSsoSessions {
+      id
+      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
+    }
+    workspaces {
+      items {
+        id
+        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace
+      }
+    }
+  }
+`)
+
 const { isGuest } = useActiveUser()
 const menuButtonId = useId()
 const mixpanel = useMixpanel()
@@ -213,7 +162,9 @@ const {
   mutateActiveWorkspaceSlug,
   mutateIsProjectsActive,
   activeWorkspaceData,
-  workspaceList: workspaces
+  workspaceList: workspaces,
+  activeWorkspaceHasExpiredSsoSession,
+  expiredSsoWorkspaceData
 } = useNavigation()
 const route = useRoute()
 const {
@@ -224,7 +175,6 @@ const {
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('lg')
 
-const showInviteDialog = ref(false)
 const showDiscoverableWorkspacesModal = ref(false)
 
 const activeWorkspace = computed(() => {
@@ -246,11 +196,6 @@ const onWorkspaceSelect = (slug: string) => {
 const onProjectsSelect = () => {
   mutateIsProjectsActive(true)
   navigateTo(projectsRoute)
-}
-
-const goToSettingsRoute = () => {
-  if (!activeWorkspaceSlug.value) return
-  navigateTo(settingsWorkspaceRoutes.general.route(activeWorkspaceSlug.value))
 }
 
 const handlePlusClick = () => {
