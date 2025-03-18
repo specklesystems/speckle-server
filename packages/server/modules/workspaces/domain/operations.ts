@@ -418,20 +418,12 @@ export type AssignWorkspaceSeat = (
   }
 ) => Promise<WorkspaceSeat>
 
-export type EnsureValidWorkspaceRoleSeat = (
-  params: {
-    workspaceId: string
-    userId: string
-    role: WorkspaceRoles
-    updatedByUserId: string
-  },
-  options?: Partial<{
-    /**
-     * Project IDs to skip role updates for in downstream event handlers
-     */
-    skipProjectRoleUpdatesFor: string[]
-  }>
-) => Promise<WorkspaceSeat>
+export type EnsureValidWorkspaceRoleSeat = (params: {
+  workspaceId: string
+  userId: string
+  role: WorkspaceRoles
+  updatedByUserId: string
+}) => Promise<WorkspaceSeat>
 
 export type CopyProjectComments = (params: {
   projectIds: string[]

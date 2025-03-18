@@ -64,7 +64,7 @@ export const ensureValidWorkspaceRoleSeatFactory =
     getWorkspaceUserSeat: GetWorkspaceUserSeat
     eventEmit: EventBusEmit
   }): EnsureValidWorkspaceRoleSeat =>
-  async (params, options) => {
+  async (params) => {
     const workspaceSeat = await deps.getWorkspaceUserSeat({
       workspaceId: params.workspaceId,
       userId: params.userId
@@ -90,10 +90,7 @@ export const ensureValidWorkspaceRoleSeatFactory =
       eventName: WorkspaceEvents.SeatUpdated,
       payload: {
         seat,
-        updatedByUserId: params.updatedByUserId,
-        ...(options?.skipProjectRoleUpdatesFor?.length
-          ? { flags: { skipProjectRoleUpdatesFor: options.skipProjectRoleUpdatesFor } }
-          : {})
+        updatedByUserId: params.updatedByUserId
       }
     })
 
