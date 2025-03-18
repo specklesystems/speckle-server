@@ -19,10 +19,7 @@
         </NuxtLink>
       </div>
     </Portal>
-    <div
-      class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
-      :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
-    >
+    <div :class="wrapperClasses">
       <LayoutSidebar
         class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
       >
@@ -254,6 +251,15 @@ const workspaceItems = computed(
 const activeWorkspaceItem = computed(() =>
   workspaceItems.value.find((item) => item.slug === activeWorkspaceSlug.value)
 )
+const wrapperClasses = computed(() => {
+  // TODO: Simplify post WS migration
+  const width = isWorkspaceNewPlansEnabled.value ? '13' : '17'
+  return [
+    'absolute z-40 lg:static h-full flex shrink-0 transition-all',
+    `w-[${width}rem]`,
+    isOpenMobile.value ? '' : `-translate-x-[${width}rem] lg:translate-x-0`
+  ]
+})
 
 const needsSsoSession = (
   workspace: SettingsMenu_WorkspaceFragment,
