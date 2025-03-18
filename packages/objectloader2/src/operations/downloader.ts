@@ -38,7 +38,7 @@ export default class Downloader implements Queue<string> {
       1000,
       1000,
       (batch: string[]) =>
-        Downloader.downloadBatch(
+        this.downloadBatch(
           batch,
           this._requestUrlChildren,
           this._headers,
@@ -80,7 +80,7 @@ export default class Downloader implements Queue<string> {
     }
   }
 
-  static async downloadBatch(
+  async downloadBatch(
     idBatch: string[],
     url: string,
     headers: HeadersInit,
@@ -93,7 +93,7 @@ export default class Downloader implements Queue<string> {
       body: JSON.stringify({ objects: JSON.stringify(idBatch) })
     })
 
-    console.log('downloading ' + idBatch.length)
+    this.validateResponse(response)
     if (!response.body) {
       throw new Error('ReadableStream not supported or response has no body.')
     }
@@ -129,16 +129,20 @@ export default class Downloader implements Queue<string> {
     const response = await fetch(this._requestUrlRootObj, {
       headers: this._headers
     })
-    if (!response.ok) {
-      if ([401, 403].includes(response.status)) {
-        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
-      }
-      throw new ObjectLoaderRuntimeError(
-        `Failed to fetch root object: ${response.status} ${response.statusText})`
-      )
-    }
+    this.validateResponse(response)
     const responseText = await response.text()
     const item = Downloader.processJson(this._objectId, responseText)
     return item
+  }
+
+  validateResponse(response: Response): void {
+    if (!response.ok) {
+      if ([401, 403].includes(response.status)) {
+        throw new ObjectLoaderRuntimeError('You do not have access!')
+      }
+      throw new ObjectLoaderRuntimeError(
+        `Failed to fetch objects: ${response.status} ${response.statusText})`
+      )
+    }
   }
 }
