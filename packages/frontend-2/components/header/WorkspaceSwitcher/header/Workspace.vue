@@ -6,8 +6,8 @@
       :to="workspaceRoute(activeWorkspaceSlug || '')"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
-        {{ workspace?.plan?.name }} · {{ workspace?.team?.totalCount }} member{{
-          workspace?.team?.totalCount > 1 ? 's' : ''
+        {{ workspace?.plan?.name }} · {{ workspace?.team?.totalCount ?? 0 }} member{{
+          (workspace?.team?.totalCount ?? 0) > 1 ? 's' : ''
         }}
       </p>
       <template #actions>

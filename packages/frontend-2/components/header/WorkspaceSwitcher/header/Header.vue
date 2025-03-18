@@ -27,7 +27,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   name: MaybeNullOrUndefined<string>
-  logo: MaybeNullOrUndefined<string>
+  logo?: MaybeNullOrUndefined<string>
   to: string
 }>()
 </script>
