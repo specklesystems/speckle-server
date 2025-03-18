@@ -35,8 +35,6 @@ export default class ObjectLoader2 {
       this._objectId,
       token
     )
-
-    this._logger('Object loader constructor called!')
   }
 
   async finish(): Promise<void> {

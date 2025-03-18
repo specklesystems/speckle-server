@@ -1311,7 +1311,7 @@ export default class Sandbox {
     void this.viewer.loadObject(loader, true)
   }
 
-  public async objectLoaderOnly(resource: string, enableCaching: boolean) {
+  public async objectLoaderOnly(resource: string) {
     const token = localStorage.getItem(
       resource.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string

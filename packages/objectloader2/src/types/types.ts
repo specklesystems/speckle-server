@@ -10,11 +10,18 @@ export interface Base {
   __closure?: Record<string, number>
 }
 
-export class ObjectLoader2Options {
+export interface ObjectLoader2Options {
   customLogger?: CustomLogger
 }
-export class BaseDatabaseOptions {
-  enableCaching: boolean = true
+export interface BaseDatabaseOptions {
+  enableCaching: boolean
+  batchMaxSize: number
+  batchMaxWait: number
+}
+
+export interface BaseDownloadOptions {
+  batchMaxSize: number
+  batchMaxWait: number
 }
 
 export function isBase(maybeBase?: unknown): maybeBase is Base {

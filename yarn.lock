@@ -16704,6 +16704,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
+    fake-indexeddb: "npm:^6.0.0"
     prettier: "npm:^3.3.2"
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
@@ -30898,6 +30899,13 @@ __metadata:
   version: 1.4.1
   resolution: "extsprintf@npm:1.4.1"
   checksum: 10/bfd6d55f3c0c04d826fe0213264b383c03f32825af6b1ff777f3f2dc49467e599361993568d75b7b19a8ea1bb08c8e7cd8c3d87d179ced91bb0dcf81ca6938e0
+  languageName: node
+  linkType: hard
+
+"fake-indexeddb@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "fake-indexeddb@npm:6.0.0"
+  checksum: 10/b4098f050ae1f18e23edd5e87da17aee1b6a199e1d3dec0c35346db73416ffac59bd595e2011b9cd70f36fe25eb852d122d2a05c74f75754869f300d84159414
   languageName: node
   linkType: hard
 

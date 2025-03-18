@@ -12,21 +12,32 @@ export default class CacheDatabase {
 
   private _cacheDB?: IDBDatabase
 
-  private _writeQueue: BatchingQueue<Item>
+  private _writeQueue: BatchingQueue<Item> | undefined
 
-  constructor(logger: CustomLogger, options?: BaseDatabaseOptions) {
+  constructor(logger: CustomLogger, options?: Partial<BaseDatabaseOptions>) {
     this._logger = logger
-    this._options = options || new BaseDatabaseOptions()
-    this._writeQueue = new BatchingQueue<Item>(
-      'save cache',
-      500,
-      1000,
-      (batch: Item[]) => CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
-    )
+    this._options = {
+      ...{ batchMaxSize: 500, batchMaxWait: 1000, enableCaching: true },
+      ...options
+    }
+  }
+
+  async write(obj: Item): Promise<void> {
+    if (!this._writeQueue) {
+      if (!(await this.setupCacheDb())) {
+        return
+      }
+      this._writeQueue = new BatchingQueue<Item>(
+        this._options.batchMaxSize,
+        this._options.batchMaxWait,
+        (batch: Item[]) => CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
+      )
+    }
+    this._writeQueue.add(obj)
   }
 
   async finish(): Promise<void> {
-    await this._writeQueue.finish()
+    await this._writeQueue?.finish()
   }
 
   private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
@@ -153,10 +164,6 @@ export default class CacheDatabase {
     }
   }
 
-  write(obj: Item): void {
-    this._writeQueue.add(obj)
-  }
-
   static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
     const transaction = cacheDB.transaction(CacheDatabase._storeName, 'readwrite')
     const store = transaction.objectStore(CacheDatabase._storeName)
@@ -164,7 +171,7 @@ export default class CacheDatabase {
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
       const putItem = new Promise<void>((resolve, reject) => {
-        const request = store.put(element, element.id)
+        const request = store.put(element.obj, element.id)
         request.onsuccess = () => resolve()
         request.onerror = () =>
           reject(ensureError(request.error, 'Error trying to save a batch'))

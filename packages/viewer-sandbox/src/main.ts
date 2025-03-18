@@ -94,7 +94,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.objectLoaderOnly(_stream, true)
+  await sandbox.objectLoaderOnly(_stream)
   // await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
@@ -487,7 +487,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
-    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
 
     // A LOT of text objects
     // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'

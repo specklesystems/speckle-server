@@ -2,7 +2,7 @@ import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { isBase, Item } from '../types/types.js'
+import { BaseDownloadOptions, isBase, Item } from '../types/types.js'
 import CacheDatabase from './database.js'
 
 export default class Downloader implements Queue<string> {
@@ -13,6 +13,7 @@ export default class Downloader implements Queue<string> {
   private _requestUrlRootObj: string
   private _requestUrlChildren: string
   private _headers: HeadersInit
+  private _options: BaseDownloadOptions
 
   private _database: CacheDatabase
   private _idQueue: BatchingQueue<string>
@@ -24,7 +25,8 @@ export default class Downloader implements Queue<string> {
     serverUrl: string,
     streamId: string,
     objectId: string,
-    token?: string
+    token?: string,
+    options?: Partial<BaseDownloadOptions>
   ) {
     this._database = database
     this._results = results
@@ -33,10 +35,13 @@ export default class Downloader implements Queue<string> {
     this._streamId = streamId
     this._objectId = objectId
     this._token = token
+    this._options = {
+      ...{ batchMaxSize: 1000, batchMaxWait: 1000 },
+      ...options
+    }
     this._idQueue = new BatchingQueue<string>(
-      'download',
-      1000,
-      1000,
+      this._options.batchMaxSize,
+      this._options.batchMaxWait,
       (batch: string[]) =>
         this.downloadBatch(
           batch,
@@ -118,7 +123,7 @@ export default class Downloader implements Queue<string> {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = Downloader.processJson(id, unparsedObj)
-          database.write(item)
+          await database.write(item)
           results.add(item)
         }
       }
