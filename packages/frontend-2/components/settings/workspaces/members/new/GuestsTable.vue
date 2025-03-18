@@ -64,50 +64,19 @@
         <span class="text-foreground-2">JOINED AT</span>
       </template>
       <template #actions="{ item }">
-        <LayoutMenu
+        <SettingsWorkspacesMembersUpdateActionsMenu
           v-if="isWorkspaceAdmin"
-          v-model:open="showActionsMenu[item.id]"
-          :items="actionItems"
-          size="lg"
-          mount-menu-on-body
-          :menu-position="HorizontalDirection.Left"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
-        >
-          <FormButton
-            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
-            hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="toggleMenu(item.id)"
-          />
-        </LayoutMenu>
+          :user="{
+            ...item.user,
+            role: item.role,
+            seatType: item.seatType
+          }"
+          :workspace-role="workspace?.role"
+          :workspace-id="workspace?.id"
+        />
         <span v-else />
       </template>
     </LayoutTable>
-
-    <SettingsSharedDeleteUserDialog
-      v-model:open="showDeleteUserRoleDialog"
-      title="Remove guest"
-      :name="userToModify?.user.name ?? ''"
-      :workspace="workspace"
-      @remove-user="onRemoveUser"
-    />
-
-    <SettingsWorkspacesMembersGuestsPermissionsDialog
-      v-if="userToModify"
-      v-model:open="showGuestsPermissionsDialog"
-      :user="userToModify"
-      :workspace-id="workspace?.id"
-    />
-
-    <SettingsWorkspacesMembersChangeRoleDialog
-      v-model:open="showChangeUserRoleDialog"
-      :workspace-domain-policy-compliant="
-        userToModify?.user.workspaceDomainPolicyCompliant
-      "
-      :current-role="Roles.Workspace.Guest"
-      :workspace="workspace"
-      @update-role="onUpdateRole"
-    />
   </div>
 </template>
 
@@ -117,13 +86,9 @@ import type {
   WorkspaceCollaborator
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -134,7 +99,6 @@ graphql(`
       id
       avatar
       name
-      company
     }
     projectRoles {
       role
@@ -151,7 +115,6 @@ graphql(`
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
     ...SettingsSharedDeleteUserDialog_Workspace
-    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
     team {
       items {
         id
@@ -161,30 +124,13 @@ graphql(`
   }
 `)
 
-enum ActionTypes {
-  ChangeProjectPermissions = 'change-project-permissions',
-  RemoveMember = 'remove-member',
-  ChangeRole = 'change-role'
-}
-
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
-const updateUserRole = useWorkspaceUpdateRole()
-
 const search = ref('')
 const seatTypeFilter = ref<string>()
-const showActionsMenu = ref<Record<string, boolean>>({})
-const showDeleteUserRoleDialog = ref(false)
-const showGuestsPermissionsDialog = ref(false)
-const userIdToModify = ref<string | null>(null)
-const showChangeUserRoleDialog = ref(false)
-
-const userToModify = computed(
-  () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
-)
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
@@ -214,63 +160,4 @@ const guests = computed(() => {
 })
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
-
-const actionItems = computed(() => {
-  const items: LayoutMenuItem[][] = [
-    [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
-  ]
-
-  if (isWorkspaceAdmin.value) {
-    items.unshift([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
-  }
-
-  if (guests.value.find((guest) => guest.projectRoles.length)) {
-    items.unshift([
-      {
-        title: 'Change project permissions...',
-        id: ActionTypes.ChangeProjectPermissions
-      }
-    ])
-  }
-
-  return items
-})
-
-const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator) => {
-  userIdToModify.value = user.id
-
-  if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
-    showGuestsPermissionsDialog.value = true
-  }
-  if (actionItem.id === ActionTypes.ChangeRole) {
-    showChangeUserRoleDialog.value = true
-  }
-  if (actionItem.id === ActionTypes.RemoveMember) {
-    showDeleteUserRoleDialog.value = true
-  }
-}
-
-const onRemoveUser = async () => {
-  if (!userIdToModify.value || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userIdToModify.value,
-    role: null,
-    workspaceId: props.workspace.id
-  })
-}
-
-const toggleMenu = (itemId: string) => {
-  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
-}
-
-const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userToModify.value.id,
-    role: newRoleValue,
-    workspaceId: props.workspace.id
-  })
-}
 </script>
