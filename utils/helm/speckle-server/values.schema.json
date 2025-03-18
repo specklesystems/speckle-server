@@ -2138,6 +2138,21 @@
           "description": "The maximum number of connections that the File Import Service postgres client will make to the Postgres database.",
           "default": 1
         },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the File Import service should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
+        },
         "requests": {
           "type": "object",
           "properties": {
