@@ -13,6 +13,7 @@ import {
   MRTShadedViewPipeline,
   NormalsPass,
   ObjectLayers,
+  OrientedSectionTool,
   OutputPass,
   Pipeline,
   SectionTool,
@@ -437,8 +438,8 @@ export default class Sandbox {
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
-      this.viewer.getExtension(SectionTool).setBox(box)
-      this.viewer.getExtension(SectionTool).toggle()
+      this.viewer.getExtension(OrientedSectionTool).setBox(box)
+      this.viewer.getExtension(OrientedSectionTool).toggle()
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({

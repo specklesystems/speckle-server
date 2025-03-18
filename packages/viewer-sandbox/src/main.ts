@@ -6,7 +6,8 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController
+  HybridCameraController,
+  OrientedSectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -47,8 +48,8 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
-  viewer.createExtension(SectionTool)
-  viewer.createExtension(SectionOutlines)
+  viewer.createExtension(OrientedSectionTool)
+  // viewer.createExtension(SectionOutlines)
   viewer.createExtension(MeasurementsExtension)
   viewer.createExtension(FilteringExtension)
   viewer.createExtension(ExplodeExtension)
@@ -482,7 +483,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
-    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
 
     // A LOT of text objects
     // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'
