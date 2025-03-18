@@ -113,7 +113,7 @@ const subscriptionProduct = z.object({
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 
-export const subscriptionData = z.object({
+export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
   cancelAt: z.date().nullable(),
@@ -127,8 +127,11 @@ export const subscriptionData = z.object({
     z.literal('unpaid'),
     z.literal('paused')
   ]),
-  products: subscriptionProduct.array()
+  products: subscriptionProduct.array(),
+  currentPeriodEnd: z.coerce.date()
 })
+// this abstracts the stripe sub data
+export type SubscriptionData = z.infer<typeof SubscriptionData>
 
 export const calculateSubscriptionSeats = ({
   subscriptionData,
@@ -146,9 +149,6 @@ export const calculateSubscriptionSeats = ({
   )
   return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
 }
-
-// this abstracts the stripe sub data
-export type SubscriptionData = z.infer<typeof subscriptionData>
 
 export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
