@@ -13,7 +13,16 @@
     </div>
     <p class="text-body mt-1">
       <span class="font-medium">
-        {{ formatPrice(planPrice?.['workspace:member']) }}
+        {{
+          formatPrice(
+            props.yearlyIntervalSelected && planPrice?.['workspace:member']
+              ? {
+                  ...planPrice['workspace:member'],
+                  amount: planPrice['workspace:member'].amount * 0.8
+                }
+              : planPrice?.['workspace:member']
+          )
+        }}
       </span>
       per seat/month
     </p>
