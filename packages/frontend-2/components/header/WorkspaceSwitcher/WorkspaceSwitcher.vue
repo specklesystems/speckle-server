@@ -181,11 +181,19 @@ const activeWorkspace = computed(() => {
   return activeWorkspaceData.value
 })
 
-const displayName = computed(() => activeWorkspace.value?.name || 'Personal projects')
+const displayName = computed(() =>
+  isProjectsActive.value
+    ? 'Personal projects'
+    : activeWorkspaceHasExpiredSsoSession.value
+    ? expiredSsoWorkspaceData.value?.name
+    : activeWorkspace.value?.name
+)
 
 const displayLogo = computed(() => {
   if (isProjectsActive.value) return null
-  return activeWorkspace.value?.logo
+  return activeWorkspaceHasExpiredSsoSession.value
+    ? expiredSsoWorkspaceData.value?.logo
+    : activeWorkspace.value?.logo
 })
 
 const onWorkspaceSelect = (slug: string) => {
