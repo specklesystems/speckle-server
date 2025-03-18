@@ -2,7 +2,7 @@
   <div>
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Guests are external collaborators. They can’t create or add others to workspace
+        Guests are external collaborators. They can't create or add others to workspace
         projects. Read more about
         <!-- TODO: Add link to roles and seats page -->
         <NuxtLink to="#" class="underline">Speckle roles and seats.</NuxtLink>
@@ -10,16 +10,18 @@
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
+      v-model:seat-type="seatTypeFilter"
       search-placeholder="Search guests..."
       :workspace="workspace"
       show-invite-button
+      show-seat-filter
     />
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'email', header: 'Email', classes: 'col-span-3' },
-        { id: 'role', header: 'Seat', classes: 'col-span-2' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         {
           id: 'actions',
@@ -43,17 +45,18 @@
           </span>
         </div>
       </template>
+      <!-- TODO: Add email -->
       <template #email="">
-        <!-- TODO: Add email -->
         <span class="text-body-xs text-foreground">EMAIL</span>
       </template>
-      <template #projects="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
-            {{ item.projectRoles.length }} project{{
-              item.projectRoles.length !== 1 ? 's' : ''
-            }}
-          </CommonBadge>
+      <template #seat="{ item }">
+        <span class="text-foreground">
+          <div
+            v-tippy="`Explainer`"
+            class="border-b border-dashed border-outline-5 max-w-max select-none capitalize"
+          >
+            {{ item.seatType }}
+          </div>
         </span>
       </template>
       <!-- TODO: Add joined at date -->
@@ -110,7 +113,7 @@
 
 <script setup lang="ts">
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
   WorkspaceCollaborator
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
@@ -123,9 +126,10 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
+  fragment SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
+    seatType
     user {
       id
       avatar
@@ -143,7 +147,7 @@ graphql(`
 `)
 
 graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {
+  fragment SettingsWorkspacesMembersNewGuestsTable_Workspace on Workspace {
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
     ...SettingsSharedDeleteUserDialog_Workspace
@@ -151,7 +155,7 @@ graphql(`
     team {
       items {
         id
-        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
+        ...SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator
       }
     }
   }
@@ -164,13 +168,14 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersGuestsTable_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
 const updateUserRole = useWorkspaceUpdateRole()
 
 const search = ref('')
+const seatTypeFilter = ref<string>()
 const showActionsMenu = ref<Record<string, boolean>>({})
 const showDeleteUserRoleDialog = ref(false)
 const showGuestsPermissionsDialog = ref(false)
@@ -191,18 +196,21 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
     slug: props.workspaceSlug
   }),
   () => ({
-    enabled: !!search.value.length
+    enabled: !!search.value.length || !!seatTypeFilter.value
   })
 )
 
 const guests = computed(() => {
-  const guestArray = search.value.length
-    ? searchResult.value?.workspaceBySlug?.team.items
-    : props.workspace?.team.items
+  const guestArray =
+    search.value.length || seatTypeFilter.value
+      ? searchResult.value?.workspaceBySlug?.team.items
+      : props.workspace?.team.items
 
-  return (guestArray || []).filter(
-    (item): item is WorkspaceCollaborator => item.role === Roles.Workspace.Guest
-  )
+  return (guestArray || [])
+    .filter(
+      (item): item is WorkspaceCollaborator => item.role === Roles.Workspace.Guest
+    )
+    .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)

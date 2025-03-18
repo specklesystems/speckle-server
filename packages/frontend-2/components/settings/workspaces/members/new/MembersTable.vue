@@ -11,9 +11,11 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       v-model:role="roleFilter"
+      v-model:seat-type="seatTypeFilter"
       search-placeholder="Search members..."
       :workspace="workspace"
       show-role-filter
+      show-seat-filter
       show-invite-button
     />
     <LayoutTable
@@ -21,7 +23,7 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'email', header: 'Email', classes: 'col-span-3' },
-        { id: 'role', header: 'Seat', classes: 'col-span-2' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         {
           id: 'actions',
@@ -39,6 +41,13 @@
         <div class="flex items-center gap-2">
           <UserAvatar hide-tooltip :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
+          <CommonBadge
+            v-if="item.role === Roles.Workspace.Admin"
+            rounded
+            color-classes="bg-highlight-3 text-foreground-2"
+          >
+            Admin
+          </CommonBadge>
           <div
             v-if="
               item.workspaceDomainPolicyCompliant === false &&
@@ -57,11 +66,14 @@
         <!-- TODO: Add email -->
         <span class="text-body-xs text-foreground">EMAIL</span>
       </template>
-      <template #role="{ item }">
-        <span class="text-foreground-2">
-          <span>
-            {{ isWorkspaceRole(item.role) ? getRoleLabel(item.role).title : '' }}
-          </span>
+      <template #seat="{ item }">
+        <span class="text-foreground">
+          <div
+            v-tippy="`Explainer`"
+            class="border-b border-dashed border-outline-5 max-w-max select-none capitalize"
+          >
+            {{ item.seatType }}
+          </div>
         </span>
       </template>
       <!-- TODO: Add joined at date -->
@@ -112,7 +124,7 @@
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
@@ -122,7 +134,6 @@ import {
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
 type UserItem = (typeof members)['value'][0]
 
@@ -130,6 +141,7 @@ graphql(`
   fragment SettingsWorkspacesNewMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
+    seatType
     user {
       id
       avatar
@@ -149,7 +161,7 @@ graphql(`
     team {
       items {
         id
-        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
+        ...SettingsWorkspacesNewMembersTable_WorkspaceCollaborator
       }
     }
   }
@@ -162,12 +174,13 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesNewMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
+const seatTypeFilter = ref<string>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
@@ -176,12 +189,13 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: roleFilter.value
         ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member]
+        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      seatType: seatTypeFilter.value
     },
     slug: props.workspaceSlug
   }),
   () => ({
-    enabled: !!search.value.length || !!roleFilter.value
+    enabled: !!search.value.length || !!roleFilter.value || !!seatTypeFilter.value
   })
 )
 
@@ -198,12 +212,13 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 
 const members = computed(() => {
   const memberArray =
-    search.value.length || roleFilter.value
+    search.value.length || roleFilter.value || seatTypeFilter.value
       ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
   return (memberArray || [])
-    .map(({ user, ...rest }) => ({
+    .map(({ user, seatType, ...rest }) => ({
       ...user,
+      seatType,
       ...rest
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
@@ -218,7 +233,7 @@ const canRemoveMember = computed(
 )
 const hasNoResults = computed(
   () =>
-    (search.value.length || roleFilter.value) &&
+    (search.value.length || roleFilter.value || seatTypeFilter.value) &&
     searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
 
