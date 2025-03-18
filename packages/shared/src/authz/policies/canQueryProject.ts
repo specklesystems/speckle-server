@@ -7,7 +7,7 @@ import {
   requireExactProjectVisibility,
   requireMinimumProjectRole
 } from '../checks/projects.js'
-import { ChuckContextLoaders } from '../domain/loaders.js'
+import { AuthCheckContextLoaders } from '../domain/loaders.js'
 import { ProjectContext, UserContext } from '../domain/policies.js'
 import { requireExactServerRole } from '../checks/serverRole.js'
 import { requireValidWorkspaceSsoSession } from '../checks/workspaceSso.js'
@@ -16,7 +16,7 @@ import { Roles } from '../../core/constants.js'
 export const canQueryProjectPolicyFactory =
   (
     loaders: Pick<
-      ChuckContextLoaders,
+      AuthCheckContextLoaders,
       | 'getEnv'
       | 'getProject'
       | 'getProjectRole'

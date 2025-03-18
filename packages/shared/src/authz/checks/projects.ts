@@ -1,10 +1,10 @@
 import { StreamRoles, throwUncoveredError } from '../../core/index.js'
-import { ChuckContext } from '../domain/loaders.js'
+import { AuthCheckContext } from '../domain/loaders.js'
 import { isMinimumProjectRole } from '../domain/projects/logic.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
 
 export const requireExactProjectVisibility =
-  ({ loaders }: ChuckContext<'getProject'>) =>
+  ({ loaders }: AuthCheckContext<'getProject'>) =>
   async (args: {
     projectVisibility: ProjectVisibility
     projectId: string
@@ -27,7 +27,7 @@ export const requireExactProjectVisibility =
   }
 
 export const requireMinimumProjectRole =
-  ({ loaders }: ChuckContext<'getProjectRole'>) =>
+  ({ loaders }: AuthCheckContext<'getProjectRole'>) =>
   async (args: {
     userId: string
     projectId: string
@@ -39,8 +39,4 @@ export const requireMinimumProjectRole =
     return userProjectRole
       ? isMinimumProjectRole(userProjectRole, requiredProjectRole)
       : false
-    // ? checkResult.pass()
-    // : checkResult.fail(
-    //     `User does not have minimum role \`${requiredProjectRole}\` in project \`${projectId}\`.`
-    //   )
   }

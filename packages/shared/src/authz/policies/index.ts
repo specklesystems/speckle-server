@@ -1,11 +1,10 @@
-import { ChuckContextLoaders } from '../domain/loaders.js'
+import { AuthCheckContextLoaders } from '../domain/loaders.js'
 import { canQueryProjectPolicyFactory } from './canQueryProject.js'
 
-export const authPolicyFactory = (loaders: ChuckContextLoaders) => ({
+export const authPoliciesFactory = (loaders: AuthCheckContextLoaders) => ({
   project: {
-    query: canQueryProjectPolicyFactory(loaders),
-    createComment: canQueryProjectPolicyFactory(loaders)
+    canQuery: canQueryProjectPolicyFactory(loaders)
   }
 })
 
-export type AuthPolices = ReturnType<typeof authPolicyFactory>
+export type AuthPolices = ReturnType<typeof authPoliciesFactory>

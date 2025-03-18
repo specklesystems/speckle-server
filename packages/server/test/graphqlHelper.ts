@@ -7,7 +7,7 @@ import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   AllScopes,
-  authPolicyFactory,
+  authPoliciesFactory,
   buildManualPromise,
   ensureError,
   MaybeAsync,
@@ -118,7 +118,7 @@ export const createTestContext = async (
     scopes: [],
     stream: undefined,
     err: undefined,
-    authPolicies: authPolicyFactory(getLoaders()),
+    authPolicies: authPoliciesFactory(getLoaders()),
     ...(ctx || {})
   })
 
@@ -132,7 +132,7 @@ export const createAuthedTestContext = async (
     role: Roles.Server.User,
     token: 'asd',
     scopes: AllScopes,
-    authPolicies: authPolicyFactory(getLoaders()),
+    authPolicies: authPoliciesFactory(getLoaders()),
     ...(ctxOverrides || {})
   })
 

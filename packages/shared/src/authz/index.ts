@@ -1,2 +1,2 @@
-export { authPolicyFactory, AuthPolices } from './policies/index.js'
-export { ChuckContextLoaders } from './domain/loaders.js'
+export { authPoliciesFactory, AuthPolices } from './policies/index.js'
+export { AuthCheckContextLoaders as ChuckContextLoaders } from './domain/loaders.js'

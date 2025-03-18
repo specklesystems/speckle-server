@@ -8,11 +8,11 @@ import {
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
 
-export type ChuckContext<LoaderKeys extends keyof ChuckContextLoaders> = {
-  loaders: Pick<ChuckContextLoaders, LoaderKeys>
+export type AuthCheckContext<LoaderKeys extends keyof AuthCheckContextLoaders> = {
+  loaders: Pick<AuthCheckContextLoaders, LoaderKeys>
 }
 
-export type ChuckContextLoaders = {
+export type AuthCheckContextLoaders = {
   getEnv: GetEnv
   getProject: GetProject
   getProjectRole: GetProjectRole

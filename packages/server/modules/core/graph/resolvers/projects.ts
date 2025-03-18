@@ -178,13 +178,13 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.query({
+      const canQuery = await context.authPolicies.project.canQuery({
         projectId: args.id,
         userId: context.userId
       })
 
       if (!canQuery.authorized) {
-        switch (canQuery.reason) {
+        switch (canQuery.code) {
           case 'ProjectNotFound':
             throw new StreamNotFoundError()
           case 'ProjectNoAccess':
@@ -192,7 +192,7 @@ export = {
           case 'WorkspaceSsoSessionInvalid':
             throw new ForbiddenError(canQuery.message)
           default:
-            throwUncoveredError(canQuery.reason)
+            throwUncoveredError(canQuery.code)
         }
       }
 

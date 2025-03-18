@@ -24,7 +24,7 @@ import {
   MaybeNullOrUndefined,
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
-import { authPolicyFactory, Optional, wait } from '@speckle/shared'
+import { authPoliciesFactory, Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
@@ -221,7 +221,7 @@ export async function buildContext({
     await wait(delay)
   }
 
-  const authPolicies = authPolicyFactory(getLoaders())
+  const authPolicies = authPoliciesFactory(getLoaders())
 
   // Adding request data loaders
   return await addLoadersToCtx(

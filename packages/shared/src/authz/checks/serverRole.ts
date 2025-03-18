@@ -1,8 +1,8 @@
 import { ServerRoles } from '../../core/constants.js'
-import { ChuckContext } from '../domain/loaders.js'
+import { AuthCheckContext } from '../domain/loaders.js'
 
 export const requireExactServerRole =
-  ({ loaders }: ChuckContext<'getServerRole'>) =>
+  ({ loaders }: AuthCheckContext<'getServerRole'>) =>
   async (args: { userId: string; role: ServerRoles }): Promise<boolean> => {
     const { userId, role: requiredServerRole } = args
 

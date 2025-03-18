@@ -1,7 +1,7 @@
-import { ChuckContext } from '../domain/loaders.js'
+import { AuthCheckContext } from '../domain/loaders.js'
 
 export const requireValidWorkspaceSsoSession =
-  ({ loaders }: ChuckContext<'getWorkspaceSsoSession'>) =>
+  ({ loaders }: AuthCheckContext<'getWorkspaceSsoSession'>) =>
   async (args: { userId: string; workspaceId: string }): Promise<boolean> => {
     const { userId, workspaceId } = args
 
