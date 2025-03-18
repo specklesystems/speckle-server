@@ -1101,6 +1101,8 @@ frontend_2:
 ## @descriptionEnd
 ##
 preview_service:
+  ## @param preview_service.deployInCluster If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
+  deployInCluster: true
   ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
   ##
   dedicatedPreviewsQueue: false
