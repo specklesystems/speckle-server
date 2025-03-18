@@ -23,6 +23,11 @@ spec:
       - name: main
         image: {{ default (printf "speckle/speckle-fileimport-service:%s" .Values.docker_image_tag) .Values.fileimport_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args: #overwrites the Dockerfile CMD statement
+        {{- if .Values.fileimport_service.inspect.enabled }}
+          - {{ printf "--inspect=%s" .Values.fileimport_service.inspect.port }}
+        {{- end }}
+          - "bin/www.js"
 
         ports:
           - name: metrics
