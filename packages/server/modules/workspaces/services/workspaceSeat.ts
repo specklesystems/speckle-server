@@ -62,8 +62,9 @@ export const ensureValidWorkspaceRoleSeatFactory =
   (deps: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceUserSeat: GetWorkspaceUserSeat
+    eventEmit: EventBusEmit
   }): EnsureValidWorkspaceRoleSeat =>
-  async (params) => {
+  async (params, options) => {
     const workspaceSeat = await deps.getWorkspaceUserSeat({
       workspaceId: params.workspaceId,
       userId: params.userId
@@ -79,22 +80,35 @@ export const ensureValidWorkspaceRoleSeatFactory =
     }
 
     // Upsert default seat type assignment
-    return await deps.createWorkspaceSeat({
+    const seat = await deps.createWorkspaceSeat({
       workspaceId: params.workspaceId,
       userId: params.userId,
       type: getDefaultWorkspaceSeatTypeByWorkspaceRole({ workspaceRole: params.role })
     })
+
+    await deps.eventEmit({
+      eventName: WorkspaceEvents.SeatUpdated,
+      payload: {
+        seat,
+        updatedByUserId: params.updatedByUserId,
+        ...(options?.skipProjectRoleUpdatesFor?.length
+          ? { flags: { skipProjectRoleUpdatesFor: options.skipProjectRoleUpdatesFor } }
+          : {})
+      }
+    })
+
+    return seat
   }
 
 export const assignWorkspaceSeatFactory =
   ({
     createWorkspaceSeat,
     getWorkspaceRoleForUser,
-    emit
+    eventEmit: eventEmit
   }: {
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
-    emit: EventBusEmit
+    eventEmit: EventBusEmit
   }): AssignWorkspaceSeat =>
   async ({ workspaceId, userId, type, assignedByUserId }) => {
     const workspaceAcl = await getWorkspaceRoleForUser({ workspaceId, userId })
@@ -125,11 +139,10 @@ export const assignWorkspaceSeatFactory =
       type
     })
 
-    await emit({
-      eventName: WorkspaceEvents.RoleUpdated,
+    await eventEmit({
+      eventName: WorkspaceEvents.SeatUpdated,
       payload: {
-        acl: workspaceAcl,
-        seatType: seat.type,
+        seat,
         updatedByUserId: assignedByUserId
       }
     })

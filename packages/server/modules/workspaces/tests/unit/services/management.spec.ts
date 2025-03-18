@@ -40,7 +40,6 @@ import {
   UpsertWorkspaceArgs
 } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
@@ -816,7 +815,6 @@ describe('Workspace role services', () => {
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(payload).to.deep.equal({
         acl: role,
-        seatType: WorkspaceSeatType.Editor,
         updatedByUserId: workspaceOwnerId
       })
     })
