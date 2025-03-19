@@ -149,14 +149,18 @@ export const approveWorkspaceJoinRequestFactory =
 
     const role = Roles.Workspace.Member
     await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
-    const { type } = await ensureValidWorkspaceRoleSeat({ userId, workspaceId, role })
+    await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId,
+      role,
+      updatedByUserId: approvedByUserId
+    })
 
     await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
     await emit({
       eventName: WorkspaceEvents.RoleUpdated,
       payload: {
         acl: { workspaceId, userId, role },
-        seatType: type,
         updatedByUserId: approvedByUserId
       }
     })
