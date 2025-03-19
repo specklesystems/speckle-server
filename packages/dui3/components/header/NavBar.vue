@@ -5,7 +5,7 @@
   >
     <div class="flex items-center transition-all justify-between w-full">
       <div class="flex items-center space-x-2">
-        <div class="max-[275px]:hidden block ml-2">
+        <div class="max-[200px]:hidden block ml-2">
           <img
             class="block h-6 w-6"
             src="~~/assets/images/speckle_logo_big.png"
@@ -14,7 +14,7 @@
         </div>
         <div class="relative group flex items-center">
           <FormButton
-            v-tippy="'Publish objects from this file to Speckle'"
+            v-tippy="'Publish objects from this file to a new Speckle model'"
             color="outline"
             size="sm"
             class="relative group px-0"
