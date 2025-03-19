@@ -3,14 +3,13 @@
     <LayoutTable
       class="mt-2 mb-12"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-2' },
-        { id: 'email', header: 'Email', classes: 'col-span-3' },
+        { id: 'name', header: 'Name', classes: 'col-span-4' },
         { id: 'createdAt', header: 'Requested at', classes: 'col-span-3' },
         { id: 'status', header: 'Status', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-2 flex items-center justify-end'
+          classes: 'col-span-3 flex items-center justify-end'
         }
       ]"
       :items="joinRequests"
@@ -23,10 +22,6 @@
             {{ item.user.name }}
           </span>
         </div>
-      </template>
-      <!-- TODO: Add email -->
-      <template #email="">
-        <span class="truncate text-body-xs text-foreground">EMAIL</span>
       </template>
       <template #createdAt="{ item }">
         <p class="text-body-xs text-foreground">
