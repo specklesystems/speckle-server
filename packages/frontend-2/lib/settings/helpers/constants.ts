@@ -30,7 +30,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make admin',
+      title: 'Make an admin',
       mainMessage: (seatType) =>
         seatType === WorkspaceSeatType.Editor
           ? 'They will become project owner for all existing and new workspace projects.'
@@ -73,7 +73,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make guest',
+      title: 'Make a guest',
       mainMessage: 'They will lose access to all existing workspace projects.',
       showRoleInfo: true,
       buttonText: 'Make a guest'
