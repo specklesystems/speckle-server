@@ -4,7 +4,6 @@
       <template #description>
         Workspace members can have a viewer or editor seat. Admins must be editors. Read
         more about
-        <!-- TODO: Add link to roles and seats page -->
         <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline">
           Speckle roles and seats.
         </NuxtLink>

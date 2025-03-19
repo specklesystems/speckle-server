@@ -4,7 +4,6 @@
       <template #description>
         Guests are external collaborators. They can't create or add others to workspace
         projects. Read more about
-        <!-- TODO: Add link to roles and seats page -->
         <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline">
           Speckle roles and seats.
         </NuxtLink>
@@ -21,14 +20,13 @@
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'email', header: 'Email', classes: 'col-span-3' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'name', header: 'Name', classes: 'col-span-4' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
         { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-2 flex items-center justify-end'
         }
       ]"
       :items="guests"
@@ -52,10 +50,6 @@
             {{ item.user.name }}
           </span>
         </div>
-      </template>
-      <!-- TODO: Add email -->
-      <template #email="">
-        <span class="text-body-xs text-foreground">EMAIL</span>
       </template>
       <template #seat="{ item }">
         <SeatTypeDisplay :seat-type="item.seatType" />
