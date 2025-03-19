@@ -53,7 +53,7 @@ describe('database cache', () => {
     const itemQueue = new BufferQueue<Item>()
     const notFoundQueue = new BufferQueue<string>()
 
-    await database.getItems([i1.baseId, i2.baseId], itemQueue, notFoundQueue)
+    await database.processItems([i1.baseId, i2.baseId], itemQueue, notFoundQueue)
 
     expect(itemQueue.values().length).toBe(2)
     expect(JSON.stringify(itemQueue.values()[0])).toBe(JSON.stringify(i1))

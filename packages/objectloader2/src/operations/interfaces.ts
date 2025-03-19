@@ -3,7 +3,7 @@ import { Item } from '../types/types.js'
 
 export interface Cache {
   getItem(baseId: string): Promise<Item | undefined>
-  getItems(
+  processItems(
     baseIds: string[],
     found: Queue<Item>,
     notFound: Queue<string>

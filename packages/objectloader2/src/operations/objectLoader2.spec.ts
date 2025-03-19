@@ -18,7 +18,7 @@ describe('objectloader2', () => {
       cache,
       downloader
     })
-    const x = await loader.getRootObject()
+    const x = await loader.getRootItem()
     expect(x).toBe(root)
   })
 
@@ -43,7 +43,7 @@ describe('objectloader2', () => {
       cache,
       downloader
     })
-    const x = await loader.getRootObject()
+    const x = await loader.getRootItem()
     expect(x).toBe(root)
   })
 
@@ -61,7 +61,7 @@ describe('objectloader2', () => {
       downloader
     })
     const r = []
-    for await (const x of loader.getRawObjectIterator()) {
+    for await (const x of loader.getBases()) {
       r.push(x)
     }
 
@@ -81,7 +81,7 @@ describe('objectloader2', () => {
         expect(id).toBe(root.baseId)
         return Promise.resolve(root)
       },
-      getItems(
+      processItems(
         ids: string[],
         found: Queue<Item>,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -105,9 +105,8 @@ describe('objectloader2', () => {
       cache,
       downloader
     })
-    await loader.finish()
     const r = []
-    for await (const x of loader.getRawObjectIterator()) {
+    for await (const x of loader.getBases()) {
       r.push(x)
     }
 

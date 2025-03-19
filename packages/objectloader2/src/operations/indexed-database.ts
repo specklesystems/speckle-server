@@ -78,7 +78,7 @@ export default class IndexedDatabase implements Cache {
     )
     return true
   }
-  async getItems(
+  async processItems(
     baseIds: string[],
     found: Queue<Item>,
     notFound: Queue<string>

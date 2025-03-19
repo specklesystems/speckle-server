@@ -39,7 +39,7 @@ export default class ObjectLoader2 {
       )
   }
 
-  async finish(): Promise<void> {
+  async #finish(): Promise<void> {
     await Promise.all([
       this.#database.finish(),
       this.#downloader.finish(),
@@ -47,7 +47,7 @@ export default class ObjectLoader2 {
     ])
   }
 
-  async getRootObject(): Promise<Item | undefined> {
+  async getRootItem(): Promise<Item | undefined> {
     const cachedRootObject = await this.#database.getItem(this.#objectId)
     if (cachedRootObject) {
       return cachedRootObject
@@ -58,28 +58,29 @@ export default class ObjectLoader2 {
     return rootItem
   }
 
-  async *getRawObjectIterator(): AsyncGenerator<Item> {
-    const rootItem = await this.getRootObject()
+  async *getBases(): AsyncGenerator<Base> {
+    const rootItem = await this.getRootItem()
     if (rootItem === undefined) {
       this.#logger('No root object found!')
       return
     }
-    yield rootItem
+    yield rootItem.base
     if (!rootItem.base.__closure) return
-    const getPromise = this.#database.getItems(
-      Object.keys(rootItem.base.__closure),
+    const children = Object.keys(rootItem.base.__closure)
+    const total = children.length
+    const processPromise = this.#database.processItems(
+      children,
       this.#gathered,
       this.#downloader
     )
+    let count = 0
     for await (const item of this.#gathered.consume()) {
-      yield item
-    }
-    await getPromise
-  }
-
-  async *getObjectIterator(): AsyncGenerator<Base> {
-    for await (const item of this.getRawObjectIterator()) {
       yield item.base
+      count++
+      if (count >= total) {
+        await this.#finish()
+      }
     }
+    await processPromise
   }
 }
