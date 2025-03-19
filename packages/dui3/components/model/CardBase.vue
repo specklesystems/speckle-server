@@ -199,7 +199,6 @@ import {
   modelViewingSubscription
 } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { ArrowTopRightOnSquareIcon, XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
@@ -210,7 +209,7 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import type { ProjectCommentsUpdatedMessage } from '~/lib/common/generated/gql/graphql'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/runStatus'
-import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+import { CursorArrowRaysIcon, XCircleIcon } from '@heroicons/vue/24/outline'
 
 const app = useNuxtApp()
 const store = useHostAppStore()

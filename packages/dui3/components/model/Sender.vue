@@ -120,8 +120,6 @@ const saveFilter = async () => {
   openFilterDialog.value = false
 }
 
-const hover = ref(false)
-
 const saveFilterAndSend = async () => {
   await saveFilter()
   store.sendModel(props.modelCard.modelCardId, 'Filter')

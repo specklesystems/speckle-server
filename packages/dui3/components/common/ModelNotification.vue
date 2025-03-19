@@ -59,24 +59,7 @@ if (props.notification.timeout) {
   useTimeoutFn(() => emit('dismiss'), props.notification.timeout)
 }
 
-const containerClassColor = computed(() => {
-  return 'bg-highlight-1'
-  switch (props.notification.level) {
-    case 'danger':
-      return 'bg-red-500/10'
-    case 'info':
-      return 'bg-blue-500/10'
-    case 'success':
-      return 'bg-green-500/10'
-    case 'warning':
-      return 'bg-orange-500/10'
-    default:
-      return 'bg-blue-500/10'
-  }
-})
-
 const textClassColor = computed(() => {
-  // return 'text-foreground'
   switch (props.notification.level) {
     case 'danger':
       return 'text-red-500'
