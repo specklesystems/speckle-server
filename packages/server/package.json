@@ -202,7 +202,7 @@
     "ioredis-mock": "^8.9.0",
     "mocha": "^10.1.0",
     "mocha-junit-reporter": "^2.0.2",
-    "mocha-multi": "^1.1.7",
+    "mocha-multi": "1.1.7",
     "mock-require": "^3.0.3",
     "mock-socket": "^9.3.1",
     "node-mocks-http": "^1.12.1",

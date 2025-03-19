@@ -16919,7 +16919,7 @@ __metadata:
     mjml-bullet-list: "npm:^1.2.2"
     mocha: "npm:^10.1.0"
     mocha-junit-reporter: "npm:^2.0.2"
-    mocha-multi: "npm:^1.1.7"
+    mocha-multi: "npm:1.1.7"
     mock-require: "npm:^3.0.3"
     mock-socket: "npm:^9.3.1"
     module-alias: "npm:^2.2.2"
@@ -39881,7 +39881,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha-multi@npm:^1.1.7":
+"mocha-multi@npm:1.1.7":
   version: 1.1.7
   resolution: "mocha-multi@npm:1.1.7"
   dependencies:
