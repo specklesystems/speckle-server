@@ -1,12 +1,14 @@
 <template>
   <div>
     <div v-if="project">
-      <h1 class="block text-heading-xl mb-2">Collaborators</h1>
-      <div class="flex items-center justify-between space-x-2">
-        <p class="text-body-xs text-foreground">
-          Invite new collaborators and set permissions.
-        </p>
-        <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
+      <div class="flex justify-between space-x-2">
+        <div>
+          <h1 class="block text-heading-xl mb-2">Collaborators</h1>
+          <p class="text-body-xs text-foreground">
+            Invite new collaborators and set permissions.
+          </p>
+        </div>
+        <FormButton class="mt-1" :disabled="!canInvite" @click="toggleInviteDialog">
           Invite
         </FormButton>
       </div>
