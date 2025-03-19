@@ -74,6 +74,12 @@ const filteredActionsItems = computed(() => {
   const mainItems: LayoutMenuItem[] = []
   const footerItems: LayoutMenuItem[] = []
 
+  // Iterate through all possible actions and filter them based on:
+  // 1. If the current user is an admin (for permission-based actions)
+  // 2. If the action is being performed on the current user (for self-actions like "Leave")
+  // 3. The target user's current role (to show/hide role change options)
+  // 4. The target user's seat type (to show relevant upgrade/downgrade options)
+  // Special case: For remove action, we check against 'canRemove' instead of actual role
   Object.entries(UpdateWorkspaceMemberConfig).forEach(([type, config]) => {
     if (
       config.menu.show({
