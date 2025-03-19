@@ -1,38 +1,46 @@
 <template>
-  <div
-    :class="`${containerClassColor} text-body-3xs flex justify-between items-center py-1 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 min-w-0`"
-  >
-    <div class="grow min-w-0 flex space-x-2 items-center">
-      <ReportBase
-        v-if="notification.report"
-        :report="notification.report"
-        class="mt-[3px]"
-      />
-      <div
-        :class="`${textClassColor} leading-tight font-medium transition max-[275px]:text-center line-clamp-4 text-ellipsis break-words`"
-      >
-        {{ notification.text }}
+  <div class="bg-highlight-1 border-t border-t-highlight-3">
+    <div class="flex">
+      <div class="flex grow justify-between items-center py-2 pl-1 pr-1 min-w-0">
+        <div class="grow w-full min-w-0 flex space-x-1 items-center">
+          <ReportBase
+            v-if="notification.report"
+            :report="notification.report"
+            class="mt-[3px]"
+          />
+          <div
+            v-tippy="notification.text"
+            :class="`${textClassColor} text-body-3xs transition line-clamp-1 text-ellipsis`"
+          >
+            {{ notification.text }}
+          </div>
+        </div>
+        <div class="flex items-center group">
+          <FormButton
+            v-if="notification.cta"
+            size="sm"
+            :color="notification.level === 'info' ? 'outline' : notification.level"
+            full-width
+            @click.stop="notification.cta?.action"
+          >
+            {{ notification.cta.name }}
+          </FormButton>
+        </div>
       </div>
-    </div>
-    <div class="flex items-center group space-x-1">
-      <FormButton
+      <div
         v-if="notification.dismissible"
-        size="sm"
-        text
-        :color="notification.level"
-        @click.stop="$emit('dismiss')"
+        class="flex items-center w-0 group-hover:w-5 transition-[width]"
       >
-        <span :class="`${textClassColor}`">Dismiss</span>
-      </FormButton>
-
-      <FormButton
-        v-if="notification.cta"
-        size="sm"
-        :color="notification.level === 'info' ? 'primary' : notification.level"
-        @click.stop="notification.cta?.action"
-      >
-        {{ notification.cta.name }}
-      </FormButton>
+        <FormButton
+          v-tippy="'Dismiss'"
+          color="subtle"
+          size="sm"
+          :icon-left="XMarkIcon"
+          hide-text
+          :disabled="!notification.dismissible"
+          @click.stop="$emit('dismiss')"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -40,7 +48,7 @@
 <script setup lang="ts">
 import { useTimeoutFn } from '@vueuse/core'
 import type { ModelCardNotification } from '~/lib/models/card/notification'
-
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 const props = defineProps<{
   notification: ModelCardNotification
 }>()
@@ -52,6 +60,7 @@ if (props.notification.timeout) {
 }
 
 const containerClassColor = computed(() => {
+  return 'bg-highlight-1'
   switch (props.notification.level) {
     case 'danger':
       return 'bg-red-500/10'
@@ -67,17 +76,18 @@ const containerClassColor = computed(() => {
 })
 
 const textClassColor = computed(() => {
+  // return 'text-foreground'
   switch (props.notification.level) {
     case 'danger':
       return 'text-red-500'
     case 'info':
-      return 'text-blue-500'
+      return 'text-foreground-2'
     case 'success':
-      return 'text-green-500'
+      return 'text-foreground-2'
     case 'warning':
-      return 'text-orange-500'
+      return 'text-foreground-2'
     default:
-      return 'bg-blue-500/10'
+      return 'text-foreground-2'
   }
 })
 </script>

@@ -23,7 +23,9 @@
               >
                 <div v-if="app.$sendBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowUpIcon"
+                    v-tippy="'Publish objects from this file to a new model'"
+                    :icon-left="ArrowUpTrayIcon"
+                    color="outline"
                     full-width
                     @click="handleSendClick"
                   >
@@ -32,7 +34,9 @@
                 </div>
                 <div v-if="app.$receiveBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowDownIcon"
+                    v-tippy="'Load an existing model in this file'"
+                    :icon-left="ArrowDownTrayIcon"
+                    color="outline"
                     full-width
                     @click="handleReceiveClick"
                   >
@@ -50,32 +54,47 @@
               </div>
             </div>
             <!-- TEMPORARY MESSAGE TO USER! will be deleted -->
-            <div class="mt-2 bg-blue-500/10 rounded-md p-2">
+            <div class="mt-2 bg-highlight-1 rounded-md p-2">
               <h1
                 class="text-heading-sm w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
               >
-                Note: Beta Connector
+                Speckle for
+                <span class="capitalize">{{ store.hostAppName }}</span>
               </h1>
               <div class="text-foreground-2 text-body-xs">
-                This is a
-                <span class="font-bold">beta</span>
-                connector that will eventually replace the existing one.
-                <br />
-                <br />
-                While in beta, there will be some missing functionality and some rough
-                corners.
+                Get started in no time with our key workflows and tutorials for
+                <span class="capitalize">{{ store.hostAppName }}:</span>
+                <FormButton
+                  size="sm"
+                  color="outline"
+                  class="my-2"
+                  full-width
+                  @click="
+                    app.$openUrl(
+                      `https://speckle.systems/connectors/${store.hostAppName}`
+                    )
+                  "
+                >
+                  <span class="capitalize">{{ store.hostAppName }}&nbsp;</span>
+                  documentation
+                </FormButton>
               </div>
 
               <FormButton
                 text
-                link
+                size="sm"
+                color="subtle"
+                class=""
+                full-width
                 @click="
                   app.$openUrl(
                     'https://speckle.community/t/next-gen-connectors-supported-workflows-and-faq/16162'
                   )
                 "
               >
-                Find out more
+                <span class="text-foreground-2 text-body-3xs truncate line-clamp-1">
+                  New connectors announcement
+                </span>
               </FormButton>
             </div>
           </LayoutPanel>
@@ -85,43 +104,6 @@
             <CommonProjectModelGroup :project="project" />
           </div>
         </div>
-        <!-- <div
-          v-if="!hasNoModelCards"
-          class="z-20 fixed bottom-0 left-0 w-full bg-foundation shadow-inner rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
-        >
-          <div v-if="app.$sendBinding" class="grow">
-            <FormButton
-              v-tippy="'Send a new set of objects to a new model in Speckle'"
-              :icon-left="ArrowUpIcon"
-              full-width
-              size="sm"
-              color="outline"
-              @click="handleSendClick"
-            >
-              Publish
-              <span class="max-[275px]:hidden">&nbsp;new model</span>
-            </FormButton>
-          </div>
-          <div v-if="app.$receiveBinding" class="grow">
-            <FormButton
-              v-tippy="'Load in this file a new model from Speckle'"
-              :icon-left="ArrowDownIcon"
-              full-width
-              size="sm"
-              color="outline"
-              @click="handleReceiveClick"
-            >
-              Load
-              <span class="max-[275px]:hidden">&nbsp;new model</span>
-            </FormButton>
-          </div>
-        </div> -->
-
-        <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
-        <ReceiveWizard
-          v-model:open="showReceiveDialog"
-          @close="showReceiveDialog = false"
-        />
         <!-- Triggered by "Show Details" button on Toast Notification -->
         <ErrorDialog
           v-model:open="store.showErrorDialog"
@@ -156,11 +138,20 @@
         </LayoutPanel>
       </div>
     </div>
+    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
+    <ReceiveWizard
+      v-model:open="showReceiveDialog"
+      @close="showReceiveDialog = false"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ArrowUpIcon, ArrowDownIcon, ArrowPathIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  ArrowPathIcon
+} from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'

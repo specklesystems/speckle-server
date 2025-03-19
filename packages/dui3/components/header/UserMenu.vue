@@ -3,10 +3,16 @@
     <Menu as="div" class="flex items-center z-100">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
-        <HeaderButton>
+        <FormButton
+          color="subtle"
+          size="sm"
+          :icon-left="!open ? Bars3Icon : XMarkIcon"
+          hide-text
+        />
+        <!-- <HeaderButton>
           <Bars3Icon v-if="!open" class="w-4" />
           <XMarkIcon v-else class="w-4" />
-        </HeaderButton>
+        </HeaderButton> -->
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"

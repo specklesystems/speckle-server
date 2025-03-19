@@ -1,17 +1,18 @@
 <template>
   <div>
     <slot name="activator" :toggle="toggleDialog">
-      <button
-        v-tippy="summary.hint"
-        class="rounded-full bg-foundation"
+      <FormButton
+        v-tippy="'View report'"
+        color="outline"
+        :icon-left="
+          summary.failedCount === 0 && summary.warningCount === 0
+            ? CheckCircleIcon
+            : ExclamationCircleIcon
+        "
+        hide-text
+        size="sm"
         @click.stop="toggleDialog()"
-      >
-        <InformationCircleIcon
-          v-if="summary.failedCount === 0 && summary.warningCount === 0"
-          class="w-4 text-success"
-        />
-        <ExclamationCircleIcon v-else class="w-4 text-warning" />
-      </button>
+      />
     </slot>
     <CommonDialog v-model:open="showReportDialog" :title="`Report`" fullscreen="none">
       <div class="text-body-2xs">
@@ -75,7 +76,6 @@
 </template>
 <script setup lang="ts">
 import {
-  InformationCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon

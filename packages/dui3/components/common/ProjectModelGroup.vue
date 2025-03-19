@@ -19,18 +19,6 @@
       </div>
 
       <div class="opacity-0 group-hover:opacity-100 transition flex">
-        <!-- <button
-          v-tippy="'Open project in browser'"
-          class="hover:text-primary flex items-center space-x-2 p-2"
-        >
-          <PlusIcon
-            class="w-4"
-            @click.stop="
-              $openUrl(projectUrl),
-                trackEvent('DUI3 Action', { name: 'Project View' }, project.accountId)
-            "
-          />
-        </button> -->
         <button
           v-tippy="'Open project in browser'"
           class="hover:text-primary flex items-center space-x-2 p-2"

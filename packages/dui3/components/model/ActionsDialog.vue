@@ -1,61 +1,48 @@
 <template>
   <div>
-    <button
-      class="transition hover:text-primary"
+    <FormButton
+      color="subtle"
+      :icon-left="Bars3Icon"
+      hide-text
+      size="sm"
       @click.stop="openModelCardActionsDialog = true"
-    >
-      <Cog6ToothIcon class="w-4" />
-    </button>
+    />
     <CommonDialog
       v-model:open="openModelCardActionsDialog"
       :title="`${modelName} actions`"
       fullscreen="none"
     >
-      <div class="-mx-1">
-        <!-- TODO: for later, to be able to create automation from DUI3, our accounts need scopes to do it which we don't have yet. -->
-        <!-- <AutomateCreateDialog
-          :project-id="props.modelCard.projectId"
-          :model-id="props.modelCard.modelId"
-        >
-          <template #activator="{ toggle }">
-            <button class="action action-normal" @click="toggle()">
-              <div class="truncate max-[275px]:text-xs">Create Automation</div>
-              <div><BoltIcon class="w-5 h-5" /></div>
-            </button>
-          </template>
-        </AutomateCreateDialog> -->
-        <SendSettingsDialog
-          v-if="hasSettings"
-          :model-card-id="props.modelCard.modelCardId"
-          :settings="props.modelCard.settings"
-        >
-          <template #activator="{ toggle }">
-            <button class="action action-normal" @click="toggle()">
-              <div class="truncate max-[275px]:text-xs">Settings</div>
-              <div><Cog6ToothIcon class="w-5 h-5" /></div>
-            </button>
-          </template>
-        </SendSettingsDialog>
-        <ReportBase v-if="modelCard.report" :report="modelCard.report">
-          <template #activator="{ toggle }">
-            <button class="action action-normal" @click="toggle()">
-              <div class="truncate max-[275px]:text-xs">View Report</div>
-              <div><InformationCircleIcon class="w-5 h-5" /></div>
-            </button>
-          </template>
-        </ReportBase>
-        <button
-          v-for="item in items"
-          :key="item.name"
-          :class="`action ${item.danger ? 'action-danger' : 'action-normal'}`"
-          @click="item.action"
-        >
-          <div class="truncate max-[275px]:text-xs">{{ item.name }}</div>
-          <div>
-            <Component :is="item.icon" class="w-5 h-5" />
-          </div>
-        </button>
-      </div>
+      <SendSettingsDialog
+        v-if="hasSettings"
+        :model-card-id="props.modelCard.modelCardId"
+        :settings="props.modelCard.settings"
+      >
+        <template #activator="{ toggle }">
+          <button class="action action-normal" @click="toggle()">
+            <div class="truncate max-[275px]:text-xs">Settings</div>
+            <div><Cog6ToothIcon class="w-5 h-5" /></div>
+          </button>
+        </template>
+      </SendSettingsDialog>
+      <ReportBase v-if="modelCard.report" :report="modelCard.report">
+        <template #activator="{ toggle }">
+          <button class="action action-normal" @click="toggle()">
+            <div class="truncate max-[275px]:text-xs">View Report</div>
+            <div><InformationCircleIcon class="w-5 h-5" /></div>
+          </button>
+        </template>
+      </ReportBase>
+      <button
+        v-for="item in items"
+        :key="item.name"
+        :class="`action ${item.danger ? 'action-danger' : 'action-normal'}`"
+        @click="item.action"
+      >
+        <div class="truncate max-[275px]:text-xs">{{ item.name }}</div>
+        <div>
+          <Component :is="item.icon" class="w-5 h-5" />
+        </div>
+      </button>
     </CommonDialog>
   </div>
 </template>
@@ -65,7 +52,8 @@ import {
   Cog6ToothIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  ArchiveBoxXMarkIcon
+  ArchiveBoxXMarkIcon,
+  Bars3Icon
 } from '@heroicons/vue/24/outline'
 import type { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -128,11 +116,11 @@ const items = [
 </script>
 <style scoped lang="postcss">
 .action {
-  @apply flex items-center justify-between w-full rounded-lg text-left space-x-2 transition p-2 select-none hover:cursor-pointer min-w-0;
+  @apply text-body-sm flex items-center justify-between w-full rounded-lg text-left space-x-2 transition p-2 select-none hover:cursor-pointer min-w-0;
 }
 
 .action-normal {
-  @apply text-primary hover:bg-primary-muted;
+  @apply hover:text-primary;
 }
 
 .action-danger {

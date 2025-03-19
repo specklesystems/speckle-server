@@ -4,40 +4,42 @@
     :project="project"
     @manual-publish-or-load="handleMainButtonClick"
   >
-    <div class="flex max-[275px]:flex-col items-center space-x-2 pb-2">
-      <div class="shrink-0">
-        <FormButton
-          v-tippy="
-            isExpired
-              ? 'A new version was pushed ' +
-                latestVersionCreatedAt +
-                '. Click to load a different version.'
-              : 'Load a different version'
-          "
-          :icon-left="ClockIcon"
-          text
-          size="xs"
-          :color="isExpired ? 'warning' : 'card'"
-          class="flex min-w-0 transition hover:text-primary py-1"
-          :disabled="!!modelCard.progress"
-          @click.stop="openVersionsDialog = true"
-        >
-          <span class="">{{ createdAgo }}</span>
-        </FormButton>
-      </div>
-      <div
+    <div class="flex max-[275px]:w-full items-center space-x-2 my-2">
+      <FormButton
+        v-tippy="
+          isExpired
+            ? 'A new version was pushed ' +
+              latestVersionCreatedAt +
+              '. Click to load a different version.'
+            : 'Load a different version'
+        "
+        :icon-left="ClockIcon"
+        size="sm"
+        color="subtle"
+        class="block text-foreground-2 hover:text-foreground overflow-hidden max-w-full !justify-start"
+        full-width
+        :disabled="!!modelCard.progress"
+        @click.stop="openVersionsDialog = true"
+      >
+        <span>
+          Loaded
+          <b>version</b>
+        </span>
+        &nbsp;from&nbsp;
+        <span class="truncate">{{ createdAgo }}</span>
+      </FormButton>
+    </div>
+    <!-- <div
         class="min-w-0 truncate text-foreground-2 -mt-1"
         :title="
           versionDetailsResult?.project.model.version.message || 'No message provided'
         "
       >
         <span class="truncate max-[275px]:truncate-no select-none text-xs">
-          {{
-            versionDetailsResult?.project.model.version.message || 'No message provided'
-          }}
+          {{ createdAgo }}
         </span>
-      </div>
-    </div>
+      </div> -->
+
     <CommonDialog
       v-model:open="openVersionsDialog"
       fullscreen="none"
@@ -80,7 +82,6 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-
 import { useQuery } from '@vue/apollo-composable'
 import { ClockIcon } from '@heroicons/vue/24/solid'
 import type { ModelCardNotification } from '~/lib/models/card/notification'
@@ -174,7 +175,7 @@ const expiredNotification = computed(() => {
   if (props.modelCard.latestVersionId === props.modelCard.selectedVersionId) return
   const notification = {} as ModelCardNotification
   notification.dismissible = true
-  notification.level = 'warning'
+  notification.level = 'info'
   notification.text = 'Newer version available!'
   notification.cta = {
     name: 'Update',
