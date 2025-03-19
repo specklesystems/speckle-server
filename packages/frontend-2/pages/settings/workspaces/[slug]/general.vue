@@ -47,8 +47,8 @@
           show-label
           label-position="left"
           :disabled="!isAdmin || needsSsoLogin"
-          :rules="[isStringOfLength({ maxLength: 1024 })]"
-          help="Maximum 1024 characters"
+          :rules="[isStringOfLength({ maxLength: 512 })]"
+          help="Maximum 512 characters"
           @change="save()"
         />
         <hr class="my-4 border-outline-3" />
