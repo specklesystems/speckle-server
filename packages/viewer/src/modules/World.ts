@@ -1,4 +1,5 @@
 import { Box3, Vector3, Matrix4 } from 'three'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 export class AsyncPause {
   private lastPauseTime: number = 0
@@ -99,7 +100,15 @@ export class World {
     return offsetBox
   }
 
-  public static expandBoxRelative(box: Box3, offsetAmount: number = 0.001) {
+  public static expandBoxRelative<T extends OBB | Box3>(
+    box: T,
+    offsetAmount: number = 0.001
+  ): T {
+    if (box instanceof Box3) return World.expandBox3Relative(box, offsetAmount) as T
+    else return World.expandOBBRelative(box, offsetAmount) as T
+  }
+
+  private static expandBox3Relative(box: Box3, offsetAmount: number): Box3 {
     const center = box.getCenter(new Vector3())
     const size = box.getSize(new Vector3())
     MatBuff1.makeTranslation(center.x, center.y, center.z)
@@ -118,6 +127,30 @@ export class World {
     if (size.z === 0) {
       offsetBox.min.z += -offsetAmount * 0.5
       offsetBox.max.z += offsetAmount * 0.5
+    }
+    offsetBox.applyMatrix4(MatBuff2)
+    offsetBox.applyMatrix4(MatBuff0)
+    offsetBox.applyMatrix4(MatBuff1)
+
+    return offsetBox
+  }
+
+  private static expandOBBRelative(box: OBB, offsetAmount: number): OBB {
+    const center = box.center
+    const size = box.getSize(new Vector3())
+    MatBuff1.makeTranslation(center.x, center.y, center.z)
+    MatBuff2.copy(MatBuff1).invert()
+    MatBuff0.identity()
+    MatBuff0.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    const offsetBox = new OBB().copy(box)
+    if (size.x === 0) {
+      offsetBox.halfSize.x += offsetAmount * 0.5
+    }
+    if (size.y === 0) {
+      offsetBox.halfSize.y += offsetAmount * 0.5
+    }
+    if (size.z === 0) {
+      offsetBox.halfSize.z += offsetAmount * 0.5
     }
     offsetBox.applyMatrix4(MatBuff2)
     offsetBox.applyMatrix4(MatBuff0)

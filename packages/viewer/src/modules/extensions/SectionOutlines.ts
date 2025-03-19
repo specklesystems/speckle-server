@@ -16,8 +16,8 @@ import { Geometry } from '../converter/Geometry.js'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial.js'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
 import { Extension } from './Extension.js'
-import { type IViewer } from '../../index.js'
-import { SectionTool, SectionToolEvent } from './SectionTool.js'
+import { OrientedSectionTool, type IViewer } from '../../index.js'
+import { SectionToolEvent } from './SectionTool.js'
 import { GeometryType } from '../batching/Batch.js'
 import { ObjectLayers } from '../../IViewer.js'
 import { MeshBatch } from '../batching/MeshBatch.js'
@@ -38,7 +38,7 @@ export interface PlaneOutline {
 
 export class SectionOutlines extends Extension {
   public get inject() {
-    return [SectionTool]
+    return [OrientedSectionTool]
   }
   private static readonly OUTLINE_Z_OFFSET = 0.0001
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
@@ -55,7 +55,7 @@ export class SectionOutlines extends Extension {
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
 
-  public constructor(viewer: IViewer, protected sectionProvider: SectionTool) {
+  public constructor(viewer: IViewer, protected sectionProvider: OrientedSectionTool) {
     super(viewer)
     this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
     this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)

@@ -25,26 +25,41 @@ import { Extension } from './Extension.js'
 import { CameraController } from './CameraController.js'
 import { SectionToolEvent, SectionToolEventPayload } from './SectionTool.js'
 import { InputEvent } from '../input/Input.js'
+import { Vector3Like } from '../batching/BatchObject.js'
+import Logger from '../utils/Logger.js'
+import { World } from '../World.js'
 
 export class OrientedSectionTool extends Extension {
   public get inject() {
     return [CameraController]
   }
 
+  protected obb: OBB = new OBB()
+  protected planes: Plane[] = [
+    new Plane(new Vector3(1, 0, 0), 0.5),
+    new Plane(new Vector3(-1, 0, 0), 0.5),
+    new Plane(new Vector3(0, 1, 0), 0.5),
+    new Plane(new Vector3(0, -1, 0), 0.5),
+    new Plane(new Vector3(0, 0, 1), 0.5),
+    new Plane(new Vector3(0, 0, -1), 0.5)
+  ]
+  protected localPlanes: Plane[] = [
+    new Plane(new Vector3(1, 0, 0), 0.5),
+    new Plane(new Vector3(-1, 0, 0), 0.5),
+    new Plane(new Vector3(0, 1, 0), 0.5),
+    new Plane(new Vector3(0, -1, 0), 0.5),
+    new Plane(new Vector3(0, 0, 1), 0.5),
+    new Plane(new Vector3(0, 0, -1), 0.5)
+  ]
+
   protected dragging = false
   protected display: Group
-  protected obb: OBB = new OBB()
   protected boxMaterial: MeshStandardMaterial
   protected boxMesh: Mesh
-  protected boxTransform: Matrix4
-  protected translationAnchor: Object3D
-  protected rotationAnchor: Object3D
+
+  protected translationRotationAnchor: Object3D
   protected scaleAnchor: Object3D
 
-  protected planes: Plane[]
-
-  protected prevPosition: Vector3 | null
-  protected prevQuaternion: Quaternion | null
   protected lastScale: Vector3 | null
   protected draggingFace: Face | null
 
@@ -54,7 +69,9 @@ export class OrientedSectionTool extends Extension {
 
   protected raycaster: Raycaster
 
-  protected cubeFaces = {
+  protected cubeFaces =
+    // prettier-ignore
+    {
     '256': { verts: [1, 2, 5, 6], axis: 'x', normal: new Vector3(1, 0, 0) },
     '152': { verts: [1, 2, 5, 6], axis: 'x', normal: new Vector3(1, 0, 0) },
     '407': { verts: [0, 3, 4, 7], axis: 'x', normal: new Vector3(1, 0, 0) },
@@ -76,8 +93,15 @@ export class OrientedSectionTool extends Extension {
   public set enabled(value: boolean) {
     this._enabled = value
     this.display.visible = value
-    // this.viewer.getRenderer().renderer.localClippingEnabled = value
-    // this.emit(SectionToolEvent.Updated, this.planes)
+    if (value) {
+      this.translateControls.attach(this.translationRotationAnchor)
+      this.rotateControls.attach(this.translationRotationAnchor)
+    } else {
+      this.translateControls.detach()
+      this.rotateControls.detach()
+    }
+    this.viewer.getRenderer().renderer.localClippingEnabled = value
+    this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 
@@ -114,9 +138,9 @@ export class OrientedSectionTool extends Extension {
 
     this.display.add(this.boxMesh)
 
-    this.translationAnchor = new Object3D()
-    this.translationAnchor.name = 'TranslationAnchor'
-    this.display.add(this.translationAnchor)
+    this.translationRotationAnchor = new Object3D()
+    this.translationRotationAnchor.name = 'TranslationAnchor'
+    this.display.add(this.translationRotationAnchor)
 
     this.scaleAnchor = new Object3D()
     this.scaleAnchor.name = 'ScaleAnchor'
@@ -162,7 +186,6 @@ export class OrientedSectionTool extends Extension {
     }
     this.translateControls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.translateControls.setSize(0.75)
-    this.translateControls.attach(this.translationAnchor)
     this.display.add(this.translateControls._root)
 
     this.rotateControls = new TransformControls(
@@ -178,7 +201,6 @@ export class OrientedSectionTool extends Extension {
     this.rotateControls.setSize(0.5)
     this.rotateControls.mode = 'rotate'
     this.rotateControls.axis = 'XYZ'
-    this.rotateControls.attach(this.translationAnchor)
     this.display.add(this.rotateControls._root)
 
     this.scaleControls = new TransformControls(
@@ -194,7 +216,6 @@ export class OrientedSectionTool extends Extension {
     this.scaleControls.setSize(0.5)
     this.scaleControls.mode = 'scale'
     this.scaleControls.axis = 'X'
-    this.scaleControls.attach(this.scaleAnchor)
     this.scaleControls._root.visible = false
     this.display.add(this.scaleControls._root)
 
@@ -210,7 +231,7 @@ export class OrientedSectionTool extends Extension {
       this.draggingHandler.bind(this)
     )
 
-    this.scaleControls.addEventListener('change', this.changeHandlerScale.bind(this))
+    this.scaleControls.addEventListener('change', this.changeHandler.bind(this))
     this.scaleControls.addEventListener(
       'dragging-changed',
       this.draggingHandler.bind(this)
@@ -218,7 +239,8 @@ export class OrientedSectionTool extends Extension {
   }
 
   protected updateVisual() {
-    this.translationAnchor.position.copy(this.obb.center)
+    this.translationRotationAnchor.position.copy(this.obb.center)
+    this.scaleAnchor.scale.copy(this.obb.halfSize)
     this.boxMesh.position.copy(this.obb.center)
     this.boxMesh.scale.copy(this.obb.halfSize)
     this.boxMesh.scale.multiplyScalar(2)
@@ -236,34 +258,34 @@ export class OrientedSectionTool extends Extension {
       this.cameraProvider.enabled = false
       if (event.target === this.translateControls) this.rotateControls.detach()
       else if (event.target === this.rotateControls) this.translateControls.detach()
+      this.emit(SectionToolEvent.DragStart)
     } else {
       this.cameraProvider.enabled = true
       if (event.target === this.translateControls)
-        this.rotateControls.attach(this.translationAnchor)
+        this.rotateControls.attach(this.translationRotationAnchor)
       else if (event.target === this.rotateControls)
-        this.translateControls.attach(this.translationAnchor)
+        this.translateControls.attach(this.translationRotationAnchor)
+      this.emit(SectionToolEvent.DragEnd)
     }
     this.viewer.requestRender()
   }
 
   //@ts-ignore
   protected changeHandler() {
-    this.obb.center.copy(this.translationAnchor.position)
+    this.obb.center.copy(this.translationRotationAnchor.position)
     this.obb.rotation.copy(
       new Matrix3().setFromMatrix4(
-        new Matrix4().makeRotationFromQuaternion(this.translationAnchor.quaternion)
+        new Matrix4().makeRotationFromQuaternion(
+          this.translationRotationAnchor.quaternion
+        )
       )
     )
-    this.updateVisual()
-    this.viewer.requestRender()
-  }
 
-  //@ts-ignore
-  protected changeHandlerScale() {
     if (!this.lastScale) this.lastScale = new Vector3().copy(this.scaleAnchor.scale)
     this.lastScale.sub(this.scaleAnchor.scale)
     this.lastScale.negate()
-    this.obb.halfSize.add(this.lastScale)
+
+    this.obb.halfSize.copy(this.scaleAnchor.scale)
     if (this.draggingFace) {
       const dir = new Vector3()
         .copy(this.draggingFace.normal)
@@ -283,8 +305,10 @@ export class OrientedSectionTool extends Extension {
     }
 
     this.lastScale.copy(this.scaleAnchor.scale)
+    this.updatePlanes()
     this.updateVisual()
-    this.updateScaleControls(this.draggingFace as Face)
+    this.updateFaceControls(this.draggingFace as Face)
+    this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 
@@ -299,8 +323,8 @@ export class OrientedSectionTool extends Extension {
       intersectedObjects = this.raycaster.intersectObject(this.boxMesh)
     }
     if (!intersectedObjects.length) {
-      this.translateControls.attach(this.translationAnchor)
-      this.rotateControls.attach(this.translationAnchor)
+      this.translateControls.attach(this.translationRotationAnchor)
+      this.rotateControls.attach(this.translationRotationAnchor)
       this.scaleControls.detach()
       this.draggingFace = null
       return
@@ -310,76 +334,28 @@ export class OrientedSectionTool extends Extension {
     this.translateControls.detach()
     this.rotateControls.detach()
     this.scaleControls.attach(this.scaleAnchor)
-    this.updateScaleControls(this.draggingFace)
-
-    // if (intersectedObjects.length === 0 && !this.dragging) {
-    //   this._attachControlsToBox()
-    //   ;(this.boxMeshHelper.material as Material).opacity = 0.5
-    //   this.attachedToBox = true
-    //   return
-    // }
-    // this.attachedToBox = false
-    // ;(this.boxMeshHelper.material as Material).opacity = 0.3
-    // this.hoverPlane.visible = true
-    // const side =
-    //   this.sidesSimple[
-    //     `${intersectedObjects[0].face?.a}${intersectedObjects[0].face?.b}${intersectedObjects[0].face?.c}`
-    //   ]
-    // /** Catering to typescript
-    //  *  We're intersection an indexed mesh. There will always be an intersected face
-    //  */
-    // if (!side) {
-    //   throw new Error('Cannot determine section side')
-    // }
-    // this.controls.showX = side.axis === 'x'
-    // this.controls.showY = side.axis === 'y'
-    // this.controls.showZ = side.axis === 'z'
-
-    // this.currentRange = side.verts
-
-    // const boxArr = this.boxGeometry.attributes.position
-    // let index = 0
-    // const planeArr = this.plane.attributes.position.array as number[]
-    // const centre = new Vector3()
-
-    // const tempArr = []
-    // for (let i = 0; i < planeArr.length; i++) {
-    //   if (i % 3 === 0) {
-    //     tempArr.push(boxArr.getX(this.currentRange[index]))
-    //   } else if (i % 3 === 1) {
-    //     tempArr.push(boxArr.getY(this.currentRange[index]))
-    //   } else if (i % 3 === 2) {
-    //     tempArr.push(boxArr.getZ(this.currentRange[index]))
-    //     centre.add(new Vector3(tempArr[i - 2], tempArr[i - 1], tempArr[i]))
-    //     index++
-    //   }
-    // }
-
-    // centre.multiplyScalar(0.25)
-    // this.hoverPlane.position.copy(centre.applyMatrix4(this.boxMesh.matrixWorld))
-    // this.prevPosition = this.hoverPlane.position.clone()
-    // index = 0
-    // for (let i = 0; i < planeArr.length; i++) {
-    //   if (i % 3 === 0) {
-    //     planeArr[i] = boxArr.getX(this.currentRange[index]) - centre.x
-    //   } else if (i % 3 === 1) {
-    //     planeArr[i] = boxArr.getY(this.currentRange[index]) - centre.y
-    //   } else if (i % 3 === 2) {
-    //     planeArr[i] = boxArr.getZ(this.currentRange[index]) - centre.z
-    //     index++
-    //   }
-    // }
-
-    // this.plane.applyMatrix4(this.boxMesh.matrixWorld)
-    // this.plane.attributes.position.needsUpdate = true
-    // this.plane.computeBoundingSphere()
-    // this.plane.computeBoundingBox()
-    // this.controls?.detach()
-    // this.controls?.attach(this.hoverPlane)
-    // this.controls?.updateMatrixWorld()
+    this.updateFaceControls(this.draggingFace)
   }
 
-  private updateScaleControls(face: Face) {
+  protected updatePlanes() {
+    const obbMatrix = new Matrix4().compose(
+      this.obb.center,
+      new Quaternion().setFromRotationMatrix(
+        new Matrix4().setFromMatrix3(this.obb.rotation)
+      ),
+      new Vector3().copy(this.obb.halfSize).multiplyScalar(2)
+    )
+
+    for (let k = 0; k < this.localPlanes.length; k++) {
+      this.planes[k].copy(this.localPlanes[k])
+      this.planes[k].applyMatrix4(obbMatrix)
+    }
+    this.viewer.getRenderer().clippingPlanes = this.planes
+    this.viewer.getRenderer().clippingVolume = this.getBox()
+  }
+
+  protected updateFaceControls(face: Face) {
+    if (!face) return
     const vertices = this.boxMesh.geometry.attributes.position
     //@ts-ignore
     const cubeFace = this.cubeFaces[`${face.a}${face.b}${face.c}`]
@@ -411,8 +387,12 @@ export class OrientedSectionTool extends Extension {
 
     this.scaleAnchor.position.copy(faceCenter)
     this.scaleAnchor.quaternion.copy(faceQuat)
+    this.scaleAnchor.scale.copy(this.obb.halfSize)
+    //@ts-ignore
     this.scaleControls.showX = cubeFace.axis === 'x'
+    //@ts-ignore
     this.scaleControls.showY = cubeFace.axis === 'y'
+    //@ts-ignore
     this.scaleControls.showZ = cubeFace.axis === 'z'
   }
 
@@ -458,90 +438,45 @@ export class OrientedSectionTool extends Extension {
     return g
   }
 
-  public getBox(): OBB | null {
-    // if (!this.display.visible) return new Box3()
-    // return this.boxGeometry.boundingBox || new Box3()
-    return null
+  public getBox(): OBB {
+    return this.obb
   }
 
-  public setBox(targetBox: OBB | Box3, offset = 0): void {
-    offset
-    if (targetBox instanceof OBB) {
-      console.warn('plm')
-    } else {
-      this.obb.center.copy(targetBox.getCenter(new Vector3()))
-      this.obb.halfSize.copy(targetBox.getSize(new Vector3()).multiplyScalar(0.5))
-      this.updateVisual()
-    }
-    // let box
-    // if (targetBox) box = targetBox
-    // else {
-    //   box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-    // }
-    // if (box.min.x === Infinity) {
-    //   box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-    // }
-    // let x1, y1, z1, x2, y2, z2
-    // if (offset === 0) {
-    //   const offsetBox = this.viewer.World.getRelativeOffsetBox(box, 0.0001)
-    //   x1 = offsetBox.min.x //box.min.x - (box.max.x - box.min.x) * offset
-    //   y1 = offsetBox.min.y //box.min.y - (box.max.y - box.min.y) * offset
-    //   z1 = offsetBox.min.z //box.min.z - (box.max.z - box.min.z) * offset
-    //   x2 = offsetBox.max.x //box.max.x + (box.max.x - box.min.x) * offset
-    //   y2 = offsetBox.max.y //box.max.y + (box.max.y - box.min.y) * offset
-    //   z2 = offsetBox.max.z //box.max.z + (box.max.z - box.min.z) * offset
-    // } else {
-    //   x1 = box.min.x - (box.max.x - box.min.x) * offset
-    //   y1 = box.min.y - (box.max.y - box.min.y) * offset
-    //   z1 = box.min.z - (box.max.z - box.min.z) * offset
-    //   x2 = box.max.x + (box.max.x - box.min.x) * offset
-    //   y2 = box.max.y + (box.max.y - box.min.y) * offset
-    //   z2 = box.max.z + (box.max.z - box.min.z) * offset
-    // }
-    // const newVertices = [
-    //   x1,
-    //   y1,
-    //   z1,
-    //   x2,
-    //   y1,
-    //   z1,
-    //   x2,
-    //   y2,
-    //   z1,
-    //   x1,
-    //   y2,
-    //   z1,
-    //   x1,
-    //   y1,
-    //   z2,
-    //   x2,
-    //   y1,
-    //   z2,
-    //   x2,
-    //   y2,
-    //   z2,
-    //   x1,
-    //   y2,
-    //   z2
-    // ]
-    // const boxVerts = this.boxGeometry.attributes.position.array as number[]
-    // for (let i = 0; i < newVertices.length; i++) {
-    //   boxVerts[i] = newVertices[i]
-    // }
-    // this.boxGeometry.attributes.position.needsUpdate = true
-    // this.boxGeometry.computeVertexNormals()
-    // this.boxGeometry.computeBoundingBox()
-    // this.boxGeometry.computeBoundingSphere()
-    // this._generateOrUpdatePlanes()
-    // this._attachControlsToBox()
-    // this.boxMeshHelper.position.copy(
-    //   //@ts-ignore
-    //   this.boxMesh.position
-    // )
-    // this.emit(SectionToolEvent.Updated, this.planes)
-    // this.viewer.getRenderer().clippingPlanes = this.planes
-    // this.viewer.getRenderer().clippingVolume = this.getBox()
-    // this.viewer.requestRender()
+  protected isAABB(
+    box: Box3 | { min: Vector3Like; max: Vector3Like } | OBB
+  ): box is Box3 {
+    return box instanceof Box3 || ('min' in box && 'max' in box)
+  }
+
+  protected isOBB(
+    box: Box3 | { min: Vector3Like; max: Vector3Like } | OBB
+  ): box is OBB {
+    return box instanceof OBB
+  }
+
+  public setBox(
+    targetBox: OBB | Box3 | { min: Vector3Like; max: Vector3Like },
+    offset = 0
+  ): void {
+    offset = offset === 0 ? 0.0001 : offset
+    if (this.isOBB(targetBox)) {
+      const expandedBox = World.expandBoxRelative(targetBox, offset)
+      this.obb.center.copy(expandedBox.center)
+      this.obb.halfSize.copy(expandedBox.halfSize)
+      this.obb.rotation.copy(expandedBox.rotation)
+    } else if (this.isAABB(targetBox)) {
+      let box = new Box3()
+      box.min.copy(targetBox.min)
+      box.max.copy(targetBox.max)
+      if (box.isEmpty()) box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+      box = World.expandBoxRelative(targetBox, offset)
+      this.obb.center.copy(box.getCenter(new Vector3()))
+      this.obb.halfSize.copy(box.getSize(new Vector3()).multiplyScalar(0.5))
+    } else Logger.error(`Incorrect argument for setBox ${targetBox}`)
+
+    this.updatePlanes()
+    this.updateVisual()
+    this.emit(SectionToolEvent.Updated, this.planes)
   }
 
   public toggle(): void {

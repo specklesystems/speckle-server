@@ -176,7 +176,7 @@ const getStream = () => {
     // MEPs (whatever they are)
     // 'https://latest.speckle.systems/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
-    // 'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
+    'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
     // Alex more cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
@@ -483,7 +483,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
-    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
 
     // A LOT of text objects
     // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'
