@@ -71,7 +71,8 @@ const isActiveUserTargetUser = computed(
 )
 
 const filteredActionsItems = computed(() => {
-  const baseItems: LayoutMenuItem[][] = []
+  const mainItems: LayoutMenuItem[] = []
+  const footerItems: LayoutMenuItem[] = []
 
   Object.entries(UPDATE_WORKSPACE_MEMBER_CONFIG).forEach(([type, config]) => {
     if (
@@ -85,11 +86,24 @@ const filteredActionsItems = computed(() => {
         targetUserCurrentSeatType: props.targetUser.seatType
       })
     ) {
-      baseItems.push([{ title: config.menu.title, id: type as UserUpdateActionTypes }])
+      const item = { title: config.menu.title, id: type as UserUpdateActionTypes }
+
+      // Add remove/leave actions to footer, others to main section
+      if (
+        type === UserUpdateActionTypes.RemoveMember ||
+        type === UserUpdateActionTypes.LeaveWorkspace
+      ) {
+        footerItems.push(item)
+      } else {
+        mainItems.push(item)
+      }
     }
   })
 
-  return baseItems
+  const result: LayoutMenuItem[][] = []
+  if (mainItems.length) result.push(mainItems)
+  if (footerItems.length) result.push(footerItems)
+  return result
 })
 
 const onActionChosen = (actionItem: LayoutMenuItem) => {
@@ -156,6 +170,7 @@ const onDialogConfirm = async () => {
     case UserUpdateActionTypes.MakeGuest:
       await onUpdateRole(Roles.Workspace.Guest)
       break
+    case UserUpdateActionTypes.RemoveAdmin:
     case UserUpdateActionTypes.MakeMember:
       await onUpdateRole(Roles.Workspace.Member)
       break

@@ -30,7 +30,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make Admin',
+      title: 'Make admin',
       mainMessage: (seatType) =>
         seatType === WorkspaceSeatType.Editor
           ? 'They will become project owner for all existing and new workspace projects.'
@@ -38,6 +38,26 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       showRoleInfo: true,
       buttonText: 'Make an admin',
       seatCountMessage: true
+    }
+  },
+  [UserUpdateActionTypes.RemoveAdmin]: {
+    menu: {
+      title: 'Remove as admin...',
+      show: ({
+        isActiveUserWorkspaceAdmin = false,
+        isActiveUserTargetUser,
+        targetUserCurrentRole
+      }) =>
+        isActiveUserWorkspaceAdmin &&
+        !isActiveUserTargetUser &&
+        targetUserCurrentRole === Roles.Workspace.Admin
+    },
+    dialog: {
+      title: 'Remove as admin',
+      mainMessage: 'They will lose admin privileges and become a member.',
+      showRoleInfo: false,
+      buttonText: 'Remove as admin',
+      seatCountMessage: false
     }
   },
   [UserUpdateActionTypes.MakeGuest]: {
@@ -53,7 +73,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make Guest',
+      title: 'Make guest',
       mainMessage: 'They will lose access to all existing workspace projects.',
       showRoleInfo: true,
       buttonText: 'Make a guest'
@@ -72,7 +92,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserCurrentRole === Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make Member',
+      title: 'Make member',
       mainMessage: (seatType) =>
         seatType === WorkspaceSeatType.Editor
           ? 'They will be given a viewer seat and lose project ownership.'
