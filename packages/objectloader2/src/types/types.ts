@@ -7,7 +7,7 @@ export interface Item {
 
 export interface Base {
   id: string
-  __closure?: Record<string, number>[]
+  __closure?: Record<string, number>
 }
 
 export interface ObjectLoader2Options {

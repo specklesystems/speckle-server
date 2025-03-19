@@ -73,7 +73,7 @@ export default class CacheDatabase {
     return true
   }
 
-  async cacheStoreObjects(items: Item[]): Promise<void> {
+  async setItems(items: Item[]): Promise<void> {
     if (!(await this.setupCacheDb())) {
       return
     }
@@ -92,7 +92,7 @@ export default class CacheDatabase {
     return Promise.resolve()
   }
 
-  async cacheGetObjects(
+  async getItems(
     baseIds: string[],
     found: Queue<Item>,
     notFound: Queue<string>
@@ -139,7 +139,7 @@ export default class CacheDatabase {
     }
   }
 
-  async cacheGetObject(baseId: string): Promise<Item | undefined> {
+  async getItem(baseId: string): Promise<Item | undefined> {
     if (!(await this.setupCacheDb())) {
       return undefined
     }

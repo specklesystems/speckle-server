@@ -25,7 +25,7 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       }
     }
   }
-   finish(): void {
+  finish(): void {
     this.finished = true
   }
 }
