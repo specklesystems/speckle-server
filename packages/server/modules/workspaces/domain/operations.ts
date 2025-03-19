@@ -33,10 +33,7 @@ export type UpsertWorkspaceArgs = {
   workspace: Omit<
     SetOptional<
       NullableKeysToOptional<Workspace>,
-      | 'domainBasedMembershipProtectionEnabled'
-      | 'discoverabilityEnabled'
-      | 'defaultProjectRole'
-      | 'slug'
+      'domainBasedMembershipProtectionEnabled' | 'discoverabilityEnabled' | 'slug'
     >,
     'domains'
   >

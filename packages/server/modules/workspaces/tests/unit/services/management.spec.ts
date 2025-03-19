@@ -269,7 +269,6 @@ describe('Workspace services', () => {
         logo: null,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
-        defaultProjectRole: 'stream:contributor',
         domains: []
       }
       return merge(workspace, input)
@@ -635,8 +634,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
             payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated]
           const mapping = {
             [Roles.Workspace.Guest]: null,
-            [Roles.Workspace.Member]:
-              context.workspace.defaultProjectRole ?? Roles.Stream.Contributor,
+            [Roles.Workspace.Member]: Roles.Stream.Contributor,
             [Roles.Workspace.Admin]: Roles.Stream.Owner
           }
 
@@ -1128,8 +1126,7 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false,
-                  defaultProjectRole: 'stream:contributor'
+                  domainBasedMembershipProtectionEnabled: false
                 }
               },
               getDomains: async () => {
@@ -1168,8 +1165,7 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor'
+          domainBasedMembershipProtectionEnabled: false
         }
 
         await addDomainToWorkspaceFactory({

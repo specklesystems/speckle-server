@@ -285,9 +285,7 @@ export const getWorkspaceRolesAllowedProjectRolesFactory =
           case Roles.Workspace.Guest:
             return null // No default role
           case Roles.Workspace.Member:
-            if (isNewPlan && seatType === WorkspaceSeatType.Viewer)
-              return Roles.Stream.Reviewer
-            return workspace.defaultProjectRole
+            return Roles.Stream.Reviewer
           case Roles.Workspace.Admin:
             return Roles.Stream.Owner
           default:

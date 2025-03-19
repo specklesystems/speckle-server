@@ -164,7 +164,6 @@ export const createWorkspaceFactory =
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
-      defaultProjectRole: Roles.Stream.Contributor,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false
     }

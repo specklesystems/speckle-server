@@ -193,8 +193,7 @@ describe('Workspaces Roles GQL', () => {
       id: '',
       ownerId: '',
       slug: cryptoRandomString({ length: 10 }),
-      name: 'Test Workspace',
-      defaultProjectRole: Roles.Stream.Reviewer
+      name: 'Test Workspace'
     }
 
     const workspaceAdminUser: BasicTestUser = {
