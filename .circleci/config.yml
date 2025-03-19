@@ -520,7 +520,8 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          command: yarn test:report
+          # Extra formatting to get timestamps on each line in CI (for profiling purposes)
+          command: yarn test:report --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
           no_output_timeout: 30m
 
