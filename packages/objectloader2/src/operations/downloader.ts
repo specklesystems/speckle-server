@@ -1,11 +1,11 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
-import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { BaseDownloadOptions, isBase, Item } from '../types/types.js'
-import CacheDatabase from './database.js'
+import { isBase, Item } from '../types/types.js'
+import { ICache, IDownloader } from './interfaces.js'
+import { BaseDownloadOptions } from './options.js'
 
-export default class Downloader implements Queue<string> {
+export default class Downloader implements IDownloader {
   private _serverUrl: string
   private _streamId: string
   private _objectId: string
@@ -15,12 +15,12 @@ export default class Downloader implements Queue<string> {
   private _headers: HeadersInit
   private _options: BaseDownloadOptions
 
-  private _database: CacheDatabase
+  private _database: ICache
   private _idQueue: BatchingQueue<string>
   private _results: AsyncGeneratorQueue<Item>
 
   constructor(
-    database: CacheDatabase,
+    database: ICache,
     results: AsyncGeneratorQueue<Item>,
     serverUrl: string,
     streamId: string,

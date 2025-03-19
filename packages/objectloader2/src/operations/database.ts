@@ -1,10 +1,12 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { CustomLogger, Item, BaseDatabaseOptions, isBase } from '../types/types.js'
+import { CustomLogger, Item, isBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
+import { BaseDatabaseOptions } from './options.js'
+import { ICache } from './interfaces.js'
 
-export default class CacheDatabase {
+export default class CacheDatabase implements ICache {
   private static _databaseName: string = 'speckle-cache'
   private static _storeName: string = 'objects'
   private _options: BaseDatabaseOptions
@@ -77,26 +79,6 @@ export default class CacheDatabase {
     )
     return true
   }
-
-  async setItems(items: Item[]): Promise<void> {
-    if (!(await this.setupCacheDb())) {
-      return
-    }
-    try {
-      const store = this._cacheDB!.transaction(
-        CacheDatabase._storeName,
-        'readwrite'
-      ).objectStore(CacheDatabase._storeName)
-      for (const item of items) {
-        store.put(item.base, item.baseId)
-      }
-      return CacheDatabase.promisifyIDBTransaction(store.transaction)
-    } catch (e) {
-      this._logger(e instanceof Error ? e.message : String(e))
-    }
-    return Promise.resolve()
-  }
-
   async getItems(
     baseIds: string[],
     found: Queue<Item>,

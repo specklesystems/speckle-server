@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Item } from '../types/types.js'
 import Downloader from './downloader.js'
-import CacheDatabase from './database.js'
+import { ICache } from './interfaces.js'
 
 describe('downloader', () => {
   test('download batch', async () => {
@@ -12,11 +12,11 @@ describe('downloader', () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
     fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
     const results = new AsyncGeneratorQueue<Item>()
-    const db: CacheDatabase = {
+    const db = {
       async write(): Promise<void> {
         return Promise.resolve()
       }
-    }
+    } as unknown as ICache
     const downloader = new Downloader(
       db,
       results,
@@ -46,11 +46,11 @@ describe('downloader', () => {
     const i: Item = { baseId: 'id', base: { id: 'id', __closure: { childIds: 1 } } }
     fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
     const results = new AsyncGeneratorQueue<Item>()
-    const db: CacheDatabase = {
+    const db = {
       async write(): Promise<void> {
         return Promise.resolve()
       }
-    }
+    } as unknown as ICache
     const downloader = new Downloader(
       db,
       results,

@@ -1,7 +1,9 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import CacheDatabase from './database.js'
+import { ICache, IDownloader } from './interfaces.js'
 import Downloader from './downloader.js'
-import { CustomLogger, Base, Item, ObjectLoader2Options } from '../types/types.js'
+import { CustomLogger, Base, Item } from '../types/types.js'
+import { ObjectLoader2Options } from './options.js'
 
 export default class ObjectLoader2 {
   private _objectId: string
@@ -10,8 +12,8 @@ export default class ObjectLoader2 {
 
   private _bases: Record<string, Base> = {}
 
-  private _database: CacheDatabase
-  private _downloader: Downloader
+  private _database: ICache
+  private _downloader: IDownloader
 
   private _gathered: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue()
 
@@ -25,16 +27,17 @@ export default class ObjectLoader2 {
     this._objectId = objectId
 
     this._logger = options?.customLogger || console.log
-
-    this._database = new CacheDatabase(console.log)
-    this._downloader = new Downloader(
-      this._database,
-      this._gathered,
-      serverUrl,
-      streamId,
-      this._objectId,
-      token
-    )
+    this._database = options?.cache || new CacheDatabase(this._logger)
+    this._downloader =
+      options?.downloader ||
+      new Downloader(
+        this._database,
+        this._gathered,
+        serverUrl,
+        streamId,
+        this._objectId,
+        token
+      )
   }
 
   async finish(): Promise<void> {
@@ -49,7 +52,7 @@ export default class ObjectLoader2 {
     }
     const rootItem = await this._downloader.downloadSingle()
 
-    await this._database.setItems([rootItem])
+    await this._database.write(rootItem)
     return rootItem
   }
 

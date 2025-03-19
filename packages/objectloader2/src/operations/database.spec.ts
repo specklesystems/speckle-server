@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import CacheDatabase from './database.js'
 import { IDBFactory } from 'fake-indexeddb'
 import { Item } from '../types/types.js'
-import ArrayQueue from '../helpers/ArrayQueue.js'
+import BufferQueue from '../helpers/bufferQueue.js'
 
 describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
@@ -13,18 +13,6 @@ describe('database cache', () => {
     })
     await database.write(i)
     await database.finish()
-
-    const x = await database.getItem('id')
-    expect(x).toBeDefined()
-    expect(JSON.stringify(x)).toBe(JSON.stringify(i))
-  })
-
-  test('write single item with setItems and getItem', async () => {
-    const i: Item = { baseId: 'id', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, {
-      indexedDB: new IDBFactory()
-    })
-    await database.setItems([i])
 
     const x = await database.getItem('id')
     expect(x).toBeDefined()
@@ -62,8 +50,8 @@ describe('database cache', () => {
     await database.write(i2)
     await database.finish()
 
-    const itemQueue = new ArrayQueue<Item>()
-    const notFoundQueue = new ArrayQueue<string>()
+    const itemQueue = new BufferQueue<Item>()
+    const notFoundQueue = new BufferQueue<string>()
 
     await database.getItems([i1.baseId, i2.baseId], itemQueue, notFoundQueue)
 
