@@ -38,7 +38,7 @@ export default class Downloader implements IDownloader {
     this._options = {
       ...{
         fetch: (...args) => window.fetch(...args),
-        batchMaxSize: 1000,
+        batchMaxSize: 2000,
         batchMaxWait: 1000
       },
       ...options

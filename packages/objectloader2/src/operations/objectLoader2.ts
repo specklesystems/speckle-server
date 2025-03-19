@@ -78,15 +78,8 @@ export default class ObjectLoader2 {
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
-    const t0 = performance.now()
-    let count = 0
     for await (const item of this.getRawObjectIterator()) {
-      count++
-      if (count % 1000 === 0) {
-        this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
-      }
       yield item.base
     }
-    this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
   }
 }

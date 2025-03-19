@@ -21,7 +21,7 @@ export default class CacheDatabase implements ICache {
     this._options = {
       ...{
         indexedDB: globalThis.indexedDB,
-        batchMaxSize: 500,
+        batchMaxSize: 1000,
         batchMaxWait: 1000,
         enableCaching: true
       },
@@ -88,9 +88,8 @@ export default class CacheDatabase implements ICache {
       return
     }
 
-    let count = 0
-    for (let i = 0; i < baseIds.length; i += 500) {
-      const baseIdsChunk = baseIds.slice(i, i + 500)
+    for (let i = 0; i < baseIds.length; i += this._options.batchMaxSize) {
+      const baseIdsChunk = baseIds.slice(i, i + this._options.batchMaxSize)
 
       const store = this._cacheDB!.transaction(
         CacheDatabase._storeName,
@@ -105,16 +104,9 @@ export default class CacheDatabase implements ICache {
             reject(ensureError(request.error, 'Error trying to get a batch'))
         })
         const base = await getBase
-        count++
         if (base === undefined) {
           notFound.add(baseId)
-          if (count % 1000 === 0) {
-            this._logger(`Object ${count} not found in cache`)
-          }
         } else {
-          if (count % 1000 === 0) {
-            this._logger(`Object ${count} found in cache`)
-          }
           if (isBase(base)) {
             found.add({ baseId, base })
           } else {
