@@ -10,23 +10,22 @@ export default class ObjectLoader2 {
 
   private _logger: CustomLogger
 
-  private _bases: Record<string, Base> = {}
-
   private _database: ICache
   private _downloader: IDownloader
 
-  private _gathered: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue()
+  private _gathered: AsyncGeneratorQueue<Item>
 
   constructor(
     serverUrl: string,
     streamId: string,
     objectId: string,
     token?: string,
-    options?: ObjectLoader2Options
+    options?: Partial<ObjectLoader2Options>
   ) {
     this._objectId = objectId
 
     this._logger = options?.customLogger || console.log
+    this._gathered = new AsyncGeneratorQueue()
     this._database = options?.cache || new CacheDatabase(this._logger)
     this._downloader =
       options?.downloader ||
@@ -41,11 +40,14 @@ export default class ObjectLoader2 {
   }
 
   async finish(): Promise<void> {
-    await Promise.all([this._database.finish(), this._downloader.finish()])
-    this._gathered.finish()
+    await Promise.all([
+      this._database.finish(),
+      this._downloader.finish(),
+      this._gathered.finish()
+    ])
   }
 
-  private async getRawRootObject(): Promise<Item | undefined> {
+  async getRootObject(): Promise<Item | undefined> {
     const cachedRootObject = await this._database.getItem(this._objectId)
     if (cachedRootObject) {
       return cachedRootObject
@@ -57,7 +59,7 @@ export default class ObjectLoader2 {
   }
 
   async *getRawObjectIterator(): AsyncGenerator<Item> {
-    const rootItem = await this.getRawRootObject()
+    const rootItem = await this.getRootObject()
     if (rootItem === undefined) {
       this._logger('No root object found!')
       return
@@ -79,7 +81,6 @@ export default class ObjectLoader2 {
     const t0 = performance.now()
     let count = 0
     for await (const item of this.getRawObjectIterator()) {
-      this._bases[item.baseId] = item.base
       count++
       if (count % 1000 === 0) {
         this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)

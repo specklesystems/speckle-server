@@ -1,5 +1,5 @@
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import BatchingQueue from '../helpers/batchingQueue.js'
+import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { isBase, Item } from '../types/types.js'
 import { ICache, IDownloader } from './interfaces.js'
@@ -16,12 +16,12 @@ export default class Downloader implements IDownloader {
   private _options: BaseDownloadOptions
 
   private _database: ICache
-  private _idQueue: BatchingQueue<string>
-  private _results: AsyncGeneratorQueue<Item>
+  private _downloadQueue: BatchingQueue<string>
+  private _results: Queue<Item>
 
   constructor(
     database: ICache,
-    results: AsyncGeneratorQueue<Item>,
+    results: Queue<Item>,
     serverUrl: string,
     streamId: string,
     objectId: string,
@@ -39,7 +39,7 @@ export default class Downloader implements IDownloader {
       ...{ fetch, batchMaxSize: 1000, batchMaxWait: 1000 },
       ...options
     }
-    this._idQueue = new BatchingQueue<string>(
+    this._downloadQueue = new BatchingQueue<string>(
       this._options.batchMaxSize,
       this._options.batchMaxWait,
       (batch: string[]) =>
@@ -63,11 +63,11 @@ export default class Downloader implements IDownloader {
   }
 
   add(id: string): void {
-    this._idQueue.add(id)
+    this._downloadQueue.add(id)
   }
 
   async finish(): Promise<void> {
-    await this._idQueue.finish()
+    await this._downloadQueue.finish()
   }
 
   static processJson(baseId: string, unparsedBase: string): Item {
@@ -88,7 +88,7 @@ export default class Downloader implements IDownloader {
     idBatch: string[],
     url: string,
     headers: HeadersInit,
-    results: AsyncGeneratorQueue<Item>
+    results: Queue<Item>
   ): Promise<void> {
     const response = await this._options.fetch(url, {
       method: 'POST',
