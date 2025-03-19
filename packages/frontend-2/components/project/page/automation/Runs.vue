@@ -2,13 +2,30 @@
   <div class="flex flex-col w-full">
     <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-medium">Runs</h2>
-      <FormButton
-        v-if="!automation.isTestAutomation && isEditable"
-        :disabled="!automation.enabled"
-        @click="onTrigger"
-      >
-        Trigger automation
-      </FormButton>
+      <div class="flex items-center gap-2">
+        <LayoutMenu
+          v-model:open="showActionsMenu"
+          :items="actionItems"
+          :menu-position="HorizontalDirection.Left"
+          @click.stop.prevent
+          @chosen="onActionChosen"
+        >
+          <FormButton
+            color="subtle"
+            hide-text
+            :icon-right="EllipsisHorizontalIcon"
+            class="!text-foreground-2"
+            @click="showActionsMenu = true"
+          ></FormButton>
+        </LayoutMenu>
+        <FormButton
+          v-if="!automation.isTestAutomation && isEditable"
+          :disabled="!automation.enabled"
+          @click="onTrigger"
+        >
+          Trigger automation
+        </FormButton>
+      </div>
     </div>
     <AutomateRunsTable
       :runs="automation.runs.items"
@@ -25,6 +42,8 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { useTriggerAutomation } from '~/lib/projects/composables/automationManagement'
 import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/queries'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
 
 // TODO: Subscriptions for new runs
 
@@ -49,6 +68,27 @@ const props = defineProps<{
   projectId: string
   isEditable: boolean
 }>()
+
+const showActionsMenu = ref(false)
+
+const actionItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Delete',
+      id: 'delete'
+    }
+  ]
+])
+
+const onActionChosen = (params: { item: LayoutMenuItem }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case 'delete': {
+      break
+    }
+  }
+}
 
 const { identifier, onInfiniteLoad } = usePaginatedQuery({
   query: projectAutomationPagePaginatedRunsQuery,

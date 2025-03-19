@@ -52,6 +52,10 @@ export type UpdateAutomation = (
   automation: SetRequired<Partial<AutomationRecord>, 'id'>
 ) => Promise<AutomationRecord>
 
+export type DeleteAutomation = (params: {
+  automationId: string
+}) => Promise<boolean>
+
 export type GetLatestVersionAutomationRuns = (
   params: {
     projectId: string
@@ -63,9 +67,9 @@ export type GetLatestVersionAutomationRuns = (
 
 export type GetFunctionRun = (functionRunId: string) => Promise<
   | (AutomationFunctionRunRecord & {
-      automationId: string
-      automationRevisionId: string
-    })
+    automationId: string
+    automationRevisionId: string
+  })
   | null
 >
 
