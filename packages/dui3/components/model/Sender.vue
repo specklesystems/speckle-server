@@ -17,7 +17,7 @@
         full-width
         @click.stop="openFilterDialog = true"
       >
-        Sending&nbsp;
+        <!-- Sending&nbsp; -->
         <span class="font-bold">{{ modelCard.sendFilter?.name }}:&nbsp;</span>
         <span class="truncate">{{ modelCard.sendFilter?.summary }}</span>
       </FormButton>
