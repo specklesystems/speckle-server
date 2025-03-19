@@ -45,6 +45,8 @@ export class OrientedSectionTool extends Extension {
 
   protected prevPosition: Vector3 | null
   protected prevQuaternion: Quaternion | null
+  protected lastScale: Vector3 | null
+  protected draggingFace: Face | null
 
   protected translateControls: TransformControls
   protected rotateControls: TransformControls
@@ -208,7 +210,7 @@ export class OrientedSectionTool extends Extension {
       this.draggingHandler.bind(this)
     )
 
-    this.scaleControls.addEventListener('change', this.changeHandler.bind(this))
+    this.scaleControls.addEventListener('change', this.changeHandlerScale.bind(this))
     this.scaleControls.addEventListener(
       'dragging-changed',
       this.draggingHandler.bind(this)
@@ -256,6 +258,36 @@ export class OrientedSectionTool extends Extension {
     this.viewer.requestRender()
   }
 
+  //@ts-ignore
+  protected changeHandlerScale() {
+    if (!this.lastScale) this.lastScale = new Vector3().copy(this.scaleAnchor.scale)
+    this.lastScale.sub(this.scaleAnchor.scale)
+    this.lastScale.negate()
+    this.obb.halfSize.add(this.lastScale)
+    if (this.draggingFace) {
+      const dir = new Vector3()
+        .copy(this.draggingFace.normal)
+        .applyQuaternion(
+          new Quaternion().setFromRotationMatrix(
+            new Matrix4().setFromMatrix3(this.obb.rotation)
+          )
+        )
+        .normalize()
+      const scalar =
+        Math.abs(this.draggingFace.normal.x) * this.lastScale.x +
+        Math.abs(this.draggingFace.normal.y) * this.lastScale.y +
+        Math.abs(this.draggingFace.normal.z) * this.lastScale.z
+
+      dir.multiplyScalar(scalar)
+      this.obb.center.sub(dir)
+    }
+
+    this.lastScale.copy(this.scaleAnchor.scale)
+    this.updateVisual()
+    this.updateScaleControls(this.draggingFace as Face)
+    this.viewer.requestRender()
+  }
+
   protected clickHandler(
     args: Vector2 & { event: PointerEvent; multiSelect: boolean }
   ) {
@@ -270,13 +302,16 @@ export class OrientedSectionTool extends Extension {
       this.translateControls.attach(this.translationAnchor)
       this.rotateControls.attach(this.translationAnchor)
       this.scaleControls.detach()
+      this.draggingFace = null
       return
     }
 
+    this.draggingFace = intersectedObjects[0].face as Face
     this.translateControls.detach()
     this.rotateControls.detach()
     this.scaleControls.attach(this.scaleAnchor)
-    this.updateScaleControls(intersectedObjects[0].face as Face)
+    this.updateScaleControls(this.draggingFace)
+
     // if (intersectedObjects.length === 0 && !this.dragging) {
     //   this._attachControlsToBox()
     //   ;(this.boxMeshHelper.material as Material).opacity = 0.5
