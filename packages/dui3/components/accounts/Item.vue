@@ -28,6 +28,7 @@
         </div>
       </div>
       <button
+        v-if="canRemoveAccount"
         class="flex hidden group-hover:block px-2 py-1 text-danger"
         @click.stop="showRemoveAccountDialog = true"
       >
@@ -59,6 +60,12 @@
 <script setup lang="ts">
 import type { DUIAccount } from '~~/store/accounts'
 import { TrashIcon } from '@heroicons/vue/24/outline'
+import { type BaseBridge } from '~/lib/bridge/base'
+
+const { $accountBinding } = useNuxtApp()
+const canRemoveAccount = (
+  $accountBinding as unknown as BaseBridge
+).availableMethodNames.includes('removeAccount')
 
 const props = defineProps<{
   account: DUIAccount

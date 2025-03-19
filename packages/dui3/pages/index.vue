@@ -80,15 +80,12 @@
             </div>
           </LayoutPanel>
         </div>
-        <div
-          v-if="accounts.length !== 0 && !hasNoModelCards"
-          class="space-y-2 mt-2 max-w-2/3 mb-16"
-        >
+        <div v-if="accounts.length !== 0 && !hasNoModelCards" class="space-y-2">
           <div v-for="project in store.projectModelGroups" :key="project.projectId">
             <CommonProjectModelGroup :project="project" />
           </div>
         </div>
-        <div
+        <!-- <div
           v-if="!hasNoModelCards"
           class="z-20 fixed bottom-0 left-0 w-full bg-foundation shadow-inner rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
         >
@@ -118,7 +115,7 @@
               <span class="max-[275px]:hidden">&nbsp;new model</span>
             </FormButton>
           </div>
-        </div>
+        </div> -->
 
         <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
         <ReceiveWizard

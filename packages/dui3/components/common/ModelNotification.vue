@@ -2,9 +2,14 @@
   <div
     :class="`${containerClassColor} text-body-3xs flex justify-between items-center py-1 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 min-w-0`"
   >
-    <div class="grow min-w-0">
+    <div class="grow min-w-0 flex space-x-2 items-center">
+      <ReportBase
+        v-if="notification.report"
+        :report="notification.report"
+        class="mt-[3px]"
+      />
       <div
-        :class="`${textClassColor} font-medium transition max-[275px]:text-center line-clamp-4 text-ellipsis break-words`"
+        :class="`${textClassColor} leading-tight font-medium transition max-[275px]:text-center line-clamp-4 text-ellipsis break-words`"
       >
         {{ notification.text }}
       </div>
@@ -12,18 +17,14 @@
     <div class="flex items-center group space-x-1">
       <FormButton
         v-if="notification.dismissible"
-        size="xs"
+        size="sm"
         text
         :color="notification.level"
         @click.stop="$emit('dismiss')"
       >
         <span :class="`${textClassColor}`">Dismiss</span>
       </FormButton>
-      <ReportBase
-        v-if="notification.report"
-        :report="notification.report"
-        class="mt-[3px]"
-      />
+
       <FormButton
         v-if="notification.cta"
         size="sm"

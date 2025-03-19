@@ -1,12 +1,14 @@
 <template>
   <div>
-    <Menu as="div" class="flex items-center z-100">
+    <Menu as="div" class="ml-1 flex items-center z-100">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
-        <HeaderButton>
+        <button
+          class="rounded-full transition hover:bg-primary hover:text-foreground-on-primary p-1"
+        >
           <Bars3Icon v-if="!open" class="w-4" />
           <XMarkIcon v-else class="w-4" />
-        </HeaderButton>
+        </button>
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -17,26 +19,26 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-1 top-8 origin-top-right bg-foundation outline outline-1 outline-outline-5 rounded-md shadow-lg overflow-hidden"
+          class="absolute right-1 top-11 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <!-- <MenuItem v-slot="{ active }" @click="showFeedbackDialog = true">
+          <MenuItem v-slot="{ active }" @click="showFeedbackDialog = true">
             <div
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'my-1 text-body-2xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
             >
               Feedback
             </div>
-          </MenuItem> -->
+          </MenuItem>
           <MenuItem v-slot="{ active }" @click="toggleTheme">
             <div
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'my-1 text-body-2xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
             >
-              {{ isDarkTheme ? 'Light theme' : 'Dark theme' }}
+              {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </div>
           </MenuItem>
           <div v-if="hasConfigBindings && isDevMode">
@@ -45,7 +47,7 @@
                 <div
                   :class="[
                     active ? 'bg-highlight-1' : '',
-                    'my-1 text-body-2xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                    'my-1 text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
                   ]"
                 >
                   Open Dev Tools
@@ -57,7 +59,7 @@
                 to="/test"
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-2xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
               >
                 Test Page

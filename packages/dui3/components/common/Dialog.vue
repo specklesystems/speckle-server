@@ -16,10 +16,10 @@
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div
-          class="flex md:justify-center h-full w-full md:p-6"
+          class="flex md:justify-center h-full w-full"
           :class="[
             fullscreen === 'none' || fullscreen === 'desktop'
-              ? 'p-4 items-center'
+              ? 'p-1 items-center'
               : 'items-end md:items-center'
           ]"
         >

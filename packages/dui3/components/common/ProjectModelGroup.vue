@@ -2,7 +2,7 @@
   <div v-if="projectDetails" class="px-[2px] rounded-md">
     <button
       :class="`flex w-full items-center text-foreground-2 justify-between hover:bg-foundation-2 ${
-        showModels ? '' : 'bg-foundation-2'
+        showModels ? 'bg-foundation-2' : 'bg-foundation-2'
       } rounded-md transition group`"
       @click="showModels = !showModels"
     >
