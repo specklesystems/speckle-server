@@ -1,9 +1,9 @@
 import { LoaderConfigurationError } from '@/modules/shared/errors'
-import { ChuckContextLoaders } from '@speckle/shared'
+import { Authz } from '@speckle/shared'
 
-let cachedLoaders: Partial<ChuckContextLoaders> = {}
+let cachedLoaders: Partial<Authz.AuthCheckContextLoaders> = {}
 
-const loaderKeys: (keyof ChuckContextLoaders)[] = [
+const loaderKeys: (keyof Authz.AuthCheckContextLoaders)[] = [
   'getEnv',
   'getProject',
   'getProjectRole',
@@ -14,9 +14,11 @@ const loaderKeys: (keyof ChuckContextLoaders)[] = [
   'getWorkspaceSsoSession'
 ]
 
-export const defineLoaders = (loaders: Partial<ChuckContextLoaders>): void => {
+export const defineLoaders = (
+  loaders: Partial<Authz.AuthCheckContextLoaders>
+): void => {
   for (const key of Object.keys(loaders)) {
-    if (!loaderKeys.includes(key as keyof ChuckContextLoaders)) {
+    if (!loaderKeys.includes(key as keyof Authz.AuthCheckContextLoaders)) {
       throw new LoaderConfigurationError(
         `Attempted to define loader with unknown key: ${key}`
       )
@@ -30,8 +32,8 @@ export const defineLoaders = (loaders: Partial<ChuckContextLoaders>): void => {
 }
 
 const isValidLoaders = (
-  loaders: Partial<ChuckContextLoaders>
-): loaders is ChuckContextLoaders => {
+  loaders: Partial<Authz.AuthCheckContextLoaders>
+): loaders is Authz.AuthCheckContextLoaders => {
   return loaderKeys.every((key) => !!loaders[key])
 }
 
@@ -41,7 +43,7 @@ export const validateLoaders = () => {
   }
 }
 
-export const getLoaders = (): ChuckContextLoaders => {
+export const getLoaders = (): Authz.AuthCheckContextLoaders => {
   if (!isValidLoaders(cachedLoaders)) {
     throw new LoaderConfigurationError('Attempted to reference invalid loaders.')
   }

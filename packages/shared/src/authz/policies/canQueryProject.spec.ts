@@ -54,7 +54,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe('ProjectNoAccess')
       }
     })
   })
@@ -153,7 +153,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe('ProjectNoAccess')
       }
     })
   })
@@ -201,7 +201,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe('ProjectNoAccess')
       }
     })
   })

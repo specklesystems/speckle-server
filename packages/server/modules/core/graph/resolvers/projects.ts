@@ -90,6 +90,7 @@ import {
 import { has } from 'lodash'
 import { throwUncoveredError } from '@speckle/shared'
 import { ForbiddenError } from '@/modules/shared/errors'
+import { Authz } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -184,15 +185,15 @@ export = {
       })
 
       if (!canQuery.authorized) {
-        switch (canQuery.code) {
-          case 'ProjectNotFound':
+        switch (canQuery.error.code) {
+          case Authz.ProjectNotFoundError.code:
             throw new StreamNotFoundError()
-          case 'ProjectNoAccess':
-          case 'WorkspaceNoAccess':
-          case 'WorkspaceSsoSessionInvalid':
-            throw new ForbiddenError(canQuery.message)
+          case Authz.ProjectNoAccessError.code:
+          case Authz.WorkspaceNoAccessError.code:
+          case Authz.WorkspaceSsoSessionInvalidError.code:
+            throw new ForbiddenError(canQuery.error.message)
           default:
-            throwUncoveredError(canQuery.code)
+            throwUncoveredError(canQuery.error)
         }
       }
 
