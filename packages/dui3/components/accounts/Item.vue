@@ -1,6 +1,6 @@
 <template>
   <button
-    v-tippy="tip"
+    v-tippy="account.accountInfo.userInfo.email"
     :class="`group block w-full p-1 text-left rounded-md items-center space-x-2  select-none group transition hover:bg-primary-muted hover:cursor-pointer hover:text-primary ${
       !account.isValid
         ? 'text-danger bg-rose-500/10 cursor-not-allowed'
@@ -88,12 +88,5 @@ const userAvatar = computed(() => {
     name: props.account.accountInfo.userInfo.name,
     avatar: props.account.accountInfo.userInfo.avatar
   }
-})
-
-const tip = computed(() => {
-  let value = ''
-  if (props.account.accountInfo.isDefault) value += 'This is your default account. '
-  if (!props.account.isValid) value += 'This account is not reachable.'
-  return value === '' ? null : value
 })
 </script>

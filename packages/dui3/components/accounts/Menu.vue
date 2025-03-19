@@ -1,6 +1,10 @@
 <template>
   <div>
-    <button v-tippy="`Click to change the account.`" @click="showAccountsDialog = true">
+    <button
+      v-if="!justDialog"
+      v-tippy="`Click to change the account.`"
+      @click="showAccountsDialog = true"
+    >
       <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect size="sm" />
       <UserAvatar v-else hover-effect>
         <XMarkIcon class="w-6 h-6" />
@@ -8,7 +12,7 @@
     </button>
     <CommonDialog
       v-model:open="showAccountsDialog"
-      title="Select account"
+      :title="`${justDialog ? 'Your accounts' : 'Select account'}`"
       fullscreen="none"
     >
       <div class="pb-2">
@@ -18,7 +22,6 @@
           :key="acc.accountInfo.id"
           :current-selected-account-id="currentSelectedAccountId"
           :account="(acc as DUIAccount)"
-          class="rounded-lg mb-2"
           @select="selectAccount(acc as DUIAccount)"
           @remove="removeAccount(acc as DUIAccount)"
         />
@@ -68,16 +71,28 @@ const app = useNuxtApp()
 const { $openUrl } = useNuxtApp()
 const { pingDesktopService } = useDesktopService()
 
-defineProps<{
-  currentSelectedAccountId?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    currentSelectedAccountId?: string
+    justDialog?: boolean
+  }>(),
+  {
+    justDialog: false
+  }
+)
 
 defineEmits<{
   (e: 'select', account: DUIAccount): void
 }>()
 
 const showAddNewAccount = ref(false)
-const showAccountsDialog = ref(false)
+// const showAccountsDialog = ref(false)
+
+const showAccountsDialog = defineModel<boolean>('open', {
+  required: false,
+  default: false
+})
+
 const isDesktopServiceAvailable = ref(false) // this should be false default because there is a delay if /ping is not successful.
 
 app.$baseBinding.on('documentChanged', () => {
@@ -102,6 +117,10 @@ watch(accounts, (newVal, oldVal) => {
 })
 
 const selectAccount = (acc: DUIAccount) => {
+  if (props.justDialog) {
+    app.$openUrl(acc.accountInfo.serverInfo.url)
+    return
+  }
   userSelectedAccount.value = acc
   accountStore.setUserSelectedAccount(acc) // saves the selected account id into DUI3Config.db for later use
   showAccountsDialog.value = false

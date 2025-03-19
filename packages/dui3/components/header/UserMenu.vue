@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AccountsMenu v-model:open="showAccountsDialog" just-dialog />
     <Menu as="div" class="flex items-center z-100">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
@@ -35,6 +36,26 @@
               {{ isDarkTheme ? 'Light theme' : 'Dark theme' }}
             </div>
           </MenuItem>
+          <div class="border-t border-outline-3 mt-1">
+            <MenuItem
+              v-slot="{ active }"
+              @click="
+                (e) => {
+                  showAccountsDialog = true
+                  e.preventDefault()
+                }
+              "
+            >
+              <div
+                :class="[
+                  active ? 'bg-highlight-1' : '',
+                  'my-1 text-body-2xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+                ]"
+              >
+                Manage accounts
+              </div>
+            </MenuItem>
+          </div>
           <div class="border-t border-outline-3 mt-1">
             <MenuItem
               v-slot="{ active }"
@@ -93,4 +114,5 @@ const { isDarkTheme, hasConfigBindings, isDevMode } = storeToRefs(uiConfigStore)
 const { toggleTheme } = uiConfigStore
 
 const { $showDevTools, $openUrl } = useNuxtApp()
+const showAccountsDialog = ref(false)
 </script>
