@@ -15,6 +15,21 @@ export const workspaceUpdateRoleMutation = graphql(`
   }
 `)
 
+export const workspaceUpdateSeatTypeMutation = graphql(`
+  mutation UpdateSeatType($input: WorkspaceUpdateSeatTypeInput!) {
+    workspaceMutations {
+      updateSeatType(input: $input) {
+        team {
+          items {
+            id
+            seatType
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const inviteToWorkspaceMutation = graphql(`
   mutation InviteToWorkspace(
     $workspaceId: String!

@@ -66,7 +66,7 @@
       <template #actions="{ item }">
         <SettingsWorkspacesMembersUpdateActionsMenu
           v-if="isWorkspaceAdmin"
-          :user="{
+          :target-user="{
             ...item.user,
             role: item.role,
             seatType: item.seatType

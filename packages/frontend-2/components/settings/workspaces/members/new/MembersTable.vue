@@ -88,7 +88,7 @@
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersUpdateActionsMenu
-          :user="item"
+          :target-user="item"
           :workspace-role="workspace?.role"
           :workspace-id="workspace?.id"
         />
