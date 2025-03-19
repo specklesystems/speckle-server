@@ -227,15 +227,15 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
   if (hasRole.value) {
     items.push({
-      title: 'Settings',
-      id: 'settings'
+      title: 'Collaborators',
+      id: 'collaborators'
     })
   }
 
   if (hasRole.value) {
     items.push({
-      title: 'Collaborators',
-      id: 'collaborators'
+      title: 'Settings',
+      id: 'settings'
     })
   }
 
