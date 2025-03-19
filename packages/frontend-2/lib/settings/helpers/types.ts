@@ -1,4 +1,5 @@
 import type { AvailableRoles } from '@speckle/shared'
+import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
 type BaseSettingsMenuItem = {
   title: string
@@ -11,11 +12,6 @@ export type GenericSettingsMenuItem = BaseSettingsMenuItem & {
   route: string
 }
 
-export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
-  name: string
-  route: (slug: string) => string
-}
-
 export enum UserUpdateActionTypes {
   RemoveMember = 'remove-member',
   LeaveWorkspace = 'leave-workspace',
@@ -24,4 +20,40 @@ export enum UserUpdateActionTypes {
   MakeMember = 'make-member',
   UpgradeEditor = 'upgrade-editor',
   DowngradeEditor = 'downgrade-editor'
+}
+
+export const WORKSPACE_SEAT_TYPE_DESCRIPTIONS: Record<WorkspaceSeatType, string> = {
+  [WorkspaceSeatType.Editor]: 'Can create new models and versions',
+  [WorkspaceSeatType.Viewer]: 'Can view and receive models, but not send to them'
+}
+
+export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
+  name: string
+  route: (slug: string) => string
+}
+
+export type ShowOptions = {
+  isActiveUserWorkspaceAdmin?: boolean
+  isActiveUserCurrentUser?: boolean
+  targetUserRole?: string
+  targetUserSeatType?: WorkspaceSeatType
+}
+
+export type MenuConfig = {
+  title: string
+  show: (options: ShowOptions) => boolean
+}
+
+export type DialogConfig = {
+  title: string
+  mainMessage: string | ((seatType?: WorkspaceSeatType) => string)
+  showRoleInfo?: boolean
+  buttonText: string
+  editorSeatsInfo?: boolean | ((seatType?: WorkspaceSeatType) => boolean)
+  roleInfo?: string
+}
+
+export type ActionConfig = {
+  menu: MenuConfig
+  dialog: DialogConfig
 }

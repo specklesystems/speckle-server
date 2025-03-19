@@ -1,29 +1,15 @@
-import { UserUpdateActionTypes } from '~/lib/settings/helpers/types'
+import { UserUpdateActionTypes, type ActionConfig } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
+import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
-type ShowOptions = {
-  isActiveUserWorkspaceAdmin?: boolean
-  isActiveUserCurrentUser?: boolean
-  targetUserRole?: string
-  targetUserSeatType?: string
-}
+export const LEARN_MORE_ROLES_SEATS_URL =
+  'https://speckle.guide/user/workspaces.html#roles-and-seats'
 
-type MenuConfig = {
-  title: string
-  show: (options: ShowOptions) => boolean
-}
-
-type DialogConfig = {
-  title: string
-  mainMessage: string | ((seatType: string) => string)
-  roleInfo?: string
-  buttonText: string
-  editorSeatsInfo?: boolean | ((seatType: string) => boolean)
-}
-
-type ActionConfig = {
-  menu: MenuConfig
-  dialog: DialogConfig
+export const WORKSPACE_ROLE_DESCRIPTIONS: Record<string, string> = {
+  [Roles.Workspace.Admin]:
+    'Can edit workspaces, including settings, members and all projects',
+  [Roles.Workspace.Member]: 'Can create and own projects',
+  [Roles.Workspace.Guest]: "Can contribute to projects they're invited to"
 }
 
 export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
@@ -44,15 +30,14 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make an admin?',
-      mainMessage: (seatType: string) =>
-        seatType === 'editor'
-          ? 'They will become project owner for all existing and new workspace projects.'
+      title: 'Make Admin',
+      mainMessage: (seatType) =>
+        seatType === WorkspaceSeatType.Editor
+          ? 'They will be given an editor seat and become project owner for all existing and new workspace projects.'
           : 'They will be given an editor seat and become project owner for all existing and new workspace projects.',
-      roleInfo:
-        'Admins can edit workspaces, including settings, members and all projects. More about workspace roles.',
+      showRoleInfo: true,
       buttonText: 'Make an admin',
-      editorSeatsInfo: (seatType: string) => seatType === 'viewer'
+      editorSeatsInfo: true
     }
   },
   [UserUpdateActionTypes.MakeGuest]: {
@@ -68,10 +53,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserRole !== Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make a guest?',
-      mainMessage: 'They will lose access to all existing workspace projects.',
-      roleInfo:
-        "Guest can contribute to projects they're invited to. More about workspace roles.",
+      title: 'Make Guest',
+      mainMessage: (seatType) =>
+        seatType === WorkspaceSeatType.Editor
+          ? 'They will be given a viewer seat and lose project ownership.'
+          : 'They will be given a viewer seat.',
+      showRoleInfo: true,
       buttonText: 'Make a guest'
     }
   },
@@ -88,10 +75,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
         targetUserRole === Roles.Workspace.Guest
     },
     dialog: {
-      title: 'Make a member?',
-      mainMessage:
-        'They will become project viewer for all existing and new workspace projects.',
-      roleInfo: 'Members can create and own projects. More about workspace roles.',
+      title: 'Make Member',
+      mainMessage: (seatType) =>
+        seatType === WorkspaceSeatType.Editor
+          ? 'They will be given a viewer seat and lose project ownership.'
+          : 'They will be given a viewer seat.',
+      showRoleInfo: true,
       buttonText: 'Make a member'
     }
   },
@@ -105,7 +94,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       }) =>
         isActiveUserWorkspaceAdmin &&
         !isActiveUserCurrentUser &&
-        targetUserSeatType === 'viewer'
+        targetUserSeatType === WorkspaceSeatType.Viewer
     },
     dialog: {
       title: 'Upgrade to an editor seat?',
@@ -124,7 +113,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       }) =>
         isActiveUserWorkspaceAdmin &&
         !isActiveUserCurrentUser &&
-        targetUserSeatType === 'editor'
+        targetUserSeatType === WorkspaceSeatType.Editor
     },
     dialog: {
       title: 'Downgrade to a viewer seat?',
@@ -150,7 +139,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Remove from workspace?',
       mainMessage: 'They will lose access to all existing workspace projects.',
       buttonText: 'Remove from workspace',
-      editorSeatsInfo: (seatType: string) => seatType === 'editor'
+      editorSeatsInfo: true
     }
   },
   [UserUpdateActionTypes.LeaveWorkspace]: {
