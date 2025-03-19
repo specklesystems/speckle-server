@@ -52,14 +52,7 @@
         <span class="text-body-xs text-foreground">EMAIL</span>
       </template>
       <template #seat="{ item }">
-        <span class="text-foreground">
-          <div
-            v-tippy="`Explainer`"
-            class="border-b border-dashed border-outline-5 max-w-max select-none capitalize"
-          >
-            {{ item.seatType }}
-          </div>
-        </span>
+        <SeatTypeDisplay :seat-type="item.seatType" />
       </template>
       <!-- TODO: Add joined at date -->
       <template #joined="">
@@ -92,7 +85,7 @@ import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
-
+import SeatTypeDisplay from '../SeatTypeDisplay.vue'
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id

@@ -23,14 +23,13 @@
     <LayoutTable
       class="mt-6 mb-12"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'email', header: 'Email', classes: 'col-span-3' },
+        { id: 'name', header: 'Name', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-3 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -69,20 +68,8 @@
           </div>
         </div>
       </template>
-
-      <template #email="">
-        <!-- TODO: Add email -->
-        <span class="text-body-xs text-foreground">EMAIL</span>
-      </template>
       <template #seat="{ item }">
-        <span class="text-foreground">
-          <div
-            v-tippy="`Explainer`"
-            class="border-b border-dashed border-outline-5 max-w-max select-none capitalize"
-          >
-            {{ item.seatType }}
-          </div>
-        </span>
+        <SeatTypeDisplay :seat-type="item.seatType" />
       </template>
       <!-- TODO: Add joined at date -->
       <template #joined="">
@@ -107,6 +94,7 @@ import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
+import SeatTypeDisplay from '../SeatTypeDisplay.vue'
 
 export type UserItem = (typeof members)['value'][0]
 

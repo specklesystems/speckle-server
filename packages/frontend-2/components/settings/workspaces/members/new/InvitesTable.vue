@@ -48,16 +48,7 @@
         </div>
       </template>
       <!-- TODO: Add seat type -->
-      <template #seat="">
-        <span class="text-foreground">
-          <div
-            v-tippy="`Explainer`"
-            class="border-b border-dashed border-outline-5 max-w-max select-none capitalize"
-          >
-            SEAT TYPE
-          </div>
-        </span>
-      </template>
+      <template #seat>SEAT TYPE</template>
       <template #lastRemindedOn="{ item }">
         <span class="text-body-xs text-foreground-2">
           {{ formattedFullDate(item.updatedAt) }}
