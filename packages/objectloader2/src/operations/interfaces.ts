@@ -1,7 +1,7 @@
 import Queue from '../helpers/queue.js'
 import { Item } from '../types/types.js'
 
-export interface ICache {
+export interface Cache {
   getItem(baseId: string): Promise<Item | undefined>
   getItems(
     baseIds: string[],
@@ -13,7 +13,7 @@ export interface ICache {
   finish(): Promise<void>
 }
 
-export interface IDownloader extends Queue<string> {
+export interface Downloader extends Queue<string> {
   downloadSingle(): Promise<Item>
   finish(): Promise<void>
 }

@@ -2,10 +2,10 @@ import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { isBase, Item } from '../types/types.js'
-import { ICache, IDownloader } from './interfaces.js'
+import { Cache, Downloader } from './interfaces.js'
 import { BaseDownloadOptions } from './options.js'
 
-export default class Downloader implements IDownloader {
+export default class ServerDownloader implements Downloader {
   #serverUrl: string
   #streamId: string
   #objectId: string
@@ -15,12 +15,12 @@ export default class Downloader implements IDownloader {
   #headers: HeadersInit
   #options: BaseDownloadOptions
 
-  #database: ICache
+  #database: Cache
   #downloadQueue: BatchingQueue<string>
   #results: Queue<Item>
 
   constructor(
-    database: ICache,
+    database: Cache,
     results: Queue<Item>,
     serverUrl: string,
     streamId: string,
@@ -38,14 +38,14 @@ export default class Downloader implements IDownloader {
     this.#options = {
       ...{
         fetch: (...args) => globalThis.fetch(...args),
-        batchMaxSize: 5000,
-        batchMaxWait: 1000
+        maxDownloadSize: 5000,
+        maxDownloadBatchWait: 1000
       },
       ...options
     }
     this.#downloadQueue = new BatchingQueue<string>(
-      this.#options.batchMaxSize,
-      this.#options.batchMaxWait,
+      this.#options.maxDownloadSize,
+      this.#options.maxDownloadBatchWait,
       (batch: string[]) =>
         this.downloadBatch(
           batch,

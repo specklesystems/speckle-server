@@ -4,9 +4,9 @@ import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { Item, isBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
-import { ICache } from './interfaces.js'
+import { Cache } from './interfaces.js'
 
-export default class CacheDatabase implements ICache {
+export default class IndexedDatabase implements Cache {
   static #databaseName: string = 'speckle-cache'
   static #storeName: string = 'objects'
   #options: BaseDatabaseOptions
@@ -15,12 +15,13 @@ export default class CacheDatabase implements ICache {
 
   #writeQueue: BatchingQueue<Item> | undefined
 
-  constructor(options?: Partial<BaseDatabaseOptions>) {
+  constructor(options: Partial<BaseDatabaseOptions>) {
     this.#options = {
       ...{
         indexedDB: globalThis.indexedDB,
-        batchMaxSize: 1000,
-        batchMaxWait: 1000,
+        maxCacheReadSize: 1000,
+        maxCacheWriteSize: 1000,
+        maxCacheBatchWriteWait: 1000,
         enableCaching: true
       },
       ...options
@@ -33,8 +34,8 @@ export default class CacheDatabase implements ICache {
         return
       }
       this.#writeQueue = new BatchingQueue<Item>(
-        this.#options.batchMaxSize,
-        this.#options.batchMaxWait,
+        this.#options.maxCacheWriteSize,
+        this.#options.maxCacheBatchWriteWait,
         (batch: Item[]) => this.#cacheSaveBatch(batch, this.#cacheDB!)
       )
     }
@@ -72,8 +73,8 @@ export default class CacheDatabase implements ICache {
     // Initialize
     await this.#safariFix()
     this.#cacheDB = await this.#openDatabase(
-      CacheDatabase.#databaseName,
-      CacheDatabase.#storeName
+      IndexedDatabase.#databaseName,
+      IndexedDatabase.#storeName
     )
     return true
   }
@@ -86,13 +87,13 @@ export default class CacheDatabase implements ICache {
       return
     }
 
-    for (let i = 0; i < baseIds.length; i += this.#options.batchMaxSize) {
-      const baseIdsChunk = baseIds.slice(i, i + this.#options.batchMaxSize)
+    for (let i = 0; i < baseIds.length; i += this.#options.maxCacheReadSize) {
+      const baseIdsChunk = baseIds.slice(i, i + this.#options.maxCacheReadSize)
 
       const store = this.#cacheDB!.transaction(
-        CacheDatabase.#storeName,
+        IndexedDatabase.#storeName,
         'readonly'
-      ).objectStore(CacheDatabase.#storeName)
+      ).objectStore(IndexedDatabase.#storeName)
       const idbChildrenPromises = baseIdsChunk.map<Promise<void>>(async (baseId) => {
         const getBase = new Promise((resolve, reject) => {
           const request = store.get(baseId)
@@ -122,9 +123,9 @@ export default class CacheDatabase implements ICache {
     }
 
     const store = this.#cacheDB!.transaction(
-      CacheDatabase.#storeName,
+      IndexedDatabase.#storeName,
       'readonly'
-    ).objectStore(CacheDatabase.#storeName)
+    ).objectStore(IndexedDatabase.#storeName)
     const getBase = new Promise<unknown>((resolve, reject) => {
       const request = store.get(baseId)
 
@@ -142,8 +143,8 @@ export default class CacheDatabase implements ICache {
   }
 
   async #cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
-    const transaction = cacheDB.transaction(CacheDatabase.#storeName, 'readwrite')
-    const store = transaction.objectStore(CacheDatabase.#storeName)
+    const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite')
+    const store = transaction.objectStore(IndexedDatabase.#storeName)
     const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]

@@ -1,20 +1,21 @@
 import { CustomLogger, Fetcher } from '../types/types.js'
-import { ICache, IDownloader } from './interfaces.js'
+import { Cache, Downloader } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   customLogger: CustomLogger
-  cache: ICache
-  downloader: IDownloader
+  cache: Cache
+  downloader: Downloader
 }
 export interface BaseDatabaseOptions {
   indexedDB: IDBFactory
   enableCaching: boolean
-  batchMaxSize: number
-  batchMaxWait: number
+  maxCacheReadSize: number
+  maxCacheWriteSize: number
+  maxCacheBatchWriteWait: number
 }
 
 export interface BaseDownloadOptions {
   fetch: Fetcher
-  batchMaxSize: number
-  batchMaxWait: number
+  maxDownloadSize: number
+  maxDownloadBatchWait: number
 }

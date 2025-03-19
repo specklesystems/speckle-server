@@ -3,8 +3,8 @@ import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Item } from '../types/types.js'
-import Downloader from './downloader.js'
-import { ICache } from './interfaces.js'
+import { Cache } from './interfaces.js'
+import ServerDownloader from './server-downloader.js'
 
 describe('downloader', () => {
   test('download batch', async () => {
@@ -16,8 +16,8 @@ describe('downloader', () => {
       async write(): Promise<void> {
         return Promise.resolve()
       }
-    } as unknown as ICache
-    const downloader = new Downloader(
+    } as unknown as Cache
+    const downloader = new ServerDownloader(
       db,
       results,
       'http://speckle.test',
@@ -26,8 +26,8 @@ describe('downloader', () => {
       'token',
       {
         fetch: fetchMocker,
-        batchMaxSize: 5,
-        batchMaxWait: 200
+        maxDownloadSize: 5,
+        maxDownloadBatchWait: 200
       }
     )
     downloader.add('id')
@@ -50,8 +50,8 @@ describe('downloader', () => {
       async write(): Promise<void> {
         return Promise.resolve()
       }
-    } as unknown as ICache
-    const downloader = new Downloader(
+    } as unknown as Cache
+    const downloader = new ServerDownloader(
       db,
       results,
       'http://speckle.test',
@@ -60,8 +60,8 @@ describe('downloader', () => {
       'token',
       {
         fetch: fetchMocker,
-        batchMaxSize: 5,
-        batchMaxWait: 200
+        maxDownloadSize: 5,
+        maxDownloadBatchWait: 200
       }
     )
     const x = await downloader.downloadSingle()

@@ -1,7 +1,7 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
-import CacheDatabase from './database.js'
-import { ICache, IDownloader } from './interfaces.js'
-import Downloader from './downloader.js'
+import { Cache, Downloader } from './interfaces.js'
+import IndexedDatabase from './indexed-database.js'
+import ServerDownloader from './server-downloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
 
@@ -10,8 +10,8 @@ export default class ObjectLoader2 {
 
   #logger: CustomLogger
 
-  #database: ICache
-  #downloader: IDownloader
+  #database: Cache
+  #downloader: Downloader
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -26,10 +26,10 @@ export default class ObjectLoader2 {
 
     this.#logger = options?.customLogger || console.log
     this.#gathered = new AsyncGeneratorQueue()
-    this.#database = options?.cache || new CacheDatabase()
+    this.#database = options?.cache || new IndexedDatabase({})
     this.#downloader =
       options?.downloader ||
-      new Downloader(
+      new ServerDownloader(
         this.#database,
         this.#gathered,
         serverUrl,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import CacheDatabase from './database.js'
+import IndexedDatabase from './indexed-database.js'
 import { IDBFactory } from 'fake-indexeddb'
 import { Item } from '../types/types.js'
 import BufferQueue from '../helpers/bufferQueue.js'
@@ -7,9 +7,9 @@ import BufferQueue from '../helpers/bufferQueue.js'
 describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, {
+    const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
-      batchMaxWait: 200
+      maxCacheBatchWriteWait: 200
     })
     await database.write(i)
     await database.finish()
@@ -22,9 +22,9 @@ describe('database cache', () => {
   test('write two items to queue use getItem', async () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, {
+    const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
-      batchMaxWait: 200
+      maxCacheBatchWriteWait: 200
     })
     await database.write(i1)
     await database.write(i2)
@@ -42,9 +42,9 @@ describe('database cache', () => {
   test('write two items to queue use getItem', async () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, {
+    const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
-      batchMaxWait: 200
+      maxCacheBatchWriteWait: 200
     })
     await database.write(i1)
     await database.write(i2)

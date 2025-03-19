@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import ObjectLoader2 from './objectLoader2.js'
 import { Item } from '../types/types.js'
-import { ICache, IDownloader } from './interfaces.js'
-import BufferQueue from '../helpers/bufferQueue.js'
+import { Cache, Downloader } from './interfaces.js'
 import Queue from '../helpers/queue.js'
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -14,8 +12,8 @@ describe('objectloader2', () => {
         expect(id).toBe(root.baseId)
         return Promise.resolve(root)
       }
-    } as ICache
-    const downloader = {} as IDownloader
+    } as Cache
+    const downloader = {} as Downloader
     const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
       cache,
       downloader
@@ -35,12 +33,12 @@ describe('objectloader2', () => {
         expect(i).toBe(root)
         return Promise.resolve()
       }
-    } as ICache
+    } as Cache
     const downloader = {
       downloadSingle(): Promise<Item> {
         return Promise.resolve(root)
       }
-    } as IDownloader
+    } as Downloader
     const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
       cache,
       downloader
@@ -56,8 +54,8 @@ describe('objectloader2', () => {
         expect(id).toBe(root.baseId)
         return Promise.resolve(root)
       }
-    } as ICache
-    const downloader = {} as IDownloader
+    } as Cache
+    const downloader = {} as Downloader
     const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
       cache,
       downloader
@@ -97,11 +95,12 @@ describe('objectloader2', () => {
       finish(): Promise<void> {
         return Promise.resolve()
       }
-    } as ICache
+    } as Cache
     const downloader = {
       finish(): Promise<void> {
         return Promise.resolve()
-      }} as IDownloader
+      }
+    } as Downloader
     const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
       cache,
       downloader
