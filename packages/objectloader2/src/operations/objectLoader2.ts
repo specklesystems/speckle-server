@@ -43,13 +43,13 @@ export default class ObjectLoader2 {
   }
 
   private async getRawRootObject(): Promise<Item | undefined> {
-    const cachedRootObject = await this._database.cacheGetObject(this._objectId)
+    const cachedRootObject = await this._database.getItem(this._objectId)
     if (cachedRootObject) {
       return cachedRootObject
     }
     const rootItem = await this._downloader.downloadSingle()
 
-    await this._database.cacheStoreObjects([rootItem])
+    await this._database.setItems([rootItem])
     return rootItem
   }
 
@@ -61,7 +61,7 @@ export default class ObjectLoader2 {
     }
     yield rootItem
     if (!rootItem.base.__closure) return
-    const getPromise = this._database.cacheGetObjects(
+    const getPromise = this._database.getItems(
       Object.keys(rootItem.base.__closure),
       this._gathered,
       this._downloader

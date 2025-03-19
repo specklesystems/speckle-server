@@ -36,7 +36,7 @@ export default class Downloader implements Queue<string> {
     this._objectId = objectId
     this._token = token
     this._options = {
-      ...{ batchMaxSize: 1000, batchMaxWait: 1000 },
+      ...{ fetch, batchMaxSize: 1000, batchMaxWait: 1000 },
       ...options
     }
     this._idQueue = new BatchingQueue<string>(
@@ -90,7 +90,7 @@ export default class Downloader implements Queue<string> {
     headers: HeadersInit,
     results: AsyncGeneratorQueue<Item>
   ): Promise<void> {
-    const response = await fetch(url, {
+    const response = await this._options.fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ objects: JSON.stringify(idBatch) })
@@ -129,7 +129,7 @@ export default class Downloader implements Queue<string> {
   }
 
   async downloadSingle(): Promise<Item> {
-    const response = await fetch(this._requestUrlRootObj, {
+    const response = await this._options.fetch(this._requestUrlRootObj, {
       headers: this._headers
     })
     this.validateResponse(response)

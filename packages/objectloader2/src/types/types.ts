@@ -1,5 +1,10 @@
 export type CustomLogger = (message?: string, ...optionalParams: unknown[]) => void
 
+export type Fetcher = (
+  input: string | URL | Request,
+  init?: RequestInit
+) => Promise<Response>
+
 export interface Item {
   baseId: string
   base: Base
@@ -20,6 +25,7 @@ export interface BaseDatabaseOptions {
 }
 
 export interface BaseDownloadOptions {
+  fetch: Fetcher
   batchMaxSize: number
   batchMaxWait: number
 }
