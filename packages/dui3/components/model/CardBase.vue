@@ -35,29 +35,28 @@
           </div>
         </div>
 
-        <AutomateResultDialog
-          v-if="isSender && summary"
-          :model-card="modelCard"
-          :automation-runs="automationRuns"
-          :project-id="modelCard.projectId"
-          :model-id="modelCard.modelId"
-        >
-          <template #activator="{ toggle }">
-            <button
-              v-tippy="summary.summary.value.longSummary"
-              class="action action-normal"
-              @click.stop="toggle()"
-            >
-              <AutomateRunsTriggerStatusIcon
-                :summary="summary.summary.value"
-                class="h-5 w-5 md:h-6 md:w-6"
-              />
-            </button>
-          </template>
-        </AutomateResultDialog>
-
         <!-- TODO: uncomment if needed, this is a hack to hide this from two apps where we don't support it -->
         <div class="flex items-center justify-end grow">
+          <AutomateResultDialog
+            v-if="isSender && summary"
+            :model-card="modelCard"
+            :automation-runs="automationRuns"
+            :project-id="modelCard.projectId"
+            :model-id="modelCard.modelId"
+          >
+            <template #activator="{ toggle }">
+              <button
+                v-tippy="summary.summary.value.longSummary"
+                class="action action-normal p-1 hover:bg-highlight-2 rounded-md transition"
+                @click.stop="toggle()"
+              >
+                <AutomateRunsTriggerStatusIcon
+                  :summary="summary.summary.value"
+                  class="h-4 w-4"
+                />
+              </button>
+            </template>
+          </AutomateResultDialog>
           <FormButton
             v-if="store.hostAppName !== 'navisworks' && store.hostAppName !== 'etabs'"
             v-tippy="'Highlight'"

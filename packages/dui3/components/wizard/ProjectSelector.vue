@@ -42,6 +42,7 @@
         <FormButton
           v-if="searchText && hasReachedEnd && showNewProject"
           full-width
+          :disabled="isCreatingProject"
           @click="createNewProject(searchText)"
         >
           Create&nbsp;
@@ -88,7 +89,7 @@
           <FormButton size="sm" text @click="showNewProjectDialog = false">
             Cancel
           </FormButton>
-          <FormButton size="sm" submit>Create</FormButton>
+          <FormButton size="sm" submit :disabled="isCreatingProject">Create</FormButton>
         </div>
       </form>
     </CommonDialog>
@@ -99,6 +100,8 @@ import { storeToRefs } from 'pinia'
 import { PlusIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
+import { useHostAppStore } from '~/store/hostApp'
+
 import {
   createProjectInWorkspaceMutation,
   createProjectMutation,
@@ -115,6 +118,7 @@ import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const hostAppStore = useHostAppStore()
 
 const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
@@ -183,7 +187,10 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
+const isCreatingProject = ref(false)
+
 const createNewProject = async (name: string) => {
+  isCreatingProject.value = true
   if (selectedWorkspace.value) {
     return createNewProjectInWorkspace(name)
   }
@@ -201,8 +208,13 @@ const createNewProject = async (name: string) => {
     refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
-    // TODO: Error out
+    hostAppStore.setNotification({
+      type: 1,
+      title: 'Failed to create project',
+      description: res?.errors[0].message || 'Undefined error'
+    })
   }
+  isCreatingProject.value = false
 }
 
 const createNewProjectInWorkspace = async (name: string) => {

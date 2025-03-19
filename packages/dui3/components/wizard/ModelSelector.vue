@@ -38,20 +38,21 @@
           fullscreen="none"
         >
           <div class="mx-1">
-            <p v-if="hasNonZeroVersionsProblem" class="mb-2 text-sm">
-              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+            <p class="text-body-xs mb-2">You are about to overwrite this model.</p>
+            <p
+              v-if="hasNonZeroVersionsProblem"
+              class="mb-2 text-body-3xs text-foreground-2"
+            >
               The model you selected contains versions coming from
               <b>other files/apps</b>
               .
             </p>
-            <p v-if="existingModelProblem" class="mb-2 text-sm">
-              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+            <p v-if="existingModelProblem" class="mb-2 text-body-3xs text-foreground-2">
               <b>{{ ` ${existingModelName}` }}</b>
               is already being used to
               <b>{{ isSender ? 'publish,' : 'load,' }}</b>
               you could consider using the existing one.
             </p>
-            <p class="mb-2 text-sm">Are you sure you want to proceed?</p>
           </div>
           <template #buttons>
             <FormButton
@@ -63,7 +64,7 @@
               Cancel
             </FormButton>
             <FormButton full-width size="sm" @click="confirmModelSelection()">
-              Yes
+              Proceed
             </FormButton>
           </template>
         </CommonDialog>
@@ -71,6 +72,7 @@
         <FormButton
           v-if="searchText && hasReachedEnd && showNewModel"
           full-width
+          :disabled="isCreatingModel"
           @click="createNewModel(searchText)"
         >
           Create&nbsp;
@@ -108,14 +110,14 @@
           <FormButton size="sm" text @click="showNewModelDialog = false">
             Cancel
           </FormButton>
-          <FormButton size="sm" submit>Create</FormButton>
+          <FormButton size="sm" submit :disabled="isCreatingModel">Create</FormButton>
         </div>
       </form>
     </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import type {
   ProjectListProjectItemFragment,
@@ -193,7 +195,9 @@ const onSubmit = handleSubmit(() => {
   void createNewModel(newModelName.value as string)
 })
 
+const isCreatingModel = ref(false)
 const createNewModel = async (name: string) => {
+  isCreatingModel.value = true
   const account = accountStore.accounts.find(
     (acc) => acc.accountInfo.id === props.accountId
   ) as DUIAccount
@@ -209,7 +213,13 @@ const createNewModel = async (name: string) => {
     emit('next', res?.data?.modelMutations.create)
   } else {
     // TODO: Error out
+    hostAppStore.setNotification({
+      type: 1,
+      title: 'Failed to create model',
+      description: res?.errors[0].message || 'Undefined error'
+    })
   }
+  isCreatingModel.value = false
 }
 
 const {

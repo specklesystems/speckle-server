@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="store.hostAppName">
-      <div class="px-1">
+      <div v-if="!config.isDevMode" class="px-1">
         <CommonUpdateAlert />
       </div>
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
@@ -157,8 +157,11 @@ import {
 } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
+import { useConfigStore } from '~~/store/config'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 const app = useNuxtApp()
+const config = useConfigStore()
+
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
 // TODO: guard against this later, incase we will have more top level entry pages

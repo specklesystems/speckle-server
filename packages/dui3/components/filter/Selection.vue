@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 p-2 bg-highlight-1 rounded-md text-body-sm">
+  <div class="space-y-2 p-2 bg-highlight-1 rounded-md text-body-xs">
     <div v-if="selectionStore.selectionInfo.selectedObjectIds?.length === 0">
       No objects selected, go ahead and select some from your model!
     </div>
