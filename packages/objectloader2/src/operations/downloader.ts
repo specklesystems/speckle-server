@@ -47,7 +47,6 @@ export default class Downloader implements Queue<string> {
           batch,
           this._requestUrlChildren,
           this._headers,
-          this._database,
           this._results
         )
     )
@@ -89,7 +88,6 @@ export default class Downloader implements Queue<string> {
     idBatch: string[],
     url: string,
     headers: HeadersInit,
-    database: CacheDatabase,
     results: AsyncGeneratorQueue<Item>
   ): Promise<void> {
     const response = await fetch(url, {
@@ -123,7 +121,7 @@ export default class Downloader implements Queue<string> {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = Downloader.processJson(id, unparsedObj)
-          await database.write(item)
+          await this._database.write(item)
           results.add(item)
         }
       }

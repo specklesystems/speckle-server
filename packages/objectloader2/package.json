@@ -44,7 +44,8 @@
     "prettier": "^3.3.2",
     "tshy": "^3.0.2",
     "typescript": "^5.2.2",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "vitest-fetch-mock": "^0.4.5"
   },
   "exports": {
     "./package.json": "./package.json",

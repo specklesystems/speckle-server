@@ -3,6 +3,7 @@ import Queue from './queue.js'
 export default class AsyncGeneratorQueue<T> implements Queue<T> {
   private buffer: T[] = []
   private resolveQueue: ((value: T) => void)[] = []
+  private finished = false
 
   add(value: T): void {
     if (this.resolveQueue.length > 0) {
@@ -16,12 +17,15 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
   }
 
   async *consume(): AsyncGenerator<T> {
-    while (true) {
+    while (!this.finished || this.resolveQueue.length > 0 || this.buffer.length > 0) {
       if (this.buffer.length > 0) {
         yield this.buffer.shift()! // Yield available values
       } else {
         yield await new Promise<T>((resolve) => this.resolveQueue.push(resolve))
       }
     }
+  }
+   finish(): void {
+    this.finished = true
   }
 }

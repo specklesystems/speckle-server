@@ -16709,6 +16709,7 @@ __metadata:
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
     vitest: "npm:^3.0.7"
+    vitest-fetch-mock: "npm:^0.4.5"
   languageName: unknown
   linkType: soft
 
@@ -52396,6 +52397,15 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10/c2f0b392a253318a1d3ffc6873885d4a03c6bda6f717682bd0c82b7a431a67fb1ba08de6e1bf7f3f31bde1615015c5ef4be264f20c6e34c590d8a7c9516e94f4
+  languageName: node
+  linkType: hard
+
+"vitest-fetch-mock@npm:^0.4.5":
+  version: 0.4.5
+  resolution: "vitest-fetch-mock@npm:0.4.5"
+  peerDependencies:
+    vitest: ">=2.0.0"
+  checksum: 10/36b33ea63b582d614a9dfcb3552e4681c29d1168bcc6b023c4438a31143d8febd3ddc46c4593a32f8ffb958624d75c1ae3509b7d30c16173783d3243ee065a9b
   languageName: node
   linkType: hard
 

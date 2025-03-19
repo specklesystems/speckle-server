@@ -39,6 +39,7 @@ export default class ObjectLoader2 {
 
   async finish(): Promise<void> {
     await Promise.all([this._database.finish(), this._downloader.finish()])
+    this._gathered.finish()
   }
 
   private async getRawRootObject(): Promise<Item | undefined> {
@@ -66,8 +67,11 @@ export default class ObjectLoader2 {
       this._downloader
     )
     for await (const item of this._gathered.consume()) {
+      console.log('here2')
       yield item
+      console.log(JSON.stringify(item))
     }
+    console.log('here')
     await getPromise
   }
 
