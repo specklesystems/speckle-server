@@ -21,13 +21,13 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Make admin...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserRole
+        isActiveUserTargetUser,
+        targetUserCurrentRole
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserRole !== Roles.Workspace.Admin &&
-        targetUserRole !== Roles.Workspace.Guest
+        !isActiveUserTargetUser &&
+        targetUserCurrentRole !== Roles.Workspace.Admin &&
+        targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
       title: 'Make Admin',
@@ -45,12 +45,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Make guest...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserRole
+        isActiveUserTargetUser,
+        targetUserCurrentRole
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserRole !== Roles.Workspace.Guest
+        !isActiveUserTargetUser &&
+        targetUserCurrentRole !== Roles.Workspace.Guest
     },
     dialog: {
       title: 'Make Guest',
@@ -64,12 +64,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Make member...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserRole
+        isActiveUserTargetUser,
+        targetUserCurrentRole
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserRole === Roles.Workspace.Guest
+        !isActiveUserTargetUser &&
+        targetUserCurrentRole === Roles.Workspace.Guest
     },
     dialog: {
       title: 'Make Member',
@@ -86,12 +86,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Upgrade to editor seat...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserSeatType
+        isActiveUserTargetUser,
+        targetUserCurrentSeatType
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserSeatType === WorkspaceSeatType.Viewer
+        !isActiveUserTargetUser &&
+        targetUserCurrentSeatType === WorkspaceSeatType.Viewer
     },
     dialog: {
       title: 'Upgrade to an editor seat?',
@@ -105,12 +105,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Downgrade to viewer seat...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserSeatType
+        isActiveUserTargetUser,
+        targetUserCurrentSeatType
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserSeatType === WorkspaceSeatType.Editor
+        !isActiveUserTargetUser &&
+        targetUserCurrentSeatType === WorkspaceSeatType.Editor
     },
     dialog: {
       title: 'Downgrade to a viewer seat?',
@@ -125,12 +125,12 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Remove from workspace...',
       show: ({
         isActiveUserWorkspaceAdmin = false,
-        isActiveUserCurrentUser,
-        targetUserRole
+        isActiveUserTargetUser,
+        targetUserCurrentRole
       }) =>
         isActiveUserWorkspaceAdmin &&
-        !isActiveUserCurrentUser &&
-        targetUserRole === 'canRemove'
+        !isActiveUserTargetUser &&
+        targetUserCurrentRole === 'canRemove'
     },
     dialog: {
       title: 'Remove from workspace?',
@@ -142,7 +142,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
   [UserUpdateActionTypes.LeaveWorkspace]: {
     menu: {
       title: 'Leave workspace...',
-      show: ({ isActiveUserCurrentUser = false }) => isActiveUserCurrentUser
+      show: ({ isActiveUserTargetUser = false }) => isActiveUserTargetUser
     },
     dialog: {
       title: 'Leave workspace?',

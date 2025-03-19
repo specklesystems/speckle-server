@@ -34,9 +34,9 @@ export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
 
 export type ShowOptions = {
   isActiveUserWorkspaceAdmin?: boolean
-  isActiveUserCurrentUser?: boolean
-  targetUserRole?: string
-  targetUserSeatType?: WorkspaceSeatType
+  isActiveUserTargetUser?: boolean
+  targetUserCurrentRole?: string
+  targetUserCurrentSeatType?: WorkspaceSeatType
 }
 
 export type MenuConfig = {

@@ -66,7 +66,7 @@ const dialogType = ref<UserUpdateActionTypes>()
 const isActiveUserWorkspaceAdmin = computed(
   () => props.workspaceRole === Roles.Workspace.Admin
 )
-const isActiveUserCurrentUser = computed(
+const isActiveUserTargetUser = computed(
   () => activeUser.value?.id === props.targetUser.id
 )
 
@@ -77,12 +77,12 @@ const filteredActionsItems = computed(() => {
     if (
       config.menu.show({
         isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
-        isActiveUserCurrentUser: isActiveUserCurrentUser.value,
-        targetUserRole:
+        isActiveUserTargetUser: isActiveUserTargetUser.value,
+        targetUserCurrentRole:
           type === UserUpdateActionTypes.RemoveMember
             ? 'canRemove'
             : props.targetUser.role,
-        targetUserSeatType: props.targetUser.seatType
+        targetUserCurrentSeatType: props.targetUser.seatType
       })
     ) {
       baseItems.push([{ title: config.menu.title, id: type as UserUpdateActionTypes }])
