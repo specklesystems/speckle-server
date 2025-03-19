@@ -248,6 +248,7 @@ type Documents = {
     "\n  mutation createWebhook($webhook: WebhookCreateInput!) {\n    webhookCreate(webhook: $webhook)\n  }\n": typeof types.CreateWebhookDocument,
     "\n  mutation updateWebhook($webhook: WebhookUpdateInput!) {\n    webhookUpdate(webhook: $webhook)\n  }\n": typeof types.UpdateWebhookDocument,
     "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": typeof types.CreateAutomationDocument,
+    "\n  mutation DeleteAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        delete(automationId: $automationId)\n      }\n    }\n  }\n": typeof types.DeleteAutomationDocument,
     "\n  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        update(input: $input) {\n          id\n          name\n          enabled\n        }\n      }\n    }\n  }\n": typeof types.UpdateAutomationDocument,
     "\n  mutation CreateAutomationRevision(\n    $projectId: ID!\n    $input: ProjectAutomationRevisionCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createRevision(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": typeof types.CreateAutomationRevisionDocument,
     "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n": typeof types.TriggerAutomationDocument,
@@ -654,6 +655,7 @@ const documents: Documents = {
     "\n  mutation createWebhook($webhook: WebhookCreateInput!) {\n    webhookCreate(webhook: $webhook)\n  }\n": types.CreateWebhookDocument,
     "\n  mutation updateWebhook($webhook: WebhookUpdateInput!) {\n    webhookUpdate(webhook: $webhook)\n  }\n": types.UpdateWebhookDocument,
     "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": types.CreateAutomationDocument,
+    "\n  mutation DeleteAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        delete(automationId: $automationId)\n      }\n    }\n  }\n": types.DeleteAutomationDocument,
     "\n  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        update(input: $input) {\n          id\n          name\n          enabled\n        }\n      }\n    }\n  }\n": types.UpdateAutomationDocument,
     "\n  mutation CreateAutomationRevision(\n    $projectId: ID!\n    $input: ProjectAutomationRevisionCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createRevision(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": types.CreateAutomationRevisionDocument,
     "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n": types.TriggerAutomationDocument,
@@ -1776,6 +1778,10 @@ export function graphql(source: "\n  mutation updateWebhook($webhook: WebhookUpd
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        delete(automationId: $automationId)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        delete(automationId: $automationId)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

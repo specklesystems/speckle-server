@@ -221,6 +221,16 @@ export const createAutomationMutation = graphql(`
   }
 `)
 
+export const deleteAutomationMutation = graphql(`
+  mutation DeleteAutomation($projectId: ID!, $automationId: ID!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        delete(automationId: $automationId)
+      }
+    }
+  }
+`)
+
 export const updateAutomationMutation = graphql(`
   mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {
     projectMutations {

@@ -29,6 +29,7 @@ import {
   createAutomationMutation,
   createAutomationRevisionMutation,
   createTestAutomationMutation,
+  deleteAutomationMutation,
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
@@ -61,6 +62,33 @@ export function useCreateAutomation() {
     }
 
     return res?.data?.projectMutations.automationMutations.create
+  }
+}
+
+export function useDeleteAutomation() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate: deleteAutomation } = useMutation(deleteAutomationMutation)
+
+  return async (projectId: string, automationId: string) => {
+    if (!activeUser.value) return
+
+    const res = await deleteAutomation({ projectId, automationId }).catch(
+      convertThrowIntoFetchResult
+    )
+    if (res?.data?.projectMutations?.automationMutations?.delete) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Automation deleted'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to delete automation',
+        description: errorMessage
+      })
+    }
   }
 }
 
