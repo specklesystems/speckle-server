@@ -3,7 +3,7 @@ export * as RichTextEditor from './rich-text-editor/index.js'
 export * as SpeckleViewer from './viewer/index.js'
 // export * as Environment from './environment/index.js' // Import from @speckle/shared/dist/...
 export * as Automate from './automate/index.js'
-export * from './authz/index.js'
+export * as Authz from './authz/index.js'
 export * from './core/index.js'
 export * from './workspaces/index.js'
 export * from './onboarding/index.js'
