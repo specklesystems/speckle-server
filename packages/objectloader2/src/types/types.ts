@@ -1,13 +1,13 @@
 export type CustomLogger = (message?: string, ...optionalParams: unknown[]) => void
 
 export interface Item {
-  id: string
-  obj: Base
+  baseId: string
+  base: Base
 }
 
 export interface Base {
   id: string
-  __closure?: Record<string, number>
+  __closure?: Record<string, number>[]
 }
 
 export interface ObjectLoader2Options {

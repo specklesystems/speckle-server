@@ -70,17 +70,17 @@ export default class Downloader implements Queue<string> {
     await this._idQueue.finish()
   }
 
-  static processJson(id: string, unparsedObj: string): Item {
-    let obj: unknown
+  static processJson(baseId: string, unparsedBase: string): Item {
+    let base: unknown
     try {
-      obj = JSON.parse(unparsedObj)
+      base = JSON.parse(unparsedBase)
     } catch (e: unknown) {
-      throw new Error(`Error parsing object ${id}: ${(e as Error).message}`)
+      throw new Error(`Error parsing object ${baseId}: ${(e as Error).message}`)
     }
-    if (isBase(obj)) {
-      return { id, obj }
+    if (isBase(base)) {
+      return { baseId, base }
     } else {
-      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+      throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
     }
   }
 
@@ -133,9 +133,19 @@ export default class Downloader implements Queue<string> {
       headers: this._headers
     })
     this.validateResponse(response)
-    const responseText = await response.text()
-    const item = Downloader.processJson(this._objectId, responseText)
-    return item
+    let responseText = await response.text()
+    const boundary = responseText.indexOf('\n')
+    if (boundary !== -1) {
+      const jsonString = responseText.slice(0, boundary)
+      responseText = responseText.slice(boundary + 1)
+      if (jsonString) {
+        const pieces = jsonString.split('\t')
+        const [id, unparsedObj] = pieces
+        const item = Downloader.processJson(id, unparsedObj)
+        return item
+      }
+    }
+    throw new Error('Could not find single item: ' + this._objectId)
   }
 
   validateResponse(response: Response): void {

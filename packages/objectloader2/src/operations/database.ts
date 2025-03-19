@@ -73,7 +73,7 @@ export default class CacheDatabase {
     return true
   }
 
-  async cacheStoreObjects(objects: Item[]): Promise<void> {
+  async cacheStoreObjects(items: Item[]): Promise<void> {
     if (!(await this.setupCacheDb())) {
       return
     }
@@ -82,8 +82,8 @@ export default class CacheDatabase {
         CacheDatabase._storeName,
         'readwrite'
       ).objectStore(CacheDatabase._storeName)
-      for (const obj of objects) {
-        store.put(obj.obj, obj.id)
+      for (const item of items) {
+        store.put(item.base, item.baseId)
       }
       return CacheDatabase.promisifyIDBTransaction(store.transaction)
     } catch (e) {
@@ -93,7 +93,7 @@ export default class CacheDatabase {
   }
 
   async cacheGetObjects(
-    ids: string[],
+    baseIds: string[],
     found: Queue<Item>,
     notFound: Queue<string>
   ): Promise<void> {
@@ -102,25 +102,25 @@ export default class CacheDatabase {
     }
 
     let count = 0
-    for (let i = 0; i < ids.length; i += 500) {
-      const idsChunk = ids.slice(i, i + 500)
+    for (let i = 0; i < baseIds.length; i += 500) {
+      const baseIdsChunk = baseIds.slice(i, i + 500)
 
       const store = this._cacheDB!.transaction(
         CacheDatabase._storeName,
         'readonly'
       ).objectStore(CacheDatabase._storeName)
-      const idbChildrenPromises = idsChunk.map<Promise<void>>(async (id) => {
-        const getItem = new Promise((resolve, reject) => {
-          const request = store.get(id)
+      const idbChildrenPromises = baseIdsChunk.map<Promise<void>>(async (baseId) => {
+        const getBase = new Promise((resolve, reject) => {
+          const request = store.get(baseId)
 
           request.onsuccess = () => resolve(request.result)
           request.onerror = () =>
             reject(ensureError(request.error, 'Error trying to get a batch'))
         })
-        const base = await getItem
+        const base = await getBase
         count++
         if (base === undefined) {
-          notFound.add(id)
+          notFound.add(baseId)
           if (count % 1000 === 0) {
             this._logger(`Object ${count} not found in cache`)
           }
@@ -129,9 +129,9 @@ export default class CacheDatabase {
             this._logger(`Object ${count} found in cache`)
           }
           if (isBase(base)) {
-            found.add({ id, obj: base })
+            found.add({ baseId, base })
           } else {
-            throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+            throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
           }
         }
       })
@@ -139,7 +139,7 @@ export default class CacheDatabase {
     }
   }
 
-  async cacheGetObject(id: string): Promise<Item | undefined> {
+  async cacheGetObject(baseId: string): Promise<Item | undefined> {
     if (!(await this.setupCacheDb())) {
       return undefined
     }
@@ -148,19 +148,19 @@ export default class CacheDatabase {
       CacheDatabase._storeName,
       'readonly'
     ).objectStore(CacheDatabase._storeName)
-    const getItem = new Promise<unknown>((resolve, reject) => {
-      const request = store.get(id)
+    const getBase = new Promise<unknown>((resolve, reject) => {
+      const request = store.get(baseId)
 
       request.onsuccess = () => resolve(request.result)
       request.onerror = () =>
         reject(ensureError(request.error, 'Error trying to get an item'))
     })
-    const obj = await getItem
-    if (obj === undefined) return undefined
-    if (isBase(obj)) {
-      return { id, obj }
+    const base = await getBase
+    if (base === undefined) return undefined
+    if (isBase(base)) {
+      return { baseId, base }
     } else {
-      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
+      throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
     }
   }
 
@@ -171,7 +171,7 @@ export default class CacheDatabase {
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
       const putItem = new Promise<void>((resolve, reject) => {
-        const request = store.put(element.obj, element.id)
+        const request = store.put(element.base, element.baseId)
         request.onsuccess = () => resolve()
         request.onerror = () =>
           reject(ensureError(request.error, 'Error trying to save a batch'))

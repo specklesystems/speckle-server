@@ -8,7 +8,7 @@ export default class ObjectLoader2 {
 
   private _logger: CustomLogger
 
-  private _buffer: Record<string, Base> = {}
+  private _bases: Record<string, Base> = {}
 
   private _database: CacheDatabase
   private _downloader: Downloader
@@ -60,18 +60,15 @@ export default class ObjectLoader2 {
       return
     }
     yield rootItem
-    if (!rootItem.obj.__closure) return
+    if (!rootItem.base.__closure) return
     const getPromise = this._database.cacheGetObjects(
-      Object.keys(rootItem.obj.__closure),
+      Object.keys(rootItem.base.__closure),
       this._gathered,
       this._downloader
     )
     for await (const item of this._gathered.consume()) {
-      console.log('here2')
       yield item
-      console.log(JSON.stringify(item))
     }
-    console.log('here')
     await getPromise
   }
 
@@ -79,12 +76,12 @@ export default class ObjectLoader2 {
     const t0 = performance.now()
     let count = 0
     for await (const item of this.getRawObjectIterator()) {
-      this._buffer[item.id] = item.obj
+      this._bases[item.baseId] = item.base
       count++
       if (count % 1000 === 0) {
         this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
       }
-      yield item.obj
+      yield item.base
     }
     this._logger(`Loaded ${count} objects in: ${(performance.now() - t0) / 1000}`)
   }
