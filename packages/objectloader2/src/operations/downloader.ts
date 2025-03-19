@@ -36,7 +36,11 @@ export default class Downloader implements IDownloader {
     this._objectId = objectId
     this._token = token
     this._options = {
-      ...{ fetch, batchMaxSize: 1000, batchMaxWait: 1000 },
+      ...{
+        fetch: (...args) => window.fetch(...args),
+        batchMaxSize: 1000,
+        batchMaxWait: 1000
+      },
       ...options
     }
     this._downloadQueue = new BatchingQueue<string>(
@@ -133,19 +137,9 @@ export default class Downloader implements IDownloader {
       headers: this._headers
     })
     this.validateResponse(response)
-    let responseText = await response.text()
-    const boundary = responseText.indexOf('\n')
-    if (boundary !== -1) {
-      const jsonString = responseText.slice(0, boundary)
-      responseText = responseText.slice(boundary + 1)
-      if (jsonString) {
-        const pieces = jsonString.split('\t')
-        const [id, unparsedObj] = pieces
-        const item = Downloader.processJson(id, unparsedObj)
-        return item
-      }
-    }
-    throw new Error('Could not find single item: ' + this._objectId)
+    const responseText = await response.text()
+    const item = Downloader.processJson(this._objectId, responseText)
+    return item
   }
 
   validateResponse(response: Response): void {

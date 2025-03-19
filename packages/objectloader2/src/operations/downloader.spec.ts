@@ -44,7 +44,7 @@ describe('downloader', () => {
   test('download single', async () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = { baseId: 'id', base: { id: 'id', __closure: { childIds: 1 } } }
-    fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
+    fetchMocker.mockResponseOnce(JSON.stringify(i.base))
     const results = new AsyncGeneratorQueue<Item>()
     const db = {
       async write(): Promise<void> {
@@ -56,7 +56,7 @@ describe('downloader', () => {
       results,
       'http://speckle.test',
       'streamId',
-      'objectId',
+      i.baseId,
       'token',
       {
         fetch: fetchMocker,
