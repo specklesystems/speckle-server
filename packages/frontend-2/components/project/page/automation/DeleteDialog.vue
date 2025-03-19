@@ -13,8 +13,10 @@
     <p v-if="automationFunction" class="text-body-xs text-foreground">
       You will still be able to use
       <span class="font-semibold">{{ automationFunction.name }}</span>
-      in other automations, but all previous runs of this automation will be lost. Model
-      data will not be changed or deleted.
+      in other automations, but all previous runs of this automation will be lost.
+    </p>
+    <p class="text-body-xs text-foreground">
+      Model data will not be changed or deleted.
     </p>
   </LayoutDialog>
 </template>
