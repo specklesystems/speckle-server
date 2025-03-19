@@ -29,7 +29,14 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="item.user" hide-tooltip :user="item.user" />
+          <UserAvatar
+            v-if="item.user"
+            hide-tooltip
+            :user="item.user"
+            light-style
+            class="bg-foundation"
+            no-bg
+          />
           <span class="truncate text-body-xs text-foreground">{{ item.title }}</span>
         </div>
       </template>

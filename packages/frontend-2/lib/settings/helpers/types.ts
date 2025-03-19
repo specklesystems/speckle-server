@@ -21,5 +21,6 @@ export enum UserUpdateActionTypes {
   LeaveWorkspace = 'leave-workspace',
   MakeAdmin = 'make-admin',
   MakeGuest = 'make-guest',
-  UpgradeEditor = 'upgrade-editor'
+  UpgradeEditor = 'upgrade-editor',
+  DowngradeEditor = 'downgrade-editor'
 }

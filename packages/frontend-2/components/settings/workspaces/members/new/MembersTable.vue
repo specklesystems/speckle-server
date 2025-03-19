@@ -39,7 +39,13 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar hide-tooltip :user="item" />
+          <UserAvatar
+            hide-tooltip
+            :user="item"
+            light-style
+            class="bg-foundation"
+            no-bg
+          />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <CommonBadge
             v-if="item.role === Roles.Workspace.Admin"
