@@ -224,6 +224,12 @@ export default defineNuxtConfig({
         'require-valid-workspace'
       ]
     },
+    '/projects/:id/settings/collaborators': {
+      redirect: {
+        to: '/projects/:id/collaborators',
+        statusCode: 301
+      }
+    },
     '/downloads': {
       redirect: {
         to: 'https://www.speckle.systems/connectors',
