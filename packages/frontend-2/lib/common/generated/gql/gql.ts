@@ -48,7 +48,11 @@ type Documents = {
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": typeof types.HeaderNavShare_ProjectFragmentDoc,
-    "\n  fragment HeaderWorkspaceSwitcher_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcher_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {\n    id\n    name\n    logo\n    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace\n  }\n": typeof types.HeaderWorkspaceSwitcherActiveWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {\n    id\n    expiredSsoSessions {\n      id\n      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace\n    }\n    workspaces {\n      items {\n        id\n        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace\n      }\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcherWorkspaceList_UserFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n  }\n": typeof types.HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragmentDoc,
     "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    plan {\n      status\n      name\n    }\n    subscription {\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": typeof types.InviteDialogWorkspace_WorkspaceFragmentDoc,
     "\n  fragment InviteDialogProject_Project on Project {\n    id\n    name\n    ...InviteDialogProjectWorkspaceMembers_Project\n    workspace {\n      id\n      name\n      defaultProjectRole\n      role\n      domainBasedMembershipProtectionEnabled\n      domains {\n        domain\n        id\n      }\n      plan {\n        status\n        name\n      }\n      subscription {\n        seats {\n          guest\n          plan\n        }\n      }\n    }\n  }\n": typeof types.InviteDialogProject_ProjectFragmentDoc,
     "\n  fragment InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaborator on WorkspaceCollaborator {\n    role\n    id\n    user {\n      id\n      name\n      bio\n      company\n      avatar\n      verified\n      role\n    }\n  }\n": typeof types.InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaboratorFragmentDoc,
@@ -208,9 +212,11 @@ type Documents = {
     "\n  query InviteUserSearch($input: UsersRetrievalInput!) {\n    users(input: $input) {\n      items {\n        id\n        name\n        avatar\n      }\n    }\n  }\n": typeof types.InviteUserSearchDocument,
     "\n  mutation CreateNewRegion($input: CreateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        create(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": typeof types.CreateNewRegionDocument,
     "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": typeof types.UpdateRegionDocument,
-    "\n  fragment UseNavigation_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcher_Workspace\n    id\n  }\n": typeof types.UseNavigation_WorkspaceFragmentDoc,
+    "\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n": typeof types.UseNavigationActiveWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n": typeof types.UseNavigationWorkspaceList_UserFragmentDoc,
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": typeof types.SetActiveWorkspaceDocument,
-    "\n  query HeaderWorkspaceSwitcher($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...HeaderWorkspaceSwitcher_Workspace\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcherDocument,
+    "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": typeof types.NavigationActiveWorkspaceDocument,
+    "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": typeof types.NavigationWorkspaceListDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": typeof types.ProjectPageTeamInternals_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": typeof types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": typeof types.ProjectDashboardItemNoModelsFragmentDoc,
@@ -448,7 +454,11 @@ const documents: Documents = {
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.HeaderNavShare_ProjectFragmentDoc,
-    "\n  fragment HeaderWorkspaceSwitcher_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n": types.HeaderWorkspaceSwitcher_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {\n    id\n    name\n    logo\n    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace\n  }\n": types.HeaderWorkspaceSwitcherActiveWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n": types.HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {\n    id\n    expiredSsoSessions {\n      id\n      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace\n    }\n    workspaces {\n      items {\n        id\n        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace\n      }\n    }\n  }\n": types.HeaderWorkspaceSwitcherWorkspaceList_UserFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n  }\n": types.HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragmentDoc,
+    "\n  fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n": types.HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragmentDoc,
     "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    plan {\n      status\n      name\n    }\n    subscription {\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": types.InviteDialogWorkspace_WorkspaceFragmentDoc,
     "\n  fragment InviteDialogProject_Project on Project {\n    id\n    name\n    ...InviteDialogProjectWorkspaceMembers_Project\n    workspace {\n      id\n      name\n      defaultProjectRole\n      role\n      domainBasedMembershipProtectionEnabled\n      domains {\n        domain\n        id\n      }\n      plan {\n        status\n        name\n      }\n      subscription {\n        seats {\n          guest\n          plan\n        }\n      }\n    }\n  }\n": types.InviteDialogProject_ProjectFragmentDoc,
     "\n  fragment InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaborator on WorkspaceCollaborator {\n    role\n    id\n    user {\n      id\n      name\n      bio\n      company\n      avatar\n      verified\n      role\n    }\n  }\n": types.InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaboratorFragmentDoc,
@@ -608,9 +618,11 @@ const documents: Documents = {
     "\n  query InviteUserSearch($input: UsersRetrievalInput!) {\n    users(input: $input) {\n      items {\n        id\n        name\n        avatar\n      }\n    }\n  }\n": types.InviteUserSearchDocument,
     "\n  mutation CreateNewRegion($input: CreateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        create(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.CreateNewRegionDocument,
     "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.UpdateRegionDocument,
-    "\n  fragment UseNavigation_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcher_Workspace\n    id\n  }\n": types.UseNavigation_WorkspaceFragmentDoc,
+    "\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n": types.UseNavigationActiveWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n": types.UseNavigationWorkspaceList_UserFragmentDoc,
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": types.SetActiveWorkspaceDocument,
-    "\n  query HeaderWorkspaceSwitcher($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...HeaderWorkspaceSwitcher_Workspace\n    }\n  }\n": types.HeaderWorkspaceSwitcherDocument,
+    "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": types.NavigationActiveWorkspaceDocument,
+    "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": types.NavigationWorkspaceListDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
@@ -967,7 +979,23 @@ export function graphql(source: "\n  fragment HeaderNavShare_Project on Project 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment HeaderWorkspaceSwitcher_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcher_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n"];
+export function graphql(source: "\n  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {\n    id\n    name\n    logo\n    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {\n    id\n    name\n    logo\n    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {\n    id\n    expiredSsoSessions {\n      id\n      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace\n    }\n    workspaces {\n      items {\n        id\n        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {\n    id\n    expiredSsoSessions {\n      id\n      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace\n    }\n    workspaces {\n      items {\n        id\n        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {\n    ...InviteDialogWorkspace_Workspace\n    id\n    name\n    logo\n    role\n    plan {\n      name\n    }\n    team {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1607,7 +1635,11 @@ export function graphql(source: "\n  mutation UpdateRegion($input: UpdateServerR
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UseNavigation_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcher_Workspace\n    id\n  }\n"): (typeof documents)["\n  fragment UseNavigation_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcher_Workspace\n    id\n  }\n"];
+export function graphql(source: "\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n"): (typeof documents)["\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n"): (typeof documents)["\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1615,7 +1647,11 @@ export function graphql(source: "\n  mutation SetActiveWorkspace($slug: String, 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query HeaderWorkspaceSwitcher($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...HeaderWorkspaceSwitcher_Workspace\n    }\n  }\n"): (typeof documents)["\n  query HeaderWorkspaceSwitcher($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...HeaderWorkspaceSwitcher_Workspace\n    }\n  }\n"];
+export function graphql(source: "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n"): (typeof documents)["\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n"): (typeof documents)["\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
