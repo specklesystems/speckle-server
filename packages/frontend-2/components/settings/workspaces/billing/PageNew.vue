@@ -7,7 +7,7 @@
     />
 
     <div class="flex flex-col gap-y-6 md:gap-y-10">
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
+      <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Summary" subheading />
         <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
       </section>
@@ -19,9 +19,13 @@
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns />
+        <SettingsWorkspacesBillingAddOns :slug="slug" />
       </section>
 
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Upgrade your plan" subheading />
+        <PricingTable :slug="slug" />
+      </section>
       <!-- Temporary until we can test with real upgrades -->
       <section v-if="isServerAdmin" class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Upgrade plan" subheading />
@@ -58,11 +62,20 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
 import { settingsWorkspaceBillingQueryNew } from '~/lib/settings/graphql/queries'
 import { WorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
+import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceBillingPageNew_Workspace on Workspace {
+    id
+  }
+`)
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const { isAdmin: isServerAdmin } = useActiveUser()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+const { isPurchasablePlan } = useWorkspacePlan(slug.value)
 const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQueryNew,
