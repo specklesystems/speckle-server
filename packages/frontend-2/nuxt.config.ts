@@ -194,7 +194,7 @@ export default defineNuxtConfig({
     },
     '/profile': {
       redirect: {
-        to: '/?settings/user/profile',
+        to: '/?settings=user/profile',
         statusCode: 301
       }
     },
@@ -223,12 +223,6 @@ export default defineNuxtConfig({
         'requires-workspaces-enabled',
         'require-valid-workspace'
       ]
-    },
-    '/projects/:id/settings/collaborators': {
-      redirect: {
-        to: '/projects/:id/collaborators',
-        statusCode: 301
-      }
     },
     '/downloads': {
       redirect: {
