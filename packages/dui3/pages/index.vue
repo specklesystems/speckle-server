@@ -1,6 +1,9 @@
 <template>
   <div>
     <div v-if="store.hostAppName">
+      <div class="px-1">
+        <CommonUpdateAlert />
+      </div>
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
       <div v-if="accounts.length != 0">
         <div
@@ -185,7 +188,19 @@ const handleReceiveClick = () => {
   trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'start' })
 }
 
-const hasNoModelCards = computed(() => store.projectModelGroups.length === 0)
+const hasNoModelCards = computed(
+  () => store.projectModelGroups.length === 0 || hasNoValidProjects.value
+)
+const hasNoValidProjects = computed(() => {
+  const accountIds = accounts.value
+    .filter((acc) => acc.isValid)
+    .map((acc) => acc.accountInfo.id)
+
+  return (
+    store.projectModelGroups.filter((p) => accountIds.includes(p.accountId)).length ===
+    0
+  )
+})
 
 const reload = () => {
   window.location.reload()
