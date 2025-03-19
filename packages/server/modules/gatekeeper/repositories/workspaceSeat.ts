@@ -1,5 +1,6 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
+  GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
   WorkspaceSeat
 } from '@/modules/gatekeeper/domain/billing'
@@ -89,7 +90,7 @@ export const getWorkspaceUserSeatFactory =
 
 export const getWorkspaceRolesAndSeatsFactory =
   (deps: { db: Knex }): GetWorkspaceRolesAndSeats =>
-  async ({ workspaceId }) => {
+  async ({ workspaceId, userIds }) => {
     const q = tables
       .workspaceAcl(deps.db)
       .select<Array<{ seats: WorkspaceSeat[]; roles: WorkspaceAclRecord[] }>>([
@@ -107,6 +108,10 @@ export const getWorkspaceRolesAndSeatsFactory =
       .where(WorkspaceAcl.col.workspaceId, workspaceId)
       .groupBy(WorkspaceAcl.col.userId)
 
+    if (userIds?.length) {
+      q.whereIn(WorkspaceAcl.col.userId, userIds)
+    }
+
     const res = await q
     return res.reduce((acc, row) => {
       const role = formatJsonArrayRecords(row.roles)[0]
@@ -119,4 +124,15 @@ export const getWorkspaceRolesAndSeatsFactory =
       }
       return acc
     }, {} as Awaited<ReturnType<GetWorkspaceRolesAndSeats>>)
+  }
+
+export const getWorkspaceRoleAndSeatFactory =
+  (deps: { db: Knex }): GetWorkspaceRoleAndSeat =>
+  async ({ workspaceId, userId }) => {
+    const getWorkspaceRolesAndSeats = getWorkspaceRolesAndSeatsFactory(deps)
+    const rolesAndSeats = await getWorkspaceRolesAndSeats({
+      workspaceId,
+      userIds: [userId]
+    })
+    return rolesAndSeats[userId]
   }
