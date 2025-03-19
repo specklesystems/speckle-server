@@ -33,11 +33,11 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Make Admin',
       mainMessage: (seatType) =>
         seatType === WorkspaceSeatType.Editor
-          ? 'They will be given an editor seat and become project owner for all existing and new workspace projects.'
+          ? 'They will become project owner for all existing and new workspace projects.'
           : 'They will be given an editor seat and become project owner for all existing and new workspace projects.',
       showRoleInfo: true,
       buttonText: 'Make an admin',
-      editorSeatsInfo: true
+      seatCountMessage: true
     }
   },
   [UserUpdateActionTypes.MakeGuest]: {
@@ -54,10 +54,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
     },
     dialog: {
       title: 'Make Guest',
-      mainMessage: (seatType) =>
-        seatType === WorkspaceSeatType.Editor
-          ? 'They will be given a viewer seat and lose project ownership.'
-          : 'They will be given a viewer seat.',
+      mainMessage: 'They will lose access to all existing workspace projects.',
       showRoleInfo: true,
       buttonText: 'Make a guest'
     }
@@ -100,7 +97,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Upgrade to an editor seat?',
       mainMessage: 'An editor seat will allow them to create new models and versions.',
       buttonText: 'Upgrade to editor',
-      editorSeatsInfo: true
+      seatCountMessage: true
     }
   },
   [UserUpdateActionTypes.DowngradeEditor]: {
@@ -120,7 +117,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       mainMessage:
         'A viewer seat will allow them to view and receive model, but not send to it.',
       buttonText: 'Downgrade to viewer',
-      editorSeatsInfo: true
+      seatCountMessage: true
     }
   },
   [UserUpdateActionTypes.RemoveMember]: {
@@ -139,7 +136,7 @@ export const UPDATE_WORKSPACE_MEMBER_CONFIG: Record<
       title: 'Remove from workspace?',
       mainMessage: 'They will lose access to all existing workspace projects.',
       buttonText: 'Remove from workspace',
-      editorSeatsInfo: true
+      seatCountMessage: true
     }
   },
   [UserUpdateActionTypes.LeaveWorkspace]: {

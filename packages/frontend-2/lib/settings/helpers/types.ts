@@ -49,8 +49,7 @@ export type DialogConfig = {
   mainMessage: string | ((seatType?: WorkspaceSeatType) => string)
   showRoleInfo?: boolean
   buttonText: string
-  editorSeatsInfo?: boolean | ((seatType?: WorkspaceSeatType) => boolean)
-  roleInfo?: string
+  seatCountMessage?: boolean
 }
 
 export type ActionConfig = {

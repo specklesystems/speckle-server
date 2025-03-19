@@ -3,7 +3,7 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
     <div class="flex flex-col gap-4 mb-4 -mt-1">
-      <CommonCard class="bg-foundation-2 !py-4 text-body-2xs">
+      <CommonCard size="sm" class="bg-foundation-2 text-body-2xs">
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
             hide-tooltip
@@ -19,9 +19,16 @@
       <p>{{ mainMessage }}</p>
 
       <p v-if="roleInfo" class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }}
+        {{ roleInfo }}. More about
+        <NuxtLink
+          :to="LEARN_MORE_ROLES_SEATS_URL"
+          target="_blank"
+          class="text-foreground-2 underline"
+        >
+          workspace roles.
+        </NuxtLink>
       </p>
-      <div v-if="editorSeatsInfo" class="text-body-2xs text-foreground-2 leading-5">
+      <div v-if="seatCountMessage" class="text-body-2xs text-foreground-2 leading-5">
         {{ editorSeatsMessage }}
       </div>
     </div>
@@ -31,13 +38,14 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
 
 const props = defineProps<{
   user: UserItem
   title: string
   mainMessage: string
   roleInfo?: string
-  editorSeatsInfo?: boolean
+  seatCountMessage?: boolean
   buttonText: string
 }>()
 

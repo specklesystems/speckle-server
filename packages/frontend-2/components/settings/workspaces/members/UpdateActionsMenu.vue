@@ -24,7 +24,7 @@
       :title="dialogConfig.title"
       :main-message="dialogConfig.mainMessage"
       :role-info="dialogConfig.roleInfo"
-      :editor-seats-info="dialogConfig.editorSeatsInfo"
+      :seat-count-message="dialogConfig.seatCountMessage"
       :button-text="dialogConfig.buttonText"
       @confirm="onDialogConfirm"
     />
@@ -43,7 +43,10 @@ import {
   useWorkspaceUpdateSeatType
 } from '~/lib/workspaces/composables/management'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { UPDATE_WORKSPACE_MEMBER_CONFIG } from '~/lib/settings/helpers/constants'
+import {
+  UPDATE_WORKSPACE_MEMBER_CONFIG,
+  WORKSPACE_ROLE_DESCRIPTIONS
+} from '~/lib/settings/helpers/constants'
 import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
@@ -137,11 +140,9 @@ const dialogConfig = computed(() => {
       typeof config.mainMessage === 'function'
         ? config.mainMessage(props.targetUser.seatType)
         : config.mainMessage,
-    editorSeatsInfo:
-      typeof config.editorSeatsInfo === 'function'
-        ? config.editorSeatsInfo(props.targetUser.seatType)
-        : config.editorSeatsInfo,
-    roleInfo: config.roleInfo
+    roleInfo: config.showRoleInfo
+      ? WORKSPACE_ROLE_DESCRIPTIONS[props.targetUser.role]
+      : undefined
   }
 })
 

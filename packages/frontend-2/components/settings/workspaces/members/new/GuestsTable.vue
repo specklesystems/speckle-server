@@ -5,7 +5,9 @@
         Guests are external collaborators. They can't create or add others to workspace
         projects. Read more about
         <!-- TODO: Add link to roles and seats page -->
-        <NuxtLink to="#" class="underline">Speckle roles and seats.</NuxtLink>
+        <NuxtLink :to="LEARN_MORE_ROLES_SEATS_URL" class="underline">
+          Speckle roles and seats.
+        </NuxtLink>
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -89,6 +91,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
 
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
