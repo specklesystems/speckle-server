@@ -2,17 +2,17 @@
   <div class="p-0">
     <button
       v-if="expandable"
-      class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
+      class="flex w-full items-center text-foreground-2 justify-between hover:foundation-3 rounded-md transition group mb-2"
       @click="showSettings = !showSettings"
     >
       <div class="flex items-center transition group-hover:text-primary h-8 min-w-0">
-        <ChevronDownIcon
-          :class="`w-4 ${showSettings ? '' : '-rotate-90'} transition mt-0`"
+        <CommonIconsArrowFilled
+          :class="`w-5 ${showSettings ? '' : '-rotate-90'} transition`"
         />
-        <div class="text-sm text-left truncate select-none">Settings</div>
+        <div class="text-body-sm text-left select-none">Settings</div>
       </div>
     </button>
-    <div v-show="showSettings" class="px-2">
+    <div v-show="showSettings" class="px-1">
       <FormJsonForm
         :schema="settingsJsonForms"
         :data="data"
@@ -24,7 +24,6 @@
 
 <script setup lang="ts">
 import type { CardSetting, CardSettingValue } from '~/lib/models/card/setting'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 import { cloneDeep, omit } from 'lodash-es'
 import type { JsonSchema } from '@jsonforms/core'

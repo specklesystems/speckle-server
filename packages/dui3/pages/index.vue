@@ -1,6 +1,9 @@
 <template>
   <div>
     <div v-if="store.hostAppName">
+      <div v-if="!config.isDevMode" class="px-1">
+        <CommonUpdateAlert />
+      </div>
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
       <div v-if="accounts.length != 0">
         <div
@@ -9,13 +12,13 @@
         >
           <LayoutPanel fancy-glow class="transition pointer-events-auto w-[90%]">
             <h1
-              class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+              class="text-heading-lg w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
             >
               Hello!
             </h1>
             <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
             <div v-if="!!store.documentInfo?.id">
-              <div class="text-foreground-2">
+              <div class="text-foreground-2 text-body-sm">
                 There are no Speckle models being published or loaded in this file yet.
               </div>
               <div
@@ -23,7 +26,9 @@
               >
                 <div v-if="app.$sendBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowUpCircleIcon"
+                    v-tippy="'Publish objects from this file to a new model'"
+                    :icon-left="ArrowUpTrayIcon"
+                    color="outline"
                     full-width
                     @click="handleSendClick"
                   >
@@ -32,7 +37,9 @@
                 </div>
                 <div v-if="app.$receiveBinding" class="grow">
                   <FormButton
-                    :icon-left="ArrowDownCircleIcon"
+                    v-tippy="'Load an existing model in this file'"
+                    :icon-left="ArrowDownTrayIcon"
+                    color="outline"
                     full-width
                     @click="handleReceiveClick"
                   >
@@ -50,73 +57,56 @@
               </div>
             </div>
             <!-- TEMPORARY MESSAGE TO USER! will be deleted -->
-            <div class="mt-2 bg-blue-500/10 rounded-md p-2">
+            <div class="mt-2 bg-highlight-1 rounded-md p-2">
               <h1
-                class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+                class="text-heading-sm w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
               >
-                Note: Beta Connector
+                Speckle for
+                <span class="capitalize">{{ store.hostAppName }}</span>
               </h1>
-              <div class="text-foreground-2 text-sm">
-                This is a
-                <span class="font-bold">beta</span>
-                connector that will eventually replace the existing one.
-                <br />
-                <br />
-                While in beta, there will be some missing functionality and some rough
-                corners.
+              <div class="text-foreground-2 text-body-xs">
+                Get started in no time with our key workflows and tutorials for
+                <span class="capitalize">{{ store.hostAppName }}:</span>
+                <FormButton
+                  size="sm"
+                  color="outline"
+                  class="my-2"
+                  full-width
+                  @click="
+                    app.$openUrl(
+                      `https://speckle.systems/connectors/${store.hostAppName}`
+                    )
+                  "
+                >
+                  <span class="capitalize">{{ store.hostAppName }}&nbsp;</span>
+                  documentation
+                </FormButton>
               </div>
-              <!-- TODO: replace with correct link -->
+
               <FormButton
                 text
-                link
+                size="sm"
+                color="subtle"
+                class=""
+                full-width
                 @click="
                   app.$openUrl(
                     'https://speckle.community/t/next-gen-connectors-supported-workflows-and-faq/16162'
                   )
                 "
               >
-                Find out more
+                <span class="text-foreground-2 text-body-3xs truncate line-clamp-1">
+                  New connectors announcement
+                </span>
               </FormButton>
             </div>
           </LayoutPanel>
         </div>
-        <div
-          v-if="accounts.length !== 0 && !hasNoModelCards"
-          class="space-y-2 mt-2 max-w-2/3 mb-16"
-        >
+        <div v-if="accounts.length !== 0 && !hasNoModelCards" class="space-y-2">
           <div v-for="project in store.projectModelGroups" :key="project.projectId">
             <CommonProjectModelGroup :project="project" />
           </div>
         </div>
-        <div
-          v-if="!hasNoModelCards"
-          class="z-20 fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
-        >
-          <div v-if="app.$sendBinding" class="grow">
-            <FormButton
-              :icon-left="ArrowUpCircleIcon"
-              full-width
-              @click="handleSendClick"
-            >
-              Publish
-            </FormButton>
-          </div>
-          <div v-if="app.$receiveBinding" class="grow">
-            <FormButton
-              :icon-left="ArrowDownCircleIcon"
-              full-width
-              @click="handleReceiveClick"
-            >
-              Load
-            </FormButton>
-          </div>
-        </div>
-
-        <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
-        <ReceiveWizard
-          v-model:open="showReceiveDialog"
-          @close="showReceiveDialog = false"
-        />
         <!-- Triggered by "Show Details" button on Toast Notification -->
         <ErrorDialog
           v-model:open="store.showErrorDialog"
@@ -151,26 +141,34 @@
         </LayoutPanel>
       </div>
     </div>
+    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
+    <ReceiveWizard
+      v-model:open="showReceiveDialog"
+      @close="showReceiveDialog = false"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import {
-  ArrowUpCircleIcon,
-  ArrowDownCircleIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
+import { useConfigStore } from '~~/store/config'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 const app = useNuxtApp()
+const config = useConfigStore()
+
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
 // TODO: guard against this later, incase we will have more top level entry pages
 const accountStore = useAccountStore()
 await accountStore.refreshAccounts()
 
-const { accounts, isLoading } = storeToRefs(accountStore)
+const { accounts } = storeToRefs(accountStore)
 
 const store = useHostAppStore()
 const { trackEvent } = useMixpanel()
@@ -193,7 +191,19 @@ const handleReceiveClick = () => {
   trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'start' })
 }
 
-const hasNoModelCards = computed(() => store.projectModelGroups.length === 0)
+const hasNoModelCards = computed(
+  () => store.projectModelGroups.length === 0 || hasNoValidProjects.value
+)
+const hasNoValidProjects = computed(() => {
+  const accountIds = accounts.value
+    .filter((acc) => acc.isValid)
+    .map((acc) => acc.accountInfo.id)
+
+  return (
+    store.projectModelGroups.filter((p) => accountIds.includes(p.accountId)).length ===
+    0
+  )
+})
 
 const reload = () => {
   window.location.reload()

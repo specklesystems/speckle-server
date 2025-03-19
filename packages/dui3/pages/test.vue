@@ -35,11 +35,11 @@
     <div class="px-2">
       <p class="h5 mb-4">Chromium 65 Scrollable Dialogs Test</p>
       <FormButton @click="showBigDialog = !showBigDialog">Show Big Dialog</FormButton>
-      <LayoutDialog v-model:open="showBigDialog" title="hello" fullscreen="none">
+      <CommonDialog v-model:open="showBigDialog" title="hello" fullscreen="none">
         <div class="bg-purple-500" style="height: 2000px">
           This is a test for chromium 65. If this is not scrollable, something is wrong!
         </div>
-      </LayoutDialog>
+      </CommonDialog>
     </div>
     <div class="px-2">
       <p class="h5">Selection info</p>

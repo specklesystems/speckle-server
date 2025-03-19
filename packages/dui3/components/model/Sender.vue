@@ -6,62 +6,30 @@
     :readonly="readonly"
     @manual-publish-or-load="sendOrCancel"
   >
-    <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
-    <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events vuejs-accessibility/no-static-element-interactions-->
-    <div
-      class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 pb-2 max-[275px]:space-y-2"
-      @mouseenter="hover = true"
-      @mouseleave="hover = false"
-    >
-      <div class="flex">
-        <FormButton
-          v-tippy="'Edit what gets published'"
-          :icon-left="Square3Stack3DIcon"
-          text
-          size="sm"
-          color="primary"
-          class="flex min-w-0 transition hover:text-primary py-1"
-          :disabled="!!modelCard.progress || noWriteAccess"
-          @click.stop="openFilterDialog = true"
-        >
-          <span class="">{{ modelCard.sendFilter?.name }}</span>
-        </FormButton>
-      </div>
-      <div
-        :title="modelCard.sendFilter?.summary"
-        class="flex items-center h-6 space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 min-w-0 max-w-full truncate user-select-none"
+    <div class="flex max-[275px]:w-full overflow-hidden my-2">
+      <FormButton
+        v-tippy="'Edit what gets published'"
+        :icon-left="Square3Stack3DIcon"
+        size="sm"
+        color="subtle"
+        class="block text-foreground-2 hover:text-foreground overflow-hidden max-w-full !justify-start"
+        :disabled="!!modelCard.progress || noWriteAccess"
+        full-width
+        @click.stop="openFilterDialog = true"
       >
-        <FormButton
-          v-if="
-            hover &&
-            modelCard.sendFilter?.expired &&
-            modelCard.sendFilter.name === 'Selection'
-          "
-          text
-          color="primary"
-          size="sm"
-          class="truncate"
-          :disabled="!!modelCard.progress || noWriteAccess"
-          @click.stop="openFilterDialog = true"
-        >
-          Publish current selection
-        </FormButton>
-        <span v-else class="truncate text-foreground-2 select-none max-w-full">
-          {{ modelCard.sendFilter?.summary }}
-        </span>
-      </div>
+        <!-- Sending&nbsp; -->
+        <span class="font-bold">{{ modelCard.sendFilter?.name }}:&nbsp;</span>
+        <span class="truncate">{{ modelCard.sendFilter?.summary }}</span>
+      </FormButton>
     </div>
-    <LayoutDialog
+
+    <CommonDialog
       v-model:open="openFilterDialog"
       :title="`Change filter`"
       fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
-      <!-- <SendSettings
-        v-if="hasSendSettings"
-        :settings="modelCard.settings"
-        @update:settings="updateSettings"
-      ></SendSettings> -->
+
       <div class="mt-4 flex justify-end items-center space-x-2">
         <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
         <FormButton size="sm" color="outline" @click.stop="saveFilter()">
@@ -71,7 +39,8 @@
           Save & Publish
         </FormButton>
       </div>
-    </LayoutDialog>
+    </CommonDialog>
+
     <template #states>
       <CommonModelNotification
         v-if="expiredNotification"
@@ -151,8 +120,6 @@ const saveFilter = async () => {
   openFilterDialog.value = false
 }
 
-const hover = ref(false)
-
 const saveFilterAndSend = async () => {
   await saveFilter()
   store.sendModel(props.modelCard.modelCardId, 'Filter')
@@ -163,9 +130,9 @@ const expiredNotification = computed(() => {
 
   const notification = {} as ModelCardNotification
   notification.dismissible = false
-  notification.level = props.modelCard.progress ? 'warning' : 'info'
+  notification.level = props.modelCard.progress ? 'info' : 'info'
   notification.text = props.modelCard.progress
-    ? 'Model was changed while publishing'
+    ? 'Model changed while publishing'
     : 'Out of sync with application'
 
   const ctaType = props.modelCard.progress ? 'Restart' : 'Update'
@@ -222,7 +189,7 @@ const latestVersionNotification = computed(() => {
   notification.text = sendResultNotificationText.value
   notification.report = props.modelCard.report
   notification.cta = {
-    name: 'View',
+    name: 'View version',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     action: () => cardBase.value?.viewModel()
   }

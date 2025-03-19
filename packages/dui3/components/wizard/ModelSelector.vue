@@ -1,28 +1,26 @@
 <template>
   <div class="space-y-2">
     <div class="space-y-2">
-      <div
-        class="flex items-center space-x-2 justify-between sticky top-4 bg-foundation z-10 py-2 border-b"
-      >
+      <div class="flex items-center space-x-2 justify-between">
         <FormTextInput
           v-model="searchText"
           :placeholder="
-            totalCount === 0 ? 'New model name' : 'Search models in ' + project.name
+            totalCount === 0 ? 'New model name' : 'Search in ' + project.name
           "
           name="search"
           autocomplete="off"
           :show-clear="!!searchText"
           full-width
-          size="lg"
           color="foundation"
         />
-        <FormButton
+        <button
           v-if="showNewModel"
           v-tippy="'New model'"
+          class="p-1 hover:bg-primary-muted rounded text-foreground-2"
           @click="showNewModelDialog = true"
         >
           <PlusIcon class="w-4" />
-        </FormButton>
+        </button>
       </div>
       <div class="relative grid grid-cols-1 gap-2">
         <CommonLoadingBar v-if="loading" loading />
@@ -34,26 +32,27 @@
           @click="handleModelSelect(model)"
         />
 
-        <LayoutDialog
+        <CommonDialog
           v-model:open="showSelectionHasProblemsDialog"
           title="Warning"
           fullscreen="none"
         >
           <div class="mx-1">
-            <p v-if="hasNonZeroVersionsProblem" class="mb-2 text-sm">
-              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+            <p class="text-body-xs mb-2">You are about to overwrite this model.</p>
+            <p
+              v-if="hasNonZeroVersionsProblem"
+              class="mb-2 text-body-3xs text-foreground-2"
+            >
               The model you selected contains versions coming from
               <b>other files/apps</b>
               .
             </p>
-            <p v-if="existingModelProblem" class="mb-2 text-sm">
-              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+            <p v-if="existingModelProblem" class="mb-2 text-body-3xs text-foreground-2">
               <b>{{ ` ${existingModelName}` }}</b>
               is already being used to
               <b>{{ isSender ? 'publish,' : 'load,' }}</b>
               you could consider using the existing one.
             </p>
-            <p class="mb-2 text-sm">Are you sure you want to proceed?</p>
           </div>
           <template #buttons>
             <FormButton
@@ -65,14 +64,15 @@
               Cancel
             </FormButton>
             <FormButton full-width size="sm" @click="confirmModelSelection()">
-              Yes
+              Proceed
             </FormButton>
           </template>
-        </LayoutDialog>
+        </CommonDialog>
 
         <FormButton
           v-if="searchText && hasReachedEnd && showNewModel"
           full-width
+          :disabled="isCreatingModel"
           @click="createNewModel(searchText)"
         >
           Create&nbsp;
@@ -89,7 +89,7 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog
+    <CommonDialog
       v-model:open="showNewModelDialog"
       title="Create new model"
       fullscreen="none"
@@ -98,7 +98,7 @@
         <FormTextInput
           v-model="newModelName"
           :rules="rules"
-          placeholder="West facade, Level 1 layout..."
+          :placeholder="hostAppStore.documentInfo?.name"
           name="name"
           color="foundation"
           :show-clear="!!newModelName"
@@ -106,16 +106,18 @@
           autocomplete="off"
           size="lg"
         />
-        <div class="mt-4 flex justify-center items-center space-x-2">
-          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
-          <FormButton submit>Create</FormButton>
+        <div class="mt-4 flex justify-end items-center space-x-2 w-full">
+          <FormButton size="sm" text @click="showNewModelDialog = false">
+            Cancel
+          </FormButton>
+          <FormButton size="sm" submit :disabled="isCreatingModel">Create</FormButton>
         </div>
       </form>
-    </LayoutDialog>
+    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import type {
   ProjectListProjectItemFragment,
@@ -193,7 +195,9 @@ const onSubmit = handleSubmit(() => {
   void createNewModel(newModelName.value as string)
 })
 
+const isCreatingModel = ref(false)
 const createNewModel = async (name: string) => {
+  isCreatingModel.value = true
   const account = accountStore.accounts.find(
     (acc) => acc.accountInfo.id === props.accountId
   ) as DUIAccount
@@ -209,7 +213,13 @@ const createNewModel = async (name: string) => {
     emit('next', res?.data?.modelMutations.create)
   } else {
     // TODO: Error out
+    hostAppStore.setNotification({
+      type: 1,
+      title: 'Failed to create model',
+      description: res?.errors[0].message || 'Undefined error'
+    })
   }
+  isCreatingModel.value = false
 }
 
 const {

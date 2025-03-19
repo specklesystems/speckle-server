@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog
+  <CommonDialog
     v-model:open="store.showErrorDialog"
     fullscreen="none"
     @close="store.showErrorDialog = false"
@@ -20,7 +20,7 @@
         {{ store.hostAppError?.stackTrace }}
       </div>
     </div>
-  </LayoutDialog>
+  </CommonDialog>
 </template>
 
 <script setup lang="ts">

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2">
+  <div class="space-y-4">
     <FilterListSelect @update:filter="updateFilter" />
     <SendSettings
       v-if="hasSendSettings"

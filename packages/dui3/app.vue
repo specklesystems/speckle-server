@@ -52,4 +52,4 @@ onMounted(() => {
   })
 })
 </script>
-store/config
+<style></style>

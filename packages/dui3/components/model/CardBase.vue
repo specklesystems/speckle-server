@@ -1,80 +1,91 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events vuejs-accessibility/no-static-element-interactions -->
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer dark:border-gray-800 border-gray-300 border group`"
-    @click="highlightModel"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} border-foundation hover:border-outline-2 border-2 group`"
   >
-    <div v-if="modelData" class="relative px-2 py-1">
+    <div v-if="modelData" class="relative px-1 py-1">
       <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
           <!-- CTA button -->
-          <button
-            v-if="!noWriteAccess"
+          <FormButton
             v-tippy="buttonTooltip"
-            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
+            color="outline"
+            :icon-left="
+              modelCard.progress
+                ? XCircleIcon
+                : isSender
+                ? ArrowUpTrayIcon
+                : ArrowDownTrayIcon
+            "
+            hide-text
+            class=""
+            :disabled="noWriteAccess"
             @click.stop="$emit('manual-publish-or-load')"
-          >
-            <template v-if="!modelCard.progress">
-              <ArrowUpCircleIcon v-if="isSender" class="w-8" />
-              <ArrowDownCircleIcon v-else class="w-8" />
-            </template>
-            <template v-else>
-              <XCircleIcon class="w-8" />
-            </template>
-          </button>
-
-          <button
-            v-else
-            class="z-10 transition rounded-full hover:shadow-md bg-foundation"
-          >
-            <ArrowUpCircleIcon v-if="isSender" class="w-8 text-danger" />
-            <ArrowDownCircleIcon v-else class="w-8 text-danger" />
-          </button>
-
-          <UserAvatar
-            :user="modelData.author"
-            size="sm"
-            class="z-0 max-[275px]:hidden"
-          />
+          ></FormButton>
         </div>
 
-        <div class="grow min-w-0 py-1">
-          <div class="caption text-foreground-2 truncate">
+        <div class="grow min-w-0 max-[160px]:hidden">
+          <div class="text-body-3xs text-foreground-2 truncate">
             {{ folderPath }}
           </div>
-          <div class="truncate font-bold text-foreground select-none -mt-[2px]">
+          <div
+            class="text-heading-sm truncate text-foreground dark:text-foreground-2 select-none leading-4"
+          >
             {{ modelData.displayName }}
           </div>
         </div>
 
-        <AutomateResultDialog
-          v-if="isSender && summary"
-          :model-card="modelCard"
-          :automation-runs="automationRuns"
-          :project-id="modelCard.projectId"
-          :model-id="modelCard.modelId"
-        >
-          <template #activator="{ toggle }">
-            <button
-              v-tippy="summary.summary.value.longSummary"
-              class="action action-normal"
-              @click.stop="toggle()"
-            >
-              <AutomateRunsTriggerStatusIcon
-                :summary="summary.summary.value"
-                class="h-5 w-5 md:h-6 md:w-6"
-              />
-            </button>
-          </template>
-        </AutomateResultDialog>
-
-        <ModelActionsDialog
-          :model-card="modelCard"
-          :model-name="modelData.displayName"
-          @view="viewModel"
-          @view-versions="viewModelVersions"
-          @remove="removeModel"
-        />
+        <!-- TODO: uncomment if needed, this is a hack to hide this from two apps where we don't support it -->
+        <div class="flex items-center justify-end grow">
+          <AutomateResultDialog
+            v-if="isSender && summary"
+            :model-card="modelCard"
+            :automation-runs="automationRuns"
+            :project-id="modelCard.projectId"
+            :model-id="modelCard.modelId"
+          >
+            <template #activator="{ toggle }">
+              <button
+                v-tippy="summary.summary.value.longSummary"
+                class="action action-normal p-1 hover:bg-highlight-2 rounded-md transition"
+                @click.stop="toggle()"
+              >
+                <AutomateRunsTriggerStatusIcon
+                  :summary="summary.summary.value"
+                  class="h-4 w-4"
+                />
+              </button>
+            </template>
+          </AutomateResultDialog>
+          <FormButton
+            v-if="store.hostAppName !== 'navisworks' && store.hostAppName !== 'etabs'"
+            v-tippy="'Highlight'"
+            color="subtle"
+            :icon-left="CursorArrowRaysIcon"
+            hide-text
+            size="sm"
+            @click="highlightModel"
+          />
+          <ModelActionsDialog
+            :model-card="modelCard"
+            :model-name="modelData.displayName"
+            @view="viewModel"
+            @view-versions="viewModelVersions"
+            @remove="removeModel"
+          />
+        </div>
+      </div>
+      <div class="max-[160px]:flex w-full hidden px-1 mt-2 h-[40px] items-center">
+        <div class="grow min-w-0">
+          <div class="text-body-3xs text-foreground-2 truncate">
+            {{ folderPath }}
+          </div>
+          <div
+            class="text-heading-sm truncate text-foreground dark:text-foreground-2 select-none leading-4"
+          >
+            {{ modelData.displayName }}
+          </div>
+        </div>
       </div>
     </div>
     <div v-else-if="loading" class="px-1 py-1">
@@ -85,7 +96,7 @@
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
     <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
-    <div v-if="!noWriteAccess" class="px-2">
+    <div v-if="!noWriteAccess" class="px-1">
       <slot></slot>
     </div>
 
@@ -94,13 +105,13 @@
       v-if="modelCard.progress"
       :class="`${
         modelCard.progress ? 'h-10 opacity-100' : 'h-0 opacity-0 py-0'
-      } overflow-hidden bg-blue-500/10`"
+      } overflow-hidden bg-highlight-2`"
     >
       <CommonLoadingProgressBar
         :loading="!!modelCard.progress"
         :progress="modelCard.progress ? modelCard.progress.progress : undefined"
       />
-      <div class="text-xs font-bold px-2 h-full flex items-center text-primary">
+      <div class="text-body-3xs px-2 h-full flex items-center text-foreground">
         {{ modelCard.progress?.status || '...' }}
         {{
           modelCard.progress?.progress
@@ -116,52 +127,49 @@
         <!-- Swanky web app integration: show users who is viewing the model -->
         <Transition name="bounce">
           <div
-            v-if="currentlyViewingUsers.length !== 0 && !latestCommentNotification"
-            class="text-xs text-foreground-2 py-1 px-2 bg-gray-500/5 flex space-x-1 items-center justify-between"
+            v-if="currentlyViewingUsers.length !== 0"
+            class="text-body-3xs text-foreground-2 py-1 px-1 bg-highlight-1 border-t border-t-highlight-3 flex space-x-1 items-center justify-between"
           >
             <div class="flex items-center space-x-1">
-              <UserAvatarGroup size="sm" :users="currentlyViewingUsers" />
-              <span>
-                {{ currentlyViewingUsers.length === 1 ? 'is' : 'are' }} now viewing this
-                model.
+              <UserAvatarGroup size="xs" :users="currentlyViewingUsers" />
+              <span class="line-clamp-1">
+                {{ currentlyViewingUsers.length === 1 ? 'is' : 'are' }} now viewing
               </span>
             </div>
             <div>
-              <button
-                v-tippy="'Start a review session!'"
-                class="hover:text-primary p-1"
-                @click="viewModel()"
-              >
-                <ArrowTopRightOnSquareIcon class="w-3" />
-              </button>
+              <FormButton size="sm" color="outline" full-width @click="viewModel()">
+                Join
+              </FormButton>
             </div>
           </div>
         </Transition>
         <!-- Swanky web app integration: show comment created notification -->
         <Transition name="bounce">
           <div v-if="latestCommentNotification">
-            <div class="h-[2px] bg-blue-500/20 disappearing-bar"></div>
+            <div class="h-[1px] bg-blue-500/20 disappearing-bar"></div>
             <div
-              class="text-xs text-foreground-2 py-1 px-2 bg-gray-500/5 flex space-x-1 items-center justify-between"
+              class="text-body-3xs text-foreground-2 py-1 px-1 bg-highlight-1 flex space-x-1 items-center justify-between"
             >
-              <div class="flex items-center space-x-1">
-                <UserAvatar
-                  size="sm"
-                  :user="latestCommentNotification.comment?.author"
+              <div
+                v-tippy="
+                  `${latestCommentNotification.comment?.author.name} just left a
+                  comment.`
+                "
+                class="flex items-center space-x-1"
+              >
+                <UserAvatarGroup
+                  size="xs"
+                  :users="[latestCommentNotification.comment?.author]"
                 />
-                <span>
+                <span class="line-clamp-1">
                   {{ latestCommentNotification.comment?.author.name }} just left a
                   comment.
                 </span>
               </div>
               <div>
-                <button
-                  v-tippy="'View thread'"
-                  class="hover:text-primary p-1"
-                  @click="viewComment()"
-                >
-                  <ArrowTopRightOnSquareIcon class="w-3" />
-                </button>
+                <FormButton size="sm" color="outline" full-width @click="viewComment()">
+                  Reply
+                </FormButton>
               </div>
             </div>
           </div>
@@ -190,8 +198,7 @@ import {
   modelViewingSubscription
 } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { ArrowTopRightOnSquareIcon, XCircleIcon } from '@heroicons/vue/20/solid'
-import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
+import { ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
 import type { IModelCard } from '~~/lib/models/card'
@@ -201,6 +208,7 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import type { ProjectCommentsUpdatedMessage } from '~/lib/common/generated/gql/graphql'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/runStatus'
+import { CursorArrowRaysIcon, XCircleIcon } from '@heroicons/vue/24/outline'
 
 const app = useNuxtApp()
 const store = useHostAppStore()
@@ -355,7 +363,7 @@ const cardBgColor = computed(() => {
   //   !(props.modelCard as IReceiverModelCard).hasDismissedUpdateWarning
   // )
   //   return 'bg-orange-500/10'
-  return 'bg-foundation dark:bg-neutral-800 hover:bg-blue-500/10 '
+  return 'bg-foundation xxxhover:bg-highlight-1'
 })
 
 const noWriteAccess = computed(() => {
@@ -422,7 +430,7 @@ const { start: startCommentClearTimeout, stop: stopCommentClearTimeout } = useTi
     latestCommentNotification.value = undefined
     stopCommentClearTimeout()
   },
-  10_000
+  30_000
 )
 
 onCommentResult((res) => {
@@ -456,15 +464,15 @@ const viewComment = () => {
 }
 
 .disappearing-bar {
-  animation: disappear-width 10s;
+  animation: disappear-width 30s;
 }
 
 .bounce-enter-active {
-  animation: bounce-in 0.2s;
+  animation: bounce-in 0.5s;
 }
 
 .bounce-leave-active {
-  animation: bounce-in 0.2s reverse;
+  animation: bounce-in 0.5s reverse;
 }
 
 @keyframes bounce-in {
