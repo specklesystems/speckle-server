@@ -1,5 +1,5 @@
 import type { AvailableRoles } from '@speckle/shared'
-import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
 type BaseSettingsMenuItem = {
   title: string
@@ -21,11 +21,6 @@ export enum UserUpdateActionTypes {
   MakeMember = 'make-member',
   UpgradeEditor = 'upgrade-editor',
   DowngradeEditor = 'downgrade-editor'
-}
-
-export const WORKSPACE_SEAT_TYPE_DESCRIPTIONS: Record<WorkspaceSeatType, string> = {
-  [WorkspaceSeatType.Editor]: 'Can create new models and versions',
-  [WorkspaceSeatType.Viewer]: 'Can view and receive models, but not send to them'
 }
 
 export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {

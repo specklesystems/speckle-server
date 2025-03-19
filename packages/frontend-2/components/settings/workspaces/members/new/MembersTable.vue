@@ -5,7 +5,7 @@
         Workspace members can have a viewer or editor seat. Admins must be editors. Read
         more about
         <!-- TODO: Add link to roles and seats page -->
-        <NuxtLink :to="LEARN_MORE_ROLES_SEATS_URL" class="underline">
+        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline">
           Speckle roles and seats.
         </NuxtLink>
       </template>
@@ -93,7 +93,7 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
+import { LearnMoreRolesSeatsUrl } from '~/lib/settings/helpers/constants'
 import SeatTypeDisplay from '../SeatTypeDisplay.vue'
 
 export type UserItem = (typeof members)['value'][0]

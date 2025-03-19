@@ -44,8 +44,8 @@ import {
 } from '~/lib/workspaces/composables/management'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import {
-  UPDATE_WORKSPACE_MEMBER_CONFIG,
-  WORKSPACE_ROLE_DESCRIPTIONS
+  UpdateWorkspaceMemberConfig,
+  WorkspaceRoleDescriptions
 } from '~/lib/settings/helpers/constants'
 import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
@@ -74,7 +74,7 @@ const filteredActionsItems = computed(() => {
   const mainItems: LayoutMenuItem[] = []
   const footerItems: LayoutMenuItem[] = []
 
-  Object.entries(UPDATE_WORKSPACE_MEMBER_CONFIG).forEach(([type, config]) => {
+  Object.entries(UpdateWorkspaceMemberConfig).forEach(([type, config]) => {
     if (
       config.menu.show({
         isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
@@ -147,7 +147,7 @@ const onRemoveUser = async () => {
 
 const dialogConfig = computed(() => {
   if (!dialogType.value) return null
-  const config = UPDATE_WORKSPACE_MEMBER_CONFIG[dialogType.value].dialog
+  const config = UpdateWorkspaceMemberConfig[dialogType.value].dialog
   return {
     ...config,
     mainMessage:
@@ -155,7 +155,7 @@ const dialogConfig = computed(() => {
         ? config.mainMessage(props.targetUser.seatType)
         : config.mainMessage,
     roleInfo: config.showRoleInfo
-      ? WORKSPACE_ROLE_DESCRIPTIONS[props.targetUser.role]
+      ? WorkspaceRoleDescriptions[props.targetUser.role]
       : undefined
   }
 })

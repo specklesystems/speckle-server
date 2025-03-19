@@ -21,7 +21,7 @@
       <p v-if="roleInfo" class="text-foreground-2 text-body-2xs">
         {{ roleInfo }}. More about
         <NuxtLink
-          :to="LEARN_MORE_ROLES_SEATS_URL"
+          :to="LearnMoreRolesSeatsUrl"
           target="_blank"
           class="text-foreground-2 underline"
         >
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
-import { LEARN_MORE_ROLES_SEATS_URL } from '~/lib/settings/helpers/constants'
+import { LearnMoreRolesSeatsUrl } from '~/lib/settings/helpers/constants'
 
 const props = defineProps<{
   user: UserItem
