@@ -180,7 +180,8 @@ export const createWorkspaceFactory =
     await ensureValidWorkspaceRoleSeat({
       userId,
       workspaceId: workspace.id,
-      role
+      role,
+      updatedByUserId: userId
     })
 
     // emit a workspace created event
@@ -477,10 +478,11 @@ export const updateWorkspaceRoleFactory =
       role: nextWorkspaceRole,
       createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
-    const { type } = await ensureValidWorkspaceRoleSeat({
+    await ensureValidWorkspaceRoleSeat({
       userId,
       workspaceId,
-      role: nextWorkspaceRole
+      role: nextWorkspaceRole,
+      updatedByUserId
     })
 
     await emitWorkspaceEvent({
@@ -491,7 +493,6 @@ export const updateWorkspaceRoleFactory =
           workspaceId,
           role: nextWorkspaceRole
         },
-        seatType: type,
         flags: {
           skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
         },

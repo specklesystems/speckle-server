@@ -197,17 +197,26 @@ export type UpdateWorkspaceRole = (
   }
 ) => Promise<void>
 
-export type GetWorkspaceRolesAllowedProjectRolesFactory = (params: {
+export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
 }) => Promise<{
-  defaultProjectRole: (args: {
-    workspaceRole: WorkspaceRoles
-    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-  }) => StreamRoles | null
-  allowedProjectRoles: (args: {
-    workspaceRole: WorkspaceRoles
-    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-  }) => StreamRoles[]
+  allowed: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles[]
+  }
+  default: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles | null
+  }
+}>
+
+export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<{
+  allowed: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles[]
+  }
+  default: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles
+  }
 }>
 
 /** Workspace Projects */
@@ -254,7 +263,9 @@ export type UpdateWorkspaceProjectRole = (
 
 /** Events */
 
-export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
+export type EmitWorkspaceEvent = <
+  TEvent extends WorkspaceEvents & keyof EventBusPayloads
+>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<void>
@@ -408,6 +419,7 @@ export type EnsureValidWorkspaceRoleSeat = (params: {
   workspaceId: string
   userId: string
   role: WorkspaceRoles
+  updatedByUserId: string
 }) => Promise<WorkspaceSeat>
 
 export type CopyProjectComments = (params: {

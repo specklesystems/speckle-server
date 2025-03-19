@@ -1,7 +1,8 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
-  GetWorkspaceRolesAllowedProjectRolesFactory,
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  GetWorkspaceSeatTypeToProjectRoleMapping,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -17,13 +18,7 @@ import {
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import { chunk, intersection } from 'lodash'
-import {
-  MaybeNullOrUndefined,
-  Roles,
-  StreamRoles,
-  throwUncoveredError,
-  WorkspaceRoles
-} from '@speckle/shared'
+import { Roles, StreamRoles } from '@speckle/shared'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
 import {
@@ -56,7 +51,7 @@ import {
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { LogicError } from '@/modules/shared/errors'
+import { NotImplementedError } from '@/modules/shared/errors'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -142,16 +137,18 @@ export const moveProjectToWorkspaceFactory =
     upsertProjectRole,
     getProjectCollaborators,
     getWorkspaceRolesAndSeats,
-    getWorkspaceRolesAllowedProjectRoles,
-    updateWorkspaceRole
+    getWorkspaceRoleToDefaultProjectRoleMapping,
+    updateWorkspaceRole,
+    getWorkspaceWithPlan
   }: {
     getProject: GetProject
     updateProject: UpdateProject
     upsertProjectRole: UpsertProjectRole
     getProjectCollaborators: GetProjectCollaborators
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
-    getWorkspaceRolesAllowedProjectRoles: GetWorkspaceRolesAllowedProjectRolesFactory
+    getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     updateWorkspaceRole: UpdateWorkspaceRole
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
   }) =>
   async ({
     projectId,
@@ -169,14 +166,19 @@ export const moveProjectToWorkspaceFactory =
     }
 
     // Update roles for current project members
-    const projectTeam = await getProjectCollaborators({ projectId })
-    const workspaceTeam = await getWorkspaceRolesAndSeats({ workspaceId })
-    const {
-      defaultProjectRole: getDefaultProjectRole,
-      allowedProjectRoles: getAllowedProjectRoles
-    } = await getWorkspaceRolesAllowedProjectRoles({
-      workspaceId
-    })
+    const [workspace, projectTeam, workspaceTeam] = await Promise.all([
+      getWorkspaceWithPlan({ workspaceId }),
+      getProjectCollaborators({ projectId }),
+      getWorkspaceRolesAndSeats({ workspaceId })
+    ])
+    if (!workspace) throw new WorkspaceNotFoundError()
+
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const roleMapping = isNewPlan
+      ? undefined
+      : await getWorkspaceRoleToDefaultProjectRoleMapping({
+          workspaceId
+        })
 
     for (const projectMembers of chunk(projectTeam, 5)) {
       await Promise.all(
@@ -184,7 +186,6 @@ export const moveProjectToWorkspaceFactory =
           async ({ id: userId, role: serverRole, streamRole: currentProjectRole }) => {
             // Update workspace role. Prefer existing workspace role if there is one.
             const currentWorkspaceRole = workspaceTeam[userId]?.role
-            const currentWorkspaceSeat = workspaceTeam[userId]?.seat
 
             const nextWorkspaceRole = currentWorkspaceRole
               ? currentWorkspaceRole
@@ -203,16 +204,14 @@ export const moveProjectToWorkspaceFactory =
               updatedByUserId: movedByUserId
             })
 
-            // Update project role. Prefer default workspace project role if more permissive.
+            // Upsert project role. Prefer default workspace project role if more permissive.
+            // (Does not apply to new plans)
+            if (isNewPlan) return
+
             const defaultProjectRole =
-              getDefaultProjectRole({
-                workspaceRole: nextWorkspaceRole.role,
-                seatType: currentWorkspaceSeat?.type
-              }) ?? Roles.Stream.Reviewer
-            const allowedProjectRoles = getAllowedProjectRoles({
-              workspaceRole: nextWorkspaceRole.role,
-              seatType: currentWorkspaceSeat?.type
-            })
+              roleMapping?.default[nextWorkspaceRole.role] ?? Roles.Stream.Reviewer
+            const allowedProjectRoles =
+              roleMapping?.allowed[nextWorkspaceRole.role] ?? []
             const rolePicks = intersection(
               [currentProjectRole, defaultProjectRole],
               allowedProjectRoles
@@ -234,11 +233,54 @@ export const moveProjectToWorkspaceFactory =
     return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
   }
 
-export const getWorkspaceRolesAllowedProjectRolesFactory =
+export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
+  ({
+    getWorkspaceWithPlan
+  }: {
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
+  }): GetWorkspaceRoleToDefaultProjectRoleMapping =>
+  async ({ workspaceId }) => {
+    const workspace = await getWorkspaceWithPlan({ workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    if (isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
+    }
+
+    return {
+      default: {
+        [Roles.Workspace.Guest]: null,
+        [Roles.Workspace.Member]: Roles.Stream.Reviewer,
+        [Roles.Workspace.Admin]: Roles.Stream.Owner
+      },
+      allowed: {
+        [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
+        [Roles.Workspace.Member]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ],
+        [Roles.Workspace.Admin]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      }
+    }
+  }
+
+export const getWorkspaceSeatTypeToProjectRoleMappingFactory =
   (deps: {
     getWorkspaceWithPlan: GetWorkspaceWithPlan
-  }): GetWorkspaceRolesAllowedProjectRolesFactory =>
-  async ({ workspaceId }) => {
+  }): GetWorkspaceSeatTypeToProjectRoleMapping =>
+  async (params: { workspaceId: string }) => {
+    const { workspaceId } = params
     const workspace = await deps.getWorkspaceWithPlan({ workspaceId })
 
     if (!workspace) {
@@ -246,62 +288,25 @@ export const getWorkspaceRolesAllowedProjectRolesFactory =
     }
 
     const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
-
-    const allowedProjectRoles = (args: {
-      workspaceRole: WorkspaceRoles
-      seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-    }) => {
-      const { workspaceRole, seatType = WorkspaceSeatType.Viewer } = args
-
-      switch (workspaceRole) {
-        case Roles.Workspace.Guest:
-          if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
-            return [Roles.Stream.Reviewer]
-          } else {
-            return [Roles.Stream.Reviewer, Roles.Stream.Contributor]
-          }
-        case Roles.Workspace.Member:
-          if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
-            return [Roles.Stream.Reviewer]
-          } else {
-            return [Roles.Stream.Reviewer, Roles.Stream.Contributor, Roles.Stream.Owner]
-          }
-        case Roles.Workspace.Admin:
-          return [Roles.Stream.Owner]
-        default:
-          throwUncoveredError(workspaceRole)
-      }
-    }
-
-    const defaultProjectRole = (args: {
-      workspaceRole: WorkspaceRoles
-      seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-    }) => {
-      const { workspaceRole, seatType = WorkspaceSeatType.Viewer } = args
-      const allowedRoles = allowedProjectRoles({ workspaceRole, seatType })
-
-      const role = (() => {
-        switch (workspaceRole) {
-          case Roles.Workspace.Guest:
-            return null // No default role
-          case Roles.Workspace.Member:
-            return Roles.Stream.Reviewer
-          case Roles.Workspace.Admin:
-            return Roles.Stream.Owner
-          default:
-            throwUncoveredError(workspaceRole)
-        }
-      })()
-      if (role && !allowedRoles.includes(role)) {
-        throw new LogicError('Invalid default project role')
-      }
-
-      return role
+    if (!isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
     }
 
     return {
-      defaultProjectRole,
-      allowedProjectRoles
+      allowed: {
+        [WorkspaceSeatType.Viewer]: [Roles.Stream.Reviewer],
+        [WorkspaceSeatType.Editor]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      },
+      default: {
+        [WorkspaceSeatType.Viewer]: Roles.Stream.Reviewer,
+        [WorkspaceSeatType.Editor]: Roles.Stream.Reviewer
+      }
     }
   }
 

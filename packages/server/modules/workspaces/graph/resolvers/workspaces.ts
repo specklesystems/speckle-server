@@ -98,7 +98,7 @@ import {
 import {
   createWorkspaceProjectFactory,
   getWorkspaceProjectsFactory,
-  getWorkspaceRolesAllowedProjectRolesFactory,
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
@@ -448,7 +448,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             emitWorkspaceEvent: getEventBus().emit,
             ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              eventEmit: getEventBus().emit
             })
           })
 
@@ -598,7 +599,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   emitWorkspaceEvent: emit,
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: emit
                   })
                 })
             })
@@ -693,7 +695,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             emitWorkspaceEvent: getEventBus().emit,
             ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              eventEmit: getEventBus().emit
             })
           })({ userId: context.userId, workspaceId: args.input.workspaceId })
 
@@ -876,7 +879,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 emitWorkspaceEvent: getEventBus().emit,
                 ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                   createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                  eventEmit: getEventBus().emit
                 })
               })
             }),
@@ -1006,10 +1010,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 upsertProjectRole: upsertProjectRoleFactory({ db }),
                 getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
-                getWorkspaceRolesAllowedProjectRoles:
-                  getWorkspaceRolesAllowedProjectRolesFactory({
-                    getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-                  }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                   getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
@@ -1020,9 +1020,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   emitWorkspaceEvent: emit,
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
                     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: emit
                   })
-                })
+                }),
+                getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
+                getWorkspaceRoleToDefaultProjectRoleMapping:
+                  getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                    getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+                  })
               })
           })
 
