@@ -19,6 +19,7 @@ export interface ObjectLoader2Options {
   customLogger?: CustomLogger
 }
 export interface BaseDatabaseOptions {
+  indexedDB: IDBFactory
   enableCaching: boolean
   batchMaxSize: number
   batchMaxWait: number

@@ -1,15 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import CacheDatabase from './database.js'
-import indexeddb from 'fake-indexeddb'
+import { IDBFactory } from 'fake-indexeddb'
 import { Item } from '../types/types.js'
 import ArrayQueue from '../helpers/ArrayQueue.js'
-
-globalThis.indexedDB = indexeddb
 
 describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, { batchMaxWait: 200 })
+    const database = new CacheDatabase(() => {}, {
+      indexedDB: new IDBFactory(),
+      batchMaxWait: 200
+    })
     await database.write(i)
     await database.finish()
 
@@ -20,7 +21,9 @@ describe('database cache', () => {
 
   test('write single item with setItems and getItem', async () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {})
+    const database = new CacheDatabase(() => {}, {
+      indexedDB: new IDBFactory()
+    })
     await database.setItems([i])
 
     const x = await database.getItem('id')
@@ -31,7 +34,10 @@ describe('database cache', () => {
   test('write two items to queue use getItem', async () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, { batchMaxWait: 200 })
+    const database = new CacheDatabase(() => {}, {
+      indexedDB: new IDBFactory(),
+      batchMaxWait: 200
+    })
     await database.write(i1)
     await database.write(i2)
     await database.finish()
@@ -48,7 +54,10 @@ describe('database cache', () => {
   test('write two items to queue use getItem', async () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
-    const database = new CacheDatabase(() => {}, { batchMaxWait: 200 })
+    const database = new CacheDatabase(() => {}, {
+      indexedDB: new IDBFactory(),
+      batchMaxWait: 200
+    })
     await database.write(i1)
     await database.write(i2)
     await database.finish()

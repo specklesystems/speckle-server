@@ -17,7 +17,12 @@ export default class CacheDatabase {
   constructor(logger: CustomLogger, options?: Partial<BaseDatabaseOptions>) {
     this._logger = logger
     this._options = {
-      ...{ batchMaxSize: 500, batchMaxWait: 1000, enableCaching: true },
+      ...{
+        indexedDB: globalThis.indexedDB,
+        batchMaxSize: 500,
+        batchMaxWait: 1000,
+        enableCaching: true
+      },
       ...options
     }
   }
@@ -42,7 +47,7 @@ export default class CacheDatabase {
 
   private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(dbName, 1)
+      const request = this._options.indexedDB.open(dbName, 1)
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
@@ -58,7 +63,7 @@ export default class CacheDatabase {
   }
 
   private supportsCache(): boolean {
-    return !!(this._options.enableCaching && globalThis.indexedDB)
+    return !!(this._options.enableCaching && this._options.indexedDB)
   }
 
   private async setupCacheDb(): Promise<boolean> {
@@ -196,12 +201,12 @@ export default class CacheDatabase {
    */
   private async safariFix(): Promise<void> {
     // No point putting other browsers or older versions of Safari through this mess.
-    if (!isSafari() || !indexedDB.databases) return Promise.resolve()
+    if (!isSafari() || !this._options.indexedDB.databases) return Promise.resolve()
 
     let intervalId: ReturnType<typeof setInterval>
 
     return new Promise<void>((resolve: () => void) => {
-      const tryIdb = () => indexedDB.databases().finally(resolve)
+      const tryIdb = () => this._options.indexedDB.databases().finally(resolve)
       intervalId = setInterval(() => {
         void tryIdb()
       }, 100)
