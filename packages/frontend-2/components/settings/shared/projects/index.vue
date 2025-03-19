@@ -116,7 +116,7 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
-import { projectRoute, projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
