@@ -1,24 +1,22 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { CustomLogger, Item, isBase } from '../types/types.js'
+import { Item, isBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { ICache } from './interfaces.js'
 
 export default class CacheDatabase implements ICache {
-  private static _databaseName: string = 'speckle-cache'
-  private static _storeName: string = 'objects'
-  private _options: BaseDatabaseOptions
-  private _logger: CustomLogger
+  static #databaseName: string = 'speckle-cache'
+  static #storeName: string = 'objects'
+  #options: BaseDatabaseOptions
 
-  private _cacheDB?: IDBDatabase
+  #cacheDB?: IDBDatabase
 
-  private _writeQueue: BatchingQueue<Item> | undefined
+  #writeQueue: BatchingQueue<Item> | undefined
 
-  constructor(logger: CustomLogger, options?: Partial<BaseDatabaseOptions>) {
-    this._logger = logger
-    this._options = {
+  constructor(options?: Partial<BaseDatabaseOptions>) {
+    this.#options = {
       ...{
         indexedDB: globalThis.indexedDB,
         batchMaxSize: 1000,
@@ -30,26 +28,26 @@ export default class CacheDatabase implements ICache {
   }
 
   async write(obj: Item): Promise<void> {
-    if (!this._writeQueue) {
-      if (!(await this.setupCacheDb())) {
+    if (!this.#writeQueue) {
+      if (!(await this.#setupCacheDb())) {
         return
       }
-      this._writeQueue = new BatchingQueue<Item>(
-        this._options.batchMaxSize,
-        this._options.batchMaxWait,
-        (batch: Item[]) => CacheDatabase.cacheSaveBatch(batch, this._cacheDB!)
+      this.#writeQueue = new BatchingQueue<Item>(
+        this.#options.batchMaxSize,
+        this.#options.batchMaxWait,
+        (batch: Item[]) => this.#cacheSaveBatch(batch, this.#cacheDB!)
       )
     }
-    this._writeQueue.add(obj)
+    this.#writeQueue.add(obj)
   }
 
   async finish(): Promise<void> {
-    await this._writeQueue?.finish()
+    await this.#writeQueue?.finish()
   }
 
-  private openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
+  #openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = this._options.indexedDB.open(dbName, 1)
+      const request = this.#options.indexedDB.open(dbName, 1)
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
@@ -64,18 +62,18 @@ export default class CacheDatabase implements ICache {
     })
   }
 
-  private supportsCache(): boolean {
-    return !!(this._options.enableCaching && this._options.indexedDB)
+  #supportsCache(): boolean {
+    return !!(this.#options.enableCaching && this.#options.indexedDB)
   }
 
-  private async setupCacheDb(): Promise<boolean> {
-    if (this._cacheDB !== undefined && !this.supportsCache()) return false
+  async #setupCacheDb(): Promise<boolean> {
+    if (this.#cacheDB !== undefined && !this.#supportsCache()) return false
 
     // Initialize
-    await this.safariFix()
-    this._cacheDB = await this.openDatabase(
-      CacheDatabase._databaseName,
-      CacheDatabase._storeName
+    await this.#safariFix()
+    this.#cacheDB = await this.#openDatabase(
+      CacheDatabase.#databaseName,
+      CacheDatabase.#storeName
     )
     return true
   }
@@ -84,17 +82,17 @@ export default class CacheDatabase implements ICache {
     found: Queue<Item>,
     notFound: Queue<string>
   ): Promise<void> {
-    if (!(await this.setupCacheDb())) {
+    if (!(await this.#setupCacheDb())) {
       return
     }
 
-    for (let i = 0; i < baseIds.length; i += this._options.batchMaxSize) {
-      const baseIdsChunk = baseIds.slice(i, i + this._options.batchMaxSize)
+    for (let i = 0; i < baseIds.length; i += this.#options.batchMaxSize) {
+      const baseIdsChunk = baseIds.slice(i, i + this.#options.batchMaxSize)
 
-      const store = this._cacheDB!.transaction(
-        CacheDatabase._storeName,
+      const store = this.#cacheDB!.transaction(
+        CacheDatabase.#storeName,
         'readonly'
-      ).objectStore(CacheDatabase._storeName)
+      ).objectStore(CacheDatabase.#storeName)
       const idbChildrenPromises = baseIdsChunk.map<Promise<void>>(async (baseId) => {
         const getBase = new Promise((resolve, reject) => {
           const request = store.get(baseId)
@@ -119,14 +117,14 @@ export default class CacheDatabase implements ICache {
   }
 
   async getItem(baseId: string): Promise<Item | undefined> {
-    if (!(await this.setupCacheDb())) {
+    if (!(await this.#setupCacheDb())) {
       return undefined
     }
 
-    const store = this._cacheDB!.transaction(
-      CacheDatabase._storeName,
+    const store = this.#cacheDB!.transaction(
+      CacheDatabase.#storeName,
       'readonly'
-    ).objectStore(CacheDatabase._storeName)
+    ).objectStore(CacheDatabase.#storeName)
     const getBase = new Promise<unknown>((resolve, reject) => {
       const request = store.get(baseId)
 
@@ -143,9 +141,9 @@ export default class CacheDatabase implements ICache {
     }
   }
 
-  static async cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
-    const transaction = cacheDB.transaction(CacheDatabase._storeName, 'readwrite')
-    const store = transaction.objectStore(CacheDatabase._storeName)
+  async #cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
+    const transaction = cacheDB.transaction(CacheDatabase.#storeName, 'readwrite')
+    const store = transaction.objectStore(CacheDatabase.#storeName)
     const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
@@ -159,9 +157,9 @@ export default class CacheDatabase implements ICache {
     }
     await Promise.all(promises)
     transaction.commit()
-    await CacheDatabase.promisifyIDBTransaction(transaction)
+    await this.#promisifyIDBTransaction(transaction)
   }
-  private static promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
+  #promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
     return new Promise((resolve, reject) => {
       request.oncomplete = () => resolve()
       request.onerror = (e) =>
@@ -173,14 +171,14 @@ export default class CacheDatabase implements ICache {
    * Fixes a Safari bug where IndexedDB requests get lost and never resolve - invoke before you use IndexedDB
    * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
    */
-  private async safariFix(): Promise<void> {
+  async #safariFix(): Promise<void> {
     // No point putting other browsers or older versions of Safari through this mess.
-    if (!isSafari() || !this._options.indexedDB.databases) return Promise.resolve()
+    if (!isSafari() || !this.#options.indexedDB.databases) return Promise.resolve()
 
     let intervalId: ReturnType<typeof setInterval>
 
     return new Promise<void>((resolve: () => void) => {
-      const tryIdb = () => this._options.indexedDB.databases().finally(resolve)
+      const tryIdb = () => this.#options.indexedDB.databases().finally(resolve)
       intervalId = setInterval(() => {
         void tryIdb()
       }, 100)

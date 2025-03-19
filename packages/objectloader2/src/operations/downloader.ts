@@ -6,18 +6,18 @@ import { ICache, IDownloader } from './interfaces.js'
 import { BaseDownloadOptions } from './options.js'
 
 export default class Downloader implements IDownloader {
-  private _serverUrl: string
-  private _streamId: string
-  private _objectId: string
-  private _token?: string
-  private _requestUrlRootObj: string
-  private _requestUrlChildren: string
-  private _headers: HeadersInit
-  private _options: BaseDownloadOptions
+  #serverUrl: string
+  #streamId: string
+  #objectId: string
+  #token?: string
+  #requestUrlRootObj: string
+  #requestUrlChildren: string
+  #headers: HeadersInit
+  #options: BaseDownloadOptions
 
-  private _database: ICache
-  private _downloadQueue: BatchingQueue<string>
-  private _results: Queue<Item>
+  #database: ICache
+  #downloadQueue: BatchingQueue<string>
+  #results: Queue<Item>
 
   constructor(
     database: ICache,
@@ -28,53 +28,55 @@ export default class Downloader implements IDownloader {
     token?: string,
     options?: Partial<BaseDownloadOptions>
   ) {
-    this._database = database
-    this._results = results
+    this.#database = database
+    this.#results = results
 
-    this._serverUrl = serverUrl
-    this._streamId = streamId
-    this._objectId = objectId
-    this._token = token
-    this._options = {
+    this.#serverUrl = serverUrl
+    this.#streamId = streamId
+    this.#objectId = objectId
+    this.#token = token
+    this.#options = {
       ...{
-        fetch: (...args) => window.fetch(...args),
+        fetch: (...args) => globalThis.fetch(...args),
         batchMaxSize: 5000,
         batchMaxWait: 1000
       },
       ...options
     }
-    this._downloadQueue = new BatchingQueue<string>(
-      this._options.batchMaxSize,
-      this._options.batchMaxWait,
+    this.#downloadQueue = new BatchingQueue<string>(
+      this.#options.batchMaxSize,
+      this.#options.batchMaxWait,
       (batch: string[]) =>
         this.downloadBatch(
           batch,
-          this._requestUrlChildren,
-          this._headers,
-          this._results
+          this.#requestUrlChildren,
+          this.#headers,
+          this.#results
         )
     )
 
-    this._headers = {
+    this.#headers = {
       Accept: 'text/plain'
     }
 
-    if (this._token) {
-      this._headers['Authorization'] = `Bearer ${this._token}`
+    if (this.#token) {
+      this.#headers['Authorization'] = `Bearer ${this.#token}`
     }
-    this._requestUrlChildren = `${this._serverUrl}/api/getobjects/${this._streamId}`
-    this._requestUrlRootObj = `${this._serverUrl}/objects/${this._streamId}/${this._objectId}/single`
+    this.#requestUrlChildren = `${this.#serverUrl}/api/getobjects/${this.#streamId}`
+    this.#requestUrlRootObj = `${this.#serverUrl}/objects/${this.#streamId}/${
+      this.#objectId
+    }/single`
   }
 
   add(id: string): void {
-    this._downloadQueue.add(id)
+    this.#downloadQueue.add(id)
   }
 
   async finish(): Promise<void> {
-    await this._downloadQueue.finish()
+    await this.#downloadQueue.finish()
   }
 
-  static processJson(baseId: string, unparsedBase: string): Item {
+  #processJson(baseId: string, unparsedBase: string): Item {
     let base: unknown
     try {
       base = JSON.parse(unparsedBase)
@@ -94,13 +96,13 @@ export default class Downloader implements IDownloader {
     headers: HeadersInit,
     results: Queue<Item>
   ): Promise<void> {
-    const response = await this._options.fetch(url, {
+    const response = await this.#options.fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ objects: JSON.stringify(idBatch) })
     })
 
-    this.validateResponse(response)
+    this.#validateResponse(response)
     if (!response.body) {
       throw new Error('ReadableStream not supported or response has no body.')
     }
@@ -124,8 +126,8 @@ export default class Downloader implements IDownloader {
         if (jsonString) {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
-          const item = Downloader.processJson(id, unparsedObj)
-          await this._database.write(item)
+          const item = this.#processJson(id, unparsedObj)
+          await this.#database.write(item)
           results.add(item)
         }
       }
@@ -133,16 +135,16 @@ export default class Downloader implements IDownloader {
   }
 
   async downloadSingle(): Promise<Item> {
-    const response = await this._options.fetch(this._requestUrlRootObj, {
-      headers: this._headers
+    const response = await this.#options.fetch(this.#requestUrlRootObj, {
+      headers: this.#headers
     })
-    this.validateResponse(response)
+    this.#validateResponse(response)
     const responseText = await response.text()
-    const item = Downloader.processJson(this._objectId, responseText)
+    const item = this.#processJson(this.#objectId, responseText)
     return item
   }
 
-  validateResponse(response: Response): void {
+  #validateResponse(response: Response): void {
     if (!response.ok) {
       if ([401, 403].includes(response.status)) {
         throw new ObjectLoaderRuntimeError('You do not have access!')

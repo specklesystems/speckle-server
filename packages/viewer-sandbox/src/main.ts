@@ -103,9 +103,9 @@ const getStream = () => {
   return (
     // prettier-ignore
     //crashing out of memory?
-    //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
+    `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
     //too big?
-    `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
+   // `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'

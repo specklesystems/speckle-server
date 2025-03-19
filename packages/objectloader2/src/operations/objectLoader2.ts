@@ -6,14 +6,14 @@ import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
 
 export default class ObjectLoader2 {
-  private _objectId: string
+  #objectId: string
 
-  private _logger: CustomLogger
+  #logger: CustomLogger
 
-  private _database: ICache
-  private _downloader: IDownloader
+  #database: ICache
+  #downloader: IDownloader
 
-  private _gathered: AsyncGeneratorQueue<Item>
+  #gathered: AsyncGeneratorQueue<Item>
 
   constructor(
     serverUrl: string,
@@ -22,56 +22,56 @@ export default class ObjectLoader2 {
     token?: string,
     options?: Partial<ObjectLoader2Options>
   ) {
-    this._objectId = objectId
+    this.#objectId = objectId
 
-    this._logger = options?.customLogger || console.log
-    this._gathered = new AsyncGeneratorQueue()
-    this._database = options?.cache || new CacheDatabase(this._logger)
-    this._downloader =
+    this.#logger = options?.customLogger || console.log
+    this.#gathered = new AsyncGeneratorQueue()
+    this.#database = options?.cache || new CacheDatabase()
+    this.#downloader =
       options?.downloader ||
       new Downloader(
-        this._database,
-        this._gathered,
+        this.#database,
+        this.#gathered,
         serverUrl,
         streamId,
-        this._objectId,
+        this.#objectId,
         token
       )
   }
 
   async finish(): Promise<void> {
     await Promise.all([
-      this._database.finish(),
-      this._downloader.finish(),
-      this._gathered.finish()
+      this.#database.finish(),
+      this.#downloader.finish(),
+      this.#gathered.finish()
     ])
   }
 
   async getRootObject(): Promise<Item | undefined> {
-    const cachedRootObject = await this._database.getItem(this._objectId)
+    const cachedRootObject = await this.#database.getItem(this.#objectId)
     if (cachedRootObject) {
       return cachedRootObject
     }
-    const rootItem = await this._downloader.downloadSingle()
+    const rootItem = await this.#downloader.downloadSingle()
 
-    await this._database.write(rootItem)
+    await this.#database.write(rootItem)
     return rootItem
   }
 
   async *getRawObjectIterator(): AsyncGenerator<Item> {
     const rootItem = await this.getRootObject()
     if (rootItem === undefined) {
-      this._logger('No root object found!')
+      this.#logger('No root object found!')
       return
     }
     yield rootItem
     if (!rootItem.base.__closure) return
-    const getPromise = this._database.getItems(
+    const getPromise = this.#database.getItems(
       Object.keys(rootItem.base.__closure),
-      this._gathered,
-      this._downloader
+      this.#gathered,
+      this.#downloader
     )
-    for await (const item of this._gathered.consume()) {
+    for await (const item of this.#gathered.consume()) {
       yield item
     }
     await getPromise

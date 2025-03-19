@@ -1333,6 +1333,7 @@ export default class Sandbox {
     const objectId = segments[4]
 
     const t0 = performance.now()
+    console.log('About to start  ' + (performance.now() - t0) / 1000)
     /*const loader = new ObjectLoader({
       serverUrl,
       token,
@@ -1342,7 +1343,6 @@ export default class Sandbox {
       options: { enableCaching: true }
     })*/
 
-    console.log('About to start  ' + (performance.now() - t0) / 1000)
     const loader = new ObjectLoader2(serverUrl, streamId, objectId, token)
     let count = 0
 
