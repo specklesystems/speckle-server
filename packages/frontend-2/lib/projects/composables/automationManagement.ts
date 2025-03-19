@@ -68,27 +68,53 @@ export function useCreateAutomation() {
 export function useDeleteAutomation() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
-  const { mutate: deleteAutomation } = useMutation(deleteAutomationMutation)
+  const { client: apollo } = useApolloClient()
 
   return async (projectId: string, automationId: string) => {
     if (!activeUser.value) return
 
-    const res = await deleteAutomation({ projectId, automationId }).catch(
-      convertThrowIntoFetchResult
-    )
-    if (res?.data?.projectMutations?.automationMutations?.delete) {
+    const result = await apollo
+      .mutate({
+        mutation: deleteAutomationMutation,
+        variables: {
+          projectId,
+          automationId
+        },
+        update: (cache, res) => {
+          const { data } = res
+          if (!data?.projectMutations?.automationMutations?.delete) return
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'automations',
+            ({ value, helpers }) => {
+              return {
+                ...value,
+                items: value.items?.filter(
+                  (automation) => helpers.readField(automation, 'id') !== automationId
+                )
+              }
+            }
+          )
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Automation deleted'
       })
     } else {
-      const errorMessage = getFirstErrorMessage(res?.errors)
+      const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to delete automation',
         description: errorMessage
       })
     }
+
+    return result?.data?.projectMutations?.automationMutations?.delete
   }
 }
 

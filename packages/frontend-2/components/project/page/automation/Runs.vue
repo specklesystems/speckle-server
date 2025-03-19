@@ -33,6 +33,11 @@
       :automation-id="automation.id"
     />
     <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
+    <ProjectPageAutomationDeleteDialog
+      v-model:open="showDeleteDialog"
+      :project-id="projectId"
+      :automation="automation"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -40,14 +45,10 @@ import type { Nullable } from '@speckle/shared'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
-import {
-  useDeleteAutomation,
-  useTriggerAutomation
-} from '~/lib/projects/composables/automationManagement'
+import { useTriggerAutomation } from '~/lib/projects/composables/automationManagement'
 import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/queries'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
-import { projectRoute } from '~/lib/common/helpers/route'
 
 // TODO: Subscriptions for new runs
 
@@ -64,6 +65,7 @@ graphql(`
       totalCount
       cursor
     }
+    ...ProjectPageAutomationDeleteDialog_Automation
   }
 `)
 
@@ -73,15 +75,13 @@ const props = defineProps<{
   isEditable: boolean
 }>()
 
-const router = useRouter()
-const deleteAutomation = useDeleteAutomation()
-
 const showActionsMenu = ref(false)
+const showDeleteDialog = ref(false)
 
 const actionItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Delete',
+      title: 'Delete automation',
       id: 'delete'
     }
   ]
@@ -92,9 +92,7 @@ const onActionChosen = async (params: { item: LayoutMenuItem }) => {
 
   switch (item.id) {
     case 'delete': {
-      await deleteAutomation(props.projectId, props.automation.id)
-      router.push(projectRoute(props.projectId, 'automations'))
-      break
+      showDeleteDialog.value = true
     }
   }
 }
