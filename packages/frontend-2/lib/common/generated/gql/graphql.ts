@@ -4399,6 +4399,8 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  /** Date that the user joined the workspace. */
+  joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   seatType: WorkspaceSeatType;
@@ -8564,6 +8566,7 @@ export type WorkspaceBillingMutationsFieldArgs = {
 }
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
+  joinDate: {},
   projectRoles: {},
   role: {},
   seatType: {},

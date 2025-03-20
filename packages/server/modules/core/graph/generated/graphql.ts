@@ -4422,6 +4422,8 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  /** Date that the user joined the workspace. */
+  joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   seatType: WorkspaceSeatType;
@@ -7091,6 +7093,7 @@ export type WorkspaceBillingMutationsResolvers<ContextType = GraphQLContext, Par
 
 export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceCollaborator'] = ResolversParentTypes['WorkspaceCollaborator']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  joinDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   projectRoles?: Resolver<Array<ResolversTypes['ProjectRole']>, ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   seatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
