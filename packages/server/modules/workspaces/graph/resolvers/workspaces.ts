@@ -112,7 +112,7 @@ import {
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
-import { chunk } from 'lodash'
+import { chunk, omit } from 'lodash'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -130,10 +130,7 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  isWorkspaceRole,
-  parseDefaultProjectRole
-} from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -562,10 +559,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput: {
-              ...workspaceInput,
-              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
-            }
+            workspaceInput: omit(workspaceInput, ['defaultProjectRole'])
           })
 
           return workspace
@@ -1071,6 +1065,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Workspace: {
+        defaultProjectRole: () => Roles.Stream.Reviewer,
         creationState: async (parent) => {
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
