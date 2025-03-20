@@ -199,7 +199,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const assignSeat = assignWorkspaceSeatFactory({
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-            emit: getEventBus().emit
+            eventEmit: getEventBus().emit
           })
           await assignSeat({
             workspaceId,

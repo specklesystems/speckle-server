@@ -147,7 +147,8 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+      eventEmit: getEventBus().emit
     })
   })
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
@@ -297,13 +298,14 @@ export const assignToWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat
+      getWorkspaceUserSeat,
+      eventEmit: getEventBus().emit
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-    emit: getEventBus().emit
+    eventEmit: getEventBus().emit
   })
 
   role = role || Roles.Workspace.Member

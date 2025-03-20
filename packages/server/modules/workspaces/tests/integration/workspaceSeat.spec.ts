@@ -8,6 +8,7 @@ import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
   assignToWorkspace,
@@ -110,14 +111,16 @@ describe('Workspace workspaceSeat services', () => {
     const createWorkspaceSeat = createWorkspaceSeatFactory({ db })
     const sut = ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat,
-      getWorkspaceUserSeat
+      getWorkspaceUserSeat,
+      eventEmit: getEventBus().emit
     })
 
     it('should create a new seat if none exists', async () => {
       const workspaceSeat = await sut({
         userId: testUser.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Member
+        role: Roles.Workspace.Member,
+        updatedByUserId: workspaceAdmin.id
       })
 
       expect(workspaceSeat).to.be.ok
@@ -134,7 +137,8 @@ describe('Workspace workspaceSeat services', () => {
       const workspaceSeat = await sut({
         userId: testUser.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Admin
+        role: Roles.Workspace.Admin,
+        updatedByUserId: workspaceAdmin.id
       })
 
       expect(oldSeat?.type).to.eq(WorkspaceSeatType.Viewer)
@@ -152,7 +156,8 @@ describe('Workspace workspaceSeat services', () => {
       const workspaceSeat = await sut({
         userId: testUser.id,
         workspaceId: workspace.id,
-        role: Roles.Workspace.Admin
+        role: Roles.Workspace.Admin,
+        updatedByUserId: workspaceAdmin.id
       })
 
       expect(oldSeat?.type).to.eq(WorkspaceSeatType.Editor)
