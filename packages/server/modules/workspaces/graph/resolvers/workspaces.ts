@@ -1206,6 +1206,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
+        },
+        search: async () => {
+          return []
         }
       },
       WorkspaceSso: {

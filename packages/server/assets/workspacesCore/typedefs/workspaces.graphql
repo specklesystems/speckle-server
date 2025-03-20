@@ -246,6 +246,17 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+type WorkspaceSearchResult {
+  type: String!
+  label: String!
+  name: String!
+  details: String!
+  projectId: String
+  modelId: String
+  objectId: String
+  commentId: String
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -257,6 +268,7 @@ type Workspace {
   Logo image as base64-encoded string
   """
   logo: String
+  search(query: String!): [WorkspaceSearchResult!]!
   """
   The default role workspace members will receive for workspace projects.
   """

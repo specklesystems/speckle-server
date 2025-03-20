@@ -4330,6 +4330,7 @@ export type Workspace = {
   readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
+  search: Array<WorkspaceSearchResult>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
@@ -4367,6 +4368,11 @@ export type WorkspaceProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceProjectsFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceSearchArgs = {
+  query: Scalars['String']['input'];
 };
 
 
@@ -4818,6 +4824,18 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceSearchResult = {
+  __typename?: 'WorkspaceSearchResult';
+  commentId?: Maybe<Scalars['String']['output']>;
+  details: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  modelId?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  objectId?: Maybe<Scalars['String']['output']>;
+  projectId?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
 };
 
 export const WorkspaceSeatType = {
