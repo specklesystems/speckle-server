@@ -95,6 +95,9 @@ class TransformControls extends Controls {
 
     const scope = this
 
+    this._doNotPick = false
+    this._excludeGizmos = []
+
     // Defined getter, setter and store for a property
     function defineProperty(propName, defaultValue) {
       let propValue = defaultValue
@@ -376,13 +379,18 @@ class TransformControls extends Controls {
   }
 
   pointerHover(pointer) {
+    if (this._doNotPick) {
+      this.axis = null
+      return
+    }
+
     if (this.object === undefined || this.dragging === true) return
 
     if (pointer !== null) _raycaster.setFromCamera(pointer, this.camera)
 
     const intersect = intersectObjectWithRay(this._gizmo.picker[this.mode], _raycaster)
 
-    if (intersect && intersect.object.name !== 'E') {
+    if (intersect && !this._excludeGizmos.includes(intersect.object.name)) {
       this.axis = intersect.object.name
     } else {
       this.axis = null
@@ -390,6 +398,10 @@ class TransformControls extends Controls {
   }
 
   pointerDown(pointer) {
+    if (this._doNotPick) {
+      return
+    }
+
     if (
       this.object === undefined ||
       this.dragging === true ||
@@ -426,6 +438,9 @@ class TransformControls extends Controls {
   }
 
   pointerMove(pointer) {
+    if (this._doNotPick) {
+      return
+    }
     const axis = this.axis
     const mode = this.mode
     const object = this.object
@@ -668,6 +683,10 @@ class TransformControls extends Controls {
   }
 
   pointerUp(pointer) {
+    if (this._doNotPick) {
+      return
+    }
+
     if (pointer !== null && pointer.button !== 0) return
 
     if (this.dragging && this.axis !== null) {
@@ -864,7 +883,7 @@ function onPointerUp(event) {
   this.pointerUp(this._getPointer(event))
 }
 
-function intersectObjectWithRay(object, raycaster, includeInvisible) {
+export function intersectObjectWithRay(object, raycaster, includeInvisible) {
   const allIntersections = raycaster.intersectObject(object, true)
 
   for (let i = 0; i < allIntersections.length; i++) {

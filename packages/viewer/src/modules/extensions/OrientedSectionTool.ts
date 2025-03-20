@@ -18,7 +18,7 @@ import {
   Intersection,
   Face
 } from 'three'
-import { TransformControls } from './TransformControls.js'
+import { intersectObjectWithRay, TransformControls } from './TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 import { type IViewer, ObjectLayers } from '../../IViewer.js'
 import { Extension } from './Extension.js'
@@ -162,6 +162,34 @@ export class OrientedSectionTool extends Extension {
     this.enabled = false
   }
 
+  public onEarlyUpdate() {
+    if (this.dragging) return
+
+    const intersectTranslate = intersectObjectWithRay(
+      //@ts-ignore
+      this.translateControls._gizmo.picker['translate'],
+      this.translateControls.getRaycaster()
+    )
+    const intersectRotate = intersectObjectWithRay(
+      //@ts-ignore
+      this.rotateControls._gizmo.picker['rotate'],
+      this.rotateControls.getRaycaster()
+    )
+
+    const translatDistance = intersectTranslate
+      ? intersectTranslate.distance
+      : Number.MAX_VALUE
+    const rotateDistance = intersectRotate ? intersectRotate.distance : Number.MAX_VALUE
+
+    if (translatDistance <= rotateDistance) {
+      this.translateControls._doNotPick = false
+      this.rotateControls._doNotPick = true
+    } else {
+      this.translateControls._doNotPick = true
+      this.rotateControls._doNotPick = false
+    }
+  }
+
   public on<T extends SectionToolEvent>(
     eventType: T,
     listener: (arg: SectionToolEventPayload[T]) => void
@@ -186,6 +214,7 @@ export class OrientedSectionTool extends Extension {
     }
     this.translateControls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.translateControls.setSize(0.75)
+    this.translateControls._excludeGizmos = ['XYZE', 'XYZ', 'XY', 'YZ', 'XZ']
     this.display.add(this.translateControls._root)
 
     this.rotateControls = new TransformControls(
@@ -201,6 +230,7 @@ export class OrientedSectionTool extends Extension {
     this.rotateControls.setSize(0.5)
     this.rotateControls.mode = 'rotate'
     this.rotateControls.axis = 'XYZ'
+    this.rotateControls._excludeGizmos = ['E', 'XYZE']
     this.display.add(this.rotateControls._root)
 
     this.scaleControls = new TransformControls(
