@@ -21,8 +21,8 @@
       class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
         {
           id: 'actions',
           header: '',
@@ -54,9 +54,8 @@
       <template #seat="{ item }">
         <SeatTypeDisplay :seat-type="item.seatType" />
       </template>
-      <!-- TODO: Add joined at date -->
-      <template #joined="">
-        <span class="text-foreground-2">JOINED AT</span>
+      <template #joined="{ item }">
+        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersUpdateActionsMenu
@@ -64,7 +63,8 @@
           :target-user="{
             ...item.user,
             role: item.role,
-            seatType: item.seatType
+            seatType: item.seatType,
+            joinDate: item.joinDate
           }"
           :workspace-role="workspace?.role"
           :workspace-id="workspace?.id"

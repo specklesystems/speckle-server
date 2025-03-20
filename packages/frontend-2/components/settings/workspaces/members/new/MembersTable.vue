@@ -70,9 +70,8 @@
       <template #seat="{ item }">
         <SeatTypeDisplay :seat-type="item.seatType" />
       </template>
-      <!-- TODO: Add joined at date -->
-      <template #joined="">
-        <span class="text-foreground-2">JOINED AT</span>
+      <template #joined="{ item }">
+        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersUpdateActionsMenu
@@ -101,6 +100,7 @@ graphql(`
     id
     role
     seatType
+    joinDate
     user {
       id
       avatar
