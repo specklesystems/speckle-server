@@ -1,4 +1,4 @@
-import { RateLimitBreached } from '@/modules/core/services/ratelimiter'
+import { RateLimitBreached } from '@/modules/core/utils/ratelimiter'
 import { BaseError } from '@/modules/shared/errors'
 import { Options } from 'verror'
 
