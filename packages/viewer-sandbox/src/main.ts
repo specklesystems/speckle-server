@@ -18,7 +18,6 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'

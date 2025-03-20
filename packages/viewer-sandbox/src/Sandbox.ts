@@ -13,7 +13,6 @@ import {
   MRTShadedViewPipeline,
   NormalsPass,
   ObjectLayers,
-  OrientedSectionTool,
   OutputPass,
   Pipeline,
   SectionTool,

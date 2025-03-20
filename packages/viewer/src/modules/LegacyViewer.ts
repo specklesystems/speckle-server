@@ -46,6 +46,7 @@ import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
 import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
 import { SectionTool } from '../index.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -174,8 +175,11 @@ export class LegacyViewer extends Viewer {
     this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
   }
 
-  public getCurrentSectionBox() {
-    return this.sections.getBox()
+  public getCurrentSectionBox(): Box3 {
+    /** Temporary until server data model is updated so we don't need to change anything in FE*/
+    let box = this.sections.getBox()
+    if (box instanceof OBB) box = new Box3().fromOBB(box)
+    return box
   }
 
   public toggleSectionBox() {
