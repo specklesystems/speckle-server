@@ -9,79 +9,85 @@ const isEnableAllFFsMode = () =>
 const parseFeatureFlags = () => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  const res = parseEnv(process.env, {
-    // Enables the automate module.
-    FF_AUTOMATE_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
+  const res = parseEnv(
+    {
+      ...process.env,
+      FF_WORKSPACES_NEW_PLANS_ENABLED: 'true'
     },
-    // Enables the gendo ai integration
-    FF_GENDOAI_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Enables the workspaces module
-    FF_WORKSPACES_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    FF_WORKSPACES_NEW_PLANS_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: true, _: true }
-    },
-    FF_GATEKEEPER_FORCE_FREE_PLAN: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    FF_GATEKEEPER_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    FF_BILLING_INTEGRATION_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Enables using dynamic SSO on a per workspace basis
-    FF_WORKSPACES_SSO_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    // Enables the multiple emails module
-    FF_MULTIPLE_EMAILS_MODULE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    // Enables workspaces multi region DB support
-    FF_WORKSPACES_MULTI_REGION_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Toggles IFC parsing with experimental .Net parser
-    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Forces onboarding for all users
-    FF_FORCE_ONBOARDING: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Enable to not allow personal emails
-    FF_NO_PERSONAL_EMAILS_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Fixes the streaming of objects by ensuring that the database stream is closed properly
-    FF_OBJECTS_STREAMING_FIX: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
-    // Enables endpoint(s) for updating a project's region
-    FF_MOVE_PROJECT_REGION_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
+    {
+      // Enables the automate module.
+      FF_AUTOMATE_MODULE_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      // Enables the gendo ai integration
+      FF_GENDOAI_MODULE_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Enables the workspaces module
+      FF_WORKSPACES_MODULE_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      FF_WORKSPACES_NEW_PLANS_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      FF_GATEKEEPER_FORCE_FREE_PLAN: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      FF_GATEKEEPER_MODULE_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      FF_BILLING_INTEGRATION_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Enables using dynamic SSO on a per workspace basis
+      FF_WORKSPACES_SSO_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      // Enables the multiple emails module
+      FF_MULTIPLE_EMAILS_MODULE_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      },
+      // Enables workspaces multi region DB support
+      FF_WORKSPACES_MULTI_REGION_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Toggles IFC parsing with experimental .Net parser
+      FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Forces onboarding for all users
+      FF_FORCE_ONBOARDING: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Enable to not allow personal emails
+      FF_NO_PERSONAL_EMAILS_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Fixes the streaming of objects by ensuring that the database stream is closed properly
+      FF_OBJECTS_STREAMING_FIX: {
+        schema: z.boolean(),
+        defaults: { production: false, _: false }
+      },
+      // Enables endpoint(s) for updating a project's region
+      FF_MOVE_PROJECT_REGION_ENABLED: {
+        schema: z.boolean(),
+        defaults: { production: false, _: true }
+      }
     }
-  })
+  )
 
   // Can be used to disable/enable all feature flags for testing purposes
   if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
