@@ -72,10 +72,9 @@ describe('objectloader2', () => {
   })
 
   test('can get root/child object from cache using iterator', async () => {
-    const child1Base =  { id: 'child1Id' } 
+    const child1Base = { id: 'child1Id' }
     const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
 
-    
     const rootId = 'rootId'
     const rootBase: Base = { id: 'rootId', __closure: { child1Id: 100 } }
     const root = {
@@ -104,6 +103,7 @@ describe('objectloader2', () => {
       }
     } as Cache
     const downloader = {
+      initializePool(total: number): void {},
       finish(): Promise<void> {
         return Promise.resolve()
       }
