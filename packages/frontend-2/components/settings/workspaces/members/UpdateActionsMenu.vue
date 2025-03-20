@@ -36,7 +36,7 @@ import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { UserUpdateActionTypes } from '~/lib/settings/helpers/types'
+import { WorkspaceUserUpdateActionTypes } from '~/lib/settings/helpers/types'
 import type { UserItem } from './new/MembersTable.vue'
 import {
   useWorkspaceUpdateRole,
@@ -44,7 +44,7 @@ import {
 } from '~/lib/workspaces/composables/management'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import {
-  UpdateWorkspaceMemberConfig,
+  WorkspaceUserUpdateConfig,
   WorkspaceRoleDescriptions
 } from '~/lib/settings/helpers/constants'
 import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
@@ -61,7 +61,7 @@ const updateUserSeatType = useWorkspaceUpdateSeatType()
 
 const showMenu = ref(false)
 const showDialog = ref(false)
-const dialogType = ref<UserUpdateActionTypes>()
+const dialogType = ref<WorkspaceUserUpdateActionTypes>()
 
 const isActiveUserWorkspaceAdmin = computed(
   () => props.workspaceRole === Roles.Workspace.Admin
@@ -80,24 +80,24 @@ const filteredActionsItems = computed(() => {
   // 3. The target user's current role (to show/hide role change options)
   // 4. The target user's seat type (to show relevant upgrade/downgrade options)
   // Special case: For remove action, we check against 'canRemove' instead of actual role
-  Object.entries(UpdateWorkspaceMemberConfig).forEach(([type, config]) => {
+  Object.entries(WorkspaceUserUpdateConfig).forEach(([type, config]) => {
     if (
       config.menu.show({
         isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
         isActiveUserTargetUser: isActiveUserTargetUser.value,
         targetUserCurrentRole:
-          type === UserUpdateActionTypes.RemoveMember
+          type === WorkspaceUserUpdateActionTypes.RemoveMember
             ? 'canRemove'
             : props.targetUser.role,
         targetUserCurrentSeatType: props.targetUser.seatType
       })
     ) {
-      const item = { title: config.menu.title, id: type as UserUpdateActionTypes }
+      const item = { title: config.menu.title, id: type }
 
       // Add remove/leave actions to footer, others to main section
       if (
-        type === UserUpdateActionTypes.RemoveMember ||
-        type === UserUpdateActionTypes.LeaveWorkspace
+        type === WorkspaceUserUpdateActionTypes.RemoveMember ||
+        type === WorkspaceUserUpdateActionTypes.LeaveWorkspace
       ) {
         footerItems.push(item)
       } else {
@@ -113,7 +113,7 @@ const filteredActionsItems = computed(() => {
 })
 
 const onActionChosen = (actionItem: LayoutMenuItem) => {
-  dialogType.value = actionItem.id as UserUpdateActionTypes
+  dialogType.value = actionItem.id as WorkspaceUserUpdateActionTypes
   showDialog.value = true
 }
 
@@ -153,7 +153,7 @@ const onRemoveUser = async () => {
 
 const dialogConfig = computed(() => {
   if (!dialogType.value) return null
-  const config = UpdateWorkspaceMemberConfig[dialogType.value].dialog
+  const config = WorkspaceUserUpdateConfig[dialogType.value].dialog
   return {
     ...config,
     mainMessage:
@@ -170,23 +170,23 @@ const onDialogConfirm = async () => {
   if (!props.workspaceId) return
 
   switch (dialogType.value) {
-    case UserUpdateActionTypes.MakeAdmin:
+    case WorkspaceUserUpdateActionTypes.MakeAdmin:
       await onUpdateRole(Roles.Workspace.Admin)
       break
-    case UserUpdateActionTypes.MakeGuest:
+    case WorkspaceUserUpdateActionTypes.MakeGuest:
       await onUpdateRole(Roles.Workspace.Guest)
       break
-    case UserUpdateActionTypes.RemoveAdmin:
-    case UserUpdateActionTypes.MakeMember:
+    case WorkspaceUserUpdateActionTypes.RemoveAdmin:
+    case WorkspaceUserUpdateActionTypes.MakeMember:
       await onUpdateRole(Roles.Workspace.Member)
       break
-    case UserUpdateActionTypes.UpgradeEditor:
+    case WorkspaceUserUpdateActionTypes.UpgradeEditor:
       await onUpdateSeatType('editor')
       break
-    case UserUpdateActionTypes.DowngradeEditor:
+    case WorkspaceUserUpdateActionTypes.DowngradeEditor:
       await onUpdateSeatType('viewer')
       break
-    case UserUpdateActionTypes.RemoveMember:
+    case WorkspaceUserUpdateActionTypes.RemoveMember:
       await onRemoveUser()
       break
   }
