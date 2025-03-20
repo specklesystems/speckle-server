@@ -30,9 +30,7 @@ export default class IndexedDatabase implements Cache {
 
   async write(obj: Item): Promise<void> {
     if (!this.#writeQueue) {
-      if (!(await this.#setupCacheDb())) {
-        return
-      }
+      await this.#setupCacheDb()
       this.#writeQueue = new BatchingQueue<Item>(
         this.#options.maxCacheWriteSize,
         this.#options.maxCacheBatchWriteWait,
@@ -67,8 +65,12 @@ export default class IndexedDatabase implements Cache {
     return !!(this.#options.enableCaching && this.#options.indexedDB)
   }
 
-  async #setupCacheDb(): Promise<boolean> {
-    if (this.#cacheDB !== undefined && !this.#supportsCache()) return false
+  async #setupCacheDb(): Promise<void> {
+    if (this.#cacheDB !== undefined && !this.#supportsCache()) {
+      throw new Error(
+        "Browser hasn't initialized a database.  It may not be supported."
+      )
+    }
 
     // Initialize
     await this.#safariFix()
@@ -76,16 +78,13 @@ export default class IndexedDatabase implements Cache {
       IndexedDatabase.#databaseName,
       IndexedDatabase.#storeName
     )
-    return true
   }
   async processItems(
     baseIds: string[],
     found: Queue<Item>,
     notFound: Queue<string>
   ): Promise<void> {
-    if (!(await this.#setupCacheDb())) {
-      return
-    }
+    await this.#setupCacheDb()
 
     for (let i = 0; i < baseIds.length; i += this.#options.maxCacheReadSize) {
       const baseIdsChunk = baseIds.slice(i, i + this.#options.maxCacheReadSize)
@@ -118,9 +117,7 @@ export default class IndexedDatabase implements Cache {
   }
 
   async getItem(baseId: string): Promise<Item | undefined> {
-    if (!(await this.#setupCacheDb())) {
-      return undefined
-    }
+    await this.#setupCacheDb()
 
     const store = this.#cacheDB!.transaction(
       IndexedDatabase.#storeName,
