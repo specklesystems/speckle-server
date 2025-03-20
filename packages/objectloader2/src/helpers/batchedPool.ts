@@ -1,20 +1,22 @@
 export default class BatchedPool<T> {
   private queue: T[] = []
   private concurrencyAndSizes: number[]
-  private batchTime: number
   private processFunction: (batch: T[]) => Promise<void>
   private workers: Promise<void>[] = []
+
+  private baseInterval = 200 // Initial batch time (ms)
+  private minInterval = 100 // Minimum batch time
+  private maxInterval = 3000 // Maximum batch time
+  private interval = this.baseInterval
 
   private processingLoop: Promise<void>
   private finished = false
 
   constructor(
     concurrencyAndSizes: number[],
-    batchTime: number,
     processFunction: (batch: T[]) => Promise<void>
   ) {
     this.concurrencyAndSizes = concurrencyAndSizes
-    this.batchTime = batchTime
     this.processFunction = processFunction
     this.processingLoop = this.loop()
   }
@@ -30,10 +32,21 @@ export default class BatchedPool<T> {
   private async runWorker(batchSize: number) {
     while (!this.finished || this.queue.length > 0) {
       if (this.queue.length > 0) {
+        const startTime = performance.now()
         const batch = this.getBatch(batchSize)
         await this.processFunction(batch)
+        //refigure interval
+        const endTime = performance.now()
+        const duration = endTime - startTime
+        if (duration > this.interval) {
+          this.interval = Math.min(this.interval * 1.5, this.maxInterval) // Increase if slow
+        } else {
+          this.interval = Math.max(this.interval * 0.8, this.minInterval) // Decrease if fast
+        }
       } else {
-        await this.delay(this.batchTime)
+        await this.delay(this.interval)
+        //waited so reset
+        this.interval = this.baseInterval
       }
     }
   }

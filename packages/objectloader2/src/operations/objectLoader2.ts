@@ -68,6 +68,7 @@ export default class ObjectLoader2 {
     if (!rootItem.base.__closure) return
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
+    this.#downloader.initializePool(total)
     const processPromise = this.#database.processItems(
       children,
       this.#gathered,

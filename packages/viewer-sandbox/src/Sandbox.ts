@@ -1348,7 +1348,7 @@ export default class Sandbox {
 
     for await (const obj of loader.getBases()) {
       if (count % 1000 === 0) {
-        console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
+        console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
       count++
     }

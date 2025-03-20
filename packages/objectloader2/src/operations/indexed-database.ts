@@ -5,6 +5,7 @@ import { Item, isBase } from '../types/types.js'
 import { ensureError, isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
+import { isString } from 'lodash'
 
 export default class IndexedDatabase implements Cache {
   static #databaseName: string = 'speckle-cache'
@@ -19,8 +20,8 @@ export default class IndexedDatabase implements Cache {
     this.#options = {
       ...{
         indexedDB: globalThis.indexedDB,
-        maxCacheReadSize: 1000,
-        maxCacheWriteSize: 1000,
+        maxCacheReadSize: 5000,
+        maxCacheWriteSize: 10000,
         maxCacheBatchWriteWait: 1000,
         enableCaching: true
       },
@@ -33,7 +34,6 @@ export default class IndexedDatabase implements Cache {
       await this.#setupCacheDb()
       this.#writeQueue = new BatchingQueue<Item>(
         this.#options.maxCacheWriteSize,
-        this.#options.maxCacheBatchWriteWait,
         (batch: Item[]) => this.#cacheSaveBatch(batch, this.#cacheDB!)
       )
     }
@@ -88,31 +88,39 @@ export default class IndexedDatabase implements Cache {
 
     for (let i = 0; i < baseIds.length; i += this.#options.maxCacheReadSize) {
       const baseIdsChunk = baseIds.slice(i, i + this.#options.maxCacheReadSize)
+      const store = this.#cacheDB!.transaction(IndexedDatabase.#storeName, 'readonly', {
+        durability: 'relaxed'
+      }).objectStore(IndexedDatabase.#storeName)
+      const idbChildrenPromises = baseIdsChunk.map<Promise<Item | string>>(
+        async (baseId) => {
+          const getBase = new Promise((resolve, reject) => {
+            const request = store.get(baseId)
 
-      const store = this.#cacheDB!.transaction(
-        IndexedDatabase.#storeName,
-        'readonly'
-      ).objectStore(IndexedDatabase.#storeName)
-      const idbChildrenPromises = baseIdsChunk.map<Promise<void>>(async (baseId) => {
-        const getBase = new Promise((resolve, reject) => {
-          const request = store.get(baseId)
-
-          request.onsuccess = () => resolve(request.result)
-          request.onerror = () =>
-            reject(ensureError(request.error, 'Error trying to get a batch'))
-        })
-        const base = await getBase
-        if (base === undefined) {
-          notFound.add(baseId)
-        } else {
-          if (isBase(base)) {
-            found.add({ baseId, base })
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () =>
+              reject(ensureError(request.error, 'Error trying to get a batch'))
+          })
+          const base = await getBase
+          if (base === undefined) {
+            return baseId
           } else {
-            throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
+            if (isBase(base)) {
+              return { baseId, base }
+            } else {
+              throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
+            }
           }
         }
-      })
-      await Promise.all(idbChildrenPromises)
+      )
+      const cachedData = await Promise.all(idbChildrenPromises)
+      for (const cachedObj of cachedData) {
+        if (isString(cachedObj)) {
+          notFound.add(cachedObj)
+        } else {
+          found.add(cachedObj)
+        }
+      }
+      console.log('Read ' + baseIdsChunk.length)
     }
   }
 
@@ -140,7 +148,9 @@ export default class IndexedDatabase implements Cache {
   }
 
   async #cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
-    const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite')
+    const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite', {
+      durability: 'relaxed'
+    })
     const store = transaction.objectStore(IndexedDatabase.#storeName)
     const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
@@ -155,6 +165,7 @@ export default class IndexedDatabase implements Cache {
     }
     await Promise.all(promises)
     transaction.commit()
+    console.log('Saved ' + batch.length)
     await this.#promisifyIDBTransaction(transaction)
   }
   #promisifyIDBTransaction(request: IDBTransaction): Promise<void> {

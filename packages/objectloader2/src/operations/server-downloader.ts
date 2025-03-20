@@ -16,7 +16,7 @@ export default class ServerDownloader implements Downloader {
   #options: BaseDownloadOptions
 
   #database: Cache
-  #downloadQueue: BatchedPool<string>
+  #downloadQueue?: BatchedPool<string>
   #results: Queue<Item>
 
   constructor(
@@ -39,21 +39,10 @@ export default class ServerDownloader implements Downloader {
       ...{
         fetch: (...args) => globalThis.fetch(...args),
         maxDownloadSize: 5000,
-        maxDownloadBatchWait: 1000
+        maxDownloadBatchWait: 3000
       },
       ...options
     }
-    this.#downloadQueue = new BatchedPool<string>(
-      [this.#options.maxDownloadSize],
-      this.#options.maxDownloadBatchWait,
-      (batch: string[]) =>
-        this.downloadBatch(
-          batch,
-          this.#requestUrlChildren,
-          this.#headers,
-          this.#results
-        )
-    )
 
     this.#headers = {
       Accept: 'text/plain'
@@ -68,12 +57,43 @@ export default class ServerDownloader implements Downloader {
     }/single`
   }
 
+  #getDownloadCountAndSizes(total: number): number[] {
+    if (total <= 50) {
+      return [total]
+    }
+
+    const x1 = Math.ceil(total * 0.05)
+    const x2 = Math.ceil(total * 0.2)
+    const x3 = Math.ceil(total * 0.6)
+    return [x1, x2, x3, total - (x1 + x2 + x3)]
+  }
+
+  initializePool(total: number) {
+    this.#downloadQueue = new BatchedPool<string>(
+      this.#getDownloadCountAndSizes(total),
+      (batch: string[]) =>
+        this.downloadBatch(
+          batch,
+          this.#requestUrlChildren,
+          this.#headers,
+          this.#results
+        )
+    )
+  }
+
+  #getPool(): BatchedPool<string> {
+    if (this.#downloadQueue) {
+      return this.#downloadQueue
+    }
+    throw new Error('Download pool is not initialized')
+  }
+
   add(id: string): void {
-    this.#downloadQueue.add(id)
+    this.#getPool().add(id)
   }
 
   async finish(): Promise<void> {
-    await this.#downloadQueue.finish()
+    await this.#getPool().finish()
   }
 
   #processJson(baseId: string, unparsedBase: string): Item {

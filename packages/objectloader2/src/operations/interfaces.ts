@@ -14,6 +14,7 @@ export interface Cache {
 }
 
 export interface Downloader extends Queue<string> {
+  initializePool(total: number): void
   downloadSingle(): Promise<Item>
   finish(): Promise<void>
 }
