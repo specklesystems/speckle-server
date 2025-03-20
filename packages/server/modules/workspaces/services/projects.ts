@@ -256,7 +256,7 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
     return {
       default: {
         [Roles.Workspace.Guest]: null,
-        [Roles.Workspace.Member]: workspace.defaultProjectRole,
+        [Roles.Workspace.Member]: Roles.Stream.Reviewer,
         [Roles.Workspace.Admin]: Roles.Stream.Owner
       },
       allowed: {
