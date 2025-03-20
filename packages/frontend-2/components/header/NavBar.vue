@@ -1,9 +1,7 @@
 <template>
   <div>
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div
-        class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
-      >
+      <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
         <div class="hidden lg:block">
           <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
           <HeaderLogoBlock

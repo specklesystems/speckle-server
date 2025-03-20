@@ -51,8 +51,10 @@ import {
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -462,13 +464,18 @@ describe('Workspaces GQL CRUD', () => {
               name: project1Name
             }
           },
-          {
-            role: Roles.Stream.Contributor,
-            project: {
-              id: project2Id,
-              name: project2Name
-            }
-          }
+          // No longer auto-assigned in new plan world (until we rework auth & queries)
+          ...(FF_GATEKEEPER_FORCE_FREE_PLAN
+            ? []
+            : [
+                {
+                  role: Roles.Stream.Reviewer,
+                  project: {
+                    id: project2Id,
+                    name: project2Name
+                  }
+                }
+              ])
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest
@@ -889,31 +896,6 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(updateRes).to.haveGraphQLErrors('too long')
-      })
-
-      it('should require default project role to be a valid role', async () => {
-        const resA = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:contributor'
-          }
-        })
-        const resB = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:reviewer'
-          }
-        })
-        const resC = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:collaborator'
-          }
-        })
-
-        expect(resA).to.not.haveGraphQLErrors()
-        expect(resB).to.not.haveGraphQLErrors()
-        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
       })
     })
 

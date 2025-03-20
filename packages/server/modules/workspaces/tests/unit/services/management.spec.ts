@@ -40,7 +40,6 @@ import {
   UpsertWorkspaceArgs
 } from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
@@ -269,7 +268,6 @@ describe('Workspace services', () => {
         logo: null,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
-        defaultProjectRole: 'stream:contributor',
         domains: []
       }
       return merge(workspace, input)
@@ -635,8 +633,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
             payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated]
           const mapping = {
             [Roles.Workspace.Guest]: null,
-            [Roles.Workspace.Member]:
-              context.workspace.defaultProjectRole ?? Roles.Stream.Contributor,
+            [Roles.Workspace.Member]: Roles.Stream.Contributor,
             [Roles.Workspace.Admin]: Roles.Stream.Owner
           }
 
@@ -816,7 +813,6 @@ describe('Workspace role services', () => {
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(payload).to.deep.equal({
         acl: role,
-        seatType: WorkspaceSeatType.Editor,
         updatedByUserId: workspaceOwnerId
       })
     })
@@ -1128,8 +1124,7 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false,
-                  defaultProjectRole: 'stream:contributor'
+                  domainBasedMembershipProtectionEnabled: false
                 }
               },
               getDomains: async () => {
@@ -1168,8 +1163,7 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor'
+          domainBasedMembershipProtectionEnabled: false
         }
 
         await addDomainToWorkspaceFactory({
