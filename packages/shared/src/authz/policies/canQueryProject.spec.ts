@@ -5,6 +5,7 @@ import crs from 'crypto-random-string'
 import { merge } from 'lodash'
 import { Project } from '../domain/projects/types.js'
 import { Roles } from '../../core/constants.js'
+import { ProjectNoAccessError } from '../domain/errors.js'
 
 const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: T) =>
@@ -54,7 +55,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.error.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
       }
     })
   })
@@ -153,7 +154,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.error.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
       }
     })
   })
@@ -201,7 +202,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.error.code).toBe('ProjectNoAccess')
+        expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
       }
     })
   })
