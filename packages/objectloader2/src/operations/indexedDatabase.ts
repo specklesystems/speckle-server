@@ -19,6 +19,7 @@ export default class IndexedDatabase implements Cache {
   constructor(options: Partial<BaseDatabaseOptions>) {
     this.#options = {
       ...{
+        logger: () => {},
         indexedDB: globalThis.indexedDB,
         maxCacheReadSize: 5000,
         maxCacheWriteSize: 10000,
@@ -123,6 +124,8 @@ export default class IndexedDatabase implements Cache {
           found.add(cachedObj)
         }
       }
+
+      this.#options.logger('Read ' + baseIdsChunk.length)
     }
   }
 
@@ -167,6 +170,7 @@ export default class IndexedDatabase implements Cache {
     }
     await Promise.all(promises)
     transaction.commit()
+    this.#options.logger('Saved ' + batch.length)
     await this.#promisifyIDBTransaction(transaction)
   }
   #promisifyIDBTransaction(request: IDBTransaction): Promise<void> {

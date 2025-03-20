@@ -2,11 +2,12 @@ import { CustomLogger, Fetcher } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
 
 export interface ObjectLoader2Options {
-  customLogger: CustomLogger
+  logger: CustomLogger
   cache: Cache
   downloader: Downloader
 }
 export interface BaseDatabaseOptions {
+  logger: CustomLogger
   indexedDB: IDBFactory
   enableCaching: boolean
   maxCacheReadSize: number

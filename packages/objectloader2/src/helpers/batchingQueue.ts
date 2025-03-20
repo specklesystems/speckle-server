@@ -1,57 +1,57 @@
 import Queue from './queue.js'
 
 export default class BatchingQueue<T> implements Queue<T> {
-  private queue: T[] = []
-  private batchSize: number
-  private processFunction: (batch: T[]) => Promise<void>
+  #queue: T[] = []
+  #batchSize: number
+  #processFunction: (batch: T[]) => Promise<void>
 
-  private baseInterval = 200 // Initial batch time (ms)
-  private minInterval = 100 // Minimum batch time
-  private maxInterval = 3000 // Maximum batch time
-  private interval = this.baseInterval
+  #baseInterval = 200 // Initial batch time (ms)
+  #minInterval = 100 // Minimum batch time
+  #maxInterval = 3000 // Maximum batch time
 
-  private processingLoop: Promise<void>
-  private finished = false
+  #processingLoop: Promise<void>
+  #finished = false
 
   constructor(batchSize: number, processFunction: (batch: T[]) => Promise<void>) {
-    this.batchSize = batchSize
-    this.processFunction = processFunction
-    this.processingLoop = this.#loop()
+    this.#batchSize = batchSize
+    this.#processFunction = processFunction
+    this.#processingLoop = this.#loop()
   }
 
   async finish(): Promise<void> {
-    this.finished = true
-    await this.processingLoop
+    this.#finished = true
+    await this.#processingLoop
   }
 
   add(item: T): void {
-    this.queue.push(item)
+    this.#queue.push(item)
   }
 
   getBatch(batchSize: number): T[] {
-    return this.queue.splice(0, Math.min(batchSize, this.queue.length))
+    return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
   async #loop(): Promise<void> {
-    while (!this.finished || this.queue.length > 0) {
+    let interval = this.#baseInterval
+    while (!this.#finished || this.#queue.length > 0) {
       let wait = true
-      if (this.queue.length > 0) {
+      if (this.#queue.length > 0) {
         const startTime = performance.now()
-        const batch = this.getBatch(this.batchSize)
-        await this.processFunction(batch)
+        const batch = this.getBatch(this.#batchSize)
+        await this.#processFunction(batch)
         //refigure interval
         const endTime = performance.now()
-        wait = this.batchSize !== batch.length
+        wait = this.#batchSize !== batch.length
         const duration = endTime - startTime
-        if (duration > this.interval) {
-          this.interval = Math.min(this.interval * 1.5, this.maxInterval) // Increase if slow
+        if (duration > interval) {
+          interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow
         } else {
-          this.interval = Math.max(this.interval * 0.8, this.minInterval) // Decrease if fast
+          interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
         }
       }
       if (wait) {
-        await this.#delay(this.interval)
+        await this.#delay(interval)
         //waited so reset
-        this.interval = this.baseInterval
+        interval = this.#baseInterval
       }
     }
   }

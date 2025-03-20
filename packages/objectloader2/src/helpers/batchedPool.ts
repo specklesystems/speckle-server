@@ -7,7 +7,6 @@ export default class BatchedPool<T> {
   private baseInterval = 200 // Initial batch time (ms)
   private minInterval = 100 // Minimum batch time
   private maxInterval = 3000 // Maximum batch time
-  private interval = this.baseInterval
 
   private processingLoop: Promise<void>
   private finished = false
@@ -30,6 +29,7 @@ export default class BatchedPool<T> {
   }
 
   async #runWorker(batchSize: number) {
+    let interval = this.baseInterval
     while (!this.finished || this.queue.length > 0) {
       let wait = true
       if (this.queue.length > 0) {
@@ -40,16 +40,16 @@ export default class BatchedPool<T> {
         const endTime = performance.now()
         wait = batchSize !== batch.length
         const duration = endTime - startTime
-        if (duration > this.interval) {
-          this.interval = Math.min(this.interval * 1.5, this.maxInterval) // Increase if slow
+        if (duration > interval) {
+          interval = Math.min(interval * 1.5, this.maxInterval) // Increase if slow
         } else {
-          this.interval = Math.max(this.interval * 0.8, this.minInterval) // Decrease if fast
+          interval = Math.max(interval * 0.8, this.minInterval) // Decrease if fast
         }
       }
       if (wait) {
-        await this.#delay(this.interval)
+        await this.#delay(interval)
         //waited so reset
-        this.interval = this.baseInterval
+        interval = this.baseInterval
       }
     }
   }

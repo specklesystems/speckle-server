@@ -24,9 +24,9 @@ export default class ObjectLoader2 {
   ) {
     this.#objectId = objectId
 
-    this.#logger = options?.customLogger || console.log
+    this.#logger = options?.logger || console.log
     this.#gathered = new AsyncGeneratorQueue()
-    this.#database = options?.cache || new IndexedDatabase({})
+    this.#database = options?.cache || new IndexedDatabase({ logger: this.#logger })
     this.#downloader =
       options?.downloader ||
       new ServerDownloader(
