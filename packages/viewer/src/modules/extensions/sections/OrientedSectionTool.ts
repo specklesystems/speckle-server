@@ -18,19 +18,23 @@ import {
   Intersection,
   Face
 } from 'three'
-import { intersectObjectWithRay, TransformControls } from './TransformControls.js'
+import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
-import { type IViewer, ObjectLayers } from '../../IViewer.js'
-import { Extension } from './Extension.js'
-import { CameraController } from './CameraController.js'
-import { SectionToolEvent, SectionToolEventPayload } from './SectionTool.js'
-import { InputEvent } from '../input/Input.js'
-import { Vector3Like } from '../batching/BatchObject.js'
-import Logger from '../utils/Logger.js'
-import { World } from '../World.js'
-import { CameraEvent } from '../objects/SpeckleCamera.js'
+import { type IViewer, ObjectLayers } from '../../../IViewer.js'
+import { CameraController } from '../CameraController.js'
 
-export class OrientedSectionTool extends Extension {
+import { InputEvent } from '../../input/Input.js'
+import { Vector3Like } from '../../batching/BatchObject.js'
+import Logger from '../../utils/Logger.js'
+import { World } from '../../World.js'
+import { CameraEvent } from '../../objects/SpeckleCamera.js'
+import {
+  SectionTool,
+  SectionToolEvent,
+  SectionToolEventPayload
+} from './SectionTool.js'
+
+export class OrientedSectionTool extends SectionTool {
   public get inject() {
     return [CameraController]
   }
@@ -115,7 +119,7 @@ export class OrientedSectionTool extends Extension {
   }
 
   constructor(viewer: IViewer, protected cameraProvider: CameraController) {
-    super(viewer)
+    super(viewer, cameraProvider)
     this.viewer = viewer
 
     this.viewer.getRenderer().renderer.localClippingEnabled = true

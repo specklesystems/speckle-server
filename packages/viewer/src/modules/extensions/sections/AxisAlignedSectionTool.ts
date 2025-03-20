@@ -18,25 +18,17 @@ import {
   Vector2
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
-import { type IViewer, ObjectLayers } from '../../IViewer.js'
-import { Extension } from './Extension.js'
-import { CameraEvent } from '../objects/SpeckleCamera.js'
-import { InputEvent } from '../input/Input.js'
-import { CameraController } from './CameraController.js'
+import { type IViewer, ObjectLayers } from '../../../IViewer.js'
+import { CameraEvent } from '../../objects/SpeckleCamera.js'
+import { InputEvent } from '../../input/Input.js'
+import { CameraController } from '../CameraController.js'
+import {
+  SectionTool,
+  SectionToolEvent,
+  SectionToolEventPayload
+} from './SectionTool.js'
 
-export enum SectionToolEvent {
-  DragStart = 'section-box-drag-start',
-  DragEnd = 'section-box-drag-end',
-  Updated = 'section-box-changed'
-}
-
-export interface SectionToolEventPayload {
-  [SectionToolEvent.DragStart]: void
-  [SectionToolEvent.DragEnd]: void
-  [SectionToolEvent.Updated]: Plane[]
-}
-
-export class SectionTool extends Extension {
+export class AxisAlignedSectionTool extends SectionTool {
   public get inject() {
     return [CameraController]
   }
@@ -85,7 +77,7 @@ export class SectionTool extends Extension {
   }
 
   constructor(viewer: IViewer, protected cameraProvider: CameraController) {
-    super(viewer)
+    super(viewer, cameraProvider)
     this.viewer = viewer
 
     this.viewer.getRenderer().renderer.localClippingEnabled = true

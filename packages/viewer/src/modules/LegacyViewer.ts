@@ -26,8 +26,7 @@ import {
   StencilOutlineType
 } from '../IViewer.js'
 import { Viewer } from './Viewer.js'
-import { SectionTool } from './extensions/SectionTool.js'
-import { SectionOutlines } from './extensions/SectionOutlines.js'
+import { SectionOutlines } from './extensions/sections/SectionOutlines.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import {
   type MeasurementOptions,
@@ -45,6 +44,8 @@ import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
+import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
+import { SectionTool } from '../index.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -123,7 +124,7 @@ export class LegacyViewer extends Viewer {
     super(container, params)
     this.cameraController = this.createExtension(HybridCameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
-    this.sections = this.createExtension(SectionTool)
+    this.sections = this.createExtension(OrientedSectionTool)
     this.createExtension(SectionOutlines)
     this.measurements = this.createExtension(MeasurementsExtension)
     this.filtering = this.createExtension(FilteringExtension)

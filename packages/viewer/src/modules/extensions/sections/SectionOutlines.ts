@@ -13,16 +13,17 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { Geometry } from '../converter/Geometry.js'
-import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial.js'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
-import { Extension } from './Extension.js'
-import { OrientedSectionTool, type IViewer } from '../../index.js'
+import { Geometry } from '../../converter/Geometry.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
+import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
+import { Extension } from '../Extension.js'
+import { OrientedSectionTool, SectionTool, type IViewer } from '../../../index.js'
+import { GeometryType } from '../../batching/Batch.js'
+import { ObjectLayers } from '../../../IViewer.js'
+import { MeshBatch } from '../../batching/MeshBatch.js'
+import Logger from '../../utils/Logger.js'
 import { SectionToolEvent } from './SectionTool.js'
-import { GeometryType } from '../batching/Batch.js'
-import { ObjectLayers } from '../../IViewer.js'
-import { MeshBatch } from '../batching/MeshBatch.js'
-import Logger from '../utils/Logger.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 export enum PlaneId {
   POSITIVE_X = 'POSITIVE_X',
@@ -39,7 +40,7 @@ export interface PlaneOutline {
 
 export class SectionOutlines extends Extension {
   public get inject() {
-    return [OrientedSectionTool]
+    return [SectionTool]
   }
   private static readonly OUTLINE_Z_OFFSET = 0.0001
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
@@ -393,7 +394,8 @@ export class SectionOutlines extends Extension {
 
   private getPlaneId(plane: Plane): PlaneId | undefined {
     this.tmpVec.set(plane.normal.x, plane.normal.y, plane.normal.z)
-    const box = this.sectionProvider.getBox()
+    let box = this.sectionProvider.getBox()
+    if (box instanceof Box3) box = new OBB().fromBox3(box)
     const invRotation = new Matrix4().setFromMatrix3(box.rotation).invert()
     this.tmpVec.applyMatrix4(invRotation).normalize()
     this.tmpVec.set(

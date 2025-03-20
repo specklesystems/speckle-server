@@ -438,8 +438,8 @@ export default class Sandbox {
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
-      this.viewer.getExtension(OrientedSectionTool).setBox(box)
-      this.viewer.getExtension(OrientedSectionTool).toggle()
+      this.viewer.getExtension(SectionTool).setBox(box)
+      this.viewer.getExtension(SectionTool).toggle()
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
