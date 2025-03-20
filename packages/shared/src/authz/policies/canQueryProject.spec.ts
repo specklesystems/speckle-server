@@ -5,7 +5,7 @@ import crs from 'crypto-random-string'
 import { merge } from 'lodash'
 import { Project } from '../domain/projects/types.js'
 import { Roles } from '../../core/constants.js'
-import { ProjectNoAccessError } from '../domain/errors.js'
+import { ProjectNoAccessError, ProjectNotFoundError } from '../domain/errors.js'
 
 const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: T) =>
@@ -55,7 +55,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
-        expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
+        expect(canQuery.error.code).toBe(ProjectNotFoundError.code)
       }
     })
   })
@@ -254,6 +254,156 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(false)
+    })
+    it('allows project access via workspace role if user does not have project role', async () => {
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve(null),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:admin'),
+        getWorkspaceSsoSession: () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: () => {
+          assert.fail()
+        }
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(true)
+    })
+    it('does not check SSO sessions if user is workspace guest', async () => {
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve('stream:contributor'),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:guest'),
+        getWorkspaceSsoSession: () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: () => {
+          assert.fail()
+        }
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(true)
+    })
+    it('does not check SSO sessions if workspace does not have it enabled', async () => {
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve('stream:contributor'),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:member'),
+        getWorkspaceSsoSession: () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(true)
+    })
+    it('does not allow project access if SSO session is missing', async () => {
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve('stream:contributor'),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:member'),
+        getWorkspaceSsoSession: () => Promise.resolve(null),
+        getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(false)
+    })
+    it('does not allow project access if SSO session is expired or invalid', async () => {
+      const date = new Date()
+      date.setDate(date.getDate() - 1)
+
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve('stream:contributor'),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:member'),
+        getWorkspaceSsoSession: () =>
+          Promise.resolve({ validUntil: date, userId: 'foo', providerId: 'foo' }),
+        getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
+      })
+      const canQuery = await canQueryProject(canQueryProjectArgs())
+      expect(canQuery.authorized).toBe(false)
+    })
+    it('allows project access if SSO session is valid', async () => {
+      const date = new Date()
+      date.setDate(date.getDate() + 1)
+
+      const canQueryProject = canQueryProjectPolicyFactory({
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          isDiscoverable: false,
+          isPublic: false,
+          workspaceId: crs({ length: 10 })
+        }),
+        getProjectRole: () => Promise.resolve('stream:contributor'),
+        getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspaceRole: () => Promise.resolve('workspace:member'),
+        getWorkspaceSsoSession: () =>
+          Promise.resolve({ validUntil: date, userId: 'foo', providerId: 'foo' }),
+        getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(true)
