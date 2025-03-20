@@ -48,13 +48,13 @@ export default class ObjectLoader2 {
   }
 
   async getRootItem(): Promise<Item | undefined> {
-    const cachedRootObject = await this.#database.getItem(this.#objectId)
+    const cachedRootObject = await this.#database.getItem({ id: this.#objectId })
     if (cachedRootObject) {
       return cachedRootObject
     }
     const rootItem = await this.#downloader.downloadSingle()
 
-    await this.#database.write(rootItem)
+    await this.#database.write({item: rootItem})
     return rootItem
   }
 
@@ -68,12 +68,12 @@ export default class ObjectLoader2 {
     if (!rootItem.base.__closure) return
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
-    this.#downloader.initializePool(total)
-    const processPromise = this.#database.processItems(
-      children,
-      this.#gathered,
-      this.#downloader
-    )
+    this.#downloader.initializePool({ total })
+    const processPromise = this.#database.processItems({
+      ids: children,
+      foundItems: this.#gathered,
+      notFoundItems: this.#downloader
+    })
     let count = 0
     for await (const item of this.#gathered.consume()) {
       yield item.base

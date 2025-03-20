@@ -68,16 +68,17 @@ export default class ServerDownloader implements Downloader {
     return [x1, x2, x3, total - (x1 + x2 + x3)]
   }
 
-  initializePool(total: number) {
+  initializePool(params: { total: number }) {
+    const { total } = params
     this.#downloadQueue = new BatchedPool<string>(
       this.#getDownloadCountAndSizes(total),
       (batch: string[]) =>
-        this.downloadBatch(
+        this.downloadBatch({
           batch,
-          this.#requestUrlChildren,
-          this.#headers,
-          this.#results
-        )
+          url: this.#requestUrlChildren,
+          headers: this.#headers,
+          results: this.#results
+        })
     )
   }
 
@@ -110,16 +111,17 @@ export default class ServerDownloader implements Downloader {
     }
   }
 
-  async downloadBatch(
-    idBatch: string[],
-    url: string,
-    headers: HeadersInit,
+  async downloadBatch(params: {
+    batch: string[]
+    url: string
+    headers: HeadersInit
     results: Queue<Item>
-  ): Promise<void> {
+  }): Promise<void> {
+    const { batch, url, headers, results } = params
     const response = await this.#options.fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ objects: JSON.stringify(idBatch) })
+      body: JSON.stringify({ objects: JSON.stringify(batch) })
     })
 
     this.#validateResponse(response)
@@ -147,7 +149,7 @@ export default class ServerDownloader implements Downloader {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
-          await this.#database.write(item)
+          await this.#database.write({ item })
           results.add(item)
         }
       }

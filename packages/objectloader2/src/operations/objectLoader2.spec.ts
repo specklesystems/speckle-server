@@ -8,8 +8,8 @@ describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
     const root = { baseId: 'baseId' } as unknown as Item
     const cache = {
-      getItem(id: string): Promise<Item> {
-        expect(id).toBe(root.baseId)
+      getItem(params: { id: string }): Promise<Item> {
+        expect(params.id).toBe(root.baseId)
         return Promise.resolve(root)
       }
     } as Cache
@@ -25,12 +25,12 @@ describe('objectloader2', () => {
   test('can get a root object from downloader', async () => {
     const root = { baseId: 'baseId' } as unknown as Item
     const cache = {
-      getItem(id: string): Promise<Item | undefined> {
-        expect(id).toBe(root.baseId)
+      getItem(params: { id: string }): Promise<Item | undefined> {
+        expect(params.id).toBe(root.baseId)
         return Promise.resolve<Item | undefined>(undefined)
       },
-      write(i: Item): Promise<void> {
-        expect(i).toBe(root)
+      write(params: { item: Item }): Promise<void> {
+        expect(params.item).toBe(root)
         return Promise.resolve()
       }
     } as Cache
@@ -52,8 +52,8 @@ describe('objectloader2', () => {
     const rootBase: Base = { id: 'baseId' }
     const root = { baseId: rootId, base: rootBase } as unknown as Item
     const cache = {
-      getItem(id: string): Promise<Item | undefined> {
-        expect(id).toBe(rootId)
+      getItem(params: { id: string }): Promise<Item | undefined> {
+        expect(params.id).toBe(rootId)
         return Promise.resolve(root)
       }
     } as Cache
@@ -83,19 +83,19 @@ describe('objectloader2', () => {
     } as unknown as Item
 
     const cache = {
-      getItem(id: string): Promise<Item | undefined> {
-        expect(id).toBe(root.baseId)
+      getItem(params: { id: string }): Promise<Item | undefined> {
+        expect(params.id).toBe(root.baseId)
         return Promise.resolve(root)
       },
-      processItems(
-        ids: string[],
-        found: Queue<Item>,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _notFound: Queue<string>
-      ): Promise<void> {
-        expect(ids.length).toBe(1)
-        expect(ids[0]).toBe(child1.baseId)
-        found.add(child1)
+      processItems(params: {
+        ids: string[]
+        foundItems: Queue<Item>
+
+        notFoundItems: Queue<string>
+      }): Promise<void> {
+        expect(params.ids.length).toBe(1)
+        expect(params.ids[0]).toBe(child1.baseId)
+        params.foundItems.add(child1)
         return Promise.resolve()
       },
       finish(): Promise<void> {
@@ -103,7 +103,9 @@ describe('objectloader2', () => {
       }
     } as Cache
     const downloader = {
-      initializePool(total: number): void {},
+      initializePool(params: { total: number }): void {
+        expect(params.total).toBe(1)
+      },
       finish(): Promise<void> {
         return Promise.resolve()
       }

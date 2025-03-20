@@ -30,7 +30,7 @@ describe('downloader', () => {
         maxDownloadBatchWait: 200
       }
     )
-    downloader.initializePool(1)
+    downloader.initializePool({ total: 1 })
     downloader.add('id')
     await downloader.finish()
     results.finish()
@@ -69,7 +69,7 @@ describe('downloader', () => {
         maxDownloadBatchWait: 200
       }
     )
-    downloader.initializePool(2)
+    downloader.initializePool({ total: 2 })
     downloader.add('id')
     await downloader.finish()
     results.finish()

@@ -30,22 +30,24 @@ export default class IndexedDatabase implements Cache {
     }
   }
 
-  async write(obj: Item): Promise<void> {
+  async write(params: { item: Item }): Promise<void> {
+    const { item } = params
     if (!this.#writeQueue) {
       await this.#setupCacheDb()
       this.#writeQueue = new BatchingQueue<Item>(
         this.#options.maxCacheWriteSize,
-        (batch: Item[]) => this.#cacheSaveBatch(batch, this.#cacheDB!)
+        (batch: Item[]) => this.#cacheSaveBatch({ batch, cacheDB: this.#cacheDB! })
       )
     }
-    this.#writeQueue.add(obj)
+    this.#writeQueue.add(item)
   }
 
   async finish(): Promise<void> {
     await this.#writeQueue?.finish()
   }
 
-  #openDatabase(dbName: string, storeName: string): Promise<IDBDatabase> {
+  #openDatabase(params: { dbName: string; storeName: string }): Promise<IDBDatabase> {
+    const { dbName, storeName } = params
     return new Promise((resolve, reject) => {
       const request = this.#options.indexedDB.open(dbName, 1)
 
@@ -75,13 +77,17 @@ export default class IndexedDatabase implements Cache {
 
     // Initialize
     await this.#safariFix()
-    this.#cacheDB = await this.#openDatabase(
-      IndexedDatabase.#databaseName,
-      IndexedDatabase.#storeName
-    )
+    this.#cacheDB = await this.#openDatabase({
+      dbName: IndexedDatabase.#databaseName,
+      storeName: IndexedDatabase.#storeName
+    })
   }
 
-  #checkCache(store: IDBObjectStore, batch: string[]): Promise<Item | string>[] {
+  #checkCache(params: {
+    store: IDBObjectStore
+    batch: string[]
+  }): Promise<Item | string>[] {
+    const { store, batch } = params
     return batch.map<Promise<Item | string>>(async (baseId) => {
       const getBase = new Promise((resolve, reject) => {
         const request = store.get(baseId)
@@ -103,33 +109,35 @@ export default class IndexedDatabase implements Cache {
     })
   }
 
-  async processItems(
-    baseIds: string[],
-    queueToAddFoundItems: Queue<Item>,
-    queueToAddNotFoundItems: Queue<string>
-  ): Promise<void> {
+  async processItems(params: {
+    ids: string[]
+    foundItems: Queue<Item>
+    notFoundItems: Queue<string>
+  }): Promise<void> {
+    const { ids, foundItems, notFoundItems } = params
     await this.#setupCacheDb()
 
-    for (let i = 0; i < baseIds.length; i += this.#options.maxCacheReadSize) {
-      const baseIdsChunk = baseIds.slice(i, i + this.#options.maxCacheReadSize)
+    for (let i = 0; i < ids.length; i += this.#options.maxCacheReadSize) {
+      const batch = ids.slice(i, i + this.#options.maxCacheReadSize)
       const store = this.#cacheDB!.transaction(IndexedDatabase.#storeName, 'readonly', {
         durability: 'relaxed'
       }).objectStore(IndexedDatabase.#storeName)
-      const idbChildrenPromises = this.#checkCache(store, baseIdsChunk)
+      const idbChildrenPromises = this.#checkCache({ store, batch })
       const cachedData = await Promise.all(idbChildrenPromises)
       for (const cachedObj of cachedData) {
         if (isString(cachedObj)) {
-          queueToAddNotFoundItems.add(cachedObj)
+          notFoundItems.add(cachedObj)
         } else {
-          queueToAddFoundItems.add(cachedObj)
+          foundItems.add(cachedObj)
         }
       }
 
-      this.#options.logger('Read ' + baseIdsChunk.length)
+      this.#options.logger('Read ' + batch.length)
     }
   }
 
-  async getItem(baseId: string): Promise<Item | undefined> {
+  async getItem(params: { id: string }): Promise<Item | undefined> {
+    const { id } = params
     await this.#setupCacheDb()
 
     const store = this.#cacheDB!.transaction(
@@ -137,7 +145,7 @@ export default class IndexedDatabase implements Cache {
       'readonly'
     ).objectStore(IndexedDatabase.#storeName)
     const getBase = new Promise<unknown>((resolve, reject) => {
-      const request = store.get(baseId)
+      const request = store.get(id)
 
       request.onsuccess = () => resolve(request.result)
       request.onerror = () =>
@@ -146,13 +154,17 @@ export default class IndexedDatabase implements Cache {
     const base = await getBase
     if (base === undefined) return undefined
     if (isBase(base)) {
-      return { baseId, base }
+      return { baseId: id, base }
     } else {
-      throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
+      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
     }
   }
 
-  async #cacheSaveBatch(batch: Item[], cacheDB: IDBDatabase): Promise<void> {
+  async #cacheSaveBatch(params: {
+    batch: Item[]
+    cacheDB: IDBDatabase
+  }): Promise<void> {
+    const { batch, cacheDB } = params
     const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite', {
       durability: 'relaxed'
     })

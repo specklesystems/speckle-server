@@ -11,10 +11,10 @@ describe('database cache', () => {
       indexedDB: new IDBFactory(),
       maxCacheBatchWriteWait: 200
     })
-    await database.write(i)
+    await database.write({ item: i })
     await database.finish()
 
-    const x = await database.getItem('id')
+    const x = await database.getItem({ id: 'id' })
     expect(x).toBeDefined()
     expect(JSON.stringify(x)).toBe(JSON.stringify(i))
   })
@@ -26,15 +26,15 @@ describe('database cache', () => {
       indexedDB: new IDBFactory(),
       maxCacheBatchWriteWait: 200
     })
-    await database.write(i1)
-    await database.write(i2)
+    await database.write({ item: i1 })
+    await database.write({ item: i2 })
     await database.finish()
 
-    const x1 = await database.getItem(i1.baseId)
+    const x1 = await database.getItem({ id: i1.baseId })
     expect(x1).toBeDefined()
     expect(JSON.stringify(x1)).toBe(JSON.stringify(i1))
 
-    const x2 = await database.getItem(i2.baseId)
+    const x2 = await database.getItem({ id: i2.baseId })
     expect(x2).toBeDefined()
     expect(JSON.stringify(x2)).toBe(JSON.stringify(i2))
   })
@@ -46,19 +46,23 @@ describe('database cache', () => {
       indexedDB: new IDBFactory(),
       maxCacheBatchWriteWait: 200
     })
-    await database.write(i1)
-    await database.write(i2)
+    await database.write({ item: i1 })
+    await database.write({ item: i2 })
     await database.finish()
 
-    const itemQueue = new BufferQueue<Item>()
-    const notFoundQueue = new BufferQueue<string>()
+    const foundItems = new BufferQueue<Item>()
+    const notFoundItems = new BufferQueue<string>()
 
-    await database.processItems([i1.baseId, i2.baseId], itemQueue, notFoundQueue)
+    await database.processItems({
+      ids: [i1.baseId, i2.baseId],
+      foundItems,
+      notFoundItems
+    })
 
-    expect(itemQueue.values().length).toBe(2)
-    expect(JSON.stringify(itemQueue.values()[0])).toBe(JSON.stringify(i1))
-    expect(JSON.stringify(itemQueue.values()[1])).toBe(JSON.stringify(i2))
+    expect(foundItems.values().length).toBe(2)
+    expect(JSON.stringify(foundItems.values()[0])).toBe(JSON.stringify(i1))
+    expect(JSON.stringify(foundItems.values()[1])).toBe(JSON.stringify(i2))
 
-    expect(notFoundQueue.values().length).toBe(0)
+    expect(notFoundItems.values().length).toBe(0)
   })
 })
