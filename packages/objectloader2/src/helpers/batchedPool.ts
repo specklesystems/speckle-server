@@ -31,19 +31,22 @@ export default class BatchedPool<T> {
 
   private async runWorker(batchSize: number) {
     while (!this.finished || this.queue.length > 0) {
+      let wait = true
       if (this.queue.length > 0) {
         const startTime = performance.now()
         const batch = this.getBatch(batchSize)
         await this.processFunction(batch)
         //refigure interval
         const endTime = performance.now()
+        wait = batchSize !== batch.length
         const duration = endTime - startTime
         if (duration > this.interval) {
           this.interval = Math.min(this.interval * 1.5, this.maxInterval) // Increase if slow
         } else {
           this.interval = Math.max(this.interval * 0.8, this.minInterval) // Decrease if fast
         }
-      } else {
+      }
+      if (wait) {
         await this.delay(this.interval)
         //waited so reset
         this.interval = this.baseInterval
