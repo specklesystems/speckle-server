@@ -66,7 +66,7 @@ export const parseSubscriptionData = (
     cancelAt: stripeSubscription.cancel_at
       ? new Date(stripeSubscription.cancel_at * 1000)
       : null,
-    currentPeriodEnd: stripeSubscription.current_period_end,
+    currentPeriodEnd: stripeSubscription.current_period_end * 1000, // this value arrives as a UNIX timestamp
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
         typeof subscriptionItem.price.product === 'string'
