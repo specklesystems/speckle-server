@@ -21,10 +21,7 @@ RUN apt-get update -y \
      --no-install-recommends \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
-    && chmod +x ./nodesource_setup.sh \
-    && ./nodesource_setup.sh \
-    && rm ./nodesource_setup.sh \
+     gosu=1.17-1ubuntu0.24.04.2 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
