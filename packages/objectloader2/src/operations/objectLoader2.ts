@@ -20,9 +20,7 @@ export default class ObjectLoader2 {
 
     this.#logger = options.logger || console.log
     this.#gathered = new AsyncGeneratorQueue()
-    this.#database =
-      options.cache ||
-      new IndexedDatabase({ streamId: options.streamId, logger: this.#logger })
+    this.#database = options.cache || new IndexedDatabase({ logger: this.#logger })
     this.#downloader =
       options.downloader ||
       new ServerDownloader({
@@ -50,7 +48,7 @@ export default class ObjectLoader2 {
     }
     const rootItem = await this.#downloader.downloadSingle()
 
-    await this.#database.write({ item: rootItem })
+    await this.#database.add(rootItem)
     return rootItem
   }
 

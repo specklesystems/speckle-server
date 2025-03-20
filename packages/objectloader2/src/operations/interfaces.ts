@@ -9,7 +9,7 @@ export interface Cache {
     notFoundItems: Queue<string>
   }): Promise<void>
 
-  write(params: { item: Item }): Promise<void>
+  add(item: Item): Promise<void>
   finish(): Promise<void>
 }
 

@@ -12,7 +12,6 @@ export interface ObjectLoader2Options {
   downloader?: Downloader
 }
 export interface BaseDatabaseOptions {
-  streamId: string
   logger?: CustomLogger
   indexedDB?: IDBFactory
   enableCaching?: boolean
@@ -30,5 +29,4 @@ export interface BaseDownloadOptions {
   fetch?: Fetcher
   database: Cache
   results: Queue<Item>
-
 }

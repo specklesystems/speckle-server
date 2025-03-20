@@ -9,6 +9,7 @@ import { isString } from 'lodash'
 
 export default class IndexedDatabase implements Cache {
   static #databaseName: string = 'speckle-cache'
+  static #storeName: string = 'objects'
   #options: BaseDatabaseOptions
   #logger: CustomLogger
 
@@ -29,8 +30,7 @@ export default class IndexedDatabase implements Cache {
     this.#logger = options.logger || (() => {})
   }
 
-  async write(params: { item: Item }): Promise<void> {
-    const { item } = params
+  async add(item: Item): Promise<void> {
     if (!this.#writeQueue) {
       await this.#setupCacheDb()
       this.#writeQueue = new BatchingQueue<Item>({
@@ -56,8 +56,8 @@ export default class IndexedDatabase implements Cache {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(this.#options.streamId)) {
-          db.createObjectStore(this.#options.streamId)
+        if (!db.objectStoreNames.contains(IndexedDatabase.#storeName)) {
+          db.createObjectStore(IndexedDatabase.#storeName)
         }
       }
 
@@ -120,9 +120,9 @@ export default class IndexedDatabase implements Cache {
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 5000
     for (let i = 0; i < ids.length; i += maxCacheReadSize) {
       const batch = ids.slice(i, i + maxCacheReadSize)
-      const store = this.#cacheDB!.transaction(this.#options.streamId, 'readonly', {
+      const store = this.#cacheDB!.transaction(IndexedDatabase.#storeName, 'readonly', {
         durability: 'relaxed'
-      }).objectStore(this.#options.streamId)
+      }).objectStore(IndexedDatabase.#storeName)
       const idbChildrenPromises = this.#checkCache({ store, batch })
       const cachedData = await Promise.all(idbChildrenPromises)
       for (const cachedObj of cachedData) {
@@ -142,9 +142,9 @@ export default class IndexedDatabase implements Cache {
     await this.#setupCacheDb()
 
     const store = this.#cacheDB!.transaction(
-      this.#options.streamId,
+      IndexedDatabase.#storeName,
       'readonly'
-    ).objectStore(this.#options.streamId)
+    ).objectStore(IndexedDatabase.#storeName)
     const getBase = new Promise<unknown>((resolve, reject) => {
       const request = store.get(id)
 
@@ -166,10 +166,10 @@ export default class IndexedDatabase implements Cache {
     cacheDB: IDBDatabase
   }): Promise<void> {
     const { batch, cacheDB } = params
-    const transaction = cacheDB.transaction(this.#options.streamId, 'readwrite', {
+    const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite', {
       durability: 'relaxed'
     })
-    const store = transaction.objectStore(this.#options.streamId)
+    const store = transaction.objectStore(IndexedDatabase.#storeName)
     const promises: Promise<void>[] = []
     for (let index = 0; index < batch.length; index++) {
       const element = batch[index]
