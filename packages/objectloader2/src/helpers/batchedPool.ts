@@ -24,11 +24,11 @@ export default class BatchedPool<T> {
   }
 
   getBatch(batchSize: number): T[] {
-    return this.queue.slice(0, Math.min(batchSize, this.queue.length))
+    return this.queue.splice(0, Math.min(batchSize, this.queue.length))
   }
 
   private async runWorker(batchSize: number) {
-    while (!this.finished) {
+    while (!this.finished || this.queue.length > 0) {
       if (this.queue.length > 0) {
         const batch = this.getBatch(batchSize)
         await this.processFunction(batch)
@@ -45,8 +45,8 @@ export default class BatchedPool<T> {
 
   async loop() {
     // Initialize workers
-    this.workers = Array.from(this.concurrencyAndSizes,
-      (batchSize: number) => this.runWorker(batchSize)
+    this.workers = Array.from(this.concurrencyAndSizes, (batchSize: number) =>
+      this.runWorker(batchSize)
     )
     await Promise.all(this.workers)
   }

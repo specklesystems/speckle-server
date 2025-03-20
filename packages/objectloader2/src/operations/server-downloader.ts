@@ -1,4 +1,4 @@
-import BatchedPool from '../helpers/BatchedPool.js'
+import BatchedPool from '../helpers/batchedPool.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { isBase, Item } from '../types/types.js'

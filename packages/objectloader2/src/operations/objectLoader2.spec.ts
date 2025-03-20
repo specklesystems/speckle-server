@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import ObjectLoader2 from './objectLoader2.js'
-import { Item } from '../types/types.js'
+import { Base, Item } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
 import Queue from '../helpers/queue.js'
 
@@ -48,15 +48,17 @@ describe('objectloader2', () => {
   })
 
   test('can get single object from cache using iterator', async () => {
-    const root = { baseId: 'baseId', base: { id: 'baseId' } } as unknown as Item
+    const rootId = 'baseId'
+    const rootBase: Base = { id: 'baseId' }
+    const root = { baseId: rootId, base: rootBase } as unknown as Item
     const cache = {
       getItem(id: string): Promise<Item | undefined> {
-        expect(id).toBe(root.baseId)
+        expect(id).toBe(rootId)
         return Promise.resolve(root)
       }
     } as Cache
     const downloader = {} as Downloader
-    const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
+    const loader = new ObjectLoader2('a', 'b', rootId, undefined, {
       cache,
       downloader
     })
@@ -66,14 +68,19 @@ describe('objectloader2', () => {
     }
 
     expect(r.length).toBe(1)
-    expect(r[0]).toBe(root)
+    expect(r[0]).toBe(rootBase)
   })
 
   test('can get root/child object from cache using iterator', async () => {
-    const child1 = { baseId: 'child1Id', base: { id: 'child1Id' } } as unknown as Item
+    const child1Base =  { id: 'child1Id' } 
+    const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
+
+    
+    const rootId = 'rootId'
+    const rootBase: Base = { id: 'rootId', __closure: { child1Id: 100 } }
     const root = {
-      baseId: 'rootId',
-      base: { id: 'rootId', __closure: { child1Id: 100 } }
+      baseId: rootId,
+      base: rootBase
     } as unknown as Item
 
     const cache = {
@@ -111,7 +118,7 @@ describe('objectloader2', () => {
     }
 
     expect(r.length).toBe(2)
-    expect(r[0]).toBe(root)
-    expect(r[1]).toBe(child1)
+    expect(r[0]).toBe(rootBase)
+    expect(r[1]).toBe(child1Base)
   })
 })
