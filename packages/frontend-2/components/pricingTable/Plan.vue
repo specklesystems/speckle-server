@@ -44,7 +44,7 @@
             :color="buttonColor"
             :disabled="!isSelectable"
             full-width
-            @click="onCtaClick"
+            @click="handleUpgradeClick"
           >
             {{ buttonText }}
           </FormButton>
@@ -96,6 +96,7 @@ import { startCase } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/prices'
+import { useBillingActions } from '~/lib/billing/composables/actions'
 
 defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -107,9 +108,11 @@ const props = defineProps<{
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   isAdmin: boolean
   activeBillingInterval: MaybeNullOrUndefined<BillingInterval>
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const { pricesNew } = useWorkspacePlanPrices()
+const { upgradePlan } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
@@ -237,6 +240,19 @@ const buttonText = computed(() => {
 const badgeText = computed(() =>
   props.currentPlan?.name === props.plan ? 'Current plan' : ''
 )
+
+const handleUpgradeClick = () => {
+  if (!props.workspaceId) return
+  if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
+    upgradePlan({
+      plan: props.plan,
+      cycle: isYearlyIntervalSelected.value
+        ? BillingInterval.Yearly
+        : BillingInterval.Monthly,
+      workspaceId: props.workspaceId
+    })
+  }
+}
 
 watch(
   () => props.yearlyIntervalSelected,

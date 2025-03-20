@@ -7,7 +7,8 @@
       :current-plan="currentPlan"
       :yearly-interval-selected="isYearlySelected"
       :active-billing-interval="billingInterval"
-      :is-admin="true"
+      :is-admin="isAdmin"
+      :workspace-id="props.workspaceId"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
     />
   </div>
@@ -18,6 +19,7 @@ import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlans } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
+import { type MaybeNullOrUndefined, type WorkspaceRoles, Roles } from '@speckle/shared'
 
 graphql(`
   fragment PricingTable_Workspace on Workspace {
@@ -28,6 +30,8 @@ graphql(`
 
 const props = defineProps<{
   slug: string
+  role: MaybeNullOrUndefined<WorkspaceRoles>
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const { billingInterval, plan: currentPlan } = useWorkspacePlan(props.slug)
@@ -39,6 +43,8 @@ const plans = computed(() => [
   WorkspacePlans.Team,
   WorkspacePlans.Pro
 ])
+
+const isAdmin = computed(() => props.role === Roles.Workspace.Admin)
 
 const onYearlyIntervalSelected = (newValue: boolean) => {
   isYearlySelected.value = newValue

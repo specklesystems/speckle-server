@@ -2,7 +2,7 @@
 <template>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
     <CommonCard class="flex flex-col gap-y-3 p-6">
-      <h3 class="text-body">Unlimited projects and models</h3>
+      <h3 class="text-body font-medium">Unlimited projects and models</h3>
       <p class="text-foreground-2 text-body-xs flex-1 mb-3">
         Add more projects and models to your workspace.
       </p>
@@ -10,7 +10,7 @@
     </CommonCard>
 
     <CommonCard class="flex flex-col gap-y-3 p-6">
-      <h3 class="text-body">Extra data regions</h3>
+      <h3 class="text-body font-medium">Extra data regions</h3>
       <p class="text-foreground-2 text-body-xs flex-1 mb-3">
         Access to almost all data residency regions.
       </p>
@@ -21,7 +21,7 @@
     </CommonCard>
 
     <CommonCard class="flex flex-col gap-y-3 p-6">
-      <h3 class="text-body">Priority support</h3>
+      <h3 class="text-body font-medium">Priority support</h3>
       <p class="text-foreground-2 text-body-xs flex-1 mb-3">
         Private support channel for your workspace.
       </p>

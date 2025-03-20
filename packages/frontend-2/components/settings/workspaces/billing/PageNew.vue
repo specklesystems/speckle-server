@@ -7,28 +7,8 @@
     />
 
     <div class="flex flex-col gap-y-6 md:gap-y-10">
-      <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Summary" subheading />
-        <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
-      </section>
-
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Usage" subheading />
-        <SettingsWorkspacesBillingUsage />
-      </section>
-
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns :slug="slug" />
-      </section>
-
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Upgrade your plan" subheading />
-        <PricingTable :slug="slug" />
-      </section>
       <!-- Temporary until we can test with real upgrades -->
       <section v-if="isServerAdmin" class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Upgrade plan" subheading />
         <div class="flex gap-x-4">
           <FormButton
             size="lg"
@@ -53,6 +33,30 @@
           </FormButton>
         </div>
       </section>
+
+      <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Summary" subheading />
+        <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
+      </section>
+
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Usage" subheading />
+        <SettingsWorkspacesBillingUsage />
+      </section>
+
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Upgrade your plan" subheading />
+        <PricingTable
+          :slug="slug"
+          :workspace-id="workspace?.id"
+          :role="workspace?.role as WorkspaceRoles"
+        />
+      </section>
+
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Add-ons" subheading />
+        <SettingsWorkspacesBillingAddOns :slug="slug" />
+      </section>
     </div>
   </div>
 </template>
@@ -61,13 +65,18 @@
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
 import { settingsWorkspaceBillingQueryNew } from '~/lib/settings/graphql/queries'
-import { WorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
+import {
+  WorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  type WorkspaceRoles
+} from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 
 graphql(`
   fragment WorkspaceBillingPageNew_Workspace on Workspace {
     id
+    ...PricingTable_Workspace
   }
 `)
 
