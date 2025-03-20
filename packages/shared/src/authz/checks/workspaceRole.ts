@@ -9,7 +9,7 @@ export const requireAnyWorkspaceRole =
 
     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
 
-    return userWorkspaceRole === null
+    return userWorkspaceRole !== null
   }
 
 export const requireMinimumWorkspaceRole =
