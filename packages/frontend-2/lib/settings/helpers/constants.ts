@@ -5,8 +5,8 @@ import {
 import { Roles } from '@speckle/shared'
 import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
-export const LearnMoreRolesSeatsUrl =
-  'https://speckle.guide/user/workspaces.html#roles-and-seats'
+// TODO: Add link when ready
+export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
 
 export const WorkspaceRoleDescriptions: Record<string, string> = {
   [Roles.Workspace.Admin]:
