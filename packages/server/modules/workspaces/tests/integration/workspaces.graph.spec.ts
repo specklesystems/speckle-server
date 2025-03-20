@@ -52,8 +52,42 @@ import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspace
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification: requestNewEmailVerificationFactory({
+    findEmail: findEmailFactory({ db }),
+    getUser: getUserFactory({ db }),
+    getServerInfo: getServerInfoFactory({ db }),
+    deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+    sendEmail,
+    renderEmail
+  })
+})
 const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 describe('Workspaces GQL CRUD', () => {
@@ -694,6 +728,83 @@ describe('Workspaces GQL CRUD', () => {
         expect(getRes.data?.workspace).to.exist
         expect(getRes.data?.workspace?.name).to.equal(workspaceName)
         expect(getRes.data?.workspace?.slug).to.equal(workspaceSlug)
+      })
+
+      describe('when attempting to enable domain discoverability', () => {
+        const guyWithNoVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with no verified emails',
+          email: 'guy-with-no-verified-emails@bozo1.org',
+          verified: false
+        }
+
+        const guyWithMultipleVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with multiple verified emails',
+          email: 'guy-with-multiple-verified-emails@bozo2.org',
+          verified: true
+        }
+
+        const guyWithOneVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one verified email',
+          email: 'guy-with-one-verified-email@bozo3.org',
+          verified: true
+        }
+
+        const guyWithOneBlockedVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one blocked verified email',
+          email: 'guy-with-one-blocked-verified-email@gmail.com',
+          verified: true,
+          allowPersonalEmail: true
+        }
+
+        const getDomain = (user: BasicTestUser) => user.email.split('@')[1]
+
+        before(async () => {
+          await createTestUsers([
+            guyWithNoVerifiedEmails,
+            guyWithMultipleVerifiedEmails,
+            guyWithOneVerifiedEmail,
+            guyWithOneBlockedVerifiedEmail
+          ])
+
+          await Promise.all([
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo22.org',
+                verified: true
+              }
+            }),
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo23.org',
+                verified: true
+              }
+            })
+          ])
+        })
+
+        it('user with one non-blocked verified email can enable domain discoverability', async () => {
+          const apollo = await testApolloServer({
+            authUserId: guyWithOneVerifiedEmail.id
+          })
+          const createRes = await apollo.execute(CreateWorkspaceDocument, {
+            input: {
+              name: 'My Domain Discoverability Workspace',
+              slug: cryptoRandomString({ length: 10 }),
+              enableDomainDiscoverabilityForDomain: getDomain(guyWithOneVerifiedEmail)
+            }
+          })
+
+          expect(createRes).to.not.haveGraphQLErrors()
+          expect(createRes.data?.workspaceMutations.create.id).to.be.ok
+          expect(createRes.data!.workspaceMutations.create.discoverabilityEnabled).to.be
+            .true
+        })
       })
     })
 
