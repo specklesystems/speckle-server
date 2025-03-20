@@ -42,7 +42,7 @@
             rounded
             color-classes="bg-highlight-3 text-foreground-2 capitalize"
           >
-            {{ item.role }}
+            {{ getRoleLabel(item.role) }}
           </CommonBadge>
         </div>
       </template>
@@ -184,4 +184,7 @@ const onActionChosen = async (
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
+
+// Not using shared getRoleLabel as it requires strict workspace role types, but GraphQL currently returns string
+const getRoleLabel = (role: string) => role.split(':')[1]
 </script>
