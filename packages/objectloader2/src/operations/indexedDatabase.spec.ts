@@ -8,6 +8,7 @@ describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
     const database = new IndexedDatabase({
+      streamId: 'streamId',
       indexedDB: new IDBFactory(),
       maxCacheBatchWriteWait: 200
     })
@@ -23,8 +24,8 @@ describe('database cache', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
     const database = new IndexedDatabase({
-      indexedDB: new IDBFactory(),
-      maxCacheBatchWriteWait: 200
+      streamId: 'streamId',
+      indexedDB: new IDBFactory()
     })
     await database.write({ item: i1 })
     await database.write({ item: i2 })
@@ -43,8 +44,8 @@ describe('database cache', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
     const database = new IndexedDatabase({
-      indexedDB: new IDBFactory(),
-      maxCacheBatchWriteWait: 200
+      streamId: 'streamId',
+      indexedDB: new IDBFactory()
     })
     await database.write({ item: i1 })
     await database.write({ item: i2 })

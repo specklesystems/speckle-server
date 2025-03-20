@@ -15,28 +15,24 @@ export default class ObjectLoader2 {
 
   #gathered: AsyncGeneratorQueue<Item>
 
-  constructor(
-    serverUrl: string,
-    streamId: string,
-    objectId: string,
-    token?: string,
-    options?: Partial<ObjectLoader2Options>
-  ) {
-    this.#objectId = objectId
+  constructor(options: ObjectLoader2Options) {
+    this.#objectId = options.objectId
 
-    this.#logger = options?.logger || console.log
+    this.#logger = options.logger || console.log
     this.#gathered = new AsyncGeneratorQueue()
-    this.#database = options?.cache || new IndexedDatabase({ logger: this.#logger })
+    this.#database =
+      options.cache ||
+      new IndexedDatabase({ streamId: options.streamId, logger: this.#logger })
     this.#downloader =
-      options?.downloader ||
-      new ServerDownloader(
-        this.#database,
-        this.#gathered,
-        serverUrl,
-        streamId,
-        this.#objectId,
-        token
-      )
+      options.downloader ||
+      new ServerDownloader({
+        database: this.#database,
+        results: this.#gathered,
+        serverUrl: options.serverUrl,
+        streamId: options.streamId,
+        objectId: this.#objectId,
+        token: options.token
+      })
   }
 
   async #finish(): Promise<void> {
@@ -54,7 +50,7 @@ export default class ObjectLoader2 {
     }
     const rootItem = await this.#downloader.downloadSingle()
 
-    await this.#database.write({item: rootItem})
+    await this.#database.write({ item: rootItem })
     return rootItem
   }
 

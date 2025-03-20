@@ -14,7 +14,10 @@ describe('objectloader2', () => {
       }
     } as Cache
     const downloader = {} as Downloader
-    const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
       cache,
       downloader
     })
@@ -39,7 +42,10 @@ describe('objectloader2', () => {
         return Promise.resolve(root)
       }
     } as Downloader
-    const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
       cache,
       downloader
     })
@@ -58,7 +64,10 @@ describe('objectloader2', () => {
       }
     } as Cache
     const downloader = {} as Downloader
-    const loader = new ObjectLoader2('a', 'b', rootId, undefined, {
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: rootId,
       cache,
       downloader
     })
@@ -110,7 +119,10 @@ describe('objectloader2', () => {
         return Promise.resolve()
       }
     } as Downloader
-    const loader = new ObjectLoader2('a', 'b', root.baseId, undefined, {
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
       cache,
       downloader
     })

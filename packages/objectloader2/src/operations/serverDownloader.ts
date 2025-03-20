@@ -1,60 +1,36 @@
 import BatchedPool from '../helpers/batchedPool.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { isBase, Item } from '../types/types.js'
-import { Cache, Downloader } from './interfaces.js'
+import { Fetcher, isBase, Item } from '../types/types.js'
+import { Downloader } from './interfaces.js'
 import { BaseDownloadOptions } from './options.js'
 
 export default class ServerDownloader implements Downloader {
-  #serverUrl: string
-  #streamId: string
-  #objectId: string
-  #token?: string
   #requestUrlRootObj: string
   #requestUrlChildren: string
   #headers: HeadersInit
   #options: BaseDownloadOptions
+  #fetch: Fetcher
 
-  #database: Cache
   #downloadQueue?: BatchedPool<string>
-  #results: Queue<Item>
 
-  constructor(
-    database: Cache,
-    results: Queue<Item>,
-    serverUrl: string,
-    streamId: string,
-    objectId: string,
-    token?: string,
-    options?: Partial<BaseDownloadOptions>
-  ) {
-    this.#database = database
-    this.#results = results
-
-    this.#serverUrl = serverUrl
-    this.#streamId = streamId
-    this.#objectId = objectId
-    this.#token = token
-    this.#options = {
-      ...{
-        fetch: (...args) => globalThis.fetch(...args),
-        maxDownloadSize: 5000,
-        maxDownloadBatchWait: 3000
-      },
-      ...options
-    }
+  constructor(options: BaseDownloadOptions) {
+    this.#options = options
+    this.#fetch = options.fetch ?? ((...args) => globalThis.fetch(...args))
 
     this.#headers = {
       Accept: 'text/plain'
     }
 
-    if (this.#token) {
-      this.#headers['Authorization'] = `Bearer ${this.#token}`
+    if (this.#options.token) {
+      this.#headers['Authorization'] = `Bearer ${this.#options.token}`
     }
-    this.#requestUrlChildren = `${this.#serverUrl}/api/getobjects/${this.#streamId}`
-    this.#requestUrlRootObj = `${this.#serverUrl}/objects/${this.#streamId}/${
-      this.#objectId
-    }/single`
+    this.#requestUrlChildren = `${this.#options.serverUrl}/api/getobjects/${
+      this.#options.streamId
+    }`
+    this.#requestUrlRootObj = `${this.#options.serverUrl}/objects/${
+      this.#options.streamId
+    }/${this.#options.objectId}/single`
   }
 
   #getDownloadCountAndSizes(total: number): number[] {
@@ -68,18 +44,19 @@ export default class ServerDownloader implements Downloader {
     return [x1, x2, x3, total - (x1 + x2 + x3)]
   }
 
-  initializePool(params: { total: number }) {
+  initializePool(params: { total: number; maxDownloadBatchWait?: number }) {
     const { total } = params
-    this.#downloadQueue = new BatchedPool<string>(
-      this.#getDownloadCountAndSizes(total),
-      (batch: string[]) =>
+    this.#downloadQueue = new BatchedPool<string>({
+      concurrencyAndSizes: this.#getDownloadCountAndSizes(total),
+      maxWaitTime: params.maxDownloadBatchWait,
+      processFunction: (batch: string[]) =>
         this.downloadBatch({
           batch,
           url: this.#requestUrlChildren,
           headers: this.#headers,
-          results: this.#results
+          results: this.#options.results
         })
-    )
+    })
   }
 
   #getPool(): BatchedPool<string> {
@@ -118,7 +95,7 @@ export default class ServerDownloader implements Downloader {
     results: Queue<Item>
   }): Promise<void> {
     const { batch, url, headers, results } = params
-    const response = await this.#options.fetch(url, {
+    const response = await this.#fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ objects: JSON.stringify(batch) })
@@ -149,7 +126,7 @@ export default class ServerDownloader implements Downloader {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
-          await this.#database.write({ item })
+          await this.#options.database.write({ item })
           results.add(item)
         }
       }
@@ -157,12 +134,12 @@ export default class ServerDownloader implements Downloader {
   }
 
   async downloadSingle(): Promise<Item> {
-    const response = await this.#options.fetch(this.#requestUrlRootObj, {
+    const response = await this.#fetch(this.#requestUrlRootObj, {
       headers: this.#headers
     })
     this.#validateResponse(response)
     const responseText = await response.text()
-    const item = this.#processJson(this.#objectId, responseText)
+    const item = this.#processJson(this.#options.objectId, responseText)
     return item
   }
 

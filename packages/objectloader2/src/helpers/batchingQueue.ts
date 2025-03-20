@@ -5,16 +5,23 @@ export default class BatchingQueue<T> implements Queue<T> {
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
 
-  #baseInterval = 200 // Initial batch time (ms)
-  #minInterval = 100 // Minimum batch time
-  #maxInterval = 3000 // Maximum batch time
+  #baseInterval: number
+  #minInterval: number
+  #maxInterval: number
 
   #processingLoop: Promise<void>
   #finished = false
 
-  constructor(batchSize: number, processFunction: (batch: T[]) => Promise<void>) {
-    this.#batchSize = batchSize
-    this.#processFunction = processFunction
+  constructor(params: {
+    batchSize: number
+    maxWaitTime?: number
+    processFunction: (batch: T[]) => Promise<void>
+  }) {
+    this.#batchSize = params.batchSize
+    this.#baseInterval = Math.min(params.maxWaitTime ?? 200, 200) // Initial batch time (ms)
+    this.#minInterval = Math.min(params.maxWaitTime ?? 100, 100) // Minimum batch time
+    this.#maxInterval = Math.min(params.maxWaitTime ?? 3000, 3000) // Maximum batch time
+    this.#processFunction = params.processFunction
     this.#processingLoop = this.#loop()
   }
 

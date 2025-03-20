@@ -17,19 +17,18 @@ describe('downloader', () => {
         return Promise.resolve()
       }
     } as unknown as Cache
-    const downloader = new ServerDownloader(
-      db,
+    const downloader = new ServerDownloader({
+      database: db,
       results,
-      'http://speckle.test',
-      'streamId',
-      'objectId',
-      'token',
-      {
-        fetch: fetchMocker,
-        maxDownloadSize: 5,
-        maxDownloadBatchWait: 200
-      }
-    )
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'token',
+
+      fetch: fetchMocker,
+      maxDownloadSize: 5,
+      maxDownloadBatchWait: 200
+    })
     downloader.initializePool({ total: 1 })
     downloader.add('id')
     await downloader.finish()
@@ -56,19 +55,18 @@ describe('downloader', () => {
         return Promise.resolve()
       }
     } as unknown as Cache
-    const downloader = new ServerDownloader(
-      db,
+    const downloader = new ServerDownloader({
+      database: db,
       results,
-      'http://speckle.test',
-      'streamId',
-      'objectId',
-      'token',
-      {
-        fetch: fetchMocker,
-        maxDownloadSize: 5,
-        maxDownloadBatchWait: 200
-      }
-    )
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'token',
+
+      fetch: fetchMocker,
+      maxDownloadSize: 5,
+      maxDownloadBatchWait: 200
+    })
     downloader.initializePool({ total: 2 })
     downloader.add('id')
     await downloader.finish()
@@ -93,19 +91,18 @@ describe('downloader', () => {
         return Promise.resolve()
       }
     } as unknown as Cache
-    const downloader = new ServerDownloader(
-      db,
+    const downloader = new ServerDownloader({
+      database: db,
       results,
-      'http://speckle.test',
-      'streamId',
-      i.baseId,
-      'token',
-      {
-        fetch: fetchMocker,
-        maxDownloadSize: 5,
-        maxDownloadBatchWait: 200
-      }
-    )
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: i.baseId,
+      token: 'token',
+
+      fetch: fetchMocker,
+      maxDownloadSize: 5,
+      maxDownloadBatchWait: 200
+    })
     const x = await downloader.downloadSingle()
     expect(JSON.stringify(x)).toBe(JSON.stringify(i))
   })
