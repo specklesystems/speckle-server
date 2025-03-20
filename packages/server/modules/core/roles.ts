@@ -60,14 +60,14 @@ const coreUserRoles: Array<UserServerRole | UserStreamRole> = [
   },
   {
     name: Roles.Stream.Contributor,
-    ...pick(RoleInfo.Stream[Roles.Stream.Owner], keysToPick),
+    ...pick(RoleInfo.Stream[Roles.Stream.Contributor], keysToPick),
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
     public: true
   },
   {
     name: Roles.Stream.Reviewer,
-    ...pick(RoleInfo.Stream[Roles.Stream.Owner], keysToPick),
+    ...pick(RoleInfo.Stream[Roles.Stream.Reviewer], keysToPick),
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
     public: true
