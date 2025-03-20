@@ -35,7 +35,7 @@ spec:
             command:
               - /nodejs/bin/node
               - -e
-              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 30 * 1000)
+              - "process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 30 * 1000 ? 1 : 0)"
 
         resources:
           requests:
