@@ -1,4 +1,4 @@
-import BatchingQueue from '../helpers/batchingQueue.js'
+import BatchedPool from '../helpers/BatchedPool.js'
 import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { isBase, Item } from '../types/types.js'
@@ -16,7 +16,7 @@ export default class ServerDownloader implements Downloader {
   #options: BaseDownloadOptions
 
   #database: Cache
-  #downloadQueue: BatchingQueue<string>
+  #downloadQueue: BatchedPool<string>
   #results: Queue<Item>
 
   constructor(
@@ -43,8 +43,8 @@ export default class ServerDownloader implements Downloader {
       },
       ...options
     }
-    this.#downloadQueue = new BatchingQueue<string>(
-      this.#options.maxDownloadSize,
+    this.#downloadQueue = new BatchedPool<string>(
+      [this.#options.maxDownloadSize],
       this.#options.maxDownloadBatchWait,
       (batch: string[]) =>
         this.downloadBatch(
