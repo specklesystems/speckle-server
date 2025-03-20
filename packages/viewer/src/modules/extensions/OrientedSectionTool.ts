@@ -28,6 +28,7 @@ import { InputEvent } from '../input/Input.js'
 import { Vector3Like } from '../batching/BatchObject.js'
 import Logger from '../utils/Logger.js'
 import { World } from '../World.js'
+import { CameraEvent } from '../objects/SpeckleCamera.js'
 
 export class OrientedSectionTool extends Extension {
   public get inject() {
@@ -151,10 +152,15 @@ export class OrientedSectionTool extends Extension {
 
     this.setupControls()
 
-    // this.cameraProvider.on(CameraEvent.ProjectionChanged, () => {
-    //   this._setupControls()
-    //   this._attachControlsToBox()
-    // })
+    this.cameraProvider.on(CameraEvent.ProjectionChanged, () => {
+      //@ts-ignore
+      this.translateControls.camera = this.viewer.getRenderer().renderingCamera
+      //@ts-ignore
+      this.rotateControls.camera = this.viewer.getRenderer().renderingCamera
+      //@ts-ignore
+      this.scaleControls.camera = this.viewer.getRenderer().renderingCamera
+    })
+    /** This might not be needed */
     // this.cameraProvider.on(CameraEvent.FrameUpdate, (data: boolean) => {
     //   this.allowSelection = !data
     // })

@@ -49,7 +49,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
   viewer.createExtension(OrientedSectionTool)
-  // viewer.createExtension(SectionOutlines)
+  viewer.createExtension(SectionOutlines)
   viewer.createExtension(MeasurementsExtension)
   viewer.createExtension(FilteringExtension)
   viewer.createExtension(ExplodeExtension)

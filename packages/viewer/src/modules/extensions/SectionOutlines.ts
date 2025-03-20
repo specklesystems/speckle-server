@@ -6,6 +6,7 @@ import {
   InterleavedBufferAttribute,
   Line3,
   Material,
+  Matrix4,
   Plane,
   Vector2,
   Vector3
@@ -135,7 +136,7 @@ export class SectionOutlines extends Extension {
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
     if (!planeId) {
-      Logger.error(`Invalid plane! Aborting section outline update`)
+      Logger.error(`Invalid plane! Aborting section outline update`, _plane.normal)
       return
     }
     const clipOutline = this.planeOutlines[planeId].renderable
@@ -349,7 +350,12 @@ export class SectionOutlines extends Extension {
   private setSectionPlaneChanged(planes: Plane[]) {
     this.sectionPlanesChanged.length = 0
     for (let k = 0; k < planes.length; k++) {
-      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+      if (
+        Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001 ||
+        Math.abs(
+          this.lastSectionPlanes[k].normal.length() - planes[k].normal.length()
+        ) > 0.0001
+      )
         this.sectionPlanesChanged.push(planes[k])
       this.lastSectionPlanes[k].copy(planes[k])
     }
@@ -386,10 +392,14 @@ export class SectionOutlines extends Extension {
   }
 
   private getPlaneId(plane: Plane): PlaneId | undefined {
+    this.tmpVec.set(plane.normal.x, plane.normal.y, plane.normal.z)
+    const box = this.sectionProvider.getBox()
+    const invRotation = new Matrix4().setFromMatrix3(box.rotation).invert()
+    this.tmpVec.applyMatrix4(invRotation).normalize()
     this.tmpVec.set(
-      Math.round(plane.normal.x),
-      Math.round(plane.normal.y),
-      Math.round(plane.normal.z)
+      Math.round(this.tmpVec.x),
+      Math.round(this.tmpVec.y),
+      Math.round(this.tmpVec.z)
     )
     if (this.tmpVec.equals(this.right)) return PlaneId.POSITIVE_X
     if (this.tmpVec.equals(this.left)) return PlaneId.NEGATIVE_X
