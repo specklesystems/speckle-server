@@ -124,7 +124,7 @@ export class Intersections {
     ray: Ray,
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
@@ -134,7 +134,7 @@ export class Intersections {
     ray: Ray,
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
@@ -145,7 +145,7 @@ export class Intersections {
     ray: Ray,
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly = false,
     tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
