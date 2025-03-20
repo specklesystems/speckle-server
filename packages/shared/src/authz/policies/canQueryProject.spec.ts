@@ -329,7 +329,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
-        getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
+        getWorkspaceSsoProvider: () => Promise.resolve(null)
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.authorized).toBe(true)
