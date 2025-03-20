@@ -1078,15 +1078,11 @@ export class SmoothOrbitControls extends SpeckleControls {
 
   protected onPointerDown = (event: PointerEvent) => {
     if (this._options.orbitAroundCursor) {
-      const x =
-        ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) *
-          2 -
-        1
+      /** Hope this is not slow */
+      const rect = this._container.getBoundingClientRect()
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      const y = ((event.clientY - rect.top) / rect.height) * -2 + 1
 
-      const y =
-        ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
-          -2 +
-        1
       const res = this.renderer.intersections.intersect(
         this.renderer.scene,
         this._targetCamera as PerspectiveCamera,
@@ -1242,14 +1238,10 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected onWheel = (event: WheelEvent) => {
-    const x =
-      ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) * 2 -
-      1
-
-    const y =
-      ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
-        -2 +
-      1
+    /** Hope this is not slow */
+    const rect = this._container.getBoundingClientRect()
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    const y = ((event.clientY - rect.top) / rect.height) * -2 + 1
 
     this.zoomControlCoord.set(x, y)
 
