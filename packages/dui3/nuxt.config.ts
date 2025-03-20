@@ -14,12 +14,27 @@ export default defineNuxtConfig({
   ],
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
-    lodash: 'lodash-es'
+    // lodash: 'lodash-es'
   },
 
+  // pinia: {
+  //   autoImports: ['defineStore', 'storeToRefs']
+  // },
+  runtimeConfig: {
+    public: {
+      mixpanelApiHost: 'UNDEFINED',
+      mixpanelTokenId: 'UNDEFINED',
+      speckleAccountId: process.env.SPECKLE_ACCOUNT_ID,
+      speckleToken: process.env.SPECKLE_TOKEN,
+      speckleUserId: process.env.SPECKLE_USER_ID,
+      speckleUrl: process.env.SPECKLE_URL,
+      speckleSampleProjectId: process.env.SPECKLE_SAMPLE_PROJECT_ID,
+      speckleSampleModelId: process.env.SPECKLE_SAMPLE_MODEL_ID
+    }
+  },
   vite: {
     resolve: {
-      alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
+      alias: [{ find: /^lodash(?!(-es|\/fp|\.))/, replacement: 'lodash-es' }]
     },
 
     build: {

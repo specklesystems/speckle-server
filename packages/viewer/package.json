@@ -66,9 +66,9 @@
     "type-fest": "^4.15.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.2",
-    "@babel/eslint-parser": "^7.18.2",
-    "@babel/preset-env": "^7.20.2",
+    "@babel/core": "^7.24.7",
+    "@babel/eslint-parser": "^7.24.7",
+    "@babel/preset-env": "^7.24.7",
     "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-image": "^3.0.2",
     "@rollup/plugin-typescript": "^11.1.6",
