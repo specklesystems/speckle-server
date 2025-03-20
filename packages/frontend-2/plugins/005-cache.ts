@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
-
 import type { Optional } from '@speckle/shared'
 import { has as objectHas } from 'lodash-es'
 import type { Redis } from 'ioredis'

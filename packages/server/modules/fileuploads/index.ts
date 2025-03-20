@@ -2,7 +2,7 @@
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
   onFileProcessingFactory,
@@ -24,7 +24,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
-export const init: SpeckleModule['init'] = async (app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
@@ -119,7 +119,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      req.pipe(pipedReq)
+      req.pipe(pipedReq as unknown as NodeJS.WritableStream)
     }
   )
 

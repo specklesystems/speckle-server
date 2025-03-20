@@ -45,29 +45,19 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(HybridCameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
+  viewer.createExtension(HybridCameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(MeasurementsExtension)
+  viewer.createExtension(FilteringExtension)
+  viewer.createExtension(ExplodeExtension)
+  viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -113,7 +103,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -484,6 +474,23 @@ const getStream = () => {
 
     // Custom normals
     // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
+
+    // Meshed together - like objects
+    // 'https://app.speckle.systems/projects/edccdee0fd/models/944c475581'
+
+    // Engine thing with outlines
+    // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
+
+    // Dim's meshed together non instanced + instanced
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+
+    // A LOT of text objects
+    // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'
+
+    // 'https://app.speckle.systems/projects/16cffbc224/models/1e142b07a0'
+
+    // REGIONS
+    // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
   )
 }
 

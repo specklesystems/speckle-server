@@ -6,7 +6,7 @@
         v-model="email"
         type="email"
         name="email"
-        label="Email"
+        label="Work email"
         placeholder="Email"
         size="lg"
         color="foundation"
@@ -69,16 +69,13 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
-import { passwordRules } from '~~/lib/auth/helpers/validation'
+import {
+  passwordRules,
+  doesNotContainBlockedDomain
+} from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
-
-/**
- * TODO:
- * - (BE) Password strength check? Do we want to use it anymore?
- * - Dim's answer: no, `passwordRules` are legit enough for now.
- */
 
 graphql(`
   fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {
@@ -99,13 +96,18 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
+const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
-const emailRules = [isEmail]
+const emailRules = computed(() =>
+  inviteToken.value || !isNoPersonalEmailsEnabled.value
+    ? [isEmail]
+    : [isEmail, doesNotContainBlockedDomain]
+)
 const nameRules = [isRequired]
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)

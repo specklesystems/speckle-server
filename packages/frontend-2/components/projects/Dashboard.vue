@@ -2,6 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <ProjectsDashboardHeader
+      v-if="!isWorkspaceNewPlansEnabled"
       :projects-invites="projectsPanelResult?.activeUser"
       :workspaces-invites="workspacesResult?.activeUser"
     />
@@ -92,6 +93,7 @@ const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isGuest } = useActiveUser()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
 const {
@@ -110,7 +112,8 @@ const {
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
     search: (search.value || '').trim() || null,
-    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
+    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null,
+    workspaceId: isWorkspaceNewPlansEnabled ? (null as Nullable<string>) : undefined
   },
   cursor: null as Nullable<string>
 }))

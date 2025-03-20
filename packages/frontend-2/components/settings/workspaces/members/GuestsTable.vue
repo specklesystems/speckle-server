@@ -11,9 +11,8 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'verified', header: 'Status', classes: 'col-span-3' },
         { id: 'projects', header: 'Projects', classes: 'col-span-2' },
-        { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
+        { id: 'actions', header: '', classes: 'col-span-4 flex justify-end' }
       ]"
       :items="guests"
       :loading="searchResultLoading"
@@ -34,11 +33,6 @@
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
           {{ item.user.company ? item.user.company : '-' }}
-        </span>
-      </template>
-      <template #verified="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          {{ item.user.verified ? 'Verified' : 'Unverified' }}
         </span>
       </template>
       <template #projects="{ item }">
@@ -121,7 +115,6 @@ graphql(`
       avatar
       name
       company
-      verified
     }
     projectRoles {
       role

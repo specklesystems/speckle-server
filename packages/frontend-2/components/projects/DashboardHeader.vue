@@ -21,14 +21,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectsDashboardHeaderProjects_UserFragment,
   ProjectsDashboardHeaderWorkspaces_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { CookieKeys } from '~/lib/common/helpers/constants'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 graphql(`
   fragment ProjectsDashboardHeaderProjects_User on User {
@@ -40,9 +39,6 @@ graphql(`
 
 graphql(`
   fragment ProjectsDashboardHeaderWorkspaces_User on User {
-    discoverableWorkspaces {
-      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace
-    }
     workspaceInvites {
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
     }
@@ -54,26 +50,15 @@ const props = defineProps<{
   workspacesInvites: MaybeNullOrUndefined<ProjectsDashboardHeaderWorkspaces_UserFragment>
 }>()
 
-const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
-  CookieKeys.DismissedDiscoverableWorkspaces,
-  {
-    default: () => []
-  }
-)
+const { discoverableWorkspaces } = useDiscoverableWorkspaces()
 
 const workspaceInvites = computed(() => props.workspacesInvites?.workspaceInvites || [])
-const discoverableWorkspaces = computed(
-  () =>
-    props.workspacesInvites?.discoverableWorkspaces?.filter(
-      (workspace) => !dismissedDiscoverableWorkspaces.value.includes(workspace.id)
-    ) || []
-)
 
 const hasBanners = computed(() => {
   return (
     props.projectsInvites?.projectInvites?.length ||
     workspaceInvites.value.length ||
-    discoverableWorkspaces.value.length
+    discoverableWorkspaces.value?.length
   )
 })
 </script>

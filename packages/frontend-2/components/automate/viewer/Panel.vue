@@ -26,7 +26,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { type RunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import type { RunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useAutomationsStatusOrderedRuns } from '~/lib/automate/composables/runs'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateViewerPanel_AutomateRunFragment } from '~~/lib/common/generated/gql/graphql'

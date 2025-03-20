@@ -4,7 +4,7 @@ const { fetch } = require('undici')
 const { init } = require(`@/app`)
 const request = require('supertest')
 const { exit } = require('yargs')
-const { logger } = require('@/logging/logging')
+const { logger } = require('@/observability/logging')
 const { Scopes } = require('@speckle/shared')
 const {
   getStreamFactory,

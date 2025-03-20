@@ -12,7 +12,7 @@ import {
   postgresConnectionCreateTimeoutMillis,
   knexAsyncStackTracesEnabled
 } from '@/modules/shared/helpers/envHelper'
-import { dbLogger as logger } from '@/logging/logging'
+import { dbLogger as logger } from '@/observability/logging'
 import { Knex } from 'knex'
 import {
   createKnexConfig,

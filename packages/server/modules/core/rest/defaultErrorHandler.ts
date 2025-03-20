@@ -5,7 +5,7 @@ import { Optional, ensureError } from '@speckle/shared'
 import { ErrorRequestHandler } from 'express'
 import { get, isNumber } from 'lodash'
 import { VError } from 'verror'
-import { logger as defaultLogger } from '@/logging/logging'
+import { logger as defaultLogger } from '@/observability/logging'
 
 const resolveStatusCode = (e: Error): number => {
   if (e instanceof BaseError) {

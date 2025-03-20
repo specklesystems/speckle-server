@@ -15,7 +15,7 @@ import {
   ResourceMismatch,
   BadRequestError
 } from '@/modules/shared/errors'
-import { moduleLogger, logger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,
@@ -68,7 +68,7 @@ const ensureConditions = async () => {
   }
 
   if (!process.env.S3_BUCKET) {
-    logger.warn(
+    moduleLogger.warn(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -94,7 +94,7 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
   }
 }
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   await ensureConditions()
   const createStreamWritePermissions = () =>
     streamWritePermissionsPipelineFactory({

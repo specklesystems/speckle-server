@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -302,6 +300,9 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          subscription: {
+            merge: mergeAsObjectsFunction
           }
         }
       }
@@ -384,6 +385,7 @@ function createLink(params: {
       // only log as error if at least one error has a status code of 5xx or has no status code
       const shouldLogAsWarn = gqlErrors.every(
         (e) =>
+          e.extensions &&
           'statusCode' in e.extensions &&
           typeof e.extensions.statusCode === 'number' &&
           e.extensions.statusCode < 500
@@ -395,9 +397,12 @@ function createLink(params: {
         errorMessage: errMsg,
         graphql: true
       }
-      shouldLogAsWarn
-        ? logger.warn(logContext, 'Apollo Client error: {errorMessage}')
-        : logger.error(logContext, 'Apollo Client error: {errorMessage}')
+
+      if (shouldLogAsWarn) {
+        logger.warn(logContext, 'Apollo Client error: {errorMessage}')
+      } else {
+        logger.error(logContext, 'Apollo Client error: {errorMessage}')
+      }
     }
 
     const { networkError } = res

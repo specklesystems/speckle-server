@@ -13,6 +13,7 @@ import {
 } from '@/modules/workspacesCore/helpers/db'
 import { Roles } from '@speckle/shared'
 import { Knex } from 'knex'
+import { SetRequired } from 'type-fest'
 
 const tables = {
   workspaceJoinRequests: (db: Knex) =>
@@ -51,13 +52,13 @@ export const getWorkspaceJoinRequestFactory =
   }
 
 type WorkspaceJoinRequestFilter = {
-  workspaceId: string
+  workspaceId?: string
   status?: WorkspaceJoinRequestStatus | null
   userId: string
 }
 
 const adminWorkspaceJoinRequestsBaseQueryFactory =
-  (db: Knex) => (filter: WorkspaceJoinRequestFilter) => {
+  (db: Knex) => (filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>) => {
     const query = tables
       .workspaceJoinRequests(db)
       .innerJoin(
@@ -79,7 +80,7 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor,
     limit
   }: {
-    filter: WorkspaceJoinRequestFilter
+    filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>
     cursor?: string
     limit: number
   }) => {
@@ -96,8 +97,55 @@ export const getAdminWorkspaceJoinRequestsFactory =
 
 export const countAdminWorkspaceJoinRequestsFactory =
   ({ db }: { db: Knex }) =>
-  async ({ filter }: { filter: WorkspaceJoinRequestFilter }) => {
+  async ({
+    filter
+  }: {
+    filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>
+  }) => {
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
+
+    const [res] = await query.count()
+    return parseInt(res.count.toString())
+  }
+
+const workspaceJoinRequestsBaseQueryFactory =
+  (db: Knex) => (filter: WorkspaceJoinRequestFilter) => {
+    const query = tables
+      .workspaceJoinRequests(db)
+      .where(WorkspaceJoinRequests.col.userId, filter.userId)
+    if (filter.status) query.andWhere(WorkspaceJoinRequests.col.status, filter.status)
+    if (filter.userId) query.andWhere(WorkspaceJoinRequests.col.userId, filter.userId)
+    if (filter.workspaceId)
+      query.andWhere(WorkspaceJoinRequests.col.workspaceId, filter.workspaceId)
+    return query
+  }
+
+export const getWorkspaceJoinRequestsFactory =
+  ({ db }: { db: Knex }) =>
+  ({
+    filter,
+    cursor,
+    limit
+  }: {
+    filter: WorkspaceJoinRequestFilter
+    cursor?: string
+    limit: number
+  }) => {
+    const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
+
+    if (cursor) {
+      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
+    }
+    return query
+      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
+      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
+      .limit(limit)
+  }
+
+export const countWorkspaceJoinRequestsFactory =
+  ({ db }: { db: Knex }) =>
+  async ({ filter }: { filter: WorkspaceJoinRequestFilter }) => {
+    const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
 
     const [res] = await query.count()
     return parseInt(res.count.toString())

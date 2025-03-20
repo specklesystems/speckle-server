@@ -1,6 +1,10 @@
 FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
+ARG BUILD_SOURCEMAPS=false
+
+# for better sourcemaps (the app still gets minified at the end)
+ENV SKIP_LIBRARY_MINIFICATION=true
 
 WORKDIR /speckle-server
 
@@ -30,15 +34,13 @@ COPY packages/frontend-2 ./packages/frontend-2/
 RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach -W run build
-# hadolint ignore=DL3059
-RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 
 ENV TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u8 \
+     curl=7.88.1-10+deb12u12 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /tini \
     && chmod +x /tini \
     && apt-get remove -y curl \

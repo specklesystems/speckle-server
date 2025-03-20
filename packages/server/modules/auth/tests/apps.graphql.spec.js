@@ -130,7 +130,7 @@ describe('GraphQL @apps-api', () => {
     ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
-      email: 'didimitrie@gmail.com',
+      email: 'didimitrie@example.org',
       password: 'wtfwtfwtf'
     }
 

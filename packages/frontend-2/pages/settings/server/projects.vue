@@ -18,6 +18,7 @@ import { ref } from 'vue'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment SettingsServerProjects_ProjectCollection on ProjectCollection {
@@ -46,7 +47,8 @@ const {
   query: getProjectsQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.projectList,

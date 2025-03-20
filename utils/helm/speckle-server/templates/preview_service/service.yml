@@ -1,3 +1,4 @@
+{{- if .Values.preview_service.deployInCluster }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,5 +13,6 @@ spec:
   ports:
     - protocol: TCP
       name: web
-      port: {{ .Values.preview_service.monitoring.metricsPort }}
+      port: {{ .Values.preview_service.port }}
       targetPort: metrics
+{{- end }}

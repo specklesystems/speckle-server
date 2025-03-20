@@ -1,39 +1,42 @@
 <template>
-  <div class="flex flex-col w-full items-start pt-2">
-    <CommonTextLink
-      v-for="attachment in attachments.text.attachments || []"
-      :key="attachment.id"
-      :icon-left="resolveIconComponent(attachment)"
-      @click="() => onAttachmentClick(attachment)"
-    >
-      <span class="truncate relative text-xs pl-1">
-        {{ attachment.fileName }}
-      </span>
-    </CommonTextLink>
+  <div>
+    <div v-if="attachmentList.length > 0" class="flex flex-col w-full items-start pt-1">
+      <CommonTextLink
+        v-for="attachment in attachmentList"
+        :key="attachment.id"
+        class="!text-foreground hover:!text-foreground-2"
+        @click="() => onAttachmentClick(attachment)"
+      >
+        <PaperClipIcon class="w-4 h-4 mr-1" />
+        <span class="truncate relative text-body-2xs">
+          {{ attachment.fileName }}
+        </span>
+      </CommonTextLink>
+    </div>
     <LayoutDialog v-model:open="dialogOpen" max-width="lg" :buttons="dialogButtons">
       <template #header>
         {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
       </template>
       <template v-if="dialogAttachment">
         <div class="flex flex-col space-y-2">
-          <div class="flex justify-center text-foreground">
-            <template v-if="dialogAttachmentError">
-              <span class="inline-flex space-x-2 items-center">
-                <ExclamationTriangleIcon class="w-4 h-4" />
-                <span>Failed to preview attachment</span>
-              </span>
-            </template>
+          <div class="flex justify-center text-foreground text-body-xs py-4">
+            <span
+              v-if="dialogAttachmentError"
+              class="inline-flex space-x-2 items-center"
+            >
+              Failed to load attachment preview
+            </span>
             <template
               v-else-if="isImage(dialogAttachment) && dialogAttachmentObjectUrl"
             >
               <img :src="dialogAttachmentObjectUrl" alt="Attachment preview" />
             </template>
             <template v-else>
-              <span class="inline-flex space-x-2 items-center">
-                <ExclamationTriangleIcon class="w-4 h-4" />
+              <span class="inline-flex space-x-4 items-center">
+                <ExclamationTriangleIcon class="w-6 h-6" />
                 <span>
-                  Be cautious when downloading! Attachments are not scanned for harmful
-                  content.
+                  Please note: This file is user-uploaded and has not been scanned for
+                  security. Download at your own discretion.
                 </span>
               </span>
             </template>
@@ -45,14 +48,10 @@
 </template>
 <script setup lang="ts">
 import {
-  ArchiveBoxIcon,
-  DocumentIcon,
-  GifIcon,
-  PaperClipIcon,
-  PhotoIcon,
   ArrowDownTrayIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/solid'
+  ExclamationTriangleIcon,
+  PaperClipIcon
+} from '@heroicons/vue/24/outline'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -105,23 +104,6 @@ const isImage = (attachment: AttachmentFile) => {
   }
 }
 
-const resolveIconComponent = (attachment: AttachmentFile) => {
-  switch (attachment.fileType) {
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-      return PhotoIcon
-    case 'gif':
-      return GifIcon
-    case 'pdf':
-      return DocumentIcon
-    case 'zip':
-      return ArchiveBoxIcon
-    default:
-      return PaperClipIcon
-  }
-}
-
 const onAttachmentClick = (attachment: AttachmentFile) => {
   dialogAttachment.value = attachment
   dialogOpen.value = true
@@ -142,6 +124,8 @@ const onDownloadClick = async () => {
   }
 }
 
+const attachmentList = computed(() => props.attachments.text.attachments || [])
+
 const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
   if (!dialogAttachment.value) return undefined
 
@@ -150,7 +134,8 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      iconLeft: ArrowDownTrayIcon
+      iconLeft: ArrowDownTrayIcon,
+      color: 'outline'
     },
     onClick: () => {
       onDownloadClick()

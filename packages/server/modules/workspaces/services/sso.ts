@@ -38,6 +38,7 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
+import type { Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -136,9 +137,12 @@ export const createWorkspaceUserFromSsoProfileFactory =
     ssoProfile: UserinfoResponse<OidcProfile>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
+    const email = getEmailFromOidcProfile(args.ssoProfile)
+
     // Check if user has email-based invite to given workspace
+    // TODO: Use invite token instead of searching by email. Enterprise providers may return an email different from the one we sent an invite to.
     const invite = await findInvite({
-      target: args.ssoProfile.email,
+      target: email.toLowerCase(),
       resourceFilter: {
         resourceId: args.workspaceId,
         resourceType: 'workspace'
@@ -146,12 +150,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
     })
 
     if (!invite) {
-      throw new SsoUserInviteRequiredError()
+      throw new SsoUserInviteRequiredError(email)
     }
 
     // Create Speckle user
     const { name } = args.ssoProfile
-    const email = getEmailFromOidcProfile(args.ssoProfile)
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
@@ -190,11 +193,13 @@ export const linkUserWithSsoProviderFactory =
   ({
     findEmailsByUserId,
     createUserEmail,
-    updateUserEmail
+    updateUserEmail,
+    logger
   }: {
     findEmailsByUserId: FindEmailsByUserId
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
+    logger?: Logger
   }) =>
   async (args: {
     userId: string
@@ -211,11 +216,20 @@ export const linkUserWithSsoProviderFactory =
 
     // Add SSO provider email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
-    const maybeSsoEmail = userEmails.find(
-      (entry) => entry.email === getEmailFromOidcProfile(args.ssoProfile)
+    const providerEmail = getEmailFromOidcProfile(args.ssoProfile)
+    const maybeExistingEmail = userEmails.find(
+      (entry) => entry.email === providerEmail.toLowerCase()
     )
 
-    if (!maybeSsoEmail) {
+    logger?.info(
+      {
+        userEmails: userEmails.map((entry) => entry.email),
+        providerEmail
+      },
+      'Comparing existing user emails against SSO provider email:'
+    )
+
+    if (!maybeExistingEmail) {
       await createUserEmail({
         userEmail: {
           userId: args.userId,
@@ -225,10 +239,10 @@ export const linkUserWithSsoProviderFactory =
       })
     }
 
-    if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
+    if (!!maybeExistingEmail && !maybeExistingEmail.verified) {
       await updateUserEmail({
         query: {
-          id: maybeSsoEmail.id,
+          id: maybeExistingEmail.id,
           userId: args.userId
         },
         update: {

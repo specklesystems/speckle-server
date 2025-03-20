@@ -34,16 +34,11 @@ const createViewer = async (containerName: string, stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
-  const sectionOutlines = viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  sectionOutlines // use it
-  measurements // use it
+  viewer.createExtension(CameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
+  viewer.createExtension(SectionOutlines)
+  viewer.createExtension(MeasurementsExtension)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 

@@ -30,7 +30,8 @@
 
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { OnboardingPlan, PlanTitleMap } from '~/lib/auth/helpers/onboarding'
+import { PlanTitleMap } from '~/lib/auth/helpers/onboarding'
+import { OnboardingPlan } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{

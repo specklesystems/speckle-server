@@ -30,6 +30,7 @@ import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
@@ -63,7 +64,8 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    slug: slug.value
+    slug: slug.value,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspaceBySlug.projects,

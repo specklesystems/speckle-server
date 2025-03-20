@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
@@ -117,7 +117,7 @@ const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, 
   enabled: isWorkspacesEnabled.value
 }))
 
-const visibility = ref(ProjectVisibility.Unlisted)
+const visibility = ref(SimpleProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
 const showConfirmDialog = ref(false)
 const confirmActionType = ref<'navigate' | 'close' | null>(null)

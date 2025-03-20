@@ -1,7 +1,7 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
 
 export function getStringFromEnv(
   envVarKey: string,
@@ -28,6 +28,32 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
   return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
 }
 
+function mustGetUrlFromEnv(name: string, trimTrailingSlash: boolean = false): URL {
+  const url = getUrlFromEnv(name, trimTrailingSlash)
+  if (!url) throw new MisconfiguredEnvironmentError(`${name} env var not configured`)
+  return url
+}
+
+function getUrlFromEnv(
+  name: string,
+  trimTrailingSlash: boolean = false
+): Nullable<URL> {
+  const value = process.env[name]
+  if (!value) {
+    return null
+  }
+  try {
+    return new URL(trimTrailingSlash ? trimEnd(value, '/') : value)
+  } catch (e: unknown) {
+    const err = ensureError(e, 'Unknown error parsing URL')
+    if (err instanceof TypeError && err.message === 'Invalid URL')
+      throw new MisconfiguredEnvironmentError(`${name} has to be a valid URL`, {
+        cause: err
+      })
+    throw new MisconfiguredEnvironmentError(`Error parsing ${name} URL`, { cause: err })
+  }
+}
+
 export function getSessionSecret() {
   if (!process.env.SESSION_SECRET) {
     throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
@@ -48,6 +74,10 @@ export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
 
 export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
+}
+
+export function isCompressionEnabled() {
+  return getBooleanFromEnv('COMPRESSION')
 }
 
 export function getServerVersion() {
@@ -80,6 +110,14 @@ export function enableNewFrontendMessaging() {
 
 export function getRedisUrl() {
   return getStringFromEnv('REDIS_URL')
+}
+
+export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
+}
+
+export const getPreviewServiceRedisUrl = (): string | undefined => {
+  return process.env['PREVIEW_SERVICE_REDIS_URL']
 }
 
 export function getOidcDiscoveryUrl() {
@@ -187,33 +225,19 @@ export function getFrontendOrigin() {
 }
 
 /**
- * Get server app origin/base URL
+ * Get server app origin/base URL.
+ * This is the public server URL, i.e. 'canonical url', used for external communication.
  */
 export function getServerOrigin() {
-  if (!process.env.CANONICAL_URL) {
-    throw new MisconfiguredEnvironmentError(
-      'Server origin environment variable (CANONICAL_URL) not configured'
-    )
-  }
+  return mustGetUrlFromEnv('CANONICAL_URL', true).origin
+}
 
-  try {
-    return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
-  } catch (e) {
-    const err = ensureError(e)
-    if (e instanceof TypeError && e.message === 'Invalid URL') {
-      throw new MisconfiguredEnvironmentError(
-        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${process.env.CANONICAL_URL} ${err.message}`,
-        {
-          cause: e,
-          info: {
-            value: process.env.CANONICAL_URL
-          }
-        }
-      )
-    }
-
-    throw err
-  }
+/**
+ *
+ * @returns the private server origin, which is used for internal communication between services
+ */
+export function getPrivateObjectsServerOrigin() {
+  return mustGetUrlFromEnv('PRIVATE_OBJECTS_SERVER_URL', true).origin
 }
 
 export function getBindAddress(aDefault: string = '127.0.0.1') {
@@ -231,26 +255,12 @@ export function isSSLServer() {
   return /^https:\/\//.test(getServerOrigin())
 }
 
-function parseUrlVar(value: string, name: string) {
-  try {
-    return new URL(value)
-  } catch (err: unknown) {
-    if (err instanceof TypeError && err.message === 'Invalid URL')
-      throw new MisconfiguredEnvironmentError(`${name} has to be a valid URL`)
-    throw err
-  }
-}
-
 export function getServerMovedFrom() {
-  const value = process.env.MIGRATION_SERVER_MOVED_FROM
-  if (!value) return value
-  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_FROM')
+  return getUrlFromEnv('MIGRATION_SERVER_MOVED_FROM')
 }
 
 export function getServerMovedTo() {
-  const value = process.env.MIGRATION_SERVER_MOVED_TO
-  if (!value) return value
-  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_TO')
+  return getUrlFromEnv('MIGRATION_SERVER_MOVED_TO')
 }
 
 export function adminOverrideEnabled() {
@@ -301,7 +311,7 @@ export function getOnboardingStreamUrl() {
   try {
     // validating that the URL is valid
     return new URL(val).toString()
-  } catch (e) {
+  } catch {
     // suppress
   }
 

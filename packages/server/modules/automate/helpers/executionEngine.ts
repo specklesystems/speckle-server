@@ -20,6 +20,8 @@ export type FunctionSchemaType = {
     speckleUserId: string
     speckleServerOrigin: string
   }>
+  functionCreatorSpeckleUserId: Nullable<string>
+  functionCreatorSpeckleServerOrigin: Nullable<string>
   workspaceIds: string[]
 }
 

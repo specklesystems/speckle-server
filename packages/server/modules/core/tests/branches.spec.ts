@@ -191,7 +191,7 @@ const createObject = createObjectFactory({
 describe('Branches @core-branches', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie4342@gmail.com',
+    email: 'didimitrie4342@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

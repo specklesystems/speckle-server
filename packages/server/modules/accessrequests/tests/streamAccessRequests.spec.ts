@@ -13,11 +13,6 @@ import {
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import {
   ServerAccessRequests,
   StreamActivity,
@@ -43,7 +38,6 @@ import {
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   createStreamAccessRequest,
@@ -80,7 +74,6 @@ const requestStreamAccess = requestStreamAccessFactory({
     emitEvent: getEventBus().emit
   })
 })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -89,21 +82,14 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const isNotCollaboratorError = (e: unknown) =>

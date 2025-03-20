@@ -26,7 +26,7 @@ import FormRadio from '~~/src/components/form/Radio.vue'
 import FormRadioGroup from '~~/src/components/form/RadioGroup.vue'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
-import * as ValidationHelpers from '~~/src/helpers/common/validation'
+import * as ValidationHelpers from './helpers/common/validation' // dts plugin bug, hence the relative path
 import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resize'
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'

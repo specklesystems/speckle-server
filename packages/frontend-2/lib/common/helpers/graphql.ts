@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isNullOrUndefined, isUndefinedOrVoid } from '@speckle/shared'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'

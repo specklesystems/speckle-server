@@ -5,7 +5,7 @@ import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { Roles, timeoutAt } from '@speckle/shared'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
-import { crossServerSyncLogger } from '@/logging/logging'
+import { crossServerSyncLogger } from '@/observability/logging'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
 import {

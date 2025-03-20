@@ -64,7 +64,7 @@ import type {
   ProjectsMoveToWorkspaceDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useMutationLoading, useQuery } from '@vue/apollo-composable'
-import { type LayoutDialogButton } from '@speckle/ui-components'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
 import { workspacesRoute } from '~/lib/common/helpers/route'

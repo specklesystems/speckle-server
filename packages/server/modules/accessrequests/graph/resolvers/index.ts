@@ -16,8 +16,6 @@ import {
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -33,7 +31,6 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -64,7 +61,6 @@ const getPendingStreamRequests = getPendingStreamRequestsFactory({
   getPendingProjectRequests
 })
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
@@ -72,11 +68,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const processPendingStreamRequest = processPendingStreamRequestFactory({

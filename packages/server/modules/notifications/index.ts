@@ -10,7 +10,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 
 export async function initializeConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>
@@ -45,7 +45,7 @@ export async function initializeConsumption(
   }
 }
 
-export const init: SpeckleModule['init'] = async (_, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
     await initializeConsumption()

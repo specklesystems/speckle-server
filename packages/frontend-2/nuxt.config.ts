@@ -70,9 +70,12 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true,
       ghostApiKey: ''
     }
+  },
+
+  experimental: {
+    emitRouteChunkError: 'automatic-immediate'
   },
 
   alias: {
@@ -220,6 +223,12 @@ export default defineNuxtConfig({
         'requires-workspaces-enabled',
         'require-valid-workspace'
       ]
+    },
+    '/downloads': {
+      redirect: {
+        to: 'https://www.speckle.systems/connectors',
+        statusCode: 301
+      }
     }
   },
 

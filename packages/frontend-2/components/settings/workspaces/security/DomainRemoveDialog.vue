@@ -17,7 +17,7 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useApolloClient } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import { type SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
 import {
   getCacheId,
   getFirstErrorMessage,

@@ -73,7 +73,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const apollo = useApolloClientFromNuxt()
   const resourceBuilder = () => SpeckleViewer.ViewerRoute.resourceBuilder()
 
-  if (['/streams', '/commits'].includes(path)) {
+  if (['/streams', '/commits', '/streams/', '/commits/'].includes(path)) {
     return navigateTo(homeRoute)
   }
 

@@ -9,7 +9,7 @@ import {
   estimateStringMegabyteSize
 } from '@/modules/core/utils/chunking'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
-import { servicesLogger } from '@/logging/logging'
+import { servicesLogger } from '@/observability/logging'
 import {
   CreateObject,
   CreateObjects,

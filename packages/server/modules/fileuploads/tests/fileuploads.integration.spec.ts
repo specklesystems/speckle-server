@@ -130,7 +130,7 @@ describe('FileUploads @fileuploads', () => {
 
   const userOne = {
     name: 'User',
-    email: 'user@gmail.com',
+    email: 'user@example.org',
     password: 'jdsadjsadasfdsa'
   }
 

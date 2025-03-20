@@ -420,3 +420,5 @@ export const blockedDomains: string[] = [
   'dontreg.com',
   'dontsendmespam.de'
 ]
+
+export const blockedSlugs: string[] = ['actions']

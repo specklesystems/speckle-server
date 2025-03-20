@@ -51,7 +51,12 @@ export const getObjectPreviewBufferOrFilepathFactory =
     // Get existing preview metadata
     const previewInfo = await deps.getObjectPreviewInfo({ streamId, objectId })
     if (!previewInfo) {
-      await deps.createObjectPreview({ streamId, objectId, priority: 0 })
+      const objPreviewQueued = await deps.createObjectPreview({
+        streamId,
+        objectId,
+        priority: 0
+      })
+      if (!objPreviewQueued) return { type: 'file', file: noPreviewImage }
     }
 
     if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {

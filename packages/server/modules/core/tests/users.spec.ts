@@ -96,7 +96,7 @@ import {
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -266,7 +266,7 @@ const createObject = createObjectFactory({
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

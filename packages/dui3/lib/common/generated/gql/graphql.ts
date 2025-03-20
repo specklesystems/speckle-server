@@ -27,8 +27,20 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
+};
+
+
+export type ActiveUserMutationsFinishOnboardingArgs = {
+  input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
+export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  isProjectsActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -240,6 +252,11 @@ export type AutomateAuthCodePayloadTest = {
   action: Scalars['String']['input'];
   code: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Additional resources to validate user access to. */
+export type AutomateAuthCodeResources = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -938,6 +955,18 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
+export type DiscoverableWorkspaceCollaborator = {
+  __typename?: 'DiscoverableWorkspaceCollaborator';
+  avatar?: Maybe<Scalars['String']['output']>;
+};
+
+export type DiscoverableWorkspaceCollaboratorCollection = {
+  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<DiscoverableWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1151,6 +1180,31 @@ export type LimitedWorkspace = {
   name: Scalars['String']['output'];
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
+  /** Workspace members visible to people with verified email domain */
+  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+};
+
+
+/** Workspace metadata visible to non-workspace members. */
+export type LimitedWorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: Scalars['Int']['input'];
+};
+
+export type LimitedWorkspaceJoinRequest = {
+  __typename?: 'LimitedWorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: LimitedWorkspace;
+};
+
+export type LimitedWorkspaceJoinRequestCollection = {
+  __typename?: 'LimitedWorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type MarkCommentViewedInput = {
@@ -1811,10 +1865,18 @@ export type ObjectCreateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type OnboardingCompletionInput = {
+  plans?: InputMaybe<Array<Scalars['String']['input']>>;
+  role?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+};
+
 export enum PaidWorkspacePlans {
   Business = 'business',
   Plus = 'plus',
-  Starter = 'starter'
+  Pro = 'pro',
+  Starter = 'starter',
+  Team = 'team'
 }
 
 export type PasswordStrengthCheckFeedback = {
@@ -1887,6 +1949,13 @@ export type PendingWorkspaceCollaborator = {
 
 export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Price = {
+  __typename?: 'Price';
+  amount: Scalars['Float']['output'];
+  currency: Scalars['String']['output'];
+  currencySymbol: Scalars['String']['output'];
 };
 
 export type Project = {
@@ -2621,7 +2690,6 @@ export type Query = {
    * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
-  workspacePricingPlans: Scalars['JSONObject']['output'];
   /** Find workspaces a given user email can use SSO to sign with */
   workspaceSsoByEmail: Array<LimitedWorkspace>;
 };
@@ -2662,6 +2730,7 @@ export type QueryAutomateFunctionsArgs = {
 
 export type QueryAutomateValidateAuthCodeArgs = {
   payload: AutomateAuthCodePayloadTest;
+  resources?: InputMaybe<AutomateAuthCodeResources>;
 };
 
 
@@ -2866,6 +2935,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Whether the email feature is enabled on this server */
+  isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
   objectSizeLimitBytes: Scalars['Int']['output'];
 };
@@ -3016,6 +3087,8 @@ export type ServerStats = {
 
 export type ServerWorkspacesInfo = {
   __typename?: 'ServerWorkspacesInfo';
+  /** Up-to-date prices for paid & non-invoiced Workspace plans */
+  planPrices: Array<WorkspacePlanPrice>;
   /**
    * This is a backend control variable for the workspaces feature set.
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
@@ -3624,6 +3697,8 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
+  /** The last-visited workspace for the given user */
+  activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3671,6 +3746,8 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
+  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
+  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;
@@ -3707,6 +3784,7 @@ export type User = {
   versions: CountOnlyCollection;
   /** Get all invitations to workspaces that the active user has */
   workspaceInvites: Array<PendingWorkspaceCollaborator>;
+  workspaceJoinRequests?: Maybe<LimitedWorkspaceJoinRequestCollection>;
   /** Get the workspaces for the user */
   workspaces: WorkspaceCollection;
 };
@@ -3804,6 +3882,17 @@ export type UserTimelineArgs = {
  */
 export type UserVersionsArgs = {
   authoredOnly?: Scalars['Boolean']['input'];
+  limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserWorkspaceJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<WorkspaceJoinRequestFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -4420,6 +4509,10 @@ export type WorkspaceJoinRequestCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type WorkspaceJoinRequestFilter = {
+  status?: InputMaybe<WorkspaceJoinRequestStatus>;
+};
+
 export type WorkspaceJoinRequestMutations = {
   __typename?: 'WorkspaceJoinRequestMutations';
   approve: Scalars['Boolean']['output'];
@@ -4544,6 +4637,13 @@ export type WorkspacePlan = {
   status: WorkspacePlanStatuses;
 };
 
+export type WorkspacePlanPrice = {
+  __typename?: 'WorkspacePlanPrice';
+  id: Scalars['String']['output'];
+  monthly?: Maybe<Price>;
+  yearly?: Maybe<Price>;
+};
+
 export enum WorkspacePlanStatuses {
   CancelationScheduled = 'cancelationScheduled',
   Canceled = 'canceled',
@@ -4557,10 +4657,13 @@ export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
   BusinessInvoiced = 'businessInvoiced',
+  Free = 'free',
   Plus = 'plus',
   PlusInvoiced = 'plusInvoiced',
+  Pro = 'pro',
   Starter = 'starter',
   StarterInvoiced = 'starterInvoiced',
+  Team = 'team',
   Unlimited = 'unlimited'
 }
 
@@ -4587,6 +4690,13 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  /**
+   * Schedule a job that will:
+   * - Move all regional data to target region
+   * - Update project region key
+   * - TODO: Eventually delete data in previous region
+   */
+  moveToRegion: Scalars['String']['output'];
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4594,6 +4704,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 

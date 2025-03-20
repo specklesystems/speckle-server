@@ -13,18 +13,15 @@ const buildMjmlBody = ({
   workspace,
   requester
 }: WorkspaceJoinRequestApprovedEmailArgs) => {
-  const bodyStart = `<mj-text>
+  const bodyStart = `<mj-text align="center" line-height="2">
 Hi ${requester.name}!
 <br/>
 <br/>
 You are now a member of the workspace <span style="font-weight: bold;">${workspace.name}</span>.
-<br/>
-<br/>
-
 </mj-text>
   `
-  const bodyEnd = `<mj-text>
-<span style="font-weight: bold;">Have questions or feedback?</span> Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
+  const bodyEnd = `<mj-text align="center" padding-bottom="0px" line-height="2">
+<span style="font-weight: bold;">Have questions or feedback?</span><br/>Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
   </mj-text>`
   return { bodyStart, bodyEnd }
 }

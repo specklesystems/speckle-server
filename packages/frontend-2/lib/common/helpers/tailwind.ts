@@ -11,7 +11,7 @@ import { TailwindBreakpoints } from '@speckle/ui-components'
 export function markClassesUsed(classes: string[]) {
   // this doesn't do anything, we just need PurgeCSS to be able to read
   // invocations of this function
-  // eslint-disable-next-line no-constant-binary-expression
+  // eslint-disable-next-line no-constant-binary-expression, @typescript-eslint/no-unused-expressions
   false && classes
 }
 

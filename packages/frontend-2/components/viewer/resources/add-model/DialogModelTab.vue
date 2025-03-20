@@ -8,12 +8,12 @@
         :size="isSmallerOrEqualSm ? 'sm' : 'base'"
         placeholder="Search models..."
         color="foundation"
-        class="w-48 sm:w-60"
+        class="w-full"
         :show-clear="search !== ''"
         auto-focus
         @change="updateSearchImmediately"
         @update:model-value="updateDebouncedSearch"
-      ></FormTextInput>
+      />
     </div>
     <CommonLoadingBar :loading="showLoadingBar" />
     <ProjectPageModelsCardView

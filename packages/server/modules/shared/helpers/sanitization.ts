@@ -14,7 +14,7 @@ const validateImageUrl = (url: string): string => {
   let parsedUrl: URL
   try {
     parsedUrl = new URL(url)
-  } catch (e) {
+  } catch {
     throw new InvalidUrlError('Invalid URL')
   }
 
@@ -47,7 +47,7 @@ export const sanitizeImageUrl = (
 
   try {
     return validateImageUrl(image)
-  } catch (e) {
+  } catch {
     // invalid url
   }
 

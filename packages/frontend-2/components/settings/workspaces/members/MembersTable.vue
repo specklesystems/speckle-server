@@ -13,12 +13,11 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'verified', header: 'Status', classes: 'col-span-3' },
         { id: 'role', header: 'Role', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-4 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -47,11 +46,6 @@
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
           {{ item.company ? item.company : '-' }}
-        </span>
-      </template>
-      <template #verified="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          {{ item.verified ? 'Verified' : 'Unverified' }}
         </span>
       </template>
       <template #role="{ item }">
@@ -105,7 +99,7 @@
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
@@ -120,7 +114,7 @@ import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 type UserItem = (typeof members)['value'][0]
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
+  fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
     user {
@@ -128,14 +122,13 @@ graphql(`
       avatar
       name
       company
-      verified
       workspaceDomainPolicyCompliant
     }
   }
 `)
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
+  fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
     id
     name
     ...SettingsSharedDeleteUserDialog_Workspace
@@ -144,7 +137,7 @@ graphql(`
     team {
       items {
         id
-        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
       }
     }
   }
@@ -157,7 +150,7 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersMembersTable_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 

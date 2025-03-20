@@ -55,7 +55,7 @@ const props = defineProps<{
 }>()
 
 const badgeColorClasses = computed(
-  () => props.colorClasses || 'bg-info-lighter text-primary-focus'
+  () => props.colorClasses || 'bg-info-lighter text-primary-focus dark:text-foreground'
 )
 
 const badgeDotIconColorClasses = computed(

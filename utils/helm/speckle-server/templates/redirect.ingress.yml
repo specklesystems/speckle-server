@@ -18,28 +18,16 @@ spec:
         path: "/metrics"
         backend:
           service:
-{{- if .Values.frontend_2.enabled }}
             name: speckle-frontend-2
             port:
               name: web
-{{- else }}
-            name: speckle-frontend
-            port:
-              name: www
-{{- end }}
       - pathType: Exact
         path: "/api/status"
         backend:
           service:
-{{- if .Values.frontend_2.enabled }}
             name: speckle-frontend-2
             port:
               name: web
-{{- else }}
-            name: speckle-frontend
-            port:
-              name: www
-{{- end }}
       - pathType: Exact
         path: "/liveness"
         backend:

@@ -95,6 +95,7 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import type { Nullable } from '@speckle/shared'
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInviteMutation)
@@ -114,7 +115,8 @@ const {
   query: getInvitesQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.inviteList,

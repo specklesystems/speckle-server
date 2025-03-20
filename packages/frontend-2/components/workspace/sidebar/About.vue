@@ -28,7 +28,9 @@
         </div>
       </div>
       <template v-else>
-        {{ workspaceInfo.description || 'No workspace description' }}
+        <div class="whitespace-pre-wrap">
+          {{ workspaceInfo.description || 'No workspace description' }}
+        </div>
         <FormButton
           v-if="!workspaceInfo.description && isWorkspaceAdmin"
           color="outline"

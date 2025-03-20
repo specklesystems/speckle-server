@@ -1,4 +1,4 @@
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { initializeConsumption } from '@/modules/notifications/index'
 import { EnvironmentResourceError } from '@/modules/shared/errors'

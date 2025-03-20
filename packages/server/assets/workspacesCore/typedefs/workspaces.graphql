@@ -367,6 +367,20 @@ type LimitedWorkspace {
   Optional base64 encoded workspace logo image
   """
   logo: String
+  """
+  Workspace members visible to people with verified email domain
+  """
+  team(cursor: String, limit: Int! = 25): DiscoverableWorkspaceCollaboratorCollection
+}
+
+type DiscoverableWorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [DiscoverableWorkspaceCollaborator!]!
+}
+
+type DiscoverableWorkspaceCollaborator {
+  avatar: String
 }
 
 type WorkspaceDomain {
@@ -505,6 +519,15 @@ extend type User {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
     @isOwner
+
+  """
+  The last-visited workspace for the given user
+  """
+  activeWorkspace: Workspace
+  """
+  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
+  """
+  isProjectsActive: Boolean
 }
 
 extend type Project {
@@ -618,4 +641,8 @@ input AdminUpdateWorkspacePlanInput {
 
 type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+}
+
+extend type ActiveUserMutations {
+  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
 }

@@ -907,8 +907,6 @@ function useDisableZoomOnEmbed() {
   watch(
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
-      newNoScrollValue
-      viewer
       const cameraController: CameraController =
         viewer.instance.getExtension(CameraController)
 

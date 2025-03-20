@@ -5,10 +5,7 @@ const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 
 const { Roles, Scopes } = require('@speckle/shared')
-const {
-  getUserActivityFactory,
-  saveActivityFactory
-} = require('@/modules/activitystream/repositories')
+const { getUserActivityFactory } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 const {
   validateStreamAccessFactory,
@@ -16,10 +13,6 @@ const {
 } = require('@/modules/core/services/streams/access')
 const { authorizeResolver } = require('@/modules/shared')
 const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
-const {
-  addStreamPermissionsAddedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUserFactory,
   storeUserFactory,
@@ -66,17 +59,12 @@ const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const findEmail = findEmailFactory({ db })

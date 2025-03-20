@@ -26,7 +26,8 @@
 
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { OnboardingSource, SourceTitleMap } from '~/lib/auth/helpers/onboarding'
+import { SourceTitleMap } from '~/lib/auth/helpers/onboarding'
+import { OnboardingSource } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{

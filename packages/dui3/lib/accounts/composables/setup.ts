@@ -52,7 +52,7 @@ export function useAccountsSetup(): DUIAccountsState {
       try {
         await acc.client.query({ query: accountTestQuery })
         acc.isValid = true
-      } catch (error) {
+      } catch {
         // TODO: properly dispose and kill this client. It's unclear how to do it.
         acc.isValid = false
         // NOTE: we do not want to delete the client, as we might want to "refresh" in

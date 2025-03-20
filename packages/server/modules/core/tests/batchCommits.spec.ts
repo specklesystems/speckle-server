@@ -1,7 +1,5 @@
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
@@ -14,7 +12,6 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
 import {
@@ -37,17 +34,12 @@ enum BatchActionType {
 const getUser = getUserFactory({ db })
 const createBranch = createBranchFactory({ db })
 const getCommits = getCommitsFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const cleanup = async () => {
@@ -61,13 +53,13 @@ describe('Batch commits', () => {
 
   const me: BasicTestUser = {
     name: 'batch commit dude',
-    email: 'batchcommitguy@gmail.com',
+    email: 'batchcommitguy@example.org',
     id: ''
   }
 
   const otherGuy: BasicTestUser = {
     name: 'other batch commit guy',
-    email: 'otherbatchcommitguy@gmail.com',
+    email: 'otherbatchcommitguy@example.org',
     id: ''
   }
 

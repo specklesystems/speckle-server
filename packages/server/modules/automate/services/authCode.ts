@@ -1,10 +1,11 @@
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
 import { get, has, isObjectLike } from 'lodash'
+import { Logger } from 'pino'
 
 export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
@@ -19,7 +20,6 @@ export enum AuthCodePayloadAction {
 export type AuthCodePayload = {
   code: string
   userId: string
-  workspaceId?: string
   action: AuthCodePayloadAction
 }
 
@@ -48,15 +48,32 @@ export const createStoredAuthCodeFactory =
   }
 
 export const validateStoredAuthCodeFactory =
-  (deps: { redis: Redis; emit: EventBus['emit'] }) =>
-  async (payload: AuthCodePayload) => {
-    const { redis, emit } = deps
+  (deps: { redis: Redis; logger: Logger; emit: EventBus['emit'] }) =>
+  async (params: {
+    payload: AuthCodePayload
+    resources?: {
+      workspaceId?: string
+    }
+  }) => {
+    const { redis, logger, emit } = deps
+    const { payload, resources } = params
 
     const potentialPayloadString = await redis.get(payload.code)
     const potentialPayload: unknown = potentialPayloadString
       ? JSON.parse(potentialPayloadString)
       : null
     const formattedPayload = isPayload(potentialPayload) ? potentialPayload : null
+
+    logger.info(
+      {
+        payloadString: potentialPayloadString,
+        payload: {
+          ...formattedPayload,
+          code: null
+        }
+      },
+      'Validating execution engine request with provided auth payload.'
+    )
 
     if (
       !formattedPayload ||
@@ -67,10 +84,11 @@ export const validateStoredAuthCodeFactory =
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
     }
 
-    if (payload.workspaceId) {
+    // Token is valid, confirm user is authorized to access specified resources.
+    if (resources?.workspaceId) {
       emit({
         eventName: 'workspace.authorized',
-        payload: { userId: payload.userId, workspaceId: payload.workspaceId }
+        payload: { userId: payload.userId, workspaceId: resources?.workspaceId }
       })
     }
 

@@ -63,7 +63,6 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'

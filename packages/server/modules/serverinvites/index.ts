@@ -1,5 +1,5 @@
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { Scopes } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
@@ -17,7 +17,7 @@ const scopes = [
   }
 ]
 
-export const init: SpeckleModule['init'] = async (_app, isInitial) => {
+export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('💌 Init invites module')
 
   const registerFunc = registerOrUpdateScopeFactory({ db })

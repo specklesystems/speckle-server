@@ -301,12 +301,12 @@ export class DiffExtension extends Extension {
     const renderTreeB = this.tree.getRenderTree(urlB)
     if (!renderTreeA) {
       return Promise.reject(
-        `Could not make diff. Resource ${urlA} could not be fetched`
+        new Error(`Could not make diff. Resource ${urlA} could not be fetched`)
       )
     }
     if (!renderTreeB) {
       return Promise.reject(
-        `Could not make diff. Resource ${urlB} could not be fetched`
+        new Error(`Could not make diff. Resource ${urlB} could not be fetched`)
       )
     }
     let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)

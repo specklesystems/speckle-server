@@ -18,7 +18,7 @@
     </template>
 
     <div class="flex flex-col items-center justify-center p-4">
-      <h1 class="text-heading-xl text-forefround mb-6 font-normal">
+      <h1 class="text-heading-xl text-foreground mb-6 font-normal">
         {{ isPrimaryEmail ? 'Verify your email' : 'Verify additional email' }}
       </h1>
       <p class="text-center text-body-sm text-foreground">
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
-        <CommonAlert color="neutral" size="xs">
+        <CommonAlert color="neutral" size="xs" hide-icon>
           <template #title>Why am I seeing this?</template>
           <template #description>
             This server now requires you to verify all email addresses before you can
@@ -73,7 +73,7 @@
       <SettingsUserEmailDeleteDialog
         v-model:open="showDeleteDialog"
         :email="currentEmail"
-        cancel
+        is-adding
       />
     </div>
   </HeaderWithEmptyPage>

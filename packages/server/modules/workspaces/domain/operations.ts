@@ -1,5 +1,4 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   Workspace,
   WorkspaceAcl,
@@ -20,15 +19,13 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import {
-  WorkspaceCreationState,
-  WorkspaceRoleToDefaultProjectRoleMapping
-} from '@/modules/workspaces/domain/types'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream } from '@/modules/core/domain/streams/types'
+import { Stream, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 /** Workspace */
 
@@ -198,22 +195,46 @@ export type UpdateWorkspaceRole = (
      * Only add or upgrade role, prevent downgrades
      */
     preventRoleDowngrade?: boolean
+
+    updatedByUserId: string
   }
 ) => Promise<void>
 
 export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
-}) => Promise<WorkspaceRoleToDefaultProjectRoleMapping>
+}) => Promise<{
+  allowed: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles[]
+  }
+  default: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles | null
+  }
+}>
+
+export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<{
+  allowed: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles[]
+  }
+  default: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles
+  }
+}>
 
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
   workspaceId: string
+  /**
+   * Optionally get project roles for a specific user
+   */
+  userId?: string
 }
 
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
-) => AsyncGenerator<StreamRecord[], void, unknown>
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
 
 /** Workspace Project Roles */
 
@@ -245,7 +266,9 @@ export type UpdateWorkspaceProjectRole = (
 
 /** Events */
 
-export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
+export type EmitWorkspaceEvent = <
+  TEvent extends WorkspaceEvents & keyof EventBusPayloads
+>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<void>
@@ -336,7 +359,9 @@ export type GetWorkspaceJoinRequest = (
 ) => Promise<WorkspaceJoinRequest | undefined>
 
 export type ApproveWorkspaceJoinRequest = (
-  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'> & {
+    approvedByUserId: string
+  }
 ) => Promise<boolean>
 
 export type DenyWorkspaceJoinRequest = (
@@ -355,6 +380,22 @@ export type UpdateProjectRegion = (params: {
   regionKey: string
 }) => Promise<Stream>
 
+/**
+ * Given a count of objects successfully copied to another region, confirm that these counts
+ * match the current state of the source project in its original region.
+ */
+export type ValidateProjectRegionCopy = (params: {
+  projectId: string
+  copiedRowCount: {
+    models: number
+    versions: number
+    objects: number
+    automations: number
+    comments: number
+    webhooks: number
+  }
+}) => Promise<boolean>
+
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
@@ -366,3 +407,37 @@ export type CopyProjectVersions = (params: {
 export type CopyProjectObjects = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+export type CopyProjectAutomations = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type AssignWorkspaceSeat = (
+  params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
+    type: WorkspaceSeatType
+    assignedByUserId: string
+  }
+) => Promise<WorkspaceSeat>
+
+export type EnsureValidWorkspaceRoleSeat = (params: {
+  workspaceId: string
+  userId: string
+  role: WorkspaceRoles
+  updatedByUserId: string
+}) => Promise<WorkspaceSeat>
+
+export type CopyProjectComments = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectWebhooks = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+
+export type SetUserActiveWorkspace = (args: {
+  userId: string
+  workspaceSlug: string | null
+  /** Is the user in a "personal project" outside of a workspace? */
+  isProjectsActive?: boolean
+}) => Promise<void>

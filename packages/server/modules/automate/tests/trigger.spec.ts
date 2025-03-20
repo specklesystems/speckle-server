@@ -352,7 +352,7 @@ const createAppToken = createAppTokenFactory({
             },
             source: RunTriggerSource.Manual
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -449,7 +449,7 @@ const createAppToken = createAppTokenFactory({
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
-        if (!storedRun) throw 'cant fint the stored run'
+        if (!storedRun) throw new Error('cant fint the stored run')
 
         const expectedStatus = 'exception'
 
@@ -562,7 +562,7 @@ const createAppToken = createAppTokenFactory({
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
-        if (!storedRun) throw 'cant fint the stored run'
+        if (!storedRun) throw new Error('cant fint the stored run')
 
         const expectedStatus = 'pending'
 
@@ -589,7 +589,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -632,7 +632,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -675,7 +675,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -718,7 +718,7 @@ const createAppToken = createAppTokenFactory({
               versionId: cryptoRandomString({ length: 10 })
             }
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -769,7 +769,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Only model version triggers are supported')
@@ -819,7 +819,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('The triggering version is not found')
@@ -881,7 +881,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains(
@@ -944,7 +944,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Cannot find a token for the automation')
@@ -1005,7 +1005,7 @@ const createAppToken = createAppTokenFactory({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest
           })
-          throw 'this should have thrown'
+          throw new Error('this should have thrown')
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('This is a test automation')

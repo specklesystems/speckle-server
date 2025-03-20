@@ -9,6 +9,7 @@ const isProd = process.env.NODE_ENV === 'production'
 const isExample = !!process.env.EXAMPLE_BUILD
 
 const sourcemap = isProd ? false : 'inline'
+const skipMinification = process.env.SKIP_LIBRARY_MINIFICATION === 'true'
 
 /**
  * Build config
@@ -51,7 +52,7 @@ function buildConfig(isWebBuild = false) {
             clean({ targets: 'dist/*' })
           ]),
       babel({ babelHelpers: 'bundled' }),
-      ...(isProd ? [terser()] : [])
+      ...(isProd && !skipMinification ? [terser()] : [])
     ],
     external: isWebBuild
       ? undefined

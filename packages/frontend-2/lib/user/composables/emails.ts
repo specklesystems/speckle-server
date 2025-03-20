@@ -87,17 +87,23 @@ export function useUserEmails() {
     return false
   }
 
-  const deleteUserEmail = async (email: UserEmail, cancel = false) => {
+  const deleteUserEmail = async (options: {
+    email: UserEmail
+    hideToast?: boolean
+  }) => {
+    const { email, hideToast } = options
     const result = await deleteMutation({
       input: { id: email.id }
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: `${cancel ? 'Cancelled adding email' : 'Deleted email'}`,
-        description: email.email
-      })
+      if (!hideToast) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Deleted email',
+          description: email.email
+        })
+      }
       mixpanel.track('Email Deleted')
 
       // If we're on the verify email page and there are no more unverified emails, redirect home
@@ -157,6 +163,13 @@ export function useUserEmails() {
       } else {
         navigateTo(settingsUserRoutes.emails)
       }
+
+      modifyObjectField(
+        apollo.cache,
+        getCacheId('User', activeUserId.value),
+        'discoverableWorkspaces',
+        ({ helpers: { evict } }) => evict()
+      )
 
       triggerNotification({
         type: ToastNotificationType.Success,

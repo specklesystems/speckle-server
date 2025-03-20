@@ -16,7 +16,7 @@ import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { logger, notificationsLogger, Observability } from '@/logging/logging'
+import { logger, notificationsLogger, Observability } from '@/observability/logging'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
 export type NotificationJobResult = {

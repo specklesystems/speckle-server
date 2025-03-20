@@ -41,10 +41,6 @@ import {
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import {
-  AddStreamDeletedActivity,
-  AddStreamUpdatedActivity
-} from '@/modules/activitystream/domain/operations'
 import { LogicError } from '@/modules/shared/errors'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
@@ -95,7 +91,8 @@ export const createStreamReturnRecordFactory =
       eventName: ProjectEvents.Created,
       payload: {
         project: stream,
-        ownerId
+        ownerId,
+        input: params
       }
     })
 
@@ -119,9 +116,9 @@ export const deleteStreamAndNotifyFactory =
   (deps: {
     deleteStream: DeleteStreamRecord
     authorizeResolver: AuthorizeResolver
-    addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
     getStream: GetStream
+    emitEvent: EventBusEmit
   }): DeleteStream =>
   async (
     streamId: string,
@@ -146,10 +143,13 @@ export const deleteStreamAndNotifyFactory =
     if (!stream)
       throw new LogicError('Unexpectedly stream that should exist is not found...')
 
-    await deps.addStreamDeletedActivity({
-      streamId,
-      deleterId,
-      workspaceId: stream.workspaceId
+    await deps.emitEvent({
+      eventName: ProjectEvents.Deleted,
+      payload: {
+        project: stream,
+        deleterId,
+        projectId: streamId
+      }
     })
 
     // TODO: this has been around since before my time, we should get rid of it...
@@ -176,7 +176,7 @@ export const updateStreamAndNotifyFactory =
     authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
-    addStreamUpdatedActivity: AddStreamUpdatedActivity
+    emitEvent: EventBusEmit
   }): UpdateStream =>
   async (
     update: StreamUpdateInput | ProjectUpdateInput,
@@ -202,12 +202,14 @@ export const updateStreamAndNotifyFactory =
       return oldStream
     }
 
-    await deps.addStreamUpdatedActivity({
-      streamId: update.id,
-      updaterId,
-      oldStream,
-      newStream,
-      update
+    await deps.emitEvent({
+      eventName: ProjectEvents.Updated,
+      payload: {
+        newProject: newStream,
+        oldProject: oldStream,
+        updaterId,
+        update
+      }
     })
 
     return newStream

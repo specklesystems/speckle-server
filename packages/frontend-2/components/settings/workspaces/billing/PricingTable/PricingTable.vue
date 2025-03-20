@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col lg:grid lg:grid-cols-3 gap-4 w-full">
     <SettingsWorkspacesBillingPricingTablePlan
-      v-for="plan in plans"
-      :key="plan.name"
+      v-for="plan in oldPlans"
+      :key="plan"
       :plan="plan"
       :yearly-interval-selected="isYearlySelected"
       v-bind="$props"
@@ -13,16 +13,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-  type WorkspacePlan,
-  BillingInterval,
-  type WorkspacePlans
-} from '~/lib/common/generated/gql/graphql'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { type WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
+import { type MaybeNullOrUndefined, PaidWorkspacePlansOld } from '@speckle/shared'
 
 const emit = defineEmits<{
-  (e: 'onPlanSelected', value: { name: WorkspacePlans; cycle: BillingInterval }): void
+  (
+    e: 'onPlanSelected',
+    value: { name: PaidWorkspacePlansOld; cycle: BillingInterval }
+  ): void
 }>()
 
 const props = defineProps<{
@@ -32,14 +30,14 @@ const props = defineProps<{
   activeBillingInterval?: BillingInterval
 }>()
 
-const plans = ref(pricingPlansConfig.plans)
 const isYearlySelected = ref(false)
+const oldPlans = computed(() => Object.values(PaidWorkspacePlansOld))
 
 const onYearlyIntervalSelected = (newValue: boolean) => {
   isYearlySelected.value = newValue
 }
 
-const onPlanSelected = (value: WorkspacePlans) => {
+const onPlanSelected = (value: PaidWorkspacePlansOld) => {
   emit('onPlanSelected', {
     name: value,
     cycle: isYearlySelected.value ? BillingInterval.Yearly : BillingInterval.Monthly

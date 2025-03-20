@@ -22,9 +22,7 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   },
   "homepage": "https://speckle.systems",

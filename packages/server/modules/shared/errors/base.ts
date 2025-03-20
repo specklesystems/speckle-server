@@ -43,7 +43,7 @@ export class BaseError<I extends Info = Info> extends VError {
    * the info property of the options must contain the properties to use. e.g. `{info: {property: 'value'}}`.
    */
   constructor(
-    message?: string | null | undefined,
+    message?: string | null,
     options: ExtendedOptions<I> | Error | undefined = undefined
   ) {
     // Resolve options correctly

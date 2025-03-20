@@ -60,7 +60,7 @@ export const validateContextView = (contextView: string) => {
   // Try parsing URL
   try {
     new URL(contextView, 'https://unimportant.com')
-  } catch (e) {
+  } catch {
     throw new FunctionRunReportStatusError('Invalid relative URL')
   }
 }

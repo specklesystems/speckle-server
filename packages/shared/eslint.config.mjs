@@ -22,7 +22,9 @@ const configs = [
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),
-        project: './tsconfig.json'
+        projectService: {
+          allowDefaultProject: ['*.ts']
+        }
       }
     },
     rules: {

@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   getValidDefaultProjectRegionKey,
   initializeRegisteredRegionClients as initDb
@@ -9,9 +9,14 @@ import {
   initializeRegisteredRegionClients as initBlobs,
   isMultiRegionBlobStorageEnabled
 } from '@/modules/multiregion/utils/blobStorageSelector'
+import {
+  initializeQueue,
+  shutdownQueue,
+  startQueue
+} from '@/modules/multiregion/services/queue'
 
 const multiRegion: SpeckleModule = {
-  async init() {
+  async init({ isInitial }) {
     const isEnabled = isMultiRegionEnabled()
     if (!isEnabled) {
       return
@@ -29,6 +34,14 @@ const multiRegion: SpeckleModule = {
       moduleLogger.info('🌍 Init multiRegion blob storage')
       await initBlobs()
     }
+
+    if (isInitial) {
+      await initializeQueue()
+      await startQueue()
+    }
+  },
+  async shutdown() {
+    await shutdownQueue()
   }
 }
 

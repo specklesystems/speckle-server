@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
+import { moduleLogger, crossServerSyncLogger } from '@/observability/logging'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import {
   getCommentFactory,

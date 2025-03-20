@@ -24,7 +24,8 @@
               navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
             "
           >
-            {{ adminWorkspacesJoinRequestsCount }} join requests
+            {{ adminWorkspacesJoinRequestsCount }} join
+            {{ adminWorkspacesJoinRequestsCount > 1 ? 'requests' : 'request' }}
           </button>
           <button
             v-if="invitedTeamCount && isWorkspaceAdmin"
@@ -49,24 +50,20 @@
   </LayoutSidebarMenuGroup>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceSidebarMembers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  type WorkspaceTeam_WorkspaceFragment,
+  WorkspaceJoinRequestStatus
+} from '~/lib/common/generated/gql/graphql'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
-
-graphql(`
-  fragment WorkspaceSidebarMembers_Workspace on Workspace {
-    ...WorkspaceTeam_Workspace
-  }
-`)
 
 defineEmits<{
   (e: 'show-invite-dialog'): void
 }>()
 
 const props = defineProps<{
-  workspaceInfo: WorkspaceSidebarMembers_WorkspaceFragment
+  workspaceInfo: WorkspaceTeam_WorkspaceFragment
   collapsible?: boolean
   isWorkspaceAdmin?: boolean
 }>()
@@ -94,6 +91,9 @@ const iconText = computed(() => {
 
 const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)
 const adminWorkspacesJoinRequestsCount = computed(
-  () => props.workspaceInfo?.adminWorkspacesJoinRequests?.totalCount
+  () =>
+    props.workspaceInfo?.adminWorkspacesJoinRequests?.items.filter(
+      (request) => request.status === WorkspaceJoinRequestStatus.Pending
+    ).length
 )
 </script>

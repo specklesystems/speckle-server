@@ -136,6 +136,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import type { Optional } from '@speckle/shared'
+import { webhookTriggerDisplayNames } from '~~/lib/projects/composables/webhooks'
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()
@@ -178,7 +179,11 @@ const getHistoryStatusInfo = (item: WebhookItem) => {
 
 const formatTriggers = (item: WebhookItem): string => {
   return item.triggers
-    .map((event, index, array) => `"${event}"${index < array.length - 1 ? ',' : ''}`)
+    .map((event, index, array) => {
+      const displayName =
+        webhookTriggerDisplayNames[event as keyof typeof webhookTriggerDisplayNames]
+      return `"${displayName}"${index < array.length - 1 ? ',' : ''}`
+    })
     .join(' ')
 }
 

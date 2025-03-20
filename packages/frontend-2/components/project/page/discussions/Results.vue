@@ -20,6 +20,7 @@ import type { ProjectDiscussionsPageResults_ProjectFragment } from '~~/lib/commo
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment ProjectDiscussionsPageResults_Project on Project {
@@ -41,7 +42,8 @@ const {
   query: latestCommentThreadsQuery,
   baseVariables: computed(() => ({
     projectId: props.project.id,
-    filter: { includeArchived: !!props.includeArchived }
+    filter: { includeArchived: !!props.includeArchived },
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => {
     return { projectId: vars.projectId, ...vars.filter }
