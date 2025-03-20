@@ -19,7 +19,7 @@
 
     <div
       v-if="buttons"
-      class="flex flex-col flex-wrap md:flex-row gap-y-2 md:gap-x-2 gap-y-0 mt-3"
+      class="flex flex-col flex-wrap md:flex-row gap-y-2 md:gap-x-2 md:gap-y-0 mt-3"
     >
       <div
         v-for="(button, index) in buttons"

@@ -57,6 +57,7 @@ input WorkspaceUpdateInput {
   """
   logo: String
   defaultProjectRole: String
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
 }
@@ -260,6 +261,7 @@ type Workspace {
   The default role workspace members will receive for workspace projects.
   """
   defaultProjectRole: String!
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   """
   Verified workspace domains
   """
@@ -425,6 +427,10 @@ type WorkspaceCollaborator {
   role: String!
   user: LimitedUser!
   projectRoles: [ProjectRole!]!
+  """
+  Date that the user joined the workspace.
+  """
+  joinDate: DateTime!
 }
 
 type PendingWorkspaceCollaborator {

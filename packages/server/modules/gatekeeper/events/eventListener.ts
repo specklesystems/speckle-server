@@ -5,7 +5,11 @@ import {
   upsertTrialWorkspacePlanFactory,
   upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  addWorkspaceSubscriptionSeatIfNeededFactoryNew,
+  addWorkspaceSubscriptionSeatIfNeededFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions'
 import {
   getWorkspacePlanPriceId,
   getWorkspacePlanProductId
@@ -26,7 +30,7 @@ export const initializeEventListenersFactory =
     const quitCbs = [
       eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
         const addWorkspaceSubscriptionSeatIfNeeded =
-          addWorkspaceSubscriptionSeatIfNeededFactory({
+          addWorkspaceSubscriptionSeatIfNeededFactoryOld({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
@@ -34,10 +38,32 @@ export const initializeEventListenersFactory =
             }),
             getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe })
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            })
           })
 
-        await addWorkspaceSubscriptionSeatIfNeeded(payload)
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.acl
+        })
+      }),
+      eventBus.listen(WorkspaceEvents.SeatUpdated, async ({ payload }) => {
+        const addWorkspaceSubscriptionSeatIfNeeded =
+          addWorkspaceSubscriptionSeatIfNeededFactoryNew({
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+            getWorkspacePlanPriceId,
+            getWorkspacePlanProductId,
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
+          })
+
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.seat,
+          seatType: payload.seat.type
+        })
       }),
       eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
         // TODO: based on a feature flag, we can force new workspaces into the free plan here

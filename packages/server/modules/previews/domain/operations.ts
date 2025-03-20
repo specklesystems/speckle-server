@@ -9,7 +9,7 @@ export type GetObjectPreviewInfo = (params: {
 
 export type CreateObjectPreview = (
   params: Pick<ObjectPreview, 'streamId' | 'objectId' | 'priority'>
-) => Promise<void>
+) => Promise<boolean>
 
 export type ObjectPreviewInput = Pick<
   ObjectPreview,

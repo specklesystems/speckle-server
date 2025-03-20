@@ -10,6 +10,14 @@ const resolvers: Resolvers = FF_GATEKEEPER_MODULE_ENABLED
       WorkspaceMutations: {
         billing: () => {
           throw new GatekeeperModuleDisabledError()
+        },
+        updateSeatType: () => {
+          throw new GatekeeperModuleDisabledError()
+        }
+      },
+      WorkspaceCollaborator: {
+        seatType: () => {
+          throw new GatekeeperModuleDisabledError()
         }
       },
       ServerWorkspacesInfo: {

@@ -99,6 +99,11 @@
           "type": "boolean",
           "description": "Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.",
           "default": false
+        },
+        "moveProjectRegionEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to move a project region (manually or automatically)",
+          "default": false
         }
       }
     },
@@ -926,6 +931,66 @@
                   "type": "string",
                   "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
                   "default": "workspaceYearlyBusinessSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceTeamSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
+                  "default": "workspaceTeamSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceProSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
+                  "default": "workspaceProSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyProSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyProSeatStripePriceId"
                 }
               }
             }
@@ -1819,6 +1884,11 @@
     "preview_service": {
       "type": "object",
       "properties": {
+        "deployInCluster": {
+          "type": "boolean",
+          "description": "If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.",
+          "default": true
+        },
         "dedicatedPreviewsQueue": {
           "type": "boolean",
           "description": "Allows using a dedicated redis url for the preview service job queue",
@@ -1846,18 +1916,8 @@
         },
         "port": {
           "type": "string",
-          "description": "The port on which the Preview Service will run. This is not exposed, but used within its own local network within the pod.",
+          "description": "The port on which the Preview Service will expose Prometheus metrics.",
           "default": "3001"
-        },
-        "monitoring": {
-          "type": "object",
-          "properties": {
-            "metricsPort": {
-              "type": "string",
-              "description": "The port on which the metrics server will be exposed.",
-              "default": "9094"
-            }
-          }
         },
         "postgresMaxConnections": {
           "type": "number",
@@ -2082,6 +2142,21 @@
           "type": "number",
           "description": "The maximum number of connections that the File Import Service postgres client will make to the Postgres database.",
           "default": 1
+        },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the File Import service should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
         },
         "requests": {
           "type": "object",

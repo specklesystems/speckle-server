@@ -19,6 +19,7 @@ import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 const emptyState: WorkspaceWizardState = {
   name: '',
@@ -62,6 +63,7 @@ export const useWorkspacesWizard = () => {
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
   )
+  const { mutateActiveWorkspaceSlug } = useNavigation()
 
   const isLoading = computed({
     get: () => wizardState.value.isLoading,
@@ -180,6 +182,7 @@ export const useWorkspacesWizard = () => {
     } else {
       // Keep loading state for a second
       await new Promise((resolve) => setTimeout(resolve, 1000))
+      mutateActiveWorkspaceSlug(wizardState.value.state.slug)
       await router.push(workspaceRoute(wizardState.value.state.slug))
       await new Promise((resolve) => setTimeout(resolve, 1000))
       isLoading.value = false

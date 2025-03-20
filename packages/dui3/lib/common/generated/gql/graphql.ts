@@ -1874,7 +1874,9 @@ export type OnboardingCompletionInput = {
 export enum PaidWorkspacePlans {
   Business = 'business',
   Plus = 'plus',
-  Starter = 'starter'
+  Pro = 'pro',
+  Starter = 'starter',
+  Team = 'team'
 }
 
 export type PasswordStrengthCheckFeedback = {
@@ -4689,10 +4691,12 @@ export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
   /**
-   * Update project region and move all regional data to new db.
-   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   * Schedule a job that will:
+   * - Move all regional data to target region
+   * - Update project region key
+   * - TODO: Eventually delete data in previous region
    */
-  moveToRegion: Project;
+  moveToRegion: Scalars['String']['output'];
   moveToWorkspace: Project;
   updateRole: Project;
 };

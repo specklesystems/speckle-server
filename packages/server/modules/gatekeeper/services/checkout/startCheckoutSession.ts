@@ -13,16 +13,15 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
+import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
 import { NotFoundError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import {
   PaidWorkspacePlans,
   Roles,
   throwUncoveredError,
-  WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  WorkspacePlanBillingIntervals
 } from '@speckle/shared'
-import { z } from 'zod'
 
 export const startCheckoutSessionFactoryOld =
   ({
@@ -129,27 +128,6 @@ export const startCheckoutSessionFactoryOld =
     return checkoutSession
   }
 
-const WorkspacePlansUpgradeMapping = z.union([
-  z.object({
-    current: z.literal('free'),
-    upgrade: z.union([z.literal('team'), z.literal('pro')])
-  }),
-  z.object({
-    current: z.literal('team'),
-    upgrade: z.literal('pro')
-  })
-])
-
-const isUpgradeWorkspacePlanValid = ({
-  current,
-  upgrade
-}: {
-  current: WorkspacePlans
-  upgrade: WorkspacePlans
-}): boolean => {
-  return WorkspacePlansUpgradeMapping.safeParse({ current, upgrade }).success
-}
-
 export const startCheckoutSessionFactoryNew =
   ({
     getWorkspaceCheckoutSession,
@@ -255,17 +233,19 @@ export const startCheckoutSessionFactoryNew =
       }
     }
 
-    const [editorsCount, viewersCount] = await Promise.all([
-      countSeatsByTypeInWorkspace({ workspaceId, type: 'editor' }),
-      countSeatsByTypeInWorkspace({ workspaceId, type: 'viewer' })
-    ])
+    const editorsCount = await countSeatsByTypeInWorkspace({
+      workspaceId,
+      type: 'editor'
+    })
+    if (!editorsCount) {
+      throw new InvalidWorkspacePlanUpgradeError('Workspace has no seats')
+    }
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,
       workspaceSlug,
       billingInterval,
       workspacePlan,
-      viewersCount,
       editorsCount,
       isCreateFlow
     })

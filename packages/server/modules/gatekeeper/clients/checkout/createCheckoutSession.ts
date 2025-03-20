@@ -29,7 +29,7 @@ export const createCheckoutSessionFactoryOld =
     isCreateFlow
   }) => {
     if (isNewPlanType(workspacePlan)) {
-      // TODO: Supported in follow up task
+      // Use createCheckoutSessionFactoryNew instead
       throw new NotImplementedError()
     }
 
@@ -86,7 +86,6 @@ export const createCheckoutSessionFactoryNew =
   }): CreateCheckoutSession =>
   async ({
     editorsCount,
-    viewersCount,
     workspacePlan,
     billingInterval,
     workspaceSlug,
@@ -98,14 +97,6 @@ export const createCheckoutSessionFactoryNew =
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price, quantity: editorsCount }
     ]
-    if (viewersCount > 0)
-      costLineItems.push({
-        price: getWorkspacePlanPrice({
-          workspacePlan: 'viewer',
-          billingInterval
-        }),
-        quantity: viewersCount
-      })
 
     const cancel_url = isCreateFlow
       ? `${frontendOrigin}/workspaces/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`

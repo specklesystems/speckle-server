@@ -15,21 +15,17 @@
       <div class="flex flex-col-reverse lg:flex-col gap-y-12">
         <section>
           <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-5">
             <CommonCard
-              v-for="quickStartItem in quickStartItems"
-              :key="quickStartItem.title"
-              :title="quickStartItem.title"
-              :description="quickStartItem.description"
-              :buttons="quickStartItem.buttons"
-              :is-external-route="quickStartItem.isExternalRoute"
+              v-for="useCase in useCaseItems"
+              :key="useCase.title"
+              :title="useCase.title"
+              :description="useCase.description"
+              :buttons="useCase.buttons"
+              is-external-route
             />
           </div>
         </section>
-        <!-- <section>
-          <h2 class="text-heading-sm text-foreground-2">Connectors</h2>
-
-        </section> -->
         <section>
           <div class="flex items-center justify-between">
             <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
@@ -54,6 +50,19 @@
               title="Create your first project"
               description="Projects are the place where your models and their versions live."
               :buttons="createProjectButton"
+            />
+          </div>
+        </section>
+        <section>
+          <h2 class="text-heading-sm text-foreground-2">Highlighted workflows</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
+            <CommonCard
+              v-for="workflowItem in workflowItems"
+              :key="workflowItem.title"
+              :title="workflowItem.title"
+              :description="workflowItem.description"
+              :buttons="workflowItem.buttons"
+              is-external-route
             />
           </div>
         </section>
@@ -86,24 +95,20 @@ import {
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
 import { useQuery } from '@vue/apollo-composable'
-// import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
-  docsPageUrl,
-  forumPageUrl,
   homeRoute,
-  connectorsRoute,
   projectsRoute,
-  tutorialsRoute
+  tutorialsRoute,
+  connectorsRoute,
+  forumPageUrl
 } from '~~/lib/common/helpers/route'
-// import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
-// import { downloadManager } from '~~/lib/common/utils/downloadManager'
-// import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
 import { tutorialItems } from '~/lib/dashboard/helpers/tutorials'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 
-// const mixpanel = useMixpanel()
+const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
 const { result: workspacesResult } = useQuery(
@@ -113,14 +118,82 @@ const { result: workspacesResult } = useQuery(
     enabled: isWorkspacesEnabled.value
   })
 )
-// const { triggerNotification } = useGlobalToast()
+
 const { isGuest } = useActiveUser()
 const router = useRouter()
 useUserProjectsUpdatedTracking()
 
 const promoBanners = ref<PromoBanner[]>()
 const openNewProject = ref(false)
-const quickStartItems = shallowRef<QuickStartItem[]>([
+
+const workflowItems = shallowRef<QuickStartItem[]>([
+  {
+    title: 'Design Coordination',
+    description:
+      "The smoothest design coordination for AEC! Ditch files. Share only what's needed and catch changes instantly.",
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/design-coordination' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Design Coordination'
+          })
+        }
+      }
+    ]
+  },
+  {
+    title: 'Business Intelligence',
+    description:
+      'Get from boring BIM data to insightful dashboards! Swap guesswork for informed decisions.',
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/business-intelligence' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Business Intelligence'
+          })
+        }
+      }
+    ]
+  },
+  {
+    title: 'Online Collaboration',
+    description:
+      'View, share, and brainstorm on 3D models online! Share with anyone—no desktop apps, no licenses, no hassle.',
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/online-collaboration' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Online Collaboration'
+          })
+        }
+      }
+    ]
+  },
+  {
+    title: 'Automation',
+    description:
+      'Goodbye, repetitive tasks! Kick into high gear with pre-built automations for your workflows.',
+    buttons: [
+      {
+        text: 'View workflows',
+        props: { to: 'https://www.speckle.systems/use-cases/automate' },
+        onClick: () => {
+          mixpanel.track('Workflow Card Clicked', {
+            title: 'Automation'
+          })
+        }
+      }
+    ]
+  }
+])
+
+const useCaseItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Connectors',
     description:
@@ -132,16 +205,6 @@ const quickStartItems = shallowRef<QuickStartItem[]>([
       }
     ],
     isExternalRoute: false
-  },
-  {
-    title: "Don't know where to start?",
-    description: "We'll walk you through some of most common usage scenarios.",
-    buttons: [
-      {
-        text: 'Open documentation',
-        props: { to: docsPageUrl }
-      }
-    ]
   },
   {
     title: 'Have a question you need answered?',

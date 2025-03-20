@@ -17,7 +17,6 @@ export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
 export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
-export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
 export const forumPageUrl = 'https://speckle.community/'
 export const defaultZapierWebhookUrl =

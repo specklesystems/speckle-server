@@ -137,9 +137,12 @@ export const createWorkspaceUserFromSsoProfileFactory =
     ssoProfile: UserinfoResponse<OidcProfile>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
+    const email = getEmailFromOidcProfile(args.ssoProfile)
+
     // Check if user has email-based invite to given workspace
+    // TODO: Use invite token instead of searching by email. Enterprise providers may return an email different from the one we sent an invite to.
     const invite = await findInvite({
-      target: args.ssoProfile.email,
+      target: email.toLowerCase(),
       resourceFilter: {
         resourceId: args.workspaceId,
         resourceType: 'workspace'
@@ -147,12 +150,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
     })
 
     if (!invite) {
-      throw new SsoUserInviteRequiredError()
+      throw new SsoUserInviteRequiredError(email)
     }
 
     // Create Speckle user
     const { name } = args.ssoProfile
-    const email = getEmailFromOidcProfile(args.ssoProfile)
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')

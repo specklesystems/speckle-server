@@ -91,7 +91,7 @@ export const parseSubscriptionData = (
 // on each change, we're reconciling that state to stripe
 export const reconcileWorkspaceSubscriptionFactory =
   ({ stripe }: { stripe: Stripe }): ReconcileSubscriptionData =>
-  async ({ subscriptionData, applyProrotation }) => {
+  async ({ subscriptionData, prorationBehavior }) => {
     const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
       subscriptionId: subscriptionData.subscriptionId
     })
@@ -126,7 +126,7 @@ export const reconcileWorkspaceSubscriptionFactory =
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
     await stripe.subscriptions.update(subscriptionData.subscriptionId, {
       items,
-      proration_behavior: applyProrotation ? 'create_prorations' : 'none'
+      proration_behavior: prorationBehavior
     })
   }
 

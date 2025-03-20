@@ -48,11 +48,6 @@ export const getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPrice
     // new
     ...(FF_WORKSPACES_NEW_PLANS_ENABLED
       ? {
-          viewer: {
-            productId: getStringFromEnv('WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID'),
-            monthly: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID'),
-            yearly: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID')
-          },
           team: {
             productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
             monthly: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID')
