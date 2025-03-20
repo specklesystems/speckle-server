@@ -45,6 +45,10 @@ input WorkspaceCreateInput {
   Logo image as base64-encoded string
   """
   logo: String
+  """
+  Add this domain to the workspace as a verified domain and enable domain discoverability
+  """
+  enableDomainDiscoverabilityForDomain: String
 }
 
 input WorkspaceUpdateInput {
@@ -137,12 +141,8 @@ type WorkspaceMutations {
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
   join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteSsoProvider(workspaceId: String!): Boolean!

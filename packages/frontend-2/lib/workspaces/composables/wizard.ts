@@ -28,7 +28,8 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: null
+  region: null,
+  enableDomainDiscoverabilityForDomain: undefined
 }
 
 const steps: readonly WizardSteps[] = [
@@ -129,7 +130,9 @@ export const useWorkspacesWizard = () => {
       const newWorkspaceResult = await createWorkspace(
         {
           name: wizardState.value.state.name,
-          slug: wizardState.value.state.slug
+          slug: wizardState.value.state.slug,
+          enableDomainDiscoverabilityForDomain:
+            wizardState.value.state.enableDomainDiscoverabilityForDomain || null
         },
         { navigateOnSuccess: false, hideNotifications: true }
       )
