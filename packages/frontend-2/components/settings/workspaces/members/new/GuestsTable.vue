@@ -84,8 +84,9 @@ import { graphql } from '~/lib/common/generated/gql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { LearnMoreRolesSeatsUrl } from '~/lib/settings/helpers/constants'
 import SeatTypeDisplay from '../SeatTypeDisplay.vue'
+import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
+
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id

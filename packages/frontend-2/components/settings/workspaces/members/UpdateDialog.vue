@@ -38,8 +38,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
-import { LearnMoreRolesSeatsUrl } from '~/lib/settings/helpers/constants'
-
+import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 const props = defineProps<{
   user: UserItem
   title: string

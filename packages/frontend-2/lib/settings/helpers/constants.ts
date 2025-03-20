@@ -5,9 +5,6 @@ import {
 import { Roles } from '@speckle/shared'
 import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
-// TODO: Add link when ready
-export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
-
 export const WorkspaceRoleDescriptions: Record<string, string> = {
   [Roles.Workspace.Admin]:
     'Can edit workspaces, including settings, members and all projects',

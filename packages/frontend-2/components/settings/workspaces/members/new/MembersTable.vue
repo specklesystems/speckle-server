@@ -92,9 +92,8 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { LearnMoreRolesSeatsUrl } from '~/lib/settings/helpers/constants'
 import SeatTypeDisplay from '../SeatTypeDisplay.vue'
-
+import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 export type UserItem = (typeof members)['value'][0]
 
 graphql(`
