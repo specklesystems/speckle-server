@@ -112,7 +112,7 @@ import {
   removeNullOrUndefinedKeys,
   throwUncoveredError
 } from '@speckle/shared'
-import { chunk } from 'lodash'
+import { chunk, omit } from 'lodash'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -130,10 +130,7 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  isWorkspaceRole,
-  parseDefaultProjectRole
-} from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -193,8 +190,10 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
-import { OperationTypeNode } from 'graphql'
+import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
+import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
+import { OperationTypeNode } from 'graphql'
 import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
@@ -290,7 +289,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_MOVE_PROJECT_REGION_ENABLED } =
+  getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -559,10 +559,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput: {
-              ...workspaceInput,
-              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
-            }
+            workspaceInput: omit(workspaceInput, ['defaultProjectRole'])
           })
 
           return workspace
@@ -1038,14 +1035,37 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
           })
 
-          return await moveProjectToWorkspace({
+          const updatedProject = await moveProjectToWorkspace({
             projectId,
             workspaceId,
             movedByUserId: context.userId!
           })
+
+          // Trigger project region change, if necessary
+          if (FF_MOVE_PROJECT_REGION_ENABLED) {
+            const projectRegion = await getProjectRegionKey({
+              projectId: updatedProject.id
+            })
+            const workspaceRegion = await getDefaultRegionFactory({ db })({
+              workspaceId
+            })
+
+            if (!!workspaceRegion && workspaceRegion.key !== projectRegion) {
+              await scheduleJob({
+                type: 'move-project-region',
+                payload: {
+                  projectId,
+                  regionKey: workspaceRegion.key
+                }
+              })
+            }
+          }
+
+          return updatedProject
         }
       },
       Workspace: {
+        defaultProjectRole: () => Roles.Stream.Reviewer,
         creationState: async (parent) => {
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
