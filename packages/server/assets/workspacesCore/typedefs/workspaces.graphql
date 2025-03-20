@@ -425,7 +425,10 @@ type WorkspaceCollaborator {
   role: String!
   user: LimitedUser!
   projectRoles: [ProjectRole!]!
-  createdAt: DateTime
+  """
+  Date that the user joined the workspace.
+  """
+  joinDate: DateTime!
 }
 
 type PendingWorkspaceCollaborator {

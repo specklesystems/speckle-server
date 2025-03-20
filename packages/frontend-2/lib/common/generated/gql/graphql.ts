@@ -4395,8 +4395,9 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
-  createdAt?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
+  /** Date that the user joined the workspace. */
+  joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
   seatType: WorkspaceSeatType;
@@ -8562,8 +8563,8 @@ export type WorkspaceBillingMutationsFieldArgs = {
   upgradePlan: WorkspaceBillingMutationsUpgradePlanArgs,
 }
 export type WorkspaceCollaboratorFieldArgs = {
-  createdAt: {},
   id: {},
+  joinDate: {},
   projectRoles: {},
   role: {},
   seatType: {},
