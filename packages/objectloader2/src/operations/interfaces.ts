@@ -5,8 +5,8 @@ export interface Cache {
   getItem(baseId: string): Promise<Item | undefined>
   processItems(
     baseIds: string[],
-    found: Queue<Item>,
-    notFound: Queue<string>
+    queueToAddFoundItems: Queue<Item>,
+    queueToAddNotFoundItems: Queue<string>
   ): Promise<void>
 
   write(obj: Item): Promise<void>

@@ -105,8 +105,8 @@ export default class IndexedDatabase implements Cache {
 
   async processItems(
     baseIds: string[],
-    found: Queue<Item>,
-    notFound: Queue<string>
+    queueToAddFoundItems: Queue<Item>,
+    queueToAddNotFoundItems: Queue<string>
   ): Promise<void> {
     await this.#setupCacheDb()
 
@@ -119,9 +119,9 @@ export default class IndexedDatabase implements Cache {
       const cachedData = await Promise.all(idbChildrenPromises)
       for (const cachedObj of cachedData) {
         if (isString(cachedObj)) {
-          notFound.add(cachedObj)
+          queueToAddNotFoundItems.add(cachedObj)
         } else {
-          found.add(cachedObj)
+          queueToAddFoundItems.add(cachedObj)
         }
       }
 
