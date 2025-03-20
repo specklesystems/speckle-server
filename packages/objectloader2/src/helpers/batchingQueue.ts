@@ -16,7 +16,7 @@ export default class BatchingQueue<T> implements Queue<T> {
   constructor(batchSize: number, processFunction: (batch: T[]) => Promise<void>) {
     this.batchSize = batchSize
     this.processFunction = processFunction
-    this.processingLoop = this.loop()
+    this.processingLoop = this.#loop()
   }
 
   async finish(): Promise<void> {
@@ -31,7 +31,7 @@ export default class BatchingQueue<T> implements Queue<T> {
   getBatch(batchSize: number): T[] {
     return this.queue.splice(0, Math.min(batchSize, this.queue.length))
   }
-  private async loop(): Promise<void> {
+  async #loop(): Promise<void> {
     while (!this.finished || this.queue.length > 0) {
       let wait = true
       if (this.queue.length > 0) {
@@ -49,14 +49,14 @@ export default class BatchingQueue<T> implements Queue<T> {
         }
       }
       if (wait) {
-        await this.delay(this.interval)
+        await this.#delay(this.interval)
         //waited so reset
         this.interval = this.baseInterval
       }
     }
   }
 
-  private delay(ms: number): Promise<void> {
+  #delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

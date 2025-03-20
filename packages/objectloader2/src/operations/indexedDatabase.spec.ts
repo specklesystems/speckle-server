@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import IndexedDatabase from './indexed-database.js'
+import IndexedDatabase from './indexedDatabase.js'
 import { IDBFactory } from 'fake-indexeddb'
 import { Item } from '../types/types.js'
 import BufferQueue from '../helpers/bufferQueue.js'

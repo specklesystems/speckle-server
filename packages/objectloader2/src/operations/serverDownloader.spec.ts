@@ -4,7 +4,7 @@ import { vi } from 'vitest'
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Item } from '../types/types.js'
 import { Cache } from './interfaces.js'
-import ServerDownloader from './server-downloader.js'
+import ServerDownloader from './serverDownloader.js'
 
 describe('downloader', () => {
   test('download batch of one', async () => {

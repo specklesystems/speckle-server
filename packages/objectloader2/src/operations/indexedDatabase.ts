@@ -79,6 +79,29 @@ export default class IndexedDatabase implements Cache {
       IndexedDatabase.#storeName
     )
   }
+
+  #checkCache(store: IDBObjectStore, batch: string[]): Promise<Item | string>[] {
+    return batch.map<Promise<Item | string>>(async (baseId) => {
+      const getBase = new Promise((resolve, reject) => {
+        const request = store.get(baseId)
+
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () =>
+          reject(ensureError(request.error, 'Error trying to get a batch'))
+      })
+      const base = await getBase
+      if (base === undefined) {
+        return baseId
+      } else {
+        if (isBase(base)) {
+          return { baseId, base }
+        } else {
+          throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
+        }
+      }
+    })
+  }
+
   async processItems(
     baseIds: string[],
     found: Queue<Item>,
@@ -91,27 +114,7 @@ export default class IndexedDatabase implements Cache {
       const store = this.#cacheDB!.transaction(IndexedDatabase.#storeName, 'readonly', {
         durability: 'relaxed'
       }).objectStore(IndexedDatabase.#storeName)
-      const idbChildrenPromises = baseIdsChunk.map<Promise<Item | string>>(
-        async (baseId) => {
-          const getBase = new Promise((resolve, reject) => {
-            const request = store.get(baseId)
-
-            request.onsuccess = () => resolve(request.result)
-            request.onerror = () =>
-              reject(ensureError(request.error, 'Error trying to get a batch'))
-          })
-          const base = await getBase
-          if (base === undefined) {
-            return baseId
-          } else {
-            if (isBase(base)) {
-              return { baseId, base }
-            } else {
-              throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
-            }
-          }
-        }
-      )
+      const idbChildrenPromises = this.#checkCache(store, baseIdsChunk)
       const cachedData = await Promise.all(idbChildrenPromises)
       for (const cachedObj of cachedData) {
         if (isString(cachedObj)) {
@@ -120,7 +123,6 @@ export default class IndexedDatabase implements Cache {
           found.add(cachedObj)
         }
       }
-      console.log('Read ' + baseIdsChunk.length)
     }
   }
 
@@ -165,7 +167,6 @@ export default class IndexedDatabase implements Cache {
     }
     await Promise.all(promises)
     transaction.commit()
-    console.log('Saved ' + batch.length)
     await this.#promisifyIDBTransaction(transaction)
   }
   #promisifyIDBTransaction(request: IDBTransaction): Promise<void> {

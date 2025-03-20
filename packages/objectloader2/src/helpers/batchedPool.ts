@@ -18,7 +18,7 @@ export default class BatchedPool<T> {
   ) {
     this.concurrencyAndSizes = concurrencyAndSizes
     this.processFunction = processFunction
-    this.processingLoop = this.loop()
+    this.processingLoop = this.#loop()
   }
 
   add(item: T): void {
@@ -29,7 +29,7 @@ export default class BatchedPool<T> {
     return this.queue.splice(0, Math.min(batchSize, this.queue.length))
   }
 
-  private async runWorker(batchSize: number) {
+  async #runWorker(batchSize: number) {
     while (!this.finished || this.queue.length > 0) {
       let wait = true
       if (this.queue.length > 0) {
@@ -47,7 +47,7 @@ export default class BatchedPool<T> {
         }
       }
       if (wait) {
-        await this.delay(this.interval)
+        await this.#delay(this.interval)
         //waited so reset
         this.interval = this.baseInterval
       }
@@ -59,15 +59,15 @@ export default class BatchedPool<T> {
     await this.processingLoop
   }
 
-  async loop() {
+  async #loop(): Promise<void> {
     // Initialize workers
     this.workers = Array.from(this.concurrencyAndSizes, (batchSize: number) =>
-      this.runWorker(batchSize)
+      this.#runWorker(batchSize)
     )
     await Promise.all(this.workers)
   }
 
-  private delay(ms: number): Promise<void> {
+  #delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 }

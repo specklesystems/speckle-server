@@ -1,7 +1,7 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Cache, Downloader } from './interfaces.js'
-import IndexedDatabase from './indexed-database.js'
-import ServerDownloader from './server-downloader.js'
+import IndexedDatabase from './indexedDatabase.js'
+import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
 
