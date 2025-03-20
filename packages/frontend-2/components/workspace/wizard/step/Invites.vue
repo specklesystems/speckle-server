@@ -38,9 +38,7 @@
       </div>
 
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <FormButton size="lg" submit full-width>
-          {{ nextButtonText }}
-        </FormButton>
+        <FormButton size="lg" submit full-width>Continue</FormButton>
         <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
           Back
         </FormButton>
@@ -80,9 +78,6 @@ const enableDomainDiscoverabilityModel = ref<true | undefined>(
     : true
 )
 
-const nextButtonText = computed(() =>
-  fields.value.filter((field) => !!field.value).length > 0 ? 'Continue' : 'Skip'
-)
 const verifiedDomain = computed(() => {
   // only support enabling domain discoverability if there's one verified unblocked domain
   if (domains.value.length !== 1) return undefined

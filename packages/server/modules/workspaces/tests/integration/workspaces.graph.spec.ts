@@ -69,6 +69,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { itEach } from '@/test/assertionHelper'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
@@ -788,23 +789,47 @@ describe('Workspaces GQL CRUD', () => {
           ])
         })
 
-        it('user with one non-blocked verified email can enable domain discoverability', async () => {
-          const apollo = await testApolloServer({
-            authUserId: guyWithOneVerifiedEmail.id
-          })
-          const createRes = await apollo.execute(CreateWorkspaceDocument, {
-            input: {
-              name: 'My Domain Discoverability Workspace',
-              slug: cryptoRandomString({ length: 10 }),
-              enableDomainDiscoverabilityForDomain: getDomain(guyWithOneVerifiedEmail)
-            }
-          })
+        itEach(
+          [guyWithOneVerifiedEmail, guyWithMultipleVerifiedEmails],
+          (user) => `${user.name} can create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
 
-          expect(createRes).to.not.haveGraphQLErrors()
-          expect(createRes.data?.workspaceMutations.create.id).to.be.ok
-          expect(createRes.data!.workspaceMutations.create.discoverabilityEnabled).to.be
-            .true
-        })
+            expect(createRes).to.not.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create.id).to.be.ok
+            expect(createRes.data!.workspaceMutations.create.discoverabilityEnabled).to
+              .be.true
+          }
+        )
+
+        itEach(
+          [guyWithNoVerifiedEmails, guyWithOneBlockedVerifiedEmail],
+          (user) => `${user.name} can not create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
+
+            expect(createRes).to.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create).to.not.be.ok
+          }
+        )
       })
     })
 

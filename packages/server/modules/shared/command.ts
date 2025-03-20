@@ -9,7 +9,7 @@ export const commandFactory =
   }: {
     db: Knex
     eventBus?: EventBus
-    operationFactory: (arg: { db: Knex; emit: EventBusEmit }) => TOperation
+    operationFactory: (arg: { db: Knex; trx: Knex; emit: EventBusEmit }) => TOperation
   }) =>
   async (...args: Parameters<TOperation>): Promise<Awaited<ReturnType<TOperation>>> => {
     const events: EmitArg[] = []
@@ -19,7 +19,7 @@ export const commandFactory =
 
     const trx = await db.transaction()
     try {
-      const result = await operationFactory({ db, emit })(...args)
+      const result = await operationFactory({ db, trx, emit })(...args)
 
       await trx.commit()
       if (eventBus) {
