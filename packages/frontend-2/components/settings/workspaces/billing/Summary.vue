@@ -7,7 +7,7 @@
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
         <p class="text-heading-lg text-foreground capitalize">
-          {{ plan?.name }}
+          {{ formatPlanName(plan?.name) }}
         </p>
       </div>
 
@@ -62,6 +62,7 @@
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { formatPlanName } from '~/lib/billing/helpers/plan'
 
 defineProps<{
   workspaceId?: MaybeNullOrUndefined<string>

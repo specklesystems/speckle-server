@@ -6,7 +6,7 @@
       <div class="flex items-center gap-x-2">
         <h4 class="text-body font-medium">
           Workspace
-          <span class="capitalize">{{ plan }}</span>
+          <span class="capitalize">{{ formatPlanName(plan) }}</span>
         </h4>
         <CommonBadge v-if="badgeText" rounded>
           {{ badgeText }}
@@ -95,7 +95,7 @@ import {
 import { startCase } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice, formatPlanName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 
 defineEmits<{
@@ -108,11 +108,12 @@ const props = defineProps<{
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   isAdmin: boolean
   activeBillingInterval: MaybeNullOrUndefined<BillingInterval>
+  hasSubscription: boolean
   workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const { pricesNew } = useWorkspacePlanPrices()
-const { upgradePlan } = useBillingActions()
+const { upgradePlan, redirectToCheckout } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
@@ -204,15 +205,16 @@ const isSelectable = computed(() => {
 })
 
 const buttonColor = computed(() => {
-  if (props.currentPlan?.status === WorkspacePlanStatuses.Expired) {
-    return props.plan === WorkspacePlans.Starter ? 'primary' : 'outline'
+  if (props.currentPlan?.name === WorkspacePlans.Free) {
+    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
   }
   return 'outline'
 })
 
 const buttonText = computed(() => {
-  // Allow selection during trial, expired or canceled state
+  // Allow if current plan is Free, or the current plan is expired/canceled
   if (
+    props.currentPlan?.name === WorkspacePlans.Free ||
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
@@ -243,8 +245,18 @@ const badgeText = computed(() =>
 
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
-  if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
+  if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
+
+  if (props.hasSubscription) {
     upgradePlan({
+      plan: props.plan,
+      cycle: isYearlyIntervalSelected.value
+        ? BillingInterval.Yearly
+        : BillingInterval.Monthly,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    redirectToCheckout({
       plan: props.plan,
       cycle: isYearlyIntervalSelected.value
         ? BillingInterval.Yearly
