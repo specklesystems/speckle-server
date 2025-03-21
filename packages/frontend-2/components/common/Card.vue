@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="border border-outline-3 rounded-lg flex flex-col"
-    :class="size === 'sm' ? 'p-3' : 'p-5'"
-  >
+  <div class="border border-outline-3 rounded-lg p-5 flex flex-col">
     <div v-if="$slots.icon" class="mb-4">
       <slot name="icon" />
     </div>
@@ -55,7 +52,6 @@ withDefaults(
     title?: string
     isExternalRoute?: boolean
     description?: string
-    size?: 'sm' | 'base'
     buttons?: LayoutDialogButton[]
     badge?: string
   }>(),
