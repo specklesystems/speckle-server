@@ -85,6 +85,10 @@ export type BasicTestUser = {
    */
   id: string
   role?: ServerRoles
+  /**
+   * Even if disabled server-wide, allow personal emails for this user
+   */
+  allowPersonalEmail?: boolean
 } & Partial<UserRecord>
 
 const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
@@ -119,7 +123,10 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
     setVal('email', `${kebabCase(baseUser.name)}@example.org`)
   }
 
-  const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
+  const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
+    skipPropertyValidation: true,
+    allowPersonalEmail: baseUser.allowPersonalEmail
+  })
   setVal('id', id)
 
   return baseUser
