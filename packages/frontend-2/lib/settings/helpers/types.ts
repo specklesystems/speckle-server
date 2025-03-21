@@ -1,5 +1,4 @@
-import type { AvailableRoles } from '@speckle/shared'
-import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
+import type { AvailableRoles, WorkspaceSeatType } from '@speckle/shared'
 
 type BaseSettingsMenuItem = {
   title: string

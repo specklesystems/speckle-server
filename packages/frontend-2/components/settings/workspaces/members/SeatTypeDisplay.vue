@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceSeatType } from '@speckle/shared'
 import { WorkspaceSeatTypeDescriptions } from '~/lib/settings/helpers/constants'
 
 const props = defineProps<{

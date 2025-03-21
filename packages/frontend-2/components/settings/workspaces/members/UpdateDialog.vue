@@ -1,4 +1,3 @@
-<!-- TODO: Check how domain policy interacts with this -->
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>

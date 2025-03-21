@@ -2,8 +2,7 @@ import {
   WorkspaceUserUpdateActionTypes,
   type WorkspaceUserUpdateActionConfig
 } from '~/lib/settings/helpers/types'
-import { Roles } from '@speckle/shared'
-import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
+import { Roles, type WorkspaceSeatType, SeatTypes } from '@speckle/shared'
 
 export const WorkspaceRoleDescriptions: Record<string, string> = {
   [Roles.Workspace.Admin]:
@@ -13,8 +12,8 @@ export const WorkspaceRoleDescriptions: Record<string, string> = {
 }
 
 export const WorkspaceSeatTypeDescriptions: Record<WorkspaceSeatType, string> = {
-  [WorkspaceSeatType.Editor]: 'Can create new models and versions',
-  [WorkspaceSeatType.Viewer]: 'Can view and receive models, but not send to them'
+  [SeatTypes.Editor]: 'Can create new models and versions',
+  [SeatTypes.Viewer]: 'Can view and receive models, but not send to them'
 }
 
 export const WorkspaceUserUpdateConfig: Record<
@@ -37,7 +36,7 @@ export const WorkspaceUserUpdateConfig: Record<
     dialog: {
       title: 'Make an admin',
       mainMessage: (seatType) =>
-        seatType === WorkspaceSeatType.Editor
+        seatType === SeatTypes.Editor
           ? 'They will become project owner for all existing and new workspace projects.'
           : 'They will be given an editor seat and become project owner for all existing and new workspace projects.',
       showRoleInfo: true,
@@ -99,7 +98,7 @@ export const WorkspaceUserUpdateConfig: Record<
     dialog: {
       title: 'Make member',
       mainMessage: (seatType) =>
-        seatType === WorkspaceSeatType.Editor
+        seatType === SeatTypes.Editor
           ? 'They will be given a viewer seat and lose project ownership.'
           : 'They will be given a viewer seat.',
       showRoleInfo: true,
@@ -116,7 +115,7 @@ export const WorkspaceUserUpdateConfig: Record<
       }) =>
         isActiveUserWorkspaceAdmin &&
         !isActiveUserTargetUser &&
-        targetUserCurrentSeatType === WorkspaceSeatType.Viewer
+        targetUserCurrentSeatType === SeatTypes.Viewer
     },
     dialog: {
       title: 'Upgrade to an editor seat?',
@@ -135,7 +134,7 @@ export const WorkspaceUserUpdateConfig: Record<
       }) =>
         isActiveUserWorkspaceAdmin &&
         !isActiveUserTargetUser &&
-        targetUserCurrentSeatType === WorkspaceSeatType.Editor
+        targetUserCurrentSeatType === SeatTypes.Editor
     },
     dialog: {
       title: 'Downgrade to a viewer seat?',

@@ -30,8 +30,9 @@
 
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
+import { SeatTypes, type WorkspaceSeatType } from '@speckle/shared'
 
-type ValueType = string | string[] | undefined
+type ValueType = WorkspaceSeatType | WorkspaceSeatType[] | undefined
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
@@ -49,10 +50,10 @@ const props = defineProps<{
 const labelId = useId()
 const buttonId = useId()
 
-const { selectedValue } = useFormSelectChildInternals<string>({
+const { selectedValue } = useFormSelectChildInternals<WorkspaceSeatType>({
   props: toRefs(props),
   emit
 })
 
-const seatTypes = ['editor', 'viewer']
+const seatTypes = Object.values(SeatTypes)
 </script>

@@ -32,7 +32,13 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type MaybeNullOrUndefined, type WorkspaceRoles } from '@speckle/shared'
+import {
+  Roles,
+  SeatTypes,
+  type MaybeNullOrUndefined,
+  type WorkspaceRoles,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -47,7 +53,6 @@ import {
   WorkspaceUserUpdateConfig,
   WorkspaceRoleDescriptions
 } from '~/lib/settings/helpers/constants'
-import type { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   targetUser: UserItem
@@ -181,10 +186,10 @@ const onDialogConfirm = async () => {
       await onUpdateRole(Roles.Workspace.Member)
       break
     case WorkspaceUserUpdateActionTypes.UpgradeEditor:
-      await onUpdateSeatType('editor')
+      await onUpdateSeatType(SeatTypes.Editor)
       break
     case WorkspaceUserUpdateActionTypes.DowngradeEditor:
-      await onUpdateSeatType('viewer')
+      await onUpdateSeatType(SeatTypes.Viewer)
       break
     case WorkspaceUserUpdateActionTypes.RemoveMember:
       await onRemoveUser()

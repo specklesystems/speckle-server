@@ -1,5 +1,10 @@
 import type { RouteLocationNormalized } from 'vue-router'
-import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
+import {
+  waitForever,
+  type MaybeAsync,
+  type Optional,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -496,7 +501,7 @@ export const useWorkspaceUpdateSeatType = () => {
   return async (input: {
     userId: string
     workspaceId: string
-    seatType: 'editor' | 'viewer'
+    seatType: WorkspaceSeatType
   }) => {
     const result = await mutate(
       { input },

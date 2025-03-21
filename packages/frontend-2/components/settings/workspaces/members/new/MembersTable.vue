@@ -116,7 +116,7 @@ graphql(`
     name
     ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    team {
+    team(limit: 250) {
       items {
         id
         ...SettingsWorkspacesNewMembersTable_WorkspaceCollaborator
