@@ -39,7 +39,7 @@ export const workspaceTeamFragment = graphql(`
   fragment WorkspaceTeam_Workspace on Workspace {
     id
     slug
-    team {
+    team(limit: 0) {
       totalCount
       items {
         id

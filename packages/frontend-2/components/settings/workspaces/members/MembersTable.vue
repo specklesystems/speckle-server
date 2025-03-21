@@ -134,7 +134,7 @@ graphql(`
     ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
     ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
-    team {
+    team(limit: 0) {
       items {
         id
         ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
@@ -157,17 +157,19 @@ const props = defineProps<{
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
 
+const variables = computed(() => ({
+  filter: {
+    search: search.value,
+    roles: roleFilter.value
+      ? [roleFilter.value]
+      : [Roles.Workspace.Admin, Roles.Workspace.Member]
+  },
+  slug: props.workspaceSlug
+}))
+
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
-  () => ({
-    filter: {
-      search: search.value,
-      roles: roleFilter.value
-        ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member]
-    },
-    slug: props.workspaceSlug
-  }),
+  variables,
   () => ({
     enabled: !!search.value.length || !!roleFilter.value
   })
