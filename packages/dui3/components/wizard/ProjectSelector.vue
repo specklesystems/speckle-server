@@ -208,10 +208,15 @@ const createNewProject = async (name: string) => {
     refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
+    let errorMessage = 'Undefined error'
+    if (res?.errors && res?.errors.length !== 0) {
+      errorMessage = res?.errors[0].message
+    }
+
     hostAppStore.setNotification({
       type: 1,
       title: 'Failed to create project',
-      description: res?.errors[0].message || 'Undefined error'
+      description: errorMessage
     })
   }
   isCreatingProject.value = false
