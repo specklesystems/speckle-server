@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import Queue from '../helpers/queue.js'
 import { CustomLogger, Fetcher, Item } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
@@ -14,7 +15,11 @@ export interface ObjectLoader2Options {
 export interface BaseDatabaseOptions {
   logger?: CustomLogger
   indexedDB?: IDBFactory
-  keyRange?: IDBKeyRange
+  keyRange?: {
+    bound: Function
+    lowerBound: Function
+    upperBound: Function
+  }
   enableCaching?: boolean
   maxCacheReadSize?: number
   maxCacheWriteSize?: number
