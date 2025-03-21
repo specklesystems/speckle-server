@@ -21,13 +21,13 @@ class ObjectStore extends Dexie {
 
 export default class IndexedDatabase implements Cache {
   #options: BaseDatabaseOptions
-  #logger: CustomLogger
+  //#logger: CustomLogger
 
   #cacheDB?: ObjectStore
 
   #writeQueue: BatchingQueue<Item> | undefined
 
-  #count: number = 0
+  //#count: number = 0
 
   constructor(options: BaseDatabaseOptions) {
     this.#options = {
@@ -39,7 +39,7 @@ export default class IndexedDatabase implements Cache {
       },
       ...options
     }
-    this.#logger = options.logger || (() => {})
+    //this.#logger = options.logger || (() => {})
   }
 
   async add(item: Item): Promise<void> {
@@ -94,18 +94,17 @@ export default class IndexedDatabase implements Cache {
     const ids2 = ids.sort()
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
 
-    for (let i = 0; i < ids2.length; ) {
+    for (let i = 0; i < ids2.length; i += maxCacheReadSize) {
       if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
-        this.#logger('pausing')
-        await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second
+        //this.#logger('pausing')
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second, protects against out of memory
         continue
       }
-      i += maxCacheReadSize
       const batch = ids2.slice(i, i + maxCacheReadSize)
-      const x = this.#count
-      this.#count++
-      const startTime = performance.now()
-      this.#logger('Start read ' + x + ' ' + batch.length)
+      //const x = this.#count
+      //this.#count++
+      //const startTime = performance.now()
+      //this.#logger('Start read ' + x + ' ' + batch.length)
       const cachedData = await this.#cacheDB?.objects.bulkGet(batch)
       if (!cachedData) {
         break
@@ -116,10 +115,13 @@ export default class IndexedDatabase implements Cache {
         } else {
           notFoundItems.add(batch[i])
         }
+        if (i % 1000 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
+        }
       }
-      const endTime = performance.now()
-      const duration = endTime - startTime
-      this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+      //const endTime = performance.now()
+      //const duration = endTime - startTime
+      //this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
     }
   }
 
@@ -137,15 +139,15 @@ export default class IndexedDatabase implements Cache {
     cacheDB: ObjectStore
   }): Promise<void> {
     const { batch, cacheDB } = params
-    const x = this.#count
-    this.#count++
+    //const x = this.#count
+    //this.#count++
 
-    const startTime = performance.now()
-    this.#logger('Start save ' + x + ' ' + batch.length)
+    //const startTime = performance.now()
+    //this.#logger('Start save ' + x + ' ' + batch.length)
     await cacheDB.objects.bulkPut(batch)
-    const endTime = performance.now()
-    const duration = endTime - startTime
-    this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+    //const endTime = performance.now()
+    //const duration = endTime - startTime
+    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
   }
 
   /**

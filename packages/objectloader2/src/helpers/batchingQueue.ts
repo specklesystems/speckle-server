@@ -48,7 +48,7 @@ export default class BatchingQueue<T> implements Queue<T> {
       const startTime = performance.now()
       if (this.#queue.length > 0) {
         const batch = this.#getBatch(this.#batchSize)
-        console.log('running with queue size of ' + this.#queue.length)
+        //console.log('running with queue size of ' + this.#queue.length)
         await this.#processFunction(batch)
       }
       if (this.#queue.length < this.#batchSize / 2) {
@@ -60,12 +60,12 @@ export default class BatchingQueue<T> implements Queue<T> {
         } else {
           interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
         }
-        console.log(
+        /*console.log(
           'queue is waiting ' +
             interval / 1000 +
             ' with queue size of ' +
             this.#queue.length
-        )
+        )*/
         await this.#delay(interval)
       }
     }

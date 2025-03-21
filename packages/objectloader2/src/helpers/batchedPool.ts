@@ -48,12 +48,12 @@ export default class BatchedPool<T> {
         interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
       }
       if (this.#queue.length < batchSize / 2) {
-        console.log(
+        /*console.log(
           `pool(${batchSize}) is waiting ` +
             interval / 1000 +
             ' with queue size of ' +
             this.#queue.length
-        )
+        )*/
         await this.#delay(interval)
       }
     }
