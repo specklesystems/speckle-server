@@ -17,7 +17,6 @@ import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { omit } from 'lodash'
-import { before, describe } from 'mocha'
 
 describe('Versions', () => {
   const me: BasicTestUser = {

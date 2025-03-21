@@ -20,7 +20,7 @@ const configs = [
     }
   },
   {
-    files: ['**/*.mjs'],
+    files: ['**/*.mjs', 'esmLoader.js', 'vitest.config.js'],
     languageOptions: {
       sourceType: 'module'
     }

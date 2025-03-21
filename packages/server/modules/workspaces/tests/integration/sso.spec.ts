@@ -144,7 +144,7 @@ describe('Workspace SSO repositories', () => {
     })
   })
 
-  describe('listWorkspaceSsoMembershipsFactory returns a function, that', async () => {
+  describe('listWorkspaceSsoMembershipsFactory returns a function, that', () => {
     const ssoUser: BasicTestUser = {
       id: '',
       email: 'sso-speckle@example.org',

@@ -24,7 +24,6 @@ import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { beforeEach } from 'mocha'
 
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({

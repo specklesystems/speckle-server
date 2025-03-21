@@ -118,7 +118,7 @@ isEnabled
           expect(res).to.not.haveGraphQLErrors()
         })
 
-        describe('when creating new region', async () => {
+        describe('when creating new region', () => {
           afterEach(async () => {
             // Wipe created regions
             await truncateRegionsSafely()
@@ -182,7 +182,7 @@ isEnabled
           })
         })
 
-        describe('when working with existing regions', async () => {
+        describe('when working with existing regions', () => {
           const createdRegionInput: CreateServerRegionInput = {
             key: fakeRegionKey1,
             name: 'US West 1',

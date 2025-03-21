@@ -19,7 +19,6 @@ import { beforeEachContext } from '@/test/hooks'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { beforeEach } from 'mocha'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()

@@ -24,7 +24,6 @@ import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commi
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { times } from 'lodash'
-import { describe } from 'mocha'
 
 enum BatchActionType {
   Move,
@@ -194,7 +193,7 @@ describe('Batch commits', () => {
       })
     })
 
-    describe('and deleting commits', async () => {
+    describe('and deleting commits', () => {
       const deletableCommitCount = 5
 
       let myDeletableCommits: BasicTestCommit[]

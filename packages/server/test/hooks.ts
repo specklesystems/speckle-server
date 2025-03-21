@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// import '../bootstrapTest'
 // eslint-disable-next-line no-restricted-imports
 import '../bootstrap'
 
 // Register global mocks as early as possible
 import '@/test/mocks/global'
 
+import * as jestGlobals from '@jest/globals'
+// import * as vitest from 'vitest'
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
@@ -349,7 +353,7 @@ export const initializeTestServer = async (params: {
 
 let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
 
-export const mochaHooks: mocha.RootHookObject = {
+export const mochaHooks = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
       console.log('Running tests in multi-region mode...')
@@ -379,4 +383,37 @@ export const buildApp = async () => {
 export const beforeEachContext = async () => {
   await truncateTables(undefined, { resetPubSub: true })
   return await buildApp()
+}
+
+// // vitest
+// vitest.beforeAll(async () => {
+//   await mochaHooks.beforeAll()
+// })
+
+// vitest.afterAll(async () => {
+//   await mochaHooks.afterAll()
+// })
+
+// jest
+jestGlobals.beforeAll(async () => {
+  await mochaHooks.beforeAll()
+})
+
+jestGlobals.afterAll(async () => {
+  await mochaHooks.afterAll()
+})
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+globalThis.before = jestGlobals.beforeAll
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+globalThis.after = jestGlobals.afterAll
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+globalThis.it = (...args: Parameters<typeof jestGlobals.it>) => {
+  jestGlobals.it(...args)
+  return {
+    timeout: () => {}
+  }
 }

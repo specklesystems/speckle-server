@@ -12,7 +12,6 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { describe } from 'mocha'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { WorkspaceRole } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
