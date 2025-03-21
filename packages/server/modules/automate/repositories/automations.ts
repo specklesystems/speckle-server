@@ -1,4 +1,5 @@
 import {
+  DeleteAutomation,
   GetActiveTriggerDefinitions,
   GetAutomation,
   GetAutomationProject,
@@ -308,6 +309,14 @@ export const storeAutomationFactory =
       .returning('*')
 
     return newAutomation
+  }
+
+export const deleteAutomationFactory =
+  (deps: { db: Knex }): DeleteAutomation =>
+  async ({ automationId }) => {
+    await tables.automations(deps.db).where({ id: automationId }).delete()
+
+    return true
   }
 
 export const storeAutomationTokenFactory =

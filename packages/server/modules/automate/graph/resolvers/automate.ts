@@ -13,6 +13,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
+  deleteAutomationFactory,
   getAutomationFactory,
   getAutomationRunsItemsFactory,
   getAutomationRunsTotalCountFactory,
@@ -616,6 +617,20 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             projectId: parent.projectId,
             userResourceAccessRules: ctx.resourceAccessRules
           })
+        },
+        async delete(parent, input, context) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
+          await authorizeResolver(
+            context.userId,
+            parent.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+
+          const deleteAutomation = deleteAutomationFactory({ db: projectDb })
+
+          return await deleteAutomation({ automationId: input.automationId })
         },
         async createRevision(parent, { input }, ctx) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
