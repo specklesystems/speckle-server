@@ -9,7 +9,6 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -39,12 +38,7 @@ import {
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  MaybeNullOrUndefined,
-  Roles,
-  StreamRoles,
-  WorkspaceRoles
-} from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -107,7 +101,6 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
-  defaultProjectRole?: StreamRoles
   discoverabilityEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
@@ -269,15 +262,6 @@ export const createTestWorkspace = async (
     await updateWorkspace({
       workspaceId: newWorkspace.id,
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
-    })
-  }
-
-  if (workspace.defaultProjectRole) {
-    await updateWorkspace({
-      workspaceId: newWorkspace.id,
-      workspaceInput: {
-        defaultProjectRole: parseDefaultProjectRole(workspace.defaultProjectRole)
-      }
     })
   }
 }

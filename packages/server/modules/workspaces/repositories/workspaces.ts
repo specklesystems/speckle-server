@@ -223,7 +223,6 @@ export const upsertWorkspaceFactory =
         'description',
         'logo',
         'slug',
-        'defaultProjectRole',
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
@@ -354,9 +353,9 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
+      workspaceRoleCreatedAt: i.workspaceRoleCreatedAt,
       workspaceId: i.workspaceId,
-      role: i.role,
-      createdAt: i.workspaceRoleCreatedAt
+      role: i.role
     }))
 
     return items

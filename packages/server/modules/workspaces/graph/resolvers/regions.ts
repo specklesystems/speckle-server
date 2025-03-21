@@ -18,9 +18,11 @@ import {
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { Roles } from '@speckle/shared'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -55,6 +57,28 @@ export default {
         insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
       })
       await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
+
+      // Move existing workspace projects to new target region
+      if (FF_MOVE_PROJECT_REGION_ENABLED) {
+        const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+          getStreams: legacyGetStreamsFactory({ db })
+        })
+        for await (const projects of queryAllWorkspaceProjects({
+          workspaceId: args.workspaceId
+        })) {
+          await Promise.all(
+            projects.map((project) =>
+              scheduleJob({
+                type: 'move-project-region',
+                payload: {
+                  projectId: project.id,
+                  regionKey: args.regionKey
+                }
+              })
+            )
+          )
+        }
+      }
 
       return await ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
     }
