@@ -38,6 +38,7 @@ export const settingsWorkspaceBillingQueryNew = graphql(`
   query SettingsWorkspaceBillingNew($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
+      ...WorkspaceBillingPageNew_Workspace
     }
   }
 `)

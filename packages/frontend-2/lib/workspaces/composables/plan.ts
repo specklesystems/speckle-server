@@ -18,6 +18,7 @@ graphql(`
       status
       createdAt
       name
+      paymentMethod
     }
     subscription {
       billingInterval
