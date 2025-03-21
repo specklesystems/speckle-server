@@ -5,8 +5,7 @@
     <div class="lg:h-32">
       <div class="flex items-center gap-x-2">
         <h4 class="text-body font-medium">
-          Workspace
-          <span class="capitalize">{{ formatPlanName(plan) }}</span>
+          {{ formatPlanName(plan) }}
         </h4>
         <CommonBadge v-if="badgeText" rounded>
           {{ badgeText }}
