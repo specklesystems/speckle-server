@@ -5,6 +5,17 @@
     title="Move projects to workspace"
     :buttons="buttons"
   >
+    <FormTextInput
+      v-bind="bind"
+      label="Move projects"
+      name="search"
+      color="foundation"
+      placeholder="Search projects..."
+      show-clear
+      full-width
+      class="mb-2"
+      v-on="on"
+    />
     <div
       v-if="hasMoveableProjects"
       class="flex flex-col mt-2 border rounded-md border-outline-3"
@@ -47,6 +58,12 @@
       You don't have any projects that can be moved into this workspace. Only projects
       you own and that aren't in another workspace can be moved.
     </p>
+    <InfiniteLoading
+      v-if="moveableProjects?.length && !search?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
 
     <ProjectsMoveToWorkspaceDialog
       v-if="selectedProject"
@@ -58,13 +75,17 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { LayoutDialogButton } from '@speckle/ui-components'
+import {
+  FormTextInput,
+  type LayoutDialogButton,
+  useDebouncedTextInput
+} from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   MoveProjectsDialog_WorkspaceFragment,
   ProjectsMoveToWorkspaceDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { useQuery } from '@vue/apollo-composable'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
 
@@ -88,7 +109,9 @@ graphql(`
 
 graphql(`
   fragment MoveProjectsDialog_User on User {
-    projects {
+    projects(cursor: $cursor, filter: $filter) {
+      totalCount
+      cursor
       items {
         ...ProjectsMoveToWorkspaceDialog_Project
         role
@@ -105,8 +128,27 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+const search = defineModel<string>('search')
+const { on, bind } = useDebouncedTextInput({ model: search })
 
-const { result } = useQuery(moveProjectsDialogQuery)
+const {
+  query: { result },
+  identifier,
+  onInfiniteLoad
+} = usePaginatedQuery({
+  query: moveProjectsDialogQuery,
+  baseVariables: computed(() => ({
+    cursor: null as string | null,
+    filter: search.value?.length ? { search: search.value } : null
+  })),
+  resolveKey: (vars) => [vars.filter?.search || ''],
+  resolveCurrentResult: (res) => res?.activeUser?.projects,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
