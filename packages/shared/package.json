@@ -19,7 +19,7 @@
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc",
     "lint:ci": "yarn lint:tsc",
-    "test": "vitest",
+    "test": "vitest src/authz/policies/canQueryProject.spec.ts",
     "test:single-run": "vitest run"
   },
   "sideEffects": false,

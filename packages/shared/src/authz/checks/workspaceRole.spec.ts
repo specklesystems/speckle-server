@@ -65,7 +65,7 @@ describe('requireMinimumWorkspaceRole returns a function, that', () => {
       workspaceId: cryptoRandomString({ length: 9 }),
       role: 'workspace:member'
     })
-    expect(result).toEqual(false)
+    expect(result).toEqual(true)
   })
   it('returns true if user exceeds target role', async () => {
     const result = await requireMinimumWorkspaceRole({
@@ -77,6 +77,6 @@ describe('requireMinimumWorkspaceRole returns a function, that', () => {
       workspaceId: cryptoRandomString({ length: 9 }),
       role: 'workspace:member'
     })
-    expect(result).toEqual(false)
+    expect(result).toEqual(true)
   })
 })

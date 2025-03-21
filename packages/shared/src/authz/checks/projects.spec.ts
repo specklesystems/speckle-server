@@ -3,19 +3,19 @@ import { requireExactProjectVisibility } from './projects.js'
 import cryptoRandomString from 'crypto-random-string'
 import { Project } from '../domain/projects/types.js'
 
-describe('requireExactProject Visibility returns a function, that', () => {
-  it('throws if project does not exist', () => {
+describe('requireExactProjectVisibility returns a function, that', () => {
+  it('throws if project does not exist', async () => {
     const test = requireExactProjectVisibility({
       loaders: {
         getProject: () => Promise.resolve(null)
       }
     })
-    expect(() =>
+    await expect(
       test({
         projectVisibility: 'linkShareable',
         projectId: cryptoRandomString({ length: 9 })
       })
-    ).toThrow()
+    ).rejects.toThrow()
   })
   it('correctly asserts link shareable projects', async () => {
     const result = await requireExactProjectVisibility({
