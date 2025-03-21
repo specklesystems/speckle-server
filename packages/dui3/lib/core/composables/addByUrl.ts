@@ -35,6 +35,15 @@ export function useAddByUrl() {
 
   const tryParseUrlInternal = async (url: string, type: 'sender' | 'receiver') => {
     urlParsedData.value = undefined
+
+    // try to parse url first
+    try {
+      new URL(url)
+    } catch {
+      urlParseError.value = 'Invalid url.'
+      return
+    }
+
     const parsedUrl = new URL(url)
     const params = extractIds(parsedUrl.pathname)
 
@@ -88,7 +97,7 @@ export function useAddByUrl() {
         model = omit(res.data.project.model, ['version']) as ModelListModelItemFragment
         //version = res.data.project.model.versions.items[0] as VersionListItemFragment
       }
-    } catch (err) {
+    } catch {
       urlParseError.value = 'Failed to retrieve project info.'
       return
     }
