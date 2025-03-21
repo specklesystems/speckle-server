@@ -19,7 +19,7 @@
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc",
     "lint:ci": "yarn lint:tsc",
-    "test": "vitest src/authz/policies/canQueryProject.spec.ts",
+    "test": "vitest",
     "test:single-run": "vitest run"
   },
   "sideEffects": false,
@@ -56,7 +56,6 @@
     "@types/ua-parser-js": "^0.7.39",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
-    "crypto-random-string": "^5.0.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "knex": "^2.5.1",

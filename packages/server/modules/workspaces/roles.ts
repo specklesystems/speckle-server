@@ -1,30 +1,30 @@
 import { UserWorkspaceRole } from '@/modules/shared/domain/rolesAndScopes/types'
-import { Roles, RoleInfo } from '@speckle/shared'
-import { pick } from 'lodash'
+import { Roles } from '@speckle/shared'
 
 const aclTableName = 'workspace_acl'
 const resourceTarget = 'workspaces'
 
-const keysToPick = ['weight', 'description'] as const
-
 export const workspaceRoles: UserWorkspaceRole[] = [
   {
     name: Roles.Workspace.Admin,
-    ...pick(RoleInfo.Workspace[Roles.Workspace.Admin], keysToPick),
+    description: 'Has root on the workspace',
+    weight: 1000,
     public: true,
     resourceTarget,
     aclTableName
   },
   {
     name: Roles.Workspace.Member,
-    ...pick(RoleInfo.Workspace[Roles.Workspace.Member], keysToPick),
+    description: 'A regular member of the workspace',
+    weight: 100,
     public: true,
     resourceTarget,
     aclTableName
   },
   {
     name: Roles.Workspace.Guest,
-    ...pick(RoleInfo.Workspace[Roles.Workspace.Guest], keysToPick),
+    description: 'An external guest member of the workspace with limited rights',
+    weight: 50,
     public: true,
     resourceTarget,
     aclTableName
