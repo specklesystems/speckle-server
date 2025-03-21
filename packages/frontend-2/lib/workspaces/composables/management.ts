@@ -34,7 +34,7 @@ import {
   processWorkspaceInviteMutation,
   setDefaultRegionMutation,
   workspaceUpdateRoleMutation,
-  workspaceUpdateSeatTypeMutation
+  workspacesUpdateSeatTypeMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError, GraphQLFormattedError } from 'graphql'
@@ -494,7 +494,7 @@ export const useWorkspaceUpdateRole = () => {
 }
 
 export const useWorkspaceUpdateSeatType = () => {
-  const { mutate } = useMutation(workspaceUpdateSeatTypeMutation)
+  const { mutate } = useMutation(workspacesUpdateSeatTypeMutation)
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
