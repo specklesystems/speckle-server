@@ -24,7 +24,7 @@ import {
   MaybeNullOrUndefined,
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
-import { Authz, Optional, wait } from '@speckle/shared'
+import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
@@ -48,7 +48,6 @@ import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
-import { getLoaders } from '@/modules/loaders'
 
 export const authMiddlewareCreator = (
   steps: AuthPipelineFunction[]
@@ -221,14 +220,11 @@ export async function buildContext({
     await wait(delay)
   }
 
-  const authPolicies = Authz.authPoliciesFactory(getLoaders())
-
   // Adding request data loaders
   return await addLoadersToCtx(
     {
       ...ctx,
-      log,
-      authPolicies
+      log
     },
     { cleanLoadersEarly }
   )

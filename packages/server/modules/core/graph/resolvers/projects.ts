@@ -81,6 +81,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -88,9 +89,6 @@ import {
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
-import { throwUncoveredError } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
-import { Authz } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -179,31 +177,28 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.canQuery({
-        projectId: args.id,
+      const getStream = getStreamFactory({ db })
+      const stream = await getStream({
+        streamId: args.id,
         userId: context.userId
       })
-
-      if (!canQuery.authorized) {
-        switch (canQuery.error.code) {
-          case Authz.ProjectNotFoundError.code:
-            throw new StreamNotFoundError()
-          case Authz.ProjectNoAccessError.code:
-          case Authz.WorkspaceNoAccessError.code:
-          case Authz.WorkspaceSsoSessionInvalidError.code:
-            throw new ForbiddenError(canQuery.error.message)
-          default:
-            throwUncoveredError(canQuery.error)
-        }
+      if (!stream) {
+        throw new StreamNotFoundError('Project not found')
       }
 
-      const project = await getStream({ streamId: args.id })
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
+      )
 
-      if (!project?.isPublic || !project.isDiscoverable) {
+      if (!stream.isPublic) {
+        await throwForNotHavingServerRole(context, Roles.Server.Guest)
         validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
-      return project
+      return stream
     }
   },
   Mutation: {

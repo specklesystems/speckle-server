@@ -28,57 +28,47 @@ export const RoleInfo = Object.freeze(<const>{
   Stream: {
     [Roles.Stream.Owner]: {
       title: 'Owner',
-      description: 'Can edit project, including settings, collaborators and all models',
-      weight: 1000
+      description: 'Can edit project, including settings, collaborators and all models'
     },
     [Roles.Stream.Contributor]: {
       title: 'Contributor',
-      description: 'Can create models, publish model versions, and comment',
-      weight: 500
+      description: 'Can create models, publish model versions, and comment'
     },
     [Roles.Stream.Reviewer]: {
       title: 'Reviewer',
-      description: 'Can view models, load model data, and comment',
-      weight: 100
+      description: 'Can view models, load model data, and comment'
     }
   },
   Server: {
     [Roles.Server.Admin]: {
       title: 'Admin',
-      description: 'Can edit server, including settings, users and all projects',
-      weight: 1000
+      description: 'Can edit server, including settings, users and all projects'
     },
     [Roles.Server.User]: {
       title: 'User',
-      description: 'Can create and own projects',
-      weight: 100
+      description: 'Can create and own projects'
     },
     [Roles.Server.Guest]: {
       title: 'Guest',
-      description: "Can contribute to projects they're invited to",
-      weight: 50
+      description: "Can contribute to projects they're invited to"
     },
     [Roles.Server.ArchivedUser]: {
       title: 'Archived',
-      description: 'Can no longer access server',
-      weight: 10
+      description: 'Can no longer access server'
     }
   },
   Workspace: {
     [Roles.Workspace.Admin]: {
       title: 'Admin',
-      description: 'Can edit workspace, including settings, members and all projects',
-      weight: 1000
+      description: 'Can edit workspace, including settings, members and all projects'
     },
     [Roles.Workspace.Member]: {
       title: 'Member',
-      description: 'Can create and own projects',
-      weight: 100
+      description: 'Can create and own projects'
     },
     [Roles.Workspace.Guest]: {
       title: 'Guest',
-      description: "Can contribute to projects they're invited to",
-      weight: 50
+      description: "Can contribute to projects they're invited to"
     }
   }
 })
