@@ -1,6 +1,6 @@
 import {
-  WorkspaceUserUpdateActionTypes,
-  type WorkspaceUserUpdateActionConfig
+  WorkspaceUserActionTypes,
+  type WorkspaceUserActionConfig
 } from '~/lib/settings/helpers/types'
 import { Roles, type WorkspaceSeatType, SeatTypes } from '@speckle/shared'
 
@@ -16,11 +16,11 @@ export const WorkspaceSeatTypeDescriptions: Record<WorkspaceSeatType, string> = 
   [SeatTypes.Viewer]: 'Can view and receive models, but not send to them'
 }
 
-export const WorkspaceUserUpdateConfig: Record<
-  WorkspaceUserUpdateActionTypes,
-  WorkspaceUserUpdateActionConfig
+export const WorkspaceUserActionsConfig: Record<
+  WorkspaceUserActionTypes,
+  WorkspaceUserActionConfig
 > = {
-  [WorkspaceUserUpdateActionTypes.MakeAdmin]: {
+  [WorkspaceUserActionTypes.MakeAdmin]: {
     menu: {
       title: 'Make admin...',
       show: ({
@@ -44,7 +44,7 @@ export const WorkspaceUserUpdateConfig: Record<
       seatCountMessage: true
     }
   },
-  [WorkspaceUserUpdateActionTypes.RemoveAdmin]: {
+  [WorkspaceUserActionTypes.RemoveAdmin]: {
     menu: {
       title: 'Remove as admin...',
       show: ({
@@ -64,7 +64,7 @@ export const WorkspaceUserUpdateConfig: Record<
       seatCountMessage: false
     }
   },
-  [WorkspaceUserUpdateActionTypes.MakeGuest]: {
+  [WorkspaceUserActionTypes.MakeGuest]: {
     menu: {
       title: 'Make guest...',
       show: ({
@@ -83,7 +83,7 @@ export const WorkspaceUserUpdateConfig: Record<
       buttonText: 'Make a guest'
     }
   },
-  [WorkspaceUserUpdateActionTypes.MakeMember]: {
+  [WorkspaceUserActionTypes.MakeMember]: {
     menu: {
       title: 'Make member...',
       show: ({
@@ -105,7 +105,7 @@ export const WorkspaceUserUpdateConfig: Record<
       buttonText: 'Make a member'
     }
   },
-  [WorkspaceUserUpdateActionTypes.UpgradeEditor]: {
+  [WorkspaceUserActionTypes.UpgradeEditor]: {
     menu: {
       title: 'Upgrade to editor seat...',
       show: ({
@@ -124,7 +124,7 @@ export const WorkspaceUserUpdateConfig: Record<
       seatCountMessage: true
     }
   },
-  [WorkspaceUserUpdateActionTypes.DowngradeEditor]: {
+  [WorkspaceUserActionTypes.DowngradeEditor]: {
     menu: {
       title: 'Downgrade to viewer seat...',
       show: ({
@@ -144,7 +144,7 @@ export const WorkspaceUserUpdateConfig: Record<
       seatCountMessage: true
     }
   },
-  [WorkspaceUserUpdateActionTypes.RemoveMember]: {
+  [WorkspaceUserActionTypes.RemoveMember]: {
     menu: {
       title: 'Remove from workspace...',
       show: ({
@@ -163,7 +163,7 @@ export const WorkspaceUserUpdateConfig: Record<
       seatCountMessage: true
     }
   },
-  [WorkspaceUserUpdateActionTypes.LeaveWorkspace]: {
+  [WorkspaceUserActionTypes.LeaveWorkspace]: {
     menu: {
       title: 'Leave workspace...',
       show: ({ isActiveUserTargetUser = false }) => isActiveUserTargetUser

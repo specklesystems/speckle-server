@@ -68,13 +68,13 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SeatTypeDisplay :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
-        <SettingsWorkspacesMembersUpdateActionsMenu
+        <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
           :workspace-role="workspace?.role"
           :workspace-id="workspace?.id"
@@ -91,7 +91,6 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import SeatTypeDisplay from '../SeatTypeDisplay.vue'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 export type UserItem = (typeof members)['value'][0]
 

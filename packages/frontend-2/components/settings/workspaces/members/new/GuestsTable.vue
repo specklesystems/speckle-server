@@ -52,13 +52,13 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SeatTypeDisplay :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
-        <SettingsWorkspacesMembersUpdateActionsMenu
+        <SettingsWorkspacesMembersActionsMenu
           v-if="isWorkspaceAdmin"
           :target-user="{
             ...item.user,
@@ -84,7 +84,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import SeatTypeDisplay from '../SeatTypeDisplay.vue'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
 graphql(`
