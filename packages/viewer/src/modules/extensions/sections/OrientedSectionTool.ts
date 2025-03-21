@@ -3,7 +3,6 @@ import {
   Group,
   Box3,
   BufferGeometry,
-  MeshStandardMaterial,
   Mesh,
   Vector3,
   Plane,
@@ -16,7 +15,11 @@ import {
   Matrix3,
   Vector2,
   Intersection,
-  Face
+  Face,
+  InterleavedBufferAttribute,
+  DynamicDrawUsage,
+  Color,
+  MeshBasicMaterial
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -33,6 +36,80 @@ import {
   SectionToolEvent,
   SectionToolEventPayload
 } from './SectionTool.js'
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
+import { Geometry } from '../../converter/Geometry.js'
+import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
+
+const unitCube = [
+  -1 * 0.5,
+  -1 * 0.5,
+  -1 * 0.5,
+
+  1 * 0.5,
+  -1 * 0.5,
+  -1 * 0.5,
+
+  1 * 0.5,
+  1 * 0.5,
+  -1 * 0.5,
+
+  -1 * 0.5,
+  1 * 0.5,
+  -1 * 0.5,
+
+  -1 * 0.5,
+  -1 * 0.5,
+  1 * 0.5,
+
+  1 * 0.5,
+  -1 * 0.5,
+  1 * 0.5,
+
+  1 * 0.5,
+  1 * 0.5,
+  1 * 0.5,
+
+  -1 * 0.5,
+  1 * 0.5,
+  1 * 0.5
+]
+
+const unitCubeIndices: number[] = [
+  0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2,
+  6, 4, 5, 0, 0, 5, 1
+]
+
+const unitCubeOutline: number[] = [
+  // Bottom Face
+  -0.5, -0.5, -0.5, 0.5, -0.5, -0.5,
+
+  0.5, -0.5, -0.5, 0.5, 0.5, -0.5,
+
+  0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
+
+  -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
+
+  // Top Face
+  -0.5, -0.5, 0.5, 0.5, -0.5, 0.5,
+
+  0.5, -0.5, 0.5, 0.5, 0.5, 0.5,
+
+  0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+
+  -0.5, 0.5, 0.5, -0.5, -0.5, 0.5,
+
+  // Sides
+  -0.5, -0.5, -0.5, -0.5, -0.5, 0.5,
+
+  0.5, -0.5, 0.5, 0.5, -0.5, -0.5,
+
+  0.5, 0.5, 0.5, 0.5, 0.5, -0.5,
+
+  -0.5, 0.5, 0.5, -0.5, 0.5, -0.5
+]
+
+const scratchArray: number[] = new Array(unitCubeOutline.length)
 
 export class OrientedSectionTool extends SectionTool {
   public get inject() {
@@ -59,8 +136,9 @@ export class OrientedSectionTool extends SectionTool {
 
   protected dragging = false
   protected display: Group
-  protected boxMaterial: MeshStandardMaterial
+  protected boxMaterial: MeshBasicMaterial
   protected boxMesh: Mesh
+  protected boxOutline: LineSegments2
 
   protected translationRotationAnchor: Object3D
   protected scaleAnchor: Object3D
@@ -132,16 +210,22 @@ export class OrientedSectionTool extends SectionTool {
 
     // box
     const boxGeometry = this.createCubeGeometry()
-    this.boxMaterial = new MeshStandardMaterial({
+    this.boxMaterial = new MeshBasicMaterial({
       color: 0x00ffff,
-      opacity: 0,
-      wireframe: true,
-      side: DoubleSide
+      opacity: 1,
+      wireframe: false,
+      side: DoubleSide,
+      transparent: false,
+      visible: false,
+      depthWrite: false
     })
     this.boxMesh = new Mesh(boxGeometry, this.boxMaterial)
     this.boxMesh.layers.set(ObjectLayers.PROPS)
 
     this.display.add(this.boxMesh)
+
+    this.boxOutline = this.createOutline()
+    this.display.add(this.boxOutline)
 
     this.translationRotationAnchor = new Object3D()
     this.translationRotationAnchor.name = 'TranslationAnchor'
@@ -289,6 +373,7 @@ export class OrientedSectionTool extends SectionTool {
         new Matrix4().setFromMatrix3(this.obb.rotation)
       )
     )
+    this.updateOutline()
   }
 
   //@ts-ignore
@@ -436,39 +521,9 @@ export class OrientedSectionTool extends SectionTool {
     this.scaleControls.showZ = cubeFace.axis === 'z'
   }
 
-  private createCubeGeometry(width = 0.5, depth = 0.5, height = 0.5) {
-    // GJ Prettier
-    const vertices = [
-      -1 * width,
-      -1 * depth,
-      -1 * height,
-      1 * width,
-      -1 * depth,
-      -1 * height,
-      1 * width,
-      1 * depth,
-      -1 * height,
-      -1 * width,
-      1 * depth,
-      -1 * height,
-      -1 * width,
-      -1 * depth,
-      1 * height,
-      1 * width,
-      -1 * depth,
-      1 * height,
-      1 * width,
-      1 * depth,
-      1 * height,
-      -1 * width,
-      1 * depth,
-      1 * height
-    ]
-
-    const indexes = [
-      0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7,
-      7, 2, 6, 4, 5, 0, 0, 5, 1
-    ]
+  private createCubeGeometry() {
+    const vertices = unitCube.slice()
+    const indexes = unitCubeIndices.slice()
 
     const g = new BufferGeometry()
     g.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3))
@@ -476,6 +531,78 @@ export class OrientedSectionTool extends SectionTool {
     g.computeBoundingBox()
     g.computeVertexNormals()
     return g
+  }
+
+  protected createOutline() {
+    const buffer = new Float32Array(unitCubeOutline.slice())
+
+    const lineGeometry = new LineSegmentsGeometry()
+    lineGeometry.setPositions(new Float32Array(buffer))
+    ;(
+      lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data.setUsage(DynamicDrawUsage)
+
+    Geometry.updateRTEGeometry(lineGeometry, buffer)
+    const material = new SpeckleLineMaterial(
+      {
+        color: 0x047efb,
+        linewidth: 2,
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: new Vector2(32, 32)
+      },
+      ['USE_RTE']
+    )
+    material.color = new Color(0x047efb)
+    material.color.convertSRGBToLinear()
+    material.linewidth = 2
+    material.worldUnits = false
+    material.resolution = new Vector2(32, 32)
+
+    const clipOutline = new LineSegments2(lineGeometry, material)
+    clipOutline.name = `oriented-box-outline`
+    clipOutline.frustumCulled = false
+    clipOutline.renderOrder = 1
+    clipOutline.layers.set(ObjectLayers.PROPS)
+
+    return clipOutline
+  }
+
+  protected updateOutline() {
+    const obbMatrix = new Matrix4().compose(
+      this.obb.center,
+      new Quaternion().setFromRotationMatrix(
+        new Matrix4().setFromMatrix3(this.obb.rotation)
+      ),
+      new Vector3().copy(this.obb.halfSize).multiplyScalar(2)
+    )
+    const vec = new Vector3()
+    for (let k = 0; k < unitCubeOutline.length; k += 3) {
+      vec.fromArray(unitCubeOutline, k)
+      vec.applyMatrix4(obbMatrix)
+      scratchArray[k] = vec.x
+      scratchArray[k + 1] = vec.y
+      scratchArray[k + 2] = vec.z
+    }
+
+    const posAttr = (
+      this.boxOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data
+    const posAttrLow = (
+      this.boxOutline.geometry.attributes[
+        'instanceStartLow'
+      ] as InterleavedBufferAttribute
+    ).data
+    Geometry.DoubleToHighLowBuffer(
+      scratchArray,
+      posAttrLow.array as Float32Array,
+      posAttr.array as Float32Array
+    )
+    this.boxOutline.geometry.attributes['instanceStart'].needsUpdate = true
+    this.boxOutline.geometry.attributes['instanceEnd'].needsUpdate = true
+    this.boxOutline.geometry.attributes['instanceStartLow'].needsUpdate = true
+    this.boxOutline.geometry.attributes['instanceEndLow'].needsUpdate = true
   }
 
   public getBox(): OBB {

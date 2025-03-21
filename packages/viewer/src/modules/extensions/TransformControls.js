@@ -570,24 +570,24 @@ class TransformControls extends Controls {
         _tempVector.applyQuaternion(this._worldQuaternionInv)
         _tempVector2.applyQuaternion(this._worldQuaternionInv)
 
-        _tempVector2.divide(_tempVector)
+        /** Changed from divide. Need linear movement */
+        _tempVector2.sub(_tempVector)
 
         if (axis.search('X') === -1) {
-          _tempVector2.x = 1
+          _tempVector2.x = 0
         }
 
         if (axis.search('Y') === -1) {
-          _tempVector2.y = 1
+          _tempVector2.y = 0
         }
 
         if (axis.search('Z') === -1) {
-          _tempVector2.z = 1
+          _tempVector2.z = 0
         }
       }
-
       // Apply scale
-
-      object.scale.copy(this._scaleStart).multiply(_tempVector2)
+      /** Changed from multiply. Needs linear movement. Also scale is applied bilaterally, so we divide by 2 */
+      object.scale.copy(this._scaleStart).add(_tempVector2.multiplyScalar(0.5))
 
       if (this.scaleSnap) {
         if (axis.search('X') !== -1) {
