@@ -19,7 +19,8 @@ import {
   InterleavedBufferAttribute,
   DynamicDrawUsage,
   Color,
-  MeshBasicMaterial
+  MeshBasicMaterial,
+  PlaneGeometry
 } from 'three'
 import { intersectObjectWithRay, TransformControls } from '../TransformControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
@@ -40,6 +41,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { Geometry } from '../../converter/Geometry.js'
 import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
+import SpeckleStandardMaterial from '../../materials/SpeckleStandardMaterial.js'
 
 const unitCube = [
   -1 * 0.5,
@@ -110,6 +112,7 @@ const unitCubeOutline: number[] = [
 ]
 
 const scratchArray: number[] = new Array(unitCubeOutline.length)
+const scratchPlaneArray: number[] = new Array(12)
 
 export class OrientedSectionTool extends SectionTool {
   public get inject() {
@@ -139,6 +142,7 @@ export class OrientedSectionTool extends SectionTool {
   protected boxMaterial: MeshBasicMaterial
   protected boxMesh: Mesh
   protected boxOutline: LineSegments2
+  protected facePlane: Mesh
 
   protected translationRotationAnchor: Object3D
   protected scaleAnchor: Object3D
@@ -226,6 +230,9 @@ export class OrientedSectionTool extends SectionTool {
 
     this.boxOutline = this.createOutline()
     this.display.add(this.boxOutline)
+
+    this.facePlane = this.createFacePlane()
+    this.display.add(this.facePlane)
 
     this.translationRotationAnchor = new Object3D()
     this.translationRotationAnchor.name = 'TranslationAnchor'
@@ -451,6 +458,7 @@ export class OrientedSectionTool extends SectionTool {
       this.translateControls.attach(this.translationRotationAnchor)
       this.rotateControls.attach(this.translationRotationAnchor)
       this.scaleControls.detach()
+      this.facePlane.visible = false
       this.draggingFace = null
       return
     }
@@ -519,6 +527,32 @@ export class OrientedSectionTool extends SectionTool {
     this.scaleControls.showY = cubeFace.axis === 'y'
     //@ts-ignore
     this.scaleControls.showZ = cubeFace.axis === 'z'
+
+    this.facePlane.visible = true
+    const v1 = new Vector3().fromBufferAttribute(vertices, cubeFace.verts[1])
+    const v2 = new Vector3().fromBufferAttribute(vertices, cubeFace.verts[2])
+
+    v0.applyMatrix4(obbMatrix)
+    v1.applyMatrix4(obbMatrix)
+    v2.applyMatrix4(obbMatrix)
+    v3.applyMatrix4(obbMatrix)
+
+    v0.toArray(scratchPlaneArray, 0)
+    v1.toArray(scratchPlaneArray, 3)
+    v2.toArray(scratchPlaneArray, 6)
+    v3.toArray(scratchPlaneArray, 9)
+
+    const posAttr = this.facePlane.geometry.attributes['position'] as BufferAttribute
+    // prettier-ignore
+    const posAttrLow = this.facePlane.geometry.attributes['position_low'] as BufferAttribute
+
+    Geometry.DoubleToHighLowBuffer(
+      scratchPlaneArray,
+      posAttrLow.array as Float32Array,
+      posAttr.array as Float32Array
+    )
+    posAttr.needsUpdate = true
+    posAttrLow.needsUpdate = true
   }
 
   private createCubeGeometry() {
@@ -546,7 +580,7 @@ export class OrientedSectionTool extends SectionTool {
     const material = new SpeckleLineMaterial(
       {
         color: 0x047efb,
-        linewidth: 2,
+        linewidth: 1,
         worldUnits: false,
         vertexColors: false,
         alphaToCoverage: false,
@@ -556,9 +590,10 @@ export class OrientedSectionTool extends SectionTool {
     )
     material.color = new Color(0x047efb)
     material.color.convertSRGBToLinear()
-    material.linewidth = 2
+    material.linewidth = 1
     material.worldUnits = false
     material.resolution = new Vector2(32, 32)
+    material.toneMapped = false
 
     const clipOutline = new LineSegments2(lineGeometry, material)
     clipOutline.name = `oriented-box-outline`
@@ -567,6 +602,37 @@ export class OrientedSectionTool extends SectionTool {
     clipOutline.layers.set(ObjectLayers.PROPS)
 
     return clipOutline
+  }
+
+  protected createFacePlane() {
+    const facePlaneGeometry = new PlaneGeometry(1, 1)
+    Geometry.updateRTEGeometry(facePlaneGeometry, new Float32Array(12))
+    ;(facePlaneGeometry.attributes.position as BufferAttribute).setUsage(
+      DynamicDrawUsage
+    )
+    ;(facePlaneGeometry.attributes['position_low'] as BufferAttribute).setUsage(
+      DynamicDrawUsage
+    )
+    const facePlane = new Mesh(
+      facePlaneGeometry,
+      new SpeckleStandardMaterial(
+        {
+          transparent: true,
+          side: DoubleSide,
+          opacity: 0.1,
+          wireframe: false,
+          color: 0x0a66ff,
+          metalness: 0.1,
+          roughness: 0.75
+        },
+        ['USE_RTE']
+      )
+    )
+    facePlane.layers.set(ObjectLayers.PROPS)
+    facePlane.renderOrder = 5
+    facePlane.frustumCulled = false
+
+    return facePlane
   }
 
   protected updateOutline() {

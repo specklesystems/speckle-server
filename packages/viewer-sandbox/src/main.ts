@@ -175,7 +175,7 @@ const getStream = () => {
     // MEPs (whatever they are)
     // 'https://latest.speckle.systems/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
-    'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
+    // 'https://latest.speckle.systems/streams/4658eb53b9/commits/d8ec9cccf7'
     // Alex more cubes
     // 'https://latest.speckle.systems/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
@@ -441,7 +441,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9'
 
     // Far away house section tool
-    // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
+    'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
 
     // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/49874f87a2ddd370bd2bf46b68c3660d'
