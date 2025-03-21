@@ -16,3 +16,20 @@ export const navigationWorkspaceListQuery = graphql(`
     }
   }
 `)
+
+export const workspaceSearchQuery = graphql(`
+  query WorkspaceSearch($workspaceSlug: String!, $query: String!) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      search(query: $query) {
+        name
+        value
+        category
+        workspaceId
+        projectId
+        modelId
+        versionId
+        objectId
+      }
+    }
+  }
+`)

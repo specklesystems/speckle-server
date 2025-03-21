@@ -4828,14 +4828,14 @@ export type WorkspaceRoleUpdateInput = {
 
 export type WorkspaceSearchResult = {
   __typename?: 'WorkspaceSearchResult';
-  commentId?: Maybe<Scalars['String']['output']>;
-  details: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  modelId?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  modelId: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  objectId?: Maybe<Scalars['String']['output']>;
-  projectId?: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
+  objectId: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+  versionId: Scalars['String']['output'];
+  workspaceId: Scalars['String']['output'];
 };
 
 export const WorkspaceSeatType = {

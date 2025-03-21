@@ -209,6 +209,7 @@ import {
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { Client } from '@opensearch-project/opensearch'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1207,8 +1208,65 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: parent.id
           })
         },
-        search: async () => {
-          return []
+        search: async (_parent, input) => {
+          const client = new Client({
+            node: 'https://speckle:i2APDe>>dAGi]NJ@search-speckle-search-fkfxxj536uescuse5735evmkbq.eu-north-1.es.amazonaws.com',
+            ssl: {
+              rejectUnauthorized: false
+            }
+          })
+
+          const response = await client.search({
+            index: 'v2-rvt-*',
+            body: {
+              query: {
+                bool: {
+                  must: [
+                    { term: { $workspaceId: 'cf29fa947c' } },
+                    { match: { value: { query: input.query, fuzziness: 'AUTO' } } }
+                  ]
+                }
+              }
+            }
+          } as {})
+
+          const items: {
+            name: string
+            value: string
+            category: string
+            workspaceId: string
+            projectId: string
+            modelId: string
+            versionId: string
+            objectId: string
+          }[] = []
+
+          for (const hit of response.body.hits.hits) {
+            const { _index, _source } = hit
+
+            const data = _source as {
+              $workspaceId: string
+              $projectId: string
+              $modelId: string
+              $versionId: string
+              $objectId: string
+              name: string
+              value: string
+            }
+
+            items.push({
+              name: data.name,
+              value: data.value,
+              category: _index.replace('v2-rvt-', '').replaceAll('-', ' '),
+              workspaceId: data.$workspaceId,
+              projectId: data.$projectId,
+              modelId: data.$modelId,
+              versionId: data.$versionId,
+              objectId: data.$objectId
+            })
+          }
+
+          return items
         }
       },
       WorkspaceSso: {

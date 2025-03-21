@@ -4848,14 +4848,14 @@ export type WorkspaceRoleUpdateInput = {
 
 export type WorkspaceSearchResult = {
   __typename?: 'WorkspaceSearchResult';
-  commentId?: Maybe<Scalars['String']['output']>;
-  details: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  modelId?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  modelId: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  objectId?: Maybe<Scalars['String']['output']>;
-  projectId?: Maybe<Scalars['String']['output']>;
-  type: Scalars['String']['output'];
+  objectId: Scalars['String']['output'];
+  projectId: Scalars['String']['output'];
+  value: Scalars['String']['output'];
+  versionId: Scalars['String']['output'];
+  workspaceId: Scalars['String']['output'];
 };
 
 export const WorkspaceSeatType = {
@@ -7232,14 +7232,14 @@ export type WorkspaceProjectsUpdatedMessageResolvers<ContextType = GraphQLContex
 };
 
 export type WorkspaceSearchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSearchResult'] = ResolversParentTypes['WorkspaceSearchResult']> = {
-  commentId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  details?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  objectId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  projectId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  objectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

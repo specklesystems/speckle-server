@@ -247,14 +247,14 @@ input PendingWorkspaceCollaboratorsFilter {
 }
 
 type WorkspaceSearchResult {
-  type: String!
-  label: String!
   name: String!
-  details: String!
-  projectId: String
-  modelId: String
-  objectId: String
-  commentId: String
+  value: String!
+  category: String!
+  workspaceId: String!
+  projectId: String!
+  modelId: String!
+  versionId: String!
+  objectId: String!
 }
 
 type Workspace {

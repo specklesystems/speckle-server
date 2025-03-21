@@ -48,15 +48,20 @@
                 </NuxtLink>
               </template>
 
+              <button @click.stop="handleOpenSearch">
+                <LayoutSidebarMenuGroupItem label="Search">
+                  <template #icon>
+                    <MagnifyingGlassIcon class="size-4 stroke-[1.5px]" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </button>
+
               <NuxtLink
                 v-if="activeWorkspaceSlug"
                 :to="workspaceRoute(activeWorkspaceSlug)"
                 @click="isOpenMobile = false"
               >
-                <LayoutSidebarMenuGroupItem
-                  label="Home"
-                  :active="route.name === 'workspaces-slug'"
-                >
+                <LayoutSidebarMenuGroupItem label="Home">
                   <template #icon>
                     <HomeIcon class="size-4 stroke-[1.5px]" />
                   </template>
@@ -68,10 +73,7 @@
                 :to="projectsRoute"
                 @click="isOpenMobile = false"
               >
-                <LayoutSidebarMenuGroupItem
-                  label="Projects"
-                  :active="isActive(projectsRoute)"
-                >
+                <LayoutSidebarMenuGroupItem label="Projects">
                   <template #icon>
                     <IconProjects class="size-4 text-foreground-2" />
                   </template>
@@ -79,10 +81,7 @@
               </NuxtLink>
 
               <NuxtLink :to="connectorsRoute" @click="isOpenMobile = false">
-                <LayoutSidebarMenuGroupItem
-                  label="Connectors"
-                  :active="isActive(connectorsRoute)"
-                >
+                <LayoutSidebarMenuGroupItem label="Connectors">
                   <template #icon>
                     <IconConnectors class="size-4 text-foreground-2" />
                   </template>
@@ -152,6 +151,10 @@
     </template>
 
     <FeedbackDialog v-model:open="showFeedbackDialog" />
+    <DashboardSidebarSearchDialog
+      v-model:is-open="showSearchDialog"
+      :workspace-slug="activeWorkspaceSlug"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -170,7 +173,7 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { HomeIcon } from '@heroicons/vue/24/outline'
+import { HomeIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
@@ -184,6 +187,7 @@ const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
+const showSearchDialog = ref(false)
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
@@ -192,5 +196,9 @@ const isActive = (...routes: string[]): boolean => {
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true
   isOpenMobile.value = false
+}
+
+const handleOpenSearch = () => {
+  showSearchDialog.value = true
 }
 </script>

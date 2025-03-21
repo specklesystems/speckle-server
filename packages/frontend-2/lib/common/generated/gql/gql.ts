@@ -217,6 +217,7 @@ type Documents = {
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": typeof types.SetActiveWorkspaceDocument,
     "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": typeof types.NavigationActiveWorkspaceDocument,
     "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": typeof types.NavigationWorkspaceListDocument,
+    "\n  query WorkspaceSearch($workspaceSlug: String!, $query: String!) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      search(query: $query) {\n        name\n        value\n        category\n        workspaceId\n        projectId\n        modelId\n        versionId\n        objectId\n      }\n    }\n  }\n": typeof types.WorkspaceSearchDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": typeof types.ProjectPageTeamInternals_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": typeof types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": typeof types.ProjectDashboardItemNoModelsFragmentDoc,
@@ -623,6 +624,7 @@ const documents: Documents = {
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": types.SetActiveWorkspaceDocument,
     "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": types.NavigationActiveWorkspaceDocument,
     "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": types.NavigationWorkspaceListDocument,
+    "\n  query WorkspaceSearch($workspaceSlug: String!, $query: String!) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      search(query: $query) {\n        name\n        value\n        category\n        workspaceId\n        projectId\n        modelId\n        versionId\n        objectId\n      }\n    }\n  }\n": types.WorkspaceSearchDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
@@ -1652,6 +1654,10 @@ export function graphql(source: "\n  query NavigationActiveWorkspace($slug: Stri
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n"): (typeof documents)["\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceSearch($workspaceSlug: String!, $query: String!) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      search(query: $query) {\n        name\n        value\n        category\n        workspaceId\n        projectId\n        modelId\n        versionId\n        objectId\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSearch($workspaceSlug: String!, $query: String!) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      search(query: $query) {\n        name\n        value\n        category\n        workspaceId\n        projectId\n        modelId\n        versionId\n        objectId\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
