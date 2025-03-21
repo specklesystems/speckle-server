@@ -212,11 +212,15 @@ const createNewModel = async (name: string) => {
     refetch() // Sorts the list with newly created model otherwise it will put the model at the bottom.
     emit('next', res?.data?.modelMutations.create)
   } else {
-    // TODO: Error out
+    let errorMessage = 'Undefined error'
+    if (res?.errors && res?.errors.length !== 0) {
+      errorMessage = res?.errors[0].message
+    }
+
     hostAppStore.setNotification({
       type: 1,
       title: 'Failed to create model',
-      description: res?.errors[0].message || 'Undefined error'
+      description: errorMessage
     })
   }
   isCreatingModel.value = false
