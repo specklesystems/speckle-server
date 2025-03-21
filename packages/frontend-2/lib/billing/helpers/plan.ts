@@ -9,7 +9,7 @@ export const formatPrice = (price?: { amount: number; currencySymbol: string }) 
 }
 
 // Internal plan names dont match the names we use in the product
-export const formatPlanName = (plan?: WorkspacePlans) => {
+export const formatName = (plan?: WorkspacePlans) => {
   if (!plan) return ''
 
   const formattedPlanNames: Record<WorkspacePlans, string> = {

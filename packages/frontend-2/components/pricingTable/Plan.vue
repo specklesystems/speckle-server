@@ -5,7 +5,7 @@
     <div class="lg:h-32">
       <div class="flex items-center gap-x-2">
         <h4 class="text-body font-medium">
-          {{ formatPlanName(plan) }}
+          {{ formatName(plan) }}
         </h4>
         <CommonBadge v-if="badgeText" rounded>
           {{ badgeText }}
@@ -93,7 +93,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice, formatPlanName } from '~/lib/billing/helpers/plan'
+import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 
 defineEmits<{
@@ -216,7 +216,7 @@ const buttonText = computed(() => {
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
-    return `Subscribe to ${formatPlanName(props.plan)}`
+    return `Subscribe to ${formatName(props.plan)}`
   }
   // Current plan case
   if (isCurrentPlan.value) {
@@ -234,7 +234,7 @@ const buttonText = computed(() => {
     return 'Change to annual plan'
   }
   // Upgrade case
-  return canUpgradeToPlan.value ? `Upgrade to ${formatPlanName(props.plan)}` : ''
+  return canUpgradeToPlan.value ? `Upgrade to ${formatName(props.plan)}` : ''
 })
 
 const badgeText = computed(() =>
