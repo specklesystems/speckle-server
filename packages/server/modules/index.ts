@@ -24,6 +24,7 @@ import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
+import { validateLoaders } from '@/modules/loaders'
 
 /**
  * Cached speckle module requires
@@ -126,6 +127,8 @@ export const init = async (params: { app: Express; metricsRegister: Registry }) 
   for (const module of modules) {
     await module.finalize?.({ app, isInitial, metricsRegister })
   }
+
+  validateLoaders()
 
   hasInitializationOccurred = true
 }

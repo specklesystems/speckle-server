@@ -39,6 +39,15 @@ type WorkspacePlanPrices = {
   }
 }
 
+type WorkspacePlanPricesNew = {
+  [plan in PaidWorkspacePlans]: {
+    [interval in WorkspacePlanBillingIntervals]?: {
+      amount: number
+      currencySymbol: string
+    }
+  }
+}
+
 export const useWorkspacePlanPrices = () => {
   const isBillingEnabled = useIsBillingIntegrationEnabled()
   const { result } = useQuery(workspacePlanPricesQuery, undefined, () => ({
@@ -78,5 +87,20 @@ export const useWorkspacePlanPrices = () => {
     }, {} as WorkspacePlanPrices)
   })
 
-  return { prices }
+  const pricesNew = computed(() => {
+    const base = result.value?.serverInfo?.workspaces?.planPrices
+    if (!base) return undefined
+
+    return Object.fromEntries(
+      base.map(({ id, monthly, yearly }) => [
+        id,
+        {
+          ...(monthly ? { [WorkspacePlanBillingIntervals.Monthly]: monthly } : {}),
+          ...(yearly ? { [WorkspacePlanBillingIntervals.Yearly]: yearly } : {})
+        }
+      ])
+    ) as WorkspacePlanPricesNew
+  })
+
+  return { prices, pricesNew }
 }
