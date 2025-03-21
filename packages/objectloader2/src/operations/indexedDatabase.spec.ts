@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import IndexedDatabase from './indexedDatabase.js'
-import { IDBFactory } from 'fake-indexeddb'
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { Item } from '../types/types.js'
 import BufferQueue from '../helpers/bufferQueue.js'
 
@@ -8,11 +8,11 @@ describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
     const i: Item = { baseId: 'id', base: { id: 'id' } }
     const database = new IndexedDatabase({
-      streamId: 'streamId',
       indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange,
       maxCacheBatchWriteWait: 200
     })
-    await database.write({ item: i })
+    await database.add(i)
     await database.finish()
 
     const x = await database.getItem({ id: 'id' })
@@ -24,11 +24,11 @@ describe('database cache', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
     const database = new IndexedDatabase({
-      streamId: 'streamId',
-      indexedDB: new IDBFactory()
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
-    await database.write({ item: i1 })
-    await database.write({ item: i2 })
+    await database.add(i1)
+    await database.add(i2)
     await database.finish()
 
     const x1 = await database.getItem({ id: i1.baseId })
@@ -44,11 +44,11 @@ describe('database cache', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id' } }
     const i2: Item = { baseId: 'id2', base: { id: 'id' } }
     const database = new IndexedDatabase({
-      streamId: 'streamId',
-      indexedDB: new IDBFactory()
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
-    await database.write({ item: i1 })
-    await database.write({ item: i2 })
+    await database.add(i1)
+    await database.add(i2)
     await database.finish()
 
     const foundItems = new BufferQueue<Item>()

@@ -14,6 +14,7 @@ export interface ObjectLoader2Options {
 export interface BaseDatabaseOptions {
   logger?: CustomLogger
   indexedDB?: IDBFactory
+  keyRange?: IDBKeyRange
   enableCaching?: boolean
   maxCacheReadSize?: number
   maxCacheWriteSize?: number

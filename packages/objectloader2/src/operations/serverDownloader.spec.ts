@@ -13,7 +13,7 @@ describe('downloader', () => {
     fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
     const results = new AsyncGeneratorQueue<Item>()
     const db = {
-      async write(): Promise<void> {
+      async add(): Promise<void> {
         return Promise.resolve()
       }
     } as unknown as Cache
@@ -26,10 +26,8 @@ describe('downloader', () => {
       token: 'token',
 
       fetch: fetchMocker,
-      maxDownloadSize: 5,
-      maxDownloadBatchWait: 200
     })
-    downloader.initializePool({ total: 1 })
+    downloader.initializePool({ total: 1, maxDownloadBatchWait: 200 })
     downloader.add('id')
     await downloader.finish()
     results.finish()
@@ -51,7 +49,7 @@ describe('downloader', () => {
     )
     const results = new AsyncGeneratorQueue<Item>()
     const db = {
-      async write(): Promise<void> {
+      async add(): Promise<void> {
         return Promise.resolve()
       }
     } as unknown as Cache
@@ -63,11 +61,9 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker,
-      maxDownloadSize: 5,
-      maxDownloadBatchWait: 200
+      fetch: fetchMocker
     })
-    downloader.initializePool({ total: 2 })
+    downloader.initializePool({ total: 2, maxDownloadBatchWait: 200 })
     downloader.add('id')
     await downloader.finish()
     results.finish()
@@ -87,7 +83,7 @@ describe('downloader', () => {
     fetchMocker.mockResponseOnce(JSON.stringify(i.base))
     const results = new AsyncGeneratorQueue<Item>()
     const db = {
-      async write(): Promise<void> {
+      async add(): Promise<void> {
         return Promise.resolve()
       }
     } as unknown as Cache
@@ -99,9 +95,7 @@ describe('downloader', () => {
       objectId: i.baseId,
       token: 'token',
 
-      fetch: fetchMocker,
-      maxDownloadSize: 5,
-      maxDownloadBatchWait: 200
+      fetch: fetchMocker
     })
     const x = await downloader.downloadSingle()
     expect(JSON.stringify(x)).toBe(JSON.stringify(i))

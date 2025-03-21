@@ -1,6 +1,6 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
-import { CustomLogger, Item } from '../types/types.js'
+import { Item } from '../types/types.js'
 import { isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
@@ -62,6 +62,7 @@ export default class IndexedDatabase implements Cache {
   async #openDatabase(): Promise<ObjectStore> {
     const db = new ObjectStore({
       indexedDB: this.#options.indexedDB,
+      IDBKeyRange: this.#options.keyRange,
       chromeTransactionDurability: 'relaxed'
     })
     await db.open()

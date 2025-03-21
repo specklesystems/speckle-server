@@ -32,8 +32,8 @@ describe('objectloader2', () => {
         expect(params.id).toBe(root.baseId)
         return Promise.resolve<Item | undefined>(undefined)
       },
-      write(params: { item: Item }): Promise<void> {
-        expect(params.item).toBe(root)
+      add(item: Item): Promise<void> {
+        expect(item).toBe(root)
         return Promise.resolve()
       }
     } as Cache
