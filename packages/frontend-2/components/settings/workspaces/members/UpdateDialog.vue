@@ -3,7 +3,7 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
     <div class="flex flex-col gap-4 mb-4 -mt-1">
-      <CommonCard size="sm" class="bg-foundation-2 text-body-2xs">
+      <CommonCard class="bg-foundation-2 text-body-2xs !p-3">
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
             hide-tooltip
