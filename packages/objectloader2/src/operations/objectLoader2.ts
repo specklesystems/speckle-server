@@ -20,7 +20,13 @@ export default class ObjectLoader2 {
 
     this.#logger = options.logger || console.log
     this.#gathered = new AsyncGeneratorQueue()
-    this.#database = options.cache || new IndexedDatabase({ logger: this.#logger })
+    this.#database =
+      options.cache ||
+      new IndexedDatabase({
+        logger: this.#logger,
+        maxCacheReadSize: 10000,
+        maxCacheWriteSize: 10000
+      })
     this.#downloader =
       options.downloader ||
       new ServerDownloader({

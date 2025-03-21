@@ -34,8 +34,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21"
+    "dexie": "^4.0.11"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",

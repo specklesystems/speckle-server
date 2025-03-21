@@ -1,19 +1,29 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
-import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { CustomLogger, Item, isBase } from '../types/types.js'
-import { ensureError, isSafari } from '@speckle/shared'
+import { CustomLogger, Item } from '../types/types.js'
+import { isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
-import { isString } from 'lodash'
+import { Dexie, DexieOptions, Table } from 'dexie'
+
+class ObjectStore extends Dexie {
+  static #databaseName: string = 'speckle-cache'
+  objects!: Table<Item, string> // Table type: <entity, primaryKey>
+
+  constructor(options: DexieOptions) {
+    super(ObjectStore.#databaseName, options)
+
+    this.version(1).stores({
+      objects: 'baseId, item' // baseId is primary key
+    })
+  }
+}
 
 export default class IndexedDatabase implements Cache {
-  static #databaseName: string = 'speckle-cache'
-  static #storeName: string = 'objects'
   #options: BaseDatabaseOptions
   #logger: CustomLogger
 
-  #cacheDB?: IDBDatabase
+  #cacheDB?: ObjectStore
 
   #writeQueue: BatchingQueue<Item> | undefined
 
@@ -21,7 +31,7 @@ export default class IndexedDatabase implements Cache {
     this.#options = {
       ...{
         indexedDB: globalThis.indexedDB,
-        maxCacheReadSize: 5000,
+        maxCacheReadSize: 10000,
         maxCacheBatchWriteWait: 1000,
         enableCaching: true
       },
@@ -47,24 +57,13 @@ export default class IndexedDatabase implements Cache {
     await this.#writeQueue?.finish()
   }
 
-  #openDatabase(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = this.#options.indexedDB?.open(IndexedDatabase.#databaseName, 1)
-      if (!request) {
-        throw new Error('No indexedDb')
-      }
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(IndexedDatabase.#storeName)) {
-          db.createObjectStore(IndexedDatabase.#storeName)
-        }
-      }
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = (e) =>
-        reject(ensureError(e, 'Failed to open IndexedDB database'))
+  async #openDatabase(): Promise<ObjectStore> {
+    const db = new ObjectStore({
+      indexedDB: this.#options.indexedDB,
+      chromeTransactionDurability: 'relaxed'
     })
+    await db.open()
+    return db
   }
 
   #supportsCache(): boolean {
@@ -83,32 +82,6 @@ export default class IndexedDatabase implements Cache {
     this.#cacheDB = await this.#openDatabase()
   }
 
-  #checkCache(params: {
-    store: IDBObjectStore
-    batch: string[]
-  }): Promise<Item | string>[] {
-    const { store, batch } = params
-    return batch.map<Promise<Item | string>>(async (baseId) => {
-      const getBase = new Promise((resolve, reject) => {
-        const request = store.get(baseId)
-
-        request.onsuccess = () => resolve(request.result)
-        request.onerror = () =>
-          reject(ensureError(request.error, 'Error trying to get a batch'))
-      })
-      const base = await getBase
-      if (base === undefined) {
-        return baseId
-      } else {
-        if (isBase(base)) {
-          return { baseId, base }
-        } else {
-          throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
-        }
-      }
-    })
-  }
-
   async processItems(params: {
     ids: string[]
     foundItems: Queue<Item>
@@ -117,23 +90,24 @@ export default class IndexedDatabase implements Cache {
     const { ids, foundItems, notFoundItems } = params
     await this.#setupCacheDb()
 
-    const maxCacheReadSize = this.#options.maxCacheReadSize ?? 5000
+    const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
     for (let i = 0; i < ids.length; i += maxCacheReadSize) {
+      const startTime = performance.now()
       const batch = ids.slice(i, i + maxCacheReadSize)
-      const store = this.#cacheDB!.transaction(IndexedDatabase.#storeName, 'readonly', {
-        durability: 'relaxed'
-      }).objectStore(IndexedDatabase.#storeName)
-      const idbChildrenPromises = this.#checkCache({ store, batch })
-      const cachedData = await Promise.all(idbChildrenPromises)
-      for (const cachedObj of cachedData) {
-        if (isString(cachedObj)) {
-          notFoundItems.add(cachedObj)
+      const cachedData = await this.#cacheDB?.objects.bulkGet(batch)
+      if (!cachedData) {
+        break
+      }
+      for (let i = 0; i < cachedData.length; i++) {
+        if (cachedData[i]) {
+          foundItems.add(cachedData[i]!)
         } else {
-          foundItems.add(cachedObj)
+          notFoundItems.add(batch[i])
         }
       }
-
-      this.#logger('Read ' + batch.length)
+      const endTime = performance.now()
+      const duration = endTime - startTime
+      this.#logger('Read batch ' + batch.length + ' ' + duration / 1000)
     }
   }
 
@@ -141,57 +115,24 @@ export default class IndexedDatabase implements Cache {
     const { id } = params
     await this.#setupCacheDb()
 
-    const store = this.#cacheDB!.transaction(
-      IndexedDatabase.#storeName,
-      'readonly'
-    ).objectStore(IndexedDatabase.#storeName)
-    const getBase = new Promise<unknown>((resolve, reject) => {
-      const request = store.get(id)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () =>
-        reject(ensureError(request.error, 'Error trying to get an item'))
+    return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
+      return await this.#cacheDB?.objects.get({ baseId: id })
     })
-    const base = await getBase
-    if (base === undefined) return undefined
-    if (isBase(base)) {
-      return { baseId: id, base }
-    } else {
-      throw new ObjectLoaderRuntimeError(`${id} is not a base`)
-    }
   }
 
   async #cacheSaveBatch(params: {
     batch: Item[]
-    cacheDB: IDBDatabase
+    cacheDB: ObjectStore
   }): Promise<void> {
     const { batch, cacheDB } = params
-    const transaction = cacheDB.transaction(IndexedDatabase.#storeName, 'readwrite', {
-      durability: 'relaxed'
+
+    const startTime = performance.now()
+    await cacheDB.transaction('rw', cacheDB.objects, async () => {
+      await cacheDB.objects.bulkPut(batch)
     })
-    const store = transaction.objectStore(IndexedDatabase.#storeName)
-    const promises: Promise<void>[] = []
-    for (let index = 0; index < batch.length; index++) {
-      const element = batch[index]
-      const putItem = new Promise<void>((resolve, reject) => {
-        const request = store.put(element.base, element.baseId)
-        request.onsuccess = () => resolve()
-        request.onerror = () =>
-          reject(ensureError(request.error, 'Error trying to save a batch'))
-      })
-      promises.push(putItem)
-    }
-    await Promise.all(promises)
-    transaction.commit()
-    this.#logger('Saved ' + batch.length)
-    await this.#promisifyIDBTransaction(transaction)
-  }
-  #promisifyIDBTransaction(request: IDBTransaction): Promise<void> {
-    return new Promise((resolve, reject) => {
-      request.oncomplete = () => resolve()
-      request.onerror = (e) =>
-        reject(ensureError(e, 'Failed to open Transaction for database'))
-    })
+    const endTime = performance.now()
+    const duration = endTime - startTime
+    this.#logger('Saved batch ' + batch.length + ' ' + duration / 1000)
   }
 
   /**

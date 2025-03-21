@@ -16705,11 +16705,10 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitest/ui": "npm:^3.0.9"
+    dexie: "npm:^4.0.11"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     fake-indexeddb: "npm:^6.0.0"
-    lodash: "npm:^4.17.21"
-    lodash-es: "npm:^4.17.21"
     prettier: "npm:^3.3.2"
     tshy: "npm:^3.0.2"
     typescript: "npm:^5.2.2"
@@ -28165,6 +28164,13 @@ __metadata:
   version: 0.0.1367902
   resolution: "devtools-protocol@npm:0.0.1367902"
   checksum: 10/a4bb1132d087b2b22ff9ff070e1c0af09fb07e1e3ba933918f3865f56331cc0d23a88ce4ab5de351cb4b5ca8607f564c032a39b431dcdb90df0c05f8a39494cc
+  languageName: node
+  linkType: hard
+
+"dexie@npm:^4.0.11":
+  version: 4.0.11
+  resolution: "dexie@npm:4.0.11"
+  checksum: 10/52011f03655ce90aa6701f1e0724a10a3fd6b33d6e1ec72ba27b4392f500df54788e6ed23fd692a62eb50a21ab4fe146e08a85ceca19bbeb62e12269b124b4e2
   languageName: node
   linkType: hard
 
