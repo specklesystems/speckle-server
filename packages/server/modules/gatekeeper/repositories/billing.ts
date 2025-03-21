@@ -27,6 +27,7 @@ import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
+import { PaidWorkspacePlansNew, PaidWorkspacePlansOld } from '@speckle/shared'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
 
@@ -212,15 +213,55 @@ export const getWorkspaceSubscriptionBySubscriptionIdFactory =
     return subscription ?? null
   }
 
-export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
+const newPlans = Object.values(PaidWorkspacePlansNew)
+const oldPlans = Object.values(PaidWorkspacePlansOld)
+
+export const getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans =
   ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
   async () => {
     const cycleEnd = new Date()
     cycleEnd.setMinutes(cycleEnd.getMinutes() + 5)
     return await tables
       .workspaceSubscriptions(db)
-      .select()
+      .join(
+        WorkspacePlans.name,
+        WorkspacePlans.col.workspaceId,
+        'workspace_subscriptions.workspaceId'
+      )
+      .whereIn(WorkspacePlans.col.name, oldPlans)
       .where('currentBillingCycleEnd', '<', cycleEnd)
+      .select([
+        'workspace_subscriptions.workspaceId',
+        'workspace_subscriptions.createdAt',
+        'workspace_subscriptions.updatedAt',
+        'workspace_subscriptions.currentBillingCycleEnd',
+        'workspace_subscriptions.billingInterval',
+        'workspace_subscriptions.subscriptionData'
+      ])
+  }
+
+export const getWorkspaceSubscriptionsPastBillingCycleEndFactoryNewPlans =
+  ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
+  async () => {
+    const cycleEnd = new Date()
+    cycleEnd.setMinutes(cycleEnd.getMinutes() + 5)
+    return await tables
+      .workspaceSubscriptions(db)
+      .join(
+        WorkspacePlans.name,
+        WorkspacePlans.col.workspaceId,
+        'workspace_subscriptions.workspaceId'
+      )
+      .whereIn(WorkspacePlans.col.name, newPlans)
+      .where('currentBillingCycleEnd', '<', cycleEnd)
+      .select([
+        'workspace_subscriptions.workspaceId',
+        'workspace_subscriptions.createdAt',
+        'workspace_subscriptions.updatedAt',
+        'workspace_subscriptions.currentBillingCycleEnd',
+        'workspace_subscriptions.billingInterval',
+        'workspace_subscriptions.subscriptionData'
+      ])
   }
 
 export const getWorkspacePlanByProjectIdFactory =
