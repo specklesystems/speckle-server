@@ -148,6 +148,7 @@ export class OrientedSectionTool extends SectionTool {
   protected scaleAnchor: Object3D
 
   protected lastScale: Vector3 | null
+  protected lastOBBTransform: Matrix4 = new Matrix4()
   protected draggingFace: Face | null
 
   protected translateControls: TransformControls
@@ -183,12 +184,15 @@ export class OrientedSectionTool extends SectionTool {
     if (value) {
       this.translateControls.attach(this.translationRotationAnchor)
       this.rotateControls.attach(this.translationRotationAnchor)
+      this.reset()
     } else {
       this.translateControls.detach()
       this.rotateControls.detach()
     }
     this.viewer.getRenderer().renderer.localClippingEnabled = value
     this.emit(SectionToolEvent.Updated, this.planes)
+    this.viewer.getRenderer().clippingPlanes = this.planes
+    this.viewer.getRenderer().clippingVolume = this.getBox()
     this.viewer.requestRender()
   }
 
@@ -371,6 +375,11 @@ export class OrientedSectionTool extends SectionTool {
 
   protected updateVisual() {
     this.translationRotationAnchor.position.copy(this.obb.center)
+    this.translationRotationAnchor.quaternion.copy(
+      new Quaternion().setFromRotationMatrix(
+        new Matrix4().setFromMatrix3(this.obb.rotation)
+      )
+    )
     this.scaleAnchor.scale.copy(this.obb.halfSize)
     this.boxMesh.position.copy(this.obb.center)
     this.boxMesh.scale.copy(this.obb.halfSize)
@@ -437,6 +446,7 @@ export class OrientedSectionTool extends SectionTool {
     }
 
     this.lastScale.copy(this.scaleAnchor.scale)
+
     this.updatePlanes()
     this.updateVisual()
     this.updateFaceControls(this.draggingFace as Face)
@@ -447,7 +457,7 @@ export class OrientedSectionTool extends SectionTool {
   protected clickHandler(
     args: Vector2 & { event: PointerEvent; multiSelect: boolean }
   ) {
-    // if (!this.allowSelection || this.dragging) return
+    if (this.dragging) return
 
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
     let intersectedObjects: Array<Intersection> = []
@@ -479,12 +489,24 @@ export class OrientedSectionTool extends SectionTool {
       new Vector3().copy(this.obb.halfSize).multiplyScalar(2)
     )
 
+    let obbChanged = false
+    for (let i = 0; i < 16; i++) {
+      if (Math.abs(obbMatrix.elements[i] - this.lastOBBTransform.elements[i]) > 1e-6) {
+        obbChanged = true
+        break
+      }
+    }
+
+    if (!obbChanged) return
+
     for (let k = 0; k < this.localPlanes.length; k++) {
       this.planes[k].copy(this.localPlanes[k])
       this.planes[k].applyMatrix4(obbMatrix)
     }
     this.viewer.getRenderer().clippingPlanes = this.planes
     this.viewer.getRenderer().clippingVolume = this.getBox()
+
+    this.lastOBBTransform.copy(obbMatrix)
   }
 
   protected updateFaceControls(face: Face) {
@@ -705,6 +727,7 @@ export class OrientedSectionTool extends SectionTool {
       box = World.expandBoxRelative(targetBox, offset)
       this.obb.center.copy(box.getCenter(new Vector3()))
       this.obb.halfSize.copy(box.getSize(new Vector3()).multiplyScalar(0.5))
+      this.obb.rotation.identity()
     } else Logger.error(`Incorrect argument for setBox ${targetBox}`)
 
     this.updatePlanes()
@@ -714,5 +737,11 @@ export class OrientedSectionTool extends SectionTool {
 
   public toggle(): void {
     this.enabled = !this._enabled
+  }
+
+  protected reset() {
+    this.translateControls.reset()
+    this.translateControls.reset()
+    this.scaleControls.reset()
   }
 }

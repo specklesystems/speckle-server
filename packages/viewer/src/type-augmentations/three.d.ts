@@ -4,6 +4,7 @@ import { OBB } from 'three/examples/jsm/math/OBB.js'
 declare module 'three/examples/jsm/math/OBB.js' {
   interface OBB {
     isEmpty(): boolean
+    equals(other: OBB): boolean
   }
 }
 

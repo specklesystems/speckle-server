@@ -3,8 +3,29 @@
 import { Box3, Vector3, Matrix3 } from 'three'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 
+const _vector3 = new Vector3()
+
 OBB.prototype.isEmpty = function () {
   return this.halfSize.length() === 0
+}
+
+OBB.prototype.equals = function (other: OBB, epsion = 1e-6) {
+  _vector3.copy(this.center)
+  _vector3.sub(other.center)
+
+  if (_vector3.length() > epsion) return false
+
+  _vector3.copy(this.halfSize)
+  _vector3.sub(other.halfSize)
+
+  if (_vector3.length() > epsion) return false
+
+  for (let i = 0; i < 9; i++) {
+    if (Math.abs(this.rotation.elements[i] - other.rotation.elements[i]) > epsion)
+      return false
+  }
+
+  return true
 }
 
 Box3.prototype.fromOBB = function (obb: OBB): Box3 {
