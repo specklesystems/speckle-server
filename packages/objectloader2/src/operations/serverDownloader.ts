@@ -38,10 +38,7 @@ export default class ServerDownloader implements Downloader {
       return [total]
     }
 
-    const x1 = Math.ceil(total * 0.05)
-    const x2 = Math.ceil(total * 0.2)
-    const x3 = Math.ceil(total * 0.6)
-    return [x1, x2, x3, total - (x1 + x2 + x3)]
+    return [10000, 10000, 10000, 10000]
   }
 
   initializePool(params: { total: number; maxDownloadBatchWait?: number }) {
@@ -110,6 +107,7 @@ export default class ServerDownloader implements Downloader {
     const decoder = new TextDecoder()
     let buffer = '' // Temporary buffer to store incoming chunks
 
+    let count = 0
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -126,8 +124,12 @@ export default class ServerDownloader implements Downloader {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
-          await this.#options.database.add( item )
+          await this.#options.database.add(item)
           results.add(item)
+          count++
+          if (count % 1000 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
+          }
         }
       }
     }

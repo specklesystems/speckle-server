@@ -27,6 +27,8 @@ export default class IndexedDatabase implements Cache {
 
   #writeQueue: BatchingQueue<Item> | undefined
 
+  #count: number = 0
+
   constructor(options: BaseDatabaseOptions) {
     this.#options = {
       ...{
@@ -89,11 +91,21 @@ export default class IndexedDatabase implements Cache {
   }): Promise<void> {
     const { ids, foundItems, notFoundItems } = params
     await this.#setupCacheDb()
-
+    const ids2 = ids.sort()
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
-    for (let i = 0; i < ids.length; i += maxCacheReadSize) {
+
+    for (let i = 0; i < ids2.length; ) {
+      if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
+        this.#logger('pausing')
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second
+        continue
+      }
+      i += maxCacheReadSize
+      const batch = ids2.slice(i, i + maxCacheReadSize)
+      const x = this.#count
+      this.#count++
       const startTime = performance.now()
-      const batch = ids.slice(i, i + maxCacheReadSize)
+      this.#logger('Start read ' + x + ' ' + batch.length)
       const cachedData = await this.#cacheDB?.objects.bulkGet(batch)
       if (!cachedData) {
         break
@@ -107,7 +119,7 @@ export default class IndexedDatabase implements Cache {
       }
       const endTime = performance.now()
       const duration = endTime - startTime
-      this.#logger('Read batch ' + batch.length + ' ' + duration / 1000)
+      this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
     }
   }
 
@@ -125,14 +137,15 @@ export default class IndexedDatabase implements Cache {
     cacheDB: ObjectStore
   }): Promise<void> {
     const { batch, cacheDB } = params
+    const x = this.#count
+    this.#count++
 
     const startTime = performance.now()
-    await cacheDB.transaction('rw', cacheDB.objects, async () => {
-      await cacheDB.objects.bulkPut(batch)
-    })
+    this.#logger('Start save ' + x + ' ' + batch.length)
+    await cacheDB.objects.bulkPut(batch)
     const endTime = performance.now()
     const duration = endTime - startTime
-    this.#logger('Saved batch ' + batch.length + ' ' + duration / 1000)
+    this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
   }
 
   /**

@@ -34,25 +34,27 @@ export default class BatchedPool<T> {
   async #runWorker(batchSize: number) {
     let interval = this.#baseInterval
     while (!this.#finished || this.#queue.length > 0) {
-      let wait = true
+      const startTime = performance.now()
       if (this.#queue.length > 0) {
-        const startTime = performance.now()
         const batch = this.getBatch(batchSize)
         await this.#processFunction(batch)
-        //refigure interval
-        const endTime = performance.now()
-        wait = batchSize !== batch.length
-        const duration = endTime - startTime
-        if (duration > interval) {
-          interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow
-        } else {
-          interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
-        }
       }
-      if (wait) {
+      //refigure interval
+      const endTime = performance.now()
+      const duration = endTime - startTime
+      if (duration > interval || this.#queue.length === 0) {
+        interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow or empty
+      } else {
+        interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
+      }
+      if (this.#queue.length < batchSize / 2) {
+        console.log(
+          `pool(${batchSize}) is waiting ` +
+            interval / 1000 +
+            ' with queue size of ' +
+            this.#queue.length
+        )
         await this.#delay(interval)
-        //waited so reset
-        interval = this.#baseInterval
       }
     }
   }

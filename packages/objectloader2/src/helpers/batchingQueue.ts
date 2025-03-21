@@ -34,31 +34,39 @@ export default class BatchingQueue<T> implements Queue<T> {
     this.#queue.push(item)
   }
 
-  getBatch(batchSize: number): T[] {
+  count(): number {
+    return this.#queue.length
+  }
+
+  #getBatch(batchSize: number): T[] {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
+
   async #loop(): Promise<void> {
     let interval = this.#baseInterval
     while (!this.#finished || this.#queue.length > 0) {
-      let wait = true
+      const startTime = performance.now()
       if (this.#queue.length > 0) {
-        const startTime = performance.now()
-        const batch = this.getBatch(this.#batchSize)
+        const batch = this.#getBatch(this.#batchSize)
+        console.log('running with queue size of ' + this.#queue.length)
         await this.#processFunction(batch)
+      }
+      if (this.#queue.length < this.#batchSize / 2) {
         //refigure interval
         const endTime = performance.now()
-        wait = this.#batchSize !== batch.length
         const duration = endTime - startTime
         if (duration > interval) {
-          interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow
+          interval = Math.min(interval * 1.5, this.#maxInterval) // Increase if slow or empty
         } else {
           interval = Math.max(interval * 0.8, this.#minInterval) // Decrease if fast
         }
-      }
-      if (wait) {
+        console.log(
+          'queue is waiting ' +
+            interval / 1000 +
+            ' with queue size of ' +
+            this.#queue.length
+        )
         await this.#delay(interval)
-        //waited so reset
-        interval = this.#baseInterval
       }
     }
   }
