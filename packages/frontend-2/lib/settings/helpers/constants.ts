@@ -89,11 +89,13 @@ export const WorkspaceUserActionsConfig: Record<
       show: ({
         isActiveUserWorkspaceAdmin = false,
         isActiveUserTargetUser,
-        targetUserCurrentRole
+        targetUserCurrentRole,
+        isDomainCompliant = false
       }) =>
         isActiveUserWorkspaceAdmin &&
         !isActiveUserTargetUser &&
-        targetUserCurrentRole === Roles.Workspace.Guest
+        targetUserCurrentRole === Roles.Workspace.Guest &&
+        isDomainCompliant
     },
     dialog: {
       title: 'Make member',

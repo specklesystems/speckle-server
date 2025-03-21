@@ -32,6 +32,7 @@ export type WorkspaceUserUpdateShowOptions = {
   isActiveUserTargetUser?: boolean
   targetUserCurrentRole?: string
   targetUserCurrentSeatType?: WorkspaceSeatType
+  isDomainCompliant?: boolean
 }
 
 type WorkspaceUserActionsMenuConfig = {

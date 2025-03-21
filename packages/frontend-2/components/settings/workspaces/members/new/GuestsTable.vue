@@ -68,6 +68,7 @@
           }"
           :workspace-role="workspace?.role"
           :workspace-id="workspace?.id"
+          :is-domain-compliant="item.user.workspaceDomainPolicyCompliant !== false"
         />
         <span v-else />
       </template>

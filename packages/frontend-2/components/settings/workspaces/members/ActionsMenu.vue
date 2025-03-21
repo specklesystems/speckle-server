@@ -58,6 +58,7 @@ const props = defineProps<{
   targetUser: UserItem
   workspaceRole: MaybeNullOrUndefined<string>
   workspaceId: MaybeNullOrUndefined<string>
+  isDomainCompliant?: boolean
 }>()
 
 const { activeUser } = useActiveUser()
@@ -94,7 +95,8 @@ const filteredActionsItems = computed(() => {
           type === WorkspaceUserActionTypes.RemoveMember
             ? 'canRemove'
             : props.targetUser.role,
-        targetUserCurrentSeatType: props.targetUser.seatType
+        targetUserCurrentSeatType: props.targetUser.seatType,
+        isDomainCompliant: props.isDomainCompliant
       })
     ) {
       const item = { title: config.menu.title, id: type }
