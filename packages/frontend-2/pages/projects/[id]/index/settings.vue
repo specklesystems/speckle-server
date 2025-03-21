@@ -11,11 +11,7 @@
 </template>
 <script setup lang="ts">
 import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-components'
-import {
-  projectCollaboratorsRoute,
-  projectSettingsRoute,
-  projectWebhooksRoute
-} from '~~/lib/common/helpers/route'
+import { projectSettingsRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
@@ -52,10 +48,6 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     id: 'general'
   },
   {
-    title: 'Collaborators',
-    id: 'collaborators'
-  },
-  {
     title: 'Webhooks',
     id: 'webhooks',
     disabled: !isOwner.value,
@@ -68,15 +60,11 @@ const projectId = computed(() => route.params.id as string)
 const activeSettingsPageTab = computed({
   get: () => {
     const path = route.path
-    if (path.includes('/settings/collaborators')) return settingsTabItems.value[1]
     if (path.includes('/settings/webhooks')) return settingsTabItems.value[2]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
     switch (val.id) {
-      case 'collaborators':
-        router.push(projectCollaboratorsRoute(projectId.value))
-        break
       case 'webhooks':
         router.push(projectWebhooksRoute(projectId.value))
         break

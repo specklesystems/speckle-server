@@ -17,11 +17,7 @@ graphql(`
 graphql(`
   fragment UseNavigationWorkspaceList_User on User {
     id
-    workspaces {
-      items {
-        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace
-      }
-    }
+    ...HeaderWorkspaceSwitcherWorkspaceList_User
   }
 `)
 
@@ -46,24 +42,40 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.activeWorkspaceSlug = newVal)
   })
 
+  const isProjectsActive = computed({
+    get: () => state.value.isProjectsActive,
+    set: (newVal) => (state.value.isProjectsActive = newVal)
+  })
+
+  const { result: workspacesResult } = useQuery(navigationWorkspaceListQuery, null, {
+    enabled: isWorkspacesEnabled.value
+  })
+
+  // Check for expired SSO sessions
+  const expiredSsoSessions = computed(
+    () => workspacesResult.value?.activeUser?.expiredSsoSessions || []
+  )
+
+  // Check if the current active workspace has an expired SSO session
+  const activeWorkspaceHasExpiredSsoSession = computed(
+    () =>
+      !!expiredSsoSessions.value.find(
+        (session) => session.slug === activeWorkspaceSlug.value
+      )
+  )
+
   const { result: activeWorkspaceResult, onResult } = useQuery(
     navigationActiveWorkspaceQuery,
     () => ({
       slug: activeWorkspaceSlug.value || ''
     }),
     () => ({
-      enabled: !!activeWorkspaceSlug.value && isWorkspacesEnabled.value
+      enabled:
+        !!activeWorkspaceSlug.value &&
+        isWorkspacesEnabled.value &&
+        !activeWorkspaceHasExpiredSsoSession.value
     })
   )
-
-  const { result: workspacesResult } = useQuery(navigationWorkspaceListQuery, null, {
-    enabled: isWorkspacesEnabled.value
-  })
-
-  const isProjectsActive = computed({
-    get: () => state.value.isProjectsActive,
-    set: (newVal) => (state.value.isProjectsActive = newVal)
-  })
 
   // Set state and mutate
   const mutateActiveWorkspaceSlug = async (newVal: string) => {
@@ -79,6 +91,13 @@ export const useNavigation = () => {
     await mutate({ isProjectsActive: state.value.isProjectsActive, slug: null })
   }
 
+  // Active workspace where SSO session is expired
+  const expiredSsoWorkspaceData = computed(() =>
+    expiredSsoSessions.value.find(
+      (session) => session.slug === activeWorkspaceSlug.value
+    )
+  )
+
   // Use the cached data or the current result
   const activeWorkspaceData = computed(() => {
     return (
@@ -93,6 +112,7 @@ export const useNavigation = () => {
         )
       : []
   )
+
   // Save data in the state, the prevent flickering when the component remount in between navigation
   onResult((result) => {
     const workspace = result.data?.workspaceBySlug
@@ -107,6 +127,8 @@ export const useNavigation = () => {
     mutateActiveWorkspaceSlug,
     mutateIsProjectsActive,
     activeWorkspaceData,
-    workspaceList
+    workspaceList,
+    activeWorkspaceHasExpiredSsoSession,
+    expiredSsoWorkspaceData
   }
 }
