@@ -91,7 +91,6 @@ import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { startCase } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatPlanName } from '~/lib/billing/helpers/plan'
@@ -217,7 +216,7 @@ const buttonText = computed(() => {
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
-    return `Subscribe to ${startCase(props.plan)}`
+    return `Subscribe to ${formatPlanName(props.plan)}`
   }
   // Current plan case
   if (isCurrentPlan.value) {
@@ -235,7 +234,7 @@ const buttonText = computed(() => {
     return 'Change to annual plan'
   }
   // Upgrade case
-  return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan)}` : ''
+  return canUpgradeToPlan.value ? `Upgrade to ${formatPlanName(props.plan)}` : ''
 })
 
 const badgeText = computed(() =>
