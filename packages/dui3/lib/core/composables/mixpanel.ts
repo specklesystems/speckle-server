@@ -91,6 +91,7 @@ export function useMixpanel() {
         ui: 'dui3', // Not sure about this but we need to put something to distiguish some events, like "Send", "Receive", alternatively we can have "SendDUI3" not sure!
         // eslint-disable-next-line camelcase
         core_version: hostApp.connectorVersion,
+        email: lastEmail,
         ...customProperties
       }
 
@@ -165,7 +166,8 @@ export function useMixpanel() {
         $distinct_id: hashedEmail,
         $token: mixpanelTokenId as string,
         $set: {
-          Identified: true
+          Identified: true,
+          email
         }
       }
 
