@@ -96,7 +96,6 @@ class TransformControls extends Controls {
     const scope = this
 
     this._doNotPick = false
-    this._excludeGizmos = []
 
     // Defined getter, setter and store for a property
     function defineProperty(propName, defaultValue) {
@@ -390,7 +389,7 @@ class TransformControls extends Controls {
 
     const intersect = intersectObjectWithRay(this._gizmo.picker[this.mode], _raycaster)
 
-    if (intersect && !this._excludeGizmos.includes(intersect.object.name)) {
+    if (intersect) {
       this.axis = intersect.object.name
     } else {
       this.axis = null
@@ -1107,27 +1106,27 @@ class TransformControlsGizmo extends Object3D {
           new Mesh(new OctahedronGeometry(0.1, 0), matWhiteTransparent.clone()),
           [0, 0, 0]
         ]
-      ],
-      XY: [
-        [
-          new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matBlueTransparent.clone()),
-          [0.15, 0.15, 0]
-        ]
-      ],
-      YZ: [
-        [
-          new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matRedTransparent.clone()),
-          [0, 0.15, 0.15],
-          [0, Math.PI / 2, 0]
-        ]
-      ],
-      XZ: [
-        [
-          new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matGreenTransparent.clone()),
-          [0.15, 0, 0.15],
-          [-Math.PI / 2, 0, 0]
-        ]
       ]
+      // XY: [
+      //   [
+      //     new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matBlueTransparent.clone()),
+      //     [0.15, 0.15, 0]
+      //   ]
+      // ],
+      // YZ: [
+      //   [
+      //     new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matRedTransparent.clone()),
+      //     [0, 0.15, 0.15],
+      //     [0, Math.PI / 2, 0]
+      //   ]
+      // ],
+      // XZ: [
+      //   [
+      //     new Mesh(new BoxGeometry(0.15, 0.15, 0.01), matGreenTransparent.clone()),
+      //     [0.15, 0, 0.15],
+      //     [-Math.PI / 2, 0, 0]
+      //   ]
+      // ]
     }
 
     const pickerTranslate = {
@@ -1233,17 +1232,17 @@ class TransformControlsGizmo extends Object3D {
     }
 
     const gizmoRotate = {
-      XYZE: [[new Mesh(CircleGeometry(0.5, 1), matGray), null, [0, Math.PI / 2, 0]]],
+      // XYZE: [[new Mesh(CircleGeometry(0.5, 1), matGray), null, [0, Math.PI / 2, 0]]],
       X: [[new Mesh(CircleGeometry(0.5, 0.5), matRed)]],
       Y: [[new Mesh(CircleGeometry(0.5, 0.5), matGreen), null, [0, 0, -Math.PI / 2]]],
-      Z: [[new Mesh(CircleGeometry(0.5, 0.5), matBlue), null, [0, Math.PI / 2, 0]]],
-      E: [
-        [
-          new Mesh(CircleGeometry(0.75, 1), matYellowTransparent),
-          null,
-          [0, Math.PI / 2, 0]
-        ]
-      ]
+      Z: [[new Mesh(CircleGeometry(0.5, 0.5), matBlue), null, [0, Math.PI / 2, 0]]]
+      // E: [
+      //   [
+      //     new Mesh(CircleGeometry(0.75, 1), matYellowTransparent),
+      //     null,
+      //     [0, Math.PI / 2, 0]
+      //   ]
+      // ]
     }
 
     const helperRotate = {

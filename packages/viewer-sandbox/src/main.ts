@@ -66,7 +66,9 @@ const createViewer = async (containerName: string, _stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    if (event) console.log(event.hits[0].node.model.id)
+    if (event) {
+      console.log(event.hits[0].node.model.id)
+    }
   })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
@@ -491,6 +493,8 @@ const getStream = () => {
 
     // REGIONS
     // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
+
+    // 'https://app.speckle.systems/projects/63bb691d0f/models/a64da9072d'
   )
 }
 

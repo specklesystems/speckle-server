@@ -340,12 +340,15 @@ export class SectionOutlines extends Extension {
   }
 
   private onSectionBoxDragEnd() {
-    const generate = () => {
-      this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
-      this.updateOutlines(this.sectionPlanesChanged)
-      this.sectionProvider.removeListener(SectionToolEvent.Updated, generate)
-    }
-    this.sectionProvider.on(SectionToolEvent.Updated, generate)
+    this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    this.updateOutlines(this.sectionPlanesChanged)
+    /** 22.03.2025: This became obsolete once we switched to OrientedSectionTool */
+    // const generate = () => {
+    //   this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    //   this.updateOutlines(this.sectionPlanesChanged)
+    //   this.sectionProvider.removeListener(SectionToolEvent.Updated, generate)
+    // }
+    // this.sectionProvider.on(SectionToolEvent.Updated, generate)
   }
 
   private setSectionPlaneChanged(planes: Plane[]) {
