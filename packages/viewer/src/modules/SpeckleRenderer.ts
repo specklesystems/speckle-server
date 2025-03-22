@@ -1,7 +1,6 @@
 import {
   ACESFilmicToneMapping,
   Box3,
-  Box3Helper,
   CameraHelper,
   Color,
   DirectionalLight,
@@ -63,6 +62,11 @@ import { Pipeline } from './pipeline/Pipelines/Pipeline.js'
 import { DefaultPipeline } from './pipeline/Pipelines/DefaultPipeline.js'
 import { ProgressivePipeline } from './pipeline/Pipelines/ProgressivePipeline.js'
 import { BaseGPass, GPass } from './pipeline/Passes/GPass.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
+import Logger from './utils/Logger.js'
+
+/* TO DO: Not sure where to best import these */
+import '../type-augmentations/three-extensions.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -124,7 +128,7 @@ export default class SpeckleRenderer {
   protected cancel: { [subtreeId: string]: boolean } = {}
 
   protected _clippingPlanes: Plane[] = []
-  protected _clippingVolume: Box3 = new Box3()
+  protected _clippingVolume: OBB = new OBB()
 
   protected _renderOverride: (() => void) | null = null
 
@@ -165,14 +169,25 @@ export default class SpeckleRenderer {
     return this.sceneBox.getCenter(new Vector3())
   }
 
-  public get clippingVolume(): Box3 {
+  public get clippingVolume(): OBB {
     return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
-      ? new Box3().copy(this._clippingVolume)
-      : this.sceneBox
+      ? this._clippingVolume
+      : new OBB().fromBox3(this.sceneBox)
   }
 
-  public set clippingVolume(box: Box3) {
-    this._clippingVolume = this.sceneBox.intersect(box)
+  public set clippingVolume(box: Box3 | OBB) {
+    if (this.sceneBox) {
+      if (box instanceof Box3)
+        this._clippingVolume = new OBB().fromBox3(this.sceneBox.intersect(box))
+      else if (box instanceof OBB) {
+        /** Normally we'd want the intersection, but that may be too hard to do for such little purpose */
+        this._clippingVolume = new OBB().copy(box)
+        // const intersection = this.sceneBox.intersectOBB(box)
+        // this._clippingVolume = intersection
+        //   ? intersection
+        //   : new OBB().fromBox3(this.sceneBox)
+      } else Logger.error(`Incorrect clipping volume set: ${box}. Required Box3 or OBB`)
+    }
   }
 
   /*****************
@@ -362,10 +377,11 @@ export default class SpeckleRenderer {
       helpers.name = 'Helpers'
       this._scene.add(helpers)
 
-      const sceneBoxHelper = new Box3Helper(this.clippingVolume, new Color(0xff00ff))
-      sceneBoxHelper.name = 'SceneBoxHelper'
-      sceneBoxHelper.layers.set(ObjectLayers.PROPS)
-      helpers.add(sceneBoxHelper)
+      // Will need a OBBHelper
+      // const sceneBoxHelper = new Box3Helper(this.clippingVolume, new Color(0xff00ff))
+      // sceneBoxHelper.name = 'SceneBoxHelper'
+      // sceneBoxHelper.layers.set(ObjectLayers.PROPS)
+      // helpers.add(sceneBoxHelper)
 
       const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
       dirLightHelper.name = 'DirLightHelper'
@@ -847,7 +863,7 @@ export default class SpeckleRenderer {
         this.sunConfiguration.shadowcatcher
     if (this.sunConfiguration.shadowcatcher) {
       this._shadowcatcher.bake(
-        this.clippingVolume,
+        new Box3().fromOBB(this.clippingVolume),
         this._renderer.capabilities.maxTextureSize,
         force
       )
@@ -963,9 +979,9 @@ export default class SpeckleRenderer {
     if (this.SHOW_HELPERS) {
       ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
-      ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-        this.clippingVolume
-      )
+      // ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+      //   this.clippingVolume
+      // )
       ;(
         this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
       ).update()
