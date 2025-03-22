@@ -23,6 +23,14 @@
           hide-description
           :hide-items="[Roles.Workspace.Guest]"
         />
+        <FormSelectSeatType
+          v-if="showSeatFilter"
+          v-model="seatType"
+          fully-control-value
+          clearable
+          class="!min-w-40"
+          hide-description
+        />
       </div>
       <template v-if="showInviteButton">
         <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
@@ -60,10 +68,12 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
   showInviteButton?: boolean
+  showSeatFilter?: boolean
 }>()
 
 const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
+const seatType = defineModel<string>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const isInviteDialogOpen = ref(false)
 
