@@ -100,4 +100,34 @@ describe('downloader', () => {
     const x = await downloader.downloadSingle()
     expect(JSON.stringify(x)).toBe(JSON.stringify(i))
   })
+
+  test('add extra header', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const i: Item = { baseId: 'id', base: { id: 'id', __closure: { childIds: 1 } } }
+    fetchMocker.mockResponseIf(
+      (req) => req.headers.get('x-test') === 'asdf',
+      JSON.stringify(i.base)
+    )
+    const results = new AsyncGeneratorQueue<Item>()
+    const db = {
+      async add(): Promise<void> {
+        return Promise.resolve()
+      }
+    } as unknown as Cache
+    const headers = new Headers()
+    headers.set('x-test', 'asdf')
+    const downloader = new ServerDownloader({
+      database: db,
+      results,
+      serverUrl: 'http://speckle.test',
+      headers,
+      streamId: 'streamId',
+      objectId: i.baseId,
+      token: 'token',
+
+      fetch: fetchMocker
+    })
+    const x = await downloader.downloadSingle()
+    expect(JSON.stringify(x)).toBe(JSON.stringify(i))
+  })
 })

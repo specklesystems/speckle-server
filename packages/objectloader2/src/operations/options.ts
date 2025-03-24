@@ -11,6 +11,7 @@ export interface ObjectLoader2Options {
   objectId: string
   token?: string
   logger?: CustomLogger
+  headers?: Headers
   cache?: Cache
   downloader?: Downloader
 }
@@ -32,6 +33,7 @@ export interface BaseDownloadOptions {
   streamId: string
   objectId: string
   token?: string
+  headers?: Headers
 
   fetch?: Fetcher
   database: Cache

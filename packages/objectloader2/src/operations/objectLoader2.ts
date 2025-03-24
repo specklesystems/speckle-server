@@ -40,7 +40,8 @@ export default class ObjectLoader2 {
         serverUrl: options.serverUrl,
         streamId: options.streamId,
         objectId: this.#objectId,
-        token: options.token
+        token: options.token,
+        headers: options.headers
       })
   }
 

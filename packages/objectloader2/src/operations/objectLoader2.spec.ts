@@ -135,4 +135,27 @@ describe('objectloader2', () => {
     expect(r[0]).toBe(rootBase)
     expect(r[1]).toBe(child1Base)
   })
+
+  test('add extra header', async () => {
+    const root = { baseId: 'baseId' } as unknown as Item
+    const cache = {
+      getItem(params: { id: string }): Promise<Item> {
+        expect(params.id).toBe(root.baseId)
+        return Promise.resolve(root)
+      }
+    } as Cache
+    const downloader = {} as Downloader
+    const headers = new Headers()
+    headers.set('x-test', 'asdf')
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
+      headers,
+      cache,
+      downloader
+    })
+    const x = await loader.getRootObject()
+    expect(x).toBe(root)
+  })
 })
