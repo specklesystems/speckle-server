@@ -115,30 +115,11 @@ export const legacyCreateStreamFactory =
 export const deleteStreamAndNotifyFactory =
   (deps: {
     deleteStream: DeleteStreamRecord
-    authorizeResolver: AuthorizeResolver
     deleteAllResourceInvites: DeleteAllResourceInvites
     getStream: GetStream
     emitEvent: EventBusEmit
   }): DeleteStream =>
-  async (
-    streamId: string,
-    deleterId: string,
-    deleterResourceAccessRules: ContextResourceAccessRules,
-    options?: {
-      skipAccessChecks?: boolean
-    }
-  ) => {
-    const { skipAccessChecks = false } = options || {}
-
-    if (!skipAccessChecks) {
-      await deps.authorizeResolver(
-        deleterId,
-        streamId,
-        Roles.Stream.Owner,
-        deleterResourceAccessRules
-      )
-    }
-
+  async (streamId: string, deleterId: string) => {
     const stream = await deps.getStream({ streamId })
     if (!stream)
       throw new LogicError('Unexpectedly stream that should exist is not found...')

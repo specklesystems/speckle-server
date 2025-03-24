@@ -158,7 +158,6 @@ const createStream = legacyCreateStreamFactory({
 })
 const deleteStream = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),
-  authorizeResolver,
   getStream,
   emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
@@ -310,7 +309,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
 
-      await deleteStream(id, userOne.id, null)
+      await deleteStream(id, userOne.id)
       const stream = await getStream({ streamId: id })
 
       expect(stream).to.not.be.ok

@@ -288,14 +288,7 @@ export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
 
-export type DeleteStream = (
-  streamId: string,
-  deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules,
-  options?: {
-    skipAccessChecks?: boolean
-  }
-) => Promise<boolean>
+export type DeleteStream = (streamId: string, deleterId: string) => Promise<boolean>
 
 export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,

@@ -110,7 +110,6 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),
-  authorizeResolver,
   emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
   getStream
@@ -438,23 +437,19 @@ export = {
     },
 
     async streamDelete(_, args, context) {
-      return await deleteStreamAndNotify(
+      await authorizeResolver(
+        context.userId,
         args.id,
-        context.userId!,
-        context.resourceAccessRules,
-        { skipAccessChecks: false }
+        Roles.Stream.Owner,
+        context.resourceAccessRules
       )
+      return await deleteStreamAndNotify(args.id, context.userId!)
     },
 
     async streamsDelete(_, args, context) {
       const results = await Promise.all(
         (args.ids || []).map(async (id) => {
-          return await deleteStreamAndNotify(
-            id,
-            context.userId!,
-            context.resourceAccessRules,
-            { skipAccessChecks: true }
-          )
+          return await deleteStreamAndNotify(id, context.userId!)
         })
       )
       return results.every((res) => res === true)

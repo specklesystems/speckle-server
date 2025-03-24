@@ -107,12 +107,11 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
     deleteStream: deleteStreamFactory({
       db: projectDb
     }),
-    authorizeResolver,
     emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
     getStream: getStreamFactory({ db: projectDb })
   })
-  return async () => deleteStreamAndNotify(projectId, ownerId, null)
+  return async () => deleteStreamAndNotify(projectId, ownerId)
 }
 
 const buildUpdateProject = async (params: { projectId: string }) => {
