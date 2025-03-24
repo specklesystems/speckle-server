@@ -804,14 +804,14 @@ export default class SpeckleRenderer {
     if (!rv || !rv.batchId) {
       return null
     }
-    return this.batcher.getBatch(rv).getMaterial(rv)
+    return this.batcher.getBatch(rv)?.getMaterial(rv) ?? null
   }
 
   public getBatchMaterial(rv: NodeRenderView): Material | null {
     if (!rv || !rv.batchId) {
       return null
     }
-    return this.batcher.getBatch(rv).batchMaterial
+    return this.batcher.getBatch(rv)?.batchMaterial ?? null
   }
 
   public resetMaterials() {
