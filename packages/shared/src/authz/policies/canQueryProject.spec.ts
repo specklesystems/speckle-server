@@ -96,7 +96,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       'allows access to private projects with role %',
       async (role) => {
         const canQueryProject = canQueryProjectPolicyFactory({
-          getEnv: () => parseFeatureFlags({}),
+          getEnv: () =>
+            parseFeatureFlags({
+              FF_WORKSPACES_MODULE_ENABLED: 'false'
+            }),
           getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
           getProjectRole: () => Promise.resolve(role),
           getServerRole: () => {
@@ -118,7 +121,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     )
     it('does not allow access to private projects without a project role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({}),
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: () => Promise.resolve(null),
         getServerRole: () => {
