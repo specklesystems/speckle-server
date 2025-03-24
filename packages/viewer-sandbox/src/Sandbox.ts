@@ -1346,7 +1346,7 @@ export default class Sandbox {
     const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
     let count = 0
 
-    for await (const obj of loader.getBases()) {
+    for await (const obj of loader.getObjectIterator()) {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
