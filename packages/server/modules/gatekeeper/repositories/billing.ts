@@ -38,6 +38,14 @@ const WorkspacePlans = buildTableHelper('workspace_plans', [
   'createdAt',
   'updatedAt'
 ])
+const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
+  'workspaceId',
+  'createdAt',
+  'updatedAt',
+  'currentBillingCycleEnd',
+  'billingInterval',
+  'subscriptionData'
+])
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
@@ -230,14 +238,7 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans =
       )
       .whereIn(WorkspacePlans.col.name, oldPlans)
       .where('currentBillingCycleEnd', '<', cycleEnd)
-      .select([
-        'workspace_subscriptions.workspaceId',
-        'workspace_subscriptions.createdAt',
-        'workspace_subscriptions.updatedAt',
-        'workspace_subscriptions.currentBillingCycleEnd',
-        'workspace_subscriptions.billingInterval',
-        'workspace_subscriptions.subscriptionData'
-      ])
+      .select(WorkspaceSubscriptions.cols)
   }
 
 export const getWorkspaceSubscriptionsPastBillingCycleEndFactoryNewPlans =
@@ -254,14 +255,7 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactoryNewPlans =
       )
       .whereIn(WorkspacePlans.col.name, newPlans)
       .where('currentBillingCycleEnd', '<', cycleEnd)
-      .select([
-        'workspace_subscriptions.workspaceId',
-        'workspace_subscriptions.createdAt',
-        'workspace_subscriptions.updatedAt',
-        'workspace_subscriptions.currentBillingCycleEnd',
-        'workspace_subscriptions.billingInterval',
-        'workspace_subscriptions.subscriptionData'
-      ])
+      .select(WorkspaceSubscriptions.cols)
   }
 
 export const getWorkspacePlanByProjectIdFactory =
