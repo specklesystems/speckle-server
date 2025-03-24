@@ -13,7 +13,7 @@ type StringTemplate<Data extends object> = (data: Data) => string
  */
 
 export const WorkspacePlanFeatures = <const>{
-  // Core features pretty much available to everyone
+  // Core features pretty much available to everyone on old plans
   Workspace: 'workspace',
   RoleManagement: 'roleManagement',
   GuestUsers: 'guestUsers',
@@ -25,11 +25,25 @@ export const WorkspacePlanFeatures = <const>{
   CustomDataRegion: 'workspaceDataRegionSpecificity'
 }
 
+export const WorkspacePlanFeaturesNew = <const>{
+  // Core features
+  UnlimtedSeats: 'unlimitedSeats',
+  UnlimitedGuests: 'unlimitedGuests',
+  AutomateBeta: 'automateBeta',
+  DomainDiscoverability: 'domainDiscoverability',
+  // Optional/plan specific
+  DomainSecurity: 'domainBasedSecurityPolicies',
+  SSO: 'oidcSso',
+  CustomDataRegion: 'workspaceDataRegionSpecificity'
+}
+
 export type WorkspacePlanFeatures =
   (typeof WorkspacePlanFeatures)[keyof typeof WorkspacePlanFeatures]
 
+export type WorkspacePlanFeaturesNew =
+  (typeof WorkspacePlanFeaturesNew)[keyof typeof WorkspacePlanFeaturesNew]
+
 export const WorkspacePlanFeaturesMetadata = (<const>{
-  // Old
   [WorkspacePlanFeatures.Workspace]: {
     displayName: 'Workspace',
     description: 'A shared space for your team and projects'
@@ -73,6 +87,44 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   }
 >
 
+export const WorkspacePlanFeaturesMetadataNew = (<const>{
+  [WorkspacePlanFeaturesNew.UnlimtedSeats]: {
+    displayName: 'Unlimited editors and viewer seats',
+    description: 'Unlimited editors and viewer seat'
+  },
+  [WorkspacePlanFeaturesNew.UnlimitedGuests]: {
+    displayName: 'Unlimited guests',
+    description: 'Unlimited guests'
+  },
+  [WorkspacePlanFeaturesNew.DomainDiscoverability]: {
+    displayName: 'Domain discoverability',
+    description: 'Make your workspace discoverable by your domain'
+  },
+  [WorkspacePlanFeaturesNew.DomainSecurity]: {
+    displayName: 'Domain security',
+    description: 'Require workspace members to use a verified company email'
+  },
+  [WorkspacePlanFeaturesNew.SSO]: {
+    displayName: 'Single Sign-On (SSO)',
+    description: 'Require workspace members to log in with your SSO provider'
+  },
+  [WorkspacePlanFeaturesNew.CustomDataRegion]: {
+    displayName: 'Custom data residency',
+    description: 'Store the workspace data in a custom region'
+  },
+  [WorkspacePlanFeaturesNew.AutomateBeta]: {
+    displayName: 'Automate beta access',
+    description: 'Access to the latest automate features'
+  }
+}) satisfies Record<
+  WorkspacePlanFeaturesNew,
+  {
+    displayName: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    description: string | StringTemplate<any>
+  }
+>
+
 /**
  * PLAN CONFIG - PRICES & FEATURES
  */
@@ -83,9 +135,11 @@ export type WorkspacePlanPriceStructure = {
   }
 }
 
+export type WorkspacePlanFeatureUnion = WorkspacePlanFeatures | WorkspacePlanFeaturesNew
+
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
   plan: Plan
-  features: readonly WorkspacePlanFeatures[]
+  features: readonly WorkspacePlanFeatureUnion[]
 }
 
 const baseFeatures = [
@@ -93,6 +147,13 @@ const baseFeatures = [
   WorkspacePlanFeatures.RoleManagement,
   WorkspacePlanFeatures.GuestUsers,
   WorkspacePlanFeatures.PrivateAutomateFunctions
+] as const
+
+const baseFeaturesNew = [
+  WorkspacePlanFeaturesNew.UnlimtedSeats,
+  WorkspacePlanFeaturesNew.UnlimitedGuests,
+  WorkspacePlanFeaturesNew.AutomateBeta,
+  WorkspacePlanFeaturesNew.DomainDiscoverability
 ] as const
 
 export const WorkspacePaidPlanConfigs: {
@@ -123,16 +184,15 @@ export const WorkspacePaidPlanConfigs: {
   },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
-    features: baseFeatures
+    features: [...baseFeaturesNew, WorkspacePlanFeaturesNew.DomainSecurity]
   },
   [PaidWorkspacePlans.Pro]: {
     plan: PaidWorkspacePlans.Pro,
     features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
+      ...baseFeaturesNew,
+      WorkspacePlanFeaturesNew.DomainSecurity,
+      WorkspacePlanFeaturesNew.CustomDataRegion,
+      WorkspacePlanFeaturesNew.SSO
     ]
   }
 }
@@ -143,40 +203,59 @@ export const WorkspaceUnpaidPlanConfigs: {
   // Old
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+    features: []
   },
   [UnpaidWorkspacePlans.Academia]: {
     plan: UnpaidWorkspacePlans.Academia,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+    features: []
   },
   [UnpaidWorkspacePlans.StarterInvoiced]: {
-    ...WorkspacePaidPlanConfigs.starter,
-    plan: UnpaidWorkspacePlans.StarterInvoiced
+    plan: UnpaidWorkspacePlans.StarterInvoiced,
+    features: []
   },
   [UnpaidWorkspacePlans.PlusInvoiced]: {
-    ...WorkspacePaidPlanConfigs.plus,
-    plan: UnpaidWorkspacePlans.PlusInvoiced
+    plan: UnpaidWorkspacePlans.PlusInvoiced,
+    features: []
   },
   [UnpaidWorkspacePlans.BusinessInvoiced]: {
-    ...WorkspacePaidPlanConfigs.business,
-    plan: UnpaidWorkspacePlans.BusinessInvoiced
+    plan: UnpaidWorkspacePlans.BusinessInvoiced,
+    features: []
   },
   // New
   [UnpaidWorkspacePlans.Free]: {
     plan: UnpaidWorkspacePlans.Free,
-    features: baseFeatures
+    features: baseFeaturesNew
+  }
+}
+
+export const WorkspaceUnpaidPlanConfigsNew: {
+  [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
+} = {
+  // Old
+  [UnpaidWorkspacePlans.Unlimited]: {
+    plan: UnpaidWorkspacePlans.Unlimited,
+    features: []
+  },
+  [UnpaidWorkspacePlans.Academia]: {
+    plan: UnpaidWorkspacePlans.Academia,
+    features: []
+  },
+  [UnpaidWorkspacePlans.StarterInvoiced]: {
+    plan: UnpaidWorkspacePlans.StarterInvoiced,
+    features: []
+  },
+  [UnpaidWorkspacePlans.PlusInvoiced]: {
+    plan: UnpaidWorkspacePlans.PlusInvoiced,
+    features: []
+  },
+  [UnpaidWorkspacePlans.BusinessInvoiced]: {
+    plan: UnpaidWorkspacePlans.BusinessInvoiced,
+    features: []
+  },
+  // New
+  [UnpaidWorkspacePlans.Free]: {
+    plan: UnpaidWorkspacePlans.Free,
+    features: baseFeaturesNew
   }
 }
 
