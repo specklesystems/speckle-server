@@ -25,7 +25,7 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker,
+      fetch: fetchMocker
     })
     downloader.initializePool({ total: 1, maxDownloadBatchWait: 200 })
     downloader.add('id')
