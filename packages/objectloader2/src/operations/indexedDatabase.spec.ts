@@ -13,7 +13,7 @@ describe('database cache', () => {
       maxCacheBatchWriteWait: 200
     })
     await database.add(i)
-    await database.finish()
+    await database.disposeAsync()
 
     const x = await database.getItem({ id: 'id' })
     expect(x).toBeDefined()
@@ -29,7 +29,7 @@ describe('database cache', () => {
     })
     await database.add(i1)
     await database.add(i2)
-    await database.finish()
+    await database.disposeAsync()
 
     const x1 = await database.getItem({ id: i1.baseId })
     expect(x1).toBeDefined()
@@ -49,7 +49,7 @@ describe('database cache', () => {
     })
     await database.add(i1)
     await database.add(i2)
-    await database.finish()
+    await database.disposeAsync()
 
     const foundItems = new BufferQueue<Item>()
     const notFoundItems = new BufferQueue<string>()

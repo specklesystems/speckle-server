@@ -10,11 +10,11 @@ export interface Cache {
   }): Promise<void>
 
   add(item: Item): Promise<void>
-  finish(): Promise<void>
+  disposeAsync(): Promise<void>
 }
 
 export interface Downloader extends Queue<string> {
   initializePool(params: { total: number }): void
   downloadSingle(): Promise<Item>
-  finish(): Promise<void>
+  disposeAsync(): Promise<void>
 }

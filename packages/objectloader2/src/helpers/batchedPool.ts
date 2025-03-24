@@ -59,7 +59,7 @@ export default class BatchedPool<T> {
     }
   }
 
-  async finish(): Promise<void> {
+  async disposeAsync(): Promise<void> {
     this.#finished = true
     await this.#processingLoop
   }

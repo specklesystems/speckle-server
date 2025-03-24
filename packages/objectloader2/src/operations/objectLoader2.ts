@@ -4,6 +4,7 @@ import IndexedDatabase from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
+import { Deferred } from '../helpers/deferred.js'
 
 export default class ObjectLoader2 {
   #objectId: string
@@ -14,6 +15,8 @@ export default class ObjectLoader2 {
   #downloader: Downloader
 
   #gathered: AsyncGeneratorQueue<Item>
+
+  #buffer: Record<string, Deferred<Base>> = {}
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
@@ -41,15 +44,15 @@ export default class ObjectLoader2 {
       })
   }
 
-  async #finish(): Promise<void> {
+  async disposeAsync(): Promise<void> {
     await Promise.all([
-      this.#database.finish(),
-      this.#downloader.finish(),
-      this.#gathered.finish()
+      this.#database.disposeAsync(),
+      this.#downloader.disposeAsync(),
+      this.#gathered.dispose()
     ])
   }
 
-  async getRootItem(): Promise<Item | undefined> {
+  async getRootObject(): Promise<Item | undefined> {
     const cachedRootObject = await this.#database.getItem({ id: this.#objectId })
     if (cachedRootObject) {
       return cachedRootObject
@@ -60,14 +63,28 @@ export default class ObjectLoader2 {
     return rootItem
   }
 
-  async *getBases(): AsyncGenerator<Base> {
-    const rootItem = await this.getRootItem()
+  async getObject(id: string): Promise<Base> {
+    if (!this.#buffer[id]) {
+      this.#buffer[id] = new Deferred()
+    }
+    return await this.#buffer[id].promise
+  }
+
+  async getTotalObjectCount() {
+    const rootObj = await this.getRootObject()
+    const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
+    return totalChildrenCount
+  }
+
+  async *getObjectIterator(): AsyncGenerator<Base> {
+    const rootItem = await this.getRootObject()
     if (rootItem === undefined) {
       this.#logger('No root object found!')
       return
     }
     yield rootItem.base
     if (!rootItem.base.__closure) return
+
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
     this.#downloader.initializePool({ total })
@@ -78,10 +95,14 @@ export default class ObjectLoader2 {
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {
+      if (!this.#buffer[item.baseId]) {
+        this.#buffer[item.baseId] = new Deferred()
+      }
+      this.#buffer[item.baseId].resolve(item.base)
       yield item.base
       count++
       if (count >= total) {
-        await this.#finish()
+        await this.disposeAsync()
       }
     }
     await processPromise

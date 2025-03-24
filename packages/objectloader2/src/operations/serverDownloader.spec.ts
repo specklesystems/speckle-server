@@ -29,8 +29,8 @@ describe('downloader', () => {
     })
     downloader.initializePool({ total: 1, maxDownloadBatchWait: 200 })
     downloader.add('id')
-    await downloader.finish()
-    results.finish()
+    await downloader.disposeAsync()
+    results.dispose()
     const r = []
     for await (const x of results.consume()) {
       r.push(x)
@@ -65,8 +65,8 @@ describe('downloader', () => {
     })
     downloader.initializePool({ total: 2, maxDownloadBatchWait: 200 })
     downloader.add('id')
-    await downloader.finish()
-    results.finish()
+    await downloader.disposeAsync()
+    results.dispose()
     const r = []
     for await (const x of results.consume()) {
       r.push(x)

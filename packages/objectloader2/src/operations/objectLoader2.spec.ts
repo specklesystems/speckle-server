@@ -21,7 +21,7 @@ describe('objectloader2', () => {
       cache,
       downloader
     })
-    const x = await loader.getRootItem()
+    const x = await loader.getRootObject()
     expect(x).toBe(root)
   })
 
@@ -49,7 +49,7 @@ describe('objectloader2', () => {
       cache,
       downloader
     })
-    const x = await loader.getRootItem()
+    const x = await loader.getRootObject()
     expect(x).toBe(root)
   })
 
@@ -72,7 +72,7 @@ describe('objectloader2', () => {
       downloader
     })
     const r = []
-    for await (const x of loader.getBases()) {
+    for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
 
@@ -107,7 +107,7 @@ describe('objectloader2', () => {
         params.foundItems.add(child1)
         return Promise.resolve()
       },
-      finish(): Promise<void> {
+      disposeAsync(): Promise<void> {
         return Promise.resolve()
       }
     } as Cache
@@ -115,7 +115,7 @@ describe('objectloader2', () => {
       initializePool(params: { total: number }): void {
         expect(params.total).toBe(1)
       },
-      finish(): Promise<void> {
+      disposeAsync(): Promise<void> {
         return Promise.resolve()
       }
     } as Downloader
@@ -127,7 +127,7 @@ describe('objectloader2', () => {
       downloader
     })
     const r = []
-    for await (const x of loader.getBases()) {
+    for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
 

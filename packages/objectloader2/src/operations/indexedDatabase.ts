@@ -53,8 +53,8 @@ export default class IndexedDatabase implements Cache {
     this.#writeQueue.add(item)
   }
 
-  async finish(): Promise<void> {
-    await this.#writeQueue?.finish()
+  async disposeAsync(): Promise<void> {
+    await this.#writeQueue?.disposeAsync()
   }
 
   async #openDatabase(): Promise<ObjectStore> {

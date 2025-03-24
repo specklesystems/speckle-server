@@ -29,7 +29,7 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
       }
     }
   }
-  finish(): void {
+  dispose(): void {
     this.#finished = true
   }
 }

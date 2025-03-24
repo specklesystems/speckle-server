@@ -25,7 +25,7 @@ export default class BatchingQueue<T> implements Queue<T> {
     this.#processingLoop = this.#loop()
   }
 
-  async finish(): Promise<void> {
+  async disposeAsync(): Promise<void> {
     this.#finished = true
     await this.#processingLoop
   }

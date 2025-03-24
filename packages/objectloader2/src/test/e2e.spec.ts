@@ -15,10 +15,18 @@ describe('e2e', () => {
       keyRange: IDBKeyRange
     })
 
+    const getObjectPromise = loader.getObject('1708a78e057e8115f924c620ba686db6')
+
     const bases: Base[] = []
-    for await (const obj of loader.getBases()) {
+    for await (const obj of loader.getObjectIterator()) {
       bases.push(obj)
     }
     expect(bases.length).toBe(1328)
+    const base = await getObjectPromise
+    expect(base).toBeDefined()
+    expect(base.id).toBe('1708a78e057e8115f924c620ba686db6')
+    const base2 = await loader.getObject('3841e3cbc45d52c47bc2f1b7b0ad4eb9')
+    expect(base2).toBeDefined()
+    expect(base2.id).toBe('3841e3cbc45d52c47bc2f1b7b0ad4eb9')
   })
 })
