@@ -150,7 +150,6 @@ export const deleteStreamAndNotifyFactory =
  */
 export const updateStreamAndNotifyFactory =
   (deps: {
-    // authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
     emitEvent: EventBusEmit
