@@ -172,7 +172,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_ADMIN_OVERRIDE_ENABLED: 'false',
+            FF_WORKSPACES_MODULE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin),
         getProjectRole: () => {
