@@ -53,7 +53,12 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
@@ -73,7 +78,7 @@ const props = defineProps<{
 
 const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
-const seatType = defineModel<string>('seatType')
+const seatType = defineModel<WorkspaceSeatType>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const isInviteDialogOpen = ref(false)
 
