@@ -4,6 +4,7 @@ import _, {
   has,
   isNaN,
   isNull,
+  isObjectLike,
   isUndefined,
   mapValues,
   omitBy,
@@ -37,7 +38,12 @@ import {
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import {
+  decodeCompositeCursor,
+  decodeCursor,
+  encodeCompositeCursor,
+  encodeCursor
+} from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
@@ -779,14 +785,39 @@ export const getUserStreamsPageFactory =
     const query = getUserStreamsQueryBaseFactory(deps)(params)
     query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
 
-    if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
+    type CursorType = { updatedAt: string; id: string }
 
-    query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
+    const decodedCursor = decodeCompositeCursor<CursorType>(
+      cursor,
+      (c) => isObjectLike(c) && has(c, 'id') && has(c, 'updatedAt')
+    )
+    if (decodedCursor) {
+      // filter by date, and if there's duplicate dates, filter by id too
+      query.andWhereRaw('(??, ??) < (?, ?)', [
+        Streams.col.updatedAt,
+        Streams.col.id,
+        decodedCursor.updatedAt,
+        decodedCursor.id
+      ])
+    }
+
+    query
+      .orderBy(Streams.col.updatedAt, 'desc')
+      .orderBy(Streams.col.id, 'desc')
+      .limit(finalLimit)
 
     const rows = (await query) as StreamWithOptionalRole[]
+    const newCursorRow = rows.at(-1)
+    const newCursor = newCursorRow
+      ? encodeCompositeCursor<CursorType>({
+          updatedAt: newCursorRow.updatedAt.toISOString(),
+          id: newCursorRow.id
+        })
+      : null
+
     return {
       streams: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+      cursor: newCursor
     }
   }
 
