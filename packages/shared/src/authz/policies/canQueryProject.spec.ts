@@ -2,26 +2,9 @@ import { describe, expect, it, assert } from 'vitest'
 import { canQueryProjectPolicyFactory } from './canQueryProject.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import crs from 'crypto-random-string'
-import { merge } from 'lodash'
-import { Project } from '../domain/projects/types.js'
 import { Roles } from '../../core/constants.js'
-import { ProjectNoAccessError, ProjectNotFoundError } from '../domain/errors.js'
-
-const fakeGetFactory =
-  <T extends Record<string, unknown>>(defaults: T) =>
-  (overrides?: Partial<T>) =>
-  (): Promise<T> => {
-    if (overrides) {
-      return Promise.resolve(merge(defaults, overrides))
-    }
-    return Promise.resolve(defaults)
-  }
-
-const getProjectFake = fakeGetFactory<Project>({
-  isPublic: false,
-  isDiscoverable: false,
-  workspaceId: null
-})
+import { ProjectNoAccessError, ProjectNotFoundError } from '../domain/authErrors.js'
+import { getProjectFake } from '../../tests/fakes.js'
 
 const canQueryProjectArgs = () => {
   const projectId = crs({ length: 10 })
@@ -113,7 +96,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       'allows access to private projects with role %',
       async (role) => {
         const canQueryProject = canQueryProjectPolicyFactory({
-          getEnv: () => parseFeatureFlags({}),
+          getEnv: () =>
+            parseFeatureFlags({
+              FF_WORKSPACES_MODULE_ENABLED: 'false'
+            }),
           getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
           getProjectRole: () => Promise.resolve(role),
           getServerRole: () => {
@@ -135,7 +121,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     )
     it('does not allow access to private projects without a project role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({}),
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: () => Promise.resolve(null),
         getServerRole: () => {
@@ -183,7 +172,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
+        getEnv: () =>
+          parseFeatureFlags({
+            FF_ADMIN_OVERRIDE_ENABLED: 'false',
+            FF_WORKSPACES_MODULE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin),
         getProjectRole: () => {
