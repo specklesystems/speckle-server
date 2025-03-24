@@ -11,7 +11,7 @@ import {
   NotFoundError,
   UnauthorizedError
 } from '@/modules/shared/errors'
-import { Optional } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 /**
@@ -41,6 +41,36 @@ export function decodeIsoDateCursor(value: string): string | null {
 export function encodeIsoDateCursor(date: Date | Dayjs): string {
   const str = date.toISOString()
   return encodeCursor(str)
+}
+
+export const encodeCompositeCursor = <C extends object>(val: C): string => {
+  const json = JSON.stringify(val)
+  return encodeCursor(json)
+}
+
+export const decodeCompositeCursor = <C extends object>(
+  cursor: MaybeNullOrUndefined<string>,
+  /**
+   * Users can feed in any kind of garbage into the cursor, this predicate will validate
+   * that its the expected format and if it isn't, null will be returned
+   */
+  validate: (obj: unknown) => boolean
+): Nullable<C> => {
+  if (!cursor) return null
+
+  let decodedJson: unknown
+  try {
+    decodedJson = JSON.parse(decodeCursor(cursor))
+  } catch {
+    // swallow - user error
+    return null
+  }
+
+  if (validate(decodedJson)) {
+    return decodedJson as C
+  }
+
+  return null
 }
 
 /**

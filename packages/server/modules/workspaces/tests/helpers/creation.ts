@@ -9,7 +9,6 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -39,12 +38,7 @@ import {
 import { BasicTestUser } from '@/test/authHelper'
 import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  MaybeNullOrUndefined,
-  Roles,
-  StreamRoles,
-  WorkspaceRoles
-} from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -107,13 +101,12 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
-  defaultProjectRole?: StreamRoles
   discoverabilityEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
-  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
+  workspace: SetOptional<BasicTestWorkspace, 'id' | 'slug'>,
   owner: BasicTestUser,
   options?: {
     domain?: string
@@ -147,7 +140,8 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+      eventEmit: getEventBus().emit
     })
   })
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
@@ -267,15 +261,6 @@ export const createTestWorkspace = async (
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
   }
-
-  if (workspace.defaultProjectRole) {
-    await updateWorkspace({
-      workspaceId: newWorkspace.id,
-      workspaceInput: {
-        defaultProjectRole: parseDefaultProjectRole(workspace.defaultProjectRole)
-      }
-    })
-  }
 }
 
 export const assignToWorkspace = async (
@@ -294,13 +279,14 @@ export const assignToWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat
+      getWorkspaceUserSeat,
+      eventEmit: getEventBus().emit
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-    emit: getEventBus().emit
+    eventEmit: getEventBus().emit
   })
 
   role = role || Roles.Workspace.Member

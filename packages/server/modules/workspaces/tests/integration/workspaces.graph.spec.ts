@@ -48,11 +48,18 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -314,6 +321,94 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.workspace.team.cursor).to.exist
       })
 
+      it('should respect seatType filter', async () => {
+        const admin = await createTestUser({
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        const workspace = {
+          id: createRandomString(),
+          ownerId: admin.id,
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 })
+        }
+        await createTestWorkspace(workspace, admin)
+        const otherWorkspace = {
+          id: createRandomString(),
+          ownerId: admin.id,
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 })
+        }
+        await createTestWorkspace(otherWorkspace, admin)
+
+        const session = await login(admin)
+
+        const memberEditor = {
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail()
+        }
+        await createTestUser(memberEditor)
+        await assignToWorkspace(workspace, memberEditor, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: workspace.id,
+          userId: memberEditor.id,
+          type: 'editor',
+          assignedByUserId: admin.id
+        })
+        // Assign the same user editor to another workspace
+        await assignToWorkspace(otherWorkspace, memberEditor, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: otherWorkspace.id,
+          userId: memberEditor.id,
+          type: 'editor',
+          assignedByUserId: admin.id
+        })
+
+        const memberViewer = {
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail()
+        }
+        await createTestUser(memberViewer)
+        await assignToWorkspace(workspace, memberViewer, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: workspace.id,
+          userId: memberViewer.id,
+          type: 'viewer',
+          assignedByUserId: admin.id
+        })
+
+        const res = await session.execute(GetWorkspaceTeamDocument, {
+          workspaceId: workspace.id,
+          filter: {
+            seatType: 'editor'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.items.length).to.equal(2)
+        expect(res.data?.workspace.team.items.length).to.equal(2)
+        const team = res.data?.workspace.team.items
+        expect(team?.[1].user.name).to.eq(admin.name)
+        expect(team?.[0].user.name).to.eq(memberEditor.name)
+      })
+
       it('should respect team pagination', async () => {
         const resA = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
           workspaceId: largeWorkspace.id,
@@ -462,13 +557,18 @@ describe('Workspaces GQL CRUD', () => {
               name: project1Name
             }
           },
-          {
-            role: Roles.Stream.Contributor,
-            project: {
-              id: project2Id,
-              name: project2Name
-            }
-          }
+          // No longer auto-assigned in new plan world (until we rework auth & queries)
+          ...(FF_GATEKEEPER_FORCE_FREE_PLAN
+            ? []
+            : [
+                {
+                  role: Roles.Stream.Reviewer,
+                  project: {
+                    id: project2Id,
+                    name: project2Name
+                  }
+                }
+              ])
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest
@@ -889,31 +989,6 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(updateRes).to.haveGraphQLErrors('too long')
-      })
-
-      it('should require default project role to be a valid role', async () => {
-        const resA = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:contributor'
-          }
-        })
-        const resB = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:reviewer'
-          }
-        })
-        const resC = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:collaborator'
-          }
-        })
-
-        expect(resA).to.not.haveGraphQLErrors()
-        expect(resB).to.not.haveGraphQLErrors()
-        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
       })
     })
 

@@ -7,6 +7,7 @@ import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   AllScopes,
+  Authz,
   buildManualPromise,
   ensureError,
   MaybeAsync,
@@ -33,6 +34,7 @@ import { PingPongDocument } from '@/test/graphql/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
 import { expectToThrow } from '@/test/assertionHelper'
+import { getLoaders } from '@/modules/loaders'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -116,6 +118,7 @@ export const createTestContext = async (
     scopes: [],
     stream: undefined,
     err: undefined,
+    authPolicies: Authz.authPoliciesFactory(getLoaders()),
     ...(ctx || {})
   })
 
@@ -129,6 +132,7 @@ export const createAuthedTestContext = async (
     role: Roles.Server.User,
     token: 'asd',
     scopes: AllScopes,
+    authPolicies: Authz.authPoliciesFactory(getLoaders()),
     ...(ctxOverrides || {})
   })
 
