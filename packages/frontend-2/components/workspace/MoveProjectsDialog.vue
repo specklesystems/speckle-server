@@ -37,21 +37,9 @@
             }}
           </span>
         </div>
-        <span
-          v-tippy="
-            project.role !== Roles.Stream.Owner &&
-            'Only the project owner can move this project'
-          "
-        >
-          <FormButton
-            :disabled="project.role !== Roles.Stream.Owner"
-            size="sm"
-            color="outline"
-            @click="onMoveClick(project)"
-          >
-            Move...
-          </FormButton>
-        </span>
+        <FormButton size="sm" color="outline" @click="onMoveClick(project)">
+          Move...
+        </FormButton>
       </div>
     </div>
     <p v-else class="py-4 text-body-xs text-foreground-2">
@@ -139,7 +127,11 @@ const {
   query: moveProjectsDialogQuery,
   baseVariables: computed(() => ({
     cursor: null as string | null,
-    filter: search.value?.length ? { search: search.value } : null
+    filter: {
+      search: search.value?.length ? search.value : null,
+      workspaceId: null,
+      onlyWithRoles: [Roles.Stream.Owner]
+    }
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.activeUser?.projects,
@@ -157,17 +149,8 @@ const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
 )
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
-const projectsWithWorkspace = computed(() =>
-  userProjects.value
-    .filter((project) => !!project.workspace?.id)
-    .map((project) => project.id)
-)
 const moveableProjects = computed(() =>
-  userProjects.value.filter(
-    (project) =>
-      !workspaceProjects.value.includes(project.id) &&
-      !projectsWithWorkspace.value.includes(project.id)
-  )
+  userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
 )
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 const buttons = computed((): LayoutDialogButton[] => [
