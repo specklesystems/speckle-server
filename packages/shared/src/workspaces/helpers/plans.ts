@@ -38,12 +38,12 @@ export type PaidWorkspacePlans =
 
 export const UnpaidWorkspacePlans = <const>{
   // Old
-  Unlimited: 'unlimited',
-  Academia: 'academia',
   StarterInvoiced: 'starterInvoiced',
   PlusInvoiced: 'plusInvoiced',
   BusinessInvoiced: 'businessInvoiced',
   // New
+  Unlimited: 'unlimited',
+  Academia: 'academia',
   Free: 'free'
 }
 

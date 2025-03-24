@@ -9,6 +9,7 @@
       :active-billing-interval="billingInterval"
       :is-admin="isAdmin"
       :workspace-id="props.workspaceId"
+      :has-subscription="!!subscription"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
     />
   </div>
@@ -34,7 +35,11 @@ const props = defineProps<{
   workspaceId: MaybeNullOrUndefined<string>
 }>()
 
-const { billingInterval, plan: currentPlan } = useWorkspacePlan(props.slug)
+const {
+  billingInterval,
+  plan: currentPlan,
+  subscription
+} = useWorkspacePlan(props.slug)
 
 const isYearlySelected = ref(false)
 
