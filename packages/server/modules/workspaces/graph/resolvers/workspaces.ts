@@ -448,7 +448,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const createWorkspace = commandFactory({
             db,
             eventBus,
-            operationFactory: ({ db, trx, emit }) => {
+            operationFactory: ({ trx, emit }) => {
               const createWorkspace = createWorkspaceFactory({
                 validateSlug: validateSlugFactory({
                   getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx })
@@ -481,7 +481,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
               const addDomain = addDomainToWorkspaceFactory({
                 getWorkspace: getWorkspaceFactory({ db: trx }),
-                findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+                findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
                 storeWorkspaceDomain: storeWorkspaceDomainFactory({ db: trx }),
                 getDomains: getWorkspaceDomainsFactory({ db: trx }),
                 emitWorkspaceEvent: emit

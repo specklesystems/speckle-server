@@ -38,7 +38,7 @@
       </div>
 
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <FormButton size="lg" submit full-width>Continue</FormButton>
+        <FormButton size="lg" submit full-width>{{ nextButtonText }}</FormButton>
         <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
           Back
         </FormButton>
@@ -76,6 +76,12 @@ const enableDomainDiscoverabilityModel = ref<true | undefined>(
       ? true
       : undefined
     : true
+)
+
+const nextButtonText = computed(() =>
+  fields.value.filter((field) => !!field.value).length > 0
+    ? 'Continue'
+    : 'Continue without inviting'
 )
 
 const verifiedDomain = computed(() => {
