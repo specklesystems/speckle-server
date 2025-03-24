@@ -4,8 +4,8 @@ import {
 } from '../checks/workspaceRole.js'
 import { AuthResult, authorized, unauthorized } from '../domain/authResult.js'
 import {
-  requireExactProjectVisibility,
-  requireMinimumProjectRole
+  requireExactProjectVisibilityFactory,
+  requireMinimumProjectRoleFactory
 } from '../checks/projects.js'
 import { AuthCheckContextLoaders } from '../domain/loaders.js'
 import { ProjectContext, UserContext } from '../domain/policies.js'
@@ -17,7 +17,7 @@ import {
   ProjectNotFoundError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionInvalidError
-} from '../domain/errors.js'
+} from '../domain/authErrors.js'
 
 export const canQueryProjectPolicyFactory =
   (
@@ -50,7 +50,7 @@ export const canQueryProjectPolicyFactory =
     if (!project) return unauthorized(ProjectNotFoundError)
 
     // All users may read public projects
-    const isPublicResult = await requireExactProjectVisibility({ loaders })({
+    const isPublicResult = await requireExactProjectVisibilityFactory({ loaders })({
       projectId,
       projectVisibility: 'public'
     })
@@ -59,7 +59,9 @@ export const canQueryProjectPolicyFactory =
     }
 
     // All users may read link-shareable projects
-    const isLinkShareableResult = await requireExactProjectVisibility({ loaders })({
+    const isLinkShareableResult = await requireExactProjectVisibilityFactory({
+      loaders
+    })({
       projectId,
       projectVisibility: 'linkShareable'
     })
@@ -130,7 +132,9 @@ export const canQueryProjectPolicyFactory =
     }
 
     // User must have at least stream reviewer role to read project data
-    const hasMinimumProjectRoleResult = await requireMinimumProjectRole({ loaders })({
+    const hasMinimumProjectRoleResult = await requireMinimumProjectRoleFactory({
+      loaders
+    })({
       userId,
       projectId,
       role: 'stream:reviewer'
