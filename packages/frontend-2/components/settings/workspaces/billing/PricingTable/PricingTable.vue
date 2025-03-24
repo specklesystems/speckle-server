@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+// DEPCRECATED: This is only used for old workspace plans
 import { type WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { type MaybeNullOrUndefined, PaidWorkspacePlansOld } from '@speckle/shared'
 

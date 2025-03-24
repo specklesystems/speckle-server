@@ -120,7 +120,7 @@ import { startCase, isFunction } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { SetupContext } from 'vue'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void

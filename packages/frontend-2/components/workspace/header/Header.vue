@@ -77,6 +77,7 @@
         v-if="!isWorkspaceGuest"
         :workspace-info="workspaceInfo"
         :is-workspace-admin="isWorkspaceAdmin"
+        :is-workspace-guest="isWorkspaceGuest"
         @show-invite-dialog="$emit('show-invite-dialog')"
       />
     </div>

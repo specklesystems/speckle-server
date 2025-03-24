@@ -1,5 +1,10 @@
 import type { RouteLocationNormalized } from 'vue-router'
-import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
+import {
+  waitForever,
+  type MaybeAsync,
+  type Optional,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -28,7 +33,8 @@ import {
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
   setDefaultRegionMutation,
-  workspaceUpdateRoleMutation
+  workspaceUpdateRoleMutation,
+  workspacesUpdateSeatTypeMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError, GraphQLFormattedError } from 'graphql'
@@ -481,6 +487,54 @@ export const useWorkspaceUpdateRole = () => {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
+  }
+}
+
+export const useWorkspaceUpdateSeatType = () => {
+  const { mutate } = useMutation(workspacesUpdateSeatTypeMutation)
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (input: {
+    userId: string
+    workspaceId: string
+    seatType: WorkspaceSeatType
+  }) => {
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          // Update the team member's seat type in the cache
+          modifyObjectField(
+            cache,
+            getCacheId('WorkspaceCollaborator', input.userId),
+            'seatType',
+            () => input.seatType
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'User seat type updated',
+        description: `The user's seat type has been updated to ${input.seatType}`
+      })
+
+      mixpanel.track('Workspace User Seat Type Updated', {
+        newSeatType: input.seatType,
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update seat type',
         description: errorMessage
       })
     }

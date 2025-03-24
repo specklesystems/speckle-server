@@ -33,10 +33,7 @@ export type UpsertWorkspaceArgs = {
   workspace: Omit<
     SetOptional<
       NullableKeysToOptional<Workspace>,
-      | 'domainBasedMembershipProtectionEnabled'
-      | 'discoverabilityEnabled'
-      | 'defaultProjectRole'
-      | 'slug'
+      'domainBasedMembershipProtectionEnabled' | 'discoverabilityEnabled' | 'slug'
     >,
     'domains'
   >
@@ -125,6 +122,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      * Optionally filter by user name or email
      */
     search?: string
+    seatType?: WorkspaceSeatType
   }
 }
 

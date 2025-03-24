@@ -381,7 +381,6 @@ describe('Workspace SSO services', () => {
               name: '',
               description: '',
               logo: null,
-              defaultProjectRole: 'stream:contributor',
               domainBasedMembershipProtectionEnabled: false,
               discoverabilityEnabled: false,
               createdAt: new Date(),
