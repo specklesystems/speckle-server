@@ -1255,7 +1255,7 @@ export default class SpeckleRenderer {
 
   public getObject(rv: NodeRenderView): BatchObject | null {
     const batch = this.batcher.getBatch(rv) as MeshBatch
-    if (batch.geometryType !== GeometryType.MESH) {
+    if (!batch || batch.geometryType !== GeometryType.MESH) {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }
