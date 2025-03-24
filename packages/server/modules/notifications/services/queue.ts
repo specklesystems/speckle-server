@@ -115,7 +115,7 @@ export function registerNotificationHandlers(
  */
 export async function consumeIncomingNotifications() {
   const queue = getQueue()
-  queue.process(async (job): Promise<NotificationJobResult> => {
+  void queue.process(async (job): Promise<NotificationJobResult> => {
     let notificationType: Optional<NotificationType>
     try {
       notificationsLogger.info('New notification received...')

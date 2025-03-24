@@ -741,7 +741,7 @@ describe('Workspaces GQL CRUD', () => {
           authorId: ''
         }
 
-        createTestCommit(testVersion, {
+        await createTestCommit(testVersion, {
           owner: testAdminUser,
           stream: workspaceProject
         })

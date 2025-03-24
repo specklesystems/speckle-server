@@ -136,7 +136,7 @@ describe('Objects streaming REST @core', () => {
 
     await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
     for (let i = 0; i < 4; i++) {
-      forceCloseStreamingConnection({
+      await forceCloseStreamingConnection({
         serverAddress,
         projectId: project.id,
         token,
@@ -219,7 +219,7 @@ describe('Objects streaming REST @core', () => {
 
     await createObjectsBatched({ streamId: project.id, objects: manyObjs })
     for (let i = 0; i < 1; i++) {
-      forceCloseStreamingConnection({
+      await forceCloseStreamingConnection({
         serverAddress,
         projectId: project.id,
         token,

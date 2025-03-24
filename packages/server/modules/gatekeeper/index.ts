@@ -155,12 +155,12 @@ const scheduleWorkspaceTrialExpiry = ({
           'Workspace trial expired for {workspaceIds}.'
         )
         await Promise.all(
-          expiredWorkspacePlans.map(async (plan) => {
+          expiredWorkspacePlans.map(async (plan) =>
             emit({
               eventName: 'gatekeeper.workspace-trial-expired',
               payload: { workspaceId: plan.workspaceId }
             })
-          })
+          )
         )
       }
     }
