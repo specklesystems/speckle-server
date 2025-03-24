@@ -80,7 +80,7 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'settings'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -112,9 +112,6 @@ export const projectDiscussionsRoute = (projectId: string) => `/projects/${proje
 
 export const projectSettingsRoute = (projectId: string) =>
   `/projects/${projectId}/settings`
-
-export const projectCollaboratorsRoute = (projectId: string) =>
-  `/projects/${projectId}/settings/collaborators`
 
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`

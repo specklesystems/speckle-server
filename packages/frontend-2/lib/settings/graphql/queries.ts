@@ -38,6 +38,7 @@ export const settingsWorkspaceBillingQueryNew = graphql(`
   query SettingsWorkspaceBillingNew($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
+      ...WorkspaceBillingPageNew_Workspace
     }
   }
 `)
@@ -106,7 +107,7 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
   query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
     workspaceBySlug(slug: $slug) {
       id
-      team(filter: $filter) {
+      team(filter: $filter, limit: 250) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
