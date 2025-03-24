@@ -56,8 +56,7 @@ withDefaults(
     badge?: string
   }>(),
   {
-    isExternalRoute: false,
-    size: 'base'
+    isExternalRoute: false
   }
 )
 </script>
