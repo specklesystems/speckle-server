@@ -26,8 +26,7 @@ import {
   StencilOutlineType
 } from '../IViewer.js'
 import { Viewer } from './Viewer.js'
-import { SectionTool } from './extensions/SectionTool.js'
-import { SectionOutlines } from './extensions/SectionOutlines.js'
+import { SectionOutlines } from './extensions/sections/SectionOutlines.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import {
   type MeasurementOptions,
@@ -45,6 +44,9 @@ import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
+import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
+import { SectionTool } from '../index.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -123,7 +125,7 @@ export class LegacyViewer extends Viewer {
     super(container, params)
     this.cameraController = this.createExtension(HybridCameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
-    this.sections = this.createExtension(SectionTool)
+    this.sections = this.createExtension(OrientedSectionTool)
     this.createExtension(SectionOutlines)
     this.measurements = this.createExtension(MeasurementsExtension)
     this.filtering = this.createExtension(FilteringExtension)
@@ -173,8 +175,11 @@ export class LegacyViewer extends Viewer {
     this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
   }
 
-  public getCurrentSectionBox() {
-    return this.sections.getBox()
+  public getCurrentSectionBox(): Box3 {
+    /** Temporary until server data model is updated so we don't need to change anything in FE*/
+    let box = this.sections.getBox()
+    if (box instanceof OBB) box = new Box3().fromOBB(box)
+    return box
   }
 
   public toggleSectionBox() {
