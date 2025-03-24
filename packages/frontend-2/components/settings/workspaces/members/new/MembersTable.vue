@@ -85,7 +85,12 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -131,7 +136,7 @@ const props = defineProps<{
 
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
-const seatTypeFilter = ref<string>()
+const seatTypeFilter = ref<WorkspaceSeatType>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,

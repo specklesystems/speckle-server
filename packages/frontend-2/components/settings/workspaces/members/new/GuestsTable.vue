@@ -82,7 +82,11 @@ import type {
   WorkspaceCollaborator
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type MaybeNullOrUndefined,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
@@ -127,7 +131,7 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
-const seatTypeFilter = ref<string>()
+const seatTypeFilter = ref<WorkspaceSeatType>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
