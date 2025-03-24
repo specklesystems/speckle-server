@@ -22,7 +22,6 @@ export interface BaseDatabaseOptions {
     lowerBound: Function
     upperBound: Function
   }
-  enableCaching?: boolean
   maxCacheReadSize?: number
   maxCacheWriteSize?: number
   maxCacheBatchWriteWait?: number

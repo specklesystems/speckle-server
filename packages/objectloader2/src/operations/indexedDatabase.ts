@@ -32,10 +32,8 @@ export default class IndexedDatabase implements Cache {
   constructor(options: BaseDatabaseOptions) {
     this.#options = {
       ...{
-        indexedDB: globalThis.indexedDB,
         maxCacheReadSize: 10000,
-        maxCacheBatchWriteWait: 1000,
-        enableCaching: true
+        maxCacheBatchWriteWait: 1000
       },
       ...options
     }
@@ -61,23 +59,17 @@ export default class IndexedDatabase implements Cache {
 
   async #openDatabase(): Promise<ObjectStore> {
     const db = new ObjectStore({
-      indexedDB: this.#options.indexedDB,
-      IDBKeyRange: this.#options.keyRange,
+      indexedDB: this.#options.indexedDB ?? globalThis.indexedDB,
+      IDBKeyRange: this.#options.keyRange ?? IDBKeyRange,
       chromeTransactionDurability: 'relaxed'
     })
     await db.open()
     return db
   }
 
-  #supportsCache(): boolean {
-    return !!(this.#options.enableCaching && this.#options.indexedDB)
-  }
-
   async #setupCacheDb(): Promise<void> {
-    if (this.#cacheDB !== undefined && !this.#supportsCache()) {
-      throw new Error(
-        "Browser hasn't initialized a database.  It may not be supported."
-      )
+    if (this.#cacheDB !== undefined) {
+      return
     }
 
     // Initialize
