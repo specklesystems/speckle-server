@@ -18,6 +18,7 @@ graphql(`
       status
       createdAt
       name
+      paymentMethod
     }
     subscription {
       billingInterval
@@ -77,7 +78,6 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
-
   // TODO: Replace with value from API call, this a placeholder value
   const seatPrice = 15
 
@@ -108,6 +108,7 @@ export const useWorkspacePlan = (slug: string) => {
     billingInterval,
     intervalIsYearly,
     totalCostFormatted,
-    statusIsCancelationScheduled
+    statusIsCancelationScheduled,
+    subscription
   }
 }
