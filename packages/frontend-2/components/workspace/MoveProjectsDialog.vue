@@ -97,7 +97,7 @@ graphql(`
 
 graphql(`
   fragment MoveProjectsDialog_User on User {
-    projects(cursor: $cursor, filter: $filter) {
+    projects(cursor: $cursor, filter: $filter, limit: 10) {
       totalCount
       cursor
       items {
