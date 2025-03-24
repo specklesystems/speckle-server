@@ -31,7 +31,7 @@ import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 const props = defineProps<{
   plan: PaidWorkspacePlansOld

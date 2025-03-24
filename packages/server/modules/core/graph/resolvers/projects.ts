@@ -199,8 +199,8 @@ export = {
 
       const project = await getStream({ streamId: args.id })
 
-      if (!project?.isPublic || !project.isDiscoverable) {
-        validateScopes(context.scopes, Scopes.Streams.Read)
+      if (!project?.isPublic && !project?.isDiscoverable) {
+        await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
       return project
