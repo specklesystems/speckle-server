@@ -69,6 +69,8 @@ export class World {
   }
 
   public getRelativeOffset(offsetAmount: number = 0.001): number {
+    if (this.worldBox.isEmpty()) return offsetAmount
+
     MatBuff0.identity()
     MatBuff0.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
     const worldSize = this.VecBuff.set(
@@ -87,6 +89,8 @@ export class World {
   }
 
   public getRelativeOffsetBox(box: Box3, offsetAmount: number = 0.001) {
+    if (this.worldBox.isEmpty()) return box
+
     const center = box.getCenter(new Vector3())
     MatBuff1.makeTranslation(center.x, center.y, center.z)
     MatBuff2.copy(MatBuff1).invert()
@@ -100,6 +104,8 @@ export class World {
   }
 
   public static expandBoxRelative(box: Box3, offsetAmount: number = 0.001) {
+    if (box.isEmpty()) return box
+
     const center = box.getCenter(new Vector3())
     const size = box.getSize(new Vector3())
     MatBuff1.makeTranslation(center.x, center.y, center.z)
