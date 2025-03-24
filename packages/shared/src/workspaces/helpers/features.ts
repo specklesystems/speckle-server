@@ -27,7 +27,7 @@ export const WorkspacePlanFeatures = <const>{
 
 export const WorkspacePlanFeaturesNew = <const>{
   // Core features
-  UnlimtedSeats: 'unlimitedSeats',
+  UnlimitedSeats: 'unlimitedSeats',
   UnlimitedGuests: 'unlimitedGuests',
   AutomateBeta: 'automateBeta',
   DomainDiscoverability: 'domainDiscoverability',
@@ -88,7 +88,7 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
 >
 
 export const WorkspacePlanFeaturesMetadataNew = (<const>{
-  [WorkspacePlanFeaturesNew.UnlimtedSeats]: {
+  [WorkspacePlanFeaturesNew.UnlimitedSeats]: {
     displayName: 'Unlimited editors and viewer seats',
     description: 'Unlimited editors and viewer seat'
   },
@@ -150,7 +150,7 @@ const baseFeatures = [
 ] as const
 
 const baseFeaturesNew = [
-  WorkspacePlanFeaturesNew.UnlimtedSeats,
+  WorkspacePlanFeaturesNew.UnlimitedSeats,
   WorkspacePlanFeaturesNew.UnlimitedGuests,
   WorkspacePlanFeaturesNew.AutomateBeta,
   WorkspacePlanFeaturesNew.DomainDiscoverability
