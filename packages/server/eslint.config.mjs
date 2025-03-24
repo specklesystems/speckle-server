@@ -46,9 +46,9 @@ const configs = [
       ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-base-to-string': 'off',
       '@typescript-eslint/no-misused-promises': 'off', // breaks async middlewares (could be fixed tho)
-      '@typescript-eslint/no-floating-promises': 'error', // too many false positives in knex query builders
       '@typescript-eslint/restrict-template-expressions': 'off', // too restrictive
       '@typescript-eslint/no-unsafe-enum-comparison': 'off', // too restrictive
       '@typescript-eslint/unbound-method': 'off', // too many false positives
