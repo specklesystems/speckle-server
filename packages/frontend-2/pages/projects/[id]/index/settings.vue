@@ -60,7 +60,7 @@ const projectId = computed(() => route.params.id as string)
 const activeSettingsPageTab = computed({
   get: () => {
     const path = route.path
-    if (path.includes('/settings/webhooks')) return settingsTabItems.value[2]
+    if (path.includes('/settings/webhooks')) return settingsTabItems.value[1]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
