@@ -210,3 +210,7 @@ export type TriggerAutomationRevisionRun = <
 export type GetProjectAutomationCount = (params: {
   projectId: string
 }) => Promise<number>
+
+export type QueryAllAutomationFunctionRuns = (params: {
+  automationId: string
+}) => AsyncGenerator<AutomationFunctionRunRecord[], void, unknown>

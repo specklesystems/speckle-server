@@ -20,6 +20,7 @@ import {
   GetProjectAutomationCount,
   GetRevisionsFunctions,
   GetRevisionsTriggerDefinitions,
+  QueryAllAutomationFunctionRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
@@ -70,7 +71,10 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 
-import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
+import {
+  executeBatchedSelect,
+  formatJsonArrayRecords
+} from '@/modules/shared/helpers/dbHelper'
 import {
   decodeCursor,
   decodeIsoDateCursor,
@@ -731,6 +735,27 @@ export const getAutomationRunsItemsFactory =
         ? encodeIsoDateCursor(items[items.length - 1].updatedAt)
         : null
     }
+  }
+
+export const queryAllAutomationFunctionRunsFactory =
+  (deps: { db: Knex }): QueryAllAutomationFunctionRuns =>
+  ({ automationId }) => {
+    const automationFunctionRunsQuery = tables
+      .automationRevisions(deps.db)
+      .select<AutomationFunctionRunRecord[]>(...AutomationFunctionRuns.cols)
+      .where({ automationId })
+      .join<AutomationRunRecord>(
+        AutomationRuns.name,
+        AutomationRuns.col.automationRevisionId,
+        AutomationRevisions.col.id
+      )
+      .join<AutomationFunctionRunRecord>(
+        AutomationFunctionRuns.name,
+        AutomationFunctionRuns.col.runId,
+        AutomationRuns.col.id
+      )
+
+    return executeBatchedSelect(automationFunctionRunsQuery)
   }
 
 export type GetProjectAutomationsParams = {
