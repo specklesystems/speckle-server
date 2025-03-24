@@ -25,7 +25,9 @@ export default class ObjectLoader2 {
       new IndexedDatabase({
         logger: this.#logger,
         maxCacheReadSize: 10000,
-        maxCacheWriteSize: 5000
+        maxCacheWriteSize: 5000,
+        indexedDB: options.indexedDB,
+        keyRange: options.keyRange
       })
     this.#downloader =
       options.downloader ||

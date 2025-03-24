@@ -4,6 +4,8 @@ import { CustomLogger, Fetcher, Item } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
 
 export interface ObjectLoader2Options {
+  keyRange: { bound: Function; lowerBound: Function; upperBound: Function } | undefined
+  indexedDB: IDBFactory | undefined
   serverUrl: string
   streamId: string
   objectId: string
