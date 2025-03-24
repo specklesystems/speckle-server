@@ -25,6 +25,21 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const ProjectWorkspaceRequiredError = defineAuthError({
+  code: 'ProjectWorkspaceRequiredError',
+  message: 'Projects must be created in a workspace.'
+})
+
+export const ServerNoAccessError = defineAuthError({
+  code: 'ServerNoAccess',
+  message: 'You do not have required access to the server'
+})
+
+export const UnauthenticatedError = defineAuthError({
+  code: 'Unauthenticated',
+  message: 'Missing or invalid authentication info'
+})
+
 export const WorkspaceNoAccessError = defineAuthError({
   code: 'WorkspaceNoAccess',
   message: 'You do not have access to the workspace'
