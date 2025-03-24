@@ -126,7 +126,7 @@ type ProjectMutations {
   """
   Create new project
   """
-  create(input: ProjectCreateInput): Project! @hasServerRole(role: SERVER_USER)
+  create(input: ProjectCreateInput): Project!
 
   """
   Invite related mutations

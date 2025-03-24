@@ -89,8 +89,13 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 import { throwUncoveredError } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { Authz } from '@speckle/shared'
+import {
+  ProjectWorkspaceRequiredError,
+  ServerNoAccessError,
+  UnauthenticatedError
+} from '@speckle/shared/dist/commonjs/authz'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -272,6 +277,22 @@ export = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
+      }
+
+      const authResult = await context.authPolicies.project.canCreateProject({
+        userId: context.userId
+      })
+
+      if (!authResult.authorized) {
+        switch (authResult.error.code) {
+          case UnauthenticatedError.code:
+            throw new UnauthorizedError(authResult.error.message)
+          case ServerNoAccessError.code:
+          case ProjectWorkspaceRequiredError.code:
+            throw new ForbiddenError(authResult.error.message)
+          default:
+            throwUncoveredError(authResult.error)
+        }
       }
 
       const regionKey = await getValidDefaultProjectRegionKey()
