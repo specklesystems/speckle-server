@@ -164,7 +164,6 @@ const deleteStream = deleteStreamAndNotifyFactory({
 })
 
 const updateStream = updateStreamAndNotifyFactory({
-  authorizeResolver,
   getStream,
   updateStream: updateStreamFactory({ db }),
   emitEvent: getEventBus().emit
@@ -276,8 +275,7 @@ describe('Streams @core-streams', () => {
           name: 'Modified Name',
           description: 'Wooot'
         },
-        userOne.id,
-        null
+        userOne.id
       )
       const stream = await getStream({ streamId: testStream.id })
       expect(stream?.name).to.equal('Modified Name')
@@ -438,7 +436,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update stream updatedAt on stream update ', async () => {
-      await updateStream({ id: updatableStream.id, name: 'TU1' }, userOne.id, null)
+      await updateStream({ id: updatableStream.id, name: 'TU1' }, userOne.id)
       const su = await getStream({ streamId: updatableStream.id })
 
       expect(su?.updatedAt).to.be.ok

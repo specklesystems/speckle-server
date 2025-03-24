@@ -115,7 +115,6 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   getStream
 })
 const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  authorizeResolver,
   getStream,
   updateStream: updateStreamFactory({ db }),
   emitEvent: getEventBus().emit
@@ -428,11 +427,13 @@ export = {
     },
 
     async streamUpdate(_, args, context) {
-      await updateStreamAndNotify(
-        args.stream,
-        context.userId!,
+      await authorizeResolver(
+        context.userId,
+        args.stream.id,
+        Roles.Stream.Owner,
         context.resourceAccessRules
       )
+      await updateStreamAndNotify(args.stream, context.userId!)
       return true
     },
 

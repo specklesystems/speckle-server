@@ -253,14 +253,19 @@ export = {
       })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        update.id,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
       const projectDB = await getProjectDbClient({ projectId: update.id })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        authorizeResolver,
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!, resourceAccessRules)
+      return await updateStreamAndNotify(update, userId!)
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {

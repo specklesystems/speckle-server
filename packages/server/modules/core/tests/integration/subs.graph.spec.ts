@@ -118,7 +118,6 @@ const buildUpdateProject = async (params: { projectId: string }) => {
   const { projectId } = params
   const projectDB = await getProjectDbClient({ projectId })
   const updateStreamAndNotify = updateStreamAndNotifyFactory({
-    authorizeResolver,
     getStream: getStreamFactory({ db: projectDB }),
     updateStream: updateStreamFactory({ db: projectDB }),
     emitEvent: getEventBus().emit
@@ -284,8 +283,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             const updateProject = await buildUpdateProject({ projectId })
             await updateProject(
               { id: projectId, name: new Date().toISOString() },
-              me.id,
-              null
+              me.id
             )
           }
 
@@ -591,11 +589,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForMessage(),
@@ -636,11 +630,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForTimeout(),

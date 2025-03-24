@@ -292,8 +292,7 @@ export type DeleteStream = (streamId: string, deleterId: string) => Promise<bool
 
 export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: ContextResourceAccessRules
+  updaterId: string
 ) => Promise<Stream>
 
 export type LegacyUpdateStream = (

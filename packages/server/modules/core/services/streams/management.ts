@@ -12,10 +12,7 @@ import {
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { has } from 'lodash'
-import {
-  ContextResourceAccessRules,
-  isNewResourceAllowed
-} from '@/modules/core/helpers/token'
+import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
@@ -39,7 +36,6 @@ import {
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
-import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { LogicError } from '@/modules/shared/errors'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
@@ -154,23 +150,12 @@ export const deleteStreamAndNotifyFactory =
  */
 export const updateStreamAndNotifyFactory =
   (deps: {
-    authorizeResolver: AuthorizeResolver
+    // authorizeResolver: AuthorizeResolver
     getStream: GetStream
     updateStream: UpdateStreamRecord
     emitEvent: EventBusEmit
   }): UpdateStream =>
-  async (
-    update: StreamUpdateInput | ProjectUpdateInput,
-    updaterId: string,
-    updaterResourceAccessRules: ContextResourceAccessRules
-  ) => {
-    await deps.authorizeResolver(
-      updaterId,
-      update.id,
-      Roles.Stream.Owner,
-      updaterResourceAccessRules
-    )
-
+  async (update: StreamUpdateInput | ProjectUpdateInput, updaterId: string) => {
     const oldStream = await deps.getStream({ streamId: update.id, userId: updaterId })
     if (!oldStream) {
       throw new StreamUpdateError('Stream not found', {
