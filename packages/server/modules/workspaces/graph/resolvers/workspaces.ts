@@ -1292,6 +1292,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
         role: async (parent) => {
           return parent.workspaceRole
         },
+        joinDate: async (parent) => {
+          return parent.workspaceRoleCreatedAt
+        },
         projectRoles: async (parent) => {
           const projectRoles = await getRolesByUserIdFactory({ db })({
             userId: parent.id,

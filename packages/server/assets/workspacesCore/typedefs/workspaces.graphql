@@ -406,6 +406,7 @@ input WorkspaceTeamFilter {
   Search for team members by name or email
   """
   search: String
+  seatType: WorkspaceSeatType
 }
 
 type WorkspaceCollaboratorCollection {
@@ -427,6 +428,10 @@ type WorkspaceCollaborator {
   role: String!
   user: LimitedUser!
   projectRoles: [ProjectRole!]!
+  """
+  Date that the user joined the workspace.
+  """
+  joinDate: DateTime!
 }
 
 type PendingWorkspaceCollaborator {

@@ -326,7 +326,14 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, roles } = filter || {}
+    const { search, roles, seatType } = filter || {}
+
+    if (seatType) {
+      query
+        .join('workspace_seats', 'workspace_seats.userId', DbWorkspaceAcl.col.userId)
+        .andWhere('workspace_seats.type', seatType)
+        .andWhere('workspace_seats.workspaceId', workspaceId)
+    }
 
     if (search) {
       query.andWhere((builder) => {
@@ -353,9 +360,9 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
+      workspaceRoleCreatedAt: i.workspaceRoleCreatedAt,
       workspaceId: i.workspaceId,
-      role: i.role,
-      createdAt: i.workspaceRoleCreatedAt
+      role: i.role
     }))
 
     return items

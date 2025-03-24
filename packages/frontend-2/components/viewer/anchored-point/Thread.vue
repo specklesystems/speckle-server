@@ -530,7 +530,8 @@ const bannerText = computed(() => {
     return 'References multiple models with different versions'
   if (threadResourceStatus.value.isDifferentVersion)
     return 'Conversation started in a different version'
-  if (threadResourceStatus.value.isFederatedModel) return 'References multiple models'
+  if (threadResourceStatus.value.isFederatedModel)
+    return 'References models not currently loaded'
   return ''
 })
 
