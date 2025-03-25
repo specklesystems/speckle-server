@@ -34,21 +34,3 @@ export type WorkspaceUserUpdateShowOptions = {
   targetUserCurrentSeatType?: WorkspaceSeatType
   isDomainCompliant?: boolean
 }
-
-type WorkspaceUserActionsMenuConfig = {
-  title: string
-  show: (options: WorkspaceUserUpdateShowOptions) => boolean
-}
-
-export type WorkspaceUserActionsDialogConfig = {
-  title: string
-  mainMessage: string | ((seatType?: WorkspaceSeatType) => string)
-  showRoleInfo?: boolean
-  buttonText: string
-  seatCountMessage?: boolean
-}
-
-export type WorkspaceUserActionConfig = {
-  menu: WorkspaceUserActionsMenuConfig
-  dialog: WorkspaceUserActionsDialogConfig
-}

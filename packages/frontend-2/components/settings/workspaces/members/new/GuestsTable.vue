@@ -66,9 +66,7 @@
             seatType: item.seatType,
             joinDate: item.joinDate
           }"
-          :workspace-role="workspace?.role"
-          :workspace-id="workspace?.id"
-          :is-domain-compliant="item.user.workspaceDomainPolicyCompliant !== false"
+          :workspace="workspace"
         />
         <span v-else />
       </template>
@@ -114,6 +112,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_Workspace on Workspace {
     id
+    name
     ...SettingsWorkspacesMembersTableHeader_Workspace
     ...SettingsSharedDeleteUserDialog_Workspace
     team(limit: 250) {

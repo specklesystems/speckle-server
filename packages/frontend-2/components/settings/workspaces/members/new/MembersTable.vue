@@ -76,8 +76,7 @@
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
-          :workspace-role="workspace?.role"
-          :workspace-id="workspace?.id"
+          :workspace="workspace"
         />
       </template>
     </LayoutTable>

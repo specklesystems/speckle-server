@@ -17,106 +17,236 @@
       />
     </LayoutMenu>
 
-    <SettingsWorkspacesMembersActionsDialog
-      v-if="dialogConfig"
+    <SettingsWorkspacesMembersActionsUpdateRoleDialog
+      v-if="showUpdateRoleDialog"
       v-model:open="showDialog"
       :user="targetUser"
-      :title="dialogConfig.title"
-      :main-message="dialogConfig.mainMessage"
-      :role-info="dialogConfig.roleInfo"
-      :seat-count-message="dialogConfig.seatCountMessage"
-      :button-text="dialogConfig.buttonText"
-      @confirm="onDialogConfirm"
+      :workspace="workspace"
+      :new-role="newRole"
+      @success="onDialogSuccess"
+    />
+
+    <SettingsWorkspacesMembersActionsUpdateSeatTypeDialog
+      v-if="showUpdateSeatTypeDialog"
+      v-model:open="showDialog"
+      :user="targetUser"
+      :workspace="workspace"
+      @success="onDialogSuccess"
+    />
+
+    <SettingsWorkspacesMembersActionsRemoveMemberDialog
+      v-if="showRemoveMemberDialog"
+      v-model:open="showDialog"
+      :user="targetUser"
+      :workspace="workspace"
+      @success="onDialogSuccess"
+    />
+
+    <SettingsWorkspacesMembersActionsLeaveWorkspaceDialog
+      v-if="showLeaveWorkspaceDialog"
+      v-model:open="showDialog"
+      :workspace="workspace"
+      @success="onDialogSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  Roles,
-  SeatTypes,
-  type MaybeNullOrUndefined,
-  type WorkspaceRoles,
-  type WorkspaceSeatType
-} from '@speckle/shared'
+import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import type { UserItem } from './new/MembersTable.vue'
-import {
-  useWorkspaceUpdateRole,
-  useWorkspaceUpdateSeatType
-} from '~/lib/workspaces/composables/management'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import {
-  WorkspaceUserActionsConfig,
-  WorkspaceRoleDescriptions
-} from '~/lib/settings/helpers/constants'
+import type {
+  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+} from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   targetUser: UserItem
-  workspaceRole: MaybeNullOrUndefined<string>
-  workspaceId: MaybeNullOrUndefined<string>
   isDomainCompliant?: boolean
+  workspace?: MaybeNullOrUndefined<
+    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+  >
 }>()
 
 const { activeUser } = useActiveUser()
-const updateUserRole = useWorkspaceUpdateRole()
-const updateUserSeatType = useWorkspaceUpdateSeatType()
 
 const showMenu = ref(false)
 const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
 
 const isActiveUserWorkspaceAdmin = computed(
-  () => props.workspaceRole === Roles.Workspace.Admin
+  () => props.workspace?.role === Roles.Workspace.Admin
 )
 const isActiveUserTargetUser = computed(
   () => activeUser.value?.id === props.targetUser.id
 )
 
+// Computed properties for each action's visibility
+const canMakeAdmin = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.role === Roles.Workspace.Member
+  )
+})
+
+const canRemoveAdmin = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.role === Roles.Workspace.Admin
+  )
+})
+
+const canMakeGuest = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.role !== Roles.Workspace.Guest
+  )
+})
+
+const canMakeMember = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.role !== Roles.Workspace.Member
+  )
+})
+
+const canUpgradeEditor = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.seatType === SeatTypes.Viewer
+  )
+})
+
+const canDowngradeEditor = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.seatType === SeatTypes.Editor
+  )
+})
+
+const canRemoveMember = computed(() => {
+  return (
+    isActiveUserWorkspaceAdmin.value &&
+    !isActiveUserTargetUser.value &&
+    props.targetUser.role !== Roles.Workspace.Admin
+  )
+})
+
+const canLeaveWorkspace = computed(() => {
+  return isActiveUserTargetUser.value
+})
+
 const filteredActionsItems = computed(() => {
   const mainItems: LayoutMenuItem[] = []
   const footerItems: LayoutMenuItem[] = []
 
-  // Iterate through all possible actions and filter them based on:
-  // 1. If the current user is an admin (for permission-based actions)
-  // 2. If the action is being performed on the current user (for self-actions like "Leave")
-  // 3. The target user's current role (to show/hide role change options)
-  // 4. The target user's seat type (to show relevant upgrade/downgrade options)
-  // Special case: For remove action, we check against 'canRemove' instead of actual role
-  Object.entries(WorkspaceUserActionsConfig).forEach(([type, config]) => {
-    if (
-      config.menu.show({
-        isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
-        isActiveUserTargetUser: isActiveUserTargetUser.value,
-        targetUserCurrentRole:
-          type === WorkspaceUserActionTypes.RemoveMember
-            ? 'canRemove'
-            : props.targetUser.role,
-        targetUserCurrentSeatType: props.targetUser.seatType,
-        isDomainCompliant: props.isDomainCompliant
-      })
-    ) {
-      const item = { title: config.menu.title, id: type }
+  // Add main menu items
+  if (canMakeAdmin.value) {
+    mainItems.push({
+      title: 'Make admin...',
+      id: WorkspaceUserActionTypes.MakeAdmin
+    })
+  }
+  if (canRemoveAdmin.value) {
+    mainItems.push({
+      title: 'Remove admin...',
+      id: WorkspaceUserActionTypes.RemoveAdmin
+    })
+  }
+  if (canMakeGuest.value) {
+    mainItems.push({
+      title: 'Make guest...',
+      id: WorkspaceUserActionTypes.MakeGuest
+    })
+  }
+  if (canMakeMember.value) {
+    mainItems.push({
+      title: 'Make member...',
+      id: WorkspaceUserActionTypes.MakeMember
+    })
+  }
+  if (canUpgradeEditor.value) {
+    mainItems.push({
+      title: 'Upgrade to editor...',
+      id: WorkspaceUserActionTypes.UpgradeEditor
+    })
+  }
+  if (canDowngradeEditor.value) {
+    mainItems.push({
+      title: 'Downgrade to viewer...',
+      id: WorkspaceUserActionTypes.DowngradeEditor
+    })
+  }
 
-      // Add remove/leave actions to footer, others to main section
-      if (
-        type === WorkspaceUserActionTypes.RemoveMember ||
-        type === WorkspaceUserActionTypes.LeaveWorkspace
-      ) {
-        footerItems.push(item)
-      } else {
-        mainItems.push(item)
-      }
-    }
-  })
+  // Add footer items
+  if (canRemoveMember.value) {
+    footerItems.push({
+      title: 'Remove member...',
+      id: WorkspaceUserActionTypes.RemoveMember
+    })
+  }
+  if (canLeaveWorkspace.value) {
+    footerItems.push({
+      title: 'Leave workspace...',
+      id: WorkspaceUserActionTypes.LeaveWorkspace
+    })
+  }
 
   const result: LayoutMenuItem[][] = []
   if (mainItems.length) result.push(mainItems)
   if (footerItems.length) result.push(footerItems)
   return result
+})
+
+const showUpdateRoleDialog = computed(() => {
+  return (
+    dialogType.value === WorkspaceUserActionTypes.MakeGuest ||
+    dialogType.value === WorkspaceUserActionTypes.MakeMember ||
+    dialogType.value === WorkspaceUserActionTypes.MakeAdmin ||
+    dialogType.value === WorkspaceUserActionTypes.RemoveAdmin
+  )
+})
+
+const showUpdateSeatTypeDialog = computed(() => {
+  return (
+    dialogType.value === WorkspaceUserActionTypes.UpgradeEditor ||
+    dialogType.value === WorkspaceUserActionTypes.DowngradeEditor
+  )
+})
+
+const showRemoveMemberDialog = computed(() => {
+  return dialogType.value === WorkspaceUserActionTypes.RemoveMember
+})
+
+const showLeaveWorkspaceDialog = computed(() => {
+  return dialogType.value === WorkspaceUserActionTypes.LeaveWorkspace
+})
+
+const newRole = computed(() => {
+  if (!dialogType.value) return undefined
+  switch (dialogType.value) {
+    case WorkspaceUserActionTypes.MakeAdmin:
+      return Roles.Workspace.Admin
+    case WorkspaceUserActionTypes.MakeMember:
+      return Roles.Workspace.Member
+    case WorkspaceUserActionTypes.MakeGuest:
+      return Roles.Workspace.Guest
+    case WorkspaceUserActionTypes.RemoveAdmin:
+      return Roles.Workspace.Member
+    default:
+      return undefined
+  }
 })
 
 const onActionChosen = (actionItem: LayoutMenuItem) => {
@@ -128,74 +258,8 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!newRoleValue || !props.workspaceId) return
-
-  await updateUserRole({
-    userId: props.targetUser.id,
-    role: newRoleValue,
-    workspaceId: props.workspaceId
-  })
-}
-
-const onUpdateSeatType = async (newSeatTypeValue: WorkspaceSeatType) => {
-  if (!newSeatTypeValue || !props.workspaceId) return
-
-  await updateUserSeatType({
-    userId: props.targetUser.id,
-    seatType: newSeatTypeValue,
-    workspaceId: props.workspaceId
-  })
-}
-
-const onRemoveUser = async () => {
-  if (!props.workspaceId) return
-
-  await updateUserRole({
-    userId: props.targetUser.id,
-    role: null,
-    workspaceId: props.workspaceId
-  })
-}
-
-const dialogConfig = computed(() => {
-  if (!dialogType.value) return null
-  const config = WorkspaceUserActionsConfig[dialogType.value].dialog
-  return {
-    ...config,
-    mainMessage:
-      typeof config.mainMessage === 'function'
-        ? config.mainMessage(props.targetUser.seatType)
-        : config.mainMessage,
-    roleInfo: config.showRoleInfo
-      ? WorkspaceRoleDescriptions[props.targetUser.role]
-      : undefined
-  }
-})
-
-const onDialogConfirm = async () => {
-  if (!props.workspaceId) return
-
-  switch (dialogType.value) {
-    case WorkspaceUserActionTypes.MakeAdmin:
-      await onUpdateRole(Roles.Workspace.Admin)
-      break
-    case WorkspaceUserActionTypes.MakeGuest:
-      await onUpdateRole(Roles.Workspace.Guest)
-      break
-    case WorkspaceUserActionTypes.RemoveAdmin:
-    case WorkspaceUserActionTypes.MakeMember:
-      await onUpdateRole(Roles.Workspace.Member)
-      break
-    case WorkspaceUserActionTypes.UpgradeEditor:
-      await onUpdateSeatType(SeatTypes.Editor)
-      break
-    case WorkspaceUserActionTypes.DowngradeEditor:
-      await onUpdateSeatType(SeatTypes.Viewer)
-      break
-    case WorkspaceUserActionTypes.RemoveMember:
-      await onRemoveUser()
-      break
-  }
+const onDialogSuccess = () => {
+  showDialog.value = false
+  dialogType.value = undefined
 }
 </script>
