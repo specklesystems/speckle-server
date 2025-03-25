@@ -35,7 +35,7 @@ export const parseFeatureFlags = (
     },
     FF_WORKSPACES_NEW_PLANS_ENABLED: {
       schema: z.boolean(),
-      defaults: { production: false, _: false }
+      defaults: { production: false, _: true }
     },
     FF_GATEKEEPER_FORCE_FREE_PLAN: {
       schema: z.boolean(),
