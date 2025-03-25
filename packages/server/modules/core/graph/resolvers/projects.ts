@@ -184,21 +184,21 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.query({
+      const canRead = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
       })
 
-      if (!canQuery.authorized) {
-        switch (canQuery.error.code) {
+      if (!canRead.authorized) {
+        switch (canRead.error.code) {
           case Authz.ProjectNotFoundError.code:
             throw new StreamNotFoundError()
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
           case Authz.WorkspaceSsoSessionInvalidError.code:
-            throw new ForbiddenError(canQuery.error.message)
+            throw new ForbiddenError(canRead.error.message)
           default:
-            throwUncoveredError(canQuery.error)
+            throwUncoveredError(canRead.error)
         }
       }
 
@@ -279,19 +279,19 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const authResult = await context.authPolicies.project.create({
+      const canCreate = await context.authPolicies.project.canCreate({
         userId: context.userId
       })
 
-      if (!authResult.authorized) {
-        switch (authResult.error.code) {
+      if (!canCreate.authorized) {
+        switch (canCreate.error.code) {
           case UnauthenticatedError.code:
-            throw new UnauthorizedError(authResult.error.message)
+            throw new UnauthorizedError(canCreate.error.message)
           case ServerNoAccessError.code:
           case ProjectWorkspaceRequiredError.code:
-            throw new ForbiddenError(authResult.error.message)
+            throw new ForbiddenError(canCreate.error.message)
           default:
-            throwUncoveredError(authResult.error)
+            throwUncoveredError(canCreate.error)
         }
       }
 

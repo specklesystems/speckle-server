@@ -19,7 +19,7 @@ import {
   WorkspaceSsoSessionInvalidError
 } from '../../domain/authErrors.js'
 
-export const queryProjectPolicyFactory =
+export const canReadProjectPolicyFactory =
   (
     loaders: Pick<
       AuthCheckContextLoaders,

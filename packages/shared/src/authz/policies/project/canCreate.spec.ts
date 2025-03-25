@@ -1,17 +1,17 @@
 import cryptoRandomString from 'crypto-random-string'
 import { assert, describe, expect, it } from 'vitest'
-import { createProjectPolicyFactory } from './canCreate.js'
+import { canCreateProjectPolicyFactory } from './canCreate.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 
-const createProjectArgs = () => ({
+const canCreateProjectArgs = () => ({
   userId: cryptoRandomString({ length: 9 })
 })
 
-describe('createProjectFactory creates a function, that', () => {
+describe('canCreateProjectFactory creates a function, that', () => {
   describe('given server environment configuration ', () => {
     it('allows creation of personal projects when workspaces are disabled', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false',
@@ -19,11 +19,11 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(true)
     })
     it('allows creation of personal projects when workspace are enabled but new plans are not', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true',
@@ -31,11 +31,11 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(true)
     })
     it('forbids creation of personal projects when workspaces and new plans are enabled', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true',
@@ -45,13 +45,13 @@ describe('createProjectFactory creates a function, that', () => {
           assert.fail()
         }
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(false)
     })
   })
   describe('given user server roles', () => {
     it('forbids server guests from creating personal projects', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false',
@@ -59,11 +59,11 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.Guest)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(false)
     })
     it('forbids server archived users from creating personal projects', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false',
@@ -71,11 +71,11 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.ArchivedUser)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(false)
     })
     it('allows server users to create personal projects', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false',
@@ -83,11 +83,11 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.User)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(true)
     })
     it('allows server admins to create personal projects', async () => {
-      const createProject = createProjectPolicyFactory({
+      const canCreateProject = canCreateProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false',
@@ -95,7 +95,7 @@ describe('createProjectFactory creates a function, that', () => {
           }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin)
       })
-      const result = await createProject(createProjectArgs())
+      const result = await canCreateProject(canCreateProjectArgs())
       expect(result.authorized).toBe(true)
     })
   })

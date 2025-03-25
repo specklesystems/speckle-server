@@ -8,7 +8,7 @@ import { AuthCheckContextLoaders } from '../../domain/loaders.js'
 import { UserContext } from '../../domain/policies.js'
 import { requireMinimumServerRoleFactory } from '../../checks/serverRole.js'
 
-export const createProjectPolicyFactory =
+export const canCreateProjectPolicyFactory =
   (loaders: Pick<AuthCheckContextLoaders, 'getEnv' | 'getServerRole'>) =>
   async ({
     userId

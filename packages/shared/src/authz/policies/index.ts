@@ -1,13 +1,13 @@
 import { AuthCheckContextLoaders } from '../domain/loaders.js'
 import {
-  createProjectPolicyFactory,
-  queryProjectPolicyFactory
-} from './projects/index.js'
+  canCreateProjectPolicyFactory,
+  canReadProjectPolicyFactory
+} from './project/index.js'
 
 export const authPoliciesFactory = (loaders: AuthCheckContextLoaders) => ({
   project: {
-    create: createProjectPolicyFactory(loaders),
-    query: queryProjectPolicyFactory(loaders)
+    canCreate: canCreateProjectPolicyFactory(loaders),
+    canRead: canReadProjectPolicyFactory(loaders)
   }
 })
 
