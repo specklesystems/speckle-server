@@ -91,6 +91,16 @@ export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream'
 export type AvailableRoles = ServerRoles | StreamRoles | WorkspaceRoles
 
 /**
+ * Workspace seat type constants
+ */
+export const SeatTypes = Object.freeze(<const>{
+  Editor: 'editor',
+  Viewer: 'viewer'
+})
+
+export type WorkspaceSeatType = (typeof SeatTypes)[keyof typeof SeatTypes]
+
+/**
  * Speckle scope constants
  * - Scopes define what kind of access has a user approved for a specific access token
  */

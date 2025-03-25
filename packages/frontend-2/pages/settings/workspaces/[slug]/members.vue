@@ -3,7 +3,7 @@
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader
         hide-divider
-        title="Members"
+        title="People"
         text="Manage users in your workspace"
         class="mb-6"
       />
