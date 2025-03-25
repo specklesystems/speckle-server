@@ -8,11 +8,24 @@ import type {
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
 
-export type AuthCheckContext<LoaderKeys extends keyof AuthCheckContextLoaders> = {
-  loaders: Pick<AuthCheckContextLoaders, LoaderKeys>
+/**
+ * All loaders must be listed here for app startup validation to work properly
+ */
+export const AuthCheckContextLoaderKeys = <const>{
+  getEnv: 'getEnv',
+  getProject: 'getProject',
+  getProjectRole: 'getProjectRole',
+  getServerRole: 'getServerRole',
+  getWorkspace: 'getWorkspace',
+  getWorkspaceRole: 'getWorkspaceRole',
+  getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
+  getWorkspaceSsoSession: 'getWorkspaceSsoSession'
 }
 
-export type AuthCheckContextLoaders = {
+export type AuthCheckContextLoaderKeys =
+  (typeof AuthCheckContextLoaderKeys)[keyof typeof AuthCheckContextLoaderKeys]
+
+export type AllAuthCheckContextLoaders = {
   getEnv: GetEnv
   getProject: GetProject
   getProjectRole: GetProjectRole
@@ -21,4 +34,14 @@ export type AuthCheckContextLoaders = {
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
+} & {
+  [key in AuthCheckContextLoaderKeys]: unknown
+}
+
+export type AuthCheckContextLoaders<
+  LoaderKeys extends AuthCheckContextLoaderKeys = AuthCheckContextLoaderKeys
+> = Pick<AllAuthCheckContextLoaders, LoaderKeys>
+
+export type AuthCheckContext<LoaderKeys extends AuthCheckContextLoaderKeys> = {
+  loaders: AuthCheckContextLoaders<LoaderKeys>
 }

@@ -1,4 +1,4 @@
-type AuthError<ErrorCode extends string> = {
+export type AuthError<ErrorCode extends string = string> = {
   code: ErrorCode
   message: string
 }

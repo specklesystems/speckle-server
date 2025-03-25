@@ -2,13 +2,12 @@ import {
   requireAnyWorkspaceRole,
   requireMinimumWorkspaceRole
 } from '../checks/workspaceRole.js'
-import { AuthResult, authorized, unauthorized } from '../domain/authResult.js'
+import { authorized, unauthorized } from '../domain/authResult.js'
 import {
   requireExactProjectVisibilityFactory,
   requireMinimumProjectRoleFactory
 } from '../checks/projects.js'
-import { AuthCheckContextLoaders } from '../domain/loaders.js'
-import { ProjectContext, UserContext } from '../domain/policies.js'
+import { AuthPolicyFactory, ProjectContext, UserContext } from '../domain/policies.js'
 import { requireExactServerRole } from '../checks/serverRole.js'
 import { requireValidWorkspaceSsoSession } from '../checks/workspaceSso.js'
 import { Roles } from '../../core/constants.js'
@@ -19,30 +18,22 @@ import {
   WorkspaceSsoSessionInvalidError
 } from '../domain/authErrors.js'
 
-export const canQueryProjectPolicyFactory =
-  (
-    loaders: Pick<
-      AuthCheckContextLoaders,
-      | 'getEnv'
-      | 'getProject'
-      | 'getProjectRole'
-      | 'getServerRole'
-      | 'getWorkspaceRole'
-      | 'getWorkspaceSsoProvider'
-      | 'getWorkspaceSsoSession'
-    >
-  ) =>
-  async ({
-    userId,
-    projectId
-  }: UserContext & ProjectContext): Promise<
-    AuthResult<
-      | typeof ProjectNotFoundError
-      | typeof ProjectNoAccessError
-      | typeof WorkspaceNoAccessError
-      | typeof WorkspaceSsoSessionInvalidError
-    >
-  > => {
+export const canQueryProjectPolicyFactory: AuthPolicyFactory<
+  | 'getEnv'
+  | 'getProject'
+  | 'getProjectRole'
+  | 'getServerRole'
+  | 'getWorkspaceRole'
+  | 'getWorkspaceSsoProvider'
+  | 'getWorkspaceSsoSession',
+  UserContext & ProjectContext,
+  | typeof ProjectNotFoundError
+  | typeof ProjectNoAccessError
+  | typeof WorkspaceNoAccessError
+  | typeof WorkspaceSsoSessionInvalidError
+> =
+  (loaders) =>
+  async ({ userId, projectId }) => {
     const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
 
     const project = await loaders.getProject({ projectId })

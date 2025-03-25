@@ -1,3 +1,5 @@
+import { AuthError } from './authErrors.js'
+
 type AuthSuccess = {
   authorized: true
 }
@@ -7,7 +9,7 @@ export type AuthFailure<T> = {
   error: T
 }
 
-export type AuthResult<T> = AuthSuccess | AuthFailure<T>
+export type AuthResult<T extends AuthError> = AuthSuccess | AuthFailure<T>
 
 export const authorized = (): AuthSuccess => ({
   authorized: true
