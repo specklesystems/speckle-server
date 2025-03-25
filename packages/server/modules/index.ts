@@ -4,7 +4,7 @@
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
-import { values, merge, camelCase, reduce, intersection, difference, set } from 'lodash'
+import { values, merge, camelCase, reduce, intersection, difference } from 'lodash'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
@@ -372,9 +372,7 @@ export const moduleAuthLoaders = async () => {
       cacheProvider: inMemoryCacheProviderFactory({ cache }),
       ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be)
     })
-
-    // lodash.set because typing is hard here
-    set(acc, key, newLoader)
+    acc[key] = newLoader
 
     return acc
   }, {} as Authz.AuthCheckContextLoaders)

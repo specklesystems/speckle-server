@@ -16,7 +16,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   describe('project not found', () => {
     it('by returning project no access', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({}),
         getProject: () => Promise.resolve(null),
         getProjectRole: () => {
           assert.fail()
@@ -45,7 +45,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   describe('project visibility', () => {
     it('allows anyone on a public project', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({}),
         getProject: getProjectFake({ isPublic: true }),
         getProjectRole: () => {
           assert.fail()
@@ -68,7 +68,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('allows anyone on a linkShareable project', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({}),
         getProject: getProjectFake({ isDiscoverable: true }),
         getProjectRole: () => {
           assert.fail()
@@ -96,7 +96,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       'allows access to private projects with role %',
       async (role) => {
         const canQueryProject = canQueryProjectPolicyFactory({
-          getEnv: () =>
+          getEnv: async () =>
             parseFeatureFlags({
               FF_WORKSPACES_MODULE_ENABLED: 'false'
             }),
@@ -121,7 +121,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     )
     it('does not allow access to private projects without a project role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false'
           }),
@@ -150,7 +150,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   describe('admin override', () => {
     it('allows server admins without project roles on private projects if admin override is enabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
+        getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin),
         getProjectRole: () => {
@@ -172,7 +172,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_ADMIN_OVERRIDE_ENABLED: 'false',
             FF_WORKSPACES_MODULE_ENABLED: 'false'
@@ -202,7 +202,8 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   describe('the workspace world', () => {
     it('does not check workspace rules if the workspaces module is not enabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+        getEnv: async () =>
+          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({
           isDiscoverable: false,
           isPublic: false,
@@ -227,7 +228,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('does not allow project access without a workspace role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -253,7 +254,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('allows project access via workspace role if user does not have project role', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -277,7 +278,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('does not check SSO sessions if user is workspace guest', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -303,7 +304,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('does not check SSO sessions if workspace does not have it enabled', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -327,7 +328,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     })
     it('does not allow project access if SSO session is missing', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -352,7 +353,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       date.setDate(date.getDate() - 1)
 
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
@@ -378,7 +379,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
       date.setDate(date.getDate() + 1)
 
       const canQueryProject = canQueryProjectPolicyFactory({
-        getEnv: () =>
+        getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),

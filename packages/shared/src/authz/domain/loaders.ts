@@ -1,3 +1,5 @@
+import { OverrideProperties } from 'type-fest'
+import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
 import type { GetProject, GetProjectRole } from './projects/operations.js'
 import type {
@@ -7,6 +9,29 @@ import type {
   GetWorkspaceSsoProvider,
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
+
+// utility type that ensures all properties functions that return promises
+type PromiseAll<T> = {
+  [K in keyof T]: T[K] extends (...args: infer Args) => MaybeAsync<infer Return>
+    ? (...args: Args) => Promise<Return>
+    : never
+}
+
+// wrapper type for AllAuthCheckContextLoaders that ensures loaders follow the expected schema
+type AuthContextLoaderMappingDefinition<
+  Mapping extends {
+    [Key in keyof Mapping]: Key extends AuthCheckContextLoaderKeys
+      ? Mapping[Key]
+      : never
+  }
+> = PromiseAll<
+  OverrideProperties<
+    {
+      [key in AuthCheckContextLoaderKeys]: unknown
+    },
+    Mapping
+  >
+>
 
 /**
  * All loaders must be listed here for app startup validation to work properly
@@ -25,7 +50,7 @@ export const AuthCheckContextLoaderKeys = <const>{
 export type AuthCheckContextLoaderKeys =
   (typeof AuthCheckContextLoaderKeys)[keyof typeof AuthCheckContextLoaderKeys]
 
-export type AllAuthCheckContextLoaders = {
+export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
   getProject: GetProject
   getProjectRole: GetProjectRole
@@ -34,9 +59,7 @@ export type AllAuthCheckContextLoaders = {
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
-} & {
-  [key in AuthCheckContextLoaderKeys]: unknown
-}
+}>
 
 export type AuthCheckContextLoaders<
   LoaderKeys extends AuthCheckContextLoaderKeys = AuthCheckContextLoaderKeys

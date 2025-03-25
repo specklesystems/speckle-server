@@ -34,7 +34,8 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
+    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } =
+      await loaders.getEnv()
 
     const project = await loaders.getProject({ projectId })
     // hiding the project not found, to stop id brute force lookups
