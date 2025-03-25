@@ -17,7 +17,7 @@ export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
 }
 
 export enum WorkspaceUserActionTypes {
-  RemoveMember = 'remove-member',
+  RemoveFromWorkspace = 'remove-from-workspace',
   LeaveWorkspace = 'leave-workspace',
   MakeAdmin = 'make-admin',
   RemoveAdmin = 'remove-admin',

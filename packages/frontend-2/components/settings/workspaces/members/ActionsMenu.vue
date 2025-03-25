@@ -34,8 +34,8 @@
       @success="onDialogSuccess"
     />
 
-    <SettingsWorkspacesMembersActionsRemoveMemberDialog
-      v-if="showRemoveMemberDialog"
+    <SettingsWorkspacesMembersActionsRemoveFromWorkspaceDialog
+      v-if="showRemoveFromWorkspaceDialog"
       v-model:open="showDialog"
       :user="targetUser"
       :workspace="workspace"
@@ -135,7 +135,7 @@ const canDowngradeEditor = computed(() => {
   )
 })
 
-const canRemoveMember = computed(() => {
+const canRemoveFromWorkspace = computed(() => {
   return (
     isActiveUserWorkspaceAdmin.value &&
     !isActiveUserTargetUser.value &&
@@ -190,10 +190,10 @@ const filteredActionsItems = computed(() => {
   }
 
   // Add footer items
-  if (canRemoveMember.value) {
+  if (canRemoveFromWorkspace.value) {
     footerItems.push({
-      title: 'Remove member...',
-      id: WorkspaceUserActionTypes.RemoveMember
+      title: 'Remove from workspace...',
+      id: WorkspaceUserActionTypes.RemoveFromWorkspace
     })
   }
   if (canLeaveWorkspace.value) {
@@ -225,7 +225,7 @@ const showUpdateSeatTypeDialog = computed(() => {
   )
 })
 
-const showRemoveMemberDialog = computed(() => {
+const showRemoveFromWorkspaceDialog = computed(() => {
   return dialogType.value === WorkspaceUserActionTypes.RemoveMember
 })
 
