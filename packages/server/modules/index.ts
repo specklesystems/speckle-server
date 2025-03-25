@@ -4,7 +4,7 @@
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
-import { values, merge, camelCase, reduce, intersection, difference } from 'lodash'
+import { values, merge, camelCase, reduce, intersection, difference, set } from 'lodash'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
@@ -25,6 +25,11 @@ import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LoaderConfigurationError, LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
 import type { defineModuleLoaders } from '@/modules/loaders'
+import {
+  inMemoryCacheProviderFactory,
+  wrapWithCache
+} from '@/modules/shared/utils/caching'
+import TTLCache from '@isaacs/ttlcache'
 
 /**
  * Cached speckle module requires
@@ -311,10 +316,7 @@ export const moduleMockConfigs = (
   return mockConfigs
 }
 
-let cachedAuthzLoaders: Optional<Authz.AuthCheckContextLoaders> = undefined
 export const moduleAuthLoaders = async () => {
-  if (cachedAuthzLoaders) return cachedAuthzLoaders
-
   const enabledModuleNames = getEnabledModuleNames()
 
   let loaders: Partial<Authz.AuthCheckContextLoaders> = {}
@@ -349,6 +351,36 @@ export const moduleAuthLoaders = async () => {
     )
   }
 
-  cachedAuthzLoaders = loaders as Authz.AuthCheckContextLoaders
-  return cachedAuthzLoaders
+  const allLoaders = loaders as Authz.AuthCheckContextLoaders
+
+  /**
+   * Add inmemory caching to all loaders. Since the loaders & their caches are scoped to each request and these checks
+   * occur before any mutations, we can safely cache them in memory with a long ttl.
+   *
+   * In edge cases - the caches can be cleared
+   */
+  const cache = new TTLCache<string, unknown>()
+  const loadersWithCache: Authz.AuthCheckContextLoaders = Object.entries(
+    allLoaders
+  ).reduce((acc, entry) => {
+    const key = entry[0] as Authz.AuthCheckContextLoaderKeys
+    const loader = entry[1] as Authz.AllAuthCheckContextLoaders[typeof key]
+
+    const newLoader = wrapWithCache<any, any>({
+      resolver: loader,
+      name: `authzLoader:${key}`,
+      cacheProvider: inMemoryCacheProviderFactory({ cache }),
+      ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be)
+    })
+
+    // lodash.set because typing is hard here
+    set(acc, key, newLoader)
+
+    return acc
+  }, {} as Authz.AuthCheckContextLoaders)
+
+  return {
+    loaders: loadersWithCache,
+    clearCache: () => cache.clear()
+  }
 }

@@ -213,13 +213,18 @@ export async function buildContext(params?: {
     moduleAuthLoaders(),
     buildRequestLoaders(ctx, { cleanLoadersEarly })
   ])
-  const authPolicies = Authz.authPoliciesFactory(authLoaders)
+  const authPolicies = Authz.authPoliciesFactory(authLoaders.loaders)
 
   return {
     ...ctx,
     loaders: dataLoaders,
     log,
-    authPolicies
+    authPolicies: {
+      ...authPolicies,
+      clearCache: () => {
+        authLoaders.clearCache()
+      }
+    }
   }
 }
 
