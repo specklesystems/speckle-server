@@ -767,9 +767,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               query: {
                 query: args.filter?.search || undefined,
                 cursor: args.cursor || undefined,
-                limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-                functionsWithoutVersions:
-                  args.filter?.functionsWithoutReleases || undefined
+                limit: isNullOrUndefined(args.limit) ? undefined : args.limit
               }
             })
 

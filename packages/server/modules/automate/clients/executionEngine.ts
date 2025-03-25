@@ -539,15 +539,14 @@ export const getPublicFunctionsFactory =
       query?: string
       cursor?: string
       limit?: number
-      functionsWithoutVersions?: boolean
     }
   }) => {
     const { logger } = deps
     const { query } = params
-    const url = getApiUrl(`/api/v1/functions`, {
+    const url = getApiUrl(`/api/v2/functions`, {
       query: {
         ...query,
-        featuredFunctionsOnly: true
+        includeFeatured: true
       }
     })
 
