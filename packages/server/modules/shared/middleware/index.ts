@@ -48,7 +48,7 @@ import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
-import { getLoaders } from '@/modules/loaders'
+import { moduleAuthLoaders } from '@/modules'
 
 export const authMiddlewareCreator = (
   steps: AuthPipelineFunction[]
@@ -221,9 +221,10 @@ export async function buildContext({
     await wait(delay)
   }
 
-  const authPolicies = Authz.authPoliciesFactory(getLoaders())
+  const authPolicies = Authz.authPoliciesFactory(await moduleAuthLoaders())
 
   // Adding request data loaders
+  // TODO: Clean this up
   return await addLoadersToCtx(
     {
       ...ctx,

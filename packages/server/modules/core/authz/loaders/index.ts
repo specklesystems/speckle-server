@@ -1,14 +1,14 @@
+import { defineModuleLoaders } from '@/modules/loaders'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { defineLoaders } from '@/modules/loaders'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { getUserServerRoleFactory } from '@/modules/shared/repositories/acl'
 
-export const defineModuleLoaders = () => {
+export default defineModuleLoaders(async () => {
   const getStream = getStreamFactory({ db })
   const getUserServerRole = getUserServerRoleFactory({ db })
 
-  defineLoaders({
+  return {
     getEnv: getFeatureFlags,
     getProject: async ({ projectId }) => {
       const project = await getStream({ streamId: projectId })
@@ -23,5 +23,5 @@ export const defineModuleLoaders = () => {
       const role = await getUserServerRole({ userId })
       return role ?? null
     }
-  })
-}
+  }
+})

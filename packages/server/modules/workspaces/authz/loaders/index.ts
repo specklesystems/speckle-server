@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { defineLoaders } from '@/modules/loaders'
+import { defineModuleLoaders } from '@/modules/loaders'
 import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
@@ -9,8 +9,8 @@ import {
   getWorkspaceRoleForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 
-export const defineModuleLoaders = () => {
-  defineLoaders({
+export default defineModuleLoaders(() => {
+  return {
     getWorkspace: getWorkspaceFactory({ db }),
     getWorkspaceRole: async ({ userId, workspaceId }) => {
       const role = await getWorkspaceRoleForUserFactory({ db })({
@@ -32,5 +32,5 @@ export const defineModuleLoaders = () => {
       })
       return ssoProvider ?? null
     }
-  })
-}
+  }
+})

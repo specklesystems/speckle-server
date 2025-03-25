@@ -4,14 +4,14 @@
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
-import { values, merge, camelCase, reduce, intersection } from 'lodash'
+import { values, merge, camelCase, reduce, intersection, difference } from 'lodash'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { isNonNullable } from '@speckle/shared'
+import { isNonNullable, Optional, Authz } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
@@ -22,9 +22,9 @@ import {
 } from '@/modules/core/graph/helpers/directiveHelper'
 import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
-import { LogicError } from '@/modules/shared/errors'
+import { LoaderConfigurationError, LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
-import { validateLoaders } from '@/modules/loaders'
+import type { defineModuleLoaders } from '@/modules/loaders'
 
 /**
  * Cached speckle module requires
@@ -128,7 +128,8 @@ export const init = async (params: { app: Express; metricsRegister: Registry }) 
     await module.finalize?.({ app, isInitial, metricsRegister })
   }
 
-  validateLoaders()
+  // Validate & cache authz loaders
+  await moduleAuthLoaders()
 
   hasInitializationOccurred = true
 }
@@ -148,10 +149,12 @@ export const shutdown = async () => {
  */
 export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => {
   let dataLoaders: RequestDataLoadersBuilder<any>[] = []
+  const enabledModuleNames = getEnabledModuleNames()
 
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
+    if (!enabledModuleNames.includes(file)) return
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // load dataloaders
@@ -169,13 +172,15 @@ export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => 
 }
 
 /**
- * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
- * that resolvers return valid values even if the module is disabled
+ * GQL components - typedefs, resolvers, directives
+ * (assets will be loaded from even disabled components cause the schema must be static)
  */
 const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
   directiveBuilders: Record<string, GraphqlDirectiveBuilder>
   typeDefs: string[]
 } => {
+  const enabledModuleNames = getEnabledModuleNames()
+
   // Base query and mutation to allow for type extension by modules.
   const typeDefs = [baseTypeDefs]
 
@@ -197,6 +202,7 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
+    if (!enabledModuleNames.includes(file)) return
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
@@ -303,4 +309,46 @@ export const moduleMockConfigs = (
   })
 
   return mockConfigs
+}
+
+let cachedAuthzLoaders: Optional<Authz.AuthCheckContextLoaders> = undefined
+export const moduleAuthLoaders = async () => {
+  if (cachedAuthzLoaders) return cachedAuthzLoaders
+
+  const enabledModuleNames = getEnabledModuleNames()
+
+  let loaders: Partial<Authz.AuthCheckContextLoaders> = {}
+
+  // load auth loaders from /modules and in same order as the whitelist
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  const coreModuleDirsOrdered = intersection(enabledModuleNames, codeModuleDirs)
+  for (const moduleName of coreModuleDirsOrdered) {
+    const fullModulePath = path.join(`${appRoot}/modules`, moduleName)
+    const loadersFolderPath = path.join(fullModulePath, 'authz', 'loaders')
+    if (!fs.existsSync(loadersFolderPath)) continue
+
+    // We only take the first loaders.ts file we find (for now)
+    const moduleLoadersBuilderFn = values(autoloadFromDirectory(loadersFolderPath))
+      .map((l) => l.default)
+      .filter(isNonNullable)[0] as Optional<ReturnType<typeof defineModuleLoaders>>
+
+    loaders = {
+      ...loaders,
+      ...(await moduleLoadersBuilderFn?.())
+    }
+  }
+
+  // validate that all were loaded
+  const notFoundKeys = difference(
+    Object.values(Authz.AuthCheckContextLoaderKeys),
+    Object.keys(loaders)
+  )
+  if (notFoundKeys.length) {
+    throw new LoaderConfigurationError(
+      `Missing authz loaders found: ${notFoundKeys.join(', ')}`
+    )
+  }
+
+  cachedAuthzLoaders = loaders as Authz.AuthCheckContextLoaders
+  return cachedAuthzLoaders
 }
