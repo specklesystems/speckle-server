@@ -8,7 +8,7 @@ import { BaseDownloadOptions } from './options.js'
 export default class ServerDownloader implements Downloader {
   #requestUrlRootObj: string
   #requestUrlChildren: string
-  #headers: Headers
+  #headers: HeadersInit
   #options: BaseDownloadOptions
   #fetch: Fetcher
 
@@ -18,11 +18,16 @@ export default class ServerDownloader implements Downloader {
     this.#options = options
     this.#fetch = options.fetch ?? ((...args) => globalThis.fetch(...args))
 
-    this.#headers = this.#options.headers ?? new Headers()
-    this.#headers.set('Accept', 'text/plain')
+    this.#headers = {}
+    if (options.headers) {
+      for (const header of options.headers.entries()) {
+        this.#headers[header[0]] = header[1]
+      }
+    }
+    this.#headers['Accept'] = `text/plain`
 
     if (this.#options.token) {
-      this.#headers.set('Authorization', `Bearer ${this.#options.token}`)
+      this.#headers['Authorization'] = `Bearer ${this.#options.token}`
     }
     this.#requestUrlChildren = `${this.#options.serverUrl}/api/getobjects/${
       this.#options.streamId
