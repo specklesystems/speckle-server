@@ -74,7 +74,7 @@ export default class ObjectLoader2 {
   async getTotalObjectCount() {
     const rootObj = await this.getRootObject()
     const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
-    return totalChildrenCount
+    return totalChildrenCount + 1 //count the root
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {

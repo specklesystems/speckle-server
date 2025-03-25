@@ -21,6 +21,8 @@ describe('e2e', () => {
     for await (const obj of loader.getObjectIterator()) {
       bases.push(obj)
     }
+
+    expect(await loader.getTotalObjectCount()).toBe(1328)
     expect(bases.length).toBe(1328)
     const base = await getObjectPromise
     expect(base).toBeDefined()
