@@ -1,25 +1,25 @@
 import {
   requireAnyWorkspaceRole,
   requireMinimumWorkspaceRole
-} from '../checks/workspaceRole.js'
-import { AuthResult, authorized, unauthorized } from '../domain/authResult.js'
+} from '../../checks/workspaceRole.js'
+import { AuthResult, authorized, unauthorized } from '../../domain/authResult.js'
 import {
   requireExactProjectVisibilityFactory,
   requireMinimumProjectRoleFactory
-} from '../checks/projects.js'
-import { AuthCheckContextLoaders } from '../domain/loaders.js'
-import { ProjectContext, UserContext } from '../domain/policies.js'
-import { requireExactServerRole } from '../checks/serverRole.js'
-import { requireValidWorkspaceSsoSession } from '../checks/workspaceSso.js'
-import { Roles } from '../../core/constants.js'
+} from '../../checks/projects.js'
+import { AuthCheckContextLoaders } from '../../domain/loaders.js'
+import { ProjectContext, UserContext } from '../../domain/policies.js'
+import { requireExactServerRole } from '../../checks/serverRole.js'
+import { requireValidWorkspaceSsoSession } from '../../checks/workspaceSso.js'
+import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionInvalidError
-} from '../domain/authErrors.js'
+} from '../../domain/authErrors.js'
 
-export const canQueryProjectPolicyFactory =
+export const queryProjectPolicyFactory =
   (
     loaders: Pick<
       AuthCheckContextLoaders,

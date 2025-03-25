@@ -1,21 +1,21 @@
 import { describe, expect, it, assert } from 'vitest'
-import { canQueryProjectPolicyFactory } from './canQueryProject.js'
-import { parseFeatureFlags } from '../../environment/index.js'
+import { queryProjectPolicyFactory } from './canQuery.js'
+import { parseFeatureFlags } from '../../../environment/index.js'
 import crs from 'crypto-random-string'
-import { Roles } from '../../core/constants.js'
-import { ProjectNoAccessError, ProjectNotFoundError } from '../domain/authErrors.js'
-import { getProjectFake } from '../../tests/fakes.js'
+import { Roles } from '../../../core/constants.js'
+import { ProjectNoAccessError, ProjectNotFoundError } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
-const canQueryProjectArgs = () => {
+const queryProjectArgs = () => {
   const projectId = crs({ length: 10 })
   const userId = crs({ length: 10 })
   return { projectId, userId }
 }
 
-describe('canQueryProjectPolicyFactory creates a function, that handles ', () => {
+describe('queryProjectPolicyFactory creates a function, that handles ', () => {
   describe('project not found', () => {
     it('by returning project no access', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () => parseFeatureFlags({}),
         getProject: () => Promise.resolve(null),
         getProjectRole: () => {
@@ -34,7 +34,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
 
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
@@ -44,7 +44,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   })
   describe('project visibility', () => {
     it('allows anyone on a public project', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () => parseFeatureFlags({}),
         getProject: getProjectFake({ isPublic: true }),
         getProjectRole: () => {
@@ -63,11 +63,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
     it('allows anyone on a linkShareable project', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () => parseFeatureFlags({}),
         getProject: getProjectFake({ isDiscoverable: true }),
         getProjectRole: () => {
@@ -86,7 +86,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
   })
@@ -95,7 +95,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     it.each(Object.values(Roles.Stream))(
       'allows access to private projects with role %',
       async (role) => {
-        const canQueryProject = canQueryProjectPolicyFactory({
+        const queryProject = queryProjectPolicyFactory({
           getEnv: () =>
             parseFeatureFlags({
               FF_WORKSPACES_MODULE_ENABLED: 'false'
@@ -115,12 +115,12 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
             assert.fail()
           }
         })
-        const canQuery = await canQueryProject(canQueryProjectArgs())
+        const canQuery = await queryProject(queryProjectArgs())
         expect(canQuery.authorized).toBe(true)
       }
     )
     it('does not allow access to private projects without a project role', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'false'
@@ -140,7 +140,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
         expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
@@ -149,7 +149,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   })
   describe('admin override', () => {
     it('allows server admins without project roles on private projects if admin override is enabled', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: () => Promise.resolve(Roles.Server.Admin),
@@ -166,12 +166,12 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_ADMIN_OVERRIDE_ENABLED: 'false',
@@ -192,7 +192,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(false)
       if (!canQuery.authorized) {
         expect(canQuery.error.code).toBe(ProjectNoAccessError.code)
@@ -201,7 +201,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
   })
   describe('the workspace world', () => {
     it('does not check workspace rules if the workspaces module is not enabled', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -222,11 +222,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
     it('does not allow project access without a workspace role', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -248,11 +248,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(false)
     })
     it('allows project access via workspace role if user does not have project role', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -272,11 +272,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         },
         getWorkspaceSsoProvider: () => Promise.resolve(null)
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
     it('does not check SSO sessions if user is workspace guest', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -298,11 +298,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
     it('does not check SSO sessions if workspace does not have it enabled', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -322,11 +322,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         },
         getWorkspaceSsoProvider: () => Promise.resolve(null)
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
     it('does not allow project access if SSO session is missing', async () => {
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -344,14 +344,14 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getWorkspaceSsoSession: () => Promise.resolve(null),
         getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(false)
     })
     it('does not allow project access if SSO session is expired or invalid', async () => {
       const date = new Date()
       date.setDate(date.getDate() - 1)
 
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -370,14 +370,14 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           Promise.resolve({ validUntil: date, userId: 'foo', providerId: 'foo' }),
         getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(false)
     })
     it('allows project access if SSO session is valid', async () => {
       const date = new Date()
       date.setDate(date.getDate() + 1)
 
-      const canQueryProject = canQueryProjectPolicyFactory({
+      const queryProject = queryProjectPolicyFactory({
         getEnv: () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -396,7 +396,7 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           Promise.resolve({ validUntil: date, userId: 'foo', providerId: 'foo' }),
         getWorkspaceSsoProvider: () => Promise.resolve({ providerId: 'foo' })
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await queryProject(queryProjectArgs())
       expect(canQuery.authorized).toBe(true)
     })
   })

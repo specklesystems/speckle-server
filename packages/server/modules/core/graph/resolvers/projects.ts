@@ -184,7 +184,7 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.canQuery({
+      const canQuery = await context.authPolicies.project.query({
         projectId: args.id,
         userId: context.userId
       })
@@ -279,7 +279,7 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const authResult = await context.authPolicies.project.canCreateProject({
+      const authResult = await context.authPolicies.project.create({
         userId: context.userId
       })
 

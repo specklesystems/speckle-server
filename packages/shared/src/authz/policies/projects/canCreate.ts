@@ -2,13 +2,13 @@ import {
   ProjectWorkspaceRequiredError,
   ServerNoAccessError,
   UnauthenticatedError
-} from '../domain/authErrors.js'
-import { authorized, AuthResult, unauthorized } from '../domain/authResult.js'
-import { AuthCheckContextLoaders } from '../domain/loaders.js'
-import { UserContext } from '../domain/policies.js'
-import { requireMinimumServerRoleFactory } from '../checks/serverRole.js'
+} from '../../domain/authErrors.js'
+import { authorized, AuthResult, unauthorized } from '../../domain/authResult.js'
+import { AuthCheckContextLoaders } from '../../domain/loaders.js'
+import { UserContext } from '../../domain/policies.js'
+import { requireMinimumServerRoleFactory } from '../../checks/serverRole.js'
 
-export const canCreateProjectPolicyFactory =
+export const createProjectPolicyFactory =
   (loaders: Pick<AuthCheckContextLoaders, 'getEnv' | 'getServerRole'>) =>
   async ({
     userId
