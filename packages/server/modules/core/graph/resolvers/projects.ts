@@ -218,30 +218,32 @@ export = {
             deleteStream: deleteStreamFactory({
               db: projectDb
             }),
-            authorizeResolver,
             emitEvent: getEventBus().emit,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
             getStream: getStreamFactory({ db: projectDb })
           })
-          return deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
-            skipAccessChecks: true
-          })
+          return deleteStreamAndNotify(id, ctx.userId!)
         })
       )
       return results.every((res) => res === true)
     },
-    async delete(_parent, { id }, { userId, resourceAccessRules }) {
-      const projectDb = await getProjectDbClient({ projectId: id })
+    async delete(_parent, { id: projectId }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        projectId,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
+      const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
           db: projectDb
         }),
-        authorizeResolver,
         emitEvent: getEventBus().emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
         getStream: getStreamFactory({ db: projectDb })
       })
-      return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
+      return await deleteStreamAndNotify(projectId, userId!)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
       return await createOnboardingStream({
@@ -251,14 +253,19 @@ export = {
       })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        update.id,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
       const projectDB = await getProjectDbClient({ projectId: update.id })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        authorizeResolver,
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!, resourceAccessRules)
+      return await updateStreamAndNotify(update, userId!)
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {

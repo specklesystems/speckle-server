@@ -1,6 +1,6 @@
-import { GetServerRole } from './core/operations.js'
-import { GetProject, GetProjectRole } from './projects/operations.js'
-import {
+import type { GetServerRole } from './core/operations.js'
+import type { GetProject, GetProjectRole } from './projects/operations.js'
+import type {
   GetEnv,
   GetWorkspace,
   GetWorkspaceRole,

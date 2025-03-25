@@ -1,9 +1,10 @@
 import { StreamRoles, throwUncoveredError } from '../../core/index.js'
+import { ProjectNotFoundError } from '../domain/errors.js'
 import { AuthCheckContext } from '../domain/loaders.js'
 import { isMinimumProjectRole } from '../domain/projects/logic.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
 
-export const requireExactProjectVisibility =
+export const requireExactProjectVisibilityFactory =
   ({ loaders }: AuthCheckContext<'getProject'>) =>
   async (args: {
     projectVisibility: ProjectVisibility
@@ -12,7 +13,7 @@ export const requireExactProjectVisibility =
     const { projectId, projectVisibility } = args
 
     const project = await loaders.getProject({ projectId })
-    if (!project) throw new Error(`Project not found`)
+    if (!project) throw new ProjectNotFoundError({ projectId })
 
     switch (projectVisibility) {
       case 'linkShareable':
@@ -26,7 +27,7 @@ export const requireExactProjectVisibility =
     }
   }
 
-export const requireMinimumProjectRole =
+export const requireMinimumProjectRoleFactory =
   ({ loaders }: AuthCheckContext<'getProjectRole'>) =>
   async (args: {
     userId: string
