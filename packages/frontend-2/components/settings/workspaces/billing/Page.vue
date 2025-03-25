@@ -229,7 +229,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { guideBillingUrl } from '~/lib/common/helpers/route'
 import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {

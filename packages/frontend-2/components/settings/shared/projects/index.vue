@@ -116,7 +116,7 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
-import { projectCollaboratorsRoute, projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
@@ -187,7 +187,7 @@ const onActionChosen = (
   project: ProjectsDeleteDialog_ProjectFragment
 ) => {
   if (actionItem.id === ActionTypes.EditMembers) {
-    router.push(projectCollaboratorsRoute(project.id))
+    router.push(projectRoute(project.id, 'collaborators'))
   } else if (actionItem.id === ActionTypes.ViewProject) {
     handleProjectClick(project.id)
   } else if (actionItem.id === ActionTypes.DeleteProject) {

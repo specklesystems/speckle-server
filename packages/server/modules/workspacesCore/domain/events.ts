@@ -1,4 +1,4 @@
-import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
@@ -13,7 +13,8 @@ export const WorkspaceEvents = {
   Deleted: `${eventPrefix}deleted`,
   RoleDeleted: `${eventPrefix}role-deleted`,
   RoleUpdated: `${eventPrefix}role-updated`,
-  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`
+  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`,
+  SeatUpdated: `${eventPrefix}seat-updated`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
@@ -32,8 +33,11 @@ type WorkspaceRoleDeletedPayload = {
 }
 type WorkspaceRoleUpdatedPayload = {
   acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-  seatType: WorkspaceSeatType
   flags?: { skipProjectRoleUpdatesFor: string[] }
+  updatedByUserId: string
+}
+type WorkspaceSeatUpdatedPayload = {
+  seat: WorkspaceSeat
   updatedByUserId: string
 }
 type WorkspaceJoinedFromDiscoveryPayload = {
@@ -49,5 +53,6 @@ export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Deleted]: { workspaceId: string }
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
+  [WorkspaceEvents.SeatUpdated]: WorkspaceSeatUpdatedPayload
   [WorkspaceEvents.JoinedFromDiscovery]: WorkspaceJoinedFromDiscoveryPayload
 }

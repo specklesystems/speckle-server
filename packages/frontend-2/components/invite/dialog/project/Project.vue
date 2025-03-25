@@ -125,7 +125,6 @@ graphql(`
     workspace {
       id
       name
-      defaultProjectRole
       role
       domainBasedMembershipProtectionEnabled
       domains {

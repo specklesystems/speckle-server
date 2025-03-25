@@ -27,8 +27,10 @@ export function throwUncoveredError(e: never): never {
   throw createUncoveredError(e)
 }
 
+export class UncoveredError extends Error {}
+
 export function createUncoveredError(e: never) {
-  return new Error(`Uncovered error case ${e}.`)
+  return new UncoveredError(`Uncovered error case ${e}.`)
 }
 
 /**

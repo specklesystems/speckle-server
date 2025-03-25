@@ -13,7 +13,16 @@
     </div>
     <p class="text-body mt-1">
       <span class="font-medium">
-        {{ formatPrice(finalPlanPrice) }}
+        {{
+          formatPrice(
+            props.yearlyIntervalSelected && planPrice?.['workspace:member']
+              ? {
+                  ...planPrice['workspace:member'],
+                  amount: planPrice['workspace:member'].amount * 0.8
+                }
+              : planPrice?.['workspace:member']
+          )
+        }}
       </span>
       per seat/month
     </p>
@@ -111,7 +120,7 @@ import { startCase, isFunction } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { SetupContext } from 'vue'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -136,19 +145,7 @@ const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
-const planPrice = computed(
-  () =>
-    prices.value?.[props.plan]?.[props.yearlyIntervalSelected ? 'yearly' : 'monthly']
-)
-
-const finalPlanPrice = computed(() => {
-  const basePrice = prices.value?.[props.plan].monthly?.['workspace:member']
-  if (!basePrice) return undefined
-  return {
-    ...basePrice,
-    amount: props.yearlyIntervalSelected ? basePrice.amount * 0.8 : basePrice.amount
-  }
-})
+const planPrice = computed(() => prices.value?.[props.plan]?.monthly)
 
 const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {

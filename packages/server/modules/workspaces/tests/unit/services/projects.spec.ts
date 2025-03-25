@@ -1,34 +1,39 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { GetWorkspaceRolesAllowedProjectRolesFactory } from '@/modules/workspaces/domain/operations'
+import { GetWorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
 import {
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-const getWorkspaceRolesAllowedProjectRoles: GetWorkspaceRolesAllowedProjectRolesFactory =
-  async () => {
-    const mapping = {
+const getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping =
+  async () => ({
+    default: {
       [Roles.Workspace.Admin]: Roles.Stream.Owner,
       [Roles.Workspace.Member]: Roles.Stream.Contributor,
       [Roles.Workspace.Guest]: null
+    },
+    allowed: {
+      [Roles.Workspace.Admin]: [
+        Roles.Stream.Owner,
+        Roles.Stream.Contributor,
+        Roles.Stream.Reviewer
+      ],
+      [Roles.Workspace.Member]: [
+        Roles.Stream.Owner,
+        Roles.Stream.Contributor,
+        Roles.Stream.Reviewer
+      ],
+      [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor]
     }
-    return {
-      defaultProjectRole: ({ workspaceRole }) => {
-        return mapping[workspaceRole]
-      },
-      allowedProjectRoles: () => {
-        return Object.values(Roles.Stream)
-      }
-    }
-  }
+  })
 
 describe('Project retrieval services', () => {
   describe('queryAllWorkspaceProjectFactory returns a generator, that', () => {
@@ -120,7 +125,10 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
-        getWorkspaceRolesAllowedProjectRoles: async () => {
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+          expect.fail()
+        },
+        getWorkspaceWithPlan: async () => {
           expect.fail()
         },
         updateWorkspaceRole: async () => {
@@ -156,7 +164,10 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
-        getWorkspaceRolesAllowedProjectRoles: async () => {
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+          expect.fail()
+        },
+        getWorkspaceWithPlan: async () => {
           expect.fail()
         },
         updateWorkspaceRole: async () => {
@@ -213,7 +224,12 @@ describe('Project management services', () => {
             }
           }
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -253,7 +269,12 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -294,7 +315,12 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
         }
@@ -336,7 +362,12 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async () => {}
       })
 
@@ -376,7 +407,12 @@ describe('Project management services', () => {
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async () => {}
       })
 
@@ -427,7 +463,12 @@ describe('Project management services', () => {
             }
           }
         },
-        getWorkspaceRolesAllowedProjectRoles,
+        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async () => {}
       })
 
