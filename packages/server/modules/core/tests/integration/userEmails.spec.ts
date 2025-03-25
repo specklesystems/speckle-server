@@ -437,7 +437,7 @@ describe('Core @user-emails', () => {
       assertLowercase(updatedEmail)
 
       randomCaseGuy.email = newEmail
-      updateEmailDirectly(newEmail)
+      await updateEmailDirectly(newEmail)
     })
 
     it('with validateAndCreateUserEmailFactory()', async () => {
