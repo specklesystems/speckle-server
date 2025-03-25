@@ -5,6 +5,7 @@ import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
+import ObjectLoader2 from '@speckle/objectloader2'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =
@@ -16,7 +17,7 @@ export type SpeckleConverterNodeDelegate =
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  protected objectLoader: ObjectLoader
+  protected objectLoader: ObjectLoader2
   protected activePromises: number
   protected maxChildrenPromises: number
   protected spoofIDs = false
@@ -63,7 +64,7 @@ export default class SpeckleConverter {
 
   protected readonly IgnoreNodes = ['Parameter']
 
-  constructor(objectLoader: ObjectLoader, tree: WorldTree) {
+  constructor(objectLoader: ObjectLoader2, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -276,9 +277,9 @@ export default class SpeckleConverter {
 
     const chunked: unknown[] = []
     for (const ref of arr) {
-      const real: Record<string, unknown> = await this.objectLoader.getObject(
+      const real: Record<string, unknown> = (await this.objectLoader.getObject(
         ref.referencedId
-      )
+      )) as unknown as Record<string, number>
       chunked.push(real.data)
       // await this.asyncPause()
     }

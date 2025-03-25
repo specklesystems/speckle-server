@@ -1,13 +1,13 @@
 import SpeckleConverter from './SpeckleConverter.js'
 import { Loader, LoaderEvent } from '../Loader.js'
-import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
+import ObjectLoader2 from '@speckle/objectloader2'
 
 export class SpeckleLoader extends Loader {
-  protected loader: ObjectLoader
+  protected loader: ObjectLoader2
   protected converter: SpeckleConverter
   protected tree: WorldTree
   protected isCancelled = false
@@ -50,7 +50,7 @@ export class SpeckleLoader extends Loader {
     authToken?: string,
     enableCaching?: boolean,
     resourceData?: unknown
-  ): ObjectLoader {
+  ): ObjectLoader2 {
     resourceData
     let token = undefined
     try {
@@ -80,14 +80,17 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    return new ObjectLoader({
-      serverUrl,
-      token,
-      streamId,
-      objectId,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: { enableCaching, customLogger: (Logger as any).log }
-    })
+    return new ObjectLoader2(
+      { serverUrl, streamId, objectId, token }
+      //   {
+      //   serverUrl,
+      //   token,
+      //   streamId,
+      //   objectId,
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   options: { enableCaching, customLogger: (Logger as any).log }
+      // }
+    )
   }
 
   public async load(): Promise<boolean> {
@@ -184,6 +187,6 @@ export class SpeckleLoader extends Loader {
 
   dispose() {
     super.dispose()
-    this.loader.dispose()
+    void this.loader.disposeAsync()
   }
 }
