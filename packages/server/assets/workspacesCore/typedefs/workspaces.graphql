@@ -406,6 +406,7 @@ input WorkspaceTeamFilter {
   Search for team members by name or email
   """
   search: String
+  seatType: WorkspaceSeatType
 }
 
 type WorkspaceCollaboratorCollection {

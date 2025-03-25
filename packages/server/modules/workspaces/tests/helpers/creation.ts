@@ -106,7 +106,7 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
+  workspace: SetOptional<BasicTestWorkspace, 'id' | 'slug'>,
   owner: BasicTestUser,
   options?: {
     domain?: string

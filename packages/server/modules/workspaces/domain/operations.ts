@@ -122,6 +122,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      * Optionally filter by user name or email
      */
     search?: string
+    seatType?: WorkspaceSeatType
   }
 }
 
