@@ -47,6 +47,7 @@ import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
+import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
 
 graphql(`
   fragment InviteDialogWorkspace_Workspace on Workspace {
@@ -177,12 +178,16 @@ const onSubmit = async () => {
   }
 }
 
+const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains.value)
+
 const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   invites.value = updatedInvites
 
   const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
     role: isWorkspaceNewPlansEnabled.value
-      ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
+      ? canBeMember(invite.email)
+        ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
+        : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest)
       : invite.workspaceRole
       ? mapMainRoleToGqlWorkspaceRole(invite.workspaceRole)
       : undefined,
