@@ -22,6 +22,7 @@ graphql(`
     }
     subscription {
       billingInterval
+      currentBillingCycleEnd
     }
   }
 `)
@@ -78,6 +79,9 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
+
+  const billingCycleEnd = computed(() => subscription.value?.currentBillingCycleEnd)
+
   // TODO: Replace with value from API call, this a placeholder value
   const editorSeatPrice = 15
   const guestSeatPrice = 15
@@ -107,8 +111,8 @@ export const useWorkspacePlan = (slug: string) => {
     }
 
     const usedSeats = {
-      editor: 5,
-      guest: 6
+      editor: 4,
+      guest: 5
     }
 
     return {
@@ -136,6 +140,7 @@ export const useWorkspacePlan = (slug: string) => {
     isActivePlan,
     billingInterval,
     intervalIsYearly,
+    billingCycleEnd,
     totalCostFormatted,
     statusIsCancelationScheduled,
     subscription,

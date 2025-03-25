@@ -31,9 +31,9 @@
       >
         <div class="flex items-center gap-2">
           <div
-            class="p-2 rounded-full border border-blue-300 dark:border-blue-800 bg-foundation"
+            class="p-2.5 rounded-full border border-blue-300 dark:border-blue-800 bg-foundation"
           >
-            <component :is="newSeatIcon" class="w-5 h-5" />
+            <component :is="newSeatIcon" class="w-4 h-4" />
           </div>
           <div class="flex flex-col">
             <div class="text-foreground">{{ newSeatTitle }}</div>
@@ -81,7 +81,7 @@ import {
 import { useWorkspaceUpdateSeatType } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
-import { EyeIcon, LinkIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { ArrowDownIcon } from '@heroicons/vue/20/solid'
 import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
@@ -103,7 +103,8 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserSeatType = useWorkspaceUpdateSeatType()
-const { seats, totalCostFormatted } = useWorkspacePlan(props.workspace?.slug || '')
+const { seats, totalCostFormatted, billingCycleEnd, isPurchasablePlan } =
+  useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
 
@@ -112,8 +113,8 @@ const hasUnusedEditorSeat = computed(() => {
   return seats.value.editor.hasSeatAvailable
 })
 
-const currentSeatIcon = computed(() => (isUpgrading.value ? EyeIcon : LinkIcon))
-const newSeatIcon = computed(() => (isUpgrading.value ? LinkIcon : EyeIcon))
+const currentSeatIcon = computed(() => (isUpgrading.value ? EyeIcon : PencilIcon))
+const newSeatIcon = computed(() => (isUpgrading.value ? PencilIcon : EyeIcon))
 
 const currentSeatTitle = computed(() =>
   isUpgrading.value ? 'Viewer seat' : 'Editor seat'
@@ -138,9 +139,9 @@ const billingMessage = computed(() => {
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
       : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/month.`
   } else {
-    // TODO: Replace with actual renewal date from subscription
-    const renewalDate = '[xx/xx/xxxx]'
-    return `The Editor seat will still be paid for until your plan renews on ${renewalDate}. You can freely reassign it to another person.`
+    return isPurchasablePlan.value
+      ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd}. You can freely reassign it to another person.`
+      : null
   }
 })
 

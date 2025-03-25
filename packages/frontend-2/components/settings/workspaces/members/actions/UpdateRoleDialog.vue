@@ -27,8 +27,6 @@
           workspace roles.
         </NuxtLink>
       </p>
-
-      <div></div>
     </div>
   </LayoutDialog>
 </template>
