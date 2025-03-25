@@ -275,6 +275,8 @@ export const deleteAutomationFactory =
 
     // Delete root automation record
     await deps.deleteAutomation({ automationId })
+
+    return true
   }
 
 export type ValidateAndUpdateAutomationDeps = {
