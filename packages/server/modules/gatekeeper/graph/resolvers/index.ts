@@ -67,6 +67,7 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -177,14 +178,16 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }
           }
           // Only editor seats are considered
-          const totalSeatsCount = parent.subscriptionData.products[0].quantity
           const assignedSeatsCount = await countSeatsByTypeInWorkspaceFactory({ db })({
             workspaceId: parent.workspaceId,
             type: 'editor'
           })
           return {
             assigned: assignedSeatsCount,
-            totalCount: totalSeatsCount,
+            totalCount: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData: parent.subscriptionData
+            }),
             // These values have no reference in the new plans
             guest: 0,
             plan: 0

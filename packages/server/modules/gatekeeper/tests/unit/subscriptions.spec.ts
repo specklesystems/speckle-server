@@ -16,6 +16,7 @@ import {
   addWorkspaceSubscriptionSeatIfNeededFactoryNew,
   addWorkspaceSubscriptionSeatIfNeededFactoryOld,
   downscaleWorkspaceSubscriptionFactory,
+  getTotalSeatsCountByPlanFactory,
   handleSubscriptionUpdateFactory,
   manageSubscriptionDownscaleFactory
 } from '@/modules/gatekeeper/services/subscriptions'
@@ -2176,6 +2177,42 @@ describe('subscriptions @gatekeeper', () => {
 
       expect(newProduct!.quantity).to.equal(4)
       expect(newProduct!.priceId).to.equal('newPlanPrice')
+    })
+  })
+  describe('getTotalSeatsCountByPlanFactory returns a function that, ', () => {
+    it('should return the fixed value for the free plan', () => {
+      const getWorkspacePlanProductId = () => expect.fail()
+      expect(
+        getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+          workspacePlan: { name: 'free' },
+          subscriptionData: { products: [] }
+        })
+      ).to.eq(3)
+    })
+    it('should return 0 if subscription data has no product', () => {
+      const getWorkspacePlanProductId = () => 'any'
+      expect(
+        getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+          workspacePlan: { name: 'pro' },
+          subscriptionData: { products: [] }
+        })
+      ).to.eq(0)
+    })
+    it('should return the number of purchased seats in the current billing period for the subscription', () => {
+      const getWorkspacePlanProductId = () => 'productId'
+      expect(
+        getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+          workspacePlan: { name: 'pro' },
+          subscriptionData: {
+            products: [
+              {
+                productId: 'productId',
+                quantity: 4
+              } as SubscriptionData['products'][number]
+            ]
+          }
+        })
+      ).to.eq(4)
     })
   })
 })

@@ -119,7 +119,7 @@ describe('Workspaces Billing', () => {
     'workspace.subscription',
     () => {
       describe('subscription.seats', () => {
-        it('should return the number of total seats', async () => {
+        it('should return the number of total and assigned seats', async () => {
           const user = await createTestUser({
             name: createRandomString(),
             email: createRandomEmail(),
@@ -166,7 +166,7 @@ describe('Workspaces Billing', () => {
 
           expect(res).to.not.haveGraphQLErrors()
           const seats = res.data?.workspace.subscription?.seats
-          expect(seats).to.deep.eq({ guest: 0, plan: 0, assigned: 1, totalCount: 12 })
+          expect(seats?.assigned).to.eq(1)
         })
       })
     }

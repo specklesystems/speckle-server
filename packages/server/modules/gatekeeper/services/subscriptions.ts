@@ -31,6 +31,7 @@ import { cloneDeep, isEqual, sum } from 'lodash'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -410,4 +411,29 @@ export const manageSubscriptionDownscaleFactory =
       })
       log.info({ updatedWorkspaceSubscription }, 'Updated workspace billing cycle end')
     }
+  }
+
+export const getTotalSeatsCountByPlanFactory =
+  ({
+    getWorkspacePlanProductId
+  }: {
+    getWorkspacePlanProductId: GetWorkspacePlanProductId
+  }) =>
+  ({
+    workspacePlan,
+    subscriptionData
+  }: {
+    workspacePlan: Pick<WorkspacePlan, 'name'>
+    subscriptionData: Pick<SubscriptionData, 'products'>
+  }) => {
+    if (workspacePlan.name === 'free') {
+      return 3 // Max editors seats in the free plan
+    }
+    const productId = getWorkspacePlanProductId({
+      workspacePlan: workspacePlan.name as 'pro' | 'team'
+    })
+    const product = subscriptionData.products.find(
+      (product) => product.productId === productId
+    )
+    return product?.quantity ?? 0
   }
