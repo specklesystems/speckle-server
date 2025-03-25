@@ -1115,7 +1115,7 @@ const createAppToken = createAppTokenFactory({
             })
         )
         expect(e.message).to.eq(
-          'No version to trigger on found for the available triggers'
+          'Selected model has no versions and cannot be used to trigger an automation.'
         )
       })
 
