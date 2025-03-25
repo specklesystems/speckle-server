@@ -52,7 +52,6 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "workspace:^",
     "@speckle/objectloader2": "workspace:^",
     "@speckle/shared": "workspace:^",
     "@types/flat": "^5.0.2",
