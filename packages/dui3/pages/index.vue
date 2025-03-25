@@ -195,12 +195,12 @@ const hasNoModelCards = computed(
   () => store.projectModelGroups.length === 0 || hasNoValidProjects.value
 )
 const hasNoValidProjects = computed(() => {
-  const accountIds = accounts.value
+  const serverUrls = accounts.value
     .filter((acc) => acc.isValid)
-    .map((acc) => acc.accountInfo.id)
+    .map((acc) => acc.accountInfo.serverInfo.url)
 
   return (
-    store.projectModelGroups.filter((p) => accountIds.includes(p.accountId)).length ===
+    store.projectModelGroups.filter((p) => serverUrls.includes(p.serverUrl)).length ===
     0
   )
 })
