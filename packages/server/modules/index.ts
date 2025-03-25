@@ -178,7 +178,7 @@ export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => 
 
 /**
  * GQL components - typedefs, resolvers, directives
- * (assets will be loaded from even disabled components cause the schema must be static)
+ * (assets & directives will be loaded from even disabled components cause the schema must be static)
  */
 const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
   directiveBuilders: Record<string, GraphqlDirectiveBuilder>
@@ -207,12 +207,12 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
-    if (!enabledModuleNames.includes(file)) return
+    const isEnabledModule = enabledModuleNames.includes(file)
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
     const resolversPath = path.join(fullPath, 'graph', 'resolvers')
-    if (fs.existsSync(resolversPath)) {
+    if (isEnabledModule && fs.existsSync(resolversPath)) {
       const newResolverObjs = values(autoloadFromDirectory(resolversPath)).map((o) =>
         'default' in o ? o.default : o
       )
