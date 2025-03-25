@@ -91,11 +91,6 @@ import { has } from 'lodash'
 import { throwUncoveredError } from '@speckle/shared'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { Authz } from '@speckle/shared'
-import {
-  ProjectWorkspaceRequiredError,
-  ServerNoAccessError,
-  UnauthenticatedError
-} from '@speckle/shared/dist/commonjs/authz'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -285,10 +280,10 @@ export = {
 
       if (!canCreate.authorized) {
         switch (canCreate.error.code) {
-          case UnauthenticatedError.code:
+          case Authz.UnauthenticatedError.code:
             throw new UnauthorizedError(canCreate.error.message)
-          case ServerNoAccessError.code:
-          case ProjectWorkspaceRequiredError.code:
+          case Authz.ServerNoAccessError.code:
+          case Authz.ProjectWorkspaceRequiredError.code:
             throw new ForbiddenError(canCreate.error.message)
           default:
             throwUncoveredError(canCreate.error)
