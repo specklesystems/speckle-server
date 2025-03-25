@@ -140,6 +140,7 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { WebXrExtension } from './modules/extensions/WebXrExtension.js'
 
 export {
   Viewer,
@@ -239,7 +240,8 @@ export {
   CONTAINED,
   ViewModeEvent,
   SpeckleMesh,
-  SpeckleInstancedMesh
+  SpeckleInstancedMesh,
+  WebXrExtension
 }
 
 export type {

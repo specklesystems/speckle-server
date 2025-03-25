@@ -6,7 +6,8 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController
+  HybridCameraController,
+  WebXrExtension
 } from '@speckle/viewer'
 
 import './style.css'
@@ -58,6 +59,9 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
+
+  const xr = viewer.createExtension(WebXrExtension)
+  xr.init()
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
