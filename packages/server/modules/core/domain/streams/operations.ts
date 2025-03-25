@@ -178,6 +178,10 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
+
+  /**
+   * If provided, filter to given workspace id. If null, filter to projects outside of workspaces.
+   */
   workspaceId?: string | null
 
   /**

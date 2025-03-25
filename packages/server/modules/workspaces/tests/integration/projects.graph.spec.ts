@@ -26,6 +26,7 @@ import {
   createTestUsers
 } from '@/test/authHelper'
 import {
+  ActiveUserProjectsDocument,
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
   GetProjectDocument,
@@ -509,6 +510,45 @@ describe('Workspace project GQL CRUD', () => {
       expect(resA).to.not.haveGraphQLErrors()
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
+    })
+  })
+
+  describe('when querying active user projects', () => {
+    const activeUserProject: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: 'My User Project',
+      isPublic: false
+    }
+
+    beforeEach(async () => {
+      await createTestStream(activeUserProject, serverAdminUser)
+    })
+
+    it('should allow limiting results to projects outside of workspaces', async () => {
+      const res = await apollo.execute(ActiveUserProjectsDocument, {
+        filter: { workspaceId: null }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res?.data?.activeUser?.projects.items.length).to.equal(1)
+      expect(res?.data?.activeUser?.projects.items.at(0)).to.equal(activeUserProject.id)
+    })
+
+    it('should allow limiting results to projects within a specific workspace', async () => {
+      const res = await apollo.execute(ActiveUserProjectsDocument, {
+        filter: { workspaceId: workspace.id }
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res?.data?.activeUser?.projects.items.length).to.equal(3)
+    })
+
+    it('should allow listing projects that are both inside and outside of a workspace', async () => {
+      const res = await apollo.execute(ActiveUserProjectsDocument, { filter: {} })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res?.data?.activeUser?.projects.items.length).to.equal(4)
     })
   })
 })
