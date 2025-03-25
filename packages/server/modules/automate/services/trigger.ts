@@ -522,7 +522,7 @@ export const manuallyTriggerAutomationFactory =
     )
     if (!latestCommit) {
       throw new TriggerAutomationError(
-        'Selected model has no versions and cannot be used to trigger an automation.'
+        'Selected model has no versions so it cannot be used to trigger an automation.'
       )
     }
 
