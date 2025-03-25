@@ -6,7 +6,6 @@
     @update:open="isOpen = false"
   >
     <template #header>{{ title }}</template>
-    {{ isWorkspaceNewPlansEnabled }}
     <InviteDialogWorkspaceSelectRole
       v-if="isSelectingRole"
       v-model:selected-role="selectedRole"
