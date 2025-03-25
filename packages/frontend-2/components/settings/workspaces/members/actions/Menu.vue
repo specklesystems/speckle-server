@@ -57,7 +57,7 @@ import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
-import type { UserItem } from './new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
@@ -226,7 +226,7 @@ const showUpdateSeatTypeDialog = computed(() => {
 })
 
 const showRemoveFromWorkspaceDialog = computed(() => {
-  return dialogType.value === WorkspaceUserActionTypes.RemoveMember
+  return dialogType.value === WorkspaceUserActionTypes.RemoveFromWorkspace
 })
 
 const showLeaveWorkspaceDialog = computed(() => {

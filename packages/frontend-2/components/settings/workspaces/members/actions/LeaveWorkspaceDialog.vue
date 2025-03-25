@@ -1,7 +1,15 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
     <template #header>Leave workspace?</template>
-    <div class="flex flex-col gap-4 mb-4 -mt-1">
+    <CommonAlert v-if="isOnlyAdmin" color="danger" hide-icon size="xs">
+      <template #title>You are the only admin of this workspace</template>
+      <template #description>
+        <span class="text-body-2xs">
+          Please transfer the admin role to another user before leaving the workspace.
+        </span>
+      </template>
+    </CommonAlert>
+    <div v-else class="flex flex-col gap-4 mb-4 -mt-1">
       <p>
         You will no longer have access to projects in the
         <span class="font-medium">{{ workspace?.name }}</span>
@@ -20,7 +28,8 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-
+import { computed } from 'vue'
+import { Roles } from '@speckle/shared'
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<
     | SettingsWorkspacesNewMembersTable_WorkspaceFragment
@@ -36,6 +45,13 @@ const open = defineModel<boolean>('open', { required: true })
 
 const { activeUser } = useActiveUser()
 const updateUserRole = useWorkspaceUpdateRole()
+
+const isOnlyAdmin = computed(() => {
+  const adminUsers = props.workspace?.team.items.filter(
+    (user) => user.role === Roles.Workspace.Admin
+  )
+  return adminUsers?.length === 1
+})
 
 const handleConfirm = async () => {
   if (!props.workspace?.id || !activeUser.value?.id) return
@@ -58,7 +74,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: 'Leave',
-    onClick: handleConfirm
+    onClick: handleConfirm,
+    disabled: isOnlyAdmin.value
   }
 ])
 </script>

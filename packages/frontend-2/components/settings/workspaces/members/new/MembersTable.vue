@@ -116,6 +116,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesNewMembersTable_Workspace on Workspace {
     id
+    slug
     name
     ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace

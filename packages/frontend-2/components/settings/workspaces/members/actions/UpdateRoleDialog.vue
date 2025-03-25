@@ -27,6 +27,8 @@
           workspace roles.
         </NuxtLink>
       </p>
+
+      <div></div>
     </div>
   </LayoutDialog>
 </template>
@@ -88,7 +90,7 @@ const mainMessage = computed(() => {
   }
   if (props.newRole === Roles.Workspace.Member) {
     return isGuest.value
-      ? 'They will be able to create and own projects in the workspace.'
+      ? 'They will be able to access all projects.'
       : 'They will be able to create and own projects, but will no longer have admin privileges.'
   }
   return 'They will lose access to all projects. Make sure to add them back to the specific projects they need access to.'

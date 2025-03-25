@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
     <template #header>Remove member?</template>
     <div class="flex flex-col gap-4 mb-4 -mt-1">
       <CommonCard class="bg-foundation-2 text-body-2xs !p-2">

@@ -79,13 +79,14 @@ export const useWorkspacePlan = (slug: string) => {
     () => billingInterval.value === BillingInterval.Yearly
   )
   // TODO: Replace with value from API call, this a placeholder value
-  const seatPrice = 15
+  const editorSeatPrice = 15
+  const guestSeatPrice = 15
 
   const totalCost = computed(() => {
     return isPurchasablePlan.value
       ? intervalIsYearly.value
-        ? seatPrice * 12
-        : seatPrice
+        ? editorSeatPrice * 12
+        : editorSeatPrice
       : 0
   })
 
@@ -96,6 +97,34 @@ export const useWorkspacePlan = (slug: string) => {
       : isFreePlan.value
       ? 'Free'
       : 'Not applicable'
+  })
+
+  // TODO: Replace with actual values from backend once ready
+  const seats = computed(() => {
+    const seatLimits = {
+      editor: 5,
+      guest: 6
+    }
+
+    const usedSeats = {
+      editor: 5,
+      guest: 6
+    }
+
+    return {
+      editor: {
+        limit: seatLimits.editor,
+        used: usedSeats.editor,
+        hasSeatAvailable: seatLimits.editor > usedSeats.editor,
+        seatPrice: editorSeatPrice
+      },
+      guest: {
+        limit: seatLimits.guest,
+        used: usedSeats.guest,
+        hasSeatAvailable: seatLimits.guest > usedSeats.guest,
+        seatPrice: guestSeatPrice
+      }
+    }
   })
 
   return {
@@ -109,6 +138,7 @@ export const useWorkspacePlan = (slug: string) => {
     intervalIsYearly,
     totalCostFormatted,
     statusIsCancelationScheduled,
-    subscription
+    subscription,
+    seats
   }
 }
