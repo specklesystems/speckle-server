@@ -7,4 +7,4 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   }
 })
 
-export type AuthPolices = ReturnType<typeof authPoliciesFactory>
+export type AuthPolicies = ReturnType<typeof authPoliciesFactory>

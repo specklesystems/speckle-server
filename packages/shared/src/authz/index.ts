@@ -1,4 +1,4 @@
-export { authPoliciesFactory, AuthPolices } from './policies/index.js'
+export { authPoliciesFactory, AuthPolicies } from './policies/index.js'
 export {
   AllAuthCheckContextLoaders,
   AuthCheckContextLoaders,

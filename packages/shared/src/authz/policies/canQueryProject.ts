@@ -38,7 +38,6 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
       await loaders.getEnv()
 
     const project = await loaders.getProject({ projectId })
-    // hiding the project not found, to stop id brute force lookups
     if (!project) return unauthorized(ProjectNotFoundError)
 
     // All users may read public projects
