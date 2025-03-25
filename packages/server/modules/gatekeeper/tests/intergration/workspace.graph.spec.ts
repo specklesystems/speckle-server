@@ -115,57 +115,60 @@ describe('Workspaces Billing', () => {
       })
     }
   )
-  describe('workspace.subscription', () => {
-    describe('subscription.seats', () => {
-      it('should return the number of total seats', async () => {
-        const user = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.Admin,
-          verified: true
-        })
-        const workspace = {
-          id: createRandomString(),
-          name: createRandomString(),
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: user.id
-        }
-        await createTestWorkspace(workspace, user, {
-          addPlan: { name: 'pro', status: 'valid' }
-        })
-        await upsertWorkspaceSubscriptionFactory({ db })({
-          workspaceSubscription: {
-            workspaceId: workspace.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
-            billingInterval: 'monthly',
-            subscriptionData: {
-              subscriptionId: cryptoRandomString({ length: 10 }),
-              customerId: cryptoRandomString({ length: 10 }),
-              cancelAt: null,
-              status: 'active',
-              products: [
-                {
-                  priceId: createRandomString(),
-                  quantity: 12,
-                  productId: createRandomString(),
-                  subscriptionItemId: createRandomString()
-                }
-              ]
-            }
+  ;(FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
+    'workspace.subscription',
+    () => {
+      describe('subscription.seats', () => {
+        it('should return the number of total seats', async () => {
+          const user = await createTestUser({
+            name: createRandomString(),
+            email: createRandomEmail(),
+            role: Roles.Server.Admin,
+            verified: true
+          })
+          const workspace = {
+            id: createRandomString(),
+            name: createRandomString(),
+            slug: cryptoRandomString({ length: 10 }),
+            ownerId: user.id
           }
-        })
-        const session = await login(user)
+          await createTestWorkspace(workspace, user, {
+            addPlan: { name: 'pro', status: 'valid' }
+          })
+          await upsertWorkspaceSubscriptionFactory({ db })({
+            workspaceSubscription: {
+              workspaceId: workspace.id,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
+              billingInterval: 'monthly',
+              subscriptionData: {
+                subscriptionId: cryptoRandomString({ length: 10 }),
+                customerId: cryptoRandomString({ length: 10 }),
+                cancelAt: null,
+                status: 'active',
+                products: [
+                  {
+                    priceId: createRandomString(),
+                    quantity: 12,
+                    productId: createRandomString(),
+                    subscriptionItemId: createRandomString()
+                  }
+                ]
+              }
+            }
+          })
+          const session = await login(user)
 
-        const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
-          workspaceId: workspace.id
-        })
+          const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
+            workspaceId: workspace.id
+          })
 
-        expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.subscription?.seats
-        expect(seats).to.deep.eq({ guest: 0, plan: 0, assigned: 1, totalCount: 12 })
+          expect(res).to.not.haveGraphQLErrors()
+          const seats = res.data?.workspace.subscription?.seats
+          expect(seats).to.deep.eq({ guest: 0, plan: 0, assigned: 1, totalCount: 12 })
+        })
       })
-    })
-  })
+    }
+  )
 })
