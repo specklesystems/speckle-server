@@ -1,5 +1,5 @@
+import Result from 'true-myth/result'
 import { AuthError } from './authErrors.js'
-import { AuthResult } from './authResult.js'
 import { AuthCheckContextLoaderKeys, AuthCheckContextLoaders } from './loaders.js'
 
 export type ProjectContext = { projectId: string }
@@ -12,4 +12,4 @@ export type AuthPolicyFactory<
   ExpectedAuthErrors extends AuthError
 > = (
   loaders: AuthCheckContextLoaders<LoaderKeys>
-) => (args: Args) => Promise<AuthResult<ExpectedAuthErrors>>
+) => (args: Args) => Promise<Result<true, ExpectedAuthErrors>>

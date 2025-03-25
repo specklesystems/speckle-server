@@ -369,6 +369,8 @@ export const moduleAuthLoaders = async () => {
     const newLoader = wrapWithCache<any, any>({
       resolver: loader,
       name: `authzLoader:${key}`,
+      // since its the inmemory cache, we dont have to worry about true-myth results being
+      // serialized and deserialized as they would be with redis
       cacheProvider: inMemoryCacheProviderFactory({ cache }),
       ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be)
     })

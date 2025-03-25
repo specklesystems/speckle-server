@@ -53,7 +53,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
 
 export type GraphQLContext = BaseContext &
   AuthContext & {
-    authPolicies: Authz.AuthPolices & { clearCache: () => void }
+    authPolicies: Authz.AuthPolicies & { clearCache: () => void }
     /**
      * Request-scoped GraphQL dataloaders
      * @see https://github.com/graphql/dataloader
