@@ -363,6 +363,27 @@ export const getWorkspaceWithJoinRequestsQuery = gql`
   ${basicWorkspaceFragment}
 `
 
+export const getWorkspaceWithSubscriptionQuery = gql`
+  query GetWorkspaceWithSubscription($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      subscription {
+        createdAt
+        updatedAt
+        currentBillingCycleEnd
+        billingInterval
+        seats {
+          guest
+          plan
+          assigned
+          totalCount
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
 export const updateWorkspaceProjectRoleMutation = gql`
   mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
     workspaceMutations {

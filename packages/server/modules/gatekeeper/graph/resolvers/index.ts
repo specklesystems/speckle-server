@@ -158,6 +158,39 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
         }
       },
+      WorkspaceSubscription: {
+        seats: async (parent) => {
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId: parent.workspaceId
+          })
+          if (!workspacePlan || !isNewPlanType(workspacePlan.name)) {
+            return {
+              ...calculateSubscriptionSeats({
+                subscriptionData: parent.subscriptionData,
+                guestSeatProductId: getWorkspacePlanProductId({
+                  workspacePlan: 'guest'
+                })
+              }),
+              // These values have no reference in the old plans FF_WORKSPACES_NEW_PLANS_ENABLED
+              totalCount: 0,
+              assigned: 0
+            }
+          }
+          // Only editor seats are considered
+          const totalSeatsCount = parent.subscriptionData.products[0].quantity
+          const assignedSeatsCount = await countSeatsByTypeInWorkspaceFactory({ db })({
+            workspaceId: parent.workspaceId,
+            type: 'editor'
+          })
+          return {
+            assigned: assignedSeatsCount,
+            totalCount: totalSeatsCount,
+            // These values have no reference in the new plans
+            guest: 0,
+            plan: 0
+          }
+        }
+      },
       WorkspaceCollaborator: {
         seatType: async (parent, _args, context) => {
           const seat = await context.loaders
