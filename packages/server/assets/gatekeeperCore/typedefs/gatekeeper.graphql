@@ -92,8 +92,20 @@ type WorkspacePlan {
 }
 
 type WorkspaceSubscriptionSeats {
-  plan: Int!
-  guest: Int!
+  plan: Int! @deprecated
+  guest: Int! @deprecated
+  """
+  Total number of seats purchased and available in the current subscription cycle
+  """
+  totalCount: Int!
+  """
+  Number assigned seats in the current billing cycle
+  """
+  assigned: Int!
+  """
+  Number of viewer seats currently assigned in the workspace
+  """
+  viewersCount: Int!
 }
 
 type WorkspaceSubscription {

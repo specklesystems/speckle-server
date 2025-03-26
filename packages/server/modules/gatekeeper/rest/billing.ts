@@ -22,6 +22,7 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -144,6 +145,19 @@ export const getBillingRouter = (): Router => {
         })({ subscriptionData: parseSubscriptionData(event.data.object) })
 
         break
+      case 'invoice.created':
+        const subscriptionData = await getSubscriptionFromEventFactory({ stripe })(
+          event
+        )
+        if (!subscriptionData) break
+        await handleSubscriptionUpdateFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db }),
+          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+          getWorkspaceSubscriptionBySubscriptionId:
+            getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+          upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+        })({ subscriptionData })
+        break
 
       default:
         break
@@ -154,3 +168,18 @@ export const getBillingRouter = (): Router => {
 
   return router
 }
+
+const getSubscriptionFromEventFactory =
+  ({ stripe }: { stripe: Stripe }) =>
+  async (event: Stripe.InvoiceCreatedEvent): Promise<SubscriptionData | null> => {
+    const subscription = event.data.object.subscription
+    if (!subscription) {
+      return null
+    }
+    if (typeof subscription === 'string') {
+      return await getSubscriptionDataFactory({ stripe })({
+        subscriptionId: subscription
+      })
+    }
+    return parseSubscriptionData(subscription)
+  }
