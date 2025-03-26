@@ -75,7 +75,7 @@ const billingMessage = computed(() => {
       : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/month.`
   } else {
     return isPurchasablePlan.value
-      ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd}. You can freely reassign it to another person.`
+      ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd.value}. You can freely reassign it to another person.`
       : null
   }
 })
