@@ -4,59 +4,12 @@
     <div class="flex flex-col mb-4">
       <p class="text-body-sm mb-4">Confirm {{ user.name }}'s new seat.</p>
 
-      <!-- Current Seat -->
-      <CommonCard class="!p-2 !pr-3 !border-outline-3 !bg-foundation-2">
-        <div class="flex items-center gap-2">
-          <div class="p-2 rounded-full border border-outline-3 bg-foundation">
-            <component :is="currentSeatIcon" class="w-5 h-5" />
-          </div>
-          <div class="flex flex-col">
-            <div class="text-foreground">{{ currentSeatTitle }}</div>
-            <div class="text-foreground-2 text-body-2xs">
-              {{ currentSeatDescription }}
-            </div>
-          </div>
-          <div class="ml-auto text-foreground-2 font-medium">Current</div>
-        </div>
-      </CommonCard>
-
-      <!-- Arrow -->
-      <div class="flex justify-center my-2">
-        <ArrowDownIcon class="w-5 h-5 text-foreground-2" />
-      </div>
-
-      <!-- New Seat -->
-      <CommonCard
-        class="!p-2 !pr-3 !border-blue-300 !bg-blue-50 dark:!border-blue-800 dark:!bg-blue-950"
-      >
-        <div class="flex items-center gap-2">
-          <div
-            class="p-2.5 rounded-full border border-blue-300 dark:border-blue-800 bg-foundation"
-          >
-            <component :is="newSeatIcon" class="w-4 h-4" />
-          </div>
-          <div class="flex flex-col">
-            <div class="text-foreground">{{ newSeatTitle }}</div>
-            <div class="text-foreground-2 text-body-2xs">
-              {{ newSeatDescription }}
-            </div>
-          </div>
-          <template v-if="!isFreePlan">
-            <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
-              <template v-if="editorSeats.hasSeatAvailable">
-                <div class="line-through text-foreground-2">
-                  £{{ editorSeats.seatPrice }}/month
-                </div>
-                <div class="text-primary">Free</div>
-              </template>
-              <template v-else>
-                <div class="text-foreground">£{{ editorSeats.seatPrice }}/month</div>
-              </template>
-            </div>
-            <div v-else class="ml-auto text-primary font-medium">Free</div>
-          </template>
-        </div>
-      </CommonCard>
+      <SeatTransitionCards
+        :is-upgrading="isUpgrading"
+        :is-free-plan="isFreePlan"
+        :has-available-seat="editorSeats.hasSeatAvailable"
+        :seat-price="editorSeats.seatPrice"
+      />
 
       <p v-if="billingMessage" class="text-foreground-2 text-body-xs mt-4">
         {{ billingMessage }}
@@ -83,8 +36,7 @@ import {
 import { useWorkspaceUpdateSeatType } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
-import { EyeIcon, PencilIcon } from '@heroicons/vue/24/outline'
-import { ArrowDownIcon } from '@heroicons/vue/20/solid'
+import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
   SettingsWorkspacesNewMembersTable_WorkspaceFragment
@@ -114,26 +66,6 @@ const {
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
-
-const currentSeatIcon = computed(() => (isUpgrading.value ? EyeIcon : PencilIcon))
-const newSeatIcon = computed(() => (isUpgrading.value ? PencilIcon : EyeIcon))
-
-const currentSeatTitle = computed(() =>
-  isUpgrading.value ? 'Viewer seat' : 'Editor seat'
-)
-const newSeatTitle = computed(() => (isUpgrading.value ? 'Editor seat' : 'Viewer seat'))
-
-const currentSeatDescription = computed(() =>
-  isUpgrading.value
-    ? 'Can view and comment on projects'
-    : 'Can create and edit projects'
-)
-
-const newSeatDescription = computed(() =>
-  isUpgrading.value
-    ? 'Can create and edit projects'
-    : 'Can view and comment on projects'
-)
 
 const billingMessage = computed(() => {
   if (isFreePlan.value) return null

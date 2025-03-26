@@ -23,6 +23,19 @@
       :user="targetUser"
       :workspace="workspace"
       :new-role="newRole"
+      :is-active-user-target-user="isActiveUserTargetUser"
+      :is-only-admin="isOnlyAdmin"
+      @success="onDialogSuccess"
+    />
+
+    <SettingsWorkspacesMembersActionsUpdateAdminDialog
+      v-if="showUpdateAdminDialog"
+      v-model:open="showDialog"
+      :user="targetUser"
+      :workspace="workspace"
+      :is-active-user-target-user="isActiveUserTargetUser"
+      :is-only-admin="isOnlyAdmin"
+      :action="adminAction"
       @success="onDialogSuccess"
     />
 
@@ -115,7 +128,8 @@ const canMakeMember = computed(() => {
   return (
     isActiveUserWorkspaceAdmin.value &&
     !isActiveUserTargetUser.value &&
-    props.targetUser.role !== Roles.Workspace.Member
+    props.targetUser.role !== Roles.Workspace.Member &&
+    props.targetUser.role !== Roles.Workspace.Admin
   )
 })
 
@@ -147,6 +161,21 @@ const canLeaveWorkspace = computed(() => {
   return isActiveUserTargetUser.value
 })
 
+const canResignAdmin = computed(() => {
+  return (
+    isActiveUserTargetUser.value &&
+    isActiveUserWorkspaceAdmin.value &&
+    !isOnlyAdmin.value
+  )
+})
+
+const isOnlyAdmin = computed(() => {
+  const adminUsers = props.workspace?.team.items.filter(
+    (user) => user.role === Roles.Workspace.Admin
+  )
+  return adminUsers?.length === 1
+})
+
 const filteredActionsItems = computed(() => {
   const mainItems: LayoutMenuItem[] = []
   const footerItems: LayoutMenuItem[] = []
@@ -156,12 +185,6 @@ const filteredActionsItems = computed(() => {
     mainItems.push({
       title: 'Make admin...',
       id: WorkspaceUserActionTypes.MakeAdmin
-    })
-  }
-  if (canRemoveAdmin.value) {
-    mainItems.push({
-      title: 'Remove admin...',
-      id: WorkspaceUserActionTypes.RemoveAdmin
     })
   }
   if (canMakeGuest.value) {
@@ -190,6 +213,18 @@ const filteredActionsItems = computed(() => {
   }
 
   // Add footer items
+  if (canRemoveAdmin.value) {
+    footerItems.push({
+      title: 'Remove admin...',
+      id: WorkspaceUserActionTypes.RemoveAdmin
+    })
+  }
+  if (canResignAdmin.value) {
+    footerItems.push({
+      title: 'Resign as admin...',
+      id: WorkspaceUserActionTypes.ResignAdmin
+    })
+  }
   if (canRemoveFromWorkspace.value) {
     footerItems.push({
       title: 'Remove from workspace...',
@@ -212,9 +247,15 @@ const filteredActionsItems = computed(() => {
 const showUpdateRoleDialog = computed(() => {
   return (
     dialogType.value === WorkspaceUserActionTypes.MakeGuest ||
-    dialogType.value === WorkspaceUserActionTypes.MakeMember ||
+    dialogType.value === WorkspaceUserActionTypes.MakeMember
+  )
+})
+
+const showUpdateAdminDialog = computed(() => {
+  return (
     dialogType.value === WorkspaceUserActionTypes.MakeAdmin ||
-    dialogType.value === WorkspaceUserActionTypes.RemoveAdmin
+    dialogType.value === WorkspaceUserActionTypes.RemoveAdmin ||
+    dialogType.value === WorkspaceUserActionTypes.ResignAdmin
   )
 })
 
@@ -243,7 +284,21 @@ const newRole = computed(() => {
     case WorkspaceUserActionTypes.MakeGuest:
       return Roles.Workspace.Guest
     case WorkspaceUserActionTypes.RemoveAdmin:
+    case WorkspaceUserActionTypes.ResignAdmin:
       return Roles.Workspace.Member
+    default:
+      return undefined
+  }
+})
+
+const adminAction = computed(() => {
+  switch (dialogType.value) {
+    case WorkspaceUserActionTypes.MakeAdmin:
+      return 'make' as const
+    case WorkspaceUserActionTypes.RemoveAdmin:
+      return 'remove' as const
+    case WorkspaceUserActionTypes.ResignAdmin:
+      return 'resign' as const
     default:
       return undefined
   }

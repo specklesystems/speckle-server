@@ -15,7 +15,9 @@
         </div>
       </CommonCard>
 
-      <p>{{ mainMessage }}</p>
+      <p class="text-body-sm">
+        {{ mainMessage }}
+      </p>
 
       <p class="text-foreground-2 text-body-2xs">
         {{ roleInfo }} Learn more about
@@ -61,35 +63,22 @@ const open = defineModel<boolean>('open', { required: true })
 
 const updateUserRole = useWorkspaceUpdateRole()
 
-const isGuest = computed(() => {
-  return props.user.role === Roles.Workspace.Guest
-})
-
 const title = computed(() => {
   if (!props.newRole) return ''
-  if (props.newRole === Roles.Workspace.Admin) return 'Make an admin?'
-  if (props.newRole === Roles.Workspace.Member)
-    return isGuest.value ? 'Make a member?' : 'Remove admin?'
+  if (props.newRole === Roles.Workspace.Member) return 'Make a member?'
   return 'Make a guest?'
 })
 
 const buttonText = computed(() => {
   if (!props.newRole) return ''
-  if (props.newRole === Roles.Workspace.Admin) return 'Make an admin'
-  if (props.newRole === Roles.Workspace.Member)
-    return isGuest.value ? 'Make a member' : 'Remove admin'
+  if (props.newRole === Roles.Workspace.Member) return 'Make a member'
   return 'Make a guest'
 })
 
 const mainMessage = computed(() => {
   if (!props.newRole) return ''
-  if (props.newRole === Roles.Workspace.Admin) {
-    return 'They will be able to edit workspaces, including settings, members and all projects.'
-  }
   if (props.newRole === Roles.Workspace.Member) {
-    return isGuest.value
-      ? 'They will be able to access all projects.'
-      : 'They will be able to create and own projects, but will no longer have admin privileges.'
+    return 'They will be able to access all projects.'
   }
   return 'They will lose access to all projects. Make sure to add them back to the specific projects they need access to.'
 })
