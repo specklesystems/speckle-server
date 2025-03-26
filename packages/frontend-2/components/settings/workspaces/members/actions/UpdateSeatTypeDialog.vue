@@ -42,14 +42,14 @@
             </div>
           </div>
           <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
-            <template v-if="hasUnusedEditorSeat">
+            <template v-if="editorSeats.hasSeatAvailable">
               <div class="line-through text-foreground-2">
-                £{{ seats.editor.seatPrice }}/month
+                £{{ editorSeats.seatPrice }}/month
               </div>
               <div class="text-primary">Free</div>
             </template>
             <template v-else>
-              <div class="text-foreground">£{{ seats.editor.seatPrice }}/month</div>
+              <div class="text-foreground">£{{ editorSeats.seatPrice }}/month</div>
             </template>
           </div>
           <div v-else class="ml-auto text-primary font-medium">Free</div>
@@ -103,15 +103,10 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserSeatType = useWorkspaceUpdateSeatType()
-const { seats, totalCostFormatted, billingCycleEnd, isPurchasablePlan } =
+const { editorSeats, totalCostFormatted, billingCycleEnd, isPurchasablePlan } =
   useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
-
-const hasUnusedEditorSeat = computed(() => {
-  if (!seats.value?.editor) return false
-  return seats.value.editor.hasSeatAvailable
-})
 
 const currentSeatIcon = computed(() => (isUpgrading.value ? EyeIcon : PencilIcon))
 const newSeatIcon = computed(() => (isUpgrading.value ? PencilIcon : EyeIcon))
@@ -135,7 +130,7 @@ const newSeatDescription = computed(() =>
 
 const billingMessage = computed(() => {
   if (isUpgrading.value) {
-    return hasUnusedEditorSeat.value
+    return editorSeats.value.hasSeatAvailable
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
       : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/month.`
   } else {

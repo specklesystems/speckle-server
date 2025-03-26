@@ -84,7 +84,6 @@ export const useWorkspacePlan = (slug: string) => {
 
   // TODO: Replace with value from API call, this a placeholder value
   const editorSeatPrice = 15
-  const guestSeatPrice = 15
 
   const totalCost = computed(() => {
     return isPurchasablePlan.value
@@ -104,30 +103,15 @@ export const useWorkspacePlan = (slug: string) => {
   })
 
   // TODO: Replace with actual values from backend once ready
-  const seats = computed(() => {
-    const seatLimits = {
-      editor: 5,
-      guest: 6
-    }
-
-    const usedSeats = {
-      editor: 4,
-      guest: 5
-    }
+  const editorSeats = computed(() => {
+    const seatLimit = 6
+    const seatsUsed = 6
 
     return {
-      editor: {
-        limit: seatLimits.editor,
-        used: usedSeats.editor,
-        hasSeatAvailable: seatLimits.editor > usedSeats.editor,
-        seatPrice: editorSeatPrice
-      },
-      guest: {
-        limit: seatLimits.guest,
-        used: usedSeats.guest,
-        hasSeatAvailable: seatLimits.guest > usedSeats.guest,
-        seatPrice: guestSeatPrice
-      }
+      limit: seatLimit,
+      used: seatsUsed,
+      hasSeatAvailable: seatLimit > seatsUsed,
+      seatPrice: editorSeatPrice
     }
   })
 
@@ -144,6 +128,6 @@ export const useWorkspacePlan = (slug: string) => {
     totalCostFormatted,
     statusIsCancelationScheduled,
     subscription,
-    seats
+    editorSeats
   }
 }
