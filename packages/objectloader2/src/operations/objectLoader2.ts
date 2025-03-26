@@ -4,7 +4,7 @@ import IndexedDatabase from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
-import { Deferred } from '../helpers/deferred.js'
+import { DeferredBase } from '../helpers/deferredBase.js'
 
 export default class ObjectLoader2 {
   #objectId: string
@@ -16,7 +16,7 @@ export default class ObjectLoader2 {
 
   #gathered: AsyncGeneratorQueue<Item>
 
-  #buffer: Record<string, Deferred<Base>> = {}
+  #buffer: DeferredBase[] = []
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
@@ -64,11 +64,16 @@ export default class ObjectLoader2 {
     return rootItem
   }
 
-  async getObject(id: string): Promise<Base> {
-    if (!this.#buffer[id]) {
-      this.#buffer[id] = new Deferred()
+  async getObject(params: { id: string }): Promise<Base> {
+    const item = await this.#database.getItem({ id: params.id })
+    if (item) {
+      return item.base
     }
-    return await this.#buffer[id].promise
+    const deferredBase = this.#buffer.find((x) => x.id === params.id)
+    if (deferredBase) {
+      return await deferredBase.promise
+    }
+    throw new Error('Not deferred or downloaded: ' + params.id)
   }
 
   async getTotalObjectCount() {
@@ -96,10 +101,10 @@ export default class ObjectLoader2 {
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      if (!this.#buffer[item.baseId]) {
-        this.#buffer[item.baseId] = new Deferred()
+      const deferredBase = this.#buffer.find((x) => x.id === item.baseId)
+      if (deferredBase) {
+        deferredBase.resolve(item.base)
       }
-      this.#buffer[item.baseId].resolve(item.base)
       yield item.base
       count++
       if (count >= total) {
