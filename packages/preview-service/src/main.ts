@@ -15,6 +15,7 @@ import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
+import { createTerminus } from '@godaddy/terminus'
 
 const app = express()
 const host = HOST
@@ -122,25 +123,32 @@ const server = app.listen(port, host, async () => {
   })
 })
 
-const shutdown = async () => {
-  // stop accepting new jobs
+const beforeShutdown = async () => {
+  logger.info('🛑 Beginning shut down, pausing all jobs')
+  // stop accepting new jobs and kill any running jobs
   await jobQueue.pause(
     true, // just pausing this local worker of the queue
     true // do not wait for active jobs to finish
   )
 
-  // if there is a job currently running, cancell it with an error
   if (jobDoneCallback) {
-    jobDoneCallback(new Error('Job cancelled due to perview-service shutdown'))
+    logger.warn('Cancelling job due to preview-service shutdown')
+    jobDoneCallback(new Error('Job cancelled due to preview-service shutdown'))
   }
-
-  logger.info('Received signal to shut down')
-  server.close(() => {
-    logger.debug('Exiting the express server')
-    process.exit()
-  })
 }
 
-process.on('SIGINT', async () => await shutdown())
-process.on('SIGQUIT', async () => await shutdown())
-process.on('SIGABRT', async () => await shutdown())
+const onShutdown = async () => {
+  logger.info('👋 Completed shut down, now exiting')
+}
+
+createTerminus(server, {
+  beforeShutdown,
+  onShutdown,
+  logger: (msg, err) => {
+    if (err) {
+      logger.error({ err }, msg)
+      return
+    }
+    logger.info(msg)
+  }
+})

@@ -4858,8 +4858,16 @@ export type WorkspaceSubscription = {
 
 export type WorkspaceSubscriptionSeats = {
   __typename?: 'WorkspaceSubscriptionSeats';
+  /** Number assigned seats in the current billing cycle */
+  assigned: Scalars['Int']['output'];
+  /** @deprecated Field no longer supported */
   guest: Scalars['Int']['output'];
+  /** @deprecated Field no longer supported */
   plan: Scalars['Int']['output'];
+  /** Total number of seats purchased and available in the current subscription cycle */
+  totalCount: Scalars['Int']['output'];
+  /** Number of viewer seats currently assigned in the workspace */
+  viewersCount: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {

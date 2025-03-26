@@ -38,6 +38,7 @@ import { computeOrthographicSize } from '../CameraController.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
 
 /**
  * @param {Number} value
@@ -1076,6 +1077,12 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.orbitSphere.visible = false
   }
 
+  /** By default hidden objects are ignored when picking for orbit around cursor */
+  protected filterOrbitToCursorHits(hit: ExtendedMeshIntersection) {
+    const material = this.renderer.getMaterial(hit.batchObject.renderView)
+    return material?.visible ?? false
+  }
+
   protected onPointerDown = (event: PointerEvent) => {
     if (this._options.orbitAroundCursor) {
       /** Hope this is not slow */
@@ -1083,7 +1090,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       const y = ((event.clientY - rect.top) / rect.height) * -2 + 1
 
-      const res = this.renderer.intersections.intersect(
+      let res = this.renderer.intersections.intersect(
         this.renderer.scene,
         this._targetCamera as PerspectiveCamera,
         new Vector2(x, y),
@@ -1091,7 +1098,9 @@ export class SmoothOrbitControls extends SpeckleControls {
         true,
         this.renderer.clippingVolume
       )
-      if (res && res.length) {
+      res = res?.filter(this.filterOrbitToCursorHits.bind(this)) ?? []
+
+      if (res.length) {
         this.pivotPoint.copy(res[0].point)
         this.usePivotal = true
         this.orbitSphere.visible = this._options.showOrbitPoint

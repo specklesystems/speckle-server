@@ -195,6 +195,8 @@ export const createTestWorkspace = async (
   }
 
   if (addSubscription) {
+    const aMonthFromNow = new Date()
+    aMonthFromNow.setMonth(new Date().getMonth() + 1)
     await upsertSubscription({
       workspaceSubscription: {
         workspaceId: newWorkspace.id,
@@ -207,7 +209,8 @@ export const createTestWorkspace = async (
           customerId: cryptoRandomString({ length: 10 }),
           cancelAt: null,
           status: 'active',
-          products: []
+          products: [],
+          currentPeriodEnd: aMonthFromNow
         }
       }
     })

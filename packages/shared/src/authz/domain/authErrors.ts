@@ -1,4 +1,4 @@
-type AuthError<ErrorCode extends string> = {
+export type AuthError<ErrorCode extends string = string> = {
   code: ErrorCode
   message: string
 }
@@ -25,19 +25,19 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const ProjectRoleNotFoundError = defineAuthError({
+  code: 'ProjectRoleNotFound',
+  message: 'Could not resolve your project role'
+})
+
 export const ProjectWorkspaceRequiredError = defineAuthError({
   code: 'ProjectWorkspaceRequiredError',
   message: 'Projects must be created in a workspace.'
 })
 
-export const ServerNoAccessError = defineAuthError({
-  code: 'ServerNoAccess',
-  message: 'You do not have required access to the server'
-})
-
-export const UnauthenticatedError = defineAuthError({
-  code: 'Unauthenticated',
-  message: 'Missing or invalid authentication info'
+export const WorkspaceNotFoundError = defineAuthError({
+  code: 'WorkspaceNotFound',
+  message: 'Workspace not found'
 })
 
 export const WorkspaceNoAccessError = defineAuthError({
@@ -45,7 +45,37 @@ export const WorkspaceNoAccessError = defineAuthError({
   message: 'You do not have access to the workspace'
 })
 
+export const WorkspaceSsoProviderNotFoundError = defineAuthError({
+  code: 'WorkspaceSsoProviderNotFound',
+  message: 'The workspace SSO provider was not found'
+})
+
 export const WorkspaceSsoSessionInvalidError = defineAuthError({
   code: 'WorkspaceSsoSessionInvalid',
   message: 'Your workspace SSO session is invalid'
+})
+
+export const WorkspaceSsoSessionNotFoundError = defineAuthError({
+  code: 'WorkspaceSsoSessionNotFound',
+  message: 'Your workspace SSO session was not found'
+})
+
+export const WorkspaceRoleNotFoundError = defineAuthError({
+  code: 'WorkspaceRoleNotFound',
+  message: 'The user does not have a role in the workspace'
+})
+
+export const ServerNoAccessError = defineAuthError({
+  code: 'ServerNoAccess',
+  message: 'You do not have required access to the server'
+})
+
+export const ServerRoleNotFoundError = defineAuthError({
+  code: 'ServerRoleNotFound',
+  message: 'Could not resolve your server role'
+})
+
+export const UnauthenticatedError = defineAuthError({
+  code: 'Unauthenticated',
+  message: 'Missing or invalid authentication info'
 })

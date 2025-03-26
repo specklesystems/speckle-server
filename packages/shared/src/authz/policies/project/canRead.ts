@@ -2,13 +2,15 @@ import {
   requireAnyWorkspaceRole,
   requireMinimumWorkspaceRole
 } from '../../checks/workspaceRole.js'
-import { AuthResult, authorized, unauthorized } from '../../domain/authResult.js'
 import {
   requireExactProjectVisibilityFactory,
   requireMinimumProjectRoleFactory
 } from '../../checks/projects.js'
-import { AuthCheckContextLoaders } from '../../domain/loaders.js'
-import { ProjectContext, UserContext } from '../../domain/policies.js'
+import {
+  AuthPolicyFactory,
+  ProjectContext,
+  UserContext
+} from '../../domain/policies.js'
 import { requireExactServerRole } from '../../checks/serverRole.js'
 import { requireValidWorkspaceSsoSession } from '../../checks/workspaceSso.js'
 import { Roles } from '../../../core/constants.js'
@@ -18,36 +20,45 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionInvalidError
 } from '../../domain/authErrors.js'
+import { err, isOk, ok } from 'true-myth/result'
+import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
+import { LogicError } from '../../domain/errors.js'
 
-export const canReadProjectPolicyFactory =
-  (
-    loaders: Pick<
-      AuthCheckContextLoaders,
-      | 'getEnv'
-      | 'getProject'
-      | 'getProjectRole'
-      | 'getServerRole'
-      | 'getWorkspaceRole'
-      | 'getWorkspaceSsoProvider'
-      | 'getWorkspaceSsoSession'
-    >
-  ) =>
-  async ({
-    userId,
-    projectId
-  }: UserContext & ProjectContext): Promise<
-    AuthResult<
-      | typeof ProjectNotFoundError
-      | typeof ProjectNoAccessError
-      | typeof WorkspaceNoAccessError
-      | typeof WorkspaceSsoSessionInvalidError
-    >
-  > => {
-    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = loaders.getEnv()
+type PolicyLoaders =
+  | typeof AuthCheckContextLoaderKeys.getEnv
+  | typeof AuthCheckContextLoaderKeys.getProject
+  | typeof AuthCheckContextLoaderKeys.getProjectRole
+  | typeof AuthCheckContextLoaderKeys.getServerRole
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
+
+type PolicyArgs = UserContext & ProjectContext
+
+type PolicyErrors =
+  | typeof ProjectNotFoundError
+  | typeof ProjectNoAccessError
+  | typeof WorkspaceNoAccessError
+  | typeof WorkspaceSsoSessionInvalidError
+
+export const canReadProjectPolicyFactory: AuthPolicyFactory<
+  PolicyLoaders,
+  PolicyArgs,
+  PolicyErrors
+> =
+  (loaders) =>
+  async ({ userId, projectId }) => {
+    const env = await loaders.getEnv()
+    if (!isOk(env)) {
+      throw new LogicError('Failed to load environment variables')
+    }
+
+    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = env.value
 
     const project = await loaders.getProject({ projectId })
-    // hiding the project not found, to stop id brute force lookups
-    if (!project) return unauthorized(ProjectNotFoundError)
+    if (!isOk(project)) {
+      return err(project.error)
+    }
 
     // All users may read public projects
     const isPublicResult = await requireExactProjectVisibilityFactory({ loaders })({
@@ -55,7 +66,7 @@ export const canReadProjectPolicyFactory =
       projectVisibility: 'public'
     })
     if (isPublicResult) {
-      return authorized()
+      return ok(true)
     }
 
     // All users may read link-shareable projects
@@ -66,11 +77,11 @@ export const canReadProjectPolicyFactory =
       projectVisibility: 'linkShareable'
     })
     if (isLinkShareableResult) {
-      return authorized()
+      return ok(true)
     }
     // From this point on, you cannot pass as an unknown user
     if (!userId) {
-      return unauthorized(ProjectNoAccessError)
+      return err(ProjectNoAccessError)
     }
 
     // When G O D M O D E is enabled
@@ -81,11 +92,11 @@ export const canReadProjectPolicyFactory =
         role: Roles.Server.Admin
       })
       if (isServerAdminResult) {
-        return authorized()
+        return ok(true)
       }
     }
 
-    const { workspaceId } = project
+    const { workspaceId } = project.value
 
     // When a project belongs to a workspace
     if (FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
@@ -96,7 +107,7 @@ export const canReadProjectPolicyFactory =
       })
       if (!hasWorkspaceRoleResult) {
         // Should we hide the fact, the project is in a workspace?
-        return unauthorized(WorkspaceNoAccessError)
+        return err(WorkspaceNoAccessError)
       }
 
       const hasMinimumMemberRole = await requireMinimumWorkspaceRole({
@@ -111,7 +122,7 @@ export const canReadProjectPolicyFactory =
         const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
           workspaceId
         })
-        if (!!workspaceSsoProvider) {
+        if (workspaceSsoProvider.isOk) {
           // Member and admin user must have a valid SSO session to read project data
           const hasValidSsoSessionResult = await requireValidWorkspaceSsoSession({
             loaders
@@ -120,12 +131,12 @@ export const canReadProjectPolicyFactory =
             workspaceId
           })
           if (!hasValidSsoSessionResult) {
-            return unauthorized(WorkspaceSsoSessionInvalidError)
+            return err(WorkspaceSsoSessionInvalidError)
           }
         }
 
         // Workspace members get to go through without an explicit project role
-        return authorized()
+        return ok(true)
       } else {
         // just fall through to the generic project role check for workspace:guest-s
       }
@@ -140,7 +151,7 @@ export const canReadProjectPolicyFactory =
       role: 'stream:reviewer'
     })
     if (hasMinimumProjectRoleResult) {
-      return authorized()
+      return ok(true)
     }
-    return unauthorized(ProjectNoAccessError)
+    return err(ProjectNoAccessError)
   }
