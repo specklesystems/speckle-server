@@ -42,7 +42,7 @@ export default class ServerDownloader implements Downloader {
       return [total]
     }
 
-    return [10000, 10000, 10000, 10000]
+    return [10000, 30000, 10000, 1000]
   }
 
   initializePool(params: { total: number; maxDownloadBatchWait?: number }) {

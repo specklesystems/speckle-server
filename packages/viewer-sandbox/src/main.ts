@@ -102,6 +102,7 @@ const createViewer = async (containerName: string, _stream: string) => {
 const getStream = () => {
   return (
     // prettier-ignore
+    `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
     //crashing out of memory?
     //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
     //too big?
