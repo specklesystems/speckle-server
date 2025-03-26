@@ -41,18 +41,20 @@
               {{ newSeatDescription }}
             </div>
           </div>
-          <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
-            <template v-if="editorSeats.hasSeatAvailable">
-              <div class="line-through text-foreground-2">
-                £{{ editorSeats.seatPrice }}/month
-              </div>
-              <div class="text-primary">Free</div>
-            </template>
-            <template v-else>
-              <div class="text-foreground">£{{ editorSeats.seatPrice }}/month</div>
-            </template>
-          </div>
-          <div v-else class="ml-auto text-primary font-medium">Free</div>
+          <template v-if="!isFreePlan">
+            <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
+              <template v-if="editorSeats.hasSeatAvailable">
+                <div class="line-through text-foreground-2">
+                  £{{ editorSeats.seatPrice }}/month
+                </div>
+                <div class="text-primary">Free</div>
+              </template>
+              <template v-else>
+                <div class="text-foreground">£{{ editorSeats.seatPrice }}/month</div>
+              </template>
+            </div>
+            <div v-else class="ml-auto text-primary font-medium">Free</div>
+          </template>
         </div>
       </CommonCard>
 
@@ -103,8 +105,13 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserSeatType = useWorkspaceUpdateSeatType()
-const { editorSeats, totalCostFormatted, billingCycleEnd, isPurchasablePlan } =
-  useWorkspacePlan(props.workspace?.slug || '')
+const {
+  editorSeats,
+  totalCostFormatted,
+  billingCycleEnd,
+  isPurchasablePlan,
+  isFreePlan
+} = useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
 
@@ -129,6 +136,7 @@ const newSeatDescription = computed(() =>
 )
 
 const billingMessage = computed(() => {
+  if (isFreePlan.value) return null
   if (isUpgrading.value) {
     return editorSeats.value.hasSeatAvailable
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'

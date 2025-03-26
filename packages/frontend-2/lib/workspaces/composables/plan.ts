@@ -122,6 +122,7 @@ export const useWorkspacePlan = (slug: string) => {
     statusIsCanceled,
     isPurchasablePlan,
     isActivePlan,
+    isFreePlan,
     billingInterval,
     intervalIsYearly,
     billingCycleEnd,

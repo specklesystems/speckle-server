@@ -18,7 +18,7 @@
       <p>{{ mainMessage }}</p>
 
       <p class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }}. Learn more about
+        {{ roleInfo }} Learn more about
         <NuxtLink
           :to="LearnMoreRolesSeatsUrl"
           target="_blank"

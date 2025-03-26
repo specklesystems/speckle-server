@@ -6,7 +6,7 @@ export const WorkspaceRoleDescriptions: Record<string, string> = {
   [Roles.Workspace.Member]:
     'Members can access all projects in a workspace. They can create, own and contribute to projects if assigned an Editor seat.',
   [Roles.Workspace.Guest]:
-    'Guests cannot create projects, their project access is limited to select projects, and they don’t need to authenticate through SSO. '
+    'Guests cannot create projects, their project access is limited to select projects, and they don’t need to authenticate through SSO.'
 }
 
 export const WorkspaceSeatTypeDescriptions: Record<WorkspaceSeatType, string> = {
