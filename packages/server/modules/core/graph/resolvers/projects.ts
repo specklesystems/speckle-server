@@ -184,7 +184,7 @@ export = {
         userId: context.userId
       })
 
-      if (!canQuery.authorized) {
+      if (!canQuery.isOk) {
         switch (canQuery.error.code) {
           case Authz.ProjectNotFoundError.code:
             throw new StreamNotFoundError()
@@ -199,6 +199,7 @@ export = {
 
       const project = await getStream({ streamId: args.id })
 
+      // TODO: Should scopes & token resource access rules be checked in authz policy?
       if (!project?.isPublic && !project?.isDiscoverable) {
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }

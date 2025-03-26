@@ -66,9 +66,9 @@ export const hasScopes: GraphqlDirectiveBuilder = () => {
             const currentScopes = context.scopes
 
             await Promise.all(
-              requiredScopes.map(async (requiredScope: string) => {
+              requiredScopes.map((requiredScope: string) =>
                 validateScopes(currentScopes, requiredScope)
-              })
+              )
             )
 
             const data = await resolve.apply(this, args)

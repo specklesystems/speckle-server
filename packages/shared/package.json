@@ -38,6 +38,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
+    "true-myth": "^8.5.0",
     "type-fest": "^3.11.1"
   },
   "peerDependencies": {

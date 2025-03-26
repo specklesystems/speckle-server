@@ -409,7 +409,7 @@ describe('Workspace SSO repositories', () => {
     })
 
     afterEach(async () => {
-      truncateTables(['user_sso_sessions'])
+      await truncateTables(['user_sso_sessions'])
     })
 
     describe('when deleting an sso provider that exists', async () => {
