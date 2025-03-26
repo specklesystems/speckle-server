@@ -1,27 +1,25 @@
 <template>
   <div>
-    <div v-if="project">
-      <div class="flex justify-between space-x-2">
-        <div>
-          <h1 class="block text-heading-xl mb-2">Collaborators</h1>
-          <p class="text-body-xs text-foreground">
-            Invite new collaborators and set permissions.
-          </p>
-        </div>
-        <FormButton class="mt-1" :disabled="!canInvite" @click="toggleInviteDialog">
-          Invite
+    <div v-if="project" class="pt-3">
+      <div class="flex justify-between space-x-2 items-center">
+        <h1 class="block text-heading-lg md:text-heading-xl">Project collaborators</h1>
+        <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
+          Invite to project
         </FormButton>
       </div>
       <div class="flex flex-col mt-6">
-        <ProjectPageSettingsCollaboratorsRow
-          v-for="collaborator in collaboratorListItems"
-          :key="collaborator.id"
-          :can-edit="canEdit"
-          :collaborator="collaborator"
-          :loading="loading"
-          @cancel-invite="onCancelInvite"
-          @change-role="onCollaboratorRoleChange"
-        />
+        <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
+        <div class="mt-3">
+          <ProjectPageSettingsCollaboratorsRow
+            v-for="collaborator in collaboratorListItems"
+            :key="collaborator.id"
+            :can-edit="canEdit"
+            :collaborator="collaborator"
+            :loading="loading"
+            @cancel-invite="onCancelInvite"
+            @change-role="onCollaboratorRoleChange"
+          />
+        </div>
       </div>
       <InviteDialogProject
         v-if="project"

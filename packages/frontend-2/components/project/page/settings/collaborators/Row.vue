@@ -3,14 +3,13 @@
     class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
   >
     <UserAvatar hide-tooltip :user="collaborator.user" />
-    <div class="flex flex-col grow">
+    <div class="flex gap-x-2 flex-1">
       <span class="truncate text-body-xs">{{ collaborator.title }}</span>
-      <span
-        v-if="collaborator.inviteId"
-        class="truncate text-body-2xs text-foreground-2"
-      >
-        Pending invite
-      </span>
+      <div>
+        <CommonBadge v-if="badgeText" rounded color="secondary">
+          {{ badgeText }}
+        </CommonBadge>
+      </div>
     </div>
     <template v-if="!collaborator.inviteId">
       <ProjectPageTeamPermissionSelect
@@ -134,6 +133,21 @@ const isTargettingWorkspaceGuest = computed(
   () => props.collaborator.workspaceRole === Roles.Workspace.Guest
 )
 
+const badgeText = computed(() => {
+  if (props.collaborator.inviteId) {
+    return 'Pending'
+  }
+
+  if (props.collaborator.workspaceRole === Roles.Workspace.Guest) {
+    return 'Guest'
+  }
+
+  if (props.collaborator.role === Roles.Stream.Owner) {
+    return 'Project owner'
+  }
+
+  return null
+})
 const onActionChosen = (
   params: { item: LayoutMenuItem; event: MouseEvent },
   collaborator: ProjectCollaboratorListItem
