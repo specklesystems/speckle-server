@@ -18,8 +18,6 @@ import { Nullable, Scopes, wait } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Logger } from 'pino'
 
-const { FF_FILEIMPORT_IFC_DOTNET_ENABLED } = Environment.getFeatureFlags()
-
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 const TMP_INPUT_DIR = '/tmp/file_to_import'
@@ -156,27 +154,7 @@ async function doTask(
     taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      if (FF_FILEIMPORT_IFC_DOTNET_ENABLED) {
-        await runProcessWithTimeout(
-          taskLogger,
-          process.env['DOTNET_BINARY_PATH'] || 'dotnet',
-          [
-            process.env['IFC_DOTNET_DLL_PATH'] ||
-              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
-            TMP_FILE_PATH,
-            TMP_RESULTS_PATH,
-            info.streamId,
-            `File upload: ${info.fileName}`,
-            existingBranch?.id || '',
-            info.branchName,
-            regionName
-          ],
-          {
-            USER_TOKEN: tempUserToken
-          },
-          TIME_LIMIT
-        )
-      } else {
+      if (info.fileName.toLowerCase().endsWith('.legacyparser.ifc')) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['NODE_BINARY_PATH'] || 'node',
@@ -192,6 +170,26 @@ async function doTask(
             `File upload: ${info.fileName}`,
             info.id,
             existingBranch?.id || '',
+            regionName
+          ],
+          {
+            USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT
+        )
+      } else {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['DOTNET_BINARY_PATH'] || 'dotnet',
+          [
+            process.env['IFC_DOTNET_DLL_PATH'] ||
+              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.streamId,
+            `File upload: ${info.fileName}`,
+            existingBranch?.id || '',
+            info.branchName,
             regionName
           ],
           {

@@ -51,8 +51,6 @@ featureFlags:
   billingIntegrationEnabled: false
   ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
-  ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
-  fileImportIFCDotNetEnabled: false
   ## @param featureFlags.forceEmailVerification Forces email verification for all users
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
