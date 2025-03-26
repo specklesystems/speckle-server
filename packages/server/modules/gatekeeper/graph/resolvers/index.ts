@@ -188,6 +188,10 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               workspacePlan,
               subscriptionData: parent.subscriptionData
             }),
+            viewersCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId: parent.workspaceId,
+              type: 'viewer'
+            }),
             // These values have no reference in the new plans
             guest: 0,
             plan: 0

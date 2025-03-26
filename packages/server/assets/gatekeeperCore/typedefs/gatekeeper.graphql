@@ -102,6 +102,10 @@ type WorkspaceSubscriptionSeats {
   Number assigned seats in the current billing cycle
   """
   assigned: Int!
+  """
+  Number of viewer seats currently assigned in the workspace
+  """
+  viewersCount: Int!
 }
 
 type WorkspaceSubscription {

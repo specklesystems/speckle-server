@@ -4866,6 +4866,8 @@ export type WorkspaceSubscriptionSeats = {
   plan: Scalars['Int']['output'];
   /** Total number of seats purchased and available in the current subscription cycle */
   totalCount: Scalars['Int']['output'];
+  /** Number of viewer seats currently assigned in the workspace */
+  viewersCount: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {

@@ -377,6 +377,7 @@ export const getWorkspaceWithSubscriptionQuery = gql`
           plan
           assigned
           totalCount
+          viewersCount
         }
       }
     }
