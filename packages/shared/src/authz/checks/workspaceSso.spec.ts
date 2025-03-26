@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { requireValidWorkspaceSsoSession } from './workspaceSso.js'
 import cryptoRandomString from 'crypto-random-string'
+import { err, ok } from 'true-myth/result'
+import { WorkspaceSsoSessionNotFoundError } from '../domain/authErrors.js'
 
 describe('requireValidWorkspaceSsoSession returns a function, that', () => {
   it('returns false if user does not have an SSO session', async () => {
     const result = await requireValidWorkspaceSsoSession({
       loaders: {
-        getWorkspaceSsoSession: () => Promise.resolve(null)
+        getWorkspaceSsoSession: () =>
+          Promise.resolve(err(WorkspaceSsoSessionNotFoundError))
       }
     })({
       userId: cryptoRandomString({ length: 9 }),
@@ -25,11 +28,13 @@ describe('requireValidWorkspaceSsoSession returns a function, that', () => {
     const result = await requireValidWorkspaceSsoSession({
       loaders: {
         getWorkspaceSsoSession: () =>
-          Promise.resolve({
-            userId,
-            providerId,
-            validUntil
-          })
+          Promise.resolve(
+            ok({
+              userId,
+              providerId,
+              validUntil
+            })
+          )
       }
     })({
       userId,
@@ -48,11 +53,13 @@ describe('requireValidWorkspaceSsoSession returns a function, that', () => {
     const result = await requireValidWorkspaceSsoSession({
       loaders: {
         getWorkspaceSsoSession: () =>
-          Promise.resolve({
-            userId,
-            providerId,
-            validUntil
-          })
+          Promise.resolve(
+            ok({
+              userId,
+              providerId,
+              validUntil
+            })
+          )
       }
     })({
       userId,

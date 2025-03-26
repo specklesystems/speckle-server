@@ -10,7 +10,6 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
-import { defineModuleLoaders } from '@/modules/workspaces/authz'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
 
@@ -45,8 +44,6 @@ const workspacesModule: SpeckleModule = {
       quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])
-
-    defineModuleLoaders()
   },
   shutdown() {
     if (!FF_WORKSPACES_MODULE_ENABLED) return

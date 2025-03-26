@@ -1,27 +1,31 @@
+import { defineModuleLoaders } from '@/modules/loaders'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { defineLoaders } from '@/modules/loaders'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { getUserServerRoleFactory } from '@/modules/shared/repositories/acl'
+import { err, ok } from 'true-myth/result'
+import { Authz } from '@speckle/shared'
 
-export const defineModuleLoaders = () => {
+export default defineModuleLoaders(async () => {
   const getStream = getStreamFactory({ db })
   const getUserServerRole = getUserServerRoleFactory({ db })
 
-  defineLoaders({
-    getEnv: getFeatureFlags,
+  return {
+    getEnv: async () => ok(getFeatureFlags()),
     getProject: async ({ projectId }) => {
       const project = await getStream({ streamId: projectId })
-      if (!project) return null
-      return { ...project, projectId: project.id }
+      if (!project) return err(Authz.ProjectNotFoundError)
+      return ok({ ...project, projectId: project.id })
     },
     getProjectRole: async ({ userId, projectId }) => {
       const project = await getStream({ streamId: projectId, userId })
-      return project?.role ?? null
+      if (!project?.role) return err(Authz.ProjectRoleNotFoundError)
+      return ok(project.role)
     },
     getServerRole: async ({ userId }) => {
       const role = await getUserServerRole({ userId })
-      return role ?? null
+      if (!role) return err(Authz.ServerRoleNotFoundError)
+      return ok(role)
     }
-  })
-}
+  }
+})
