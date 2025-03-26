@@ -105,5 +105,4 @@ describe('object preview @previews', () => {
       expect(objectPreviewRequest).to.be.undefined // we have not created a new request
     })
   })
-  describe('addRequestQueueListeners', () => {})
 })
