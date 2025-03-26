@@ -73,7 +73,9 @@ export default class ObjectLoader2 {
     if (deferredBase) {
       return await deferredBase.promise
     }
-    throw new Error('Not deferred or downloaded: ' + params.id)
+    const d = new DeferredBase(params.id)
+    this.#buffer.push(d)
+    return d
   }
 
   async getTotalObjectCount() {
@@ -101,9 +103,11 @@ export default class ObjectLoader2 {
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      const deferredBase = this.#buffer.find((x) => x.id === item.baseId)
-      if (deferredBase) {
+      const deferredIndex = this.#buffer.findIndex((x) => x.id === item.baseId)
+      if (deferredIndex !== -1) {
+        const deferredBase = this.#buffer[deferredIndex]
         deferredBase.resolve(item.base)
+        this.#buffer.splice(deferredIndex, 1)
       }
       yield item.base
       count++

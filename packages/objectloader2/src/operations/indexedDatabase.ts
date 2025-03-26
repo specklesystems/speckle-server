@@ -121,7 +121,7 @@ export default class IndexedDatabase implements Cache {
     await this.#setupCacheDb()
 
     return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
-      return await this.#cacheDB?.objects.get({ baseId: id })
+      return await this.#cacheDB?.objects.get(id)
     })
   }
 
