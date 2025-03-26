@@ -1,6 +1,21 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
+    <CommonAlert
+      v-if="props.isDomainCompliant === false"
+      color="danger"
+      hide-icon
+      size="xs"
+      class="mb-4"
+    >
+      <template #title>User is not domain compliant</template>
+      <template #description>
+        <span class="text-body-2xs">
+          This user is not using a compliant email domain and cannot become a workspace
+          member.
+        </span>
+      </template>
+    </CommonAlert>
     <div class="flex flex-col gap-4 mb-4 -mt-1">
       <CommonCard class="bg-foundation-2 text-body-2xs !p-2">
         <div class="flex flex-row gap-x-2 items-center">
@@ -15,11 +30,11 @@
         </div>
       </CommonCard>
 
-      <p class="text-body-sm">
+      <p v-if="mainMessage" class="text-body-sm">
         {{ mainMessage }}
       </p>
 
-      <p class="text-foreground-2 text-body-2xs">
+      <p v-if="roleInfo" class="text-foreground-2 text-body-2xs">
         {{ roleInfo }} Learn more about
         <NuxtLink
           :to="LearnMoreRolesSeatsUrl"
@@ -49,6 +64,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 const props = defineProps<{
   user: UserItem
   newRole: MaybeNullOrUndefined<string>
+  isDomainCompliant?: MaybeNullOrUndefined<boolean>
   workspace?: MaybeNullOrUndefined<
     | SettingsWorkspacesNewMembersTable_WorkspaceFragment
     | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
@@ -76,7 +92,8 @@ const buttonText = computed(() => {
 })
 
 const mainMessage = computed(() => {
-  if (!props.newRole) return ''
+  if (!props.newRole) return undefined
+  if (props.isDomainCompliant === false) return undefined
   if (props.newRole === Roles.Workspace.Member) {
     return 'They will be able to access all projects.'
   }
@@ -84,7 +101,8 @@ const mainMessage = computed(() => {
 })
 
 const roleInfo = computed(() => {
-  if (!props.newRole) return ''
+  if (!props.newRole) return undefined
+  if (props.isDomainCompliant === false) return undefined
   return WorkspaceRoleDescriptions[
     props.newRole as keyof typeof WorkspaceRoleDescriptions
   ]
@@ -114,7 +132,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: {
       color: 'primary'
     },
-    onClick: handleConfirm
+    onClick: handleConfirm,
+    disabled: props.isDomainCompliant === false
   }
 ])
 </script>

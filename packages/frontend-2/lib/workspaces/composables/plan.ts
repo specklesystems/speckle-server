@@ -23,6 +23,11 @@ graphql(`
     subscription {
       billingInterval
       currentBillingCycleEnd
+      seats {
+        totalCount
+        assigned
+        viewersCount
+      }
     }
   }
 `)
@@ -102,15 +107,16 @@ export const useWorkspacePlan = (slug: string) => {
       : 'Not applicable'
   })
 
-  // TODO: Replace with actual values from backend once ready
   const editorSeats = computed(() => {
-    const seatLimit = 6
-    const seatsUsed = 6
+    const seats = subscription.value?.seats
+    if (!seats)
+      return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
 
+    const editorSeatsUsed = seats.assigned - seats.viewersCount
     return {
-      limit: seatLimit,
-      used: seatsUsed,
-      hasSeatAvailable: seatLimit > seatsUsed,
+      limit: seats.totalCount,
+      used: editorSeatsUsed,
+      hasSeatAvailable: seats.totalCount > editorSeatsUsed,
       seatPrice: editorSeatPrice
     }
   })

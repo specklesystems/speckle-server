@@ -67,6 +67,7 @@
             joinDate: item.joinDate
           }"
           :workspace="workspace"
+          :is-domain-compliant="item.user.workspaceDomainPolicyCompliant"
         />
         <span v-else />
       </template>
@@ -98,6 +99,7 @@ graphql(`
       id
       avatar
       name
+      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
     }
     projectRoles {
       role
