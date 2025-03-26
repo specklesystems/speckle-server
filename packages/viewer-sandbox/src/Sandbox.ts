@@ -1352,6 +1352,7 @@ export default class Sandbox {
       }
       count++
     }
+    await loader.disposeAsync()
     console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
   }
 }

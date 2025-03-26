@@ -1,6 +1,6 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
-import { Item } from '../types/types.js'
+import { CustomLogger, Item } from '../types/types.js'
 import { isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
@@ -21,13 +21,13 @@ class ObjectStore extends Dexie {
 
 export default class IndexedDatabase implements Cache {
   #options: BaseDatabaseOptions
-  //#logger: CustomLogger
+  #logger: CustomLogger
 
   #cacheDB?: ObjectStore
 
   #writeQueue: BatchingQueue<Item> | undefined
 
-  //#count: number = 0
+  // #count: number = 0
 
   constructor(options: BaseDatabaseOptions) {
     this.#options = {
@@ -37,7 +37,7 @@ export default class IndexedDatabase implements Cache {
       },
       ...options
     }
-    //this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || (() => {})
   }
 
   async add(item: Item): Promise<void> {
@@ -84,37 +84,35 @@ export default class IndexedDatabase implements Cache {
   }): Promise<void> {
     const { ids, foundItems, notFoundItems } = params
     await this.#setupCacheDb()
-    const ids2 = ids.sort()
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
 
-    for (let i = 0; i < ids2.length; i += maxCacheReadSize) {
+    for (let i = 0; i < ids.length; i += maxCacheReadSize) {
       if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
-        //this.#logger('pausing')
+        this.#logger('pausing')
         await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second, protects against out of memory
         continue
       }
-      const batch = ids2.slice(i, i + maxCacheReadSize)
-      //const x = this.#count
-      //this.#count++
-      //const startTime = performance.now()
-      //this.#logger('Start read ' + x + ' ' + batch.length)
-      const cachedData = await this.#cacheDB?.objects.bulkGet(batch)
-      if (!cachedData) {
-        break
-      }
-      for (let i = 0; i < cachedData.length; i++) {
-        if (cachedData[i]) {
-          foundItems.add(cachedData[i]!)
-        } else {
-          notFoundItems.add(batch[i])
+      const batch = ids.slice(i, i + maxCacheReadSize)
+      //   const x = this.#count
+      //   this.#count++
+      //  const startTime = performance.now()
+      // this.#logger('Start read ' + x + ' ' + batch.length)
+
+      //faster than BulkGet with dexie
+      await this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
+        const gets = batch.map((key) => this.#cacheDB!.objects.get(key))
+        const cachedData = await Promise.all(gets)
+        for (let i = 0; i < cachedData.length; i++) {
+          if (cachedData[i]) {
+            foundItems.add(cachedData[i]!)
+          } else {
+            notFoundItems.add(batch[i])
+          }
         }
-        if (i % 1000 === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
-        }
-      }
-      //const endTime = performance.now()
-      //const duration = endTime - startTime
-      //this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+      })
+      // const endTime = performance.now()
+      // const duration = endTime - startTime
+      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
     }
   }
 
@@ -135,11 +133,11 @@ export default class IndexedDatabase implements Cache {
     //const x = this.#count
     //this.#count++
 
-    //const startTime = performance.now()
-    //this.#logger('Start save ' + x + ' ' + batch.length)
+    // const startTime = performance.now()
+    //  this.#logger('Start save ' + x + ' ' + batch.length)
     await cacheDB.objects.bulkPut(batch)
-    //const endTime = performance.now()
-    //const duration = endTime - startTime
+    // const endTime = performance.now()
+    // const duration = endTime - startTime
     //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
   }
 
