@@ -6,13 +6,23 @@ import {
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Nullable,
+  Optional,
+  PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type GetWorkspaceWithPlan = (args: {
+  workspaceId: string
+}) => Promise<Optional<Workspace & { plan: Nullable<WorkspacePlan> }>>
 
 export type UpsertTrialWorkspacePlan = (args: {
   workspacePlan: TrialWorkspacePlan
@@ -103,7 +113,7 @@ const subscriptionProduct = z.object({
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 
-export const subscriptionData = z.object({
+export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
   cancelAt: z.date().nullable(),
@@ -117,8 +127,11 @@ export const subscriptionData = z.object({
     z.literal('unpaid'),
     z.literal('paused')
   ]),
-  products: subscriptionProduct.array()
+  products: subscriptionProduct.array(),
+  currentPeriodEnd: z.coerce.date()
 })
+// this abstracts the stripe sub data
+export type SubscriptionData = z.infer<typeof SubscriptionData>
 
 export const calculateSubscriptionSeats = ({
   subscriptionData,
@@ -136,9 +149,6 @@ export const calculateSubscriptionSeats = ({
   )
   return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
 }
-
-// this abstracts the stripe sub data
-export type SubscriptionData = z.infer<typeof subscriptionData>
 
 export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -214,3 +224,26 @@ export type GetRecurringPrices = () => Promise<
 >
 
 export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>
+
+export type GetWorkspaceRolesAndSeats = (params: {
+  workspaceId: string
+  userIds?: string[]
+}) => Promise<{
+  [userId: string]: {
+    role: WorkspaceAcl
+    seat: Nullable<WorkspaceSeat>
+    userId: string
+  }
+}>
+
+export type GetWorkspaceRoleAndSeat = (params: {
+  workspaceId: string
+  userId: string
+}) => Promise<
+  | {
+      role: WorkspaceAcl
+      seat: Nullable<WorkspaceSeat>
+      userId: string
+    }
+  | undefined
+>

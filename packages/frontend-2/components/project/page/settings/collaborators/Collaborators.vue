@@ -1,32 +1,35 @@
 <template>
-  <ProjectPageSettingsBlock title="Collaborators">
-    <template #introduction>
-      <p class="text-body-xs text-foreground">
-        Invite new collaborators and set permissions.
-      </p>
-    </template>
-    <template #top-buttons>
-      <FormButton :disabled="!canInvite" @click="toggleInviteDialog">Invite</FormButton>
-    </template>
-
-    <div class="flex flex-col mt-6">
-      <ProjectPageSettingsCollaboratorsRow
-        v-for="collaborator in collaboratorListItems"
-        :key="collaborator.id"
-        :can-edit="canEdit"
-        :collaborator="collaborator"
-        :loading="loading"
-        @cancel-invite="onCancelInvite"
-        @change-role="onCollaboratorRoleChange"
+  <div>
+    <div v-if="project">
+      <div class="flex justify-between space-x-2">
+        <div>
+          <h1 class="block text-heading-xl mb-2">Collaborators</h1>
+          <p class="text-body-xs text-foreground">
+            Invite new collaborators and set permissions.
+          </p>
+        </div>
+        <FormButton class="mt-1" :disabled="!canInvite" @click="toggleInviteDialog">
+          Invite
+        </FormButton>
+      </div>
+      <div class="flex flex-col mt-6">
+        <ProjectPageSettingsCollaboratorsRow
+          v-for="collaborator in collaboratorListItems"
+          :key="collaborator.id"
+          :can-edit="canEdit"
+          :collaborator="collaborator"
+          :loading="loading"
+          @cancel-invite="onCancelInvite"
+          @change-role="onCollaboratorRoleChange"
+        />
+      </div>
+      <InviteDialogProject
+        v-if="project"
+        v-model:open="showInviteDialog"
+        :project="project"
       />
     </div>
-
-    <InviteDialogProject
-      v-if="project"
-      v-model:open="showInviteDialog"
-      :project="project"
-    />
-  </ProjectPageSettingsBlock>
+  </div>
 </template>
 <script setup lang="ts">
 import type { Project } from '~~/lib/common/generated/gql/graphql'

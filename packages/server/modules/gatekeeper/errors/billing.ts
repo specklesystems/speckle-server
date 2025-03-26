@@ -71,3 +71,9 @@ export class InvalidBillingIntervalError extends BaseError {
   static code = 'INVALID_BILLING_INTERVAL'
   static statusCode = 400
 }
+
+export class UnsupportedWorkspacePlanError extends BaseError {
+  static defaultMessage = 'Unsupported workspace plan'
+  static code = 'UNSUPPORTED_WORKSPACE_PLAN_ERROR'
+  static statusCode = 400
+}

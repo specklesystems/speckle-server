@@ -1,9 +1,8 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
-  GetWorkspace,
-  GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
+  GetWorkspaceSeatTypeToProjectRoleMapping,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -18,7 +17,7 @@ import {
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import { chunk } from 'lodash'
+import { chunk, intersection } from 'lodash'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
@@ -46,6 +45,13 @@ import {
   getWorkspaceFactory,
   upsertWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import {
+  GetWorkspaceRolesAndSeats,
+  GetWorkspaceWithPlan,
+  WorkspaceSeatType
+} from '@/modules/gatekeeper/domain/billing'
+import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { NotImplementedError } from '@/modules/shared/errors'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -53,7 +59,8 @@ export const queryAllWorkspaceProjectsFactory = ({
   getStreams: LegacyGetStreams
 }): QueryAllWorkspaceProjects =>
   async function* queryAllWorkspaceProjects({
-    workspaceId
+    workspaceId,
+    userId
   }): AsyncGenerator<StreamRecord[], void, unknown> {
     let cursor: Date | null = null
     let iterationCount = 0
@@ -64,11 +71,12 @@ export const queryAllWorkspaceProjectsFactory = ({
       const { streams, cursorDate } = await getStreams({
         cursor,
         orderBy: null,
-        limit: 1000,
+        limit: 100,
         visibility: null,
         searchQuery: null,
         streamIdWhitelist: null,
-        workspaceIdWhitelist: [workspaceId]
+        workspaceIdWhitelist: [workspaceId],
+        userId
       })
 
       yield streams
@@ -119,6 +127,7 @@ export const getWorkspaceProjectsFactory =
 type MoveProjectToWorkspaceArgs = {
   projectId: string
   workspaceId: string
+  movedByUserId: string
 }
 
 export const moveProjectToWorkspaceFactory =
@@ -127,21 +136,24 @@ export const moveProjectToWorkspaceFactory =
     updateProject,
     upsertProjectRole,
     getProjectCollaborators,
-    getWorkspaceRoles,
+    getWorkspaceRolesAndSeats,
     getWorkspaceRoleToDefaultProjectRoleMapping,
-    updateWorkspaceRole
+    updateWorkspaceRole,
+    getWorkspaceWithPlan
   }: {
     getProject: GetProject
     updateProject: UpdateProject
     upsertProjectRole: UpsertProjectRole
     getProjectCollaborators: GetProjectCollaborators
-    getWorkspaceRoles: GetWorkspaceRoles
+    getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
     getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     updateWorkspaceRole: UpdateWorkspaceRole
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
   }) =>
   async ({
     projectId,
-    workspaceId
+    workspaceId,
+    movedByUserId
   }: MoveProjectToWorkspaceArgs): Promise<StreamRecord> => {
     const project = await getProject({ projectId })
 
@@ -154,38 +166,59 @@ export const moveProjectToWorkspaceFactory =
     }
 
     // Update roles for current project members
-    const projectTeam = await getProjectCollaborators({ projectId })
-    const workspaceTeam = await getWorkspaceRoles({ workspaceId })
-    const defaultProjectRoleMapping = await getWorkspaceRoleToDefaultProjectRoleMapping(
-      { workspaceId }
-    )
+    const [workspace, projectTeam, workspaceTeam] = await Promise.all([
+      getWorkspaceWithPlan({ workspaceId }),
+      getProjectCollaborators({ projectId }),
+      getWorkspaceRolesAndSeats({ workspaceId })
+    ])
+    if (!workspace) throw new WorkspaceNotFoundError()
+
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const roleMapping = isNewPlan
+      ? undefined
+      : await getWorkspaceRoleToDefaultProjectRoleMapping({
+          workspaceId
+        })
 
     for (const projectMembers of chunk(projectTeam, 5)) {
       await Promise.all(
         projectMembers.map(
           async ({ id: userId, role: serverRole, streamRole: currentProjectRole }) => {
             // Update workspace role. Prefer existing workspace role if there is one.
-            const currentWorkspaceRole = workspaceTeam.find(
-              (role) => role.userId === userId
-            )
-            const nextWorkspaceRole = currentWorkspaceRole ?? {
-              userId,
-              workspaceId,
-              role:
-                serverRole === Roles.Server.Guest
-                  ? Roles.Workspace.Guest
-                  : Roles.Workspace.Member,
-              createdAt: new Date()
-            }
-            await updateWorkspaceRole(nextWorkspaceRole)
+            const currentWorkspaceRole = workspaceTeam[userId]?.role
 
-            // Update project role. Prefer default workspace project role if more permissive.
+            const nextWorkspaceRole = currentWorkspaceRole
+              ? currentWorkspaceRole
+              : {
+                  userId,
+                  workspaceId,
+                  role:
+                    serverRole === Roles.Server.Guest
+                      ? Roles.Workspace.Guest
+                      : Roles.Workspace.Member,
+                  createdAt: new Date()
+                }
+
+            await updateWorkspaceRole({
+              ...nextWorkspaceRole,
+              updatedByUserId: movedByUserId
+            })
+
+            // Upsert project role. Prefer default workspace project role if more permissive.
+            // (Does not apply to new plans)
+            if (isNewPlan) return
+
             const defaultProjectRole =
-              defaultProjectRoleMapping[nextWorkspaceRole.role] ?? Roles.Stream.Reviewer
-            const nextProjectRole = orderByWeight(
+              roleMapping?.default[nextWorkspaceRole.role] ?? Roles.Stream.Reviewer
+            const allowedProjectRoles =
+              roleMapping?.allowed[nextWorkspaceRole.role] ?? []
+            const rolePicks = intersection(
               [currentProjectRole, defaultProjectRole],
-              coreUserRoles
-            )[0]
+              allowedProjectRoles
+            )
+            const nextProjectRole = orderByWeight(rolePicks, coreUserRoles)[0]
+
+            // TODO: Shouldn't this be the service call that also fires events?
             await upsertProjectRole({
               userId,
               projectId,
@@ -202,21 +235,78 @@ export const moveProjectToWorkspaceFactory =
 
 export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
   ({
-    getWorkspace
+    getWorkspaceWithPlan
   }: {
-    getWorkspace: GetWorkspace
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
   }): GetWorkspaceRoleToDefaultProjectRoleMapping =>
   async ({ workspaceId }) => {
-    const workspace = await getWorkspace({ workspaceId })
+    const workspace = await getWorkspaceWithPlan({ workspaceId })
 
     if (!workspace) {
       throw new WorkspaceNotFoundError()
     }
 
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    if (isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
+    }
+
     return {
-      [Roles.Workspace.Guest]: null,
-      [Roles.Workspace.Member]: workspace.defaultProjectRole,
-      [Roles.Workspace.Admin]: Roles.Stream.Owner
+      default: {
+        [Roles.Workspace.Guest]: null,
+        [Roles.Workspace.Member]: Roles.Stream.Reviewer,
+        [Roles.Workspace.Admin]: Roles.Stream.Owner
+      },
+      allowed: {
+        [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
+        [Roles.Workspace.Member]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ],
+        [Roles.Workspace.Admin]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      }
+    }
+  }
+
+export const getWorkspaceSeatTypeToProjectRoleMappingFactory =
+  (deps: {
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
+  }): GetWorkspaceSeatTypeToProjectRoleMapping =>
+  async (params: { workspaceId: string }) => {
+    const { workspaceId } = params
+    const workspace = await deps.getWorkspaceWithPlan({ workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    if (!isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
+    }
+
+    return {
+      allowed: {
+        [WorkspaceSeatType.Viewer]: [Roles.Stream.Reviewer],
+        [WorkspaceSeatType.Editor]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      },
+      default: {
+        [WorkspaceSeatType.Viewer]: Roles.Stream.Reviewer,
+        [WorkspaceSeatType.Editor]: Roles.Stream.Reviewer
+      }
     }
   }
 

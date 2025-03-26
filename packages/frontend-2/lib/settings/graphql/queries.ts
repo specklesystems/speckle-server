@@ -3,7 +3,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const settingsSidebarQuery = graphql(`
   query SettingsSidebar {
     activeUser {
-      ...SettingsDialog_User
+      ...SettingsSidebar_User
     }
   }
 `)
@@ -38,6 +38,7 @@ export const settingsWorkspaceBillingQueryNew = graphql(`
   query SettingsWorkspaceBillingNew($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
+      ...WorkspaceBillingPageNew_Workspace
     }
   }
 `)
@@ -74,6 +75,7 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   query SettingsWorkspacesMembersTable($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersTable_Workspace
+      ...SettingsWorkspacesNewMembersTable_Workspace
     }
   }
 `)
@@ -82,6 +84,7 @@ export const settingsWorkspacesMembersGuestsQuery = graphql(`
   query SettingsWorkspacesMembersGuests($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersGuestsTable_Workspace
+      ...SettingsWorkspacesMembersNewGuestsTable_Workspace
     }
   }
 `)
@@ -106,10 +109,11 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
   query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
     workspaceBySlug(slug: $slug) {
       id
-      team(filter: $filter) {
+      team(filter: $filter, limit: 250) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
+          ...SettingsWorkspacesNewMembersTable_WorkspaceCollaborator
         }
       }
     }

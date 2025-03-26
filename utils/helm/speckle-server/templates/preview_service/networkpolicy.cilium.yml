@@ -1,3 +1,4 @@
+{{- if .Values.preview_service.deployInCluster }}
 {{- if (and (.Values.preview_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -37,4 +38,5 @@ spec:
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
+{{- end }}
 {{- end }}

@@ -124,7 +124,7 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
     })
     app.use(previewRouter)
 
-    previewResponseQueue.process(async (payload, done) => {
+    void previewResponseQueue.process(async (payload, done) => {
       const parsedMessage = previewResultPayload.safeParse(payload.data)
       if (!parsedMessage.success) {
         logger.error(

@@ -3,7 +3,8 @@ import type {
   Optional,
   MaybeNullOrUndefined,
   MaybeAsync,
-  MaybeFalsy
+  MaybeFalsy,
+  Authz
 } from '@speckle/shared'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import type { AuthContext } from '@/modules/shared/authz'
@@ -52,6 +53,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
 
 export type GraphQLContext = BaseContext &
   AuthContext & {
+    authPolicies: Authz.AuthPolicies & { clearCache: () => void }
     /**
      * Request-scoped GraphQL dataloaders
      * @see https://github.com/graphql/dataloader

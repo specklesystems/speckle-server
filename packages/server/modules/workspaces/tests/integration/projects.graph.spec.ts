@@ -12,6 +12,7 @@ import {
   createWebhookConfigFactory,
   createWebhookEventFactory
 } from '@/modules/webhooks/repositories/webhooks'
+import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -281,9 +282,7 @@ describe('Workspace project GQL CRUD', () => {
               })
               const newRole = await getUserStreamRole(workspaceGuest.id, roleProject.id)
 
-              expect(res).to.haveGraphQLErrors(
-                'Workspace guests cannot be project owners'
-              )
+              expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
               expect(newRole).to.eq(Roles.Stream.Reviewer)
             })
 
@@ -310,12 +309,12 @@ describe('Workspace project GQL CRUD', () => {
                 expect(resB).to.not.haveGraphQLErrors()
                 expect(newRole).to.eq(Roles.Stream.Owner)
               } else {
-                expect(resA).to.haveGraphQLErrors(
-                  'Workspace viewers can only be project reviewers.'
-                )
-                expect(resB).to.haveGraphQLErrors(
-                  'Workspace viewers can only be project reviewers.'
-                )
+                expect(resA).to.haveGraphQLErrors({
+                  code: WorkspaceInvalidRoleError.code
+                })
+                expect(resB).to.haveGraphQLErrors({
+                  code: WorkspaceInvalidRoleError.code
+                })
                 expect(newRole).to.eq(Roles.Stream.Reviewer)
               }
             })
@@ -522,7 +521,8 @@ isMultiRegionTestMode()
       const adminUser: BasicTestUser = {
         id: '',
         name: 'John Speckle',
-        email: createRandomEmail()
+        email: createRandomEmail(),
+        role: Roles.Server.Admin
       }
 
       const testWorkspace: SetOptional<BasicTestWorkspace, 'slug'> = {

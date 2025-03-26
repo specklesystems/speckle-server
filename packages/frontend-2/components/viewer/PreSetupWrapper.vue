@@ -8,20 +8,17 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="project?.workspace.name"
+                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
                 :separator="false"
-              ></HeaderNavLink>
+              />
             </template>
             <HeaderNavLink
               v-else
               :to="projectsRoute"
               name="Projects"
               :separator="false"
-            ></HeaderNavLink>
-            <HeaderNavLink
-              :to="`/projects/${project?.id}`"
-              :name="project?.name"
-            ></HeaderNavLink>
+            />
+            <HeaderNavLink :to="`/projects/${project?.id}`" :name="project?.name" />
             <ViewerExplorerNavbarLink />
           </ViewerScope>
         </Portal>
@@ -97,7 +94,11 @@
       :url="route.path"
     />
     <Portal to="primary-actions">
-      <HeaderNavShare v-if="project" :resource-id-string="modelId" :project="project" />
+      <HeaderNavShare
+        v-if="project"
+        :resource-id-string="resourceIdString"
+        :project="project"
+      />
     </Portal>
   </div>
 </template>
@@ -113,18 +114,30 @@ import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { writableAsyncComputed } from '~/lib/common/composables/async'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
 
+const router = useRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-const modelId = computed(() => route.params.modelId as string)
+const resourceIdString = computed(() => route.params.modelId as string)
+const projectId = writableAsyncComputed({
+  get: () => route.params.id as string,
+  set: async (value: string) => {
+    // Just rewrite route id param
+    await router.push({
+      params: { id: value }
+    })
+  },
+  initialState: route.params.id as string,
+  asyncRead: false
+})
 
-const projectId = computed(() => route.params.id as string)
-
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })

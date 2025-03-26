@@ -81,7 +81,6 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -89,6 +88,9 @@ import {
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
+import { throwUncoveredError } from '@speckle/shared'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { Authz } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -177,28 +179,32 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const getStream = getStreamFactory({ db })
-      const stream = await getStream({
-        streamId: args.id,
+      const canQuery = await context.authPolicies.project.canQuery({
+        projectId: args.id,
         userId: context.userId
       })
-      if (!stream) {
-        throw new StreamNotFoundError('Project not found')
+
+      if (!canQuery.isOk) {
+        switch (canQuery.error.code) {
+          case Authz.ProjectNotFoundError.code:
+            throw new StreamNotFoundError()
+          case Authz.ProjectNoAccessError.code:
+          case Authz.WorkspaceNoAccessError.code:
+          case Authz.WorkspaceSsoSessionInvalidError.code:
+            throw new ForbiddenError(canQuery.error.message)
+          default:
+            throwUncoveredError(canQuery.error)
+        }
       }
 
-      await authorizeResolver(
-        context.userId,
-        args.id,
-        Roles.Stream.Reviewer,
-        context.resourceAccessRules
-      )
+      const project = await getStream({ streamId: args.id })
 
-      if (!stream.isPublic) {
-        await throwForNotHavingServerRole(context, Roles.Server.Guest)
-        validateScopes(context.scopes, Scopes.Streams.Read)
+      // TODO: Should scopes & token resource access rules be checked in authz policy?
+      if (!project?.isPublic && !project?.isDiscoverable) {
+        await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
-      return stream
+      return project
     }
   },
   Mutation: {
@@ -213,30 +219,32 @@ export = {
             deleteStream: deleteStreamFactory({
               db: projectDb
             }),
-            authorizeResolver,
             emitEvent: getEventBus().emit,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
             getStream: getStreamFactory({ db: projectDb })
           })
-          return deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
-            skipAccessChecks: true
-          })
+          return deleteStreamAndNotify(id, ctx.userId!)
         })
       )
       return results.every((res) => res === true)
     },
-    async delete(_parent, { id }, { userId, resourceAccessRules }) {
-      const projectDb = await getProjectDbClient({ projectId: id })
+    async delete(_parent, { id: projectId }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        projectId,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
+      const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
           db: projectDb
         }),
-        authorizeResolver,
         emitEvent: getEventBus().emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
         getStream: getStreamFactory({ db: projectDb })
       })
-      return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
+      return await deleteStreamAndNotify(projectId, userId!)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
       return await createOnboardingStream({
@@ -246,14 +254,19 @@ export = {
       })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        update.id,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
       const projectDB = await getProjectDbClient({ projectId: update.id })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        authorizeResolver,
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!, resourceAccessRules)
+      return await updateStreamAndNotify(update, userId!)
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {

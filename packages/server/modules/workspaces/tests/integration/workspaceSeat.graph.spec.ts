@@ -12,12 +12,18 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
+  GetProjectCollaboratorsDocument,
   UpdateWorkspaceSeatTypeDocument,
   WorkspaceUpdateSeatTypeInput
 } from '@/test/graphql/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { StripeClientMock } from '@/test/mocks/global'
+import {
+  addToStream,
+  BasicTestStream,
+  createTestStream
+} from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -112,7 +118,7 @@ describe('Workspace Seats @graphql', () => {
       expect(res.data?.workspaceMutations.updateSeatType).to.not.be.ok
     })
 
-    it('should assign a workspace seat with the provided type and reconcile subscription', async () => {
+    it('should upgrade a workspace seat and reconcile subscription', async () => {
       const user: BasicTestUser = {
         id: createRandomString(),
         name: createRandomString(),
@@ -150,6 +156,102 @@ describe('Workspace Seats @graphql', () => {
       const reconcileArgs = args[0][0]
       expect(reconcileArgs.prorationBehavior).to.eq('always_invoice') // new plan
       expect(reconcileArgs.subscriptionData.products.length).to.be.ok
+    })
+
+    it('should downgrade a workspace seat', async () => {
+      const user: BasicTestUser = {
+        id: createRandomString(),
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      }
+      await createTestUser(user)
+      await assignToWorkspace(
+        testWorkspace1,
+        user,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Editor
+      )
+
+      const res = await updateSeatType({
+        workspaceId: testWorkspace1.id,
+        userId: user.id,
+        seatType: WorkspaceSeatType.Viewer
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(
+        res.data?.workspaceMutations.updateSeatType.team.items.find(
+          (i) => i.id === user.id
+        )?.seatType
+      ).to.eq(WorkspaceSeatType.Viewer)
+    })
+
+    it('should reduce project role on downgrade to viewer seat', async () => {
+      const testWorkspace2: BasicTestWorkspace = {
+        id: '',
+        slug: '',
+        ownerId: '',
+        name: 'Test Workspace 2'
+      }
+      await createTestWorkspace(testWorkspace2, workspaceAdmin, {
+        addPlan: { name: 'pro', status: 'valid' }
+      })
+
+      const user: BasicTestUser = {
+        id: createRandomString(),
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      }
+      await createTestUser(user)
+      await assignToWorkspace(
+        testWorkspace2,
+        user,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Editor
+      )
+
+      const userOwnedProject: BasicTestStream = {
+        name: 'User Owned Project',
+        isPublic: false,
+        id: '',
+        ownerId: '',
+        workspaceId: testWorkspace2.id
+      }
+
+      await createTestStream(userOwnedProject, user)
+      await addToStream(userOwnedProject, workspaceAdmin, Roles.Stream.Owner)
+
+      const res1 = await updateSeatType({
+        workspaceId: testWorkspace2.id,
+        userId: user.id,
+        seatType: WorkspaceSeatType.Viewer
+      })
+
+      expect(res1).to.not.haveGraphQLErrors()
+      expect(
+        res1.data?.workspaceMutations.updateSeatType.team.items.find(
+          (i) => i.id === user.id
+        )?.seatType
+      ).to.eq(WorkspaceSeatType.Viewer)
+
+      // Check project ownership from user perspective, they should have reduced roles
+      const res2 = await apollo.execute(
+        GetProjectCollaboratorsDocument,
+        {
+          projectId: userOwnedProject.id
+        },
+        { assertNoErrors: true, authUserId: user.id }
+      )
+
+      expect(res2.data?.project.id).to.eq(userOwnedProject.id)
+      expect(res2.data?.project.team.length).to.greaterThanOrEqual(1)
+
+      const userRes = res2.data?.project.team.find((t) => t.id === user.id)
+      expect(userRes?.role).to.eq(Roles.Stream.Reviewer)
     })
   })
 })

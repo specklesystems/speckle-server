@@ -164,7 +164,6 @@ export const createWorkspaceFactory =
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
-      defaultProjectRole: Roles.Stream.Contributor,
       domainBasedMembershipProtectionEnabled: false,
       discoverabilityEnabled: false
     }
@@ -181,7 +180,8 @@ export const createWorkspaceFactory =
     await ensureValidWorkspaceRoleSeat({
       userId,
       workspaceId: workspace.id,
-      role
+      role,
+      updatedByUserId: userId
     })
 
     // emit a workspace created event
@@ -421,7 +421,8 @@ export const updateWorkspaceRoleFactory =
     userId,
     role: nextWorkspaceRole,
     skipProjectRoleUpdatesFor,
-    preventRoleDowngrade
+    preventRoleDowngrade,
+    updatedByUserId
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 
@@ -477,10 +478,11 @@ export const updateWorkspaceRoleFactory =
       role: nextWorkspaceRole,
       createdAt: previousWorkspaceRole?.createdAt ?? new Date()
     })
-    const { type } = await ensureValidWorkspaceRoleSeat({
+    await ensureValidWorkspaceRoleSeat({
       userId,
       workspaceId,
-      role: nextWorkspaceRole
+      role: nextWorkspaceRole,
+      updatedByUserId
     })
 
     await emitWorkspaceEvent({
@@ -491,10 +493,10 @@ export const updateWorkspaceRoleFactory =
           workspaceId,
           role: nextWorkspaceRole
         },
-        seatType: type,
         flags: {
           skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
-        }
+        },
+        updatedByUserId
       }
     })
   }

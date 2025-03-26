@@ -29,7 +29,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteGenericItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteGenericItem } from '~~/lib/invites/helpers/constants'
-import { Roles } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
@@ -58,7 +58,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: InviteDialogWorkspace_WorkspaceFragment
+  workspace?: MaybeNullOrUndefined<InviteDialogWorkspace_WorkspaceFragment>
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -75,7 +75,7 @@ const invites = ref<InviteGenericItem[]>([
 ])
 
 const allowedDomains = computed(() =>
-  props.workspace.domainBasedMembershipProtectionEnabled
+  props.workspace?.domainBasedMembershipProtectionEnabled
     ? props.workspace.domains?.map((d) => d.domain)
     : null
 )
@@ -117,7 +117,7 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
       : undefined
   }))
 
-  if (!inputs.length) return
+  if (!inputs.length || !props.workspace?.id) return
 
   await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
   isOpen.value = false
