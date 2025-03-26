@@ -160,7 +160,7 @@ const showBillingInfo = computed(() => {
 })
 
 const onBack = () => {
-  if (isSelectingRole.value) {
+  if (isSelectingRole.value || !isWorkspaceNewPlansEnabled.value) {
     isOpen.value = false
   } else {
     isSelectingRole.value = true
