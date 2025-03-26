@@ -26,6 +26,7 @@ import {
 } from '@speckle/shared'
 import { cloneDeep, sum } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -291,4 +292,29 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
       subscriptionData,
       prorationBehavior: 'create_prorations'
     })
+  }
+
+export const getTotalSeatsCountByPlanFactory =
+  ({
+    getWorkspacePlanProductId
+  }: {
+    getWorkspacePlanProductId: GetWorkspacePlanProductId
+  }) =>
+  ({
+    workspacePlan,
+    subscriptionData
+  }: {
+    workspacePlan: Pick<WorkspacePlan, 'name'>
+    subscriptionData: Pick<SubscriptionData, 'products'>
+  }) => {
+    if (workspacePlan.name === 'free') {
+      return 3 // Max editors seats in the free plan
+    }
+    const productId = getWorkspacePlanProductId({
+      workspacePlan: workspacePlan.name as 'pro' | 'team'
+    })
+    const product = subscriptionData.products.find(
+      (product) => product.productId === productId
+    )
+    return product?.quantity ?? 0
   }

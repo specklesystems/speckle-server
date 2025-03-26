@@ -67,6 +67,7 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -156,6 +157,45 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        }
+      },
+      WorkspaceSubscription: {
+        seats: async (parent) => {
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId: parent.workspaceId
+          })
+          if (!workspacePlan || !isNewPlanType(workspacePlan.name)) {
+            return {
+              ...calculateSubscriptionSeats({
+                subscriptionData: parent.subscriptionData,
+                guestSeatProductId: getWorkspacePlanProductId({
+                  workspacePlan: 'guest'
+                })
+              }),
+              // These values have no reference in the old plans FF_WORKSPACES_NEW_PLANS_ENABLED
+              totalCount: 0,
+              assigned: 0
+            }
+          }
+          // Only editor seats are considered
+          const assignedSeatsCount = await countSeatsByTypeInWorkspaceFactory({ db })({
+            workspaceId: parent.workspaceId,
+            type: 'editor'
+          })
+          return {
+            assigned: assignedSeatsCount,
+            totalCount: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData: parent.subscriptionData
+            }),
+            viewersCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId: parent.workspaceId,
+              type: 'viewer'
+            }),
+            // These values have no reference in the new plans
+            guest: 0,
+            plan: 0
+          }
         }
       },
       WorkspaceCollaborator: {
