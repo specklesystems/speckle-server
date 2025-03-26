@@ -13,11 +13,7 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge
-              v-if="project.role"
-              rounded
-              :color-classes="'text-foreground-2 bg-primary-muted'"
-            >
+            <CommonBadge v-if="project.role" rounded color="secondary">
               <span class="capitalize">
                 {{ project.role?.split(':').reverse()[0] }}
               </span>

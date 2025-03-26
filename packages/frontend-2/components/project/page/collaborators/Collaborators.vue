@@ -7,18 +7,27 @@
           Invite to project
         </FormButton>
       </div>
-      <div class="flex flex-col mt-6">
-        <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
-        <div class="mt-3">
-          <ProjectPageSettingsCollaboratorsRow
-            v-for="collaborator in collaboratorListItems"
-            :key="collaborator.id"
-            :can-edit="canEdit"
-            :collaborator="collaborator"
-            :loading="loading"
-            @cancel-invite="onCancelInvite"
-            @change-role="onCollaboratorRoleChange"
+      <div class="flex flex-col mt-6 gap-y-6">
+        <div class="flex flex-col gap-y-3">
+          <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
+          <ProjectPageCollaboratorsGeneralAccessRow
+            :name="project.workspace?.name"
+            :logo="project.workspace?.logo"
           />
+        </div>
+        <div class="flex flex-col gap-y-3">
+          <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
+          <div>
+            <ProjectPageCollaboratorsRow
+              v-for="collaborator in collaboratorListItems"
+              :key="collaborator.id"
+              :can-edit="canEdit"
+              :collaborator="collaborator"
+              :loading="loading"
+              @cancel-invite="onCancelInvite"
+              @change-role="onCollaboratorRoleChange"
+            />
+          </div>
         </div>
       </div>
       <InviteDialogProject
@@ -47,8 +56,8 @@ import {
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
 
-const projectPageSettingsCollaboratorsQuery = graphql(`
-  query ProjectPageSettingsCollaborators($projectId: String!) {
+const projectPageCollaboratorsQuery = graphql(`
+  query ProjectPageCollaborators($projectId: String!) {
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
@@ -58,10 +67,12 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
   }
 `)
 
-const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
-  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
+const projectPageCollaboratorWorkspaceQuery = graphql(`
+  query ProjectPageCollaboratorsWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...ProjectPageTeamInternals_Workspace
+      name
+      logo
     }
   }
 `)
@@ -77,11 +88,11 @@ const loading = ref(false)
 
 const projectId = computed(() => route.params.id as string)
 
-const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
+const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
 const { result: workspaceResult } = useQuery(
-  projectPageSettingsCollaboratorWorkspaceQuery,
+  projectPageCollaboratorWorkspaceQuery,
   () => ({
     workspaceId: pageResult.value!.project.workspace!.id
   }),

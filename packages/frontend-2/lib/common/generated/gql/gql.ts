@@ -75,6 +75,8 @@ type Documents = {
     "\n  fragment ProjectPageAutomationModels_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": typeof types.ProjectPageAutomationModels_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    runs(limit: 10) {\n      items {\n        ...AutomationRunDetails\n      }\n      totalCount\n      cursor\n    }\n  }\n": typeof types.ProjectPageAutomationRuns_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 10) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n      cursor\n    }\n  }\n": typeof types.ProjectPageAutomationsRow_AutomationFragmentDoc,
+    "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": typeof types.ProjectPageCollaboratorsDocument,
+    "\n  query ProjectPageCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n      name\n      logo\n    }\n  }\n": typeof types.ProjectPageCollaboratorsWorkspaceDocument,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": typeof types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": typeof types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": typeof types.ProjectPageModelsActionsFragmentDoc,
@@ -86,8 +88,6 @@ type Documents = {
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": typeof types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": typeof types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": typeof types.ProjectPageModelsCardRenameDialogFragmentDoc,
-    "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": typeof types.ProjectPageSettingsCollaboratorsDocument,
-    "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": typeof types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": typeof types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": typeof types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n": typeof types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
@@ -488,6 +488,8 @@ const documents: Documents = {
     "\n  fragment ProjectPageAutomationModels_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectPageAutomationModels_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    runs(limit: 10) {\n      items {\n        ...AutomationRunDetails\n      }\n      totalCount\n      cursor\n    }\n  }\n": types.ProjectPageAutomationRuns_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 10) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n      cursor\n    }\n  }\n": types.ProjectPageAutomationsRow_AutomationFragmentDoc,
+    "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": types.ProjectPageCollaboratorsDocument,
+    "\n  query ProjectPageCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n      name\n      logo\n    }\n  }\n": types.ProjectPageCollaboratorsWorkspaceDocument,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
@@ -499,8 +501,6 @@ const documents: Documents = {
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
-    "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsDocument,
-    "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n": types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
@@ -1101,6 +1101,14 @@ export function graphql(source: "\n  fragment ProjectPageAutomationsRow_Automati
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectPageCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n      name\n      logo\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n      name\n      logo\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1142,14 +1150,6 @@ export function graphql(source: "\n  fragment ProjectPageModelsCardDeleteDialog 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

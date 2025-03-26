@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsCollaborators />
+  <ProjectPageCollaborators />
 </template>
 
 <script setup lang="ts">
