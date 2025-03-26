@@ -129,8 +129,7 @@ const canMakeMember = computed(() => {
   return (
     isActiveUserWorkspaceAdmin.value &&
     !isActiveUserTargetUser.value &&
-    props.targetUser.role !== Roles.Workspace.Member &&
-    props.targetUser.role !== Roles.Workspace.Admin
+    props.targetUser.role === Roles.Workspace.Guest
   )
 })
 
@@ -163,11 +162,7 @@ const canLeaveWorkspace = computed(() => {
 })
 
 const canResignAdmin = computed(() => {
-  return (
-    isActiveUserTargetUser.value &&
-    isActiveUserWorkspaceAdmin.value &&
-    !isOnlyAdmin.value
-  )
+  return isActiveUserTargetUser.value && isActiveUserWorkspaceAdmin.value
 })
 
 const isOnlyAdmin = computed(() => {

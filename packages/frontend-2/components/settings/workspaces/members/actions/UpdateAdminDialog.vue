@@ -136,8 +136,8 @@ const mainMessage = computed(() => {
 
 const roleInfo = computed(() => {
   return props.action === 'make'
-    ? WorkspaceRoleDescriptions.admin
-    : WorkspaceRoleDescriptions.member
+    ? WorkspaceRoleDescriptions[Roles.Workspace.Admin]
+    : WorkspaceRoleDescriptions[Roles.Workspace.Member]
 })
 
 const handleConfirm = async () => {

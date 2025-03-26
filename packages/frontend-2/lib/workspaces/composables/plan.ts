@@ -112,11 +112,10 @@ export const useWorkspacePlan = (slug: string) => {
     if (!seats)
       return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
 
-    const editorSeatsUsed = seats.assigned - seats.viewersCount
     return {
       limit: seats.totalCount,
-      used: editorSeatsUsed,
-      hasSeatAvailable: seats.totalCount > editorSeatsUsed,
+      used: seats.assigned,
+      hasSeatAvailable: seats.totalCount > seats.assigned,
       seatPrice: editorSeatPrice
     }
   })
