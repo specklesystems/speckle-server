@@ -1,7 +1,9 @@
-import { AuthCheckContext } from '../domain/loaders.js'
+import { AuthCheckContext, AuthCheckContextLoaderKeys } from '../domain/loaders.js'
 
 export const requireValidWorkspaceSsoSession =
-  ({ loaders }: AuthCheckContext<'getWorkspaceSsoSession'>) =>
+  ({
+    loaders
+  }: AuthCheckContext<typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession>) =>
   async (args: { userId: string; workspaceId: string }): Promise<boolean> => {
     const { userId, workspaceId } = args
 
@@ -9,9 +11,10 @@ export const requireValidWorkspaceSsoSession =
       userId,
       workspaceId
     })
+    if (!workspaceSsoSession.isOk) return false
 
     const isExpiredSession =
-      new Date().getTime() > (workspaceSsoSession?.validUntil?.getTime() ?? 0)
+      new Date().getTime() > workspaceSsoSession.value.validUntil.getTime()
 
-    return !!workspaceSsoSession && !isExpiredSession
+    return !isExpiredSession
   }

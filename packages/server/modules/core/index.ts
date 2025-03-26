@@ -23,7 +23,6 @@ import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscript
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
-import { defineModuleLoaders } from '@/modules/core/authz'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -88,8 +87,6 @@ const coreModule: SpeckleModule<{
         getStreamCollaborators: getStreamCollaboratorsFactory({ db })
       })()
     }
-
-    defineModuleLoaders()
   },
   async shutdown() {
     await shutdownResultListener()

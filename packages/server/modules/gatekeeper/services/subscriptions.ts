@@ -1,18 +1,15 @@
-import type { Logger } from '@/observability/logging'
 import {
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
-  GetWorkspaceSubscriptions,
   ReconcileSubscriptionData,
   SubscriptionData,
   SubscriptionDataInput,
   UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
-  WorkspaceSeatType,
-  WorkspaceSubscription
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanMismatchError,
@@ -27,9 +24,7 @@ import {
   throwUncoveredError,
   WorkspaceRoles
 } from '@speckle/shared'
-import { cloneDeep, isEqual, sum } from 'lodash'
-import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
-import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
+import { cloneDeep, sum } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 

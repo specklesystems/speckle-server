@@ -6,13 +6,15 @@ import {
 import cryptoRandomString from 'crypto-random-string'
 import { Project } from '../domain/projects/types.js'
 import { Roles, UncoveredError } from '../../core/index.js'
+import { err, ok } from 'true-myth/result'
+import { ProjectNotFoundError, ProjectRoleNotFoundError } from '../domain/authErrors.js'
 
 describe('project checks', () => {
   describe('requireExactProjectVisibilityFactory returns a function, that', () => {
     it('throws if project does not exist', async () => {
       const requireExactProjectVisibility = requireExactProjectVisibilityFactory({
         loaders: {
-          getProject: () => Promise.resolve(null)
+          getProject: () => Promise.resolve(err(ProjectNotFoundError))
         }
       })
       await expect(
@@ -26,9 +28,11 @@ describe('project checks', () => {
       const result = await requireExactProjectVisibilityFactory({
         loaders: {
           getProject: () =>
-            Promise.resolve({
-              isDiscoverable: true
-            } as Project)
+            Promise.resolve(
+              ok({
+                isDiscoverable: true
+              } as Project)
+            )
         }
       })({
         projectVisibility: 'linkShareable',
@@ -40,9 +44,11 @@ describe('project checks', () => {
       const result = await requireExactProjectVisibilityFactory({
         loaders: {
           getProject: () =>
-            Promise.resolve({
-              isPublic: true
-            } as Project)
+            Promise.resolve(
+              ok({
+                isPublic: true
+              } as Project)
+            )
         }
       })({
         projectVisibility: 'public',
@@ -54,10 +60,12 @@ describe('project checks', () => {
       const result = await requireExactProjectVisibilityFactory({
         loaders: {
           getProject: () =>
-            Promise.resolve({
-              isDiscoverable: false,
-              isPublic: false
-            } as Project)
+            Promise.resolve(
+              ok({
+                isDiscoverable: false,
+                isPublic: false
+              } as Project)
+            )
         }
       })({
         projectVisibility: 'private',
@@ -70,10 +78,12 @@ describe('project checks', () => {
         requireExactProjectVisibilityFactory({
           loaders: {
             getProject: () =>
-              Promise.resolve({
-                isDiscoverable: false,
-                isPublic: false
-              } as Project)
+              Promise.resolve(
+                ok({
+                  isDiscoverable: false,
+                  isPublic: false
+                } as Project)
+              )
           }
         })({
           // @ts-expect-error this is what im testing here
@@ -87,7 +97,7 @@ describe('project checks', () => {
     it('returns false, if there is no role for the user', async () => {
       const result = await requireMinimumProjectRoleFactory({
         loaders: {
-          getProjectRole: () => Promise.resolve(null)
+          getProjectRole: () => Promise.resolve(err(ProjectRoleNotFoundError))
         }
       })({
         projectId: cryptoRandomString({ length: 10 }),
@@ -99,7 +109,7 @@ describe('project checks', () => {
     it('returns false, if the role is not sufficient', async () => {
       const result = await requireMinimumProjectRoleFactory({
         loaders: {
-          getProjectRole: () => Promise.resolve(Roles.Stream.Reviewer)
+          getProjectRole: () => Promise.resolve(ok(Roles.Stream.Reviewer))
         }
       })({
         projectId: cryptoRandomString({ length: 10 }),
@@ -111,7 +121,7 @@ describe('project checks', () => {
     it('returns true, if the role is sufficient', async () => {
       const result = await requireMinimumProjectRoleFactory({
         loaders: {
-          getProjectRole: () => Promise.resolve(Roles.Stream.Contributor)
+          getProjectRole: () => Promise.resolve(ok(Roles.Stream.Contributor))
         }
       })({
         projectId: cryptoRandomString({ length: 10 }),
