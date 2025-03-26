@@ -147,6 +147,7 @@ describe('Workspaces Billing', () => {
                 customerId: cryptoRandomString({ length: 10 }),
                 cancelAt: null,
                 status: 'active',
+                currentPeriodEnd: new Date(),
                 products: [
                   {
                     priceId: createRandomString(),
