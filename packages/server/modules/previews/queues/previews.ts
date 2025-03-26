@@ -39,7 +39,7 @@ export const addRequestQueueListeners = (params: {
     if (!jobId) return
     const [projectId, objectId] = jobId.split('.')
     const projectDb = await getProjectDbClient({ projectId })
-    upsertObjectPreviewFactory({ db: projectDb })({
+    await upsertObjectPreviewFactory({ db: projectDb })({
       objectPreview: {
         streamId: projectId,
         objectId,
