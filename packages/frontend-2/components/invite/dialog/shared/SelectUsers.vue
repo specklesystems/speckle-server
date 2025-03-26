@@ -1,6 +1,8 @@
 <template>
   <form>
     <div class="flex flex-col gap-y-3 text-foreground">
+      <slot name="info" />
+
       <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
         <div class="flex flex-col gap-y-3 flex-1">
           <div class="flex flex-row gap-x-3">

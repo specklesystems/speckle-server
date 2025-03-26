@@ -18,13 +18,19 @@
       :allowed-domains="allowedDomains"
       :show-workspace-roles="!isWorkspaceNewPlansEnabled"
     >
-      <div v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
-        <p>
-          Inviting users may add seats to your current billing cycle. If there are
-          available seats, they will be used first. Your workspace is currently billed
-          for {{ memberSeatText }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
+      <p v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
+        Inviting users may add seats to your current billing cycle. If there are
+        available seats, they will be used first. Your workspace is currently billed for
+        {{ memberSeatText }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
+      </p>
+      <template #info>
+        <p
+          v-if="isWorkspaceNewPlansEnabled"
+          class="text-body-2xs text-foreground-2 leading-5"
+        >
+          {{ infoText }}
         </p>
-      </div>
+      </template>
     </InviteDialogSharedSelectUsers>
   </LayoutDialog>
 </template>
@@ -127,6 +133,13 @@ const allowedDomains = computed(() =>
     ? props.workspace.domains?.map((d) => d.domain)
     : null
 )
+const infoText = computed(() => {
+  if (selectedRole.value === Roles.Workspace.Member) {
+    return 'Members can access all projects in the workspace and act as admins. Their seat type controls whether they can create and edit projects or just view them.'
+  }
+
+  return `They don't work at ${props.workspace?.name}. They can collaborate on projects but can't create projects, invite others, add people, or be admins.`
+})
 // TODO: All of these billing info will not be used in the new flow, needs to be removed post-release
 const memberSeatText = computed(() => {
   if (!props.workspace?.subscription) return ''
