@@ -17163,7 +17163,6 @@ __metadata:
     "@rollup/plugin-babel": "npm:^5.3.1"
     "@rollup/plugin-image": "npm:^3.0.2"
     "@rollup/plugin-typescript": "npm:^11.1.6"
-    "@speckle/objectloader": "workspace:^"
     "@speckle/objectloader2": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@types/babel__core": "npm:^7.20.1"
