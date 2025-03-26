@@ -94,15 +94,15 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  // await sandbox.objectLoaderOnly(_stream)
-  await sandbox.loadUrl(_stream)
+  await sandbox.objectLoaderOnly(_stream)
+  // await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
 
 const getStream = () => {
   return (
     // prettier-ignore
-    `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
+    // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
     //crashing out of memory?
     //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
     //too big?
