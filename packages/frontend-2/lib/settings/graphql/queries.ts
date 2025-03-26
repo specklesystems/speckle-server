@@ -72,7 +72,7 @@ export const settingsWorkspacesMembersQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersTableQuery = graphql(`
-  query SettingsWorkspacesMembersTable($slug: String!) {
+  query SettingsWorkspacesMembersTable($slug: String!, $workspaceId: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersTable_Workspace
       ...SettingsWorkspacesNewMembersTable_Workspace
@@ -81,7 +81,7 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersGuestsQuery = graphql(`
-  query SettingsWorkspacesMembersGuests($slug: String!) {
+  query SettingsWorkspacesMembersGuests($slug: String!, $workspaceId: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersGuestsTable_Workspace
       ...SettingsWorkspacesMembersNewGuestsTable_Workspace
@@ -106,7 +106,11 @@ export const settingsWorkspacesMembersRequestsQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+  query SettingsWorkspacesMembersSearch(
+    $slug: String!
+    $filter: WorkspaceTeamFilter
+    $workspaceId: String!
+  ) {
     workspaceBySlug(slug: $slug) {
       id
       team(filter: $filter, limit: 250) {

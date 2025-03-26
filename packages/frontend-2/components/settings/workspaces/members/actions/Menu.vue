@@ -25,7 +25,7 @@
       :new-role="newRole"
       :is-active-user-target-user="isActiveUserTargetUser"
       :is-only-admin="isOnlyAdmin"
-      :is-domain-compliant="isDomainCompliant"
+      :is-domain-compliant="targetUser.workspaceDomainPolicyCompliant"
       @success="onDialogSuccess"
     />
 
@@ -80,7 +80,6 @@ import type {
 
 const props = defineProps<{
   targetUser: UserItem
-  isDomainCompliant?: MaybeNullOrUndefined<boolean>
   workspace?: MaybeNullOrUndefined<
     | SettingsWorkspacesNewMembersTable_WorkspaceFragment
     | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
