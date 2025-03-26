@@ -13,6 +13,7 @@
           <ProjectPageCollaboratorsGeneralAccessRow
             :name="project.workspace?.name"
             :logo="project.workspace?.logo"
+            :can-edit="canEdit"
           />
         </div>
         <div class="flex flex-col gap-y-3">
