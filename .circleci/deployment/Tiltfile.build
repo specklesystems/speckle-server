@@ -12,5 +12,5 @@ def speckle_image(package,original_package_name=None):
                   context='../..',
                   dockerfile='../../{}/Dockerfile'.format(package_dir),
                   platform='linux/amd64',
-                  ignore = ['**/node_modules', '**/dist', '**/build', '**/coverage', 'minio-data', 'postgres-data']
+                  ignore = ['**/node_modules', '**/dist', '**/build', '**/coverage', 'minio-data', 'postgres-data', 'minio-region1-data', 'postgres-region1-data']
                 )
