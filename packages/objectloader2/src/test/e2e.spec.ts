@@ -31,6 +31,6 @@ describe('e2e', () => {
     expect(base.id).toBe('1708a78e057e8115f924c620ba686db6')
     const base2 = await loader.getObject({ id: '3841e3cbc45d52c47bc2f1b7b0ad4eb9' })
     expect(base2).toBeDefined()
-    expect(base2.id).toBe({ id: '3841e3cbc45d52c47bc2f1b7b0ad4eb9' })
-  })
+    expect(base2.id).toBe('3841e3cbc45d52c47bc2f1b7b0ad4eb9')
+  }, 10000)
 })
