@@ -39,7 +39,7 @@
               'This user does not comply with the domain policy set on this workspace'
             "
           >
-            <ExclamationCircleIcon class="text-danger w-5 w-4" />
+            <ExclamationCircleIcon class="text-danger w-4" />
           </div>
         </div>
       </template>
