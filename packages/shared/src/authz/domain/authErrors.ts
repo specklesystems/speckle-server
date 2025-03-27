@@ -60,6 +60,16 @@ export const WorkspaceRoleNotFoundError = defineAuthError({
   message: 'The user does not have a role in the workspace'
 })
 
+export const ServerNoAccessError = defineAuthError({
+  code: 'ServerNoAccess',
+  message: 'You do not have access to this server'
+})
+
+export const ServerNoSessionError = defineAuthError({
+  code: 'ServerNoSession',
+  message: 'You are not logged in to this server'
+})
+
 export const ServerRoleNotFoundError = defineAuthError({
   code: 'ServerRoleNotFound',
   message: 'Could not resolve your server role'

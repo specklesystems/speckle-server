@@ -11,7 +11,7 @@ export default defineModuleLoaders(async () => {
   const getUserServerRole = getUserServerRoleFactory({ db })
 
   return {
-    getEnv: async () => ok(getFeatureFlags()),
+    getEnv: async () => getFeatureFlags(),
     getProject: async ({ projectId }) => {
       const project = await getStream({ streamId: projectId })
       if (!project) return err(Authz.ProjectNotFoundError)
