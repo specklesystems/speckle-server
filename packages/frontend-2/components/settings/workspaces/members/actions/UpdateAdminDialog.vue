@@ -1,7 +1,12 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
-    <CommonAlert v-if="isOnlyAdmin" color="danger" hide-icon size="xs">
+    <CommonAlert
+      v-if="isOnlyAdmin && props.action === 'resign'"
+      color="danger"
+      hide-icon
+      size="xs"
+    >
       <template #title>You are the only admin of this workspace</template>
       <template #description>
         <span class="text-body-2xs">
