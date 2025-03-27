@@ -20,6 +20,7 @@ COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/ui-components-nuxt/package.json ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme/package.json ./packages/tailwind-theme/
 COPY packages/frontend-2/package.json ./packages/frontend-2/
+COPY packages/frontend-2/type-augmentations ./packages/frontend-2/
 
 # hadolint ignore=DL3059
 RUN yarn workspaces focus -A
@@ -31,7 +32,6 @@ COPY packages/ui-components ./packages/ui-components/
 COPY packages/ui-components-nuxt ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
-COPY packages/frontend-2/type-augmentations ./packages/frontend-2/ 
 
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach -W run build
