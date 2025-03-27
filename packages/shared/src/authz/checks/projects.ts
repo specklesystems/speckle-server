@@ -30,7 +30,7 @@ export const isPubliclyReadableProject: AuthPolicyCheck<'getProject', ProjectCon
           return false
         case 'ProjectNoAccess':
           return false
-        case 'WorkspaceSsoSessionInvalid':
+        case 'WorkspaceSsoSessionNoAccess':
           return false
         default:
           throwUncoveredError(project.error)

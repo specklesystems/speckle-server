@@ -5,7 +5,7 @@ import {
   ProjectNoAccessError,
   ProjectNotFoundError,
   ProjectRoleNotFoundError,
-  WorkspaceSsoSessionInvalidError
+  WorkspaceSsoSessionNoAccessError
 } from '../authErrors.js'
 
 export type GetProject = (args: {
@@ -13,13 +13,13 @@ export type GetProject = (args: {
 }) => Promise<
   Result<
     Project,
-    | typeof ProjectNotFoundError
-    | typeof ProjectNoAccessError
-    | typeof WorkspaceSsoSessionInvalidError
+    | InstanceType<typeof ProjectNotFoundError>
+    | InstanceType<typeof ProjectNoAccessError>
+    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   >
 >
 
 export type GetProjectRole = (args: {
   userId: string
   projectId: string
-}) => Promise<Result<StreamRoles, typeof ProjectRoleNotFoundError>>
+}) => Promise<Result<StreamRoles, InstanceType<typeof ProjectRoleNotFoundError>>>

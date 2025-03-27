@@ -16,7 +16,7 @@ export default defineModuleLoaders(async () => {
   return {
     getWorkspace: async ({ workspaceId }) => {
       const workspace = await getWorkspace({ workspaceId })
-      if (!workspace) return err(Authz.WorkspaceNotFoundError)
+      if (!workspace) return err(new Authz.WorkspaceNotFoundError())
       return ok(workspace)
     },
     getWorkspaceRole: async ({ userId, workspaceId }) => {
@@ -24,7 +24,7 @@ export default defineModuleLoaders(async () => {
         userId,
         workspaceId
       })
-      if (!role) return err(Authz.WorkspaceRoleNotFoundError)
+      if (!role) return err(new Authz.WorkspaceRoleNotFoundError())
       return ok(role.role)
     },
     getWorkspaceSsoSession: async ({ userId, workspaceId }) => {
@@ -32,14 +32,14 @@ export default defineModuleLoaders(async () => {
         userId,
         workspaceId
       })
-      if (!ssoSession) return err(Authz.WorkspaceSsoSessionNotFoundError)
+      if (!ssoSession) return err(new Authz.WorkspaceSsoSessionNotFoundError())
       return ok(ssoSession)
     },
     getWorkspaceSsoProvider: async ({ workspaceId }) => {
       const ssoProvider = await getWorkspaceSsoProviderRecordFactory({ db })({
         workspaceId
       })
-      if (!ssoProvider) return err(Authz.WorkspaceSsoProviderNotFoundError)
+      if (!ssoProvider) return err(new Authz.WorkspaceSsoProviderNotFoundError())
       return ok(ssoProvider)
     }
   }

@@ -1,5 +1,3 @@
-import { isJust } from 'true-myth/maybe'
-import { err, isErr, isOk, ok } from 'true-myth/result'
 import { Roles } from '../../core/constants.js'
 import { hasMinimumProjectRole, isPubliclyReadableProject } from '../checks/projects.js'
 import {
@@ -8,8 +6,9 @@ import {
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceNoAccessError,
-  WorkspaceSsoSessionInvalidError
+  WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
+import { err, ok } from 'true-myth/result'
 import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
 import { AuthPolicy, MaybeUserContext, ProjectContext } from '../domain/policies.js'
 import { canUseAdminOverride, hasMinimumServerRole } from '../checks/serverRole.js'
@@ -24,14 +23,15 @@ export const canQueryProjectPolicy: AuthPolicy<
   | typeof AuthCheckContextLoaderKeys.getServerRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession,
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
+  | typeof AuthCheckContextLoaderKeys.getWorkspace,
   MaybeUserContext & ProjectContext,
-  | typeof ServerNoSessionError
-  | typeof ServerNoAccessError
-  | typeof ProjectNotFoundError
-  | typeof ProjectNoAccessError
-  | typeof WorkspaceNoAccessError
-  | typeof WorkspaceSsoSessionInvalidError
+  | InstanceType<typeof ProjectNotFoundError>
+  | InstanceType<typeof ProjectNoAccessError>
+  | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
+  | InstanceType<typeof ServerNoSessionError>
+  | InstanceType<typeof ServerNoAccessError>
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
@@ -43,12 +43,11 @@ export const canQueryProjectPolicy: AuthPolicy<
     // make sure to expose all of the error types in the loader type,
     // that we care about in this early return
     const project = await loaders.getProject({ projectId })
-    // if (isErr(project)) return err(project.error)
-    if (isErr(project)) {
+    if (project.isErr) {
       switch (project.error.code) {
         case 'ProjectNoAccess':
         case 'ProjectNotFound':
-        case 'WorkspaceSsoSessionInvalid':
+        case 'WorkspaceSsoSessionNoAccess':
           return err(project.error)
         default:
           throwUncoveredError(project.error)
@@ -59,12 +58,12 @@ export const canQueryProjectPolicy: AuthPolicy<
     if (await isPubliclyReadableProject(loaders)({ projectId })) return ok()
 
     // From this point on, you cannot pass as an unknown user, need to log in
-    if (!userId) return err(ServerNoSessionError)
+    if (!userId) return err(new ServerNoSessionError())
     const isActiveServerUser = await hasMinimumServerRole(loaders)({
       userId,
       role: Roles.Server.Guest
     })
-    if (!isActiveServerUser) return err(ServerNoAccessError)
+    if (!isActiveServerUser) return err(new ServerNoAccessError())
 
     // When G O D M O D E is enabled
     if (await canUseAdminOverride(loaders)({ userId })) return ok()
@@ -74,7 +73,7 @@ export const canQueryProjectPolicy: AuthPolicy<
     if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
       // User must have a workspace role to read project data
       if (!(await hasAnyWorkspaceRole(loaders)({ userId, workspaceId })))
-        return err(WorkspaceNoAccessError)
+        return err(new WorkspaceNoAccessError())
 
       const memberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
         loaders
@@ -83,9 +82,9 @@ export const canQueryProjectPolicy: AuthPolicy<
         workspaceId
       })
 
-      if (isJust(memberWithSsoSession)) {
+      if (memberWithSsoSession.isJust) {
         // if a member, make sure it has a valid sso session
-        return isOk(memberWithSsoSession.value)
+        return memberWithSsoSession.value.isOk
           ? ok()
           : err(memberWithSsoSession.value.error)
       } else {
@@ -101,5 +100,5 @@ export const canQueryProjectPolicy: AuthPolicy<
       role: 'stream:reviewer'
     }))
       ? ok()
-      : err(ProjectNoAccessError)
+      : err(new ProjectNoAccessError())
   }

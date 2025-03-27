@@ -12,7 +12,8 @@ export type MaybeUserContext = { userId?: string }
 export type AuthPolicy<
   LoaderKeys extends AuthCheckContextLoaderKeys,
   Args extends object,
-  ExpectedAuthErrors extends AuthError
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ExpectedAuthErrors extends AuthError<any, any>
 > = (
   loaders: AuthCheckContextLoaders<LoaderKeys>
 ) => (args: Args) => Promise<Result<Unit, ExpectedAuthErrors>>
@@ -22,11 +23,11 @@ export type AuthPolicy<
 export type AuthPolicyFragment<
   LoaderKeys extends AuthCheckContextLoaderKeys,
   Args extends object,
-  ExpectedAuthErrors extends AuthError
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ExpectedAuthErrors extends AuthError<any, any>
 > = (
   loaders: AuthCheckContextLoaders<LoaderKeys>
 ) => (args: Args) => Promise<Maybe<Result<Unit, ExpectedAuthErrors>>>
-// ) => (args: Args) => Promise<Maybe<Result<Unit, ExpectedAuthErrors>>>
 
 export type AuthPolicyCheck<
   LoaderKeys extends AuthCheckContextLoaderKeys,

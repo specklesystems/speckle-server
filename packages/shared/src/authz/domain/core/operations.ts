@@ -4,4 +4,4 @@ import { ServerRoleNotFoundError } from '../authErrors.js'
 
 export type GetServerRole = (args: {
   userId: string
-}) => Promise<Result<ServerRoles, typeof ServerRoleNotFoundError>>
+}) => Promise<Result<ServerRoles, InstanceType<typeof ServerRoleNotFoundError>>>

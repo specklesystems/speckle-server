@@ -3,7 +3,7 @@ import {
   useOnAuthStateChange
 } from '~/lib/auth/composables/auth'
 import { useCreateLoggingTransport } from '~/lib/core/composables/error'
-import type { Plugin } from 'nuxt/dist/app/nuxt'
+import type { Plugin } from '#app'
 import { isH3Error } from '~/lib/common/helpers/error'
 import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
 import { isBrave, isSafari } from '@speckle/shared'
