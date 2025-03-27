@@ -1,8 +1,8 @@
 <template>
   <div
-    class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center"
+    class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center mt-3"
   >
-    <h1 class="block text-heading-xl">Automations</h1>
+    <h1 class="block text-heading-lg md:text-heading-xl">Automations</h1>
     <div v-if="showHeader" class="flex flex-col gap-2 md:flex-row md:items-center">
       <FormTextInput
         name="search"
