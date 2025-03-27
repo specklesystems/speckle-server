@@ -1,4 +1,3 @@
-import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import {
   initPrometheusMetrics,
   metricDuration,
