@@ -256,20 +256,18 @@ const dialogToShow = computed(() => ({
 }))
 
 const newRole = computed(() => {
-  if (!dialogType.value) return undefined
-  switch (dialogType.value) {
-    case WorkspaceUserActionTypes.MakeAdmin:
-      return Roles.Workspace.Admin
-    case WorkspaceUserActionTypes.MakeMember:
-      return Roles.Workspace.Member
-    case WorkspaceUserActionTypes.MakeGuest:
-      return Roles.Workspace.Guest
-    case WorkspaceUserActionTypes.RemoveAdmin:
-    case WorkspaceUserActionTypes.ResignAdmin:
-      return Roles.Workspace.Member
-    default:
-      return undefined
+  const roleMap: Record<WorkspaceUserActionTypes, string | undefined> = {
+    [WorkspaceUserActionTypes.MakeAdmin]: Roles.Workspace.Admin,
+    [WorkspaceUserActionTypes.MakeMember]: Roles.Workspace.Member,
+    [WorkspaceUserActionTypes.MakeGuest]: Roles.Workspace.Guest,
+    [WorkspaceUserActionTypes.RemoveAdmin]: Roles.Workspace.Member,
+    [WorkspaceUserActionTypes.ResignAdmin]: Roles.Workspace.Member,
+    [WorkspaceUserActionTypes.UpgradeEditor]: undefined,
+    [WorkspaceUserActionTypes.DowngradeEditor]: undefined,
+    [WorkspaceUserActionTypes.RemoveFromWorkspace]: undefined,
+    [WorkspaceUserActionTypes.LeaveWorkspace]: undefined
   }
+  return dialogType.value ? roleMap[dialogType.value] : undefined
 })
 
 const adminAction = computed(() => {
