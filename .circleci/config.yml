@@ -522,7 +522,14 @@ jobs:
       - run:
           name: 'Run tests'
           # Extra formatting to get timestamps on each line in CI (for profiling purposes)
-          command: yarn test:report --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
+          command: |
+            GREP_FLAG=""
+
+            if [ "$RUN_TESTS_IN_MULTIREGION_MODE" == "true" ]; then
+              GREP_FLAG="--grep @multiregion"
+            fi
+
+            yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
           no_output_timeout: 30m
 
