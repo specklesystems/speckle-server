@@ -14,7 +14,7 @@ class ObjectStore extends Dexie {
     super(ObjectStore.#databaseName, options)
 
     this.version(1).stores({
-      objects: 'baseId, item' // baseId is primary key
+      objects: 'baseId' // baseId is primary key
     })
   }
 }
