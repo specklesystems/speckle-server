@@ -154,7 +154,7 @@ async function doTask(
     taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      if (info.fileName.toLowerCase().endsWith('.legacyparser.ifc')) {
+      if (info.fileName.toLowerCase().endsWith('.legacyimporter.ifc')) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['NODE_BINARY_PATH'] || 'node',
