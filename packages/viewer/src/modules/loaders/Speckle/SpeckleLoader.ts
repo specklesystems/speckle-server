@@ -102,7 +102,6 @@ export class SpeckleLoader extends Loader {
 
     const pause = new AsyncPause()
 
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
