@@ -11,7 +11,7 @@ describe('requireAnyWorkspaceRole returns a function, that', () => {
   it('returns false if the user has no role', async () => {
     const result = await requireAnyWorkspaceRole({
       loaders: {
-        getWorkspaceRole: () => Promise.resolve(err(WorkspaceRoleNotFoundError))
+        getWorkspaceRole: () => Promise.resolve(err(new WorkspaceRoleNotFoundError()))
       }
     })({
       userId: cryptoRandomString({ length: 9 }),
@@ -36,7 +36,7 @@ describe('requireMinimumWorkspaceRole returns a function, that', () => {
   it('returns false if user does not have a role', async () => {
     const result = await requireMinimumWorkspaceRole({
       loaders: {
-        getWorkspaceRole: () => Promise.resolve(err(WorkspaceRoleNotFoundError))
+        getWorkspaceRole: () => Promise.resolve(err(new WorkspaceRoleNotFoundError()))
       }
     })({
       userId: cryptoRandomString({ length: 9 }),

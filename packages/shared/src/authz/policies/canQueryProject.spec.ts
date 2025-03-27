@@ -25,11 +25,14 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
     it('by returning project no access', async () => {
       const canQueryProject = canQueryProjectPolicyFactory({
         getEnv: async () => ok(parseFeatureFlags({})),
-        getProject: () => Promise.resolve(err(ProjectNotFoundError)),
+        getProject: () => Promise.resolve(err(new ProjectNotFoundError())),
         getProjectRole: () => {
           assert.fail()
         },
         getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspace: () => {
           assert.fail()
         },
         getWorkspaceRole: () => {
@@ -61,6 +64,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace: () => {
+          assert.fail()
+        },
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -82,6 +88,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           assert.fail()
         },
         getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspace: () => {
           assert.fail()
         },
         getWorkspaceRole: () => {
@@ -115,6 +124,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           getServerRole: () => {
             assert.fail()
           },
+          getWorkspace: () => {
+            assert.fail()
+          },
           getWorkspaceRole: () => {
             assert.fail()
           },
@@ -138,8 +150,11 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
             })
           ),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getProjectRole: () => Promise.resolve(err(ProjectRoleNotFoundError)),
+        getProjectRole: () => Promise.resolve(err(new ProjectRoleNotFoundError())),
         getServerRole: () => {
+          assert.fail()
+        },
+        getWorkspace: () => {
           assert.fail()
         },
         getWorkspaceRole: () => {
@@ -169,6 +184,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getProjectRole: () => {
           assert.fail()
         },
+        getWorkspace: () => {
+          assert.fail()
+        },
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -195,7 +213,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: () => Promise.resolve(ok(Roles.Server.Admin)),
         getProjectRole: () => {
-          return Promise.resolve(err(ProjectRoleNotFoundError))
+          return Promise.resolve(err(new ProjectRoleNotFoundError()))
+        },
+        getWorkspace: () => {
+          assert.fail()
         },
         getWorkspaceRole: () => {
           assert.fail()
@@ -228,6 +249,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace: () => {
+          assert.fail()
+        },
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -258,7 +282,10 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getServerRole: () => {
           assert.fail()
         },
-        getWorkspaceRole: () => Promise.resolve(err(WorkspaceRoleNotFoundError)),
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
+        },
+        getWorkspaceRole: () => Promise.resolve(err(new WorkspaceRoleNotFoundError())),
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
@@ -282,16 +309,19 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: () => Promise.resolve(err(ProjectRoleNotFoundError)),
+        getProjectRole: () => Promise.resolve(err(new ProjectRoleNotFoundError())),
         getServerRole: () => {
           assert.fail()
+        },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
         },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:admin')),
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
         getWorkspaceSsoProvider: () =>
-          Promise.resolve(err(WorkspaceSsoProviderNotFoundError))
+          Promise.resolve(err(new WorkspaceSsoProviderNotFoundError()))
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.isOk).toBe(true)
@@ -312,6 +342,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getProjectRole: () => Promise.resolve(ok('stream:contributor')),
         getServerRole: () => {
           assert.fail()
+        },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
         },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:guest')),
         getWorkspaceSsoSession: () => {
@@ -341,12 +374,15 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
+        },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:member')),
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
         getWorkspaceSsoProvider: () =>
-          Promise.resolve(err(WorkspaceSsoProviderNotFoundError))
+          Promise.resolve(err(new WorkspaceSsoProviderNotFoundError()))
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
       expect(canQuery.isOk).toBe(true)
@@ -368,9 +404,12 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
+        },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:member')),
         getWorkspaceSsoSession: () =>
-          Promise.resolve(err(WorkspaceSsoSessionNotFoundError)),
+          Promise.resolve(err(new WorkspaceSsoSessionNotFoundError())),
         getWorkspaceSsoProvider: () => Promise.resolve(ok({ providerId: 'foo' }))
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
@@ -395,6 +434,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getProjectRole: () => Promise.resolve(ok('stream:contributor')),
         getServerRole: () => {
           assert.fail()
+        },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
         },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:member')),
         getWorkspaceSsoSession: () =>
@@ -423,6 +465,9 @@ describe('canQueryProjectPolicyFactory creates a function, that handles ', () =>
         getProjectRole: () => Promise.resolve(ok('stream:contributor')),
         getServerRole: () => {
           assert.fail()
+        },
+        getWorkspace: async () => {
+          return ok({ id: 'foo', slug: 'bar' })
         },
         getWorkspaceRole: () => Promise.resolve(ok('workspace:member')),
         getWorkspaceSsoSession: () =>

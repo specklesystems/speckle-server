@@ -16640,6 +16640,7 @@ __metadata:
     stylelint-config-standard: "npm:^26.0.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     tailwindcss: "npm:^3.4.1"
+    true-myth: "npm:^8.5.0"
     tweetnacl-sealedbox-js: "npm:^1.2.0"
     tweetnacl-util: "npm:^0.15.1"
     type-fest: "npm:^4.24.0"
@@ -16992,6 +16993,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     mixpanel: "npm:^0.17.0"
+    nanoid: "npm:^5.1.5"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
     true-myth: "npm:^8.5.0"
@@ -40386,6 +40388,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.js
   checksum: 10/8a3f9104f81095e3e4785f58caae47a05755599824b8611b9730cbf73db706b664f100e6189f8303f08764f144d499613d8e4a39e83125c53f4b4986d6576621
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^5.1.5":
+  version: 5.1.5
+  resolution: "nanoid@npm:5.1.5"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: 10/6de2d006b51c983be385ef7ee285f7f2a57bd96f8c0ca881c4111461644bd81fafc2544f8e07cb834ca0f3e0f3f676c1fe78052183f008b0809efe6e273119f5
   languageName: node
   linkType: hard
 

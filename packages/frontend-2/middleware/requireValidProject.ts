@@ -1,80 +1,47 @@
-import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
-import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
-import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
+import { throwUncoveredError } from '@speckle/shared'
 import {
-  convertThrowIntoFetchResult,
-  getFirstErrorMessage
-} from '~~/lib/common/helpers/graphql'
-import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
+  ProjectNoAccessError,
+  ProjectNotFoundError,
+  WorkspaceNoAccessError,
+  WorkspaceSsoSessionNoAccessError
+} from '@speckle/shared/authz'
+import { useAuthPolicies } from '~/lib/auth/composables/authPolicies'
+import { ActiveUserId } from '~/lib/auth/helpers/authPolicies'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
-  const client = useApolloClientFromNuxt()
-
-  const { data, errors } = await client
-    .query({
-      query: projectAccessCheckQuery,
-      variables: { id: projectId },
-      context: {
-        skipLoggingErrors: true
-      },
-      fetchPolicy: 'network-only'
-    })
-    .catch(convertThrowIntoFetchResult)
-
-  // If project is public or link shareable, allow access regardless of SSO
-  if (
-    // data?.project?.visibility === ProjectVisibility.Public ||
-    data?.project?.visibility === SimpleProjectVisibility.Unlisted
-  ) {
-    return
-  }
-
-  // Check for SSO session error
-  const ssoSessionError = (errors || []).find(
-    (e) => e.extensions?.['code'] === WorkspaceSsoErrorCodes.SESSION_MISSING_OR_EXPIRED
-  )
-
-  // If we have an SSO error, the message contains the workspace slug
-  if (ssoSessionError) {
-    const workspaceSlug = ssoSessionError.message
-    return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
-  }
-
-  // If project successfully resolved and isn't public or link shareable, continue with normal flow
-  if (data?.project?.id) {
-    return
-  }
-
-  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
-  const isNotFound = (errors || []).find(
-    (e) => e.extensions?.['code'] === 'STREAM_NOT_FOUND'
-  )
-
-  if (isNotFound) {
-    return abortNavigation(
-      createError({ statusCode: 404, message: 'Project not found' })
-    )
-  }
-
-  if (isForbidden) {
-    return abortNavigation(
-      createError({
-        statusCode: 403,
-        message: 'You do not have access to this project'
-      })
-    )
-  }
-
-  if (errors?.length) {
-    return abortNavigation(
-      createError({
-        statusCode: 500,
-        message: getFirstErrorMessage(errors) || 'An unexpected error occurred'
-      })
-    )
+  const authPolicies = useAuthPolicies()
+  const canAccess = await authPolicies.noCache.project.canQuery({
+    projectId,
+    userId: ActiveUserId
+  })
+  if (canAccess.isErr) {
+    switch (canAccess.error.code) {
+      case WorkspaceSsoSessionNoAccessError.code: {
+        // Redirect to the SSO error page
+        const workspaceSlug = canAccess.error.payload.workspaceSlug
+        return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+      }
+      case ProjectNotFoundError.code: {
+        return abortNavigation(
+          createError({ statusCode: 404, message: 'Project not found' })
+        )
+      }
+      case WorkspaceNoAccessError.code:
+      case ProjectNoAccessError.code: {
+        return abortNavigation(
+          createError({
+            statusCode: 403,
+            message: 'You do not have access to this project'
+          })
+        )
+      }
+      default: {
+        throwUncoveredError(canAccess.error)
+      }
+    }
   }
 })

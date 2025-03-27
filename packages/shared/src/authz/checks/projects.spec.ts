@@ -14,7 +14,7 @@ describe('project checks', () => {
     it('throws if project does not exist', async () => {
       const requireExactProjectVisibility = requireExactProjectVisibilityFactory({
         loaders: {
-          getProject: () => Promise.resolve(err(ProjectNotFoundError))
+          getProject: () => Promise.resolve(err(new ProjectNotFoundError()))
         }
       })
       await expect(
@@ -97,7 +97,7 @@ describe('project checks', () => {
     it('returns false, if there is no role for the user', async () => {
       const result = await requireMinimumProjectRoleFactory({
         loaders: {
-          getProjectRole: () => Promise.resolve(err(ProjectRoleNotFoundError))
+          getProjectRole: () => Promise.resolve(err(new ProjectRoleNotFoundError()))
         }
       })({
         projectId: cryptoRandomString({ length: 10 }),

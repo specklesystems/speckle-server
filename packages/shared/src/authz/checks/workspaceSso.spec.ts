@@ -9,7 +9,7 @@ describe('requireValidWorkspaceSsoSession returns a function, that', () => {
     const result = await requireValidWorkspaceSsoSession({
       loaders: {
         getWorkspaceSsoSession: () =>
-          Promise.resolve(err(WorkspaceSsoSessionNotFoundError))
+          Promise.resolve(err(new WorkspaceSsoSessionNotFoundError()))
       }
     })({
       userId: cryptoRandomString({ length: 9 }),

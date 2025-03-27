@@ -14,9 +14,9 @@ import {
   ProjectNoAccessError,
   ProjectNotFoundError,
   WorkspaceNoAccessError,
-  WorkspaceSsoSessionInvalidError
+  WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
-import { err, isOk, ok } from 'true-myth/result'
+import { err, ok } from 'true-myth/result'
 import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
 import { LogicError } from '../domain/errors.js'
 
@@ -27,24 +27,25 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
   | typeof AuthCheckContextLoaderKeys.getServerRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession,
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
+  | typeof AuthCheckContextLoaderKeys.getWorkspace,
   UserContext & ProjectContext,
-  | typeof ProjectNotFoundError
-  | typeof ProjectNoAccessError
-  | typeof WorkspaceNoAccessError
-  | typeof WorkspaceSsoSessionInvalidError
+  | InstanceType<typeof ProjectNotFoundError>
+  | InstanceType<typeof ProjectNoAccessError>
+  | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
     const env = await loaders.getEnv()
-    if (!isOk(env)) {
+    if (!env.isOk) {
       throw new LogicError('Failed to load environment variables')
     }
 
     const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = env.value
 
     const project = await loaders.getProject({ projectId })
-    if (!isOk(project)) {
+    if (!project.isOk) {
       return err(project.error)
     }
 
@@ -69,7 +70,7 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
     }
     // From this point on, you cannot pass as an unknown user
     if (!userId) {
-      return err(ProjectNoAccessError)
+      return err(new ProjectNoAccessError())
     }
 
     // When G O D M O D E is enabled
@@ -88,6 +89,12 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
 
     // When a project belongs to a workspace
     if (FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
+      // Get workspace, so we can resolve its slug
+      const workspace = await loaders.getWorkspace({ workspaceId })
+      if (!workspace.isOk) {
+        return err(new WorkspaceNoAccessError())
+      }
+
       // User must have a workspace role to read project data
       const hasWorkspaceRoleResult = await requireAnyWorkspaceRole({ loaders })({
         userId,
@@ -95,7 +102,7 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
       })
       if (!hasWorkspaceRoleResult) {
         // Should we hide the fact, the project is in a workspace?
-        return err(WorkspaceNoAccessError)
+        return err(new WorkspaceNoAccessError())
       }
 
       const hasMinimumMemberRole = await requireMinimumWorkspaceRole({
@@ -119,7 +126,11 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
             workspaceId
           })
           if (!hasValidSsoSessionResult) {
-            return err(WorkspaceSsoSessionInvalidError)
+            return err(
+              new WorkspaceSsoSessionNoAccessError({
+                payload: { workspaceSlug: workspace.value.slug }
+              })
+            )
           }
         }
 
@@ -141,5 +152,5 @@ export const canQueryProjectPolicyFactory: AuthPolicyFactory<
     if (hasMinimumProjectRoleResult) {
       return ok(true)
     }
-    return err(ProjectNoAccessError)
+    return err(new ProjectNoAccessError())
   }
