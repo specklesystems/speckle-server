@@ -3,7 +3,8 @@ import type {
   WorkspaceSettingsMenuItem
 } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
-import { Roles } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
+import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -136,3 +137,59 @@ export const useSettingsMenuState = () =>
   }>('settings-menu-state', () => ({
     previousRoute: undefined
   }))
+
+export const useSettingsMembersActions = (props: {
+  isActiveUserWorkspaceAdmin: boolean
+  isActiveUserTargetUser: boolean
+  targetUser: UserItem
+}) => {
+  const canModifyUser = computed(
+    () => props.isActiveUserWorkspaceAdmin && !props.isActiveUserTargetUser
+  )
+
+  const canMakeAdmin = computed(
+    () => canModifyUser.value && props.targetUser.role === Roles.Workspace.Member
+  )
+
+  const canRemoveAdmin = computed(
+    () => canModifyUser.value && props.targetUser.role === Roles.Workspace.Admin
+  )
+
+  const canMakeGuest = computed(
+    () => canModifyUser.value && props.targetUser.role !== Roles.Workspace.Guest
+  )
+
+  const canMakeMember = computed(
+    () => canModifyUser.value && props.targetUser.role === Roles.Workspace.Guest
+  )
+
+  const canUpgradeEditor = computed(
+    () => canModifyUser.value && props.targetUser.seatType === SeatTypes.Viewer
+  )
+
+  const canDowngradeEditor = computed(
+    () => canModifyUser.value && props.targetUser.seatType === SeatTypes.Editor
+  )
+
+  const canRemoveFromWorkspace = computed(
+    () => canModifyUser.value && props.targetUser.role !== Roles.Workspace.Admin
+  )
+
+  const canLeaveWorkspace = computed(() => props.isActiveUserTargetUser)
+
+  const canResignAdmin = computed(
+    () => props.isActiveUserTargetUser && props.isActiveUserWorkspaceAdmin
+  )
+
+  return {
+    canMakeAdmin,
+    canRemoveAdmin,
+    canMakeGuest,
+    canMakeMember,
+    canUpgradeEditor,
+    canDowngradeEditor,
+    canRemoveFromWorkspace,
+    canLeaveWorkspace,
+    canResignAdmin
+  }
+}

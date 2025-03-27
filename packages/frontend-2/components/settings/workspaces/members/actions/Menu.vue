@@ -66,13 +66,14 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
   SettingsWorkspacesNewMembersTable_WorkspaceFragment
@@ -99,69 +100,20 @@ const isActiveUserTargetUser = computed(
   () => activeUser.value?.id === props.targetUser.id
 )
 
-// Computed properties for each action's visibility
-const canMakeAdmin = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.role === Roles.Workspace.Member
-  )
-})
-
-const canRemoveAdmin = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.role === Roles.Workspace.Admin
-  )
-})
-
-const canMakeGuest = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.role !== Roles.Workspace.Guest
-  )
-})
-
-const canMakeMember = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.role === Roles.Workspace.Guest
-  )
-})
-
-const canUpgradeEditor = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.seatType === SeatTypes.Viewer
-  )
-})
-
-const canDowngradeEditor = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.seatType === SeatTypes.Editor
-  )
-})
-
-const canRemoveFromWorkspace = computed(() => {
-  return (
-    isActiveUserWorkspaceAdmin.value &&
-    !isActiveUserTargetUser.value &&
-    props.targetUser.role !== Roles.Workspace.Admin
-  )
-})
-
-const canLeaveWorkspace = computed(() => {
-  return isActiveUserTargetUser.value
-})
-
-const canResignAdmin = computed(() => {
-  return isActiveUserTargetUser.value && isActiveUserWorkspaceAdmin.value
+const {
+  canMakeAdmin,
+  canRemoveAdmin,
+  canMakeGuest,
+  canMakeMember,
+  canUpgradeEditor,
+  canDowngradeEditor,
+  canRemoveFromWorkspace,
+  canLeaveWorkspace,
+  canResignAdmin
+} = useSettingsMembersActions({
+  isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
+  isActiveUserTargetUser: isActiveUserTargetUser.value,
+  targetUser: props.targetUser
 })
 
 const isOnlyAdmin = computed(() => {
