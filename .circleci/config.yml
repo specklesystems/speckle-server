@@ -699,6 +699,11 @@ jobs:
           command: yarn lint:ci
           working_directory: 'packages/viewer-sandbox'
 
+      - run:
+          name: Build viewer-sandbox
+          command: yarn build
+          working_directory: 'packages/viewer-sandbox'
+
   test-preview-service:
     docker:
       - image: cimg/node:18.19.0
