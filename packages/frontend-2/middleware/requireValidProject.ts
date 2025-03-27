@@ -2,11 +2,14 @@ import { throwUncoveredError } from '@speckle/shared'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '@speckle/shared/authz'
 import { useAuthPolicies } from '~/lib/auth/composables/authPolicies'
 import { ActiveUserId } from '~/lib/auth/helpers/authPolicies'
+import { loginRoute } from '~/lib/common/helpers/route'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
@@ -14,7 +17,7 @@ import { ActiveUserId } from '~/lib/auth/helpers/authPolicies'
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   const authPolicies = useAuthPolicies()
-  const canAccess = await authPolicies.noCache.project.canQuery({
+  const canAccess = await authPolicies.noCache().project.canQuery({
     projectId,
     userId: ActiveUserId
   })
@@ -39,6 +42,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
           })
         )
       }
+      case ServerNoAccessError.code:
+      case ServerNoSessionError.code:
+        return navigateTo(loginRoute)
       default: {
         throwUncoveredError(canAccess.error)
       }

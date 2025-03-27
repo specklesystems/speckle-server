@@ -1,9 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NuxtApp } from '#app'
-import type { FetchPolicy } from '@apollo/client/core'
+import type {
+  ApolloQueryResult,
+  MaybeMasked,
+  OperationVariables,
+  QueryOptions
+} from '@apollo/client/core'
 
 export type AuthLoaderDependencies = {
   nuxtApp: NuxtApp
-  fetchPolicy: FetchPolicy
+  /**
+   * Use this to query GQL, instead of taking apollo client from nuxtApp. This ensures
+   * appropriate caching settings
+   */
+  query: <T = any, TVariables extends OperationVariables = OperationVariables>(
+    options: QueryOptions<TVariables, T>
+  ) => Promise<ApolloQueryResult<MaybeMasked<T>>>
 }
 
 export type AuthLoaderFactory<T> = (deps: AuthLoaderDependencies) => T

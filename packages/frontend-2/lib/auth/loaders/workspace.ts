@@ -42,17 +42,13 @@ graphql(`
 export const getWorkspaceFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getWorkspace']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
-
   return async ({ workspaceId }) => {
-    const { data, errors } = await apollo.query({
-      query: authzWorkspaceMetadataQuery,
-      variables: { id: workspaceId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzWorkspaceMetadataQuery,
+        variables: { id: workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const isSsoSessionError = hasErrorWith({
       errors,
@@ -76,7 +72,7 @@ export const getWorkspaceFactory: AuthLoaderFactory<
     })
     if (isForbidden) return err(new WorkspaceNoAccessError())
 
-    if (data.workspace.id) return ok(data.workspace)
+    if (data?.workspace.id) return ok(data.workspace)
 
     throw new Error('Unexpectedly failed to load workspace')
   }
@@ -92,10 +88,6 @@ graphql(`
 export const getWorkspaceRoleFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getWorkspaceRole']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
   const { userId: activeUserId } = useActiveUser()
 
   return async ({ workspaceId, userId }) => {
@@ -103,11 +95,12 @@ export const getWorkspaceRoleFactory: AuthLoaderFactory<
       throw new Error('Checking workspace role for another user is not supported')
     }
 
-    const { data, errors } = await apollo.query({
-      query: authzWorkspaceMetadataQuery,
-      variables: { id: workspaceId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzWorkspaceMetadataQuery,
+        variables: { id: workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const hasExpectedNotFoundErrors = hasErrorWith({
       errors,
@@ -118,7 +111,7 @@ export const getWorkspaceRoleFactory: AuthLoaderFactory<
       ]
     })
     if (hasExpectedNotFoundErrors) return err(new WorkspaceRoleNotFoundError())
-    if (data.workspace.role) {
+    if (data?.workspace.role) {
       return ok(data.workspace.role as WorkspaceRoles)
     }
 
@@ -143,17 +136,13 @@ graphql(`
 export const getWorkspaceSsoProviderFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getWorkspaceSsoProvider']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
-
   return async ({ workspaceId }) => {
-    const { data, errors } = await apollo.query({
-      query: authzWorkspaceMetadataQuery,
-      variables: { id: workspaceId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzWorkspaceMetadataQuery,
+        variables: { id: workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const hasExpectedNotFoundErrors = hasErrorWith({
       errors,
@@ -168,7 +157,7 @@ export const getWorkspaceSsoProviderFactory: AuthLoaderFactory<
       throw new Error("Couldn't retrieve project role due to unexpected error")
     }
 
-    return data.workspace.sso?.provider
+    return data?.workspace.sso?.provider
       ? ok({ providerId: data.workspace.sso.provider.id })
       : err(new WorkspaceSsoProviderNotFoundError())
   }
@@ -177,10 +166,6 @@ export const getWorkspaceSsoProviderFactory: AuthLoaderFactory<
 export const getWorkspaceSsoSessionFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getWorkspaceSsoSession']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
   const { userId: activeUserId } = useActiveUser()
 
   return async ({ workspaceId, userId }) => {
@@ -189,11 +174,12 @@ export const getWorkspaceSsoSessionFactory: AuthLoaderFactory<
     }
     if (!activeUserId.value) return err(new WorkspaceSsoSessionNotFoundError())
 
-    const { data, errors } = await apollo.query({
-      query: authzWorkspaceMetadataQuery,
-      variables: { id: workspaceId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzWorkspaceMetadataQuery,
+        variables: { id: workspaceId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const hasExpectedNotFoundErrors = hasErrorWith({
       errors,
@@ -208,7 +194,7 @@ export const getWorkspaceSsoSessionFactory: AuthLoaderFactory<
       throw new Error("Couldn't retrieve project role due to unexpected error")
     }
 
-    return data.workspace.sso?.session && data.workspace.sso.provider
+    return data?.workspace.sso?.session && data.workspace.sso.provider
       ? ok({
           providerId: data.workspace.sso.provider.id,
           userId: activeUserId.value,

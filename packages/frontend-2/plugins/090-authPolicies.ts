@@ -7,25 +7,23 @@ import { buildAuthPolicyLoaders } from '~/lib/auth/loaders/index'
  */
 export default defineNuxtPlugin(async (nuxt) => {
   const nuxtApp = nuxt as NuxtApp
-  const [loaders, noCacheLoaders] = await Promise.all([
-    buildAuthPolicyLoaders({ nuxtApp }),
-    buildAuthPolicyLoaders({
-      nuxtApp,
-      options: { noCache: true }
-    })
-  ])
+  const loaders = buildAuthPolicyLoaders({ nuxtApp })
 
   return {
     provide: {
       authPolicies: {
         ...Authz.authPoliciesFactory(loaders),
         /**
-         * Skips Apollo Cache and fetches fresh results from server. Useful in
-         * middlewares where you want to re-check permissions on every navigation
-         *
-         * TODO: We want some cache, maybe just a new one?
+         * Skips Apollo Cache the first time a query is requested. Useful in middlewares
+         * where we want a fresh check to be invoked every time
          */
-        noCache: Authz.authPoliciesFactory(noCacheLoaders)
+        noCache: () =>
+          Authz.authPoliciesFactory(
+            buildAuthPolicyLoaders({
+              nuxtApp,
+              options: { noCache: true }
+            })
+          )
       }
     }
   }

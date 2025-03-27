@@ -43,17 +43,13 @@ graphql(`
 export const getProjectFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getProject']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
-
   return async ({ projectId }) => {
-    const { data, errors } = await apollo.query({
-      query: authzProjectMetadataQuery,
-      variables: { id: projectId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzProjectMetadataQuery,
+        variables: { id: projectId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const isSsoSessionError = hasErrorWith({
       errors,
@@ -77,7 +73,7 @@ export const getProjectFactory: AuthLoaderFactory<
     })
     if (isForbidden) return err(new ProjectNoAccessError())
 
-    if (data.project.id)
+    if (data?.project.id)
       return ok({
         id: data.project.id,
         isDiscoverable: false,
@@ -99,10 +95,6 @@ graphql(`
 export const getProjectRoleFactory: AuthLoaderFactory<
   AuthCheckContextLoaders['getProjectRole']
 > = (deps) => {
-  const apollo = deps.nuxtApp['$apollo'].default
-  if (!apollo) {
-    throw new Error('Apollo client not found')
-  }
   const { userId: activeUserId } = useActiveUser()
 
   return async ({ projectId, userId }) => {
@@ -110,11 +102,12 @@ export const getProjectRoleFactory: AuthLoaderFactory<
       throw new Error('Checking project role for a different user is not supported')
     }
 
-    const { data, errors } = await apollo.query({
-      query: authzProjectMetadataQuery,
-      variables: { id: projectId },
-      fetchPolicy: deps.fetchPolicy
-    })
+    const { data, errors } = await deps
+      .query({
+        query: authzProjectMetadataQuery,
+        variables: { id: projectId }
+      })
+      .catch(convertThrowIntoFetchResult)
 
     const hasExpectedNotFoundErrors = hasErrorWith({
       errors,
@@ -126,7 +119,7 @@ export const getProjectRoleFactory: AuthLoaderFactory<
     })
     if (hasExpectedNotFoundErrors) return err(new ProjectRoleNotFoundError())
 
-    if (data.project.id) {
+    if (data?.project.id) {
       return data.project.role
         ? ok(data.project.role as StreamRoles)
         : err(new ProjectRoleNotFoundError())
