@@ -1,5 +1,12 @@
 import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
+import { createTerminus } from '@godaddy/terminus'
+import type { Logger } from 'pino'
+import { Redis, type RedisOptions } from 'ioredis'
+import Bull from 'bull'
+
+import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
+
 import {
   REDIS_URL,
   HOST,
@@ -9,25 +16,14 @@ import {
   USER_DATA_DIR,
   PREVIEW_TIMEOUT
 } from '@/config.js'
-import Bull from 'bull'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
-import { Redis, RedisOptions } from 'ioredis'
-import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
+import { AppState } from '@/const.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
-import { createTerminus } from '@godaddy/terminus'
-import type { Logger } from 'pino'
 
 const app = express()
 const host = HOST
 const port = PORT
-
-const AppState = {
-  STARTING: 'starting',
-  RUNNING: 'running',
-  SHUTTINGDOWN: 'shuttingdown'
-} as const
-type AppState = (typeof AppState)[keyof typeof AppState]
 
 let appState: AppState = AppState.STARTING
 

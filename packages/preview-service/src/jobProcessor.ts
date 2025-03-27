@@ -1,10 +1,13 @@
 import { Page, Browser } from 'puppeteer'
-import { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
-import {
+import type { Logger } from 'pino'
+
+import type { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
+import type {
   JobPayload,
   PreviewResultPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
-import type { Logger } from 'pino'
+
+import { AppState } from '@/const.js'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -52,7 +55,7 @@ export const jobProcessor = async ({
     logger.info({ status: result.status, elapsed: elapsed() }, jobMessage)
     return result
   } catch (err: unknown) {
-    if (getAppState() === 'SHUTTINGDOWN') {
+    if (getAppState() === AppState.SHUTTINGDOWN) {
       // likely that the job was cancelled due to the service shutting down
       logger.warn({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
     } else {
