@@ -32,14 +32,14 @@ COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-aug
 COPY packages/preview-frontend/package.json ./packages/preview-frontend/
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
-COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/objectloader2/package.json ./packages/objectloader2/
 COPY packages/shared/package.json ./packages/shared/
 
 RUN yarn workspaces focus -A && yarn
 
-# Onyl copy in the relevant source files for the dependencies
+# Only copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
-COPY packages/objectloader ./packages/objectloader/
+COPY packages/objectloader2 ./packages/objectloader2/
 COPY packages/viewer ./packages/viewer/
 COPY packages/preview-frontend ./packages/preview-frontend/
 COPY packages/preview-service ./packages/preview-service/

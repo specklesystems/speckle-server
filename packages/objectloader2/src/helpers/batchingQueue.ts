@@ -1,9 +1,10 @@
+import { Item } from '../types/types.js'
 import Queue from './queue.js'
 
-export default class BatchingQueue<T> implements Queue<T> {
-  #queue: T[] = []
+export default class BatchingQueue implements Queue<Item> {
+  #queue: Item[] = []
   #batchSize: number
-  #processFunction: (batch: T[]) => Promise<void>
+  #processFunction: (batch: Item[]) => Promise<void>
 
   #baseInterval: number
   #minInterval: number
@@ -15,7 +16,7 @@ export default class BatchingQueue<T> implements Queue<T> {
   constructor(params: {
     batchSize: number
     maxWaitTime?: number
-    processFunction: (batch: T[]) => Promise<void>
+    processFunction: (batch: Item[]) => Promise<void>
   }) {
     this.#batchSize = params.batchSize
     this.#baseInterval = Math.min(params.maxWaitTime ?? 200, 200) // Initial batch time (ms)
@@ -30,15 +31,23 @@ export default class BatchingQueue<T> implements Queue<T> {
     await this.#processingLoop
   }
 
-  add(item: T): void {
+  add(item: Item): void {
     this.#queue.push(item)
+  }
+
+  get(id: string): Item | undefined {
+    const index = this.#queue.findIndex((x) => x.baseId === id)
+    if (index !== -1) {
+      return this.#queue[index]
+    }
+    return undefined
   }
 
   count(): number {
     return this.#queue.length
   }
 
-  #getBatch(batchSize: number): T[] {
+  #getBatch(batchSize: number): Item[] {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
 
