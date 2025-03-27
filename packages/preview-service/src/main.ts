@@ -89,9 +89,9 @@ const server = app.listen(port, host, async () => {
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
     let jobLogger = logger.child({ payloadId: payload.id })
+    let browser: Browser | undefined = undefined
     try {
       currentJob = { done, logger: jobLogger }
-      const browser = await launchBrowser()
       const parseResult = jobPayload.safeParse(payload.data)
       if (!parseResult.success) {
         jobLogger.error(
@@ -109,6 +109,7 @@ const server = app.listen(port, host, async () => {
       })
       const resultsQueue = new Bull(job.responseQueue, opts)
 
+      browser = await launchBrowser()
       const result = await jobProcessor({
         logger: jobLogger,
         browser,
@@ -122,6 +123,7 @@ const server = app.listen(port, host, async () => {
       // is cleared from the response queue
       await resultsQueue.add(result, { removeOnComplete: true })
       await browser.close()
+      browser = undefined
       done()
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
@@ -135,6 +137,9 @@ const server = app.listen(port, host, async () => {
       } else {
         throw err
       }
+    } finally {
+      if (browser) await browser.close()
+      browser = undefined
     }
     currentJob = undefined
   })
