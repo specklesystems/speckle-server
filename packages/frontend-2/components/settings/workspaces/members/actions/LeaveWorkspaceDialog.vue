@@ -28,13 +28,13 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { Roles } from '@speckle/shared'
 
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<
     | SettingsWorkspacesNewMembersTable_WorkspaceFragment
     | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
   >
+  isOnlyAdmin: boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,13 +45,6 @@ const open = defineModel<boolean>('open', { required: true })
 
 const { activeUser } = useActiveUser()
 const updateUserRole = useWorkspaceUpdateRole()
-
-const isOnlyAdmin = computed(() => {
-  const adminUsers = props.workspace?.team.items.filter(
-    (user) => user.role === Roles.Workspace.Admin
-  )
-  return adminUsers?.length === 1
-})
 
 const handleConfirm = async () => {
   if (!props.workspace?.id || !activeUser.value?.id) return
@@ -75,7 +68,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Leave',
     onClick: handleConfirm,
-    disabled: isOnlyAdmin.value
+    disabled: props.isOnlyAdmin
   }
 ])
 </script>

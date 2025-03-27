@@ -378,6 +378,7 @@ type Documents = {
     "\n  fragment WorkspaceInvitedTeam_Workspace on Workspace {\n    id\n    invitedTeam(filter: $invitesFilter) {\n      id\n      role\n      email\n    }\n  }\n": typeof types.WorkspaceInvitedTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team(limit: 250) {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        status\n        id\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n": typeof types.WorkspaceTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n    }\n  }\n": typeof types.WorkspaceSecurity_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceLastAdminCheck_Workspace on Workspace {\n    id\n    team(limit: 50, filter: { roles: [\"workspace:admin\"] }) {\n      items {\n        id\n      }\n    }\n  }\n": typeof types.WorkspaceLastAdminCheck_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": typeof types.UpdateRoleDocument,
     "\n  mutation WorkspacesUpdateSeatType($input: WorkspaceUpdateSeatTypeInput!) {\n    workspaceMutations {\n      updateSeatType(input: $input) {\n        team {\n          items {\n            id\n            seatType\n          }\n        }\n      }\n    }\n  }\n": typeof types.WorkspacesUpdateSeatTypeDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": typeof types.InviteToWorkspaceDocument,
@@ -404,6 +405,7 @@ type Documents = {
     "\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": typeof types.DiscoverableWorkspacesDocument,
     "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": typeof types.DiscoverableWorkspacesRequestsDocument,
     "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": typeof types.WorkspacePlanDocument,
+    "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": typeof types.WorkspaceLastAdminCheckDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -791,6 +793,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceInvitedTeam_Workspace on Workspace {\n    id\n    invitedTeam(filter: $invitesFilter) {\n      id\n      role\n      email\n    }\n  }\n": types.WorkspaceInvitedTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team(limit: 250) {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        status\n        id\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n": types.WorkspaceTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSecurity_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceLastAdminCheck_Workspace on Workspace {\n    id\n    team(limit: 50, filter: { roles: [\"workspace:admin\"] }) {\n      items {\n        id\n      }\n    }\n  }\n": types.WorkspaceLastAdminCheck_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation WorkspacesUpdateSeatType($input: WorkspaceUpdateSeatTypeInput!) {\n    workspaceMutations {\n      updateSeatType(input: $input) {\n        team {\n          items {\n            id\n            seatType\n          }\n        }\n      }\n    }\n  }\n": types.WorkspacesUpdateSeatTypeDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
@@ -817,6 +820,7 @@ const documents: Documents = {
     "\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": types.DiscoverableWorkspacesDocument,
     "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": types.DiscoverableWorkspacesRequestsDocument,
     "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": types.WorkspacePlanDocument,
+    "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": types.WorkspaceLastAdminCheckDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -2313,6 +2317,10 @@ export function graphql(source: "\n  fragment WorkspaceSecurity_Workspace on Wor
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment WorkspaceLastAdminCheck_Workspace on Workspace {\n    id\n    team(limit: 50, filter: { roles: [\"workspace:admin\"] }) {\n      items {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceLastAdminCheck_Workspace on Workspace {\n    id\n    team(limit: 50, filter: { roles: [\"workspace:admin\"] }) {\n      items {\n        id\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2414,6 +2422,10 @@ export function graphql(source: "\n  query DiscoverableWorkspacesRequests {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -24,7 +24,7 @@
       :workspace="workspace"
       :new-role="newRole"
       :is-active-user-target-user="isActiveUserTargetUser"
-      :is-only-admin="isOnlyAdmin"
+      :is-only-admin="hasSingleAdmin"
       :is-domain-compliant="targetUser.workspaceDomainPolicyCompliant"
       @success="onDialogSuccess"
     />
@@ -35,7 +35,7 @@
       :user="targetUser"
       :workspace="workspace"
       :is-active-user-target-user="isActiveUserTargetUser"
-      :is-only-admin="isOnlyAdmin"
+      :is-only-admin="hasSingleAdmin"
       :action="adminAction"
       @success="onDialogSuccess"
     />
@@ -60,6 +60,7 @@
       v-if="dialogToShow.leaveWorkspace"
       v-model:open="showDialog"
       :workspace="workspace"
+      :is-only-admin="hasSingleAdmin"
       @success="onDialogSuccess"
     />
   </div>
@@ -78,6 +79,7 @@ import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
   SettingsWorkspacesNewMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 
 const props = defineProps<{
   targetUser: UserItem
@@ -92,6 +94,10 @@ const { activeUser } = useActiveUser()
 const showMenu = ref(false)
 const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
+
+const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+  workspaceSlug: props.workspace?.slug || ''
+})
 
 const isActiveUserWorkspaceAdmin = computed(
   () => props.workspace?.role === Roles.Workspace.Admin
@@ -114,13 +120,6 @@ const {
   isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
   isActiveUserTargetUser: isActiveUserTargetUser.value,
   targetUser: props.targetUser
-})
-
-const isOnlyAdmin = computed(() => {
-  const adminUsers = props.workspace?.team.items.filter(
-    (user) => user.role === Roles.Workspace.Admin
-  )
-  return adminUsers?.length === 1
 })
 
 const filteredActionsItems = computed(() => {

@@ -156,7 +156,10 @@ export const useSettingsMembersActions = (props: {
   )
 
   const canMakeGuest = computed(
-    () => canModifyUser.value && props.targetUser.role !== Roles.Workspace.Guest
+    () =>
+      canModifyUser.value &&
+      props.targetUser.role !== Roles.Workspace.Guest &&
+      props.targetUser.role !== Roles.Workspace.Admin
   )
 
   const canMakeMember = computed(
