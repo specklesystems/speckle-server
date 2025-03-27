@@ -69,7 +69,7 @@ export function useTeamManagePermissionsInternals(
 
 export function useTeamInternals(
   projectData: ComputedRef<ProjectPageTeamInternals_ProjectFragment | undefined>,
-  workspace?: Ref<ProjectPageTeamInternals_WorkspaceFragment | undefined>
+  workspace?: Ref<ProjectPageTeamInternals_WorkspaceFragment | undefined | null>
 ) {
   const { isOwner, activeUser, isServerGuest } =
     useTeamManagePermissionsInternals(projectData)

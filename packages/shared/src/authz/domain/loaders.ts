@@ -36,6 +36,8 @@ type AuthContextLoaderMappingDefinition<
 /**
  * All loaders must be listed here for app startup validation to work properly
  */
+
+/* v8 ignore start  */
 export const AuthCheckContextLoaderKeys = <const>{
   getEnv: 'getEnv',
   getProject: 'getProject',
@@ -46,6 +48,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession'
 }
+/* v8 ignore end  */
 
 export type AuthCheckContextLoaderKeys =
   (typeof AuthCheckContextLoaderKeys)[keyof typeof AuthCheckContextLoaderKeys]
