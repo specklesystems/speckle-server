@@ -67,6 +67,7 @@ const jobQueue = new Bull('preview-service-jobs', opts)
 
 // store this callback, so on shutdown we can error the job
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
+let browser: Browser | undefined = undefined
 
 const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
@@ -81,15 +82,27 @@ const server = app.listen(port, host, async () => {
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      protocolTimeout: PREVIEW_TIMEOUT
+      protocolTimeout: PREVIEW_TIMEOUT,
+      handleSIGHUP: false, // handle closing of the browser by the parent process
+      handleSIGINT: false, // handle closing of the browser by the parent process
+      handleSIGTERM: false // handle closing of the browser by the parent process
     })
   }
   logger.debug('Starting message queues')
 
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
-    let jobLogger = logger.child({ payloadId: payload.id })
-    let browser: Browser | undefined = undefined
+    let jobLogger = logger.child({
+      payloadId: payload.id,
+      jobPriorAttemptsMade: payload.attemptsMade
+    })
+
+    if (browser) {
+      const message = 'Starting job but Browser is already open.'
+      done(new Error(message))
+      throw new Error(message)
+    }
+
     try {
       currentJob = { done, logger: jobLogger }
       const parseResult = jobPayload.safeParse(payload.data)
@@ -104,7 +117,6 @@ const server = app.listen(port, host, async () => {
       const job = parseResult.data
       jobLogger = jobLogger.child({
         jobId: job.jobId,
-        jobPriorAttemptsMade: payload.attemptsMade,
         serverUrl: job.url
       })
       const resultsQueue = new Bull(job.responseQueue, opts)
@@ -140,8 +152,8 @@ const server = app.listen(port, host, async () => {
     } finally {
       if (browser) await browser.close()
       browser = undefined
+      currentJob = undefined
     }
-    currentJob = undefined
   })
 })
 
@@ -157,6 +169,10 @@ const beforeShutdown = async () => {
   if (currentJob) {
     currentJob.logger.warn('Cancelling job due to preview-service shutdown')
     currentJob.done(new Error('Job cancelled due to preview-service shutdown'))
+  }
+  if (browser) {
+    await browser.close()
+    browser = undefined
   }
 }
 
