@@ -96,7 +96,7 @@ const server = app.listen(port, host, async () => {
     try {
       currentJob = { done, logger: jobLogger }
       const browser = await launchBrowser()
-      const parseResult = jobPayload.safeParse(payload)
+      const parseResult = jobPayload.safeParse(payload.data)
       if (!parseResult.success) {
         jobLogger.error(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

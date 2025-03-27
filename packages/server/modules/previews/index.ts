@@ -135,7 +135,7 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
           projectId: data.jobId.split('.')[0],
           objectId: data.jobId.split('.')[1]
         }))
-        .safeParse(payload)
+        .safeParse(payload.data)
       if (!parsedMessage.success) {
         logger.error(
           { payload: payload.data, reason: parsedMessage.error },
