@@ -18,7 +18,7 @@
     </LayoutMenu>
 
     <SettingsWorkspacesMembersActionsUpdateRoleDialog
-      v-if="showUpdateRoleDialog"
+      v-if="dialogToShow.updateRole"
       v-model:open="showDialog"
       :user="targetUser"
       :workspace="workspace"
@@ -30,7 +30,7 @@
     />
 
     <SettingsWorkspacesMembersActionsUpdateAdminDialog
-      v-if="showUpdateAdminDialog"
+      v-if="dialogToShow.updateAdmin"
       v-model:open="showDialog"
       :user="targetUser"
       :workspace="workspace"
@@ -41,7 +41,7 @@
     />
 
     <SettingsWorkspacesMembersActionsUpdateSeatTypeDialog
-      v-if="showUpdateSeatTypeDialog"
+      v-if="dialogToShow.updateSeatType"
       v-model:open="showDialog"
       :user="targetUser"
       :workspace="workspace"
@@ -49,7 +49,7 @@
     />
 
     <SettingsWorkspacesMembersActionsRemoveFromWorkspaceDialog
-      v-if="showRemoveFromWorkspaceDialog"
+      v-if="dialogToShow.removeFromWorkspace"
       v-model:open="showDialog"
       :user="targetUser"
       :workspace="workspace"
@@ -57,7 +57,7 @@
     />
 
     <SettingsWorkspacesMembersActionsLeaveWorkspaceDialog
-      v-if="showLeaveWorkspaceDialog"
+      v-if="dialogToShow.leaveWorkspace"
       v-model:open="showDialog"
       :workspace="workspace"
       @success="onDialogSuccess"
@@ -239,35 +239,21 @@ const filteredActionsItems = computed(() => {
   return result
 })
 
-const showUpdateRoleDialog = computed(() => {
-  return (
+const dialogToShow = computed(() => ({
+  updateRole:
     dialogType.value === WorkspaceUserActionTypes.MakeGuest ||
-    dialogType.value === WorkspaceUserActionTypes.MakeMember
-  )
-})
-
-const showUpdateAdminDialog = computed(() => {
-  return (
+    dialogType.value === WorkspaceUserActionTypes.MakeMember,
+  updateAdmin:
     dialogType.value === WorkspaceUserActionTypes.MakeAdmin ||
     dialogType.value === WorkspaceUserActionTypes.RemoveAdmin ||
-    dialogType.value === WorkspaceUserActionTypes.ResignAdmin
-  )
-})
-
-const showUpdateSeatTypeDialog = computed(() => {
-  return (
+    dialogType.value === WorkspaceUserActionTypes.ResignAdmin,
+  updateSeatType:
     dialogType.value === WorkspaceUserActionTypes.UpgradeEditor ||
-    dialogType.value === WorkspaceUserActionTypes.DowngradeEditor
-  )
-})
-
-const showRemoveFromWorkspaceDialog = computed(() => {
-  return dialogType.value === WorkspaceUserActionTypes.RemoveFromWorkspace
-})
-
-const showLeaveWorkspaceDialog = computed(() => {
-  return dialogType.value === WorkspaceUserActionTypes.LeaveWorkspace
-})
+    dialogType.value === WorkspaceUserActionTypes.DowngradeEditor,
+  removeFromWorkspace:
+    dialogType.value === WorkspaceUserActionTypes.RemoveFromWorkspace,
+  leaveWorkspace: dialogType.value === WorkspaceUserActionTypes.LeaveWorkspace
+}))
 
 const newRole = computed(() => {
   if (!dialogType.value) return undefined

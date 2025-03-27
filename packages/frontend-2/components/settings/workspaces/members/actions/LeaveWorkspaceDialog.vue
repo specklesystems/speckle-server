@@ -28,8 +28,8 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { computed } from 'vue'
 import { Roles } from '@speckle/shared'
+
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<
     | SettingsWorkspacesNewMembersTable_WorkspaceFragment
