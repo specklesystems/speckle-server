@@ -23,7 +23,7 @@ type SharedArgs = {
 
 type JobArgs = SharedArgs & {
   browser: Browser
-  getAppState: () => string
+  getAppState: () => AppState
 }
 
 type PageArgs = SharedArgs & {
