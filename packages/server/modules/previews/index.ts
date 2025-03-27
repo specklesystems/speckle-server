@@ -125,7 +125,17 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
     app.use(previewRouter)
 
     void previewResponseQueue.process(async (payload, done) => {
-      const parsedMessage = previewResultPayload.safeParse(payload.data)
+      const { attemptsMade } = payload
+      const parsedMessage = previewResultPayload
+        .refine((data) => data.jobId.split('.').length === 2, {
+          message: 'jobId must be in the format "projectId.objectId"'
+        })
+        .transform((data) => ({
+          ...data,
+          projectId: data.jobId.split('.')[0],
+          objectId: data.jobId.split('.')[1]
+        }))
+        .safeParse(payload)
       if (!parsedMessage.success) {
         logger.error(
           { payload: payload.data, reason: parsedMessage.error },
@@ -138,11 +148,17 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
         done(parsedMessage.error)
         return
       }
-      const [projectId, objectId] = parsedMessage.data.jobId.split('.')
+      const parsedResult = parsedMessage.data
+      const { projectId, objectId } = parsedResult
+      const jobLogger = logger.child({
+        projectId,
+        objectId,
+        responsePriorAttemptsMade: attemptsMade
+      })
 
       const projectDb = await getProjectDbClient({ projectId })
       await consumePreviewResultFactory({
-        logger,
+        logger: jobLogger,
         storePreview: storePreviewFactory({ db: projectDb }),
         upsertObjectPreview: upsertObjectPreviewFactory({ db: projectDb }),
         getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
@@ -151,23 +167,23 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
       })({
         projectId,
         objectId,
-        previewResult: parsedMessage.data
+        previewResult: parsedResult
       })
 
       previewJobsProcessedSummary.observe(
-        { status: parsedMessage.data.status, step: PreviewJobDurationStep.TOTAL },
-        parsedMessage.data.result.durationSeconds * TIME.second
+        { status: parsedResult.status, step: PreviewJobDurationStep.TOTAL },
+        parsedResult.result.durationSeconds * TIME.second
       )
-      if (parsedMessage.data.result.loadDurationSeconds) {
+      if (parsedResult.result.loadDurationSeconds) {
         previewJobsProcessedSummary.observe(
-          { status: parsedMessage.data.status, step: PreviewJobDurationStep.LOAD },
-          parsedMessage.data.result.loadDurationSeconds * TIME.second
+          { status: parsedResult.status, step: PreviewJobDurationStep.LOAD },
+          parsedResult.result.loadDurationSeconds * TIME.second
         )
       }
-      if (parsedMessage.data.result.renderDurationSeconds) {
+      if (parsedResult.result.renderDurationSeconds) {
         previewJobsProcessedSummary.observe(
-          { status: parsedMessage.data.status, step: PreviewJobDurationStep.RENDER },
-          parsedMessage.data.result.renderDurationSeconds * TIME.second
+          { status: parsedResult.status, step: PreviewJobDurationStep.RENDER },
+          parsedResult.result.renderDurationSeconds * TIME.second
         )
       }
 

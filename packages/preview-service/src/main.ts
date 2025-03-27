@@ -13,7 +13,7 @@ import Bull from 'bull'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
-import { jobMessage } from '@speckle/shared/dist/esm/previews/job.js'
+import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 import { createTerminus } from '@godaddy/terminus'
 import type { Logger } from 'pino'
@@ -96,7 +96,7 @@ const server = app.listen(port, host, async () => {
     try {
       currentJob = { done, logger: jobLogger }
       const browser = await launchBrowser()
-      const parseResult = jobMessage.safeParse(payload)
+      const parseResult = jobPayload.safeParse(payload)
       if (!parseResult.success) {
         jobLogger.error(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -106,18 +106,17 @@ const server = app.listen(port, host, async () => {
         return done(parseResult.error)
       }
       const job = parseResult.data
-      const jobData = job.data
       jobLogger = jobLogger.child({
-        jobId: jobData.jobId,
-        jobAttemptsMade: job.attemptsMade,
-        serverUrl: jobData.url
+        jobId: job.jobId,
+        jobPriorAttemptsMade: payload.attemptsMade,
+        serverUrl: job.url
       })
-      const resultsQueue = new Bull(jobData.responseQueue, opts)
+      const resultsQueue = new Bull(job.responseQueue, opts)
 
       const result = await jobProcessor({
         logger: jobLogger,
         browser,
-        job: jobData,
+        job,
         port: PORT,
         timeout: PREVIEW_TIMEOUT,
         getAppState: () => appState
