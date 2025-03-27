@@ -1,4 +1,3 @@
-import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import {
   initPrometheusMetrics,
   metricDuration,
@@ -17,8 +16,6 @@ import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Logger } from 'pino'
-
-const { FF_FILEIMPORT_IFC_DOTNET_ENABLED } = Environment.getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -156,27 +153,7 @@ async function doTask(
     taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      if (FF_FILEIMPORT_IFC_DOTNET_ENABLED) {
-        await runProcessWithTimeout(
-          taskLogger,
-          process.env['DOTNET_BINARY_PATH'] || 'dotnet',
-          [
-            process.env['IFC_DOTNET_DLL_PATH'] ||
-              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
-            TMP_FILE_PATH,
-            TMP_RESULTS_PATH,
-            info.streamId,
-            `File upload: ${info.fileName}`,
-            existingBranch?.id || '',
-            info.branchName,
-            regionName
-          ],
-          {
-            USER_TOKEN: tempUserToken
-          },
-          TIME_LIMIT
-        )
-      } else {
+      if (info.fileName.toLowerCase().endsWith('.legacyimporter.ifc')) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['NODE_BINARY_PATH'] || 'node',
@@ -192,6 +169,26 @@ async function doTask(
             `File upload: ${info.fileName}`,
             info.id,
             existingBranch?.id || '',
+            regionName
+          ],
+          {
+            USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT
+        )
+      } else {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['DOTNET_BINARY_PATH'] || 'dotnet',
+          [
+            process.env['IFC_DOTNET_DLL_PATH'] ||
+              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.streamId,
+            `File upload: ${info.fileName}`,
+            existingBranch?.id || '',
+            info.branchName,
             regionName
           ],
           {
