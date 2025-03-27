@@ -1,27 +1,38 @@
 <template>
   <div>
-    <div v-if="project">
-      <div class="flex justify-between space-x-2">
-        <div>
-          <h1 class="block text-heading-xl mb-2">Collaborators</h1>
-          <p class="text-body-xs text-foreground">
-            Invite new collaborators and set permissions.
-          </p>
-        </div>
-        <FormButton class="mt-1" :disabled="!canInvite" @click="toggleInviteDialog">
-          Invite
+    <div v-if="project" class="pt-3">
+      <div class="flex justify-between space-x-2 items-center">
+        <h1 class="block text-heading-lg md:text-heading-xl">Project collaborators</h1>
+        <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
+          Invite to project
         </FormButton>
       </div>
-      <div class="flex flex-col mt-6">
-        <ProjectPageSettingsCollaboratorsRow
-          v-for="collaborator in collaboratorListItems"
-          :key="collaborator.id"
-          :can-edit="canEdit"
-          :collaborator="collaborator"
-          :loading="loading"
-          @cancel-invite="onCancelInvite"
-          @change-role="onCollaboratorRoleChange"
-        />
+      <div class="flex flex-col mt-6 gap-y-6">
+        <div
+          v-if="isWorkspaceNewPlansEnabled && project.workspace"
+          class="flex flex-col gap-y-3"
+        >
+          <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
+          <ProjectPageCollaboratorsGeneralAccessRow
+            :name="project.workspace?.name"
+            :logo="project.workspace?.logo"
+            :can-edit="canEdit"
+          />
+        </div>
+        <div class="flex flex-col gap-y-3">
+          <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
+          <div>
+            <ProjectPageCollaboratorsRow
+              v-for="collaborator in collaboratorListItems"
+              :key="collaborator.id"
+              :can-edit="canEdit"
+              :collaborator="collaborator"
+              :loading="loading"
+              @cancel-invite="onCancelInvite"
+              @change-role="onCollaboratorRoleChange"
+            />
+          </div>
+        </div>
       </div>
       <InviteDialogProject
         v-if="project"
@@ -49,67 +60,52 @@ import {
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
 
-const projectPageSettingsCollaboratorsQuery = graphql(`
-  query ProjectPageSettingsCollaborators($projectId: String!) {
+const projectPageCollaboratorsQuery = graphql(`
+  query ProjectPageCollaborators($projectId: String!) {
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
       ...InviteDialogProject_Project
       workspaceId
+      workspace {
+        ...ProjectPageTeamInternals_Workspace
+        name
+        logo
+      }
     }
   }
 `)
-
-const projectPageSettingsCollaboratorWorkspaceQuery = graphql(`
-  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      ...ProjectPageTeamInternals_Workspace
-    }
-  }
-`)
-
-const route = useRoute()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const apollo = useApolloClient().client
-const mp = useMixpanel()
-const cancelInvite = useCancelProjectInvite()
-
-const showInviteDialog = ref(false)
-const loading = ref(false)
 
 const projectId = computed(() => route.params.id as string)
 
-const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
+const route = useRoute()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const apollo = useApolloClient().client
+const mixpanel = useMixpanel()
+const cancelInvite = useCancelProjectInvite()
+const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
-const { result: workspaceResult } = useQuery(
-  projectPageSettingsCollaboratorWorkspaceQuery,
-  () => ({
-    workspaceId: pageResult.value!.project.workspace!.id
-  }),
-  () => ({
-    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspace?.id
-  })
-)
 
-const project = computed(() => pageResult.value?.project)
-const workspace = computed(() => workspaceResult.value?.workspace)
-const projectRole = computed(() => project.value?.role)
-const updateRole = useUpdateUserRole(project)
-
-const toggleInviteDialog = () => {
-  showInviteDialog.value = true
-}
-
-const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
-  project,
-  workspace
-)
+const showInviteDialog = ref(false)
+const loading = ref(false)
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 const canInvite = computed(() =>
   workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
 )
+const project = computed(() => pageResult.value?.project)
+const workspace = computed(() => project.value?.workspace)
+const projectRole = computed(() => project.value?.role)
+const updateRole = useUpdateUserRole(project)
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
+  project,
+  workspace
+)
+
+const toggleInviteDialog = () => {
+  showInviteDialog.value = true
+}
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,
@@ -125,7 +121,7 @@ const onCollaboratorRoleChange = async (
   })
   loading.value = false
 
-  mp.track('Stream Action', {
+  mixpanel.track('Stream Action', {
     type: 'action',
     name: 'update',
     action: 'team member role',

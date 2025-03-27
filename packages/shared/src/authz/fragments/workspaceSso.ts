@@ -1,14 +1,20 @@
 import { err, isErr, ok } from 'true-myth/result'
 import { throwUncoveredError } from '../../core/helpers/error.js'
-import { WorkspaceSsoSessionInvalidError } from '../domain/authErrors.js'
 import { AuthPolicyFragment } from '../domain/policies.js'
 import { requireMinimumWorkspaceRole } from '../checks/workspaceRole.js'
 import { just, nothing } from 'true-myth/maybe'
+import {
+  WorkspaceNoAccessError,
+  WorkspaceSsoSessionNoAccessError
+} from '../domain/authErrors.js'
 
 export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
-  'getWorkspaceRole' | 'getWorkspaceSsoProvider' | 'getWorkspaceSsoSession',
+  | 'getWorkspaceRole'
+  | 'getWorkspaceSsoProvider'
+  | 'getWorkspaceSsoSession'
+  | 'getWorkspace',
   { userId: string; workspaceId: string },
-  typeof WorkspaceSsoSessionInvalidError
+  InstanceType<typeof WorkspaceSsoSessionNoAccessError | typeof WorkspaceNoAccessError>
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {
@@ -19,6 +25,12 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
     })
 
     if (!hasMinimumMemberRole) return nothing()
+
+    // Get workspace, so we can resolve its slug for error scenarios
+    const workspace = await loaders.getWorkspace({ workspaceId })
+    if (!workspace.isOk) {
+      return just(err(new WorkspaceNoAccessError()))
+    }
 
     const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
       workspaceId
@@ -40,7 +52,13 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
     if (isErr(workspaceSsoSession)) {
       switch (workspaceSsoSession.error.code) {
         case 'WorkspaceSsoSessionNotFound':
-          return just(err(WorkspaceSsoSessionInvalidError))
+          return just(
+            err(
+              new WorkspaceSsoSessionNoAccessError({
+                payload: { workspaceSlug: workspace.value.slug }
+              })
+            )
+          )
         default:
           throwUncoveredError(workspaceSsoSession.error.code)
       }
@@ -49,6 +67,13 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
     const isExpiredSession =
       new Date().getTime() > workspaceSsoSession.value.validUntil.getTime()
 
-    if (isExpiredSession) return just(err(WorkspaceSsoSessionInvalidError))
+    if (isExpiredSession)
+      return just(
+        err(
+          new WorkspaceSsoSessionNoAccessError({
+            payload: { workspaceSlug: workspace.value.slug }
+          })
+        )
+      )
     return just(ok())
   }

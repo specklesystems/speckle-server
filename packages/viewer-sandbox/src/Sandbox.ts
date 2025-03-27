@@ -58,7 +58,6 @@ import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader2 from '@speckle/objectloader2'
-import ObjectLoader from '@speckle/objectloader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1346,7 +1345,7 @@ export default class Sandbox {
     const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
     let count = 0
 
-    for await (const obj of loader.getObjectIterator()) {
+    for await (const {} of loader.getObjectIterator()) {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }

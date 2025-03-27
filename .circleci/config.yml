@@ -692,7 +692,7 @@ jobs:
           command: yarn build:public
 
       - run:
-          name: Lint everything
+          name: Lint viewer
           command: yarn lint:ci
           working_directory: 'packages/viewer'
 
@@ -700,6 +700,16 @@ jobs:
           name: Run tests
           command: yarn test
           working_directory: 'packages/viewer'
+
+      - run:
+          name: Lint viewer-sandbox
+          command: yarn lint:ci
+          working_directory: 'packages/viewer-sandbox'
+
+      - run:
+          name: Build viewer-sandbox
+          command: yarn build
+          working_directory: 'packages/viewer-sandbox'
 
   test-preview-service:
     docker:

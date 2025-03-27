@@ -1,10 +1,10 @@
 <template>
   <div>
     <div
-      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4"
+      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4 mt-3"
     >
       <div class="flex justify-between items-center flex-wrap xl:flex-nowrap">
-        <h1 class="block text-heading-xl">Models</h1>
+        <h1 class="block text-heading-lg md:text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
             color="outline"

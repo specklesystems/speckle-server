@@ -13,7 +13,7 @@ describe('hasMinimumServerRole returns a function, that', () => {
     await expect(
       hasMinimumServerRole({
         // @ts-expect-error deliberately testing an unexpected loader error
-        getServerRole: async () => err(ProjectRoleNotFoundError)
+        getServerRole: async () => err(new ProjectRoleNotFoundError())
       })({ userId: cryptoRandomString({ length: 10 }), role: 'server:user' })
     ).rejects.toThrowError(/Uncovered error/)
   })
@@ -21,7 +21,7 @@ describe('hasMinimumServerRole returns a function, that', () => {
     'turns expected loader error $code into false ',
     async (loaderError) => {
       const result = await hasMinimumServerRole({
-        getServerRole: async () => err(loaderError)
+        getServerRole: async () => err(new loaderError())
       })({ userId: cryptoRandomString({ length: 10 }), role: 'server:user' })
       expect(result).toEqual(false)
     }
