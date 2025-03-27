@@ -216,7 +216,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   private render() {
-    this.speckleRenderer.render()
+    // this.speckleRenderer.render()
     Object.values(this.extensions).forEach((ext: Extension) => {
       ext.onRender()
     })

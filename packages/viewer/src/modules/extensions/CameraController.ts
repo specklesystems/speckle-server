@@ -98,7 +98,7 @@ export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   damperDecay: 30,
   enableLook: true,
   relativeUpDown: false,
-  nearPlaneCalculation: NearPlaneCalculation.ACCURATE
+  nearPlaneCalculation: NearPlaneCalculation.EMPIRIC
 }
 
 export class CameraController extends Extension implements SpeckleCamera {
