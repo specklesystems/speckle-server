@@ -86,9 +86,11 @@ export default class IndexedDatabase implements Cache {
     await this.#setupCacheDb()
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
 
-    for (let i = 0; i < ids.length; i += maxCacheReadSize) {
+    for (let i = 0; i < ids.length; ) {
       if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
-        this.#logger('pausing')
+        this.#logger(
+          'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
+        )
         await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second, protects against out of memory
         continue
       }
@@ -113,6 +115,9 @@ export default class IndexedDatabase implements Cache {
       // const endTime = performance.now()
       // const duration = endTime - startTime
       // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+
+      // interate down here to help with pausing
+      i += maxCacheReadSize
     }
   }
 
