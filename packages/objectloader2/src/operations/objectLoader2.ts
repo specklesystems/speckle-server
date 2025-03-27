@@ -16,7 +16,7 @@ export default class ObjectLoader2 {
 
   #gathered: AsyncGeneratorQueue
 
-  #deferredItems: Record<string, DeferredBase | undefined> = {}
+  #deferredItems: Record<string, DeferredBase> = {}
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
@@ -88,7 +88,7 @@ export default class ObjectLoader2 {
   }
 
   #removeAndReturn(d: DeferredBase, item: Item): Promise<Base> {
-    this.#deferredItems[d.id] = undefined
+    delete this.#deferredItems[d.id]
     d.resolve(item.base)
     return d.promise
   }
@@ -102,7 +102,7 @@ export default class ObjectLoader2 {
   #resolveDeferred(item: Item): void {
     const d = this.#deferredItems[item.baseId]
     if (d) {
-      this.#deferredItems[item.baseId] = undefined
+      delete this.#deferredItems[item.baseId]
       d.resolve(item.base)
     }
   }
