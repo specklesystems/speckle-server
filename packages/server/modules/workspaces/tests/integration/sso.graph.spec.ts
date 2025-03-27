@@ -171,7 +171,9 @@ describe('Workspace SSO', () => {
           const resC = await memberApollo.execute(GetProjectDocument, {
             id: testWorkspaceWithSsoProjectId
           })
-          expect(resC).to.haveGraphQLErrors({ message: 'SSO session is invalid' })
+          expect(resC).to.haveGraphQLErrors({
+            message: 'SSO session is expired or it does not exist'
+          })
         })
 
         it('should allow limited access to workspace memberships', async () => {
