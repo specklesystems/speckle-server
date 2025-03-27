@@ -14,9 +14,9 @@ export default class ObjectLoader2 {
   #database: Cache
   #downloader: Downloader
 
-  #gathered: AsyncGeneratorQueue<Item>
+  #gathered: AsyncGeneratorQueue
 
-  #buffer: DeferredBase[] = []
+  #deferredItems: Record<string, DeferredBase | undefined> = {}
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
@@ -64,24 +64,47 @@ export default class ObjectLoader2 {
     return rootItem
   }
 
+  //don't await, caller does
   async getObject(params: { id: string }): Promise<Base> {
-    const item = await this.#database.getItem({ id: params.id })
-    if (item) {
-      return item.base
-    }
-    const deferredBase = this.#buffer.find((x) => x.id === params.id)
+    const { id } = params
+    const deferredBase = this.#deferredItems[id]
     if (deferredBase) {
-      return await deferredBase.promise
+      //already exists so wait
+      return deferredBase.promise
     }
-    const d = new DeferredBase(params.id)
-    this.#buffer.push(d)
-    return d
+    //create and add in case we get another waiter
+    const d = new DeferredBase(id)
+    this.#deferredItems[id] = d
+    let item = this.#gathered.get(id)
+    if (item) {
+      return this.#removeAndReturn(d, item)
+    }
+    item = await this.#database.getItem({ id: params.id })
+    if (item) {
+      return this.#removeAndReturn(d, item)
+    }
+    //else wait
+    return d.promise
+  }
+
+  #removeAndReturn(d: DeferredBase, item: Item): Promise<Base> {
+    this.#deferredItems[d.id] = undefined
+    d.resolve(item.base)
+    return d.promise
   }
 
   async getTotalObjectCount() {
     const rootObj = await this.getRootObject()
     const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
     return totalChildrenCount + 1 //count the root
+  }
+
+  #resolveDeferred(item: Item): void {
+    const d = this.#deferredItems[item.baseId]
+    if (d) {
+      this.#deferredItems[item.baseId] = undefined
+      d.resolve(item.base)
+    }
   }
 
   async *getObjectIterator(): AsyncGenerator<Base> {
@@ -103,12 +126,7 @@ export default class ObjectLoader2 {
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      const deferredIndex = this.#buffer.findIndex((x) => x.id === item.baseId)
-      if (deferredIndex !== -1) {
-        const deferredBase = this.#buffer[deferredIndex]
-        deferredBase.resolve(item.base)
-        this.#buffer.splice(deferredIndex, 1)
-      }
+      this.#resolveDeferred(item)
       yield item.base
       count++
       if (count >= total) {
