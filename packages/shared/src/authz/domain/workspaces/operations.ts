@@ -27,4 +27,4 @@ export type GetWorkspaceSsoSession = (args: {
   workspaceId: string
 }) => Promise<Result<WorkspaceSsoSession, typeof WorkspaceSsoSessionNotFoundError>>
 
-export type GetEnv = () => Result<FeatureFlags, never>
+export type GetEnv = () => Promise<FeatureFlags>

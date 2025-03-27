@@ -4,13 +4,19 @@ import { Project } from './types.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
-  ProjectRoleNotFoundError
+  ProjectRoleNotFoundError,
+  WorkspaceSsoSessionInvalidError
 } from '../authErrors.js'
 
 export type GetProject = (args: {
   projectId: string
 }) => Promise<
-  Result<Project, typeof ProjectNotFoundError | typeof ProjectNoAccessError>
+  Result<
+    Project,
+    | typeof ProjectNotFoundError
+    | typeof ProjectNoAccessError
+    | typeof WorkspaceSsoSessionInvalidError
+  >
 >
 
 export type GetProjectRole = (args: {
