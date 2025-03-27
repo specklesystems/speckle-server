@@ -20,6 +20,7 @@ type SharedArgs = {
 
 type JobArgs = SharedArgs & {
   browser: Browser
+  getAppState: () => string
 }
 
 type PageArgs = SharedArgs & {
@@ -31,7 +32,8 @@ export const jobProcessor = async ({
   browser,
   job,
   port,
-  timeout
+  timeout,
+  getAppState
 }: JobArgs): Promise<PreviewResultPayload> => {
   const elapsed = (() => {
     const start = new Date().getTime()
@@ -50,7 +52,13 @@ export const jobProcessor = async ({
     logger.info({ status: result.status, elapsed: elapsed() }, jobMessage)
     return result
   } catch (err: unknown) {
-    logger.error({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
+    if (getAppState() === 'SHUTTINGDOWN') {
+      // likely that the job was cancelled due to the service shutting down
+      logger.warn({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
+    } else {
+      logger.error({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
+    }
+
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()

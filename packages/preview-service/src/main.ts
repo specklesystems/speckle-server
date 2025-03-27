@@ -22,6 +22,15 @@ const app = express()
 const host = HOST
 const port = PORT
 
+const AppState = {
+  STARTING: 'starting',
+  RUNNING: 'running',
+  SHUTTINGDOWN: 'shuttingdown'
+} as const
+type AppState = (typeof AppState)[keyof typeof AppState]
+
+let appState: AppState = AppState.STARTING
+
 // serve the preview-frontend
 app.use(express.static('public'))
 await initMetrics({ app, registry: initPrometheusRegistry() })
@@ -65,6 +74,7 @@ let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefi
 
 const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
+  appState = AppState.RUNNING
 
   const launchBrowser = async (): Promise<Browser> => {
     logger.debug('Starting browser')
@@ -109,7 +119,8 @@ const server = app.listen(port, host, async () => {
         browser,
         job: jobData,
         port: PORT,
-        timeout: PREVIEW_TIMEOUT
+        timeout: PREVIEW_TIMEOUT,
+        getAppState: () => appState
       })
 
       // with removeOnComplete, the job response potentially containing a large images,
@@ -118,7 +129,12 @@ const server = app.listen(port, host, async () => {
       await browser.close()
       done()
     } catch (err) {
-      jobLogger.error({ err }, 'Processing {jobId} failed')
+      if (appState === AppState.SHUTTINGDOWN) {
+        // likely that the job was cancelled due to the service shutting down
+        jobLogger.warn({ err }, 'Processing {jobId} failed')
+      } else {
+        jobLogger.error({ err }, 'Processing {jobId} failed')
+      }
       if (err instanceof Error) {
         done(err)
       } else {
@@ -131,6 +147,7 @@ const server = app.listen(port, host, async () => {
 
 const beforeShutdown = async () => {
   logger.info('🛑 Beginning shut down, pausing all jobs')
+  appState = AppState.SHUTTINGDOWN
   // stop accepting new jobs and kill any running jobs
   await jobQueue.pause(
     true, // just pausing this local worker of the queue
