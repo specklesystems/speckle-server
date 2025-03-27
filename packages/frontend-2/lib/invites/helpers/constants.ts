@@ -1,6 +1,6 @@
 import type {
   InviteServerItem,
-  InviteGenericItem,
+  InviteWorkspaceItem,
   InviteProjectItem
 } from '~~/lib/invites/helpers/types'
 import { Roles } from '@speckle/shared'
@@ -18,7 +18,7 @@ export const emptyInviteProjectItem: InviteProjectItem = {
   project: undefined
 }
 
-export const emptyInviteGenericItem: InviteGenericItem = {
+export const emptyInviteWorkspaceItem: InviteWorkspaceItem = {
   email: '',
   workspaceRole: undefined,
   projectRole: undefined,

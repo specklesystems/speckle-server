@@ -1,6 +1,6 @@
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { DepthPass } from '../Passes/DepthPass.js'
-import { EdgePass } from '../Passes/EdgesPass.js'
+import { EdgesPass } from '../Passes/EdgesPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
 import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
 import { TAAPass } from '../Passes/TAAPass.js'
@@ -50,11 +50,11 @@ export class PenViewPipeline extends ProgressivePipeline {
     normalPassDynamic.setClearColor(0x000000, 1)
     normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const edgesPass = new EdgePass()
+    const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
 
-    const edgesPassDynamic = new EdgePass()
+    const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
     edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
     edgesPassDynamic.outputTarget = null

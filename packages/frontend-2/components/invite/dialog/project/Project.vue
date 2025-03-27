@@ -42,26 +42,6 @@
                     :hidden-items="[Roles.Stream.Owner]"
                   />
                 </div>
-                <div v-if="isInWorkspace">
-                  <FormSelectProjects
-                    v-model="item.value.project"
-                    label="Select project"
-                    class="w-full"
-                    owned-only
-                    show-optional
-                    mount-menu-on-body
-                    show-label
-                    :name="`project-${index}`"
-                    :disabled="!canBeMember(item.value.email)"
-                  />
-                  <p
-                    v-if="!canBeMember(item.value.email)"
-                    class="text-body-3xs text-foreground-2 mt-2"
-                  >
-                    This email does not match the set domain policy, and can only be
-                    invited to individual projects
-                  </p>
-                </div>
               </div>
               <CommonTextLink class="mt-7">
                 <TrashIcon
@@ -104,7 +84,6 @@ import type { InviteProjectForm, InviteProjectItem } from '~~/lib/invites/helper
 import { emptyInviteProjectItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { Roles } from '@speckle/shared'
-import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
 import {
   type InviteDialogProject_ProjectFragment,
   type WorkspacePlans,
@@ -182,9 +161,6 @@ const invitableWorkspaceMembers = computed(() => {
   )
 })
 const isInWorkspace = computed(() => !!props.project.workspace?.id)
-const allowedDomains = computed(() =>
-  props.project.workspace?.domains?.map((d) => d.domain)
-)
 const memberSeatText = computed(() =>
   props.project.workspace?.subscription?.seats.plan
     ? getSeatText(props.project.workspace.subscription.seats.plan, 'member')
@@ -227,8 +203,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const getSeatText = (count: number, type: 'member' | 'guest') =>
   `${count} ${type} ${count === 1 ? 'seat' : 'seats'}`
-
-const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains.value)
 
 const addInviteItem = () => {
   pushInvite({

@@ -163,7 +163,7 @@ const cloneStream = cloneStreamFactory({
   emitEvent: getEventBus().emit
 })
 
-// We want to read & write from main DB - this isn't occuring in a multi region workspace ctx
+// We want to read & write from main DB - this isn't occurring in a multi region workspace ctx
 const createOnboardingStream = createOnboardingStreamFactory({
   getOnboardingBaseProject: getOnboardingBaseProjectFactory({
     getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
@@ -184,13 +184,16 @@ export = {
         userId: context.userId
       })
 
-      if (!canQuery.authorized) {
+      if (!canQuery.isOk) {
         switch (canQuery.error.code) {
           case Authz.ProjectNotFoundError.code:
             throw new StreamNotFoundError()
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
           case Authz.WorkspaceSsoSessionInvalidError.code:
+            throw new ForbiddenError(canQuery.error.message)
+          case Authz.ServerNoAccessError.code:
+          case Authz.ServerNoSessionError.code:
             throw new ForbiddenError(canQuery.error.message)
           default:
             throwUncoveredError(canQuery.error)
@@ -199,6 +202,7 @@ export = {
 
       const project = await getStream({ streamId: args.id })
 
+      // TODO: Should scopes & token resource access rules be checked in authz policy?
       if (!project?.isPublic && !project?.isDiscoverable) {
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }

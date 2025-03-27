@@ -10526,6 +10526,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@godaddy/terminus@npm:^4.12.1":
+  version: 4.12.1
+  resolution: "@godaddy/terminus@npm:4.12.1"
+  dependencies:
+    stoppable: "npm:^1.1.0"
+  checksum: 10/e1b6e0a079db5748c71211e22d2fc1ab76ee20763bb552e9e2b6003330c0b19fee10b20b1dd961218a402c6aadd3a8ecf7f03ecdfaa2c65ed072b2479eb9b517
+  languageName: node
+  linkType: hard
+
 "@godaddy/terminus@npm:^4.9.0":
   version: 4.10.2
   resolution: "@godaddy/terminus@npm:4.10.2"
@@ -16786,6 +16795,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/preview-service@workspace:packages/preview-service"
   dependencies:
+    "@godaddy/terminus": "npm:^4.12.1"
     "@speckle/shared": "workspace:^"
     "@swc/cli": "npm:^0.5.1"
     "@swc/core": "npm:^1.9.3"
@@ -16975,6 +16985,7 @@ __metadata:
     stripe: "npm:^17.1.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     supertest: "npm:^4.0.2"
+    true-myth: "npm:^8.5.0"
     ts-node: "npm:^10.9.2"
     tsconfig-paths: "npm:^4.0.0"
     type-fest: "npm:^4.26.1"
@@ -17015,6 +17026,7 @@ __metadata:
     mixpanel: "npm:^0.17.0"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
+    true-myth: "npm:^8.5.0"
     tshy: "npm:^1.14.0"
     type-fest: "npm:^3.11.1"
     typescript: "npm:^4.5.4"
@@ -50289,6 +50301,13 @@ __metadata:
   version: 0.47.2
   resolution: "troika-worker-utils@npm:0.47.2"
   checksum: 10/c640b051906ea5988758a9ba367b66dcf767e6d71c7523c9c19175618b141c29618474ba14057b3332f4598bfb31126c7f40c59135f534df02e1e5c766144b5a
+  languageName: node
+  linkType: hard
+
+"true-myth@npm:^8.5.0":
+  version: 8.5.0
+  resolution: "true-myth@npm:8.5.0"
+  checksum: 10/f3f96d96df8f0bfb5d26c379bbe029b947349b9dabdd00afa939ff75e979864c951c647ba35b21a13d676a9b34d721bffd2a1e9f0750d5d2a588988f16de5bd0
   languageName: node
   linkType: hard
 

@@ -2,7 +2,7 @@ import { ObjectLayers, WorldTree } from '../../../index.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
 import { Pipeline } from './Pipeline.js'
-import { BasitPass } from '../Passes/BasitPass.js'
+import { ShadedPass } from '../Passes/ShadedPass.js'
 import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
 import { StencilPass } from '../Passes/StencilPass.js'
 import { StencilMaskPass } from '../Passes/StencilMaskPass.js'
@@ -11,7 +11,7 @@ export class BasitPipeline extends Pipeline {
   constructor(speckleRenderer: SpeckleRenderer, tree: WorldTree) {
     super(speckleRenderer)
 
-    const basitPass = new BasitPass(tree, speckleRenderer)
+    const basitPass = new ShadedPass(tree, speckleRenderer)
     basitPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.PROPS])
     basitPass.setClearColor(0x000000, 0)
     basitPass.setClearFlags(ClearFlags.COLOR)

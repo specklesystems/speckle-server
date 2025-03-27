@@ -76,6 +76,7 @@ bin/
 !packages/monitor-deployment/bin
 !packages/preview-service/bin
 !packages/server/bin
+!packages/viewer/src/modules/loaders/OBJ
 
 # Server
 multiregion.json

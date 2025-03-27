@@ -586,7 +586,8 @@ describe('checkout @gatekeeper', () => {
               }
             ],
             status: 'active',
-            cancelAt: null
+            cancelAt: null,
+            currentPeriodEnd: new Date()
           }
 
           let storedWorkspaceSubscriptionData: WorkspaceSubscription | undefined =
