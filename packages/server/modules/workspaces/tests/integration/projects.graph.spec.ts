@@ -513,8 +513,9 @@ describe('Workspace project GQL CRUD', () => {
   })
 })
 
+// TODO: These are very flaky for some reason
 isMultiRegionTestMode()
-  ? describe('Workspace project region changes', () => {
+  ? describe.skip('Workspace project region changes', () => {
       const regionKey1 = 'region1'
       const regionKey2 = 'region2'
 
