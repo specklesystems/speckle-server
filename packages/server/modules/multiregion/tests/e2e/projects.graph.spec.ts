@@ -67,7 +67,7 @@ const ensureProjectRegion = async (
   projectId: string,
   regionKey: string
 ): Promise<void> => {
-  await retry(async () => assertProjectRegion(projectId, regionKey), 20, 10)
+  await retry(async () => assertProjectRegion(projectId, regionKey), 30, 500)
 }
 
 isMultiRegionTestMode()
