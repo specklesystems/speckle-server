@@ -19,7 +19,7 @@ describe('requireExactServerRole returns a function, that', () => {
   it('returns false for users without roles', async () => {
     const result = await requireExactServerRole({
       loaders: {
-        getServerRole: () => Promise.resolve(err(ServerRoleNotFoundError))
+        getServerRole: () => Promise.resolve(err(new ServerRoleNotFoundError()))
       }
     })({
       userId: cryptoRandomString({ length: 9 }),

@@ -16648,7 +16648,7 @@ __metadata:
     ua-parser-js: "npm:^1.0.38"
     vee-validate: "npm:4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:^6.0.0"
+    vue-tippy: "npm:^6.7.0"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
     ws: "npm:^8.17.1"
@@ -53080,6 +53080,17 @@ __metadata:
   peerDependencies:
     vue: ^3.2.0
   checksum: 10/2e11d9db3b7a5912cd2b22311976cfcbb2159c79270d834c7d0387a9ae0905571217e7e9cf092fe46ac47da720b3fe196034723be30525051c63c7f57cde6623
+  languageName: node
+  linkType: hard
+
+"vue-tippy@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "vue-tippy@npm:6.7.0"
+  dependencies:
+    tippy.js: "npm:^6.3.7"
+  peerDependencies:
+    vue: ^3.2.0
+  checksum: 10/5794a740b1cde284150ae7ce873b2c60afa6f09607c96f38b800f12954e7dfa949f8c9b332f0db416f032b7fb32056b305179cb4ebbfa6613936c7150b98e293
   languageName: node
   linkType: hard
 

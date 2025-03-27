@@ -81,7 +81,7 @@
     "ua-parser-js": "^1.0.38",
     "vee-validate": "4.7.0",
     "vue-advanced-cropper": "^2.8.8",
-    "vue-tippy": "^6.0.0",
+    "vue-tippy": "^6.7.0",
     "ws": "^8.17.1"
   },
   "devDependencies": {
