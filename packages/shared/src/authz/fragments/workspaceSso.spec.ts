@@ -4,6 +4,8 @@ import cryptoRandomString from 'crypto-random-string'
 import { err, ok } from 'true-myth/result'
 import {
   ProjectNotFoundError,
+  WorkspaceNoAccessError,
+  WorkspaceNotFoundError,
   WorkspaceRoleNotFoundError,
   WorkspaceSsoProviderNotFoundError,
   WorkspaceSsoSessionNoAccessError,
@@ -12,6 +14,39 @@ import {
 import { just, nothing } from 'true-myth/maybe'
 
 describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', () => {
+  it.each([new WorkspaceNoAccessError(), new WorkspaceNotFoundError()])(
+    'remaps workspace loader error $code into WorkspaceNoAccessError',
+    async (expectedError) => {
+      const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+        getWorkspace: async () => err(expectedError),
+        getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
+        getWorkspaceSsoProvider: async () =>
+          err(new WorkspaceSsoProviderNotFoundError()),
+        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 })
+      })
+      await expect(result).resolves.toStrictEqual(
+        just(err(new WorkspaceNoAccessError()))
+      )
+    }
+  )
+  it('throws Uncovered error for unknown loader errors', async () => {
+    await expect(
+      maybeMemberRoleWithValidSsoSessionIfNeeded({
+        // @ts-expect-error testing the unexpected error case here
+        getWorkspace: async () => err(new WorkspaceSsoProviderNotFoundError()),
+        getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
+        getWorkspaceSsoProvider: async () =>
+          err(new WorkspaceSsoProviderNotFoundError()),
+        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 })
+      })
+    ).rejects.toThrowError(/Uncovered error/)
+  })
   it('returns nothing if user does not have a workspace role', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
       getWorkspace: async () => {

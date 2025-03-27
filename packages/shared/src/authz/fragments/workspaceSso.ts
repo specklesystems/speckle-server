@@ -18,19 +18,23 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {
+    // Get workspace, so we can resolve its slug for error scenarios
+    const workspace = await loaders.getWorkspace({ workspaceId })
+    if (workspace.isErr) {
+      switch (workspace.error.code) {
+        case 'WorkspaceNoAccess':
+        case 'WorkspaceNotFound':
+          return just(err(new WorkspaceNoAccessError()))
+        default:
+          throwUncoveredError(workspace.error)
+      }
+    }
     const hasMinimumMemberRole = await requireMinimumWorkspaceRole(loaders)({
       userId,
       workspaceId,
       role: 'workspace:member'
     })
-
     if (!hasMinimumMemberRole) return nothing()
-
-    // Get workspace, so we can resolve its slug for error scenarios
-    const workspace = await loaders.getWorkspace({ workspaceId })
-    if (!workspace.isOk) {
-      return just(err(new WorkspaceNoAccessError()))
-    }
 
     const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
       workspaceId

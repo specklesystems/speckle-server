@@ -7,7 +7,6 @@ import {
   WorkspaceNotFoundError,
   WorkspaceRoleNotFoundError,
   WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionNoAccessError,
   WorkspaceSsoSessionNotFoundError
 } from '../authErrors.js'
 
@@ -17,7 +16,6 @@ export type GetWorkspace = (args: {
   Result<
     Workspace,
     | InstanceType<typeof WorkspaceNotFoundError>
-    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
     | InstanceType<typeof WorkspaceNoAccessError>
   >
 >
