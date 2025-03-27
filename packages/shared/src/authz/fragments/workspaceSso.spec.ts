@@ -6,7 +6,7 @@ import {
   ProjectNotFoundError,
   WorkspaceRoleNotFoundError,
   WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionInvalidError,
+  WorkspaceSsoSessionNoAccessError,
   WorkspaceSsoSessionNotFoundError
 } from '../domain/authErrors.js'
 import { just, nothing } from 'true-myth/maybe'
@@ -14,9 +14,15 @@ import { just, nothing } from 'true-myth/maybe'
 describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', () => {
   it('returns nothing if user does not have a workspace role', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
-      getWorkspaceRole: async () => err(WorkspaceRoleNotFoundError),
-      getWorkspaceSsoProvider: async () => err(WorkspaceSsoProviderNotFoundError),
-      getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError)
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
+      getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
+      getWorkspaceSsoProvider: async () => err(new WorkspaceSsoProviderNotFoundError()),
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
@@ -25,9 +31,15 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
   })
   it('returns nothing if user does not have a minimum workspace:member role', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:guest'),
-      getWorkspaceSsoProvider: async () => err(WorkspaceSsoProviderNotFoundError),
-      getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError)
+      getWorkspaceSsoProvider: async () => err(new WorkspaceSsoProviderNotFoundError()),
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
@@ -36,9 +48,15 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
-      getWorkspaceSsoProvider: async () => err(WorkspaceSsoProviderNotFoundError),
-      getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError)
+      getWorkspaceSsoProvider: async () => err(new WorkspaceSsoProviderNotFoundError()),
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
@@ -47,10 +65,16 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
   })
   it('throws uncovered error for unexpected ssoProvider loader errors', async () => {
     const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
       // @ts-expect-error testing uncovered errors
-      getWorkspaceSsoProvider: async () => err(ProjectNotFoundError),
-      getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError)
+      getWorkspaceSsoProvider: async () => err(new ProjectNotFoundError()),
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
@@ -59,11 +83,17 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
   })
   it('throws uncovered error for unexpected ssoSession loader errors', async () => {
     const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
       getWorkspaceSsoProvider: async () =>
         ok({ providerId: cryptoRandomString({ length: 10 }) }),
       // @ts-expect-error testing uncovered errors
-      getWorkspaceSsoSession: async () => err(ProjectNotFoundError)
+      getWorkspaceSsoSession: async () => err(new ProjectNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
@@ -72,16 +102,24 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
   })
   it('returns WorkspaceSsoSessionInvalidError if user does not have an SSO session', async () => {
     const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
       getWorkspaceSsoProvider: async () =>
         ok({ providerId: cryptoRandomString({ length: 10 }) }),
-      getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError)
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
     })({
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
     await expect(result).resolves.toStrictEqual(
-      just(err(WorkspaceSsoSessionInvalidError))
+      just(
+        err(new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug: 'bbb' } }))
+      )
     )
   })
   it('returns WorkspaceSsoSessionInvalidError if user has an expired sso session', async () => {
@@ -93,6 +131,12 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     validUntil.setDate(validUntil.getDate() - 1)
 
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
       getWorkspaceSsoProvider: async () =>
         ok({ providerId: cryptoRandomString({ length: 10 }) }),
@@ -101,7 +145,11 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId,
       workspaceId
     })
-    expect(result).toStrictEqual(just(err(WorkspaceSsoSessionInvalidError)))
+    expect(result).toStrictEqual(
+      just(
+        err(new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug: 'bbb' } }))
+      )
+    )
   })
   it('returns true if user has a valid sso session', async () => {
     const userId = cryptoRandomString({ length: 10 })
@@ -112,6 +160,12 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     validUntil.setDate(validUntil.getDate() + 100)
 
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => {
+        return ok({
+          id: 'aaa',
+          slug: 'bbb'
+        })
+      },
       getWorkspaceRole: async () => ok('workspace:member'),
       getWorkspaceSsoProvider: async () =>
         ok({ providerId: cryptoRandomString({ length: 10 }) }),
