@@ -13,9 +13,10 @@ import Bull from 'bull'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
-import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
+import { jobMessage } from '@speckle/shared/dist/esm/previews/job.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 import { createTerminus } from '@godaddy/terminus'
+import type { Logger } from 'pino'
 
 const app = express()
 const host = HOST
@@ -60,7 +61,7 @@ const opts = {
 const jobQueue = new Bull('preview-service-jobs', opts)
 
 // store this callback, so on shutdown we can error the job
-let jobDoneCallback: Bull.DoneCallback | undefined = undefined
+let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
 
 const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
@@ -83,9 +84,9 @@ const server = app.listen(port, host, async () => {
   await jobQueue.process(async (payload, done) => {
     let jobLogger = logger.child({ payloadId: payload.id })
     try {
-      jobDoneCallback = done
+      currentJob = { done, logger: jobLogger }
       const browser = await launchBrowser()
-      const parseResult = jobPayload.safeParse(payload.data)
+      const parseResult = jobMessage.safeParse(payload)
       if (!parseResult.success) {
         jobLogger.error(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -95,13 +96,18 @@ const server = app.listen(port, host, async () => {
         return done(parseResult.error)
       }
       const job = parseResult.data
-      jobLogger = jobLogger.child({ jobId: job.jobId, serverUrl: job.url })
-      const resultsQueue = new Bull(job.responseQueue, opts)
+      const jobData = job.data
+      jobLogger = jobLogger.child({
+        jobId: jobData.jobId,
+        jobAttemptsMade: job.attemptsMade,
+        serverUrl: jobData.url
+      })
+      const resultsQueue = new Bull(jobData.responseQueue, opts)
 
       const result = await jobProcessor({
         logger: jobLogger,
         browser,
-        job: parseResult.data,
+        job: jobData,
         port: PORT,
         timeout: PREVIEW_TIMEOUT
       })
@@ -119,7 +125,7 @@ const server = app.listen(port, host, async () => {
         throw err
       }
     }
-    jobDoneCallback = undefined
+    currentJob = undefined
   })
 })
 
@@ -131,9 +137,9 @@ const beforeShutdown = async () => {
     true // do not wait for active jobs to finish
   )
 
-  if (jobDoneCallback) {
-    logger.warn('Cancelling job due to preview-service shutdown')
-    jobDoneCallback(new Error('Job cancelled due to preview-service shutdown'))
+  if (currentJob) {
+    currentJob.logger.warn('Cancelling job due to preview-service shutdown')
+    currentJob.done(new Error('Job cancelled due to preview-service shutdown'))
   }
 }
 

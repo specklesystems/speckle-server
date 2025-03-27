@@ -13,6 +13,12 @@ export const jobPayload = job.merge(
 )
 export type JobPayload = z.infer<typeof jobPayload>
 
+export const jobMessage = z.object({
+  attemptsMade: z.number().optional(),
+  data: jobPayload
+})
+export type JobMessage = z.infer<typeof jobMessage>
+
 const previewPageResult = z.object({
   durationSeconds: z.number().describe('Duration to generate the preview, in seconds'),
   screenshots: z.record(z.string(), z.string())
