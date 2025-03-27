@@ -1,6 +1,8 @@
 export type Project = {
   id: string
-  // TODO: Deprecated field?
+  /**
+   * @deprecated
+   */
   isDiscoverable: boolean
   isPublic: boolean
   workspaceId: string | null

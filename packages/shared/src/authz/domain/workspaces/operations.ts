@@ -39,4 +39,5 @@ export type GetWorkspaceSsoSession = (args: {
 }) => Promise<
   Result<WorkspaceSsoSession, InstanceType<typeof WorkspaceSsoSessionNotFoundError>>
 >
-export type GetEnv = () => Result<FeatureFlags, never>
+
+export type GetEnv = () => Promise<FeatureFlags>

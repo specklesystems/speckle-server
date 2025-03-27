@@ -1,7 +1,7 @@
 import { ObjectLayers } from '../../../../index.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { GeometryPass } from '../../Passes/GeometryPass.js'
-import { EdgePass } from '../../Passes/EdgesPass.js'
+import { EdgesPass } from '../../Passes/EdgesPass.js'
 import { OutputPass } from '../../Passes/OutputPass.js'
 import { ObjectVisibility, ClearFlags } from '../../Passes/GPass.js'
 import { StencilMaskPass } from '../../Passes/StencilMaskPass.js'
@@ -36,12 +36,12 @@ export class MRTPenViewPipeline extends ProgressivePipeline {
     depthNormalIdPassDynamic.setClearColor(0x000000, 1)
     depthNormalIdPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
-    const edgesPass = new EdgePass()
+    const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
     edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
 
-    const edgesPassDynamic = new EdgePass()
+    const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthNormalIdPassDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthNormalIdPassDynamic.normalTexture)
     edgesPassDynamic.setTexture('tId', depthNormalIdPassDynamic.idTexture)
