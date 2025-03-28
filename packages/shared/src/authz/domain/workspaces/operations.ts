@@ -17,8 +17,8 @@ export type GetWorkspace = (args: {
   Result<
     Workspace,
     | InstanceType<typeof WorkspaceNotFoundError>
-    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
     | InstanceType<typeof WorkspaceNoAccessError>
+    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   >
 >
 
