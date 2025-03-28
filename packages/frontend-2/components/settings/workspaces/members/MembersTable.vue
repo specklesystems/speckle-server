@@ -122,7 +122,7 @@ graphql(`
       avatar
       name
       company
-      workspaceDomainPolicyCompliant
+      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
     }
   }
 `)
@@ -166,10 +166,11 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         ? [roleFilter.value]
         : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    slug: props.workspaceSlug
+    slug: props.workspaceSlug,
+    workspaceId: props.workspace?.id || ''
   }),
   () => ({
-    enabled: !!search.value.length || !!roleFilter.value
+    enabled: !!search.value.length || !!roleFilter.value || !!props.workspace?.id
   })
 )
 

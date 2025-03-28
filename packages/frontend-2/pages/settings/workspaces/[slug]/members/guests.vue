@@ -21,7 +21,8 @@ const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
 const { result } = useQuery(settingsWorkspacesMembersGuestsQuery, () => ({
-  slug: slug.value
+  slug: slug.value,
+  workspaceId: 'a1a6b3520d'
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)
