@@ -67,6 +67,10 @@ const jobQueue = new Bull('preview-service-jobs', opts)
 
 // store this callback, so on shutdown we can error the job
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
+
+// browser is a global variable, so we can handle the shutdown of the browser
+// in the beforeShutdown function. We need to stop processing jobs before we
+// can close the browser
 let browser: Browser | undefined = undefined
 
 const server = app.listen(port, host, async () => {
@@ -83,9 +87,12 @@ const server = app.listen(port, host, async () => {
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       protocolTimeout: PREVIEW_TIMEOUT,
-      handleSIGHUP: false, // handle closing of the browser by the parent process
-      handleSIGINT: false, // handle closing of the browser by the parent process
-      handleSIGTERM: false // handle closing of the browser by the parent process
+      // handle closing of the browser by the preview-service, not puppeteer
+      // this is important for the preview-service to be able to shut down gracefully,
+      // otherwise we end up in race condition where puppeteer closes before preview-service
+      handleSIGHUP: false,
+      handleSIGINT: false,
+      handleSIGTERM: false
     })
   }
   logger.debug('Starting message queues')
@@ -171,6 +178,10 @@ const beforeShutdown = async () => {
     currentJob.done(new Error('Job cancelled due to preview-service shutdown'))
   }
   if (browser) {
+    // preview-service is responsible for closing the browser
+    // to allow us to stop listening for new jobs and properly respond to any
+    // current job before we kill the browser
+    logger.info('Closing browser')
     await browser.close()
     browser = undefined
   }
