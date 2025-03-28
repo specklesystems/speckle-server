@@ -74,6 +74,14 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
+    const loadingWrapper = document.getElementById('loadingWrapper')
+    if (loadingWrapper) {
+      loadingWrapper.addEventListener('transitionend', function () {
+        // Remove the loading wrapper from the page
+        loadingWrapper.style.display = 'none'
+      })
+      loadingWrapper.style.opacity = '0'
+    }
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
