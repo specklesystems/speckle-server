@@ -171,7 +171,10 @@ export const useSettingsMembersActions = (props: {
   )
 
   const canDowngradeEditor = computed(
-    () => canModifyUser.value && props.targetUser.seatType === SeatTypes.Editor
+    () =>
+      canModifyUser.value &&
+      props.targetUser.seatType === SeatTypes.Editor &&
+      props.targetUser.role !== Roles.Workspace.Admin
   )
 
   const canRemoveFromWorkspace = computed(
