@@ -32,6 +32,21 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       )
     }
   )
+  it('returns workspace loader error sso error completely', async () => {
+    const ssoError = new WorkspaceSsoSessionNoAccessError({
+      payload: { workspaceSlug: cryptoRandomString({ length: 10 }) }
+    })
+    const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+      getWorkspace: async () => err(ssoError),
+      getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
+      getWorkspaceSsoProvider: async () => err(new WorkspaceSsoProviderNotFoundError()),
+      getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError())
+    })({
+      userId: cryptoRandomString({ length: 10 }),
+      workspaceId: cryptoRandomString({ length: 10 })
+    })
+    await expect(result).resolves.toStrictEqual(just(err(ssoError)))
+  })
   it('throws Uncovered error for unknown loader errors', async () => {
     await expect(
       maybeMemberRoleWithValidSsoSessionIfNeeded({

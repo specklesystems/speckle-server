@@ -8,6 +8,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 
+//
 export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
   | 'getWorkspaceRole'
   | 'getWorkspaceSsoProvider'
@@ -25,6 +26,8 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
         case 'WorkspaceNoAccess':
         case 'WorkspaceNotFound':
           return just(err(new WorkspaceNoAccessError()))
+        case 'WorkspaceSsoSessionNoAccess':
+          return just(err(workspace.error))
         default:
           throwUncoveredError(workspace.error)
       }
