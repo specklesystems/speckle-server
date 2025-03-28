@@ -12,7 +12,7 @@ describe('hasAnyWorkspaceRole returns a function, that', () => {
     await expect(
       hasAnyWorkspaceRole({
         // @ts-expect-error deliberately testing an unexpected loader error
-        getWorkspaceRole: async () => err(ProjectRoleNotFoundError)
+        getWorkspaceRole: async () => err(new ProjectRoleNotFoundError())
       })({
         userId: cryptoRandomString({ length: 10 }),
         workspaceId: cryptoRandomString({ length: 10 })
@@ -23,7 +23,7 @@ describe('hasAnyWorkspaceRole returns a function, that', () => {
     'turns expected loader error $code into false ',
     async (loaderError) => {
       const result = await hasAnyWorkspaceRole({
-        getWorkspaceRole: async () => err(loaderError)
+        getWorkspaceRole: async () => err(new loaderError())
       })({
         userId: cryptoRandomString({ length: 10 }),
         workspaceId: cryptoRandomString({ length: 10 })
@@ -33,7 +33,7 @@ describe('hasAnyWorkspaceRole returns a function, that', () => {
   )
   it('returns false if the user has no role', async () => {
     const result = await hasAnyWorkspaceRole({
-      getWorkspaceRole: async () => err(WorkspaceRoleNotFoundError)
+      getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError())
     })({
       userId: cryptoRandomString({ length: 9 }),
       workspaceId: cryptoRandomString({ length: 9 })
@@ -56,7 +56,7 @@ describe('requireMinimumWorkspaceRole returns a function, that', () => {
     await expect(
       requireMinimumWorkspaceRole({
         // @ts-expect-error deliberately testing an unexpected loader error
-        getWorkspaceRole: async () => err(ProjectRoleNotFoundError)
+        getWorkspaceRole: async () => err(new ProjectRoleNotFoundError())
       })({
         userId: cryptoRandomString({ length: 10 }),
         workspaceId: cryptoRandomString({ length: 10 }),
@@ -68,7 +68,7 @@ describe('requireMinimumWorkspaceRole returns a function, that', () => {
     'turns expected loader error $code into false ',
     async (loaderError) => {
       const result = await requireMinimumWorkspaceRole({
-        getWorkspaceRole: async () => err(loaderError)
+        getWorkspaceRole: async () => err(new loaderError())
       })({
         userId: cryptoRandomString({ length: 10 }),
         workspaceId: cryptoRandomString({ length: 10 }),

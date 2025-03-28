@@ -58,7 +58,6 @@ import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader2 from '@speckle/objectloader2'
-import ObjectLoader from '@speckle/objectloader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1271,6 +1270,7 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
+    const colorImage = document.getElementById('colorImage')
     const authToken = localStorage.getItem(
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
@@ -1285,9 +1285,10 @@ export default class Sandbox {
         undefined
       )
       /** Too spammy */
-      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-      //   console.warn(arg)
-      // })
+      loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+        if (colorImage)
+          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+      })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })
@@ -1346,7 +1347,7 @@ export default class Sandbox {
     const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
     let count = 0
 
-    for await (const obj of loader.getObjectIterator()) {
+    for await (const {} of loader.getObjectIterator()) {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }

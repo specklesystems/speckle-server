@@ -75,6 +75,7 @@ type Documents = {
     "\n  fragment ProjectPageAutomationModels_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": typeof types.ProjectPageAutomationModels_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    runs(limit: 10) {\n      items {\n        ...AutomationRunDetails\n      }\n      totalCount\n      cursor\n    }\n  }\n": typeof types.ProjectPageAutomationRuns_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 10) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n      cursor\n    }\n  }\n": typeof types.ProjectPageAutomationsRow_AutomationFragmentDoc,
+    "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n      workspace {\n        ...ProjectPageTeamInternals_Workspace\n        name\n        logo\n      }\n    }\n  }\n": typeof types.ProjectPageCollaboratorsDocument,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": typeof types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": typeof types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": typeof types.ProjectPageModelsActionsFragmentDoc,
@@ -86,8 +87,6 @@ type Documents = {
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": typeof types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": typeof types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": typeof types.ProjectPageModelsCardRenameDialogFragmentDoc,
-    "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": typeof types.ProjectPageSettingsCollaboratorsDocument,
-    "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": typeof types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": typeof types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": typeof types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n": typeof types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
@@ -171,6 +170,15 @@ type Documents = {
     "\n  query ActiveUserWorkspaceExistenceCheck {\n    activeUser {\n      id\n      verified\n      isOnboardingFinished\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces(limit: 0) {\n        totalCount\n        items {\n          id\n          slug\n        }\n      }\n      discoverableWorkspaces {\n        id\n      }\n      workspaceJoinRequests(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserWorkspaceExistenceCheckDocument,
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": typeof types.ProjectWorkspaceAccessCheckDocument,
+    "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": typeof types.AuthzProjectMetadataDocument,
+    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n": typeof types.AuthzGetProject_ProjectFragmentDoc,
+    "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": typeof types.AuthzGetProjectRole_ProjectFragmentDoc,
+    "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": typeof types.AuthzServerMetadataDocument,
+    "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": typeof types.AuthzGetServerRole_UserFragmentDoc,
+    "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n": typeof types.AuthzWorkspaceMetadataDocument,
+    "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n": typeof types.AuthzGetWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n": typeof types.AuthzGetWorkspaceRole_WorkspaceFragmentDoc,
+    "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.AuthzGetWorkspaceSsoProviderSession_WorkspaceFragmentDoc,
     "\n  fragment FunctionRunStatusForSummary on AutomateFunctionRun {\n    id\n    status\n  }\n": typeof types.FunctionRunStatusForSummaryFragmentDoc,
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": typeof types.TriggeredAutomationsStatusSummaryFragmentDoc,
     "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    functionRuns {\n      ...FunctionRunStatusForSummary\n      statusMessage\n    }\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": typeof types.AutomationRunDetailsFragmentDoc,
@@ -490,6 +498,7 @@ const documents: Documents = {
     "\n  fragment ProjectPageAutomationModels_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectPageAutomationModels_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    runs(limit: 10) {\n      items {\n        ...AutomationRunDetails\n      }\n      totalCount\n      cursor\n    }\n  }\n": types.ProjectPageAutomationRuns_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    isTestAutomation\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 10) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n      cursor\n    }\n  }\n": types.ProjectPageAutomationsRow_AutomationFragmentDoc,
+    "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n      workspace {\n        ...ProjectPageTeamInternals_Workspace\n        name\n        logo\n      }\n    }\n  }\n": types.ProjectPageCollaboratorsDocument,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
@@ -501,8 +510,6 @@ const documents: Documents = {
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
-    "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsDocument,
-    "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n": types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
@@ -586,6 +593,15 @@ const documents: Documents = {
     "\n  query ActiveUserWorkspaceExistenceCheck {\n    activeUser {\n      id\n      verified\n      isOnboardingFinished\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces(limit: 0) {\n        totalCount\n        items {\n          id\n          slug\n        }\n      }\n      discoverableWorkspaces {\n        id\n      }\n      workspaceJoinRequests(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserWorkspaceExistenceCheckDocument,
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": types.ProjectWorkspaceAccessCheckDocument,
+    "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": types.AuthzProjectMetadataDocument,
+    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n": types.AuthzGetProject_ProjectFragmentDoc,
+    "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": types.AuthzGetProjectRole_ProjectFragmentDoc,
+    "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": types.AuthzServerMetadataDocument,
+    "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": types.AuthzGetServerRole_UserFragmentDoc,
+    "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n": types.AuthzWorkspaceMetadataDocument,
+    "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n": types.AuthzGetWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n": types.AuthzGetWorkspaceRole_WorkspaceFragmentDoc,
+    "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.AuthzGetWorkspaceSsoProviderSession_WorkspaceFragmentDoc,
     "\n  fragment FunctionRunStatusForSummary on AutomateFunctionRun {\n    id\n    status\n  }\n": types.FunctionRunStatusForSummaryFragmentDoc,
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": types.TriggeredAutomationsStatusSummaryFragmentDoc,
     "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    functionRuns {\n      ...FunctionRunStatusForSummary\n      statusMessage\n    }\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomationRunDetailsFragmentDoc,
@@ -1105,6 +1121,10 @@ export function graphql(source: "\n  fragment ProjectPageAutomationsRow_Automati
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n      workspace {\n        ...ProjectPageTeamInternals_Workspace\n        name\n        logo\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n      workspace {\n        ...ProjectPageTeamInternals_Workspace\n        name\n        logo\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1146,14 +1166,6 @@ export function graphql(source: "\n  fragment ProjectPageModelsCardDeleteDialog 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsCollaborators($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageTeamInternals_Project\n      ...InviteDialogProject_Project\n      workspaceId\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"): (typeof documents)["\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1486,6 +1498,42 @@ export function graphql(source: "\n  query ActiveUserActiveWorkspaceCheck {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n"): (typeof documents)["\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n"): (typeof documents)["\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n"): (typeof documents)["\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
