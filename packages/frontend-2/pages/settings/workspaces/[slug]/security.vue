@@ -132,6 +132,7 @@ import {
   workspaceUpdateDomainProtectionMutation,
   workspaceUpdateDiscoverabilityMutation
 } from '~/lib/workspaces/graphql/mutations'
+import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -146,15 +147,6 @@ graphql(`
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
   }
-
-  fragment SettingsWorkspacesSecurity_User on User {
-    id
-    emails {
-      id
-      email
-      verified
-    }
-  }
 `)
 
 definePageMeta({
@@ -167,6 +159,9 @@ useHead({
 
 const slug = computed(() => (route.params.slug as string) || '')
 
+const { domains: userEmailDomains } = useVerifiedUserEmailDomains({
+  filterBlocked: false
+})
 const route = useRoute()
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
@@ -198,10 +193,7 @@ const verifiedUserDomains = computed(() => {
 
   return [
     ...new Set(
-      (result.value?.activeUser?.emails ?? [])
-        .filter((email) => email.verified)
-        .map((email) => email.email.split('@')[1])
-        .filter((domain) => !workspaceDomainSet.has(domain))
+      userEmailDomains.value.filter((domain) => !workspaceDomainSet.has(domain))
     )
   ]
 })

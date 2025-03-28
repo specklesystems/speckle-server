@@ -10,6 +10,7 @@ export const workspaceFragment = gql`
     updatedAt
     logo
     readOnly
+    discoverabilityEnabled
   }
 `
 
