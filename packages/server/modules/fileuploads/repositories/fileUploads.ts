@@ -1,5 +1,10 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
-import { GetFileInfo, SaveUploadFile } from '@/modules/fileuploads/domain/operations'
+import {
+  GetAllPendingUploads,
+  GetFileInfo,
+  SaveUploadFile,
+  UpdateUploadFile
+} from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
   FileUploadRecord
@@ -73,6 +78,38 @@ export const saveUploadFileFactory =
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
+  }
+
+export const updateUploadFileFactory =
+  (deps: { db: Knex }): UpdateUploadFile =>
+  async ({ fileId, newStatus }) => {
+    const [updatedRecord] = await tables
+      .fileUploads(deps.db)
+      .where({ [FileUploads.col.id]: fileId })
+      .update(
+        {
+          [FileUploads.col.convertedStatus]: newStatus
+        },
+        '*'
+      )
+    return updatedRecord
+  }
+
+export const getAllPendingUploadsFactory =
+  (deps: { db: Knex }): GetAllPendingUploads =>
+  async (options) => {
+    const { limit } = options || {}
+    const q = tables
+      .fileUploads(deps.db)
+      .whereIn(FileUploads.col.convertedStatus, [
+        FileUploadConvertedStatus.Queued,
+        FileUploadConvertedStatus.Converting
+      ])
+      .orderBy(FileUploads.col.uploadDate, 'asc')
+    if (limit) {
+      q.limit(limit)
+    }
+    return await q
   }
 
 const getPendingUploadsBaseQueryFactory =

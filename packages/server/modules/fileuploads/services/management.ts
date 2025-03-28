@@ -4,7 +4,11 @@ import {
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { SaveUploadFile } from '@/modules/fileuploads/domain/operations'
+import {
+  SaveUploadFile,
+  UpdateFileStatusAndNotify,
+  UpdateUploadFile
+} from '@/modules/fileuploads/domain/operations'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
@@ -35,6 +39,47 @@ export const insertNewUploadAndNotifyFactory =
         projectPendingVersionsUpdated: {
           id: file.id,
           type: ProjectPendingVersionsUpdatedMessageType.Created,
+          version: file
+        },
+        projectId: file.streamId,
+        branchName: file.branchName
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: file
+      },
+      projectId: file.streamId
+    })
+  }
+
+export const updateUploadAndNotifyFactory =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    updateUploadFile: UpdateUploadFile
+    publish: PublishSubscription
+  }): UpdateFileStatusAndNotify =>
+  async (params) => {
+    const branch = await deps.getStreamBranchByName(params.streamId, params.branchName)
+    const file = await deps.updateUploadFile(params)
+
+    if (!branch) {
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: file.id,
+          type: ProjectPendingModelsUpdatedMessageType.Updated,
+          model: file
+        },
+        projectId: file.streamId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: file.id,
+          type: ProjectPendingVersionsUpdatedMessageType.Updated,
           version: file
         },
         projectId: file.streamId,
