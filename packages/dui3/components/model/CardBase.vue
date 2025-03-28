@@ -92,7 +92,7 @@
       Fetching model data...
       <CommonLoadingBar loading />
     </div>
-    <div v-else class="px-1 py-1">Error loading data.</div>
+    <div v-else-if="modelError" class="px-1 py-1 text-danger">{{ modelError }}</div>
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
     <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
@@ -234,6 +234,8 @@ defineEmits<{
   (e: 'manual-publish-or-load'): void
 }>()
 
+const modelError = ref()
+
 const buttonTooltip = computed(() => {
   return props.modelCard.progress
     ? 'Cancel'
@@ -248,7 +250,11 @@ const projectAccount = computed(() =>
 
 const clientId = projectAccount.value.accountInfo.id
 
-const { result: modelResult, loading } = useQuery(
+const {
+  result: modelResult,
+  onError: onModelError,
+  loading
+} = useQuery(
   modelDetailsQuery,
   () => ({
     projectId: props.project.projectId,
@@ -259,6 +265,10 @@ const { result: modelResult, loading } = useQuery(
 
 const modelData = computed(() => modelResult.value?.project.model)
 const queryData = computed(() => modelResult.value?.project)
+
+onModelError(({ graphQLErrors }) => {
+  modelError.value = graphQLErrors.map((e) => e.message).join(', ')
+})
 
 const folderPath = computed(() => {
   const splitName = modelData.value?.name.split('/')
