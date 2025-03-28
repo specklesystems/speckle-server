@@ -100,6 +100,11 @@ export const ServerNoSessionError = defineAuthError({
   message: 'You are not logged in to this server'
 })
 
+export const ServerPersonalProjectsDisabledError = defineAuthError({
+  code: 'ServerPersonalProjectsDisabled',
+  message: 'Personal projects are not enabled on this server.'
+})
+
 export const ServerRoleNotFoundError = defineAuthError({
   code: 'ServerRoleNotFound',
   message: 'Could not resolve your server role'

@@ -19,7 +19,7 @@ import { hasAnyWorkspaceRole } from '../../checks/workspaceRole.js'
 import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
 import { throwUncoveredError } from '../../../core/index.js'
 
-export const canReadProjectPolicy: AuthPolicy<
+type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
   | typeof AuthCheckContextLoaderKeys.getProject
   | typeof AuthCheckContextLoaderKeys.getProjectRole
@@ -27,14 +27,22 @@ export const canReadProjectPolicy: AuthPolicy<
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
-  | typeof AuthCheckContextLoaderKeys.getWorkspace,
-  MaybeUserContext & ProjectContext,
+  | typeof AuthCheckContextLoaderKeys.getWorkspace
+
+type PolicyArgs = MaybeUserContext & ProjectContext
+
+type PolicyErrors =
   | InstanceType<typeof ProjectNotFoundError>
   | InstanceType<typeof ProjectNoAccessError>
   | InstanceType<typeof WorkspaceNoAccessError>
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+
+export const canReadProjectPolicy: AuthPolicy<
+  PolicyLoaderKeys,
+  PolicyArgs,
+  PolicyErrors
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
