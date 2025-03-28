@@ -9,13 +9,13 @@
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
         <div
-          v-if="isWorkspaceNewPlansEnabled && project.workspace"
+          v-if="isWorkspaceNewPlansEnabled && workspace"
           class="flex flex-col gap-y-3"
         >
           <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
           <ProjectPageCollaboratorsGeneralAccessRow
-            :name="project.workspace?.name"
-            :logo="project.workspace?.logo"
+            :name="workspace.name"
+            :logo="workspace?.logo"
             :can-edit="canEdit"
           />
         </div>
@@ -67,11 +67,16 @@ const projectPageCollaboratorsQuery = graphql(`
       ...ProjectPageTeamInternals_Project
       ...InviteDialogProject_Project
       workspaceId
-      workspace {
-        ...ProjectPageTeamInternals_Workspace
-        name
-        logo
-      }
+    }
+  }
+`)
+
+const projectPageCollaboratorWorkspaceQuery = graphql(`
+  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...ProjectPageTeamInternals_Workspace
+      name
+      logo
     }
   }
 `)
@@ -80,12 +85,22 @@ const projectId = computed(() => route.params.id as string)
 
 const route = useRoute()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
 const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
+const { result: workspaceResult } = useQuery(
+  projectPageCollaboratorWorkspaceQuery,
+  () => ({
+    workspaceId: pageResult.value!.project.workspace!.id
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspace?.id
+  })
+)
 
 const showInviteDialog = ref(false)
 const loading = ref(false)
@@ -95,7 +110,7 @@ const canInvite = computed(() =>
   workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
 )
 const project = computed(() => pageResult.value?.project)
-const workspace = computed(() => project.value?.workspace)
+const workspace = computed(() => workspaceResult.value?.workspace)
 const projectRole = computed(() => project.value?.role)
 const updateRole = useUpdateUserRole(project)
 const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
