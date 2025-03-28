@@ -1,9 +1,9 @@
 <template>
   <div>
     <LayoutMenu
-      v-if="filteredActionsItems.length"
+      v-if="actionItems.length"
       v-model:open="showMenu"
-      :items="filteredActionsItems"
+      :items="actionItems"
       mount-menu-on-body
       size="lg"
       :menu-position="HorizontalDirection.Left"
@@ -73,7 +73,6 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
-import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
   SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
@@ -89,8 +88,6 @@ const props = defineProps<{
   >
 }>()
 
-const { activeUser } = useActiveUser()
-
 const showMenu = ref(false)
 const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
@@ -99,95 +96,9 @@ const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
   workspaceSlug: props.workspace?.slug || ''
 })
 
-const isActiveUserWorkspaceAdmin = computed(
-  () => props.workspace?.role === Roles.Workspace.Admin
-)
-const isActiveUserTargetUser = computed(
-  () => activeUser.value?.id === props.targetUser.id
-)
-
-const {
-  canMakeAdmin,
-  canRemoveAdmin,
-  canMakeGuest,
-  canMakeMember,
-  canUpgradeEditor,
-  canDowngradeEditor,
-  canRemoveFromWorkspace,
-  canLeaveWorkspace,
-  canResignAdmin
-} = useSettingsMembersActions({
-  isActiveUserWorkspaceAdmin: isActiveUserWorkspaceAdmin.value,
-  isActiveUserTargetUser: isActiveUserTargetUser.value,
+const { actionItems, isActiveUserTargetUser } = useSettingsMembersActions({
+  workspaceRole: props.workspace?.role,
   targetUser: props.targetUser
-})
-
-const filteredActionsItems = computed(() => {
-  const mainItems: LayoutMenuItem[] = []
-  const footerItems: LayoutMenuItem[] = []
-
-  // Add main menu items
-  if (canMakeAdmin.value) {
-    mainItems.push({
-      title: 'Make admin...',
-      id: WorkspaceUserActionTypes.MakeAdmin
-    })
-  }
-  if (canMakeGuest.value) {
-    mainItems.push({
-      title: 'Make guest...',
-      id: WorkspaceUserActionTypes.MakeGuest
-    })
-  }
-  if (canMakeMember.value) {
-    mainItems.push({
-      title: 'Make member...',
-      id: WorkspaceUserActionTypes.MakeMember
-    })
-  }
-  if (canUpgradeEditor.value) {
-    mainItems.push({
-      title: 'Upgrade to editor...',
-      id: WorkspaceUserActionTypes.UpgradeEditor
-    })
-  }
-  if (canDowngradeEditor.value) {
-    mainItems.push({
-      title: 'Downgrade to viewer...',
-      id: WorkspaceUserActionTypes.DowngradeEditor
-    })
-  }
-
-  // Add footer items
-  if (canRemoveAdmin.value) {
-    footerItems.push({
-      title: 'Remove admin...',
-      id: WorkspaceUserActionTypes.RemoveAdmin
-    })
-  }
-  if (canResignAdmin.value) {
-    footerItems.push({
-      title: 'Resign as admin...',
-      id: WorkspaceUserActionTypes.ResignAdmin
-    })
-  }
-  if (canRemoveFromWorkspace.value) {
-    footerItems.push({
-      title: 'Remove from workspace...',
-      id: WorkspaceUserActionTypes.RemoveFromWorkspace
-    })
-  }
-  if (canLeaveWorkspace.value) {
-    footerItems.push({
-      title: 'Leave workspace...',
-      id: WorkspaceUserActionTypes.LeaveWorkspace
-    })
-  }
-
-  const result: LayoutMenuItem[][] = []
-  if (mainItems.length) result.push(mainItems)
-  if (footerItems.length) result.push(footerItems)
-  return result
 })
 
 const dialogToShow = computed(() => ({
@@ -243,7 +154,7 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-const onDialogSuccess = () => {
+const onDialogSuccess = async () => {
   showDialog.value = false
   dialogType.value = undefined
 }
