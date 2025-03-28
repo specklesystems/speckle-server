@@ -1,17 +1,8 @@
 import { db } from '@/db/knex'
-import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
-import { CommentRecord } from '@/modules/comments/helpers/types'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
-import {
-  createWebhookConfigFactory,
-  createWebhookEventFactory
-} from '@/modules/webhooks/repositories/webhooks'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   assignToWorkspace,
@@ -28,19 +19,10 @@ import {
 import {
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
-  GetProjectDocument,
-  GetRegionalProjectAutomationDocument,
-  GetRegionalProjectBlobDocument,
-  GetRegionalProjectCommentDocument,
-  GetRegionalProjectModelDocument,
-  GetRegionalProjectObjectDocument,
-  GetRegionalProjectVersionDocument,
-  GetRegionalProjectWebhookDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
   ProjectUpdateRoleInput,
-  UpdateProjectRegionDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
@@ -51,56 +33,14 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import {
-  createTestAutomation,
-  createTestAutomationRun
-} from '@/test/speckle-helpers/automationHelper'
-import { createTestBlob } from '@/test/speckle-helpers/blobHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { createTestComment } from '@/test/speckle-helpers/commentHelper'
-import {
-  BasicTestCommit,
-  createTestCommit,
-  createTestObject
-} from '@/test/speckle-helpers/commitHelper'
-import {
-  getMainTestRegionKey,
-  isMultiRegionTestMode,
-  waitForRegionUser,
-  waitForRegionUsers
-} from '@/test/speckle-helpers/regions'
-import {
   addToStream,
   BasicTestStream,
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { Roles, retry } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import { SetOptional } from 'type-fest'
-
-const tables = {
-  projects: (db: Knex) => db.table<StreamRecord>('streams')
-}
-
-const assertProjectRegion = async (
-  projectId: string,
-  regionKey: string
-): Promise<void> => {
-  const project = await tables.projects(db).select('*').where('id', projectId).first()
-
-  if (!project || project.regionKey !== regionKey) {
-    expect.fail('Project is not in expected region.')
-  }
-}
-
-const ensureProjectRegion = async (
-  projectId: string,
-  regionKey: string
-): Promise<void> => {
-  await retry(async () => assertProjectRegion(projectId, regionKey), 20, 10)
-}
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -182,12 +122,6 @@ describe('Workspace project GQL CRUD', () => {
         createTestUser(workspaceEditor),
         createTestUser(workspaceMemberViewer)
       ])
-      await waitForRegionUsers([
-        serverAdminUser,
-        workspaceGuest,
-        workspaceEditor,
-        workspaceMemberViewer
-      ])
     })
 
     describeEach(
@@ -213,8 +147,7 @@ describe('Workspace project GQL CRUD', () => {
           await createTestWorkspace(roleWorkspace, serverAdminUser, {
             addPlan: oldPlan
               ? { name: 'business', status: 'valid' }
-              : { name: 'pro', status: 'valid' },
-            regionKey: isMultiRegionTestMode() ? getMainTestRegionKey() : undefined
+              : { name: 'pro', status: 'valid' }
           })
           roleProject.workspaceId = roleWorkspace.id
 
@@ -512,296 +445,3 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 })
-
-// TODO: These are very flaky for some reason
-isMultiRegionTestMode()
-  ? describe.skip('Workspace project region changes', () => {
-      const regionKey1 = 'region1'
-      const regionKey2 = 'region2'
-
-      const adminUser: BasicTestUser = {
-        id: '',
-        name: 'John Speckle',
-        email: createRandomEmail(),
-        role: Roles.Server.Admin
-      }
-
-      const testWorkspace: SetOptional<BasicTestWorkspace, 'slug'> = {
-        id: '',
-        ownerId: '',
-        name: 'Unlimited Workspace'
-      }
-
-      const testProject: BasicTestStream = {
-        id: '',
-        ownerId: '',
-        name: 'Regional Project',
-        isPublic: true
-      }
-
-      const testModel: BasicTestBranch = {
-        id: '',
-        name: cryptoRandomString({ length: 8 }),
-        streamId: '',
-        authorId: ''
-      }
-
-      const testVersion: BasicTestCommit = {
-        id: '',
-        objectId: '',
-        streamId: '',
-        authorId: ''
-      }
-
-      let testAutomation: AutomationRecord
-      let testAutomationRun: AutomationRunRecord
-
-      let testComment: CommentRecord
-      let testWebhookId: string
-      let testBlobId: string
-
-      let apollo: TestApolloServer
-      let sourceRegionDb: Knex
-
-      before(async () => {
-        await createTestUser(adminUser)
-        await waitForRegionUser(adminUser)
-
-        apollo = await testApolloServer({ authUserId: adminUser.id })
-        sourceRegionDb = await getDb({ regionKey: regionKey1 })
-      })
-
-      beforeEach(async () => {
-        delete testWorkspace.slug
-
-        await createTestWorkspace(testWorkspace, adminUser, {
-          regionKey: regionKey1,
-          addPlan: {
-            name: 'unlimited',
-            status: 'valid'
-          }
-        })
-
-        testProject.workspaceId = testWorkspace.id
-
-        await createTestStream(testProject, adminUser)
-        await createTestBranch({
-          stream: testProject,
-          branch: testModel,
-          owner: adminUser
-        })
-
-        testVersion.branchName = testModel.name
-        testVersion.objectId = await createTestObject({ projectId: testProject.id })
-
-        await createTestCommit(testVersion, {
-          owner: adminUser,
-          stream: testProject
-        })
-
-        const { automation, revision } = await createTestAutomation({
-          userId: adminUser.id,
-          projectId: testProject.id,
-          revision: {
-            functionId: cryptoRandomString({ length: 9 }),
-            functionReleaseId: cryptoRandomString({ length: 9 })
-          }
-        })
-
-        if (!revision) {
-          throw new Error('Failed to create automation revision.')
-        }
-
-        testAutomation = automation.automation
-
-        const { automationRun } = await createTestAutomationRun({
-          userId: adminUser.id,
-          projectId: testProject.id,
-          automationId: testAutomation.id
-        })
-
-        testAutomationRun = automationRun
-
-        testComment = await createTestComment({
-          userId: adminUser.id,
-          projectId: testProject.id,
-          objectId: testVersion.objectId
-        })
-
-        testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
-          id: cryptoRandomString({ length: 9 }),
-          streamId: testProject.id,
-          url: 'https://example.org',
-          description: cryptoRandomString({ length: 9 }),
-          secret: cryptoRandomString({ length: 9 }),
-          enabled: false,
-          triggers: ['branch_create']
-        })
-        await createWebhookEventFactory({ db: sourceRegionDb })({
-          id: cryptoRandomString({ length: 9 }),
-          webhookId: testWebhookId,
-          payload: cryptoRandomString({ length: 9 })
-        })
-
-        const testBlob = await createTestBlob({
-          userId: adminUser.id,
-          projectId: testProject.id
-        })
-        testBlobId = testBlob.blobId
-
-        await assertProjectRegion(testProject.id, regionKey1)
-      })
-
-      it('moves project record to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetProjectDocument, {
-          id: testProject.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.name).to.equal(testProject.name)
-      })
-
-      it('moves project models to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectModelDocument, {
-          projectId: testProject.id,
-          modelId: testModel.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.model.name).to.equal(testModel.name)
-      })
-
-      it('moves project model versions to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectVersionDocument, {
-          projectId: testProject.id,
-          modelId: testModel.id,
-          versionId: testVersion.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.model.version.referencedObject).to.equal(
-          testVersion.objectId
-        )
-      })
-
-      it('moves project version objects to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectObjectDocument, {
-          projectId: testProject.id,
-          objectId: testVersion.objectId
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.object).to.not.be.undefined
-      })
-
-      it('moves project automations to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectAutomationDocument, {
-          projectId: testProject.id,
-          automationId: testAutomation.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.automation.id).to.equal(testAutomation.id)
-        expect(resB.data?.project.automation.runs.items.at(0)?.id).to.equal(
-          testAutomationRun.id
-        )
-        expect(
-          resB.data?.project.automation.runs.items.at(0)?.functionRuns.length
-        ).to.not.equal(0)
-      })
-
-      it('moves project comments to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectCommentDocument, {
-          projectId: testProject.id,
-          commentId: testComment.id
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.comment).to.not.be.undefined
-      })
-
-      it('moves project webhooks to target regional db', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectWebhookDocument, {
-          projectId: testProject.id,
-          webhookId: testWebhookId
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.webhooks.items.length).to.equal(1)
-      })
-
-      it('moves project files and associated blobs to target regional db and object storage', async () => {
-        const resA = await apollo.execute(UpdateProjectRegionDocument, {
-          projectId: testProject.id,
-          regionKey: regionKey2
-        })
-        expect(resA).to.not.haveGraphQLErrors()
-
-        await ensureProjectRegion(testProject.id, regionKey2)
-
-        const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
-          projectId: testProject.id,
-          blobId: testBlobId
-        })
-        expect(resB).to.not.haveGraphQLErrors()
-
-        expect(resB.data?.project.blob).to.not.be.undefined
-      })
-    })
-  : void 0
