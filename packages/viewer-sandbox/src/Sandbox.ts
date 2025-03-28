@@ -431,11 +431,13 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
+      const selection = this.viewer.getExtension(SelectionExtension)
       let box = this.viewer.getRenderer().boxFromObjects(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        selection ? selection.getSelectedObjects().map((val) => val.id) : []
       )
-      if (!box) {
+      if (box.isEmpty()) {
         box = this.viewer.getRenderer().sceneBox
       }
       this.viewer.getExtension(SectionTool).setBox(box)
