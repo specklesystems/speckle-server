@@ -44,6 +44,13 @@ type WrapWithCacheBaseParams<Args extends Array<any>> = {
      * Function to generate the cache key for the specific args. Defaults to JSON.stringify
      */
     argsKey: (...args: Args) => string
+    /**
+     * Whether to always return the same promise instead of creating a new one for each call when the args are the same.
+     * This will avoid multiple calls to the resolver function on empty cache when they're invoked in short succession - the 2nd call
+     * will just await the 1st call's promise.
+     * Default: true
+     */
+    cachePromises?: boolean
   }>
 }
 
@@ -60,7 +67,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
 
-  const buildRet =
+  const buildResolver =
     (
       retOptions?: Partial<{
         skipCache: boolean
@@ -92,7 +99,27 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
       return result
     }
 
-  const ret = buildRet() as {
+  const coreResolver = buildResolver()
+  const freshResolver = buildResolver({ skipCache: true })
+
+  const promiseCache = new Map<string, Promise<Results>>()
+  const mainResolver = options?.cachePromises
+    ? async (...args: Args) => {
+        const cacheKey = key(...args)
+        if (promiseCache.has(cacheKey)) {
+          return promiseCache.get(cacheKey)!
+        }
+
+        const resolverPromise = coreResolver(...args).finally(() => {
+          promiseCache.delete(cacheKey)
+        })
+
+        promiseCache.set(cacheKey, resolverPromise)
+        return resolverPromise
+      }
+    : coreResolver
+
+  const ret = mainResolver as {
     (...args: Args): Promise<Results>
     /**
      * Delete cached data for the given args
@@ -112,7 +139,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
     logger.info("Cache '{cacheName}' cleared for specific args")
   }
 
-  ret.fresh = buildRet({ skipCache: true })
+  ret.fresh = freshResolver
 
   return ret
 }
