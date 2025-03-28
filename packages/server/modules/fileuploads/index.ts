@@ -31,6 +31,7 @@ import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/ope
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
 import { TIME } from '@speckle/shared'
 import { getRouter } from '@/modules/fileuploads/rest/routes'
+import { FILE_UPLOAD_DB_EVENTS } from '@/modules/fileuploads/domain/consts'
 
 let scheduledTasks: cron.ScheduledTask[] = []
 
@@ -91,7 +92,7 @@ export const init: SpeckleModule = {
 
       scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-      listenFor('file_import_update', async (msg) => {
+      listenFor(FILE_UPLOAD_DB_EVENTS.Update, async (msg) => {
         const parsedMessage = parseMessagePayload(msg.payload)
         if (!parsedMessage.streamId) return
         const projectDb = await getProjectDbClient({
@@ -104,7 +105,7 @@ export const init: SpeckleModule = {
           eventEmit: getEventBus().emit
         })(parsedMessage)
       })
-      listenFor('file_import_started', async (msg) => {
+      listenFor(FILE_UPLOAD_DB_EVENTS.Started, async (msg) => {
         const parsedMessage = parseMessagePayload(msg.payload)
         if (!parsedMessage.streamId) return
         const projectDb = await getProjectDbClient({
