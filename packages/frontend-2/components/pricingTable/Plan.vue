@@ -51,29 +51,33 @@
       </template>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
-      <li
-        v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
+      <PricingTablePlanFeature
+        :is-included="true"
+        display-name="99 projects"
+        description="99 projects is a lot!"
+      />
+      <PricingTablePlanFeature
+        :is-included="true"
+        display-name="99 models per workspace"
+        description="99 models per workspace is a lot!"
+      />
+      <PricingTablePlanFeature
+        :is-included="true"
+        display-name="99 day version history"
+        description="99 day version history is a lot!"
+      />
+      <PricingTablePlanFeature
+        :is-included="true"
+        display-name="99 day comment history"
+        description="99 day comment history is a lot!"
+      />
+      <PricingTablePlanFeature
+        v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadataNew"
         :key="feature"
-        class="flex items-center text-body-xs"
-        :class="{
-          'lg:hidden': !planFeatures.includes(feature)
-        }"
-      >
-        <IconCheck
-          v-if="planFeatures.includes(feature)"
-          class="w-4 h-4 text-foreground mx-2"
-        />
-        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
-        <span
-          v-tippy="featureMetadata.description"
-          class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
-          :class="{
-            'text-foreground-2': !planFeatures.includes(feature)
-          }"
-        >
-          {{ featureMetadata.displayName }}
-        </span>
-      </li>
+        :is-included="planFeatures.includes(feature)"
+        :display-name="featureMetadata.displayName"
+        :description="featureMetadata.description"
+      />
     </ul>
   </div>
 </template>
@@ -82,7 +86,7 @@
 import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
-  WorkspacePlanFeaturesMetadata,
+  WorkspacePlanFeaturesMetadataNew,
   WorkspacePlanConfigs,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
@@ -91,7 +95,6 @@ import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
