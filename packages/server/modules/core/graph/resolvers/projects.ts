@@ -191,7 +191,6 @@ export = {
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
           case Authz.WorkspaceSsoSessionNoAccessError.code:
-            throw new ForbiddenError(canRead.error.message)
           case Authz.ServerNoAccessError.code:
           case Authz.ServerNoSessionError.code:
             throw new ForbiddenError(canRead.error.message)
@@ -276,6 +275,21 @@ export = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
+      }
+
+      const canCreate = await context.authPolicies.project.canCreate({
+        userId: context.userId
+      })
+
+      if (!canCreate.isOk) {
+        switch (canCreate.error.code) {
+          case Authz.ServerNoSessionError.code:
+          case Authz.ServerNoAccessError.code:
+          case Authz.ServerPersonalProjectsDisabledError.code:
+            throw new ForbiddenError(canCreate.error.message)
+          default:
+            throwUncoveredError(canCreate.error)
+        }
       }
 
       const regionKey = await getValidDefaultProjectRegionKey()
