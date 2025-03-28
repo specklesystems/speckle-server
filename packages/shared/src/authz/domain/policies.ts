@@ -7,6 +7,7 @@ import Maybe from 'true-myth/maybe'
 export type ProjectContext = { projectId: string }
 export type UserContext = { userId: string }
 export type MaybeUserContext = { userId?: string }
+export type WorkspaceContext = { workspaceId: string }
 
 // a complete policy always returns a full result
 export type AuthPolicy<

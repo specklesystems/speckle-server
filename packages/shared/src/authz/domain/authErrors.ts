@@ -60,9 +60,19 @@ export const WorkspaceNotFoundError = defineAuthError({
   message: 'Workspace not found'
 })
 
+export const WorkspacesNotEnabledError = defineAuthError({
+  code: 'WorkspacesNotEnabled',
+  message: 'This server does not support workspaces'
+})
+
 export const WorkspaceNoAccessError = defineAuthError({
   code: 'WorkspaceNoAccess',
   message: 'You do not have access to the workspace'
+})
+
+export const WorkspaceNotEnoughPermissionsError = defineAuthError({
+  code: 'WorkspaceNotEnoughPermissions',
+  message: 'You do not have enough permissions in the workspace to perform this action'
 })
 
 export const WorkspaceSsoProviderNotFoundError = defineAuthError({
@@ -88,6 +98,16 @@ export const WorkspaceSsoSessionNoAccessError = defineAuthError<
 export const WorkspaceRoleNotFoundError = defineAuthError({
   code: 'WorkspaceRoleNotFound',
   message: 'The user does not have a role in the workspace'
+})
+
+export const WorkspaceSeatNotFoundError = defineAuthError({
+  code: 'WorkspaceSeatNotFound',
+  message: 'The user does not have a seat in the workspace'
+})
+
+export const WorkspaceNoEditorSeatError = defineAuthError({
+  code: 'WorkspaceNoEditorSeat',
+  message: 'You need an editor seat to perform this action'
 })
 
 export const ServerNoAccessError = defineAuthError({

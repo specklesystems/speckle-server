@@ -1,11 +1,12 @@
 import Result from 'true-myth/result'
-import { WorkspaceRoles } from '../../../core/constants.js'
+import { WorkspaceRoles, WorkspaceSeatType } from '../../../core/constants.js'
 import { FeatureFlags } from '../../../environment/index.js'
 import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
 import {
   WorkspaceNoAccessError,
   WorkspaceNotFoundError,
   WorkspaceRoleNotFoundError,
+  WorkspaceSeatNotFoundError,
   WorkspaceSsoProviderNotFoundError,
   WorkspaceSsoSessionNoAccessError,
   WorkspaceSsoSessionNotFoundError
@@ -26,6 +27,13 @@ export type GetWorkspaceRole = (args: {
   userId: string
   workspaceId: string
 }) => Promise<Result<WorkspaceRoles, InstanceType<typeof WorkspaceRoleNotFoundError>>>
+
+export type GetWorkspaceSeat = (args: {
+  userId: string
+  workspaceId: string
+}) => Promise<
+  Result<WorkspaceSeatType, InstanceType<typeof WorkspaceSeatNotFoundError>>
+>
 
 export type GetWorkspaceSsoProvider = (args: {
   workspaceId: string
