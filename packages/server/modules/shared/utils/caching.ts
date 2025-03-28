@@ -64,6 +64,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 ) => {
   const cacheProvider = params.cacheProvider
   const { name, resolver, options } = params
+  const cachePromises = params.options?.cachePromises ?? true
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
 
@@ -103,7 +104,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
   const freshResolver = buildResolver({ skipCache: true })
 
   const promiseCache = new Map<string, Promise<Results>>()
-  const mainResolver = options?.cachePromises
+  const mainResolver = cachePromises
     ? async (...args: Args) => {
         const cacheKey = key(...args)
         if (promiseCache.has(cacheKey)) {
