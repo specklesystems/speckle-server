@@ -80,7 +80,7 @@ const createViewer = async (containerName: string, _stream: string) => {
         // Remove the loading wrapper from the page
         loadingWrapper.style.display = 'none'
       })
-      loadingWrapper.style.opacity = 0
+      loadingWrapper.style.opacity = '0'
     }
   })
 
