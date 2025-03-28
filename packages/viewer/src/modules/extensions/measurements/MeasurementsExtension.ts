@@ -158,9 +158,6 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    /** Catering to typescript
-     *  There will always be an intersected face. We're casting against indexed meshes only
-     */
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
 
@@ -177,6 +174,13 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.startPoint.copy(this.pointBuff)
       this._activeMeasurement.startNormal.copy(this.normalBuff)
     } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+      const normal = this._activeMeasurement.startNormal
+      const point = this._activeMeasurement.startPoint
+      const dir = new Vector3().subVectors(this.pointBuff, point).normalize()
+      const dot = dir.dot(normal)
+      if (dot < 0) this._activeMeasurement.flipStartNormal = true
+      else this._activeMeasurement.flipStartNormal = false
+
       this._activeMeasurement.endPoint.copy(this.pointBuff)
       this._activeMeasurement.endNormal.copy(this.normalBuff)
     }
