@@ -96,6 +96,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getFileImportTimeLimitMinutes() {
+  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
+}
+
 export function getMaximumRequestBodySizeMB() {
   return getIntFromEnv('MAX_REQUEST_BODY_SIZE_MB', '100')
 }
