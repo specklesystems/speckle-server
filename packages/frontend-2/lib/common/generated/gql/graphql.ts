@@ -2230,6 +2230,8 @@ export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
   id: Scalars['ID']['output'];
   role: Scalars['String']['output'];
+  /** The collaborator's workspace seat type for the workspace this project is in */
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
@@ -4327,6 +4329,8 @@ export type Workspace = {
   readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
+  /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
+  seatType?: Maybe<WorkspaceSeatType>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
@@ -4403,7 +4407,7 @@ export type WorkspaceCollaborator = {
   joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
-  seatType: WorkspaceSeatType;
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
@@ -5167,13 +5171,13 @@ export type SettingsWorkspacesMembersTable_WorkspaceFragment = { __typename?: 'W
 
 export type SettingsWorkspacesMembersTableHeader_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null, name: string, domainBasedMembershipProtectionEnabled: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null, plan?: { __typename?: 'WorkspacePlan', status: WorkspacePlanStatuses, name: WorkspacePlans } | null, subscription?: { __typename?: 'WorkspaceSubscription', seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null };
 
-export type SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> };
+export type SettingsWorkspacesMembersNewGuestsTable_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> };
 
-export type SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null, name: string, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
+export type SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null, name: string, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
-export type SettingsWorkspacesNewMembersTable_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, workspaceDomainPolicyCompliant?: boolean | null } };
+export type SettingsWorkspacesNewMembersTable_WorkspaceCollaboratorFragment = { __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, workspaceDomainPolicyCompliant?: boolean | null } };
 
-export type SettingsWorkspacesNewMembersTable_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, workspaceDomainPolicyCompliant?: boolean | null } }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
+export type SettingsWorkspacesNewMembersTable_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, workspaceDomainPolicyCompliant?: boolean | null } }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
 export type SettingsWorkspacesRegionsSelect_ServerRegionItemFragment = { __typename?: 'ServerRegionItem', id: string, key: string, name: string, description?: string | null };
 
@@ -6347,14 +6351,14 @@ export type SettingsWorkspacesMembersTableQueryVariables = Exact<{
 }>;
 
 
-export type SettingsWorkspacesMembersTableQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, name: string, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null, workspaceDomainPolicyCompliant?: boolean | null } }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string, domain: string }> | null } };
+export type SettingsWorkspacesMembersTableQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, name: string, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null, workspaceDomainPolicyCompliant?: boolean | null } }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string, domain: string }> | null } };
 
 export type SettingsWorkspacesMembersGuestsQueryVariables = Exact<{
   slug: Scalars['String']['input'];
 }>;
 
 
-export type SettingsWorkspacesMembersGuestsQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, role?: string | null, name: string, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string, domain: string }> | null } };
+export type SettingsWorkspacesMembersGuestsQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, role?: string | null, name: string, domainBasedMembershipProtectionEnabled: boolean, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null }, projectRoles: Array<{ __typename?: 'ProjectRole', role: string, project: { __typename?: 'Project', id: string, name: string } }> }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', currentBillingCycleEnd: string, seats: { __typename?: 'WorkspaceSubscriptionSeats', guest: number, plan: number } } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', id: string, domain: string }> | null } };
 
 export type SettingsWorkspacesMembersInvitesQueryVariables = Exact<{
   slug: Scalars['String']['input'];
@@ -6376,7 +6380,7 @@ export type SettingsWorkspacesMembersSearchQueryVariables = Exact<{
 }>;
 
 
-export type SettingsWorkspacesMembersSearchQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType: WorkspaceSeatType, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null, workspaceDomainPolicyCompliant?: boolean | null } }> } } };
+export type SettingsWorkspacesMembersSearchQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, seatType?: WorkspaceSeatType | null, joinDate: string, user: { __typename?: 'LimitedUser', id: string, avatar?: string | null, name: string, company?: string | null, workspaceDomainPolicyCompliant?: boolean | null } }> } } };
 
 export type SettingsWorkspacesInvitesSearchQueryVariables = Exact<{
   slug: Scalars['String']['input'];
@@ -6613,7 +6617,7 @@ export type WorkspacesUpdateSeatTypeMutationVariables = Exact<{
 }>;
 
 
-export type WorkspacesUpdateSeatTypeMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', updateSeatType: { __typename?: 'Workspace', team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, seatType: WorkspaceSeatType }> } } } };
+export type WorkspacesUpdateSeatTypeMutation = { __typename?: 'Mutation', workspaceMutations: { __typename?: 'WorkspaceMutations', updateSeatType: { __typename?: 'Workspace', team: { __typename?: 'WorkspaceCollaboratorCollection', items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, seatType?: WorkspaceSeatType | null }> } } } };
 
 export type InviteToWorkspaceMutationVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -8085,6 +8089,7 @@ export type ProjectAutomationsUpdatedMessageFieldArgs = {
 export type ProjectCollaboratorFieldArgs = {
   id: {},
   role: {},
+  seatType: {},
   user: {},
 }
 export type ProjectCollectionFieldArgs = {
@@ -8623,6 +8628,7 @@ export type WorkspaceFieldArgs = {
   projects: WorkspaceProjectsArgs,
   readOnly: {},
   role: {},
+  seatType: {},
   slug: {},
   sso: {},
   subscription: {},
