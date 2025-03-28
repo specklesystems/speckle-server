@@ -179,24 +179,24 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.canQuery({
+      const canRead = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
       })
 
-      if (!canQuery.isOk) {
-        switch (canQuery.error.code) {
+      if (!canRead.isOk) {
+        switch (canRead.error.code) {
           case Authz.ProjectNotFoundError.code:
             throw new StreamNotFoundError()
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
           case Authz.WorkspaceSsoSessionNoAccessError.code:
-            throw new ForbiddenError(canQuery.error.message)
+            throw new ForbiddenError(canRead.error.message)
           case Authz.ServerNoAccessError.code:
           case Authz.ServerNoSessionError.code:
-            throw new ForbiddenError(canQuery.error.message)
+            throw new ForbiddenError(canRead.error.message)
           default:
-            throwUncoveredError(canQuery.error)
+            throwUncoveredError(canRead.error)
         }
       }
 
