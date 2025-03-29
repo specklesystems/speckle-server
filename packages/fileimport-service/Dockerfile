@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble@sha256:59d7b5f3bff2318735c6f2dd95bb6a05908665f72dd25bfaf934ba78b3c4eae9 AS dotnet-build-stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble@sha256:5717ed8759f8f925328999e44c9c9f87c79b51864966d3b2017e5a9183ffab06 AS dotnet-build-stage
 WORKDIR /app
 COPY packages/fileimport-service/src/ifc-dotnet .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
