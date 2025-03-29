@@ -1,4 +1,5 @@
-import { buildTableHelper } from '@/modules/core/dbSchema'
+import { buildTableHelper, StreamAcl, Streams } from '@/modules/core/dbSchema'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
@@ -8,6 +9,8 @@ import {
   CountSeatsByTypeInWorkspace,
   CreateWorkspaceSeat,
   DeleteWorkspaceSeat,
+  GetProjectsUsersSeats,
+  GetWorkspacesUsersSeats,
   GetWorkspaceUserSeat,
   GetWorkspaceUserSeats
 } from '@/modules/gatekeeper/domain/operations'
@@ -26,7 +29,9 @@ const WorkspaceSeats = buildTableHelper('workspace_seats', [
 
 const tables = {
   workspaceSeats: (db: Knex) => db<WorkspaceSeat>(WorkspaceSeats.name),
-  workspaceAcl: (db: Knex) => db<WorkspaceAclRecord>(WorkspaceAcl.name)
+  workspaceAcl: (db: Knex) => db<WorkspaceAclRecord>(WorkspaceAcl.name),
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name),
+  streams: (db: Knex) => db<StreamRecord>(Streams.name)
 }
 
 export const countSeatsByTypeInWorkspaceFactory =
@@ -135,4 +140,68 @@ export const getWorkspaceRoleAndSeatFactory =
       userIds: [userId]
     })
     return rolesAndSeats[userId]
+  }
+
+export const getWorkspacesUsersSeatsFactory =
+  (deps: { db: Knex }): GetWorkspacesUsersSeats =>
+  async (params) => {
+    const { requests } = params
+    const q = tables.workspaceSeats(deps.db).whereIn(
+      [WorkspaceSeats.col.workspaceId, WorkspaceSeats.col.userId],
+      requests.map(({ userId, workspaceId }) => [workspaceId, userId])
+    )
+    const results = await q
+
+    return results.reduce((acc, seat) => {
+      const { userId, workspaceId } = seat
+      if (!acc[workspaceId]) {
+        acc[workspaceId] = {}
+      }
+
+      if (!acc[workspaceId][userId]) {
+        acc[workspaceId][userId] = seat
+      }
+      return acc
+    }, {} as Awaited<ReturnType<GetWorkspacesUsersSeats>>)
+  }
+
+export const getProjectsUsersSeatsFactory =
+  (deps: { db: Knex }): GetProjectsUsersSeats =>
+  async (params: {
+    requests: Array<{
+      userId: string
+      projectId: string
+    }>
+  }) => {
+    const { requests } = params
+    const idPairs = requests.map(({ userId, projectId }) => [userId, projectId])
+
+    const q = tables
+      .streamAcl(deps.db)
+      .whereIn([StreamAcl.col.userId, StreamAcl.col.resourceId], idPairs)
+      .innerJoin(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+      .leftJoin(WorkspaceSeats.name, (j1) => {
+        j1.on(WorkspaceSeats.col.userId, StreamAcl.col.userId).andOn(
+          WorkspaceSeats.col.workspaceId,
+          Streams.col.workspaceId
+        )
+      })
+      .select<Array<StreamAclRecord & WorkspaceSeat>>([
+        ...StreamAcl.cols,
+        ...WorkspaceSeats.cols
+      ])
+
+    const results = await q
+
+    return results.reduce((acc, row) => {
+      const { userId, resourceId: projectId } = row
+      if (!acc[projectId]) {
+        acc[projectId] = {}
+      }
+
+      if (!acc[projectId][userId]) {
+        acc[projectId][userId] = row
+      }
+      return acc
+    }, {} as Awaited<ReturnType<GetProjectsUsersSeats>>)
   }
