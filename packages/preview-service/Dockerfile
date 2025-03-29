@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 ARG NODE_ENV=production
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
+FROM node:18-bookworm-slim@sha256:3197eb4d1d37f37cc2217dc1a5c01f5d61d840e6299185e72e66fd2a6a698127 AS build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -49,7 +49,7 @@ RUN yarn workspaces foreach -W run build
 
 # google-chrome-stable is only available for amd64 so we have to fix the platform
 # hadolint ignore=DL3029
-FROM --platform=linux/amd64 node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS node
+FROM --platform=linux/amd64 node:18-bookworm-slim@sha256:3197eb4d1d37f37cc2217dc1a5c01f5d61d840e6299185e72e66fd2a6a698127 AS node
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install tini and fonts
