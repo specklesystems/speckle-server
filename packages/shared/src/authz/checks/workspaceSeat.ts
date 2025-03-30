@@ -1,5 +1,4 @@
 import { SeatTypes } from '../../core/constants.js'
-import { throwUncoveredError } from '../../core/index.js'
 import { AuthPolicyCheck, UserContext, WorkspaceContext } from '../domain/policies.js'
 
 export const hasEditorSeat: AuthPolicyCheck<
@@ -12,13 +11,6 @@ export const hasEditorSeat: AuthPolicyCheck<
       userId,
       workspaceId
     })
-    if (seat.isErr) {
-      switch (seat.error.code) {
-        case 'WorkspaceSeatNotFound':
-          return false
-        default:
-          throwUncoveredError(seat.error.code)
-      }
-    }
-    return seat.value === SeatTypes.Editor
+    if (!seat) return false
+    return seat === SeatTypes.Editor
   }

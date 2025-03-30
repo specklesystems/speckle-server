@@ -1,8 +1,8 @@
-import { AuthPolicy, MaybeUserContext, WorkspaceContext } from '../domain/policies.js'
-import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
+import { AuthPolicy } from '../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
+  WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
@@ -16,20 +16,25 @@ import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../fragments/workspa
 import { hasAnyWorkspaceRole } from '../checks/workspaceRole.js'
 import { throwUncoveredError } from '../../core/index.js'
 import { hasEditorSeat } from '../checks/workspaceSeat.js'
+import { MaybeUserContext, WorkspaceContext } from '../domain/context.js'
 
-export const canCreateWorkspaceProject: AuthPolicy<
-  | typeof AuthCheckContextLoaderKeys.getEnv
-  | typeof AuthCheckContextLoaderKeys.getServerRole
-  | typeof AuthCheckContextLoaderKeys.getWorkspace
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
+export const canCreateWorkspaceProjectPolicy: AuthPolicy<
+  | 'getEnv'
+  | 'getServerRole'
+  | 'getWorkspace'
+  | 'getWorkspaceRole'
   | 'getWorkspaceSeat'
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession,
+  | 'getWorkspaceLimits'
+  | 'getWorkspaceProjectCount'
+  | 'getWorkspaceSsoProvider'
+  | 'getWorkspaceSsoSession',
   MaybeUserContext & WorkspaceContext,
   | InstanceType<typeof WorkspacesNotEnabledError>
   | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceNoEditorSeatError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
+  | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
 > =
@@ -37,8 +42,8 @@ export const canCreateWorkspaceProject: AuthPolicy<
   async ({ userId, workspaceId }) => {
     const env = await loaders.getEnv()
     if (!env.FF_WORKSPACES_MODULE_ENABLED) return err(new WorkspacesNotEnabledError())
-
     if (!userId) return err(new ServerNoSessionError())
+
     const isActiveServerUser = await hasMinimumServerRole(loaders)({
       userId,
       role: Roles.Server.User
@@ -72,6 +77,9 @@ export const canCreateWorkspaceProject: AuthPolicy<
       }
     }
 
+    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+    if (!workspaceLimits) return err(new WorkspaceNoAccessError())
+
     if (env.FF_WORKSPACES_NEW_PLANS_ENABLED) {
       const isEditor = await hasEditorSeat(loaders)({
         userId,
@@ -80,5 +88,16 @@ export const canCreateWorkspaceProject: AuthPolicy<
       if (!isEditor) return err(new WorkspaceNoEditorSeatError())
     }
 
-    const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
+    // const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
+    // this will not happen in practice
+    // no limits imposed
+    if (!workspaceLimits.projectCount) return ok()
+    const currentProjectCount = await loaders.getWorkspaceProjectCount({
+      workspaceId
+    })
+    // this will not happen in practice
+    if (!currentProjectCount) return err(new WorkspaceNoAccessError())
+    return currentProjectCount < workspaceLimits.projectCount
+      ? ok()
+      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
   }
