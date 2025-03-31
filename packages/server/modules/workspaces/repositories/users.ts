@@ -25,12 +25,12 @@ function buildInvitableCollaboratorsByProjectIdQuery(
   db: Knex,
   {
     workspaceId,
-    search,
-    otherProjectsIds
+    projectId,
+    search
   }: {
     workspaceId: string
+    projectId: string
     search?: string
-    otherProjectsIds: string[]
   }
 ) {
   const query = tables
@@ -38,7 +38,13 @@ function buildInvitableCollaboratorsByProjectIdQuery(
     .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
     .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
     .where(WorkspaceAcl.col.workspaceId, workspaceId)
-    .whereNotIn(Users.col.id, otherProjectsIds)
+    .whereNotIn(
+      Users.col.id,
+      tables
+        .streamAcl(db)
+        .select(StreamAcl.col.resourceId)
+        .whereNot(StreamAcl.col.resourceId, projectId)
+    )
   if (search) {
     query
       .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
@@ -48,7 +54,7 @@ function buildInvitableCollaboratorsByProjectIdQuery(
           .orWhereLike(UserEmails.col.email, `%${search}%`)
       )
   }
-  return query
+  return query.groupBy(Users.col.id)
 }
 
 export const getInvitableCollaboratorsByProjectIdFactory =
@@ -67,14 +73,10 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     limit: number
   }): Promise<WorkspaceTeamMember[]> => {
     const { workspaceId, projectId, search } = filter
-    const otherProjectsIds = await tables
-      .streamAcl(db)
-      .select(StreamAcl.col.userId)
-      .where(StreamAcl.col.resourceId, projectId)
     const query = buildInvitableCollaboratorsByProjectIdQuery(db, {
       workspaceId,
-      search,
-      otherProjectsIds
+      projectId,
+      search
     })
     if (cursor) {
       query.andWhere(Users.col.createdAt, '<', cursor)
@@ -83,7 +85,6 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       .orderBy(Users.col.createdAt, 'desc')
       .limit(limit)
       .select(Users.cols.filter((col) => col !== Users.col.passwordDigest))
-      .groupBy(Users.col.id)
   }
 
 export const countInvitableCollaboratorsByProjectIdFactory =
@@ -98,14 +99,10 @@ export const countInvitableCollaboratorsByProjectIdFactory =
     }
   }) => {
     const { workspaceId, projectId, search } = filter
-    const otherProjectsIds = await tables
-      .streamAcl(db)
-      .select(StreamAcl.col.userId)
-      .where(StreamAcl.col.resourceId, projectId)
     const query = buildInvitableCollaboratorsByProjectIdQuery(db, {
       workspaceId,
-      search,
-      otherProjectsIds
+      projectId,
+      search
     })
     const [res] = await query.count()
     return parseInt(res.count.toString())
