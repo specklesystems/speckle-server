@@ -115,7 +115,7 @@ graphql(`
       avatar
       name
       company
-      workspaceDomainPolicyCompliant
+      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
     }
     projectRoles {
       role
