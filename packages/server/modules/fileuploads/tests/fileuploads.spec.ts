@@ -59,6 +59,7 @@ import { testLogger as logger } from '@/observability/logging'
 import { sleep } from '@/test/helpers'
 import { expect } from 'chai'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import { TIME } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -173,7 +174,32 @@ describe('FileUploads @fileuploads', () => {
         expect(results).to.not.be.undefined
         return //HACK to appease typescript
       }
-      expect(results?.convertedStatus).to.be.equal(FileUploadConvertedStatus.Error)
+      expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Error)
+    })
+    it('Should not garbage collect files that are not expired', async () => {
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+        saveUploadFile: saveUploadFileFactory({ db }),
+        publish
+      })
+      const fileId = cryptoRandomString({ length: 10 })
+      await insertNewUploadAndNotify({
+        streamId: createdStreamId,
+        branchName: 'main',
+        userId: userOneId,
+        fileId,
+        fileName: 'testfile.txt',
+        fileSize: 100,
+        fileType: 'text/plain'
+      })
+      // timeout far in the future, so it won't be garbage collected
+      await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
+      const results = await getFileInfoFactory({ db })({ fileId })
+      if (!results) {
+        expect(results).to.not.be.undefined
+        return //HACK to appease typescript
+      }
+      expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
     })
   })
 })
