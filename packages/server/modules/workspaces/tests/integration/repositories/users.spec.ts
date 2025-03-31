@@ -15,7 +15,7 @@ import { expect } from 'chai'
 import { pick } from 'lodash'
 
 describe('Workspace repositories', () => {
-  describe.only('users repository', () => {
+  describe('users repository', () => {
     describe('getInvitableCollaboratorsByProjectIdFactory returns a function that ', () => {
       const getInvitableCollaboratorsByProjectId =
         getInvitableCollaboratorsByProjectIdFactory({ db })
