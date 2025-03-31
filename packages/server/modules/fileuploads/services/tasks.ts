@@ -8,15 +8,15 @@ export const manageFileImportExpiryFactory = (deps: {
   garbageCollectExpiredPendingUploads: GarbageCollectPendingUploadedFiles
   notifyUploadStatus: NotifyChangeInFileStatus
 }) => {
-  const {} = deps
+  const { garbageCollectExpiredPendingUploads, notifyUploadStatus } = deps
   return async (params: { logger: Logger; timeoutThresholdSeconds: number }) => {
     const { logger, timeoutThresholdSeconds } = params
-    const updatedUploads = await deps.garbageCollectExpiredPendingUploads({
+    const updatedUploads = await garbageCollectExpiredPendingUploads({
       timeoutThresholdSeconds
     })
     logger.info(`Expired ${updatedUploads.length} pending uploads`)
     for (const upload of updatedUploads) {
-      await deps.notifyUploadStatus({
+      await notifyUploadStatus({
         file: upload
       })
     }
