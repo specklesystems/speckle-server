@@ -1270,6 +1270,7 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
+    const colorImage = document.getElementById('colorImage')
     const authToken = localStorage.getItem(
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
@@ -1284,9 +1285,10 @@ export default class Sandbox {
         undefined
       )
       /** Too spammy */
-      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-      //   console.warn(arg)
-      // })
+      loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+        if (colorImage)
+          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+      })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })

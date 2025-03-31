@@ -190,7 +190,7 @@ export = {
             throw new StreamNotFoundError()
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
-          case Authz.WorkspaceSsoSessionInvalidError.code:
+          case Authz.WorkspaceSsoSessionNoAccessError.code:
             throw new ForbiddenError(canQuery.error.message)
           case Authz.ServerNoAccessError.code:
           case Authz.ServerNoSessionError.code:
@@ -382,7 +382,8 @@ export = {
       return users.map((u) => ({
         user: u,
         role: u.streamRole,
-        id: u.id
+        id: u.id,
+        projectId: parent.id
       }))
     },
     async sourceApps(parent, _args, ctx) {

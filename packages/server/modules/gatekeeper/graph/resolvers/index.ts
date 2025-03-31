@@ -157,6 +157,17 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        },
+        seatType: async (parent, _args, context) => {
+          if (!context.userId) return null
+
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.id,
+            userId: context.userId
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
         }
       },
       WorkspaceSubscription: {
@@ -200,9 +211,10 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       WorkspaceCollaborator: {
         seatType: async (parent, _args, context) => {
-          const seat = await context.loaders
-            .gatekeeper!.getUserWorkspaceSeatType.forWorkspace(parent.workspaceId)
-            .load(parent.id)
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.workspaceId,
+            userId: parent.id
+          })
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
@@ -222,6 +234,17 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             monthly: price.monthly,
             yearly: 'yearly' in price ? price.yearly : null
           }))
+        }
+      },
+      ProjectCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders.gatekeeper!.getUserProjectSeat.load({
+            projectId: parent.projectId,
+            userId: parent.id
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
         }
       },
       WorkspaceMutations: {

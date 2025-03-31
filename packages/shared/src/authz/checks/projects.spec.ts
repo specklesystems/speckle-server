@@ -7,7 +7,7 @@ import {
   ProjectNoAccessError,
   ProjectNotFoundError,
   ProjectRoleNotFoundError,
-  WorkspaceSsoSessionInvalidError
+  WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { getProjectFake } from '../../tests/fakes.js'
 
@@ -17,17 +17,18 @@ describe('project checks', () => {
       await expect(
         isPubliclyReadableProject({
           // @ts-expect-error deliberately testing an unexpeceted error type
-          getProject: async () => err(ProjectRoleNotFoundError)
+          getProject: async () => err(new ProjectRoleNotFoundError())
         })({ projectId: cryptoRandomString({ length: 10 }) })
       ).rejects.toThrowError(/Uncovered error/)
     })
     it.each([
       ProjectNotFoundError,
       ProjectNoAccessError,
-      WorkspaceSsoSessionInvalidError
+      WorkspaceSsoSessionNoAccessError
     ])('turns expected loader error $code into false ', async (loaderError) => {
       const result = await isPubliclyReadableProject({
-        getProject: async () => err(loaderError)
+        getProject: async () =>
+          err(new loaderError({ payload: { workspaceSlug: 'foo' } }))
       })({ projectId: cryptoRandomString({ length: 10 }) })
       expect(result).toEqual(false)
     })
@@ -49,7 +50,7 @@ describe('project checks', () => {
       await expect(
         hasMinimumProjectRole({
           // @ts-expect-error deliberately testing an unexpeceted error type
-          getProjectRole: async () => err(ProjectNotFoundError)
+          getProjectRole: async () => err(new ProjectNotFoundError())
         })({
           projectId: cryptoRandomString({ length: 10 }),
           userId: cryptoRandomString({ length: 10 }),
@@ -59,7 +60,7 @@ describe('project checks', () => {
     })
     it('returns false, if there is no role for the user', async () => {
       const result = await hasMinimumProjectRole({
-        getProjectRole: () => Promise.resolve(err(ProjectRoleNotFoundError))
+        getProjectRole: () => Promise.resolve(err(new ProjectRoleNotFoundError()))
       })({
         projectId: cryptoRandomString({ length: 10 }),
         userId: cryptoRandomString({ length: 10 }),

@@ -13,12 +13,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceRoleNotFoundError,
   WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionInvalidError,
+  WorkspaceSsoSessionNoAccessError,
   WorkspaceSsoSessionNotFoundError
 } from '../domain/authErrors.js'
 import { getProjectFake } from '../../tests/fakes.js'
 import { err, ok } from 'true-myth/result'
 import cryptoRandomString from 'crypto-random-string'
+import { AuthCheckContextLoaders } from '../domain/loaders.js'
 
 const canQueryProjectArgs = () => {
   const projectId = crs({ length: 10 })
@@ -26,22 +27,30 @@ const canQueryProjectArgs = () => {
   return { projectId, userId }
 }
 
+const getWorkspace: AuthCheckContextLoaders['getWorkspace'] = async () =>
+  ok({
+    id: 'aaa',
+    slug: 'bbb'
+  })
+
 describe('canQueryProjectPolicy creates a function, that handles ', () => {
   describe('project loader errors', () => {
     it.each([
       ProjectNoAccessError,
       ProjectNotFoundError,
-      WorkspaceSsoSessionInvalidError
+      WorkspaceSsoSessionNoAccessError
     ])('expected $code error by returning the error', async (expectedError) => {
       const result = await canQueryProjectPolicy({
         getEnv: async () => parseFeatureFlags({}),
-        getProject: async () => err(expectedError),
+        getProject: async () =>
+          err(new expectedError({ payload: { workspaceSlug: 'bbb' } })),
         getProjectRole: () => {
           assert.fail()
         },
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -53,10 +62,13 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }
       })(canQueryProjectArgs())
 
-      expect(result).toStrictEqual(err(expectedError))
+      expect(result).toStrictEqual(
+        err(new expectedError({ payload: { workspaceSlug: 'bbb' } }))
+      )
     })
     it('unexpected error by throwing UncoveredError', async () => {
       const result = canQueryProjectPolicy({
+        getWorkspace,
         getEnv: async () => parseFeatureFlags({}),
         // @ts-expect-error testing uncovered error handling
         getProject: async () => err(ProjectRoleNotFoundError),
@@ -91,6 +103,8 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace,
+
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -114,6 +128,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getServerRole: () => {
           assert.fail()
         },
+        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -137,6 +152,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getProject: getProjectFake({ isDiscoverable: false, isPublic: true }),
         getProjectRole: async () => ok(Roles.Stream.Owner),
         getServerRole: async () => ok(Roles.Server.ArchivedUser),
+        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -156,6 +172,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: async () => ok(Roles.Stream.Owner),
         getServerRole: async () => ok(Roles.Server.ArchivedUser),
+        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -166,7 +183,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(ServerNoAccessError))
+      await expect(result).resolves.toStrictEqual(err(new ServerNoAccessError()))
     })
     it('does not allow access for non public projects for unknown users', async () => {
       const result = canQueryProjectPolicy({
@@ -174,7 +191,9 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: async () => ok(Roles.Stream.Owner),
-        getServerRole: async () => err(ServerRoleNotFoundError),
+        getServerRole: async () => err(new ServerRoleNotFoundError()),
+        getWorkspace,
+
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -185,7 +204,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })({ userId: undefined, projectId: cryptoRandomString({ length: 10 }) })
-      await expect(result).resolves.toStrictEqual(err(ServerNoSessionError))
+      await expect(result).resolves.toStrictEqual(err(new ServerNoSessionError()))
     })
   })
 
@@ -199,6 +218,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
           getProjectRole: async () => ok(role),
           getServerRole: async () => ok('server:user'),
+          getWorkspace,
           getWorkspaceRole: () => {
             assert.fail()
           },
@@ -218,7 +238,8 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getProjectRole: async () => err(ProjectRoleNotFoundError),
+        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
+        getWorkspace,
         getServerRole: async () => ok(Roles.Server.Admin),
         getWorkspaceRole: () => {
           assert.fail()
@@ -230,7 +251,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(ProjectNoAccessError))
+      await expect(result).resolves.toStrictEqual(err(new ProjectNoAccessError()))
     })
   })
   describe('admin override', () => {
@@ -242,6 +263,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getProjectRole: () => {
           assert.fail()
         },
+        getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -264,7 +286,9 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: async () => ok(Roles.Server.Admin),
-        getProjectRole: async () => err(ProjectRoleNotFoundError),
+        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
+        getWorkspace,
+
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -275,7 +299,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(ProjectNoAccessError))
+      await expect(result).resolves.toStrictEqual(err(new ProjectNoAccessError()))
     })
   })
   describe('the workspace world', () => {
@@ -290,6 +314,8 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
+        getWorkspace,
+
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -315,7 +341,9 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
-        getWorkspaceRole: async () => err(WorkspaceRoleNotFoundError),
+        getWorkspace,
+
+        getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
@@ -323,7 +351,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(WorkspaceNoAccessError))
+      await expect(result).resolves.toStrictEqual(err(new WorkspaceNoAccessError()))
     })
     it('allows project access via workspace role if user does not have project role', async () => {
       const result = canQueryProjectPolicy({
@@ -336,13 +364,15 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => err(ProjectRoleNotFoundError),
+        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
         getServerRole: async () => ok('server:user'),
         getWorkspaceRole: async () => ok('workspace:admin'),
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
-        getWorkspaceSsoProvider: async () => err(WorkspaceSsoProviderNotFoundError)
+        getWorkspace,
+        getWorkspaceSsoProvider: async () =>
+          err(new WorkspaceSsoProviderNotFoundError())
       })(canQueryProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
@@ -359,6 +389,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
+        getWorkspace,
         getWorkspaceRole: async () => ok('workspace:guest'),
         getWorkspaceSsoSession: () => {
           assert.fail()
@@ -383,10 +414,12 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
         getWorkspaceRole: async () => ok('workspace:member'),
+        getWorkspace,
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
-        getWorkspaceSsoProvider: async () => err(WorkspaceSsoProviderNotFoundError)
+        getWorkspaceSsoProvider: async () =>
+          err(new WorkspaceSsoProviderNotFoundError())
       })(canQueryProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
@@ -403,8 +436,9 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
+        getWorkspace,
         getWorkspaceRole: async () => ok('workspace:member'),
-        getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError),
+        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError()),
         getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
       })
       const canQuery = await canQueryProject(canQueryProjectArgs())
@@ -427,10 +461,17 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
         getWorkspaceRole: async () => ok('workspace:member'),
-        getWorkspaceSsoSession: async () => err(WorkspaceSsoSessionNotFoundError),
+        getWorkspace,
+        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError()),
         getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(WorkspaceSsoSessionInvalidError))
+      await expect(result).resolves.toStrictEqual(
+        err(
+          new WorkspaceSsoSessionNoAccessError({
+            payload: { workspaceSlug: 'bbb' }
+          })
+        )
+      )
     })
     it('does not allow project access if SSO session is expired', async () => {
       const date = new Date()
@@ -448,12 +489,19 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
+        getWorkspace,
         getWorkspaceRole: async () => ok('workspace:member'),
         getWorkspaceSsoSession: async () =>
           ok({ validUntil: date, userId: 'foo', providerId: 'foo' }),
         getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
       })(canQueryProjectArgs())
-      await expect(result).resolves.toStrictEqual(err(WorkspaceSsoSessionInvalidError))
+      await expect(result).resolves.toStrictEqual(
+        err(
+          new WorkspaceSsoSessionNoAccessError({
+            payload: { workspaceSlug: 'bbb' }
+          })
+        )
+      )
     })
     it('allows project access if SSO session is valid', async () => {
       const date = new Date()
@@ -471,6 +519,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         }),
         getProjectRole: async () => ok('stream:contributor'),
         getServerRole: async () => ok('server:user'),
+        getWorkspace,
         getWorkspaceRole: async () => ok('workspace:member'),
         getWorkspaceSsoSession: async () =>
           ok({ validUntil: date, userId: 'foo', providerId: 'foo' }),
