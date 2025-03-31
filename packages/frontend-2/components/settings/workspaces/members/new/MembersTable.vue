@@ -106,7 +106,7 @@ graphql(`
       id
       avatar
       name
-      workspaceDomainPolicyCompliant
+      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
     }
   }
 `)
