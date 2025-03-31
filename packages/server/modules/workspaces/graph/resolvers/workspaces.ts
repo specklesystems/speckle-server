@@ -73,7 +73,8 @@ import {
   getWorkspaceCreationStateFactory,
   upsertWorkspaceCreationStateFactory,
   queryWorkspacesFactory,
-  countWorkspacesFactory
+  countWorkspacesFactory,
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -209,6 +210,7 @@ import {
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { WorkspaceMembersByRole } from '@/test/graphql/generated/graphql'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1206,7 +1208,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        }
+        },
+        membersByRole: (parent) =>
+          ({
+            admins: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            }),
+            members: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Member
+              })
+            }),
+            guests: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            })
+          } as unknown as WorkspaceMembersByRole)
       },
       WorkspaceSso: {
         provider: async ({ workspaceId }) => {

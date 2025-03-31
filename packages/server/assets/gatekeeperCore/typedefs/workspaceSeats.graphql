@@ -20,6 +20,9 @@ extend type Workspace {
   """
   seatType: WorkspaceSeatType
   seatsByType: WorkspaceSeatsByType
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
 }
 
 type WorkspaceSeatsByType {
