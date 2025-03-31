@@ -40,7 +40,6 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     const query = tables
       .users(db)
       .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
-      .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
       .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
       .where(WorkspaceAcl.col.workspaceId, workspaceId)
       .whereNotIn(
@@ -51,11 +50,13 @@ export const getInvitableCollaboratorsByProjectIdFactory =
           .where(StreamAcl.col.resourceId, projectId)
       )
     if (search) {
-      query.andWhere((w) =>
-        w
-          .whereLike(Users.col.name, `%${search}%`)
-          .orWhereLike(UserEmails.col.email, `%${search}%`)
-      )
+      query
+        .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
+        .andWhere((w) =>
+          w
+            .whereLike(Users.col.name, `%${search}%`)
+            .orWhereLike(UserEmails.col.email, `%${search}%`)
+        )
     }
     if (cursor) {
       query.andWhere(Users.col.createdAt, '<', cursor)
@@ -82,7 +83,6 @@ export const countInvitableCollaboratorsByProjectIdFactory =
     const query = tables
       .users(db)
       .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
-      .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
       .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
       .where(WorkspaceAcl.col.workspaceId, workspaceId)
       .whereNotIn(
@@ -95,11 +95,13 @@ export const countInvitableCollaboratorsByProjectIdFactory =
       .select([Users.col.id, Users.col.name])
       .groupBy(Users.col.id)
     if (search) {
-      query.andWhere((w) =>
-        w
-          .whereLike(Users.col.name, `%${search}%`)
-          .orWhereLike(UserEmails.col.email, `%${search}%`)
-      )
+      query
+        .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
+        .andWhere((w) =>
+          w
+            .whereLike(Users.col.name, `%${search}%`)
+            .orWhereLike(UserEmails.col.email, `%${search}%`)
+        )
     }
     const [res] = await query.count()
     return parseInt(res.count.toString())
