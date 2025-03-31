@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { BatchObject, Extension, ObjectLayers } from '@speckle/viewer'
-import {
-  Box3,
-  CylinderGeometry,
-  Euler,
-  Group,
-  Mesh,
-  MeshBasicMaterial,
-  Quaternion,
-  Vector3
-} from 'three'
+import { BatchObject, Extension } from '@speckle/viewer'
+import { Box3, Euler, Group, Quaternion, Vector3 } from 'three'
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js'
 
 export class XrExtension extends Extension {
@@ -20,11 +11,6 @@ export class XrExtension extends Extension {
     const renderer = this.viewer.getRenderer().renderer
 
     document.body.appendChild(ARButton.createButton(renderer))
-
-    renderer.xr.enabled = true
-    renderer.setAnimationLoop(
-      this.viewer.getRenderer().render.bind(this.viewer.getRenderer())
-    )
 
     this.controller = renderer.xr.getController(0)
     this.controller.addEventListener('select', this.onSelect.bind(this))
@@ -47,22 +33,11 @@ export class XrExtension extends Extension {
         new Vector3(0, 1, 0),
         new Vector3(0, 0, -1)
       )
-      // .premultiply(
-      //   new Quaternion().setFromRotationMatrix(this.controller.matrixWorld)
-      // )
       pos.applyMatrix4(this.controller.matrixWorld)
       console.log('Res -> ', pos)
       obj.transformTRS(pos, new Euler().setFromQuaternion(quat), undefined, origin)
     })
-    // const geometry = new CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2)
-    // const material = new MeshBasicMaterial({
-    //   color: 0xffffff * Math.random()
-    // })
-    // const mesh = new Mesh(geometry, material)
-    // mesh.name = 'fucking-cone'
-    // mesh.position.set(0, 0, -0.3).applyMatrix4(this.controller.matrixWorld)
-    // mesh.quaternion.setFromRotationMatrix(this.controller.matrixWorld)
-    // this.viewer.getRenderer().scene.add(mesh)
+
     console.log('Controller -> ', this.controller.matrixWorld)
   }
 
