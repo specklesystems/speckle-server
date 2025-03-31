@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="pb-24">
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
         Guests are external collaborators. They can't create or add others to workspace
@@ -55,7 +55,9 @@
         <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
       </template>
       <template #joined="{ item }">
-        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
+        <span class="text-foreground-2">
+          {{ formattedFullDate(item.joinDate) }}
+        </span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
@@ -64,11 +66,10 @@
             ...item.user,
             role: item.role,
             seatType: item.seatType,
-            joinDate: item.joinDate
+            joinDate: item.joinDate,
+            workspaceDomainPolicyCompliant: item.user.workspaceDomainPolicyCompliant
           }"
-          :workspace-role="workspace?.role"
-          :workspace-id="workspace?.id"
-          :is-domain-compliant="item.user.workspaceDomainPolicyCompliant !== false"
+          :workspace="workspace"
         />
         <span v-else />
       </template>
@@ -112,6 +113,8 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesMembersNewGuestsTable_Workspace on Workspace {
     id
+    slug
+    name
     ...SettingsWorkspacesMembersTableHeader_Workspace
     ...SettingsSharedDeleteUserDialog_Workspace
     team(limit: 250) {
@@ -138,7 +141,8 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: [Roles.Workspace.Guest]
     },
-    slug: props.workspaceSlug
+    slug: props.workspaceSlug,
+    workspaceId: props.workspace?.id || ''
   }),
   () => ({
     enabled: !!search.value.length || !!seatTypeFilter.value

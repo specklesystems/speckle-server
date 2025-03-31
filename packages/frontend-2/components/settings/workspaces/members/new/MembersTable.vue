@@ -76,8 +76,7 @@
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
-          :workspace-role="workspace?.role"
-          :workspace-id="workspace?.id"
+          :workspace="workspace"
         />
       </template>
     </LayoutTable>
@@ -115,6 +114,7 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesNewMembersTable_Workspace on Workspace {
     id
+    slug
     name
     ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
@@ -146,7 +146,8 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         : [Roles.Workspace.Admin, Roles.Workspace.Member],
       seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug
+    slug: props.workspaceSlug,
+    workspaceId: props.workspace?.id || ''
   }),
   () => ({
     enabled: !!search.value.length || !!roleFilter.value || !!seatTypeFilter.value
