@@ -196,12 +196,12 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  protected frame() {
+  private frame() {
     this.update()
     this.render()
   }
 
-  protected update() {
+  private update() {
     const delta = this.clock.getDelta() * 1000 // turn to miliseconds
     const extensions = Object.values(this.extensions)
     extensions.forEach((ext: Extension) => {
@@ -215,8 +215,8 @@ export class Viewer extends EventEmitter implements IViewer {
     requestAnimationFrame(this.frame.bind(this))
   }
 
-  protected render() {
-    this.speckleRenderer.render()
+  private render() {
+    // this.speckleRenderer.render()
     Object.values(this.extensions).forEach((ext: Extension) => {
       ext.onRender()
     })
