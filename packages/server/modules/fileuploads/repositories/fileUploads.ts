@@ -86,12 +86,11 @@ export const updateUploadFileFactory =
     const [updatedRecord] = await tables
       .fileUploads(deps.db)
       .where({ [FileUploads.col.id]: fileId })
-      .update(
-        {
-          [FileUploads.col.convertedStatus]: newStatus
-        },
-        '*'
-      )
+      .update({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]: newStatus
+      })
+      .returning<FileUploadRecord[]>('*')
+
     return updatedRecord
   }
 

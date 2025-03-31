@@ -73,54 +73,53 @@ const scheduleFileImportExpiry = async ({
   )
 }
 
-export const init: SpeckleModule = {
-  init: async ({ app, isInitial }) => {
-    if (process.env.DISABLE_FILE_UPLOADS) {
-      moduleLogger.warn('📄 FileUploads module is DISABLED')
-      return
-    } else {
-      moduleLogger.info('📄 Init FileUploads module')
-    }
+export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
+  if (process.env.DISABLE_FILE_UPLOADS) {
+    moduleLogger.warn('📄 FileUploads module is DISABLED')
+    return
+  } else {
+    moduleLogger.info('📄 Init FileUploads module')
+  }
 
-    app.use(getRouter())
+  app.use(getRouter())
 
-    if (isInitial) {
-      const scheduleExecution = scheduleExecutionFactory({
-        acquireTaskLock: acquireTaskLockFactory({ db }),
-        releaseTaskLock: releaseTaskLockFactory({ db })
+  if (isInitial) {
+    const scheduleExecution = scheduleExecutionFactory({
+      acquireTaskLock: acquireTaskLockFactory({ db }),
+      releaseTaskLock: releaseTaskLockFactory({ db })
+    })
+
+    scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
+
+    listenFor(FILE_UPLOAD_DB_EVENTS.Update, async (msg) => {
+      const parsedMessage = parseMessagePayload(msg.payload)
+      if (!parsedMessage.streamId) return
+      const projectDb = await getProjectDbClient({
+        projectId: parsedMessage.streamId
       })
-
-      scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
-
-      listenFor(FILE_UPLOAD_DB_EVENTS.Update, async (msg) => {
-        const parsedMessage = parseMessagePayload(msg.payload)
-        if (!parsedMessage.streamId) return
-        const projectDb = await getProjectDbClient({
-          projectId: parsedMessage.streamId
-        })
-        await onFileImportProcessedFactory({
-          getFileInfo: getFileInfoFactory({ db: projectDb }),
-          publish,
-          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-          eventEmit: getEventBus().emit
-        })(parsedMessage)
+      await onFileImportProcessedFactory({
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
+        publish,
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        eventEmit: getEventBus().emit
+      })(parsedMessage)
+    })
+    listenFor(FILE_UPLOAD_DB_EVENTS.Started, async (msg) => {
+      const parsedMessage = parseMessagePayload(msg.payload)
+      if (!parsedMessage.streamId) return
+      const projectDb = await getProjectDbClient({
+        projectId: parsedMessage.streamId
       })
-      listenFor(FILE_UPLOAD_DB_EVENTS.Started, async (msg) => {
-        const parsedMessage = parseMessagePayload(msg.payload)
-        if (!parsedMessage.streamId) return
-        const projectDb = await getProjectDbClient({
-          projectId: parsedMessage.streamId
-        })
-        await onFileProcessingFactory({
-          getFileInfo: getFileInfoFactory({ db: projectDb }),
-          publish
-        })(parsedMessage)
-      })
-    }
-  },
-  shutdown: async () => {
-    scheduledTasks.forEach((task) => {
-      task.stop()
+      await onFileProcessingFactory({
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
+        publish
+      })(parsedMessage)
     })
   }
+}
+
+export const shutdown: SpeckleModule['shutdown'] = async () => {
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
 }
