@@ -16,3 +16,11 @@ export const navigationWorkspaceListQuery = graphql(`
     }
   }
 `)
+
+export const useNavigationStateQuery = graphql(`
+  query UseNavigationUser {
+    activeUser {
+      ...UseNavigationState_User
+    }
+  }
+`)

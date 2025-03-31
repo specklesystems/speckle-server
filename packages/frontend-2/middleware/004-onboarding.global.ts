@@ -13,7 +13,8 @@ import {
   workspaceCreateRoute,
   workspaceJoinRoute,
   projectsRoute,
-  workspaceRoute
+  workspaceRoute,
+  dashboardRoute
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
@@ -132,8 +133,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 4. Redirect to the correct workspace
-  // If there is an active workspace slug or legacy projects if active, we don't need to do anything
-  if (activeWorkspaceSlug.value || isProjectsActive.value) return
 
   // Skip workspace/project navigation logic if it's not the initial load
   if (isAppInitialized.value) return
@@ -207,7 +206,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     isProjectsActive.value = true
   }
 
-  if (to.path === homeRoute) {
+  if (to.path === homeRoute || to.path === dashboardRoute) {
     if (activeUserActiveWorkspaceSlug) {
       return navigateTo(workspaceRoute(activeUserActiveWorkspaceSlug))
     } else if (activeUserIsProjectsActive) {

@@ -2,10 +2,22 @@ import { setActiveWorkspaceMutation } from '~/lib/navigation/graphql/mutations'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   navigationActiveWorkspaceQuery,
-  navigationWorkspaceListQuery
+  navigationWorkspaceListQuery,
+  useNavigationStateQuery
 } from '~/lib/navigation/graphql/queries'
 import { graphql } from '~/lib/common/generated/gql'
 import type { UseNavigationActiveWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment UseNavigationState_User on User {
+    id
+    activeWorkspace {
+      id
+      slug
+    }
+    isProjectsActive
+  }
+`)
 
 graphql(`
   fragment UseNavigationActiveWorkspace_Workspace on Workspace {
@@ -23,12 +35,8 @@ graphql(`
 
 export const useNavigationState = () =>
   useState<{
-    activeWorkspaceSlug: string | null
-    isProjectsActive: boolean
     cachedWorkspaceData: UseNavigationActiveWorkspace_WorkspaceFragment | null
   }>('navigation-state', () => ({
-    activeWorkspaceSlug: null,
-    isProjectsActive: false,
     cachedWorkspaceData: null
   }))
 
@@ -37,19 +45,21 @@ export const useNavigation = () => {
   const { mutate } = useMutation(setActiveWorkspaceMutation)
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const activeWorkspaceSlug = computed({
-    get: () => state.value.activeWorkspaceSlug,
-    set: (newVal) => (state.value.activeWorkspaceSlug = newVal)
-  })
-
-  const isProjectsActive = computed({
-    get: () => state.value.isProjectsActive,
-    set: (newVal) => (state.value.isProjectsActive = newVal)
-  })
-
   const { result: workspacesResult } = useQuery(navigationWorkspaceListQuery, null, {
     enabled: isWorkspacesEnabled.value
   })
+
+  const { result: navigationStateResult } = useQuery(useNavigationStateQuery, null, {
+    enabled: isWorkspacesEnabled.value
+  })
+
+  const activeWorkspaceSlug = computed(
+    () => navigationStateResult.value?.activeUser?.activeWorkspace?.slug || null
+  )
+
+  const isProjectsActive = computed(
+    () => navigationStateResult.value?.activeUser?.isProjectsActive || false
+  )
 
   // Check for expired SSO sessions
   const expiredSsoSessions = computed(
@@ -79,16 +89,12 @@ export const useNavigation = () => {
 
   // Set state and mutate
   const mutateActiveWorkspaceSlug = async (newVal: string) => {
-    state.value.activeWorkspaceSlug = newVal
-    state.value.isProjectsActive = false
     await mutate({ slug: newVal, isProjectsActive: false })
   }
 
   const mutateIsProjectsActive = async (isActive: boolean) => {
-    state.value.isProjectsActive = isActive
-    state.value.activeWorkspaceSlug = null
     state.value.cachedWorkspaceData = null
-    await mutate({ isProjectsActive: state.value.isProjectsActive, slug: null })
+    await mutate({ isProjectsActive: isActive, slug: null })
   }
 
   // Active workspace where SSO session is expired
