@@ -13,6 +13,7 @@ import { createTestUser } from '@/test/authHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import { pick } from 'lodash'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -83,10 +84,12 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             limit: 10
           })
           expect(invitable).to.have.length(2)
-          expect(invitable).to.deep.equalInAnyOrder([
-            { id: admin.id, name: admin.name },
-            { id: member.id, name: member.name }
-          ])
+          expect(invitable.map((i) => pick(i, ['id', 'name']))).to.deep.equalInAnyOrder(
+            [
+              { id: admin.id, name: admin.name },
+              { id: member.id, name: member.name }
+            ]
+          )
         })
         it('should should filter by user name', async () => {
           const admin = await createTestUser({
@@ -148,9 +151,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             limit: 10
           })
           expect(invitable).to.have.length(1)
-          expect(invitable).to.deep.equalInAnyOrder([
-            { id: admin.id, name: admin.name }
-          ])
+          expect(invitable.map((i) => pick(i, ['id', 'name']))).to.deep.equalInAnyOrder(
+            [{ id: admin.id, name: admin.name }]
+          )
         })
         it('should should filter by user email', async () => {
           const admin = await createTestUser({
@@ -212,9 +215,9 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             limit: 10
           })
           expect(invitable).to.have.length(1)
-          expect(invitable).to.deep.equalInAnyOrder([
-            { id: admin.id, name: admin.name }
-          ])
+          expect(invitable.map((i) => pick(i, ['id', 'name']))).to.deep.equalInAnyOrder(
+            [{ id: admin.id, name: admin.name }]
+          )
         })
         it('should should filter by user name and email', async () => {
           const admin = await createTestUser({
@@ -276,10 +279,12 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             limit: 10
           })
           expect(invitable).to.have.length(2)
-          expect(invitable).to.deep.equalInAnyOrder([
-            { id: admin.id, name: admin.name },
-            { id: member.id, name: member.name }
-          ])
+          expect(invitable.map((i) => pick(i, ['id', 'name']))).to.deep.equalInAnyOrder(
+            [
+              { id: admin.id, name: admin.name },
+              { id: member.id, name: member.name }
+            ]
+          )
         })
       })
     })
