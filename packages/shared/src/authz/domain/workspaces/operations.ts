@@ -3,28 +3,41 @@ import { WorkspaceRoles } from '../../../core/constants.js'
 import { FeatureFlags } from '../../../environment/index.js'
 import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
 import {
+  WorkspaceNoAccessError,
   WorkspaceNotFoundError,
   WorkspaceRoleNotFoundError,
   WorkspaceSsoProviderNotFoundError,
+  WorkspaceSsoSessionNoAccessError,
   WorkspaceSsoSessionNotFoundError
 } from '../authErrors.js'
 
 export type GetWorkspace = (args: {
   workspaceId: string
-}) => Promise<Result<Workspace, typeof WorkspaceNotFoundError>>
+}) => Promise<
+  Result<
+    Workspace,
+    | InstanceType<typeof WorkspaceNotFoundError>
+    | InstanceType<typeof WorkspaceNoAccessError>
+    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
+  >
+>
 
 export type GetWorkspaceRole = (args: {
   userId: string
   workspaceId: string
-}) => Promise<Result<WorkspaceRoles, typeof WorkspaceRoleNotFoundError>>
+}) => Promise<Result<WorkspaceRoles, InstanceType<typeof WorkspaceRoleNotFoundError>>>
 
 export type GetWorkspaceSsoProvider = (args: {
   workspaceId: string
-}) => Promise<Result<WorkspaceSsoProvider, typeof WorkspaceSsoProviderNotFoundError>>
+}) => Promise<
+  Result<WorkspaceSsoProvider, InstanceType<typeof WorkspaceSsoProviderNotFoundError>>
+>
 
 export type GetWorkspaceSsoSession = (args: {
   userId: string
   workspaceId: string
-}) => Promise<Result<WorkspaceSsoSession, typeof WorkspaceSsoSessionNotFoundError>>
+}) => Promise<
+  Result<WorkspaceSsoSession, InstanceType<typeof WorkspaceSsoSessionNotFoundError>>
+>
 
-export type GetEnv = () => Result<FeatureFlags, never>
+export type GetEnv = () => Promise<FeatureFlags>

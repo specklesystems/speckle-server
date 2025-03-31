@@ -64,11 +64,6 @@ export const parseFeatureFlags = (
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Toggles IFC parsing with experimental .Net parser
-    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Forces onboarding for all users
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
@@ -114,7 +109,6 @@ export type FeatureFlags = {
   FF_GATEKEEPER_FORCE_FREE_PLAN: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean

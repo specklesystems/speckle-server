@@ -1,18 +1,39 @@
 import { describe, expect, it } from 'vitest'
-import {
-  requireAnyWorkspaceRole,
-  requireMinimumWorkspaceRole
-} from './workspaceRole.js'
+import { hasAnyWorkspaceRole, requireMinimumWorkspaceRole } from './workspaceRole.js'
 import cryptoRandomString from 'crypto-random-string'
 import { err, ok } from 'true-myth/result'
-import { WorkspaceRoleNotFoundError } from '../domain/authErrors.js'
+import {
+  WorkspaceRoleNotFoundError,
+  ProjectRoleNotFoundError
+} from '../domain/authErrors.js'
 
-describe('requireAnyWorkspaceRole returns a function, that', () => {
+describe('hasAnyWorkspaceRole returns a function, that', () => {
+  it('throws uncoveredError for unexpected loader errors', async () => {
+    await expect(
+      hasAnyWorkspaceRole({
+        // @ts-expect-error deliberately testing an unexpected loader error
+        getWorkspaceRole: async () => err(new ProjectRoleNotFoundError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 })
+      })
+    ).rejects.toThrowError(/Uncovered error/)
+  })
+  it.each([WorkspaceRoleNotFoundError])(
+    'turns expected loader error $code into false ',
+    async (loaderError) => {
+      const result = await hasAnyWorkspaceRole({
+        getWorkspaceRole: async () => err(new loaderError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 })
+      })
+      expect(result).toEqual(false)
+    }
+  )
   it('returns false if the user has no role', async () => {
-    const result = await requireAnyWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(err(WorkspaceRoleNotFoundError))
-      }
+    const result = await hasAnyWorkspaceRole({
+      getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError())
     })({
       userId: cryptoRandomString({ length: 9 }),
       workspaceId: cryptoRandomString({ length: 9 })
@@ -20,10 +41,8 @@ describe('requireAnyWorkspaceRole returns a function, that', () => {
     expect(result).toEqual(false)
   })
   it('returns true if the user has a role', async () => {
-    const result = await requireAnyWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(ok('workspace:member'))
-      }
+    const result = await hasAnyWorkspaceRole({
+      getWorkspaceRole: async () => ok('workspace:member')
     })({
       userId: cryptoRandomString({ length: 9 }),
       workspaceId: cryptoRandomString({ length: 9 })
@@ -33,50 +52,57 @@ describe('requireAnyWorkspaceRole returns a function, that', () => {
 })
 
 describe('requireMinimumWorkspaceRole returns a function, that', () => {
-  it('returns false if user does not have a role', async () => {
-    const result = await requireMinimumWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(err(WorkspaceRoleNotFoundError))
-      }
-    })({
-      userId: cryptoRandomString({ length: 9 }),
-      workspaceId: cryptoRandomString({ length: 9 }),
-      role: 'workspace:member'
-    })
-    expect(result).toEqual(false)
+  it('throws uncoveredError for unexpected loader errors', async () => {
+    await expect(
+      requireMinimumWorkspaceRole({
+        // @ts-expect-error deliberately testing an unexpected loader error
+        getWorkspaceRole: async () => err(new ProjectRoleNotFoundError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 }),
+        role: 'workspace:member'
+      })
+    ).rejects.toThrowError(/Uncovered error/)
   })
+  it.each([WorkspaceRoleNotFoundError])(
+    'turns expected loader error $code into false ',
+    async (loaderError) => {
+      const result = await requireMinimumWorkspaceRole({
+        getWorkspaceRole: async () => err(new loaderError())
+      })({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceId: cryptoRandomString({ length: 10 }),
+        role: 'workspace:member'
+      })
+      expect(result).toEqual(false)
+    }
+  )
   it('returns false if user is below target role', async () => {
     const result = await requireMinimumWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(ok('workspace:member'))
-      }
+      getWorkspaceRole: () => Promise.resolve(ok('workspace:member'))
     })({
-      userId: cryptoRandomString({ length: 9 }),
-      workspaceId: cryptoRandomString({ length: 9 }),
+      userId: cryptoRandomString({ length: 10 }),
+      workspaceId: cryptoRandomString({ length: 10 }),
       role: 'workspace:admin'
     })
     expect(result).toEqual(false)
   })
   it('returns true if user matches target role', async () => {
     const result = await requireMinimumWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(ok('workspace:member'))
-      }
+      getWorkspaceRole: () => Promise.resolve(ok('workspace:member'))
     })({
-      userId: cryptoRandomString({ length: 9 }),
-      workspaceId: cryptoRandomString({ length: 9 }),
+      userId: cryptoRandomString({ length: 10 }),
+      workspaceId: cryptoRandomString({ length: 10 }),
       role: 'workspace:member'
     })
     expect(result).toEqual(true)
   })
   it('returns true if user exceeds target role', async () => {
     const result = await requireMinimumWorkspaceRole({
-      loaders: {
-        getWorkspaceRole: () => Promise.resolve(ok('workspace:admin'))
-      }
+      getWorkspaceRole: () => Promise.resolve(ok('workspace:admin'))
     })({
-      userId: cryptoRandomString({ length: 9 }),
-      workspaceId: cryptoRandomString({ length: 9 }),
+      userId: cryptoRandomString({ length: 10 }),
+      workspaceId: cryptoRandomString({ length: 10 }),
       role: 'workspace:member'
     })
     expect(result).toEqual(true)

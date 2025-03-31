@@ -115,10 +115,6 @@ spec:
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
           {{- end }}
-          {{- if .Values.featureFlags.fileImportIFCDotNetEnabled }}
-          - name: FF_FILEIMPORT_IFC_DOTNET_ENABLED
-            value: {{ .Values.featureFlags.fileImportIFCDotNetEnabled | quote }}
-          {{- end }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
       {{- end }}
@@ -143,6 +139,12 @@ spec:
       priorityClassName: low-priority
       {{- if .Values.fileimport_service.serviceAccount.create }}
       serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       # Should be > File import timeout to allow finishing up imports
       terminationGracePeriodSeconds: 610

@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="group">
+  <div class="group h-full">
     <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">

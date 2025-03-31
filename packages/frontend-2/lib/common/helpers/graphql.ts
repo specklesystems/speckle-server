@@ -751,3 +751,21 @@ export const modifyObjectField = <
     options
   )
 }
+
+export const hasErrorWith = (params: {
+  errors: readonly GraphQLFormattedError[] | undefined
+  code?: string
+  codes?: string[]
+  message?: string
+}) => {
+  const { errors, code, message, codes } = params
+  if (!errors?.length) return undefined
+  if (!code?.length && !message?.length && !codes?.length) return undefined
+
+  return errors.find((e) => {
+    const hasCode = code && e.extensions?.code === code
+    const hasMessage = message && e.message.toLowerCase().includes(message)
+    const hasCodes = codes && codes.some((c) => e.extensions?.code === c)
+    return hasCode || hasMessage || hasCodes
+  })
+}

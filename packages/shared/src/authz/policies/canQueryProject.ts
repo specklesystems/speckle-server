@@ -1,145 +1,104 @@
-import {
-  requireAnyWorkspaceRole,
-  requireMinimumWorkspaceRole
-} from '../checks/workspaceRole.js'
-import {
-  requireExactProjectVisibilityFactory,
-  requireMinimumProjectRoleFactory
-} from '../checks/projects.js'
-import { AuthPolicyFactory, ProjectContext, UserContext } from '../domain/policies.js'
-import { requireExactServerRole } from '../checks/serverRole.js'
-import { requireValidWorkspaceSsoSession } from '../checks/workspaceSso.js'
 import { Roles } from '../../core/constants.js'
+import { hasMinimumProjectRole, isPubliclyReadableProject } from '../checks/projects.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
   WorkspaceNoAccessError,
-  WorkspaceSsoSessionInvalidError
+  WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
-import { err, isOk, ok } from 'true-myth/result'
+import { err, ok } from 'true-myth/result'
 import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
-import { LogicError } from '../domain/errors.js'
+import { AuthPolicy, MaybeUserContext, ProjectContext } from '../domain/policies.js'
+import { canUseAdminOverride, hasMinimumServerRole } from '../checks/serverRole.js'
+import { hasAnyWorkspaceRole } from '../checks/workspaceRole.js'
+import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../fragments/workspaceSso.js'
+import { throwUncoveredError } from '../../core/index.js'
 
-export const canQueryProjectPolicyFactory: AuthPolicyFactory<
+export const canQueryProjectPolicy: AuthPolicy<
   | typeof AuthCheckContextLoaderKeys.getEnv
   | typeof AuthCheckContextLoaderKeys.getProject
   | typeof AuthCheckContextLoaderKeys.getProjectRole
   | typeof AuthCheckContextLoaderKeys.getServerRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession,
-  UserContext & ProjectContext,
-  | typeof ProjectNotFoundError
-  | typeof ProjectNoAccessError
-  | typeof WorkspaceNoAccessError
-  | typeof WorkspaceSsoSessionInvalidError
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
+  | typeof AuthCheckContextLoaderKeys.getWorkspace,
+  MaybeUserContext & ProjectContext,
+  | InstanceType<typeof ProjectNotFoundError>
+  | InstanceType<typeof ProjectNoAccessError>
+  | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
+  | InstanceType<typeof ServerNoSessionError>
+  | InstanceType<typeof ServerNoAccessError>
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
     const env = await loaders.getEnv()
-    if (!isOk(env)) {
-      throw new LogicError('Failed to load environment variables')
-    }
 
-    const { FF_ADMIN_OVERRIDE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = env.value
-
+    // we prerolad the project and early return any loading errors
+    // this is a short circuit in the frontend, to surface any project load errors
+    // from the backend.
+    // make sure to expose all of the error types in the loader type,
+    // that we care about in this early return
     const project = await loaders.getProject({ projectId })
-    if (!isOk(project)) {
-      return err(project.error)
+    if (project.isErr) {
+      switch (project.error.code) {
+        case 'ProjectNoAccess':
+        case 'ProjectNotFound':
+        case 'WorkspaceSsoSessionNoAccess':
+          return err(project.error)
+        default:
+          throwUncoveredError(project.error)
+      }
     }
 
     // All users may read public projects
-    const isPublicResult = await requireExactProjectVisibilityFactory({ loaders })({
-      projectId,
-      projectVisibility: 'public'
-    })
-    if (isPublicResult) {
-      return ok(true)
-    }
+    if (await isPubliclyReadableProject(loaders)({ projectId })) return ok()
 
-    // All users may read link-shareable projects
-    const isLinkShareableResult = await requireExactProjectVisibilityFactory({
-      loaders
-    })({
-      projectId,
-      projectVisibility: 'linkShareable'
+    // From this point on, you cannot pass as an unknown user, need to log in
+    if (!userId) return err(new ServerNoSessionError())
+    const isActiveServerUser = await hasMinimumServerRole(loaders)({
+      userId,
+      role: Roles.Server.Guest
     })
-    if (isLinkShareableResult) {
-      return ok(true)
-    }
-    // From this point on, you cannot pass as an unknown user
-    if (!userId) {
-      return err(ProjectNoAccessError)
-    }
+    if (!isActiveServerUser) return err(new ServerNoAccessError())
 
     // When G O D M O D E is enabled
-    if (FF_ADMIN_OVERRIDE_ENABLED) {
-      // Server admins may read all project data
-      const isServerAdminResult = await requireExactServerRole({ loaders })({
-        userId,
-        role: Roles.Server.Admin
-      })
-      if (isServerAdminResult) {
-        return ok(true)
-      }
-    }
+    if (await canUseAdminOverride(loaders)({ userId })) return ok()
 
     const { workspaceId } = project.value
-
     // When a project belongs to a workspace
-    if (FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
+    if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
       // User must have a workspace role to read project data
-      const hasWorkspaceRoleResult = await requireAnyWorkspaceRole({ loaders })({
+      if (!(await hasAnyWorkspaceRole(loaders)({ userId, workspaceId })))
+        return err(new WorkspaceNoAccessError())
+
+      const memberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
+        loaders
+      )({
         userId,
         workspaceId
       })
-      if (!hasWorkspaceRoleResult) {
-        // Should we hide the fact, the project is in a workspace?
-        return err(WorkspaceNoAccessError)
-      }
 
-      const hasMinimumMemberRole = await requireMinimumWorkspaceRole({
-        loaders
-      })({
-        userId,
-        workspaceId,
-        role: 'workspace:member'
-      })
-
-      if (hasMinimumMemberRole) {
-        const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
-          workspaceId
-        })
-        if (workspaceSsoProvider.isOk) {
-          // Member and admin user must have a valid SSO session to read project data
-          const hasValidSsoSessionResult = await requireValidWorkspaceSsoSession({
-            loaders
-          })({
-            userId,
-            workspaceId
-          })
-          if (!hasValidSsoSessionResult) {
-            return err(WorkspaceSsoSessionInvalidError)
-          }
-        }
-
-        // Workspace members get to go through without an explicit project role
-        return ok(true)
+      if (memberWithSsoSession.isJust) {
+        // if a member, make sure it has a valid sso session
+        return memberWithSsoSession.value.isOk
+          ? ok()
+          : err(memberWithSsoSession.value.error)
       } else {
         // just fall through to the generic project role check for workspace:guest-s
+        // they do not need an sso session
       }
     }
 
-    // User must have at least stream reviewer role to read project data
-    const hasMinimumProjectRoleResult = await requireMinimumProjectRoleFactory({
-      loaders
-    })({
+    // User must have at least stream:reviewer role to read project data
+    return (await hasMinimumProjectRole(loaders)({
       userId,
       projectId,
       role: 'stream:reviewer'
-    })
-    if (hasMinimumProjectRoleResult) {
-      return ok(true)
-    }
-    return err(ProjectNoAccessError)
+    }))
+      ? ok()
+      : err(new ProjectNoAccessError())
   }

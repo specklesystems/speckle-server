@@ -11,20 +11,20 @@ export default defineModuleLoaders(async () => {
   const getUserServerRole = getUserServerRoleFactory({ db })
 
   return {
-    getEnv: async () => ok(getFeatureFlags()),
+    getEnv: async () => getFeatureFlags(),
     getProject: async ({ projectId }) => {
       const project = await getStream({ streamId: projectId })
-      if (!project) return err(Authz.ProjectNotFoundError)
+      if (!project) return err(new Authz.ProjectNotFoundError())
       return ok({ ...project, projectId: project.id })
     },
     getProjectRole: async ({ userId, projectId }) => {
       const project = await getStream({ streamId: projectId, userId })
-      if (!project?.role) return err(Authz.ProjectRoleNotFoundError)
+      if (!project?.role) return err(new Authz.ProjectRoleNotFoundError())
       return ok(project.role)
     },
     getServerRole: async ({ userId }) => {
       const role = await getUserServerRole({ userId })
-      if (!role) return err(Authz.ServerRoleNotFoundError)
+      if (!role) return err(new Authz.ServerRoleNotFoundError())
       return ok(role)
     }
   }
