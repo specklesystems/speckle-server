@@ -20,6 +20,7 @@ import {
 } from '@/test/authHelper'
 import {
   GetWorkspaceDocument,
+  GetWorkspaceWithSeatsByTypeDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/test/graphql/generated/graphql'
 import {
@@ -33,7 +34,8 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 
-const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
+const { FF_BILLING_INTEGRATION_ENABLED, FF_WORKSPACES_MODULE_ENABLED } =
+  getFeatureFlags()
 
 describe('Workspaces Billing', () => {
   let apollo: TestApolloServer
@@ -248,6 +250,88 @@ describe('Workspaces Billing', () => {
           const seats = res.data?.workspace.subscription?.seats
           expect(seats?.viewersCount).to.eq(2)
         })
+      })
+    }
+  )
+  ;(FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
+    'workspace.seatsByType',
+    () => {
+      it('should return the number of editors and viewers in a workspace', async () => {
+        const user = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true
+        })
+        const workspace = {
+          id: createRandomString(),
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 }),
+          ownerId: user.id
+        }
+        await createTestWorkspace(workspace, user, {
+          addPlan: { name: 'pro', status: 'valid' }
+        })
+        const viewer1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          viewer1,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Viewer
+        )
+        const viewer2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          viewer2,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Viewer
+        )
+
+        const editor1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          editor1,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+        const editor2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          editor2,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+
+        const session = await login(user)
+
+        const res = await session.execute(GetWorkspaceWithSeatsByTypeDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const seats = res.data?.workspace.seatsByType
+        expect(seats?.viewers?.totalCount).to.eq(2)
+        expect(seats?.editors?.totalCount).to.eq(3)
       })
     }
   )
