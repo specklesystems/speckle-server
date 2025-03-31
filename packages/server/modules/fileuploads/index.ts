@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { updateUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
+import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
@@ -7,9 +7,8 @@ import {
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
 import {
-  getAllPendingUploadsFactory,
-  getFileInfoFactory,
-  updateUploadFileFactory
+  expireOldPendingUploadsFactory,
+  getFileInfoFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -46,10 +45,11 @@ const scheduleFileImportExpiry = async ({
   for (const projectDb of [db, ...regionClients]) {
     fileImportExpiryHandlers.push(
       manageFileImportExpiryFactory({
-        getPendingUploads: getAllPendingUploadsFactory({ db: projectDb }),
-        updateUploadStatus: updateUploadAndNotifyFactory({
+        garbageCollectExpiredPendingUploads: expireOldPendingUploadsFactory({
+          db: projectDb
+        }),
+        notifyUploadStatus: notifyChangeInFileStatus({
           getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-          updateUploadFile: updateUploadFileFactory({ db: projectDb }),
           publish
         })
       })

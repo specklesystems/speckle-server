@@ -6,8 +6,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   SaveUploadFile,
-  UpdateFileStatusAndNotify,
-  UpdateUploadFile
+  NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
@@ -56,43 +55,43 @@ export const insertNewUploadAndNotifyFactory =
     })
   }
 
-export const updateUploadAndNotifyFactory =
+export const notifyChangeInFileStatus =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
-    updateUploadFile: UpdateUploadFile
     publish: PublishSubscription
-  }): UpdateFileStatusAndNotify =>
+  }): NotifyChangeInFileStatus =>
   async (params) => {
-    const branch = await deps.getStreamBranchByName(params.streamId, params.branchName)
-    const file = await deps.updateUploadFile(params)
+    const { file } = params
+    const { id: fileId, streamId, branchName } = file
+    const branch = await deps.getStreamBranchByName(streamId, branchName)
 
     if (!branch) {
       await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
         projectPendingModelsUpdated: {
-          id: file.id,
+          id: fileId,
           type: ProjectPendingModelsUpdatedMessageType.Updated,
           model: file
         },
-        projectId: file.streamId
+        projectId: streamId
       })
     } else {
       await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
         projectPendingVersionsUpdated: {
-          id: file.id,
+          id: fileId,
           type: ProjectPendingVersionsUpdatedMessageType.Updated,
           version: file
         },
-        projectId: file.streamId,
-        branchName: file.branchName
+        projectId: streamId,
+        branchName
       })
     }
 
     await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {
-        id: file.id,
+        id: fileId,
         type: ProjectFileImportUpdatedMessageType.Created,
         upload: file
       },
-      projectId: file.streamId
+      projectId: streamId
     })
   }

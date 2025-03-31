@@ -1,9 +1,8 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
-  GetAllPendingUploads,
+  GarbageCollectPendingUploadedFiles,
   GetFileInfo,
-  SaveUploadFile,
-  UpdateUploadFile
+  SaveUploadFile
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -80,35 +79,27 @@ export const saveUploadFileFactory =
     return newRecord as FileUploadRecord
   }
 
-export const updateUploadFileFactory =
-  (deps: { db: Knex }): UpdateUploadFile =>
-  async ({ fileId, newStatus }) => {
-    const [updatedRecord] = await tables
-      .fileUploads(deps.db)
-      .where({ [FileUploads.col.id]: fileId })
+export const expireOldPendingUploadsFactory =
+  (deps: { db: Knex }): GarbageCollectPendingUploadedFiles =>
+  async (params: { timeoutThresholdSeconds: number }) => {
+    const updatedRows = await deps
+      .db(FileUploads.name)
+      .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
+        FileUploadConvertedStatus.Converting,
+        FileUploadConvertedStatus.Queued
+      ])
+      .andWhere(
+        FileUploads.withoutTablePrefix.col.uploadDate,
+        '<',
+        deps.db.raw(`now() - interval '${params.timeoutThresholdSeconds} seconds'`)
+      )
       .update({
-        [FileUploads.withoutTablePrefix.col.convertedStatus]: newStatus
+        [FileUploads.withoutTablePrefix.col.convertedStatus]:
+          FileUploadConvertedStatus.Error
       })
       .returning<FileUploadRecord[]>('*')
 
-    return updatedRecord
-  }
-
-export const getAllPendingUploadsFactory =
-  (deps: { db: Knex }): GetAllPendingUploads =>
-  async (options) => {
-    const { limit } = options || {}
-    const q = tables
-      .fileUploads(deps.db)
-      .whereIn(FileUploads.col.convertedStatus, [
-        FileUploadConvertedStatus.Queued,
-        FileUploadConvertedStatus.Converting
-      ])
-      .orderBy(FileUploads.col.uploadDate, 'asc')
-    if (limit) {
-      q.limit(limit)
-    }
-    return await q
+    return updatedRows
   }
 
 const getPendingUploadsBaseQueryFactory =

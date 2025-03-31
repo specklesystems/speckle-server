@@ -45,14 +45,13 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
 import {
-  getAllPendingUploadsFactory,
+  expireOldPendingUploadsFactory,
   getFileInfoFactory,
-  saveUploadFileFactory,
-  updateUploadFileFactory
+  saveUploadFileFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   insertNewUploadAndNotifyFactory,
-  updateUploadAndNotifyFactory
+  notifyChangeInFileStatus
 } from '@/modules/fileuploads/services/management'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { testLogger as logger } from '@/observability/logging'
@@ -122,10 +121,11 @@ const createUser = createUserFactory({
 })
 
 const garbageCollector = manageFileImportExpiryFactory({
-  getPendingUploads: getAllPendingUploadsFactory({ db }),
-  updateUploadStatus: updateUploadAndNotifyFactory({
+  garbageCollectExpiredPendingUploads: expireOldPendingUploadsFactory({
+    db
+  }),
+  notifyUploadStatus: notifyChangeInFileStatus({
     getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-    updateUploadFile: updateUploadFileFactory({ db }),
     publish
   })
 })
