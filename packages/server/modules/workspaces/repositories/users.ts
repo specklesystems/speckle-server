@@ -21,9 +21,9 @@ export const setUserActiveWorkspaceFactory =
     ])
   }
 
-function buildInvitableCollaboratorsByProjectIdQuery(
-  db: Knex,
-  {
+const buildInvitableCollaboratorsByProjectIdQueryFactory =
+  ({ db }: { db: Knex }) =>
+  ({
     workspaceId,
     projectId,
     search
@@ -31,31 +31,30 @@ function buildInvitableCollaboratorsByProjectIdQuery(
     workspaceId: string
     projectId: string
     search?: string
-  }
-) {
-  const query = tables
-    .users(db)
-    .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
-    .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
-    .where(WorkspaceAcl.col.workspaceId, workspaceId)
-    .whereNotIn(
-      Users.col.id,
-      tables
-        .streamAcl(db)
-        .select(StreamAcl.col.resourceId)
-        .whereNot(StreamAcl.col.resourceId, projectId)
-    )
-  if (search) {
-    query
-      .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
-      .andWhere((w) =>
-        w
-          .whereLike(Users.col.name, `%${search}%`)
-          .orWhereLike(UserEmails.col.email, `%${search}%`)
+  }) => {
+    const query = tables
+      .users(db)
+      .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
+      .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
+      .where(WorkspaceAcl.col.workspaceId, workspaceId)
+      .whereNotIn(
+        Users.col.id,
+        tables
+          .streamAcl(db)
+          .select(StreamAcl.col.resourceId)
+          .whereNot(StreamAcl.col.resourceId, projectId)
       )
+    if (search) {
+      query
+        .join(UserEmails.name, UserEmails.col.userId, Users.col.id)
+        .andWhere((w) =>
+          w
+            .whereLike(Users.col.name, `%${search}%`)
+            .orWhereLike(UserEmails.col.email, `%${search}%`)
+        )
+    }
+    return query.groupBy(Users.col.id)
   }
-  return query.groupBy(Users.col.id)
-}
 
 export const getInvitableCollaboratorsByProjectIdFactory =
   ({ db }: { db: Knex }) =>
@@ -73,7 +72,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     limit: number
   }): Promise<WorkspaceTeamMember[]> => {
     const { workspaceId, projectId, search } = filter
-    const query = buildInvitableCollaboratorsByProjectIdQuery(db, {
+    const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
       workspaceId,
       projectId,
       search
@@ -99,7 +98,7 @@ export const countInvitableCollaboratorsByProjectIdFactory =
     }
   }) => {
     const { workspaceId, projectId, search } = filter
-    const query = buildInvitableCollaboratorsByProjectIdQuery(db, {
+    const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
       workspaceId,
       projectId,
       search
