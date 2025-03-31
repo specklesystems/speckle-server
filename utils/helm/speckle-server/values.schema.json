@@ -167,6 +167,11 @@
       "description": "This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle",
       "default": 100
     },
+    "file_import_time_limit_min": {
+      "type": "number",
+      "description": "The maximum time (unit is minutes) that a file import can take before it is considered to have failed",
+      "default": 10
+    },
     "enable_prometheus_monitoring": {
       "type": "boolean",
       "description": "If enabled, Speckle deploys a Prometheus ServiceMonitor resource",
@@ -2233,7 +2238,7 @@
         },
         "time_limit_min": {
           "type": "number",
-          "description": "The maximum time that a file can take to be processed by the FileImport Service.",
+          "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
           "default": 10
         }
       }
