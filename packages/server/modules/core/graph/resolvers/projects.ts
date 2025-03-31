@@ -382,7 +382,8 @@ export = {
       return users.map((u) => ({
         user: u,
         role: u.streamRole,
-        id: u.id
+        id: u.id,
+        projectId: parent.id
       }))
     },
     async sourceApps(parent, _args, ctx) {
