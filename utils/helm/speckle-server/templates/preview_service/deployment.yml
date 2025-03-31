@@ -32,13 +32,14 @@ spec:
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
-          exec:
-            command:
-              - node
-              - -e
-              # just a dummy output for now, not yet sure how to do liveliness with the new setup.
-              # if there is no job in the queue, the service does nothing, so the prev solution would not work
-              - {{ printf "console.log(%s)" .Values.preview_service.puppeteer.timeoutMilliseconds }}
+          httpGet:
+            path: /liveness
+            port: metrics
+
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: metrics
 
         resources:
           requests:
