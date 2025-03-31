@@ -122,7 +122,7 @@ graphql(`
       avatar
       name
       company
-      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
+      workspaceDomainPolicyCompliant
     }
   }
 `)

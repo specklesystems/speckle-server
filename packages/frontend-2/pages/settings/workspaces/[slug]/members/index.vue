@@ -20,8 +20,7 @@ const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
-  slug: slug.value,
-  workspaceId: 'a1a6b3520d'
+  slug: slug.value
 }))
 const workspace = computed(() => result.value?.workspaceBySlug)
 </script>
