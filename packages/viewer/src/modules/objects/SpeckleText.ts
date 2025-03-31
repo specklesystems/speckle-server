@@ -44,7 +44,11 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
   billboard: false
 }
 
-/** TO DO: This is weird  */
+/** TO DO: This is weird because in the billboarded scenario, background size is
+ *  specified in pixels inside the style, yet we still rely on the actual world space
+ *  background rectangle to be a factor larger than the text itself
+ *  This needs to be looked and probably eliminated, but it does not currently break functionality
+ */
 const BACKGROUND_OVERSIZE = 1.2
 
 export class SpeckleText extends Mesh {

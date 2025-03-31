@@ -357,6 +357,12 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+    /** We're not testing the line, points and disc because testing the label only
+     *  was explicitly requested.
+     *  However, I'll keep these commented because this last request could change in the future
+     *  and also to emphasize that raycasting agains the gizmo is not restricted to text object only
+     *  and that we *explictly* do not test any other components
+     */
     // this.disc.raycast(raycaster, intersects)
     // this.line.raycast(raycaster, intersects)
     // this.point.raycast(raycaster, intersects)
