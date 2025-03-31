@@ -20,6 +20,7 @@ import {
 } from '@/test/authHelper'
 import {
   GetWorkspaceDocument,
+  GetWorkspaceWithSeatsByTypeDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/test/graphql/generated/graphql'
 import {
@@ -251,4 +252,83 @@ describe('Workspaces Billing', () => {
       })
     }
   )
+  describe('workspace.seatsByType', () => {
+    it('should return the number of editors and viewers in a workspace', async () => {
+      const user = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.Admin,
+        verified: true
+      })
+      const workspace = {
+        id: createRandomString(),
+        name: createRandomString(),
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user, {
+        addPlan: { name: 'pro', status: 'valid' }
+      })
+      const viewer1 = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      })
+      await assignToWorkspace(
+        workspace,
+        viewer1,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Viewer
+      )
+      const viewer2 = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      })
+      await assignToWorkspace(
+        workspace,
+        viewer2,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Viewer
+      )
+
+      const editor1 = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      })
+      await assignToWorkspace(
+        workspace,
+        editor1,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Editor
+      )
+      const editor2 = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      })
+      await assignToWorkspace(
+        workspace,
+        editor2,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Editor
+      )
+
+      const session = await login(user)
+
+      const res = await session.execute(GetWorkspaceWithSeatsByTypeDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      const seats = res.data?.workspace.seatsByType
+      expect(seats?.viewers?.totalCount).to.eq(2)
+      expect(seats?.editors?.totalCount).to.eq(3)
+    })
+  })
 })

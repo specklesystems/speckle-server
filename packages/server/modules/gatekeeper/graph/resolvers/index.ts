@@ -42,7 +42,10 @@ import {
   CreateCheckoutSessionOld,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import {
+  WorkspacePaymentMethod,
+  WorkspaceSeatsByType
+} from '@/test/graphql/generated/graphql'
 import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
@@ -168,7 +171,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
-        }
+        },
+        seatsByType: (parent) =>
+          ({
+            editors: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'editor'
+              })
+            }),
+            viewers: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'viewer'
+              })
+            })
+          } as unknown as WorkspaceSeatsByType)
       },
       WorkspaceSubscription: {
         seats: async (parent) => {

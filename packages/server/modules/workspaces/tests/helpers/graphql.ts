@@ -385,6 +385,23 @@ export const getWorkspaceWithSubscriptionQuery = gql`
   ${basicWorkspaceFragment}
 `
 
+export const getWorkspaceWithSeatsByType = gql`
+  query GetWorkspaceWithSeatsByType($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      seatsByType {
+        editors {
+          totalCount
+        }
+        viewers {
+          totalCount
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
 export const updateWorkspaceProjectRoleMutation = gql`
   mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
     workspaceMutations {
