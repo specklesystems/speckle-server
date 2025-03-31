@@ -61,7 +61,6 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry.js'
 import { TypedArray } from 'type-fest'
-
 export class RTEBuffers {
   private _cache: RTEBuffers | undefined
 
