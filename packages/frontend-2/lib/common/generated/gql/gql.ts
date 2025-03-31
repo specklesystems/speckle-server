@@ -171,7 +171,7 @@ type Documents = {
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": typeof types.ProjectWorkspaceAccessCheckDocument,
     "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": typeof types.AuthzProjectMetadataDocument,
-    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n": typeof types.AuthzGetProject_ProjectFragmentDoc,
+    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n": typeof types.AuthzGetProject_ProjectFragmentDoc,
     "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": typeof types.AuthzGetProjectRole_ProjectFragmentDoc,
     "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": typeof types.AuthzServerMetadataDocument,
     "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": typeof types.AuthzGetServerRole_UserFragmentDoc,
@@ -594,7 +594,7 @@ const documents: Documents = {
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": types.ProjectWorkspaceAccessCheckDocument,
     "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": types.AuthzProjectMetadataDocument,
-    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n": types.AuthzGetProject_ProjectFragmentDoc,
+    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n": types.AuthzGetProject_ProjectFragmentDoc,
     "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": types.AuthzGetProjectRole_ProjectFragmentDoc,
     "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": types.AuthzServerMetadataDocument,
     "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": types.AuthzGetServerRole_UserFragmentDoc,
@@ -1505,7 +1505,7 @@ export function graphql(source: "\n  query AuthzProjectMetadata($id: String!) {\
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspace {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n"): (typeof documents)["\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

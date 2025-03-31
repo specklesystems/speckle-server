@@ -445,6 +445,10 @@ multiRegion:
     ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
     secretKey: 'multi-region-config.json'
 
+## @param imagePullSecrets The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+## This is used to pull the Docker image from a private registry.  If this is not provided, no imagePullSecrets will be used.
+imagePullSecrets: []
+
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.

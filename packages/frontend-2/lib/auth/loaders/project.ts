@@ -34,9 +34,7 @@ graphql(`
   fragment AuthzGetProject_Project on Project {
     id
     visibility
-    workspace {
-      id
-    }
+    workspaceId
   }
 `)
 
@@ -78,7 +76,7 @@ export const getProjectFactory: AuthLoaderFactory<
         id: data.project.id,
         isDiscoverable: false,
         isPublic: data.project.visibility === SimpleProjectVisibility.Unlisted,
-        workspaceId: data.project.workspace?.id || null
+        workspaceId: data.project.workspaceId || null
       })
 
     throw new Error("Couldn't retrieve project due to unexpected error")
