@@ -1,6 +1,7 @@
 import { WorkspaceRoles, WorkspaceSeatType } from '../../../core/constants.js'
 import { FeatureFlags } from '../../../environment/index.js'
 import { WorkspaceLimits } from '../../../workspaces/helpers/limits.js'
+import { WorkspacePlan } from '../../../workspaces/index.js'
 import { UserContext, WorkspaceContext } from '../context.js'
 import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
 
@@ -14,9 +15,7 @@ export type GetWorkspaceLimits = (
   args: WorkspaceContext
 ) => Promise<WorkspaceLimits | null>
 
-export type GetWorkspacePlan = (
-  args: WorkspaceContext
-) => Promise<WorkspaceLimits | null>
+export type GetWorkspacePlan = (args: WorkspaceContext) => Promise<WorkspacePlan | null>
 
 export type GetWorkspaceProjectCount = (
   args: WorkspaceContext

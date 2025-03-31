@@ -67,6 +67,11 @@ export const WorkspaceNotEnoughPermissionsError = defineAuthError({
   message: 'You do not have enough permissions in the workspace to perform this action'
 })
 
+export const WorkspaceReadOnlyError = defineAuthError({
+  code: 'WorkspaceReadOnly',
+  message: 'The workspace is in a read only mode, upgrade your plan to unlock it'
+})
+
 export const WorkspaceLimitsReachedError = defineAuthError<
   'WorkspaceLimitsReached',
   { limit: keyof WorkspaceLimits }

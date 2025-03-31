@@ -1,3 +1,4 @@
+import { throwUncoveredError } from '../../core/helpers/error.js'
 import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
 
 /**
@@ -142,3 +143,18 @@ export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
   status: UnpaidWorkspacePlanStatuses
 }
 export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
+
+export const isWorkspacePlanStatusReadOnly = (status: WorkspacePlan['status']) => {
+  switch (status) {
+    case 'cancelationScheduled':
+    case 'valid':
+    case 'trial':
+    case 'paymentFailed':
+      return false
+    case 'expired':
+    case 'canceled':
+      return true
+    default:
+      throwUncoveredError(status)
+  }
+}

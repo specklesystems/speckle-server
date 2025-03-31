@@ -6,6 +6,7 @@ import type {
   GetEnv,
   GetWorkspace,
   GetWorkspaceLimits,
+  GetWorkspacePlan,
   GetWorkspaceProjectCount,
   GetWorkspaceRole,
   GetWorkspaceSeat,
@@ -68,7 +69,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceLimits: GetWorkspaceLimits
-  // getWorkspacePlan: GetWorkspacePlan
+  getWorkspacePlan: GetWorkspacePlan
   getWorkspaceSeat: GetWorkspaceSeat
   getWorkspaceProjectCount: GetWorkspaceProjectCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
