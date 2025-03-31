@@ -358,7 +358,7 @@ export class MeasurementPointGizmo extends Group {
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     // this.disc.raycast(raycaster, intersects)
-    this.line.raycast(raycaster, intersects)
+    // this.line.raycast(raycaster, intersects)
     // this.point.raycast(raycaster, intersects)
     this.text.raycast(raycaster, intersects)
   }
