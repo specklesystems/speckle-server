@@ -1,6 +1,7 @@
 import { Roles, ServerRoles } from '../../core/constants.js'
+import { UserContext } from '../domain/context.js'
 import { isMinimumServerRole } from '../domain/logic/roles.js'
-import { AuthPolicyCheck, UserContext } from '../domain/policies.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 
 export const hasMinimumServerRole: AuthPolicyCheck<
   'getServerRole',

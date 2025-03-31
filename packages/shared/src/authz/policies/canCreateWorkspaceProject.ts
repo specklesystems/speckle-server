@@ -77,9 +77,12 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
       }
     }
 
-    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspaceLimits) return err(new WorkspaceNoAccessError())
+    // check workspace plan active
 
+    // const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+    // if (!workspaceLimits) return err(new WorkspaceNoAccessError())
+
+    // TODO: change check, load plan and make sure its a new type plan
     if (env.FF_WORKSPACES_NEW_PLANS_ENABLED) {
       const isEditor = await hasEditorSeat(loaders)({
         userId,
@@ -91,13 +94,15 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
     // const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
     // this will not happen in practice
     // no limits imposed
-    if (!workspaceLimits.projectCount) return ok()
+    // if (!workspaceLimits.projectCount) return ok()
     const currentProjectCount = await loaders.getWorkspaceProjectCount({
       workspaceId
     })
     // this will not happen in practice
     if (!currentProjectCount) return err(new WorkspaceNoAccessError())
-    return currentProjectCount < workspaceLimits.projectCount
-      ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+    // return currentProjectCount < workspaceLimits.projectCount
+    // ? ok()
+    // : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+    //
+    return ok()
   }

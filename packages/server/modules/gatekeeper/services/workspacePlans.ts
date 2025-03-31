@@ -1,10 +1,9 @@
 import { UpsertWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 
 export const updateWorkspacePlanFactory =
   ({

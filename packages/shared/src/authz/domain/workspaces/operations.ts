@@ -14,6 +14,10 @@ export type GetWorkspaceLimits = (
   args: WorkspaceContext
 ) => Promise<WorkspaceLimits | null>
 
+export type GetWorkspacePlan = (
+  args: WorkspaceContext
+) => Promise<WorkspaceLimits | null>
+
 export type GetWorkspaceProjectCount = (
   args: WorkspaceContext
 ) => Promise<number | null>

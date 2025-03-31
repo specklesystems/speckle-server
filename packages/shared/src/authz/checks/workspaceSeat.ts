@@ -1,5 +1,6 @@
 import { SeatTypes } from '../../core/constants.js'
-import { AuthPolicyCheck, UserContext, WorkspaceContext } from '../domain/policies.js'
+import { UserContext, WorkspaceContext } from '../domain/context.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 
 export const hasEditorSeat: AuthPolicyCheck<
   'getWorkspaceSeat',

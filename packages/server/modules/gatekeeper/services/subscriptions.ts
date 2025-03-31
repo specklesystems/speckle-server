@@ -22,11 +22,11 @@ import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/
 import {
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
+  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
 import { cloneDeep, sum } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 
 export const handleSubscriptionUpdateFactory =
   ({

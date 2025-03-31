@@ -54,6 +54,7 @@ export const canReadProjectPolicy: AuthPolicy<
     // When G O D M O D E is enabled
     if (await canUseAdminOverride(loaders)({ userId })) return ok()
 
+    // todo
     const { workspaceId } = project
     // When a project belongs to a workspace
     if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {

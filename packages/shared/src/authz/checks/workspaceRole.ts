@@ -1,6 +1,7 @@
 import { WorkspaceRoles } from '../../core/constants.js'
+import { UserContext, WorkspaceContext } from '../domain/context.js'
 import { isMinimumWorkspaceRole } from '../domain/logic/roles.js'
-import { AuthPolicyCheck, UserContext, WorkspaceContext } from '../domain/policies.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 
 export const requireMinimumWorkspaceRole: AuthPolicyCheck<
   'getWorkspaceRole',

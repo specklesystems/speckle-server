@@ -1,8 +1,7 @@
 import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 
 const isWorkspacePlanStatusReadOnly = (status: WorkspacePlan['status']) => {
   switch (status) {

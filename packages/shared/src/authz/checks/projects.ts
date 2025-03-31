@@ -1,6 +1,7 @@
 import { StreamRoles } from '../../core/index.js'
-import { AuthPolicyCheck, ProjectContext, UserContext } from '../domain/policies.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 import { isMinimumProjectRole } from '../domain/logic/roles.js'
+import { ProjectContext, UserContext } from '../domain/context.js'
 
 export const hasMinimumProjectRole: AuthPolicyCheck<
   'getProjectRole',

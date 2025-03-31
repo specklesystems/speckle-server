@@ -179,7 +179,7 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.canQuery({
+      const canQuery = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
       })

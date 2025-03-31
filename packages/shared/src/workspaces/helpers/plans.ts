@@ -121,3 +121,24 @@ export const WorkspacePlanStatuses = <const>{
 
 export type WorkspacePlanStatuses =
   (typeof WorkspacePlanStatuses)[keyof typeof WorkspacePlanStatuses]
+
+type BaseWorkspacePlan = {
+  workspaceId: string
+  createdAt: Date
+}
+
+export type PaidWorkspacePlan = BaseWorkspacePlan & {
+  name: PaidWorkspacePlans
+  status: PaidWorkspacePlanStatuses
+}
+
+export type TrialWorkspacePlan = BaseWorkspacePlan & {
+  name: TrialEnabledPaidWorkspacePlans
+  status: TrialWorkspacePlanStatuses
+}
+
+export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
+  name: UnpaidWorkspacePlans
+  status: UnpaidWorkspacePlanStatuses
+}
+export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan

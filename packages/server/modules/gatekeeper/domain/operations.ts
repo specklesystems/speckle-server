@@ -1,8 +1,8 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import {
   Optional,
+  WorkspacePlan,
   WorkspacePlanFeatures,
   WorkspacePlans,
   WorkspacePlanStatuses
