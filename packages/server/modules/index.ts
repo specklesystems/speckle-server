@@ -160,12 +160,12 @@ export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => 
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
     if (!enabledModuleNames.includes(file)) return
-    const fullPath = path.join(`${appRoot}/modules`, file)
+    const modulePath = path.join(`${appRoot}/modules`, file)
 
     // load dataloaders
-    const directivesPath = path.join(fullPath, 'graph', 'dataloaders')
-    if (fs.existsSync(directivesPath)) {
-      const newLoaders = values(autoloadFromDirectory(directivesPath))
+    const fullPath = path.join(modulePath, 'graph', 'dataloaders')
+    if (fs.existsSync(fullPath)) {
+      const newLoaders = values(autoloadFromDirectory(fullPath))
         .map((l) => l.default)
         .filter(isNonNullable)
 
