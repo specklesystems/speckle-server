@@ -3,7 +3,9 @@ import {
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceNoAccessError,
+  WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
+  WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
@@ -11,6 +13,9 @@ import { nanoid } from 'nanoid'
 import { canCreateWorkspaceProjectPolicy } from './canCreateWorkspaceProject.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import cryptoRandomString from 'crypto-random-string'
+import { WorkspacePlan } from '../../workspaces/index.js'
+import { Workspace, WorkspaceSsoProvider } from '../domain/workspaces/types.js'
+import { err } from 'true-myth/result'
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 10 }),
@@ -37,6 +42,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceSeat: async () => {
           assert.fail()
         },
+        getWorkspacePlan: async () => {
+          assert.fail()
+        },
         getWorkspaceLimits: async () => {
           assert.fail()
         },
@@ -51,7 +59,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(new WorkspacesNotEnabledError())
+      expect(result).toStrictEqual(err(new WorkspacesNotEnabledError()))
     })
   })
 
@@ -71,6 +79,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceSeat: async () => {
           assert.fail()
         },
+        getWorkspacePlan: async () => {
+          assert.fail()
+        },
         getWorkspaceLimits: async () => {
           assert.fail()
         },
@@ -83,9 +94,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceSsoSession: async () => {
           assert.fail()
         }
-      })(canCreateArgs())
+      })({ workspaceId: '' })
 
-      expect(result).toStrictEqual(new ServerNoSessionError())
+      expect(result).toStrictEqual(err(new ServerNoSessionError()))
     })
     it('forbids creation for anyone not having minimum server:user role', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -102,6 +113,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceSeat: async () => {
           assert.fail()
         },
+        getWorkspacePlan: async () => {
+          assert.fail()
+        },
         getWorkspaceLimits: async () => {
           assert.fail()
         },
@@ -116,17 +130,91 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(new ServerNoAccessError())
+      expect(result).toStrictEqual(err(new ServerNoAccessError()))
     })
   })
 
   describe('workspace sso', () => {
     const workspaceSlug = nanoid()
-    it.each([
-      new WorkspaceNoAccessError(),
-      new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug } })
-    ])('forbids creation with the expected $code', async (err) => {})
-    it('throws UncoveredError from unexpected sso session errors', async () => {})
+
+    it('forbids creation when workspace not found', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          assert.fail()
+        },
+        getWorkspace: async () => {
+          return null
+        },
+        getWorkspaceSeat: async () => {
+          assert.fail()
+        },
+        getWorkspacePlan: async () => {
+          assert.fail()
+        },
+        getWorkspaceLimits: async () => {
+          assert.fail()
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+    })
+
+    it('forbids creation when sso session is not found', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {
+            slug: workspaceSlug
+          } as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          assert.fail()
+        },
+        getWorkspacePlan: async () => {
+          assert.fail()
+        },
+        getWorkspaceLimits: async () => {
+          assert.fail()
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          return {} as WorkspaceSsoProvider
+        },
+        getWorkspaceSsoSession: async () => {
+          return null
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(
+        err(
+          new WorkspaceSsoSessionNoAccessError({
+            payload: { workspaceSlug }
+          })
+        )
+      )
+    })
+    it('throws UncoveredError from unexpected sso session errors')
   })
 
   describe('user workspace roles', () => {
@@ -140,9 +228,12 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return null
         },
         getWorkspace: async () => {
-          assert.fail()
+          return {} as Workspace
         },
         getWorkspaceSeat: async () => {
+          assert.fail()
+        },
+        getWorkspacePlan: async () => {
           assert.fail()
         },
         getWorkspaceLimits: async () => {
@@ -159,7 +250,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(new WorkspaceNoAccessError())
+      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
     })
     it('WorkspaceNotEnoughPermissionsError for workspace guests', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -171,9 +262,12 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return 'workspace:guest'
         },
         getWorkspace: async () => {
-          assert.fail()
+          return {} as Workspace
         },
         getWorkspaceSeat: async () => {
+          assert.fail()
+        },
+        getWorkspacePlan: async () => {
           assert.fail()
         },
         getWorkspaceLimits: async () => {
@@ -190,7 +284,13 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(new WorkspaceNoAccessError())
+      expect(result).toStrictEqual(
+        err(
+          new WorkspaceNotEnoughPermissionsError({
+            message: 'Guests cannot create projects in the workspace'
+          })
+        )
+      )
     })
     it('forbids non-editor seats from creating projects', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -202,10 +302,16 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return 'workspace:member'
         },
         getWorkspace: async () => {
-          assert.fail()
+          return {} as Workspace
         },
         getWorkspaceSeat: async () => {
           return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid',
+            name: 'team'
+          } as WorkspacePlan
         },
         getWorkspaceLimits: async () => {
           assert.fail()
@@ -214,14 +320,87 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           assert.fail()
         },
         getWorkspaceSsoProvider: async () => {
-          assert.fail()
+          return null
         },
         getWorkspaceSsoSession: async () => {
           assert.fail()
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(new WorkspaceNotEnoughPermissionsError())
+      expect(result).toStrictEqual(err(new WorkspaceNoEditorSeatError()))
+    })
+  })
+
+  describe('workspace plans', () => {
+    it('forbids creation if plan fails to load', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return null
+        },
+        getWorkspaceLimits: async () => {
+          assert.fail()
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+    })
+    it('forbids creation if plan is read-only', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'expired'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          assert.fail()
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(err(new WorkspaceReadOnlyError()))
     })
   })
 
