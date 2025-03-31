@@ -608,6 +608,12 @@
         }
       }
     },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+      "default": [],
+      "items": {}
+    },
     "server": {
       "type": "object",
       "properties": {
