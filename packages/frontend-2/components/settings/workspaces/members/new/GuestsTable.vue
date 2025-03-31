@@ -78,16 +78,12 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  WorkspaceCollaborator
+import {
+  WorkspaceSeatType,
+  type SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  Roles,
-  type MaybeNullOrUndefined,
-  type WorkspaceSeatType
-} from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
@@ -97,6 +93,7 @@ graphql(`
     id
     role
     seatType
+    joinDate
     user {
       id
       avatar
@@ -159,9 +156,8 @@ const guests = computed(() => {
       : props.workspace?.team.items
 
   return (guestArray || [])
-    .filter(
-      (item): item is WorkspaceCollaborator => item.role === Roles.Workspace.Guest
-    )
+    .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
+    .filter((item) => item.role === Roles.Workspace.Guest)
     .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 

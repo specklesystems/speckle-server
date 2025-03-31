@@ -59,3 +59,25 @@ export type GetWorkspaceUserSeat = (params: {
   workspaceId: string
   userId: string
 }) => Promise<Optional<WorkspaceSeat>>
+
+export type GetWorkspacesUsersSeats = (params: {
+  requests: Array<{
+    userId: string
+    workspaceId: string
+  }>
+}) => Promise<{
+  [workspaceId: string]: {
+    [userId: string]: WorkspaceSeat
+  }
+}>
+
+export type GetProjectsUsersSeats = (params: {
+  requests: Array<{
+    userId: string
+    projectId: string
+  }>
+}) => Promise<{
+  [projectId: string]: {
+    [userId: string]: WorkspaceSeat
+  }
+}>

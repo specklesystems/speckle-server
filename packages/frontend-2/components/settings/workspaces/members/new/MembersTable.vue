@@ -84,15 +84,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Roles,
-  type WorkspaceRoles,
-  type MaybeNullOrUndefined,
-  type WorkspaceSeatType
-} from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesNewMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  WorkspaceSeatType,
+  type SettingsWorkspacesNewMembersTable_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
@@ -164,7 +162,7 @@ const members = computed(() => {
   return (memberArray || [])
     .map(({ user, seatType, ...rest }) => ({
       ...user,
-      seatType,
+      seatType: seatType || WorkspaceSeatType.Viewer,
       ...rest
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
