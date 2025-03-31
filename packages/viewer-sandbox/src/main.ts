@@ -23,6 +23,7 @@ import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
+import { XrExtension } from './Extensions/XrExtension'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -60,7 +61,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
 
-  const xr = viewer.createExtension(WebXrExtension)
+  const xr = viewer.createExtension(XrExtension)
   xr.init()
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
@@ -129,7 +130,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.systems/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    // 'https://latest.speckle.systems/streams/0c6ad366c4/commits/aa1c393aec'
+    'https://latest.speckle.systems/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.systems/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
@@ -486,7 +487,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
-    'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
 
     // A LOT of text objects
     // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'

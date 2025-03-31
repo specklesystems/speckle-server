@@ -17126,6 +17126,7 @@ __metadata:
     tweakpane: "npm:^3.0.8"
     typescript: "npm:^4.5.4"
     vite: "npm:^5.0.12"
+    vite-plugin-mkcert: "npm:^1.17.8"
     wrangler: "npm:^3.51.2"
   languageName: unknown
   linkType: soft
@@ -23893,6 +23894,17 @@ __metadata:
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
   checksum: 10/7a1429be1e3d0c2e1b96d4bba4d113efbfabc7c724bed107beb535c782c7bea447ff634886b0c7c43395a264d085450d009eb1154b5f38a8bae49d469fdcbc61
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.8.3":
+  version: 1.8.4
+  resolution: "axios@npm:1.8.4"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 10/a10f0dd836613924e48cf03dc2eff3fd21b14f764807aedaee4880a70c0f142aaebdb21da7ce27104d4c16ca00d0e452a20a20851f60e385a8d5bad1ae909d46
   languageName: node
   linkType: hard
 
@@ -52373,6 +52385,19 @@ __metadata:
     "@nuxt/kit":
       optional: true
   checksum: 10/aa28806113a7432301acbc1702e2c27b7e6758f785f31467d83018616344db2aa5432ebcb0b29ebe92a6bb5f98c16596fd4eeb000d56e025f5d8c72b3001defe
+  languageName: node
+  linkType: hard
+
+"vite-plugin-mkcert@npm:^1.17.8":
+  version: 1.17.8
+  resolution: "vite-plugin-mkcert@npm:1.17.8"
+  dependencies:
+    axios: "npm:^1.8.3"
+    debug: "npm:^4.4.0"
+    picocolors: "npm:^1.1.1"
+  peerDependencies:
+    vite: ">=3"
+  checksum: 10/7b26333c737ecdd5e1f3663202938839dc07e897f553f8d82597830db3d8a6d40b7d07e1b51e6bae2d7b02c28650589c55984dea63b2dec1f2f41eb650875c64
   languageName: node
   linkType: hard
 
