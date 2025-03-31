@@ -40,6 +40,7 @@ generates:
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         StreamCollaborator: '@/modules/core/helpers/graphTypes#StreamCollaboratorGraphQLReturn'
+        ProjectCollaborator: '@/modules/core/helpers/graphTypes#ProjectCollaboratorGraphQLReturn'
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
