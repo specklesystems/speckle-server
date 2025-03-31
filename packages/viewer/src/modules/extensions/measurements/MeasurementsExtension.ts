@@ -336,6 +336,7 @@ export class MeasurementsExtension extends Extension {
       Logger.error('Ignoring zero value measurement!')
     }
     this._activeMeasurement = null
+    this.viewer.requestRender()
   }
 
   public removeMeasurement() {
