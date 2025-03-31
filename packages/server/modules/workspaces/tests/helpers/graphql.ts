@@ -415,3 +415,21 @@ export const updateWorkspaceSeatTypeMutation = gql`
     }
   }
 `
+
+export const invitableUsersInProjectQuery = gql`
+  query GetProjectInvitableCollaborators($projectId: String!, $search: String) {
+    project(id: $projectId) {
+      id
+      name
+      invitableCollaborators(filter: { search: $search }) {
+        totalCount
+        items {
+          id
+          user {
+            name
+          }
+        }
+      }
+    }
+  }
+`
