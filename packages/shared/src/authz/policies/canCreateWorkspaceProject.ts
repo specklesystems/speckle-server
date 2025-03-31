@@ -86,6 +86,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
 
     if (isWorkspacePlanStatusReadOnly(workspacePlan.status))
       return err(new WorkspaceReadOnlyError())
+
     if (isNewWorkspacePlan(workspacePlan.name)) {
       const isEditor = await hasEditorSeat(loaders)({
         userId,
@@ -105,6 +106,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
 
     // this will not happen in practice
     if (!currentProjectCount) return err(new WorkspaceNoAccessError())
+
     return currentProjectCount < workspaceLimits.projectCount
       ? ok()
       : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
