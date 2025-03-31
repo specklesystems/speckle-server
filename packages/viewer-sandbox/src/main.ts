@@ -7,7 +7,7 @@ import {
   ViewModes,
   SelectionExtension,
   HybridCameraController,
-  WebXrExtension,
+  NearPlaneCalculation,
   WebXrViewer
 } from '@speckle/viewer'
 
@@ -48,7 +48,8 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new WebXrViewer(container, params)
   await viewer.init()
 
-  viewer.createExtension(HybridCameraController)
+  const cameraController = viewer.createExtension(HybridCameraController)
+  cameraController.options = { nearPlaneCalculation: NearPlaneCalculation.EMPIRIC }
   viewer.createExtension(SelectionExtension)
   viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)

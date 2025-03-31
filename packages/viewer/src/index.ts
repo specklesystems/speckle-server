@@ -44,7 +44,11 @@ import {
   SelectionExtensionOptions,
   DefaultSelectionExtensionOptions
 } from './modules/extensions/SelectionExtension.js'
-import { CameraController } from './modules/extensions/CameraController.js'
+import {
+  CameraController,
+  CameraControllerOptions,
+  NearPlaneCalculation
+} from './modules/extensions/CameraController.js'
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
@@ -241,7 +245,9 @@ export {
   CONTAINED,
   ViewModeEvent,
   SpeckleMesh,
-  SpeckleInstancedMesh
+  SpeckleInstancedMesh,
+  CameraControllerOptions,
+  NearPlaneCalculation
 }
 
 export type {
