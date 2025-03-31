@@ -62,17 +62,19 @@ const {
   totalCostFormatted,
   billingCycleEnd,
   isPurchasablePlan,
-  isFreePlan
+  isFreePlan,
+  intervalIsYearly
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
+const annualOrMonthly = computed(() => (intervalIsYearly.value ? 'year' : 'month'))
 
 const billingMessage = computed(() => {
   if (isFreePlan.value) return null
   if (isUpgrading.value) {
     return editorSeats.value.hasSeatAvailable
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/month.`
+      : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/${annualOrMonthly.value}.`
   } else {
     return isPurchasablePlan.value
       ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd.value}. You can freely reassign it to another person.`
