@@ -4430,7 +4430,7 @@ export type WorkspaceCollaborator = {
   joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
-  seatType: WorkspaceSeatType;
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
@@ -7111,7 +7111,7 @@ export type WorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentT
   joinDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   projectRoles?: Resolver<Array<ResolversTypes['ProjectRole']>, ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  seatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
+  seatType?: Resolver<Maybe<ResolversTypes['WorkspaceSeatType']>, ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

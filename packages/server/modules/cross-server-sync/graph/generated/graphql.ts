@@ -4410,7 +4410,7 @@ export type WorkspaceCollaborator = {
   joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
-  seatType: WorkspaceSeatType;
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
