@@ -1,5 +1,8 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type {
+  Resolvers,
+  WorkspaceSeatsByType
+} from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   ensureError,
@@ -42,10 +45,7 @@ import {
   CreateCheckoutSessionOld,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  WorkspacePaymentMethod,
-  WorkspaceSeatsByType
-} from '@/test/graphql/generated/graphql'
+import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'

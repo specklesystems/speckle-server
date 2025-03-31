@@ -1,5 +1,8 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  WorkspaceMembersByRole
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -210,7 +213,6 @@ import {
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { WorkspaceMembersByRole } from '@/test/graphql/generated/graphql'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
