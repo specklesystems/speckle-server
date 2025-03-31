@@ -81,7 +81,6 @@ export class MeasurementsExtension extends Extension {
     Object.assign(this._options, options)
     if (resetMeasurement) {
       this.cancelMeasurement()
-      this.startMeasurement()
     }
     this.applyOptions()
   }
