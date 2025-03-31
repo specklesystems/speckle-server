@@ -62,11 +62,15 @@ const props = withDefaults(
   }
 )
 
-const badgeColorClasses = computed(() =>
-  props.colorClasses || props.color === 'primary'
-    ? 'bg-info-lighter text-primary-focus dark:text-foreground'
-    : 'bg-highlight-3 text-foreground-2'
-)
+const badgeColorClasses = computed(() => {
+  if (props.colorClasses) {
+    return props.colorClasses
+  } else if (props.color === 'secondary') {
+    return 'bg-highlight-3 text-foreground-2'
+  } else {
+    return 'bg-info-lighter text-primary-focus dark:text-foreground'
+  }
+})
 
 const badgeDotIconColorClasses = computed(
   () => props.dotIconColorClasses || 'text-blue-400'
