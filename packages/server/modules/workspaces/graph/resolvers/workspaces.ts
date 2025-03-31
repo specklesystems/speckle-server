@@ -1430,15 +1430,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedUser: {
         workspaceDomainPolicyCompliant: async (parent, args) => {
-          const workspaceId = args.workspaceId
-          if (!workspaceId) return null
-
-          const userId = parent.id
+          const { id: userId } = parent
+          const { workspaceSlug } = args
+          if (!workspaceSlug) return null
 
           return await isUserWorkspaceDomainPolicyCompliantFactory({
-            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
-          })({ workspaceId, userId })
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+            getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+            findEmailsByUserId: findEmailsByUserIdFactory({ db })
+          })({ workspaceSlug, userId })
         },
         workspaceRole: async (parent, args, context) => {
           const workspaceId = args.workspaceId
