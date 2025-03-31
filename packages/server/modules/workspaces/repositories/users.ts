@@ -1,8 +1,8 @@
 import { StreamAcl, Streams, UserEmails, Users } from '@/modules/core/dbSchema'
-import { User } from '@/modules/core/domain/users/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
 import { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
 
@@ -35,7 +35,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     }
     cursor?: string
     limit: number
-  }): Promise<Pick<User, 'id' | 'name'>[]> => {
+  }): Promise<WorkspaceTeamMember[]> => {
     const { workspaceId, projectId, search } = filter
     const query = tables
       .users(db)
@@ -63,7 +63,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     return await query
       .orderBy(Users.col.createdAt, 'desc')
       .limit(limit)
-      .select([Users.col.id, Users.col.name])
+      .select(Users.cols.filter((col) => col !== Users.col.passwordDigest))
       .groupBy(Users.col.id)
   }
 
