@@ -21,10 +21,10 @@ export class XrExtension extends Extension {
 
     document.body.appendChild(ARButton.createButton(renderer))
 
-    renderer.xr.enabled = true
-    renderer.setAnimationLoop(
-      this.viewer.getRenderer().render.bind(this.viewer.getRenderer())
-    )
+    // renderer.xr.enabled = true
+    // renderer.setAnimationLoop(
+    //   this.viewer.getRenderer().render.bind(this.viewer.getRenderer())
+    // )
 
     this.controller = renderer.xr.getController(0)
     this.controller.addEventListener('select', this.onSelect.bind(this))

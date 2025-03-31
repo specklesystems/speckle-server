@@ -7,7 +7,8 @@ import {
   ViewModes,
   SelectionExtension,
   HybridCameraController,
-  WebXrExtension
+  WebXrExtension,
+  WebXrViewer
 } from '@speckle/viewer'
 
 import './style.css'
@@ -44,7 +45,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new Viewer(container, params)
+  const viewer: Viewer = new WebXrViewer(container, params)
   await viewer.init()
 
   viewer.createExtension(HybridCameraController)
