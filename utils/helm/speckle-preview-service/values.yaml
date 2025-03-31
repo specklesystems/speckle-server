@@ -1,0 +1,300 @@
+# Default values for speckle-preview-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## @param namespace
+## @descriptionStart
+## The namespace in which the chart will be deployed.
+## @descriptionEnd
+namespace: speckle-test
+
+## @param replicaCount
+## @descriptionStart
+## This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+## @descriptionEnd
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  ## @param image.repository
+  ## @descriptionStart
+  ## The image repository to use for the container.
+  ## @descriptionEnd
+  repository: speckle/speckle-preview-service
+  ## @param image.pullPolicy
+  ## @descriptionStart
+  ## This sets the pull policy for images.
+  ## @descriptionEnd
+  pullPolicy: IfNotPresent
+  ## @param image.tag
+  ## @descriptionStart
+  ## Overrides the image tag whose default is the chart appVersion.
+  ## @descriptionEnd
+  tag: ''
+
+## @param logLevel
+## @descriptionStart
+## The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+## @descriptionEnd
+logLevel: 'info'
+## @param logPretty
+## @descriptionStart
+## If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
+## @descriptionEnd
+logPretty: false
+
+## @param host
+## @descriptionStart
+## Set to 0.0.0.0 to enable listening on all interfaces; this allows the metrics scraper to access the metrics endpoint.
+## @descriptionEnd
+host: '0.0.0.0'
+
+## @param port
+## @descriptionStart
+## The port on which the preview service will listen for incoming requests.
+## @descriptionEnd
+port: '3001'
+
+puppeteer:
+  ## @param puppeteer.userDataDirectory
+  ## @descriptionStart
+  ## The path to the user data directory. If not set, defaults to '/tmp/puppeteer'.
+  ## @descriptionEnd
+  userDataDirectory: ''
+  ## @param puppeteer.timeoutMilliseconds
+  ## @descriptionStart
+  ## The timeout in milliseconds for the Puppeteer service.
+  ## @descriptionEnd
+  timeoutMilliseconds: '3600000'
+
+## @param imagePullSecrets
+## @descriptionStart
+## This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+## @descriptionEnd
+imagePullSecrets: []
+## @param nameOverride
+## @descriptionStart
+## This is to override the chart name.
+## @descriptionEnd
+nameOverride: ''
+## @param fullnameOverride
+## @descriptionStart
+## This is to override the chart name.
+## @descriptionEnd
+fullnameOverride: ''
+
+## @param priorityClassName
+## @descriptionStart
+## This is to set the priority class name for the deployment. This is useful for setting up priority classes for pods.
+## @descriptionEnd
+priorityClassName: low-priority
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  ## @param serviceAccount.create
+  ## @descriptionStart
+  ## Specifies whether a service account should be created
+  ## @descriptionEnd
+  create: true
+  annotations:
+    ## @param serviceAccount.annotations.kubernetes.io/enforce-mountable-secrets
+    ## @descriptionStart
+    ## This annotation is used to enforce mountable secrets. This is useful for setting up secrets which are not mountable by default.
+    ## @descriptionEnd
+    'kubernetes.io/enforce-mountable-secrets': 'true'
+  ## @param serviceAccount.name
+  ## @descriptionStart
+  ## The name of the service account to use.
+  ## If not set and create is true, a name is generated using the fullname template
+  ## @descriptionEnd
+  name: ''
+
+## @param podAnnotations
+## @descriptionStart
+## This is for setting Kubernetes Annotations to a Pod.
+## For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+## @descriptionEnd
+podAnnotations: {}
+## @param podLabels
+## @descriptionStart
+## This is for setting Kubernetes Labels to a Pod.
+## For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+## @descriptionEnd
+podLabels: {}
+
+podSecurityContext:
+  ## @param podSecurityContext.runAsNonRoot
+  runAsNonRoot: true
+  ## @param podSecurityContext.runAsUser
+  runAsUser: 800
+  ## @param podSecurityContext.fsGroup
+  fsGroup: 25000
+  ## @param podSecurityContext.fsGroupChangePolicy
+  fsGroupChangePolicy: OnRootMismatch
+  ## @param podSecurityContext.runAsGroup
+  runAsGroup: 30000
+  seccompProfile:
+    ## @param podSecurityContext.seccompProfile.type
+    type: RuntimeDefault
+
+securityContext:
+  ## @param securityContext.allowPrivilegeEscalation
+  allowPrivilegeEscalation: false
+  capabilities:
+    ## @param securityContext.capabilities.drop
+    drop:
+      - ALL
+  ## @param securityContext.privileged
+  privileged: false
+  # readOnlyRootFilesystem: true #FIXME this currently breaks chromium. Need to identify which directories should be mounted.
+  ## @param securityContext.runAsNonRoot
+  runAsNonRoot: true
+  ## @param securityContext.runAsUser
+  runAsUser: 800
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  ## @param service.type
+  ## @descriptionStart
+  ## This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  ## @descriptionEnd
+  type: ClusterIP
+  ## @param service.port
+  ## @descriptionStart
+  ## This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  ## @descriptionEnd
+  port: 80
+
+## @param resources
+## @descriptionStart
+## This is for setting up the resources for the deployment more information can be found here: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+## @descriptionEnd
+resources:
+  {}
+  # If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 1000m
+  #   memory: 4Gi
+  # requests:
+  #   cpu: 500m
+  #   memory: 2Gi
+
+# This is to setup the liveness & readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  ## @param livenessProbe.initialDelaySeconds
+  ## @descriptionStart
+  ## This is the initial delay before the liveness probe is started.
+  ## @descriptionEnd
+  initialDelaySeconds: 60
+  ## @param livenessProbe.periodSeconds
+  ## @descriptionStart
+  ## This is the period between liveness probes.
+  ## @descriptionEnd
+  periodSeconds: 60
+  httpGet:
+    ## @param livenessProbe.httpGet.path
+    ## @descriptionStart
+    ## This is the path to the liveness probe.
+    ## @descriptionEnd
+    path: /liveness
+    ## @param livenessProbe.httpGet.port
+    ## @descriptionStart
+    ## This is the port for the liveness probe. A named port can be used here.
+    ## @descriptionEnd
+    port: metrics
+
+readinessProbe:
+  httpGet:
+    ## @param readinessProbe.httpGet.path
+    ## @descriptionStart
+    ## This is the path to the readiness probe.
+    ## @descriptionEnd
+    path: /readiness
+    ## @param readinessProbe.httpGet.port
+    ## @descriptionStart
+    ## This is the port for the readiness probe. A named port can be used here.
+    ## @descriptionEnd
+    port: metrics
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  ## @param autoscaling.enabled
+  ## @descriptionStart
+  ## Enables the Horizontal Pod Autoscaler
+  ## @descriptionEnd
+  enabled: false
+  ## @param autoscaling.minReplicas
+  ## @descriptionStart
+  ## Minimum number of replicas to scale down to
+  ## @descriptionEnd
+  minReplicas: 1
+  ## @param autoscaling.maxReplicas
+  ## @descriptionStart
+  ## Maximum number of replicas to scale up to
+  ## @descriptionEnd
+  maxReplicas: 10
+  ## @param autoscaling.targetCPUUtilizationPercentage
+  ## @descriptionStart
+  ## Target CPU utilization percentage
+  ## @descriptionEnd
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+## @param volumes
+## @descriptionStart
+## Additional volumes on the output Deployment definition.
+## @descriptionEnd
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+## @param volumeMounts
+## @descriptionStart
+# Additional volumeMounts on the output Deployment definition.
+## @descriptionEnd
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+## @param nodeSelector
+## @descriptionStart
+## This is for setting up the node selector more information can be found here: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+## @descriptionEnd
+nodeSelector: {}
+
+## @param tolerations
+## @descriptionStart
+## This is for setting up the tolerations more information can be found here: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+## @descriptionEnd
+tolerations: []
+
+## @param affinity
+## @descriptionStart
+## This is for setting up the affinity more information can be found here: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+## @descriptionEnd
+affinity: {}
+
+networkPolicy:
+  ## @param networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+  ## If enabled, the `db.networkPolicy` parameters need be configured.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  ##
+  enabled: false
+
+## @section Redis Store
+## @descriptionStart
+## Defines parameters related to connecting to the Redis Store.
+## @descriptionEnd
+##
+redis:
+  connectionString:
+    ## @param redis.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
+    secretName: ''
+    ## @param redis.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
+    ##
+    secretKey: ''

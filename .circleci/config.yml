@@ -996,10 +996,16 @@ jobs:
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Template Helm Chart
+          name: Template Speckle Server Helm Chart
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \
+            ./.circleci/deployment/helm-chart-shell.nix
+      - run:
+          name: Template Speckle Preview Service Helm Chart
+          command: |
+            nix-shell \
+            --run "helm template speckle-preview-service ./utils/helm/speckle-preview-service" \
             ./.circleci/deployment/helm-chart-shell.nix
       - run:
           name: Add 127.0.0.1 domains to /etc/hosts

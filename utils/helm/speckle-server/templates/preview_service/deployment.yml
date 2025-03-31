@@ -125,7 +125,4 @@ spec:
         runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
-
-      # Should be > preview generation time ( 1 hour for good measure )
-      terminationGracePeriodSeconds: 3600
 {{- end }}

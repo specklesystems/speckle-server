@@ -26,6 +26,7 @@ events.json
 
 # Prettier doesn't understand the syntax inside the Yaml files, because of the brackets
 utils/helm/speckle-server/templates
+utils/helm/speckle-preview-service/templates
 
 # Optional eslint cache
 .eslintcache

@@ -1,0 +1,348 @@
+{
+  "title": "Chart Values",
+  "type": "object",
+  "properties": {
+    "namespace": {
+      "type": "string",
+      "description": "",
+      "default": "speckle-test"
+    },
+    "replicaCount": {
+      "type": "number",
+      "description": "",
+      "default": 1
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "",
+          "default": "speckle/speckle-preview-service"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "description": "",
+          "default": "IfNotPresent"
+        },
+        "tag": {
+          "type": "string",
+          "description": "",
+          "default": ""
+        }
+      }
+    },
+    "logLevel": {
+      "type": "string",
+      "description": "",
+      "default": "info"
+    },
+    "logPretty": {
+      "type": "boolean",
+      "description": "",
+      "default": false
+    },
+    "host": {
+      "type": "string",
+      "description": "",
+      "default": "0.0.0.0"
+    },
+    "port": {
+      "type": "string",
+      "description": "",
+      "default": "3001"
+    },
+    "puppeteer": {
+      "type": "object",
+      "properties": {
+        "userDataDirectory": {
+          "type": "string",
+          "description": "",
+          "default": ""
+        },
+        "timeoutMilliseconds": {
+          "type": "string",
+          "description": "",
+          "default": "3600000"
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "",
+      "default": [],
+      "items": {}
+    },
+    "nameOverride": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "description": "",
+      "default": ""
+    },
+    "priorityClassName": {
+      "type": "string",
+      "description": "",
+      "default": "low-priority"
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "description": "",
+          "default": true
+        },
+        "name": {
+          "type": "string",
+          "description": "",
+          "default": ""
+        }
+      }
+    },
+    "podAnnotations": {
+      "type": "object",
+      "description": "",
+      "default": {}
+    },
+    "podLabels": {
+      "type": "object",
+      "description": "",
+      "default": {}
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "number",
+          "description": "",
+          "default": 800
+        },
+        "fsGroup": {
+          "type": "number",
+          "description": "",
+          "default": 25000
+        },
+        "fsGroupChangePolicy": {
+          "type": "string",
+          "description": "",
+          "default": "OnRootMismatch"
+        },
+        "runAsGroup": {
+          "type": "number",
+          "description": "",
+          "default": 30000
+        },
+        "seccompProfile": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "",
+              "default": "RuntimeDefault"
+            }
+          }
+        }
+      }
+    },
+    "securityContext": {
+      "type": "object",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "description": "",
+          "default": false
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "array",
+              "description": "",
+              "default": ["ALL"],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "privileged": {
+          "type": "boolean",
+          "description": "",
+          "default": false
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "description": "",
+          "default": true
+        },
+        "runAsUser": {
+          "type": "number",
+          "description": "",
+          "default": 800
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "",
+          "default": "ClusterIP"
+        },
+        "port": {
+          "type": "number",
+          "description": "",
+          "default": 80
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "description": "",
+      "default": {}
+    },
+    "livenessProbe": {
+      "type": "object",
+      "properties": {
+        "initialDelaySeconds": {
+          "type": "number",
+          "description": "",
+          "default": 60
+        },
+        "periodSeconds": {
+          "type": "number",
+          "description": "",
+          "default": 60
+        },
+        "httpGet": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "",
+              "default": "/liveness"
+            },
+            "port": {
+              "type": "string",
+              "description": "",
+              "default": "metrics"
+            }
+          }
+        }
+      }
+    },
+    "readinessProbe": {
+      "type": "object",
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "",
+              "default": "/readiness"
+            },
+            "port": {
+              "type": "string",
+              "description": "",
+              "default": "metrics"
+            }
+          }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "",
+          "default": false
+        },
+        "minReplicas": {
+          "type": "number",
+          "description": "",
+          "default": 1
+        },
+        "maxReplicas": {
+          "type": "number",
+          "description": "",
+          "default": 10
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "number",
+          "description": "",
+          "default": 80
+        }
+      }
+    },
+    "volumes": {
+      "type": "array",
+      "description": "",
+      "default": [],
+      "items": {}
+    },
+    "volumeMounts": {
+      "type": "array",
+      "description": "",
+      "default": [],
+      "items": {}
+    },
+    "nodeSelector": {
+      "type": "object",
+      "description": "",
+      "default": {}
+    },
+    "tolerations": {
+      "type": "array",
+      "description": "",
+      "default": [],
+      "items": {}
+    },
+    "affinity": {
+      "type": "object",
+      "description": "",
+      "default": {}
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.",
+          "default": false
+        }
+      }
+    },
+    "redis": {
+      "type": "object",
+      "properties": {
+        "connectionString": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
+              "default": ""
+            }
+          }
+        }
+      }
+    }
+  }
+}
