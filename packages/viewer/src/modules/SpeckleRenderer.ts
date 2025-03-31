@@ -339,10 +339,10 @@ export default class SpeckleRenderer {
     this._renderer.physicallyCorrectLights = true
 
     /** No autoclear. We're clearing ourselves */
-    // this._renderer.autoClear = false
-    // this._renderer.autoClearColor = false
-    // this._renderer.autoClearDepth = false
-    // this._renderer.autoClearStencil = false
+    this._renderer.autoClear = false
+    this._renderer.autoClearColor = false
+    this._renderer.autoClearDepth = false
+    this._renderer.autoClearStencil = false
 
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
@@ -535,10 +535,7 @@ export default class SpeckleRenderer {
     if (this._needsRender) {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
-      // this._needsRender = this._pipeline.render()
-      this.renderingCamera?.layers.enableAll()
-      this.renderer.render(this.scene, this.renderingCamera as PerspectiveCamera)
-      this._needsRender = true
+      this._needsRender = this._pipeline.render()
       this._renderinStats.frameEnd()
 
       if (this.sunConfiguration.shadowcatcher && this._shadowcatcher) {

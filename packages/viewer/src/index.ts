@@ -140,10 +140,12 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { WebXrViewer } from './modules/WebXrViewer.js'
 
 export {
   Viewer,
   LegacyViewer,
+  WebXrViewer,
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
