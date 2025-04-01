@@ -132,7 +132,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.systems/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    'https://latest.speckle.systems/streams/0c6ad366c4/commits/aa1c393aec'
+    // 'https://latest.speckle.systems/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.systems/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
@@ -384,7 +384,8 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
     // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
     // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
-    // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
+    // DEFAUL WEIRD MODEL
+    'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
     // Points with display style
