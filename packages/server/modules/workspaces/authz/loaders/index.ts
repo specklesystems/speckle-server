@@ -6,6 +6,7 @@ import {
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
+import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
 
 // TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
@@ -51,12 +52,11 @@ export default defineModuleLoaders(async () => {
     getWorkspacePlan: async ({ workspaceId }) => {
       return await getWorkspacePlan({ workspaceId })
     },
-    getWorkspaceLimits: async () => {
-      // TODO: Do real implementation
-      return {
-        projectCount: 999,
-        modelCount: 999
-      }
+    getWorkspaceLimits: async ({ workspaceId }) => {
+      const plan = await getWorkspacePlan({ workspaceId })
+      if (!plan) return null
+      const config = { ...WorkspacePaidPlanConfigs, ...WorkspaceUnpaidPlanConfigs }
+      return config[plan.name]?.limits ?? null
     }
   }
 })
