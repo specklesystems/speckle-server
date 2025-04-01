@@ -215,7 +215,6 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         )
       )
     })
-    it('throws UncoveredError from unexpected sso session errors')
   })
 
   describe('user workspace roles', () => {

@@ -76,6 +76,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
         case 'WorkspaceNoAccess':
         case 'WorkspaceSsoSessionNoAccess':
           return err(memberWithSsoSession.value.error)
+        /* v8 ignore next 2*/
         default:
           throwUncoveredError(memberWithSsoSession.value.error)
       }
