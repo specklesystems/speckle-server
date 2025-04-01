@@ -100,7 +100,9 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  getWorkspaceWithPlanFactory
+  getWorkspaceWithPlanFactory,
+  upsertTrialWorkspacePlanFactory,
+  upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
@@ -119,6 +121,9 @@ import {
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { isNewPaidPlanType, isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 export const onProjectCreatedFactory =
   (deps: {
@@ -735,6 +740,28 @@ export const initializeEventListenersFactory =
           getUserSsoSession: getUserSsoSessionFactory({ db })
         })
         await onWorkspaceAuthorized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
+        // TODO: based on a feature flag, we can force new workspaces into the free plan here
+        if (FF_GATEKEEPER_FORCE_FREE_PLAN) {
+          await upsertUnpaidWorkspacePlanFactory({ db })({
+            workspacePlan: {
+              name: 'free',
+              status: 'valid',
+              workspaceId: payload.workspace.id,
+              createdAt: new Date()
+            }
+          })
+        } else {
+          await upsertTrialWorkspacePlanFactory({ db })({
+            workspacePlan: {
+              name: 'starter',
+              status: 'trial',
+              workspaceId: payload.workspace.id,
+              createdAt: new Date()
+            }
+          })
+        }
       }),
       eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
         const trx = await db.transaction()
