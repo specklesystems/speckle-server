@@ -37,14 +37,9 @@
             {{ project.name }}
           </span>
           <div class="flex items-center gap-x-1">
-            <!-- TODO: Remove this -->
-            <div>{{ canMoveProject(project) ? 'yes' : 'no' }}</div>
-
             <span class="text-foreground-3 truncate">
               {{ project.modelCount.totalCount }} model{{
                 project.modelCount.totalCount !== 1 ? 's' : ''
-              }}, {{ project.versions.totalCount }} version{{
-                project.versions.totalCount !== 1 ? 's' : ''
               }}
             </span>
           </div>
@@ -74,7 +69,6 @@
     />
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitReachedDialog"
-      :current-plan="workspace.plan?.name"
       :limit="limit"
       :limit-type="limitType"
     />
@@ -192,8 +186,6 @@ const workspaceProjects = computed(() =>
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 
 const canMoveProject = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
-  if (!isWorkspaceNewPlansEnabled.value) return true
-
   return (
     remainingProjects.value > 0 &&
     project.modelCount.totalCount <= remainingModels.value
