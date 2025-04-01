@@ -58,6 +58,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const availableViews = ref<string[]>() // TODO: later we can align views with -> const revitAvailableViews = ref<ISendFilterSelectItem[]>()
   const navisworksAvailableSavedSets = ref<ISendFilterSelectItem[]>()
 
+  // Different host apps can have different kind of ISendFilterSelect send filters, and we collect them here to generalize the component we use in `ListSelect`
+  const availableSelectSendFilters = ref<Record<string, SendFilterSelect>>({})
+
   const dismissNotification = () => {
     currentNotification.value = null
   }
@@ -550,6 +553,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       availableViews.value = revitViews.availableViews
     }
 
+    const selectSendFilters = sendFilters.value.filter(
+      (f) => f.type === 'Select'
+    ) as SendFilterSelect[]
+    if (selectSendFilters.length !== 0) {
+      selectSendFilters.forEach((selectSendFilter) => {
+        const id = selectSendFilter.id
+        availableSelectSendFilters.value[id] = selectSendFilter
+      })
+    }
+
     const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
       (f) => f.id === 'navisworksSavedSets'
     ) as SendFilterSelect
@@ -663,6 +676,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     hostAppError,
     availableViews,
     navisworksAvailableSavedSets,
+    availableSelectSendFilters,
     setNotification,
     setModelError,
     setLatestAvailableVersion,
