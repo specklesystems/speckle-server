@@ -559,14 +559,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (selectSendFilters.length !== 0) {
       selectSendFilters.forEach((selectSendFilter) => {
         const id = selectSendFilter.id
-        // if (!availableSelectSendFilters.value[id]) {
-        //   availableSelectSendFilters.value[id] = []
-        // }
         availableSelectSendFilters.value[id] = selectSendFilter
       })
     }
-
-    console.log(availableSelectSendFilters.value)
 
     const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
       (f) => f.id === 'navisworksSavedSets'
