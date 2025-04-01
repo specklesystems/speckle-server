@@ -318,6 +318,20 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
+  membersByRole: WorkspaceMembersByRole
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceMembersByRole {
+  admins: WorkspaceRoleCollection
+  members: WorkspaceRoleCollection
+  guests: WorkspaceRoleCollection
+}
+
+type WorkspaceRoleCollection {
+  totalCount: Int!
 }
 
 type WorkspaceCreationState {

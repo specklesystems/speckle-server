@@ -1,5 +1,8 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type {
+  Resolvers,
+  WorkspaceSeatsByType
+} from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   ensureError,
@@ -168,7 +171,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
-        }
+        },
+        seatsByType: (parent) =>
+          ({
+            editors: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'editor'
+              })
+            }),
+            viewers: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'viewer'
+              })
+            })
+          } as unknown as WorkspaceSeatsByType)
       },
       WorkspaceSubscription: {
         seats: async (parent) => {
