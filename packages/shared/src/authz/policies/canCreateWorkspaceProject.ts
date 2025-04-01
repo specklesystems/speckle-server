@@ -99,7 +99,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
     if (!workspaceLimits) return err(new WorkspaceNoAccessError())
 
     // no limits imposed
-    if (!workspaceLimits.projectCount) return ok()
+    if (workspaceLimits.projectCount === null) return ok()
     const currentProjectCount = await loaders.getWorkspaceProjectCount({
       workspaceId
     })

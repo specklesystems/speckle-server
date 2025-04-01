@@ -520,6 +520,11 @@ export const upsertWorkspaceCreationStateFactory =
 export const getWorkspacesProjectsCountsFactory =
   (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
   async (params) => {
+    const ret = params.workspaceIds.reduce((acc, workspaceId) => {
+      acc[workspaceId] = 0
+      return acc
+    }, {} as Record<string, number>)
+
     const q = tables
       .streams(deps.db)
       .select<
@@ -532,10 +537,12 @@ export const getWorkspacesProjectsCountsFactory =
       .groupBy(Streams.col.workspaceId)
 
     const res = await q
-    return res.reduce((acc, { workspaceId, count }) => {
-      acc[workspaceId] = parseInt(count)
-      return acc
-    }, {} as Record<string, number>)
+
+    for (const { workspaceId, count } of res) {
+      ret[workspaceId] = parseInt(count)
+    }
+
+    return ret
   }
 
 export const getWorkspacesModelsCountsFactory =
