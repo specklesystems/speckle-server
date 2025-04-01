@@ -1,28 +1,21 @@
 <template>
   <LayoutDialog v-model:open="isOpen" is-transparent max-width="lg">
-    <div class="flex items-stretch min-h-96">
+    <div class="flex items-stretch">
       <div class="w-1/2 bg-primary p-6">Left</div>
-      <div class="w-1/2 bg-foundation p-6 flex flex-col justify-between gap-y-4">
-        <div></div>
-        <div class="flex flex-col gap-y-2">
-          <h4 class="text-heading-sm text-foreground">
-            You have reached your {{ props.limitType }} limit.
-          </h4>
+      <div class="w-1/2 bg-foundation p-6 flex flex-col gap-y-8">
+        <div class="flex flex-col gap-y-2 mt-8 px-4">
+          <h4 class="text-heading-sm text-foreground">Upgrade your plan</h4>
           <p class="text-foreground">
-            Moving this project would exceed the
-            <span class="font-medium">{{ props.limitType }}</span>
-            limit of
-            <span class="font-medium">{{ props.limit }}</span>
-            for your current plan.
+            The {{ props.limit }} {{ props.limitType }} limit for this workspace has
+            been reached. Upgrade the workspace plan to create or move more projects.
           </p>
-          <p>Please upgrade to increase your {{ props.limitType }} limit.</p>
         </div>
         <div class="flex justify-end gap-x-2">
           <FormButton size="lg" color="subtle" @click="isOpen = false">
             Maybe later
           </FormButton>
           <FormButton size="lg" @click="navigateTo(settingsWorkspaceRoutes.billing)">
-            Upgrade
+            See plans
           </FormButton>
         </div>
       </div>
