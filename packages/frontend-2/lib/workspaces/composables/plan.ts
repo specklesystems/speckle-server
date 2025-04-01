@@ -1,5 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
-import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
+import {
+  workspacePlanLimitsQuery,
+  workspacePlanQuery
+} from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
   isNewWorkspacePlan,
@@ -28,6 +31,24 @@ graphql(`
         assigned
         viewersCount
       }
+    }
+  }
+`)
+
+graphql(`
+  fragment WorkspacePlanLimits_Workspace on Workspace {
+    id
+    projects {
+      totalCount
+      items {
+        id
+        models(limit: 0) {
+          totalCount
+        }
+      }
+    }
+    plan {
+      name
     }
   }
 `)
@@ -135,5 +156,63 @@ export const useWorkspacePlan = (slug: string) => {
     statusIsCancelationScheduled,
     subscription,
     editorSeats
+  }
+}
+
+export const useWorkspacePlanLimits = (slug: string) => {
+  const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+
+  const { result } = useQuery(
+    workspacePlanLimitsQuery,
+    () => ({
+      slug
+    }),
+    () => ({
+      enabled: isBillingIntegrationEnabled
+    })
+  )
+
+  const projectLimit = computed(() => 3)
+  const modelLimit = computed(() => 8)
+
+  const projectCount = computed(
+    () => result.value?.workspaceBySlug?.projects.totalCount || 0
+  )
+  const modelCount = computed(
+    () =>
+      result.value?.workspaceBySlug?.projects.items.reduce(
+        (total, project) => total + project.models.totalCount,
+        0
+      ) ?? 0
+  )
+
+  const remainingProjects = computed(() => projectLimit.value - projectCount.value)
+  const remainingModels = computed(() => modelLimit.value - modelCount.value)
+
+  const canAddProject = computed(() => remainingProjects.value > 0)
+  const canAddModels = (projectModelCount: number) =>
+    remainingModels.value >= projectModelCount
+
+  const getLimitType = (project: { modelCount: { totalCount: number } }) => {
+    if (!canAddProject.value) return 'project'
+    if (!canAddModels(project.modelCount.totalCount)) return 'model'
+    return null
+  }
+
+  const getLimit = (limitType: 'project' | 'model' | null) => {
+    return limitType === 'model' ? modelLimit.value : projectLimit.value
+  }
+
+  return {
+    projectLimit,
+    modelLimit,
+    projectCount,
+    modelCount,
+    remainingProjects,
+    remainingModels,
+    canAddProject,
+    canAddModels,
+    getLimitType,
+    getLimit
   }
 }

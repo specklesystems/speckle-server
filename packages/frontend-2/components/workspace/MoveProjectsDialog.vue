@@ -136,23 +136,6 @@ const open = defineModel<boolean>('open', { required: true })
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 
-// TODO: Get these from the workspace plan composable
-const projectLimit = computed(() => {
-  return 3
-})
-const modelLimit = computed(() => {
-  return 8
-})
-const projectCount = computed(() => {
-  return 1
-})
-const modelCount = computed(() => {
-  return 2
-})
-
-const remainingProjects = computed(() => projectLimit.value - projectCount.value)
-const remainingModels = computed(() => modelLimit.value - modelCount.value)
-
 const {
   query: { result },
   identifier,
@@ -179,6 +162,23 @@ const {
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
 const showLimitReachedDialog = ref(false)
+
+// TODO: Get these from the workspace plan composable
+const projectLimit = computed(() => {
+  return 3
+})
+const modelLimit = computed(() => {
+  return 8
+})
+const projectCount = computed(() => {
+  return 1
+})
+const modelCount = computed(() => {
+  return 2
+})
+
+const remainingProjects = computed(() => projectLimit.value - projectCount.value)
+const remainingModels = computed(() => modelLimit.value - modelCount.value)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)

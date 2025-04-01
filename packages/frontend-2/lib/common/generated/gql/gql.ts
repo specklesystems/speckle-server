@@ -375,6 +375,7 @@ type Documents = {
     "\n  fragment DiscoverableList_Requests on User {\n    workspaceJoinRequests {\n      items {\n        id\n        status\n        workspace {\n          id\n          name\n          logo\n          slug\n          team {\n            totalCount\n            items {\n              avatar\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.DiscoverableList_RequestsFragmentDoc,
     "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n": typeof types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspacesPlan_Workspace on Workspace {\n    id\n    plan {\n      status\n      createdAt\n      name\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        totalCount\n        assigned\n        viewersCount\n      }\n    }\n  }\n": typeof types.WorkspacesPlan_WorkspaceFragmentDoc,
+    "\n  fragment WorkspacePlanLimits_Workspace on Workspace {\n    id\n    projects {\n      totalCount\n      items {\n        id\n        models(limit: 0) {\n          totalCount\n        }\n      }\n    }\n    plan {\n      name\n    }\n  }\n": typeof types.WorkspacePlanLimits_WorkspaceFragmentDoc,
     "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.OnWorkspaceProjectsUpdateDocument,
     "\n  fragment WorkspaceHasCustomDataResidency_Workspace on Workspace {\n    id\n    defaultRegion {\n      id\n      name\n    }\n  }\n": typeof types.WorkspaceHasCustomDataResidency_WorkspaceFragmentDoc,
     "\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n": typeof types.CheckProjectWorkspaceDataResidencyDocument,
@@ -413,6 +414,7 @@ type Documents = {
     "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": typeof types.DiscoverableWorkspacesRequestsDocument,
     "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": typeof types.WorkspacePlanDocument,
     "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": typeof types.WorkspaceLastAdminCheckDocument,
+    "\n  query WorkspacePlanLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": typeof types.WorkspacePlanLimitsDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -797,6 +799,7 @@ const documents: Documents = {
     "\n  fragment DiscoverableList_Requests on User {\n    workspaceJoinRequests {\n      items {\n        id\n        status\n        workspace {\n          id\n          name\n          logo\n          slug\n          team {\n            totalCount\n            items {\n              avatar\n            }\n          }\n        }\n      }\n    }\n  }\n": types.DiscoverableList_RequestsFragmentDoc,
     "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspacesPlan_Workspace on Workspace {\n    id\n    plan {\n      status\n      createdAt\n      name\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        totalCount\n        assigned\n        viewersCount\n      }\n    }\n  }\n": types.WorkspacesPlan_WorkspaceFragmentDoc,
+    "\n  fragment WorkspacePlanLimits_Workspace on Workspace {\n    id\n    projects {\n      totalCount\n      items {\n        id\n        models(limit: 0) {\n          totalCount\n        }\n      }\n    }\n    plan {\n      name\n    }\n  }\n": types.WorkspacePlanLimits_WorkspaceFragmentDoc,
     "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnWorkspaceProjectsUpdateDocument,
     "\n  fragment WorkspaceHasCustomDataResidency_Workspace on Workspace {\n    id\n    defaultRegion {\n      id\n      name\n    }\n  }\n": types.WorkspaceHasCustomDataResidency_WorkspaceFragmentDoc,
     "\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n": types.CheckProjectWorkspaceDataResidencyDocument,
@@ -835,6 +838,7 @@ const documents: Documents = {
     "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": types.DiscoverableWorkspacesRequestsDocument,
     "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": types.WorkspacePlanDocument,
     "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": types.WorkspaceLastAdminCheckDocument,
+    "\n  query WorkspacePlanLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": types.WorkspacePlanLimitsDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -2319,6 +2323,10 @@ export function graphql(source: "\n  fragment WorkspacesPlan_Workspace on Worksp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment WorkspacePlanLimits_Workspace on Workspace {\n    id\n    projects {\n      totalCount\n      items {\n        id\n        models(limit: 0) {\n          totalCount\n        }\n      }\n    }\n    plan {\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspacePlanLimits_Workspace on Workspace {\n    id\n    projects {\n      totalCount\n      items {\n        id\n        models(limit: 0) {\n          totalCount\n        }\n      }\n    }\n    plan {\n      name\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "): (typeof documents)["\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2468,6 +2476,10 @@ export function graphql(source: "\n  query WorkspacePlan($slug: String!) {\n    
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspacePlanLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspacePlanLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
