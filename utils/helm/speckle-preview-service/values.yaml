@@ -51,7 +51,8 @@ host: '0.0.0.0'
 
 ## @param port
 ## @descriptionStart
-## The port on which the preview service will listen for incoming requests.
+## The port on which the preview service container will listen for incoming requests.
+## This can differ from the service port, see service.port.
 ## @descriptionEnd
 port: '3001'
 
