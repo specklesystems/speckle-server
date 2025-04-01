@@ -1,3 +1,4 @@
+{{- if .Values.webhook_service.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -151,3 +152,4 @@ spec:
             - key: {{ .Values.multiRegion.config.secretKey }}
               path: "multi-region-config.json"
       {{- end }}
+{{- end }}

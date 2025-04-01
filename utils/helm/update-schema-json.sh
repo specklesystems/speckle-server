@@ -17,7 +17,6 @@ GIT_ROOT="$(git rev-parse --show-toplevel)"
 README_GENERATOR_DIR="${GIT_ROOT}/../readme-generator-for-helm"
 
 JSON_SCHEMA_PATH="${GIT_ROOT}/utils/helm/speckle-server/values.schema.json"
-PREVIEW_SERVICE_JSON_SCHEMA_PATH="${GIT_ROOT}/utils/helm/speckle-preview-service/values.schema.json"
 
 if [ ! -d "${README_GENERATOR_DIR}" ]; then
   echo "🔭 Could not find readme-generator-for-helm in a sibling directory to speckle-server"
@@ -40,11 +39,4 @@ pushd "${GIT_ROOT}"
     --schema "${JSON_SCHEMA_PATH}"
 
   yarn prettier:fix:file "${JSON_SCHEMA_PATH}"
-
-  node  "${README_GENERATOR_DIR}/bin/index.js" \
-    --config "${GIT_ROOT}/utils/helm/.helm-readme-configuration.json" \
-    --values "${GIT_ROOT}/utils/helm/speckle-preview-service/values.yaml" \
-    --schema "${PREVIEW_SERVICE_JSON_SCHEMA_PATH}"
-
-  yarn prettier:fix:file "${PREVIEW_SERVICE_JSON_SCHEMA_PATH}"
 popd

@@ -1002,12 +1002,6 @@ jobs:
             --run "helm template speckle-server ./utils/helm/speckle-server" \
             ./.circleci/deployment/helm-chart-shell.nix
       - run:
-          name: Template Speckle Preview Service Helm Chart
-          command: |
-            nix-shell \
-            --run "helm template speckle-preview-service ./utils/helm/speckle-preview-service" \
-            ./.circleci/deployment/helm-chart-shell.nix
-      - run:
           name: Add 127.0.0.1 domains to /etc/hosts
           command: |
             sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'

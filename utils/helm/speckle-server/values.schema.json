@@ -1890,7 +1890,7 @@
     "preview_service": {
       "type": "object",
       "properties": {
-        "deployInCluster": {
+        "enabled": {
           "type": "boolean",
           "description": "If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.",
           "default": true
@@ -1972,6 +1972,31 @@
               "type": "string",
               "description": "The maximum Memory that will be made available to the Preview Service Pod.",
               "default": "4Gi"
+            }
+          }
+        },
+        "autoscaling": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "minReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 1
+            },
+            "maxReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 10
+            },
+            "targetCPUUtilizationPercentage": {
+              "type": "number",
+              "description": "",
+              "default": 80
             }
           }
         },

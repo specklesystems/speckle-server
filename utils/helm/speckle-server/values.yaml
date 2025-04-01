@@ -1109,8 +1109,8 @@ frontend_2:
 ## @descriptionEnd
 ##
 preview_service:
-  ## @param preview_service.deployInCluster If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
-  deployInCluster: true
+  ## @param preview_service.enabled If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
+  enabled: true
   ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
   ##
   dedicatedPreviewsQueue: false
@@ -1162,6 +1162,28 @@ preview_service:
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
     memory: 4Gi
+  autoscaling:
+    ## @param preview_service.autoscaling.enabled
+    ## @descriptionStart
+    ## Enables the Horizontal Pod Autoscaler
+    ## @descriptionEnd
+    enabled: false
+    ## @param preview_service.autoscaling.minReplicas
+    ## @descriptionStart
+    ## Minimum number of replicas to scale down to
+    ## @descriptionEnd
+    minReplicas: 1
+    ## @param preview_service.autoscaling.maxReplicas
+    ## @descriptionStart
+    ## Maximum number of replicas to scale up to
+    ## @descriptionEnd
+    maxReplicas: 10
+    ## @param preview_service.autoscaling.targetCPUUtilizationPercentage
+    ## @descriptionStart
+    ## Target CPU utilization percentage
+    ## @descriptionEnd
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
   networkPolicy:
     ## @param preview_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
     ## If enabled, the `db.networkPolicy` parameters need be configured.
