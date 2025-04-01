@@ -38,7 +38,8 @@
     "postinstall": "husky install",
     "cm": "cz",
     "eslint:inspect": "eslint-config-inspector",
-    "eslint:projectwide": "node ./utils/eslint-projectwide.mjs"
+    "eslint:projectwide": "node ./utils/eslint-projectwide.mjs",
+    "npkill": "npkill"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.4.10",
