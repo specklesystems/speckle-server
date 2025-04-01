@@ -105,7 +105,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
     })
 
     // this will not happen in practice
-    if (!currentProjectCount) return err(new WorkspaceNoAccessError())
+    if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
 
     return currentProjectCount < workspaceLimits.projectCount
       ? ok()
