@@ -622,6 +622,11 @@
     "server": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -1616,6 +1621,11 @@
     "objects": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed with the Objects component enabled.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -2047,6 +2057,11 @@
     "webhook_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Webhook Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Webhook Service pod to be deployed within the cluster.",
@@ -2149,6 +2164,11 @@
     "fileimport_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the File Import Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
@@ -2271,6 +2291,11 @@
     "monitoring": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, database monitoring will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Monitoring pod to be deployed within the cluster.",

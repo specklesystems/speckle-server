@@ -461,6 +461,9 @@ imagePullSecrets: []
 ## @descriptionEnd
 ##
 server:
+  ## @param server.enabled If enabled, the Speckle server will be deployed
+  ##
+  enabled: true
   ## @param server.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -936,6 +939,9 @@ server:
 ## @descriptionEnd
 ##
 objects:
+  ## @param objects.enabled If enabled, the Speckle server will be deployed with the Objects component enabled.
+  ##
+  enabled: true
   ## @param objects.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1220,6 +1226,8 @@ preview_service:
 ## @descriptionEnd
 ##
 webhook_service:
+  ## @param webhook_service.enabled If enabled, the Webhook Service will be deployed within the cluster.
+  enabled: true
   ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1293,6 +1301,8 @@ webhook_service:
 ## @descriptionEnd
 ##
 fileimport_service:
+  ## @param fileimport_service.enabled If enabled, the File Import Service will be deployed within the cluster.
+  enabled: true
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1381,6 +1391,8 @@ fileimport_service:
 ## @descriptionEnd
 ##
 monitoring:
+  ## @param monitoring.enabled If enabled, database monitoring will be deployed within the cluster.
+  enabled: true
   ## @param monitoring.replicas The number of instances of the Monitoring pod to be deployed within the cluster.
   ##
   replicas: 1
