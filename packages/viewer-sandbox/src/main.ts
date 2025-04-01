@@ -6,9 +6,7 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController,
-  NearPlaneCalculation,
-  WebXrViewer
+  HybridCameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -24,7 +22,6 @@ import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
-import { XrExtension } from './Extensions/XrExtension'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -45,11 +42,10 @@ const createViewer = async (containerName: string, _stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new WebXrViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(HybridCameraController)
-  cameraController.options = { nearPlaneCalculation: NearPlaneCalculation.EMPIRIC }
+  viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
   viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
@@ -62,9 +58,6 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-
-  const xr = viewer.createExtension(XrExtension)
-  xr.init()
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -110,7 +103,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -385,7 +378,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
     // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
     // DEFAUL WEIRD MODEL
-    'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
+    // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
     // Points with display style
