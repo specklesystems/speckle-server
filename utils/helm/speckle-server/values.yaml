@@ -88,6 +88,9 @@ networkPlugin:
 ## @descriptionEnd
 ##
 ingress:
+  ## @param ingress.enabled If enabled, the ingress resources will be deployed
+  ##
+  enabled: true
   ## @param ingress.namespace The namespace in which the ingress controller is deployed.
   namespace: ingress-nginx
   ## @param ingress.controllerName The name of the Kubernetes pod in which the ingress controller is deployed.
@@ -95,7 +98,7 @@ ingress:
 
 ## @section Common parameters
 ##
-## @param docker_image_tag Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
+## @param docker_image_tag DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
 ##
 docker_image_tag: '2'
 

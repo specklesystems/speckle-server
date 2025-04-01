@@ -135,6 +135,11 @@
     "ingress": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the ingress resources will be deployed",
+          "default": true
+        },
         "namespace": {
           "type": "string",
           "description": "The namespace in which the ingress controller is deployed.",
@@ -149,7 +154,7 @@
     },
     "docker_image_tag": {
       "type": "string",
-      "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
+      "description": "DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
       "default": "2"
     },
     "imagePullPolicy": {
