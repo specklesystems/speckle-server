@@ -16,6 +16,13 @@
       class="mb-2"
       v-on="on"
     />
+    <div v-if="isWorkspaceNewPlansEnabled" class="text-body-2xs py-2">
+      You can move up to
+      <span class="font-medium">{{ projectLimit }} projects</span>
+      and
+      <span class="font-medium">{{ modelLimit }} models</span>
+      in total.
+    </div>
     <div
       v-if="hasMoveableProjects"
       class="flex flex-col mt-2 border rounded-md border-outline-3"
@@ -29,13 +36,16 @@
           <span class="font-medium text-foreground truncate">
             {{ project.name }}
           </span>
-          <span class="text-foreground-3 truncate">
-            {{ project.modelCount.totalCount }} model{{
-              project.modelCount.totalCount !== 1 ? 's' : ''
-            }}, {{ project.versions.totalCount }} version{{
-              project.versions.totalCount !== 1 ? 's' : ''
-            }}
-          </span>
+          <div class="flex items-center gap-x-1">
+            <div>{{ canMoveProject(project) ? 'yes' : 'no' }}</div>
+            <span class="text-foreground-3 truncate">
+              {{ project.modelCount.totalCount }} model{{
+                project.modelCount.totalCount !== 1 ? 's' : ''
+              }}, {{ project.versions.totalCount }} version{{
+                project.versions.totalCount !== 1 ? 's' : ''
+              }}
+            </span>
+          </div>
         </div>
         <FormButton size="sm" color="outline" @click="onMoveClick(project)">
           Move...
@@ -59,6 +69,10 @@
       :workspace="workspace"
       :project="selectedProject"
       event-source="move-projects-dialog"
+    />
+    <WorkspacePlanLimitReachedDialog
+      v-model:open="showLimitReachedDialog"
+      :project="selectedProject"
     />
   </LayoutDialog>
 </template>
@@ -115,9 +129,25 @@ const props = defineProps<{
   workspace: MoveProjectsDialog_WorkspaceFragment
 }>()
 
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+
 const open = defineModel<boolean>('open', { required: true })
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
+
+// TODO: Get these from the workspace plan composable
+const projectLimit = computed(() => {
+  return 3
+})
+const modelLimit = computed(() => {
+  return 5
+})
+const projectCount = computed(() => {
+  return 1
+})
+const modelCount = computed(() => {
+  return 2
+})
 
 const {
   query: { result },
@@ -144,11 +174,22 @@ const {
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
+const showLimitReachedDialog = ref(false)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
 )
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
+
+const canMoveProject = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
+  if (!isWorkspaceNewPlansEnabled.value) return true
+
+  return (
+    projectCount.value < projectLimit.value &&
+    project.modelCount.totalCount + modelCount.value <= modelLimit.value
+  )
+}
+
 const moveableProjects = computed(() =>
   userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
 )
@@ -165,6 +206,10 @@ const buttons = computed((): LayoutDialogButton[] => [
 
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  showMoveToWorkspaceDialog.value = true
+  if (canMoveProject(project)) {
+    showMoveToWorkspaceDialog.value = true
+  } else {
+    showLimitReachedDialog.value = true
+  }
 }
 </script>
