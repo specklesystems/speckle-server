@@ -13,7 +13,9 @@ import {
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspacesModelsCountsFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -187,6 +189,27 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               })
             })
           } as unknown as WorkspaceSeatsByType)
+      },
+      WorkspacePlan: {
+        usage: async (parent) => {
+          return { workspaceId: parent.workspaceId }
+        }
+      },
+      WorkspacePlanUsage: {
+        projectCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesProjectsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
+        },
+        modelCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesModelsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
+        }
       },
       WorkspaceSubscription: {
         seats: async (parent) => {

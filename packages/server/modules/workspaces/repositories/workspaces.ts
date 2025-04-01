@@ -26,6 +26,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesModelCounts,
   GetWorkspacesProjectsCounts,
   QueryWorkspaces,
   StoreWorkspaceDomain,
@@ -35,7 +36,11 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  BranchRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -44,6 +49,7 @@ import {
 } from '@/modules/workspaces/helpers/db'
 import {
   knex,
+  Branches,
   ServerAcl,
   ServerInvites,
   StreamAcl,
@@ -63,6 +69,7 @@ import {
 } from '@/modules/workspaces/domain/types'
 
 const tables = {
+  branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
@@ -522,6 +529,28 @@ export const getWorkspacesProjectsCountsFactory =
         }[]
       >([Streams.col.workspaceId, knex.raw('count(*) as count')])
       .whereIn(Streams.col.workspaceId, params.workspaceIds)
+      .groupBy(Streams.col.workspaceId)
+
+    const res = await q
+    return res.reduce((acc, { workspaceId, count }) => {
+      acc[workspaceId] = parseInt(count)
+      return acc
+    }, {} as Record<string, number>)
+  }
+
+export const getWorkspacesModelsCountsFactory =
+  (deps: { db: Knex }): GetWorkspacesModelCounts =>
+  async ({ workspaceIds }) => {
+    const q = tables
+      .branches(deps.db)
+      .select<
+        {
+          workspaceId: string
+          count: string
+        }[]
+      >([Streams.col.workspaceId, knex.raw('count(*) as count')])
+      .join(Streams.name, Streams.col.id, Branches.col.streamId)
+      .whereIn(Streams.col.workspaceId, workspaceIds)
       .groupBy(Streams.col.workspaceId)
 
     const res = await q
