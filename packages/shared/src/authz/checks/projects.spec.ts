@@ -2,33 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { isPubliclyReadableProject, hasMinimumProjectRole } from './projects.js'
 import cryptoRandomString from 'crypto-random-string'
 import { Roles } from '../../core/index.js'
-import { err, ok } from 'true-myth/result'
-import {
-  ProjectNoAccessError,
-  ProjectNotFoundError,
-  ProjectRoleNotFoundError,
-  WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
 import { getProjectFake } from '../../tests/fakes.js'
 
 describe('project checks', () => {
   describe('isPubliclyReadableProject returns a function, that', () => {
-    it('throws uncoveredError for unexpected loader errors', async () => {
-      await expect(
-        isPubliclyReadableProject({
-          // @ts-expect-error deliberately testing an unexpeceted error type
-          getProject: async () => err(new ProjectRoleNotFoundError())
-        })({ projectId: cryptoRandomString({ length: 10 }) })
-      ).rejects.toThrowError(/Uncovered error/)
-    })
-    it.each([
-      ProjectNotFoundError,
-      ProjectNoAccessError,
-      WorkspaceSsoSessionNoAccessError
-    ])('turns expected loader error $code into false ', async (loaderError) => {
+    it('turns not found project into false ', async () => {
       const result = await isPubliclyReadableProject({
-        getProject: async () =>
-          err(new loaderError({ payload: { workspaceSlug: 'foo' } }))
+        getProject: async () => null
       })({ projectId: cryptoRandomString({ length: 10 }) })
       expect(result).toEqual(false)
     })
@@ -46,31 +26,20 @@ describe('project checks', () => {
     })
   })
   describe('hasMinimumProjectRole returns a function, that', () => {
-    it('throws uncoveredError for unexpected loader errors', async () => {
+    it('returns false for not existing project roles', async () => {
       await expect(
         hasMinimumProjectRole({
-          // @ts-expect-error deliberately testing an unexpeceted error type
-          getProjectRole: async () => err(new ProjectNotFoundError())
+          getProjectRole: async () => null
         })({
           projectId: cryptoRandomString({ length: 10 }),
           userId: cryptoRandomString({ length: 10 }),
           role: Roles.Stream.Contributor
         })
-      ).rejects.toThrowError(/Uncovered error/)
-    })
-    it('returns false, if there is no role for the user', async () => {
-      const result = await hasMinimumProjectRole({
-        getProjectRole: () => Promise.resolve(err(new ProjectRoleNotFoundError()))
-      })({
-        projectId: cryptoRandomString({ length: 10 }),
-        userId: cryptoRandomString({ length: 10 }),
-        role: Roles.Stream.Contributor
-      })
-      expect(result).toEqual(false)
+      ).resolves.toStrictEqual(false)
     })
     it('returns false, if the role is not sufficient', async () => {
       const result = await hasMinimumProjectRole({
-        getProjectRole: () => Promise.resolve(ok(Roles.Stream.Reviewer))
+        getProjectRole: async () => Roles.Stream.Reviewer
       })({
         projectId: cryptoRandomString({ length: 10 }),
         userId: cryptoRandomString({ length: 10 }),
@@ -80,7 +49,7 @@ describe('project checks', () => {
     })
     it('returns true, if the role is sufficient', async () => {
       const result = await hasMinimumProjectRole({
-        getProjectRole: () => Promise.resolve(ok(Roles.Stream.Contributor))
+        getProjectRole: async () => Roles.Stream.Contributor
       })({
         projectId: cryptoRandomString({ length: 10 }),
         userId: cryptoRandomString({ length: 10 }),

@@ -1,4 +1,4 @@
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlan } from '@speckle/shared'
 
 export const gatekeeperEventNamespace = 'gatekeeper' as const
 

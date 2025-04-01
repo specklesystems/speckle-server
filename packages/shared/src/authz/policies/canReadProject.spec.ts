@@ -1,77 +1,39 @@
 import { describe, expect, it, assert } from 'vitest'
-import { canQueryProjectPolicy } from './canQueryProject.js'
+import { canReadProjectPolicy } from './canReadProject.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import crs from 'crypto-random-string'
 import { Roles } from '../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
-  ProjectRoleNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
-  ServerRoleNotFoundError,
   WorkspaceNoAccessError,
-  WorkspaceRoleNotFoundError,
-  WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionNoAccessError,
-  WorkspaceSsoSessionNotFoundError
+  WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { getProjectFake } from '../../tests/fakes.js'
 import { err, ok } from 'true-myth/result'
 import cryptoRandomString from 'crypto-random-string'
 import { AuthCheckContextLoaders } from '../domain/loaders.js'
 
-const canQueryProjectArgs = () => {
+const canReadProjectArgs = () => {
   const projectId = crs({ length: 10 })
   const userId = crs({ length: 10 })
   return { projectId, userId }
 }
 
-const getWorkspace: AuthCheckContextLoaders['getWorkspace'] = async () =>
-  ok({
-    id: 'aaa',
-    slug: 'bbb'
-  })
+const getWorkspace: AuthCheckContextLoaders['getWorkspace'] = async () => ({
+  id: 'aaa',
+  slug: 'bbb'
+})
 
-describe('canQueryProjectPolicy creates a function, that handles ', () => {
-  describe('project loader errors', () => {
-    it.each([
-      ProjectNoAccessError,
-      ProjectNotFoundError,
-      WorkspaceSsoSessionNoAccessError
-    ])('expected $code error by returning the error', async (expectedError) => {
-      const result = await canQueryProjectPolicy({
-        getEnv: async () => parseFeatureFlags({}),
-        getProject: async () =>
-          err(new expectedError({ payload: { workspaceSlug: 'bbb' } })),
-        getProjectRole: () => {
-          assert.fail()
-        },
-        getServerRole: () => {
-          assert.fail()
-        },
-        getWorkspace,
-        getWorkspaceRole: () => {
-          assert.fail()
-        },
-        getWorkspaceSsoSession: () => {
-          assert.fail()
-        },
-        getWorkspaceSsoProvider: () => {
-          assert.fail()
-        }
-      })(canQueryProjectArgs())
-
-      expect(result).toStrictEqual(
-        err(new expectedError({ payload: { workspaceSlug: 'bbb' } }))
-      )
-    })
-    it('unexpected error by throwing UncoveredError', async () => {
-      const result = canQueryProjectPolicy({
+describe('canReadProjectPolicy creates a function, that handles ', () => {
+  describe('project loader', () => {
+    it('converts not found projects into ProjectNotFoundError', async () => {
+      const result = canReadProjectPolicy({
         getWorkspace,
         getEnv: async () => parseFeatureFlags({}),
-        // @ts-expect-error testing uncovered error handling
-        getProject: async () => err(ProjectRoleNotFoundError),
+        getProject: async () => null,
         getProjectRole: () => {
           assert.fail()
         },
@@ -87,14 +49,14 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
 
-      await expect(result).rejects.toThrowError(/Uncovered error/)
+      await expect(result).resolves.toStrictEqual(err(new ProjectNotFoundError()))
     })
   })
   describe('project visibility', () => {
     it('allows anyone on a public project', async () => {
-      const canQueryProject = canQueryProjectPolicy({
+      const canReadProject = canReadProjectPolicy({
         getEnv: async () => parseFeatureFlags({}),
         getProject: getProjectFake({ isPublic: true }),
         getProjectRole: () => {
@@ -115,11 +77,11 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await canReadProject(canReadProjectArgs())
       expect(canQuery.isOk).toBe(true)
     })
     it('allows anyone on a linkShareable project', async () => {
-      const canQueryProject = canQueryProjectPolicy({
+      const canReadProject = canReadProjectPolicy({
         getEnv: async () => parseFeatureFlags({}),
         getProject: getProjectFake({ isDiscoverable: true }),
         getProjectRole: () => {
@@ -139,19 +101,19 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           assert.fail()
         }
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await canReadProject(canReadProjectArgs())
       expect(canQuery.isOk).toBe(true)
     })
   })
 
   describe('server roles', () => {
     it('allows access for archived server users with a project role on a public project', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: true }),
-        getProjectRole: async () => ok(Roles.Stream.Owner),
-        getServerRole: async () => ok(Roles.Server.ArchivedUser),
+        getProjectRole: async () => Roles.Stream.Owner,
+        getServerRole: async () => Roles.Server.ArchivedUser,
         getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
@@ -162,16 +124,16 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
     it('does not allow access for archived server users with a project role', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getProjectRole: async () => ok(Roles.Stream.Owner),
-        getServerRole: async () => ok(Roles.Server.ArchivedUser),
+        getProjectRole: async () => Roles.Stream.Owner,
+        getServerRole: async () => Roles.Server.ArchivedUser,
         getWorkspace,
         getWorkspaceRole: () => {
           assert.fail()
@@ -182,16 +144,16 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(err(new ServerNoAccessError()))
     })
     it('does not allow access for non public projects for unknown users', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getProjectRole: async () => ok(Roles.Stream.Owner),
-        getServerRole: async () => err(new ServerRoleNotFoundError()),
+        getProjectRole: async () => Roles.Stream.Owner,
+        getServerRole: async () => null,
         getWorkspace,
 
         getWorkspaceRole: () => {
@@ -212,12 +174,12 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
     it.each(Object.values(Roles.Stream))(
       'allows access for active server users to private projects with %s role',
       async (role) => {
-        const canQueryProject = canQueryProjectPolicy({
+        const canReadProject = canReadProjectPolicy({
           getEnv: async () =>
             parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
           getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-          getProjectRole: async () => ok(role),
-          getServerRole: async () => ok('server:user'),
+          getProjectRole: async () => role,
+          getServerRole: async () => Roles.Server.User,
           getWorkspace,
           getWorkspaceRole: () => {
             assert.fail()
@@ -229,18 +191,18 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
             assert.fail()
           }
         })
-        const canQuery = await canQueryProject(canQueryProjectArgs())
+        const canQuery = await canReadProject(canReadProjectArgs())
         expect(canQuery.isOk).toBe(true)
       }
     )
     it('does not allow access to private projects without a project role', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
+        getProjectRole: async () => null,
         getWorkspace,
-        getServerRole: async () => ok(Roles.Server.Admin),
+        getServerRole: async () => Roles.Server.Admin,
         getWorkspaceRole: () => {
           assert.fail()
         },
@@ -250,16 +212,16 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(err(new ProjectNoAccessError()))
     })
   })
   describe('admin override', () => {
     it('allows server admins without project roles on private projects if admin override is enabled', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getServerRole: async () => ok(Roles.Server.Admin),
+        getServerRole: async () => Roles.Server.Admin,
         getProjectRole: () => {
           assert.fail()
         },
@@ -273,20 +235,20 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_ADMIN_OVERRIDE_ENABLED: 'false',
             FF_WORKSPACES_MODULE_ENABLED: 'false'
           }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
-        getServerRole: async () => ok(Roles.Server.Admin),
-        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
+        getServerRole: async () => Roles.Server.Admin,
+        getProjectRole: async () => null,
         getWorkspace,
 
         getWorkspaceRole: () => {
@@ -298,13 +260,13 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(err(new ProjectNoAccessError()))
     })
   })
   describe('the workspace world', () => {
     it('does not check workspace rules if the workspaces module is not enabled', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
         getProject: getProjectFake({
@@ -312,8 +274,8 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
 
         getWorkspaceRole: () => {
@@ -325,11 +287,11 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
     it('does not allow project access without a workspace role', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -339,22 +301,22 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
 
-        getWorkspaceRole: async () => err(new WorkspaceRoleNotFoundError()),
+        getWorkspaceRole: async () => null,
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(err(new WorkspaceNoAccessError()))
     })
     it('allows project access via workspace role if user does not have project role', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -364,20 +326,19 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => err(new ProjectRoleNotFoundError()),
-        getServerRole: async () => ok('server:user'),
-        getWorkspaceRole: async () => ok('workspace:admin'),
+        getProjectRole: async () => null,
+        getServerRole: async () => Roles.Server.User,
+        getWorkspaceRole: async () => Roles.Workspace.Admin,
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
         getWorkspace,
-        getWorkspaceSsoProvider: async () =>
-          err(new WorkspaceSsoProviderNotFoundError())
-      })(canQueryProjectArgs())
+        getWorkspaceSsoProvider: async () => null
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
     it('does not check SSO sessions if user is workspace guest', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -387,21 +348,21 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
-        getWorkspaceRole: async () => ok('workspace:guest'),
+        getWorkspaceRole: async () => Roles.Workspace.Guest,
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
         getWorkspaceSsoProvider: () => {
           assert.fail()
         }
-      })(canQueryProjectArgs())
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
     it('does not check SSO sessions if workspace does not have it enabled', async () => {
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -411,20 +372,19 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
-        getWorkspaceRole: async () => ok('workspace:member'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
+        getWorkspaceRole: async () => Roles.Workspace.Member,
         getWorkspace,
         getWorkspaceSsoSession: () => {
           assert.fail()
         },
-        getWorkspaceSsoProvider: async () =>
-          err(new WorkspaceSsoProviderNotFoundError())
-      })(canQueryProjectArgs())
+        getWorkspaceSsoProvider: async () => null
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
     it('does not allow project access if SSO session is missing', async () => {
-      const canQueryProject = canQueryProjectPolicy({
+      const canReadProject = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -434,21 +394,21 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
-        getWorkspaceRole: async () => ok('workspace:member'),
-        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError()),
-        getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getWorkspaceSsoSession: async () => null,
+        getWorkspaceSsoProvider: async () => ({ providerId: 'foo' })
       })
-      const canQuery = await canQueryProject(canQueryProjectArgs())
+      const canQuery = await canReadProject(canReadProjectArgs())
       expect(canQuery.isOk).toBe(false)
     })
     it('does not allow project access if SSO session is not found', async () => {
       const date = new Date()
       date.setDate(date.getDate() - 1)
 
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -458,13 +418,13 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
-        getWorkspaceRole: async () => ok('workspace:member'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
+        getWorkspaceRole: async () => Roles.Workspace.Member,
         getWorkspace,
-        getWorkspaceSsoSession: async () => err(new WorkspaceSsoSessionNotFoundError()),
-        getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
-      })(canQueryProjectArgs())
+        getWorkspaceSsoSession: async () => null,
+        getWorkspaceSsoProvider: async () => ({ providerId: 'foo' })
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(
         err(
           new WorkspaceSsoSessionNoAccessError({
@@ -477,7 +437,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
       const date = new Date()
       date.setDate(date.getDate() - 1)
 
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -487,14 +447,17 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
-        getWorkspaceRole: async () => ok('workspace:member'),
-        getWorkspaceSsoSession: async () =>
-          ok({ validUntil: date, userId: 'foo', providerId: 'foo' }),
-        getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
-      })(canQueryProjectArgs())
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getWorkspaceSsoSession: async () => ({
+          validUntil: date,
+          userId: 'foo',
+          providerId: 'foo'
+        }),
+        getWorkspaceSsoProvider: async () => ({ providerId: 'foo' })
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(
         err(
           new WorkspaceSsoSessionNoAccessError({
@@ -507,7 +470,7 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
       const date = new Date()
       date.setDate(date.getDate() + 1)
 
-      const result = canQueryProjectPolicy({
+      const result = canReadProjectPolicy({
         getEnv: async () =>
           parseFeatureFlags({
             FF_WORKSPACES_MODULE_ENABLED: 'true'
@@ -517,14 +480,17 @@ describe('canQueryProjectPolicy creates a function, that handles ', () => {
           isPublic: false,
           workspaceId: crs({ length: 10 })
         }),
-        getProjectRole: async () => ok('stream:contributor'),
-        getServerRole: async () => ok('server:user'),
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getServerRole: async () => Roles.Server.User,
         getWorkspace,
-        getWorkspaceRole: async () => ok('workspace:member'),
-        getWorkspaceSsoSession: async () =>
-          ok({ validUntil: date, userId: 'foo', providerId: 'foo' }),
-        getWorkspaceSsoProvider: async () => ok({ providerId: 'foo' })
-      })(canQueryProjectArgs())
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getWorkspaceSsoSession: async () => ({
+          validUntil: date,
+          userId: 'foo',
+          providerId: 'foo'
+        }),
+        getWorkspaceSsoProvider: async () => ({ providerId: 'foo' })
+      })(canReadProjectArgs())
       await expect(result).resolves.toStrictEqual(ok())
     })
   })

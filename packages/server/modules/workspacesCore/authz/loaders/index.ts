@@ -13,5 +13,17 @@ export default defineModuleLoaders(() => ({
   },
   getWorkspaceSsoProvider: async () => {
     throw new LoaderUnsupportedError()
+  },
+  getWorkspaceSeat: async () => {
+    throw new LoaderUnsupportedError()
+  },
+  getWorkspaceProjectCount: async () => {
+    throw new LoaderUnsupportedError()
+  },
+  getWorkspacePlan: async () => {
+    throw new LoaderUnsupportedError()
+  },
+  getWorkspaceLimits: async () => {
+    throw new LoaderUnsupportedError()
   }
 }))

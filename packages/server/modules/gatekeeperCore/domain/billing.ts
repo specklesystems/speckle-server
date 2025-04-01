@@ -1,10 +1,5 @@
 import {
   PaidWorkspacePlans,
-  PaidWorkspacePlanStatuses,
-  TrialEnabledPaidWorkspacePlans,
-  TrialWorkspacePlanStatuses,
-  UnpaidWorkspacePlans,
-  UnpaidWorkspacePlanStatuses,
   WorkspacePlanBillingIntervals,
   WorkspacePlans
 } from '@speckle/shared'
@@ -14,27 +9,6 @@ import { OverrideProperties, SetOptional } from 'type-fest'
  * This includes the pricing plans (Stripe products) a customer can sub to
  */
 export type WorkspacePricingProducts = PaidWorkspacePlans | 'guest'
-
-type BaseWorkspacePlan = {
-  workspaceId: string
-  createdAt: Date
-}
-
-export type PaidWorkspacePlan = BaseWorkspacePlan & {
-  name: PaidWorkspacePlans
-  status: PaidWorkspacePlanStatuses
-}
-
-export type TrialWorkspacePlan = BaseWorkspacePlan & {
-  name: TrialEnabledPaidWorkspacePlans
-  status: TrialWorkspacePlanStatuses
-}
-
-export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
-  name: UnpaidWorkspacePlans
-  status: UnpaidWorkspacePlanStatuses
-}
-export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
 
 type WorkspacePlanProductsMetadata<PriceData = string> = OverrideProperties<
   Record<

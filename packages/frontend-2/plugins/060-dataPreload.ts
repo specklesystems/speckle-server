@@ -1,4 +1,3 @@
-import type { Optional } from '@speckle/shared'
 import { activeUserQuery } from '~/lib/auth/composables/activeUser'
 import {
   authLoginPanelQuery,
@@ -6,8 +5,6 @@ import {
 } from '~/lib/auth/graphql/queries'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
-import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
-import { workspaceAccessCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
@@ -24,9 +21,6 @@ export default defineNuxtPlugin(async (ctx) => {
     return
   }
 
-  const path = route.path
-  const idParam = route.params.id as Optional<string>
-  const slugParam = route.params.slug as Optional<string>
   const promises: Promise<unknown>[] = []
 
   // Standard/global
@@ -35,36 +29,6 @@ export default defineNuxtPlugin(async (ctx) => {
       queries: [{ query: activeUserQuery }, { query: mainServerInfoDataQuery }]
     })
   )
-
-  // Preload project data
-  if (idParam && path.startsWith('/projects/')) {
-    promises.push(
-      preload({
-        queries: [
-          {
-            query: projectAccessCheckQuery,
-            variables: { id: idParam },
-            context: { skipLoggingErrors: true }
-          }
-        ]
-      })
-    )
-  }
-
-  // Preload workspace data
-  if (slugParam && path.startsWith('/workspaces/') && isWorkspacesEnabled.value) {
-    promises.push(
-      preload({
-        queries: [
-          {
-            query: workspaceAccessCheckQuery,
-            variables: { slug: slugParam },
-            context: { skipLoggingErrors: true }
-          }
-        ]
-      })
-    )
-  }
 
   // Preload viewer data
   if (route.meta.key === '/projects/:id/models/resources') {

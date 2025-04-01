@@ -5,7 +5,11 @@ import type { GetProject, GetProjectRole } from './projects/operations.js'
 import type {
   GetEnv,
   GetWorkspace,
+  GetWorkspaceLimits,
+  GetWorkspacePlan,
+  GetWorkspaceProjectCount,
   GetWorkspaceRole,
+  GetWorkspaceSeat,
   GetWorkspaceSsoProvider,
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
@@ -45,6 +49,10 @@ export const AuthCheckContextLoaderKeys = <const>{
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
   getWorkspaceRole: 'getWorkspaceRole',
+  getWorkspaceSeat: 'getWorkspaceSeat',
+  getWorkspaceProjectCount: 'getWorkspaceProjectCount',
+  getWorkspacePlan: 'getWorkspacePlan',
+  getWorkspaceLimits: 'getWorkspaceLimits',
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession'
 }
@@ -60,6 +68,10 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole
+  getWorkspaceLimits: GetWorkspaceLimits
+  getWorkspacePlan: GetWorkspacePlan
+  getWorkspaceSeat: GetWorkspaceSeat
+  getWorkspaceProjectCount: GetWorkspaceProjectCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
 }>
