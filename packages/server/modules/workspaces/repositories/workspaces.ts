@@ -26,7 +26,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
-  GetWorkspacesModelCounts,
+  GetWorkspacesModelsCounts,
   GetWorkspacesProjectsCounts,
   QueryWorkspaces,
   StoreWorkspaceDomain,
@@ -546,7 +546,7 @@ export const getWorkspacesProjectsCountsFactory =
   }
 
 export const getWorkspacesModelsCountsFactory =
-  (deps: { db: Knex }): GetWorkspacesModelCounts =>
+  (deps: { db: Knex }): GetWorkspacesModelsCounts =>
   async ({ workspaceIds }) => {
     const ret = workspaceIds.reduce((acc, workspaceId) => {
       acc[workspaceId] = 0

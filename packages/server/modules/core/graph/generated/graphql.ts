@@ -6,7 +6,6 @@ import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectRoleGraphQLReturn, WorkspacePermissionChecksGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
-import { WorkspacePlanGraphQLReturn, WorkspacePlanUsageGraphQLReturn, PriceGraphQLReturn } from '@/modules/gatekeeperCore/helpers/graphTypes';
 import { WorkspaceBillingMutationsGraphQLReturn, WorkspaceSubscriptionGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
 import { SmartTextEditorValueGraphQLReturn } from '@/modules/core/services/richTextEditorService';
@@ -5360,7 +5359,7 @@ export type ResolversTypes = {
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspacePaymentMethod: WorkspacePaymentMethod;
   WorkspacePermissionChecks: ResolverTypeWrapper<WorkspacePermissionChecksGraphQLReturn>;
-  WorkspacePlan: ResolverTypeWrapper<WorkspacePlanGraphQLReturn>;
+  WorkspacePlan: ResolverTypeWrapper<WorkspacePlan>;
   WorkspacePlanPrice: ResolverTypeWrapper<Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversTypes['Price']>, yearly?: Maybe<ResolversTypes['Price']> }>;
   WorkspacePlanStatuses: WorkspacePlanStatuses;
   WorkspacePlanUsage: ResolverTypeWrapper<WorkspacePlanUsageGraphQLReturn>;
@@ -5660,7 +5659,7 @@ export type ResolversParentTypes = {
   WorkspaceMembersByRole: WorkspaceMembersByRole;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspacePermissionChecks: WorkspacePermissionChecksGraphQLReturn;
-  WorkspacePlan: WorkspacePlanGraphQLReturn;
+  WorkspacePlan: WorkspacePlan;
   WorkspacePlanPrice: Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversParentTypes['Price']>, yearly?: Maybe<ResolversParentTypes['Price']> };
   WorkspacePlanUsage: WorkspacePlanUsageGraphQLReturn;
   WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
@@ -5715,7 +5714,7 @@ export type HasWorkspaceRoleDirectiveArgs = {
 
 export type HasWorkspaceRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasWorkspaceRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
-export type IsOwnerDirectiveArgs = { };
+export type IsOwnerDirectiveArgs = {};
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 

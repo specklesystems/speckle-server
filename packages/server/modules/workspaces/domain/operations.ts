@@ -240,7 +240,9 @@ export type GetWorkspacesProjectsCounts = (params: {
   [workspaceId: string]: number
 }>
 
-export type GetWorkspacesModelCounts = (params: { workspaceIds: string[] }) => Promise<{
+export type GetWorkspacesModelsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
   [workspaceId: string]: number
 }>
 
