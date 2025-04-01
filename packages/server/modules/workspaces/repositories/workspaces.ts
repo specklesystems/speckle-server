@@ -519,8 +519,8 @@ export const upsertWorkspaceCreationStateFactory =
 
 export const getWorkspacesProjectsCountsFactory =
   (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
-  async (params) => {
-    const ret = params.workspaceIds.reduce((acc, workspaceId) => {
+  async ({ workspaceIds }) => {
+    const ret = workspaceIds.reduce((acc, workspaceId) => {
       acc[workspaceId] = 0
       return acc
     }, {} as Record<string, number>)
@@ -533,7 +533,7 @@ export const getWorkspacesProjectsCountsFactory =
           count: string
         }[]
       >([Streams.col.workspaceId, knex.raw('count(*) as count')])
-      .whereIn(Streams.col.workspaceId, params.workspaceIds)
+      .whereIn(Streams.col.workspaceId, workspaceIds)
       .groupBy(Streams.col.workspaceId)
 
     const res = await q
@@ -548,6 +548,11 @@ export const getWorkspacesProjectsCountsFactory =
 export const getWorkspacesModelsCountsFactory =
   (deps: { db: Knex }): GetWorkspacesModelCounts =>
   async ({ workspaceIds }) => {
+    const ret = workspaceIds.reduce((acc, workspaceId) => {
+      acc[workspaceId] = 0
+      return acc
+    }, {} as Record<string, number>)
+
     const q = tables
       .branches(deps.db)
       .select<
@@ -561,8 +566,10 @@ export const getWorkspacesModelsCountsFactory =
       .groupBy(Streams.col.workspaceId)
 
     const res = await q
-    return res.reduce((acc, { workspaceId, count }) => {
-      acc[workspaceId] = parseInt(count)
-      return acc
-    }, {} as Record<string, number>)
+
+    for (const { workspaceId, count } of res) {
+      ret[workspaceId] = parseInt(count)
+    }
+
+    return ret
   }
