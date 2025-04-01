@@ -1,9 +1,5 @@
-import {
-  ServerRoleNotFoundError,
-  type AuthCheckContextLoaders
-} from '@speckle/shared/authz'
+import type { AuthCheckContextLoaders } from '@speckle/shared/authz'
 import type { ServerRoles } from '@speckle/shared'
-import { err, ok } from 'true-myth/result'
 import { graphql } from '~/lib/common/generated/gql'
 import { ActiveUserId, type AuthLoaderFactory } from '~/lib/auth/helpers/authPolicies'
 
@@ -45,8 +41,6 @@ export const getServerRoleFactory: AuthLoaderFactory<
       throw new Error('Failed to load server role')
     }
 
-    return data?.activeUser?.role
-      ? ok(data.activeUser.role as ServerRoles)
-      : err(new ServerRoleNotFoundError())
+    return (data?.activeUser?.role as ServerRoles) ?? null
   }
 }

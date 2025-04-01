@@ -207,6 +207,7 @@ input UserProjectsFilter {
   Only include projects where user has the specified roles
   """
   onlyWithRoles: [String!]
+
   workspaceId: ID
 }
 

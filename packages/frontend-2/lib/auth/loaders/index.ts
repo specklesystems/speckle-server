@@ -74,6 +74,18 @@ export const buildAuthPolicyLoaders = (params: {
     getWorkspace: getWorkspaceFactory(deps),
     getWorkspaceRole: getWorkspaceRoleFactory(deps),
     getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory(deps),
-    getWorkspaceSsoSession: getWorkspaceSsoSessionFactory(deps)
+    getWorkspaceSsoSession: getWorkspaceSsoSessionFactory(deps),
+    getWorkspaceLimits: () => {
+      throw new Error('Not yet implemented.')
+    },
+    getWorkspacePlan: () => {
+      throw new Error('Not yet implemented.')
+    },
+    getWorkspaceSeat: () => {
+      throw new Error('Not yet implemented.')
+    },
+    getWorkspaceProjectCount: () => {
+      throw new Error('Not yet implemented.')
+    }
   }
 }

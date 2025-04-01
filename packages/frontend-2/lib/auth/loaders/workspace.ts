@@ -1,15 +1,7 @@
 import type { WorkspaceRoles } from '@speckle/shared'
-import {
-  WorkspaceNoAccessError,
-  WorkspaceNotFoundError,
-  WorkspaceRoleNotFoundError,
-  WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionNoAccessError,
-  WorkspaceSsoSessionNotFoundError,
-  type AuthCheckContextLoaders
-} from '@speckle/shared/authz'
+import { Authz } from '@speckle/shared'
+import type { AuthCheckContextLoaders } from '@speckle/shared/authz'
 import dayjs from 'dayjs'
-import { err, ok } from 'true-myth/result'
 import { ActiveUserId, type AuthLoaderFactory } from '~/lib/auth/helpers/authPolicies'
 import { graphql } from '~/lib/common/generated/gql'
 import { hasErrorWith } from '~/lib/common/helpers/graphql'
@@ -55,24 +47,27 @@ export const getWorkspaceFactory: AuthLoaderFactory<
       code: WorkspaceErrorCodes.SsoSessionError
     })
     if (isSsoSessionError)
-      return err(
-        new WorkspaceSsoSessionNoAccessError({
+      throw new Error(
+        new Authz.WorkspaceSsoSessionNoAccessError({
           payload: {
             workspaceSlug: isSsoSessionError.message
           }
-        })
+        }).message
       )
 
     const isNotFound = hasErrorWith({ errors, code: WorkspaceErrorCodes.NotFound })
-    if (isNotFound) return err(new WorkspaceNotFoundError())
+    if (isNotFound)
+      throw new Error(
+        new Authz.WorkspaceNoAccessError({ message: 'Workspace not found.' }).message
+      )
 
     const isForbidden = hasErrorWith({
       errors,
       code: WorkspaceErrorCodes.Forbidden
     })
-    if (isForbidden) return err(new WorkspaceNoAccessError())
+    if (isForbidden) throw new Error(new Authz.WorkspaceNoAccessError().message)
 
-    if (data?.workspace.id) return ok(data.workspace)
+    if (data?.workspace.id) return data.workspace
 
     throw new Error('Unexpectedly failed to load workspace')
   }
@@ -110,9 +105,9 @@ export const getWorkspaceRoleFactory: AuthLoaderFactory<
         WorkspaceErrorCodes.SsoSessionError
       ]
     })
-    if (hasExpectedNotFoundErrors) return err(new WorkspaceRoleNotFoundError())
+    if (hasExpectedNotFoundErrors) throw new Error('Workspace role not found')
     if (data?.workspace.role) {
-      return ok(data.workspace.role as WorkspaceRoles)
+      return data.workspace.role as WorkspaceRoles
     }
 
     throw new Error("Couldn't retrieve project role due to unexpected error")
@@ -152,14 +147,14 @@ export const getWorkspaceSsoProviderFactory: AuthLoaderFactory<
         WorkspaceErrorCodes.SsoSessionError
       ]
     })
-    if (hasExpectedNotFoundErrors) return err(new WorkspaceSsoProviderNotFoundError())
+    if (hasExpectedNotFoundErrors) throw new Error('SSO provider not found')
     if (errors?.length) {
       throw new Error("Couldn't retrieve project role due to unexpected error")
     }
 
     return data?.workspace.sso?.provider
-      ? ok({ providerId: data.workspace.sso.provider.id })
-      : err(new WorkspaceSsoProviderNotFoundError())
+      ? { providerId: data.workspace.sso.provider.id }
+      : null
   }
 }
 
@@ -172,7 +167,7 @@ export const getWorkspaceSsoSessionFactory: AuthLoaderFactory<
     if (userId !== activeUserId.value && userId !== ActiveUserId) {
       throw new Error('Checking workspace session for another user is not supported')
     }
-    if (!activeUserId.value) return err(new WorkspaceSsoSessionNotFoundError())
+    if (!activeUserId.value) throw new Error('SSO session not found')
 
     const { data, errors } = await deps
       .query({
@@ -189,17 +184,17 @@ export const getWorkspaceSsoSessionFactory: AuthLoaderFactory<
         WorkspaceErrorCodes.SsoSessionError
       ]
     })
-    if (hasExpectedNotFoundErrors) return err(new WorkspaceSsoSessionNotFoundError())
+    if (hasExpectedNotFoundErrors) throw new Error('SSO session not found')
     if (errors?.length) {
       throw new Error("Couldn't retrieve project role due to unexpected error")
     }
 
     return data?.workspace.sso?.session && data.workspace.sso.provider
-      ? ok({
+      ? {
           providerId: data.workspace.sso.provider.id,
           userId: activeUserId.value,
           validUntil: dayjs(data.workspace.sso.session.validUntil).toDate()
-        })
-      : err(new WorkspaceSsoSessionNotFoundError())
+        }
+      : null
   }
 }

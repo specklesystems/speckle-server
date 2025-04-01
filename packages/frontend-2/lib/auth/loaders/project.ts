@@ -1,11 +1,5 @@
-import {
-  ProjectNoAccessError,
-  ProjectNotFoundError,
-  ProjectRoleNotFoundError,
-  WorkspaceSsoSessionNoAccessError,
-  type AuthCheckContextLoaders
-} from '@speckle/shared/authz'
-import { err, ok } from 'true-myth/result'
+import type { AuthCheckContextLoaders } from '@speckle/shared/authz'
+import { Authz } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { hasErrorWith } from '~/lib/common/helpers/graphql'
@@ -54,30 +48,30 @@ export const getProjectFactory: AuthLoaderFactory<
       code: ProjectErrorCodes.SsoSessionError
     })
     if (isSsoSessionError)
-      return err(
-        new WorkspaceSsoSessionNoAccessError({
+      throw new Error(
+        new Authz.WorkspaceSsoSessionNoAccessError({
           payload: {
             workspaceSlug: isSsoSessionError.message
           }
-        })
+        }).message
       )
 
     const isNotFound = hasErrorWith({ errors, code: ProjectErrorCodes.NotFound })
-    if (isNotFound) return err(new ProjectNotFoundError())
+    if (isNotFound) throw new Error(new Authz.ProjectNotFoundError().message)
 
     const isForbidden = hasErrorWith({
       errors,
       code: ProjectErrorCodes.Forbidden
     })
-    if (isForbidden) return err(new ProjectNoAccessError())
+    if (isForbidden) throw new Error(new Authz.ProjectNoAccessError().message)
 
     if (data?.project.id)
-      return ok({
+      return {
         id: data.project.id,
         isDiscoverable: false,
         isPublic: data.project.visibility === SimpleProjectVisibility.Unlisted,
         workspaceId: data.project.workspaceId || null
-      })
+      }
 
     throw new Error("Couldn't retrieve project due to unexpected error")
   }
@@ -115,12 +109,10 @@ export const getProjectRoleFactory: AuthLoaderFactory<
         ProjectErrorCodes.SsoSessionError
       ]
     })
-    if (hasExpectedNotFoundErrors) return err(new ProjectRoleNotFoundError())
+    if (hasExpectedNotFoundErrors) throw new Error('Project role not found')
 
     if (data?.project.id) {
-      return data.project.role
-        ? ok(data.project.role as StreamRoles)
-        : err(new ProjectRoleNotFoundError())
+      return data.project.role ? (data.project.role as StreamRoles) : null
     }
 
     throw new Error("Couldn't retrieve project role due to unexpected error")

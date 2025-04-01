@@ -17,7 +17,7 @@ import { loginRoute } from '~/lib/common/helpers/route'
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   const authPolicies = useAuthPolicies()
-  const canAccess = await authPolicies.noCache().project.canQuery({
+  const canAccess = await authPolicies.noCache().project.canRead({
     projectId,
     userId: ActiveUserId
   })
