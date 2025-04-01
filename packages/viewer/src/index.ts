@@ -44,7 +44,11 @@ import {
   SelectionExtensionOptions,
   DefaultSelectionExtensionOptions
 } from './modules/extensions/SelectionExtension.js'
-import { CameraController } from './modules/extensions/CameraController.js'
+import {
+  CameraController,
+  CameraControllerOptions,
+  NearPlaneCalculation
+} from './modules/extensions/CameraController.js'
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
@@ -150,6 +154,7 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { WebXrViewer } from './modules/WebXrViewer.js'
 import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import {
   DefaultEdgesPassOptions,
@@ -160,6 +165,7 @@ import {
 export {
   Viewer,
   LegacyViewer,
+  WebXrViewer,
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
@@ -264,7 +270,9 @@ export {
   CONTAINED,
   ViewModeEvent,
   SpeckleMesh,
-  SpeckleInstancedMesh
+  SpeckleInstancedMesh,
+  CameraControllerOptions,
+  NearPlaneCalculation
 }
 
 export type {

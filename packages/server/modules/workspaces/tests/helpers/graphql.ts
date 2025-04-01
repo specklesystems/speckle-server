@@ -385,6 +385,43 @@ export const getWorkspaceWithSubscriptionQuery = gql`
   ${basicWorkspaceFragment}
 `
 
+export const getWorkspaceWithSeatsByType = gql`
+  query GetWorkspaceWithSeatsByType($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      seatsByType {
+        editors {
+          totalCount
+        }
+        viewers {
+          totalCount
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
+export const getWorkspaceWithMembersByRole = gql`
+  query GetWorkspaceWithMembersByRole($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      membersByRole {
+        admins {
+          totalCount
+        }
+        members {
+          totalCount
+        }
+        guests {
+          totalCount
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
 export const updateWorkspaceProjectRoleMutation = gql`
   mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
     workspaceMutations {
@@ -409,6 +446,24 @@ export const updateWorkspaceSeatTypeMutation = gql`
             id
             role
             seatType
+          }
+        }
+      }
+    }
+  }
+`
+
+export const invitableUsersInProjectQuery = gql`
+  query GetProjectInvitableCollaborators($projectId: String!, $search: String) {
+    project(id: $projectId) {
+      id
+      name
+      invitableCollaborators(filter: { search: $search }) {
+        totalCount
+        items {
+          id
+          user {
+            name
           }
         }
       }
