@@ -24,6 +24,7 @@
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
+          <HeaderNavNotifications v-if="isLoggedIn" />
           <div class="flex justify-end">
             <FormButton
               v-if="!activeUser"
@@ -49,7 +50,7 @@ import type { Optional } from '@speckle/shared'
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
-const { activeUser } = useActiveUser()
+const { activeUser, isLoggedIn } = useActiveUser()
 const route = useRoute()
 const router = useRouter()
 
