@@ -106,7 +106,7 @@ spec:
           {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
-            value: {{ .Values.fileimport_service.time_limit_min | quote }}
+            value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.objects.max_object_size_mb | quote }}
           {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
