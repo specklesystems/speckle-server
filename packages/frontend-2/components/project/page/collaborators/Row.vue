@@ -23,10 +23,8 @@
         :model-value="collaborator.role"
         :disabled="loading"
         :hide-owner="collaborator.serverRole === Roles.Server.Guest"
-        :disabled-roles="isTargettingWorkspaceGuest ? [Roles.Stream.Owner] : []"
-        :disabled-item-tooltip="
-          isTargettingWorkspaceGuest ? 'Workspace guests cannot be project owners' : ''
-        "
+        :disabled-roles="disabledRoles"
+        :disabled-item-tooltip="disabledRolesTooltip"
         @update:model-value="emit('changeRole', collaborator, $event)"
       />
       <div v-else class="flex items-center justify-end">
@@ -146,6 +144,31 @@ const badgeText = computed(() => {
 
   return null
 })
+
+const disabledRoles = computed(() => {
+  if (isTargettingWorkspaceGuest.value) {
+    return [Roles.Stream.Owner]
+  }
+
+  if (props.collaborator.seatType === 'viewer') {
+    return [Roles.Stream.Owner, Roles.Stream.Contributor]
+  }
+
+  return []
+})
+
+const disabledRolesTooltip = computed(() => {
+  if (isTargettingWorkspaceGuest.value) {
+    return 'Workspace guests cannot be project owners'
+  }
+
+  if (props.collaborator.seatType === 'viewer') {
+    return 'Users with a viewer seat cannot be project owners or contributors'
+  }
+
+  return ''
+})
+
 const onActionChosen = (
   params: { item: LayoutMenuItem; event: MouseEvent },
   collaborator: ProjectCollaboratorListItem
