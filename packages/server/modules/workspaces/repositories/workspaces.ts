@@ -26,6 +26,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesProjectsCounts,
   QueryWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
@@ -507,4 +508,25 @@ export const upsertWorkspaceCreationStateFactory =
       .insert(workspaceCreationState)
       .onConflict('workspaceId')
       .merge()
+  }
+
+export const getWorkspacesProjectsCountsFactory =
+  (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
+  async (params) => {
+    const q = tables
+      .streams(deps.db)
+      .select<
+        {
+          workspaceId: string
+          count: string
+        }[]
+      >([Streams.col.workspaceId, knex.raw('count(*) as count')])
+      .whereIn(Streams.col.workspaceId, params.workspaceIds)
+      .groupBy(Streams.col.workspaceId)
+
+    const res = await q
+    return res.reduce((acc, { workspaceId, count }) => {
+      acc[workspaceId] = parseInt(count)
+      return acc
+    }, {} as Record<string, number>)
   }

@@ -1,11 +1,11 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn, ProjectCollaboratorGraphQLReturn, ServerInfoGraphQLReturn, BranchGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn, ProjectCollaboratorGraphQLReturn, ServerInfoGraphQLReturn, BranchGraphQLReturn, ProjectPermissionChecksGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn, ProjectAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
-import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectRoleGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
+import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectRoleGraphQLReturn, WorkspacePermissionChecksGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { WorkspaceBillingMutationsGraphQLReturn, WorkspaceSubscriptionGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
 import { SmartTextEditorValueGraphQLReturn } from '@/modules/core/services/richTextEditorService';
@@ -1980,6 +1980,13 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PermissionCheckResult = {
+  __typename?: 'PermissionCheckResult';
+  authorized: Scalars['Boolean']['output'];
+  code: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+};
+
 export type Price = {
   __typename?: 'Price';
   amount: Scalars['Float']['output'];
@@ -2024,6 +2031,7 @@ export type Project = {
   pendingAccessRequests?: Maybe<Array<ProjectAccessRequest>>;
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
+  permissions: ProjectPermissionChecks;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   /** Source apps used in any models of this project */
@@ -2517,6 +2525,11 @@ export const ProjectPendingVersionsUpdatedMessageType = {
 } as const;
 
 export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVersionsUpdatedMessageType[keyof typeof ProjectPendingVersionsUpdatedMessageType];
+export type ProjectPermissionChecks = {
+  __typename?: 'ProjectPermissionChecks';
+  canRead: PermissionCheckResult;
+};
+
 export type ProjectRole = {
   __typename?: 'ProjectRole';
   project: Project;
@@ -4346,6 +4359,7 @@ export type Workspace = {
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  permissions: WorkspacePermissionChecks;
   plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
   /** A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed */
@@ -4702,6 +4716,11 @@ export const WorkspacePaymentMethod = {
 } as const;
 
 export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof WorkspacePaymentMethod];
+export type WorkspacePermissionChecks = {
+  __typename?: 'WorkspacePermissionChecks';
+  canCreateProject: PermissionCheckResult;
+};
+
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
   createdAt: Scalars['DateTime']['output'];
@@ -5135,6 +5154,7 @@ export type ResolversTypes = {
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
   PendingWorkspaceCollaborator: ResolverTypeWrapper<PendingWorkspaceCollaboratorGraphQLReturn>;
   PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
+  PermissionCheckResult: ResolverTypeWrapper<PermissionCheckResult>;
   Price: ResolverTypeWrapper<PriceGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
@@ -5166,6 +5186,7 @@ export type ResolversTypes = {
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
   ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
+  ProjectPermissionChecks: ResolverTypeWrapper<ProjectPermissionChecksGraphQLReturn>;
   ProjectRole: ResolverTypeWrapper<ProjectRoleGraphQLReturn>;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn>;
@@ -5291,6 +5312,7 @@ export type ResolversTypes = {
   WorkspaceJoinRequestStatus: WorkspaceJoinRequestStatus;
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspacePaymentMethod: WorkspacePaymentMethod;
+  WorkspacePermissionChecks: ResolverTypeWrapper<WorkspacePermissionChecksGraphQLReturn>;
   WorkspacePlan: ResolverTypeWrapper<WorkspacePlan>;
   WorkspacePlanPrice: ResolverTypeWrapper<Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversTypes['Price']>, yearly?: Maybe<ResolversTypes['Price']> }>;
   WorkspacePlanStatuses: WorkspacePlanStatuses;
@@ -5448,6 +5470,7 @@ export type ResolversParentTypes = {
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
   PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorGraphQLReturn;
   PendingWorkspaceCollaboratorsFilter: PendingWorkspaceCollaboratorsFilter;
+  PermissionCheckResult: PermissionCheckResult;
   Price: PriceGraphQLReturn;
   Project: ProjectGraphQLReturn;
   ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
@@ -5473,6 +5496,7 @@ export type ResolversParentTypes = {
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
+  ProjectPermissionChecks: ProjectPermissionChecksGraphQLReturn;
   ProjectRole: ProjectRoleGraphQLReturn;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn;
@@ -5582,6 +5606,7 @@ export type ResolversParentTypes = {
   WorkspaceJoinRequestFilter: WorkspaceJoinRequestFilter;
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsGraphQLReturn;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
+  WorkspacePermissionChecks: WorkspacePermissionChecksGraphQLReturn;
   WorkspacePlan: WorkspacePlan;
   WorkspacePlanPrice: Omit<WorkspacePlanPrice, 'monthly' | 'yearly'> & { monthly?: Maybe<ResolversParentTypes['Price']>, yearly?: Maybe<ResolversParentTypes['Price']> };
   WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
@@ -6342,6 +6367,13 @@ export type PendingWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PermissionCheckResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PermissionCheckResult'] = ResolversParentTypes['PermissionCheckResult']> = {
+  authorized?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  code?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type PriceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Price'] = ResolversParentTypes['Price']> = {
   amount?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   currency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6370,6 +6402,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   object?: Resolver<Maybe<ResolversTypes['Object']>, ParentType, ContextType, RequireFields<ProjectObjectArgs, 'id'>>;
   pendingAccessRequests?: Resolver<Maybe<Array<ResolversTypes['ProjectAccessRequest']>>, ParentType, ContextType>;
   pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
+  permissions?: Resolver<ResolversTypes['ProjectPermissionChecks'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
@@ -6496,6 +6529,11 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['ProjectPendingVersionsUpdatedMessageType'], ParentType, ContextType>;
   version?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPermissionChecks'] = ResolversParentTypes['ProjectPermissionChecks']> = {
+  canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7086,6 +7124,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  permissions?: Resolver<ResolversTypes['WorkspacePermissionChecks'], ParentType, ContextType>;
   plan?: Resolver<Maybe<ResolversTypes['WorkspacePlan']>, ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   readOnly?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -7191,6 +7230,11 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   updateCreationState?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateCreationStateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   updateSeatType?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateSeatTypeArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePermissionChecks'] = ResolversParentTypes['WorkspacePermissionChecks']> = {
+  canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7340,6 +7384,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   PendingWorkspaceCollaborator?: PendingWorkspaceCollaboratorResolvers<ContextType>;
+  PermissionCheckResult?: PermissionCheckResultResolvers<ContextType>;
   Price?: PriceResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
   ProjectAccessRequest?: ProjectAccessRequestResolvers<ContextType>;
@@ -7356,6 +7401,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;
   ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
   ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
+  ProjectPermissionChecks?: ProjectPermissionChecksResolvers<ContextType>;
   ProjectRole?: ProjectRoleResolvers<ContextType>;
   ProjectTriggeredAutomationsStatusUpdatedMessage?: ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
@@ -7424,6 +7470,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceJoinRequestCollection?: WorkspaceJoinRequestCollectionResolvers<ContextType>;
   WorkspaceJoinRequestMutations?: WorkspaceJoinRequestMutationsResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
+  WorkspacePermissionChecks?: WorkspacePermissionChecksResolvers<ContextType>;
   WorkspacePlan?: WorkspacePlanResolvers<ContextType>;
   WorkspacePlanPrice?: WorkspacePlanPriceResolvers<ContextType>;
   WorkspaceProjectMutations?: WorkspaceProjectMutationsResolvers<ContextType>;

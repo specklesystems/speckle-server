@@ -1,46 +1,62 @@
 import { db } from '@/db/knex'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { defineModuleLoaders } from '@/modules/loaders'
 import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
-import {
-  getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
-} from '@/modules/workspaces/repositories/workspaces'
-import { Authz } from '@speckle/shared'
-import { err, ok } from 'true-myth/result'
+import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
 
+// TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
-  const getWorkspace = getWorkspaceFactory({ db })
+  const getWorkspacePlan = getWorkspacePlanFactory({ db })
+
   return {
-    getWorkspace: async ({ workspaceId }) => {
-      const workspace = await getWorkspace({ workspaceId })
-      if (!workspace) return err(new Authz.WorkspaceNotFoundError())
-      return ok(workspace)
+    getWorkspace: async ({ workspaceId }, { dataLoaders }) => {
+      return (await dataLoaders.workspaces!.getWorkspace.load(workspaceId)) || null
     },
     getWorkspaceRole: async ({ userId, workspaceId }) => {
       const role = await getWorkspaceRoleForUserFactory({ db })({
         userId,
         workspaceId
       })
-      if (!role) return err(new Authz.WorkspaceRoleNotFoundError())
-      return ok(role.role)
+      return role?.role || null
     },
     getWorkspaceSsoSession: async ({ userId, workspaceId }) => {
       const ssoSession = await getUserSsoSessionFactory({ db })({
         userId,
         workspaceId
       })
-      if (!ssoSession) return err(new Authz.WorkspaceSsoSessionNotFoundError())
-      return ok(ssoSession)
+      return ssoSession || null
     },
     getWorkspaceSsoProvider: async ({ workspaceId }) => {
       const ssoProvider = await getWorkspaceSsoProviderRecordFactory({ db })({
         workspaceId
       })
-      if (!ssoProvider) return err(new Authz.WorkspaceSsoProviderNotFoundError())
-      return ok(ssoProvider)
+      return ssoProvider || null
+    },
+    getWorkspaceSeat: async ({ userId, workspaceId }, { dataLoaders }) => {
+      return (
+        (
+          await dataLoaders.gatekeeper!.getUserWorkspaceSeat.load({
+            userId,
+            workspaceId
+          })
+        )?.type || null
+      )
+    },
+    getWorkspaceProjectCount: async ({ workspaceId }, { dataLoaders }) => {
+      return await dataLoaders.workspaces!.getProjectCount.load(workspaceId)
+    },
+    getWorkspacePlan: async ({ workspaceId }) => {
+      return await getWorkspacePlan({ workspaceId })
+    },
+    getWorkspaceLimits: async () => {
+      // TODO: Do real implementation
+      return {
+        projectCount: 999,
+        modelCount: 999
+      }
     }
   }
 })

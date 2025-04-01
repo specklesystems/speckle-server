@@ -1,0 +1,7 @@
+extend type Project {
+  permissions: ProjectPermissionChecks!
+}
+
+type ProjectPermissionChecks {
+  canRead: PermissionCheckResult!
+}
