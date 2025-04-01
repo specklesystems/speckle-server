@@ -24,6 +24,13 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Create the fully qualified domain name of the service
+*/}}
+{{- define "speckle-preview-service.serviceFQDN" -}}
+{{- printf "%s.%s.svc.cluster.local." (include "speckle-preview-service.serviceAccountName" .) .Values.namespace }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "speckle-preview-service.chart" -}}
