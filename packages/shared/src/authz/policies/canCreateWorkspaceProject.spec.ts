@@ -2,6 +2,7 @@ import { assert, describe, expect, it } from 'vitest'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
+  WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
@@ -15,7 +16,7 @@ import { parseFeatureFlags } from '../../environment/index.js'
 import cryptoRandomString from 'crypto-random-string'
 import { WorkspacePlan } from '../../workspaces/index.js'
 import { Workspace, WorkspaceSsoProvider } from '../domain/workspaces/types.js'
-import { err } from 'true-myth/result'
+import { err, ok } from 'true-myth/result'
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 10 }),
@@ -405,10 +406,199 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
   })
 
   describe('workspace limits', () => {
-    it('forbids creation if limits fail to load', async () => {})
-    it('allows creation if plan has no limits', async () => {})
-    it('forbids creation if current project count fails to load', async () => {})
-    it('allows creation if new project is within plan limits', async () => {})
-    it('forbids creation if new project is not within plan limits', async () => {})
+    it('forbids creation if limits fail to load', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          return null
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+    })
+    it('allows creation if plan has no limits', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          return {
+            projectCount: null,
+            modelCount: null
+          }
+        },
+        getWorkspaceProjectCount: async () => {
+          assert.fail()
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(ok())
+    })
+    it('forbids creation if current project count fails to load', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          return {
+            projectCount: 10,
+            modelCount: 50
+          }
+        },
+        getWorkspaceProjectCount: async () => {
+          return null
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+    })
+    it('allows creation if new project is within plan limits', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          return {
+            projectCount: 10,
+            modelCount: 50
+          }
+        },
+        getWorkspaceProjectCount: async () => {
+          return 5
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(ok())
+    })
+    it('forbids creation if new project is not within plan limits', async () => {
+      const result = await canCreateWorkspaceProjectPolicy({
+        getEnv: async () => parseFeatureFlags({}),
+        getServerRole: async () => {
+          return 'server:user'
+        },
+        getWorkspaceRole: async () => {
+          return 'workspace:member'
+        },
+        getWorkspace: async () => {
+          return {} as Workspace
+        },
+        getWorkspaceSeat: async () => {
+          return 'viewer'
+        },
+        getWorkspacePlan: async () => {
+          return {
+            status: 'valid'
+          } as WorkspacePlan
+        },
+        getWorkspaceLimits: async () => {
+          return {
+            projectCount: 10,
+            modelCount: 50
+          }
+        },
+        getWorkspaceProjectCount: async () => {
+          return 10
+        },
+        getWorkspaceSsoProvider: async () => {
+          return null
+        },
+        getWorkspaceSsoSession: async () => {
+          assert.fail()
+        }
+      })(canCreateArgs())
+
+      expect(result).toStrictEqual(
+        err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+      )
+    })
   })
 })
