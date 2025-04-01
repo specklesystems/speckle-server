@@ -18,9 +18,9 @@
     />
     <div v-if="isWorkspaceNewPlansEnabled" class="text-body-2xs py-2">
       You can move up to
-      <span class="font-medium">{{ projectLimit }} projects</span>
+      <span class="font-medium">{{ remainingProjects }} projects</span>
       and
-      <span class="font-medium">{{ modelLimit }} models</span>
+      <span class="font-medium">{{ remainingModels }} models</span>
       in total.
     </div>
     <div
@@ -37,7 +37,9 @@
             {{ project.name }}
           </span>
           <div class="flex items-center gap-x-1">
+            <!-- TODO: Remove this -->
             <div>{{ canMoveProject(project) ? 'yes' : 'no' }}</div>
+
             <span class="text-foreground-3 truncate">
               {{ project.modelCount.totalCount }} model{{
                 project.modelCount.totalCount !== 1 ? 's' : ''
@@ -72,7 +74,9 @@
     />
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitReachedDialog"
-      :project="selectedProject"
+      :current-plan="workspace.plan?.name"
+      :limit="limit"
+      :limit-type="limitType"
     />
   </LayoutDialog>
 </template>
@@ -94,6 +98,9 @@ import { Roles } from '@speckle/shared'
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
     id
+    plan {
+      name
+    }
     ...ProjectsMoveToWorkspaceDialog_Workspace
     projects {
       items {
@@ -140,7 +147,7 @@ const projectLimit = computed(() => {
   return 3
 })
 const modelLimit = computed(() => {
-  return 5
+  return 8
 })
 const projectCount = computed(() => {
   return 1
@@ -148,6 +155,9 @@ const projectCount = computed(() => {
 const modelCount = computed(() => {
   return 2
 })
+
+const remainingProjects = computed(() => projectLimit.value - projectCount.value)
+const remainingModels = computed(() => modelLimit.value - modelCount.value)
 
 const {
   query: { result },
@@ -185,8 +195,8 @@ const canMoveProject = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) 
   if (!isWorkspaceNewPlansEnabled.value) return true
 
   return (
-    projectCount.value < projectLimit.value &&
-    project.modelCount.totalCount + modelCount.value <= modelLimit.value
+    remainingProjects.value > 0 &&
+    project.modelCount.totalCount <= remainingModels.value
   )
 }
 
@@ -203,6 +213,16 @@ const buttons = computed((): LayoutDialogButton[] => [
     }
   }
 ])
+
+const limitType = computed(() =>
+  selectedProject.value && canMoveProject(selectedProject.value) ? 'model' : 'project'
+)
+
+const limit = computed(() =>
+  selectedProject.value && canMoveProject(selectedProject.value)
+    ? modelLimit.value
+    : projectLimit.value
+)
 
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
