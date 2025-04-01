@@ -3,6 +3,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "speckle-preview-service.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "speckle-preview-service.labels" . | nindent 4 }}
 spec:
