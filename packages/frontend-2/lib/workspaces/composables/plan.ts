@@ -38,7 +38,7 @@ graphql(`
 graphql(`
   fragment WorkspacePlanLimits_Workspace on Workspace {
     id
-    projects {
+    projects(limit: 0) {
       totalCount
       items {
         id
@@ -175,27 +175,40 @@ export const useWorkspacePlanLimits = (slug: string) => {
   const projectLimit = computed(() => 3)
   const modelLimit = computed(() => 8)
 
-  const projectCount = computed(
-    () => result.value?.workspaceBySlug?.projects.totalCount || 0
-  )
-  const modelCount = computed(
-    () =>
-      result.value?.workspaceBySlug?.projects.items.reduce(
-        (total, project) => total + project.models.totalCount,
+  const projectCount = computed(() => {
+    return result.value?.workspaceBySlug?.projects?.totalCount ?? 0
+  })
+
+  const modelCount = computed(() => {
+    return (
+      result.value?.workspaceBySlug?.projects?.items?.reduce(
+        (total, project) => total + (project?.models?.totalCount ?? 0),
         0
       ) ?? 0
+    )
+  })
+
+  const remainingProjects = computed(() => {
+    const count = projectCount.value ?? 0
+    return Math.max(0, projectLimit.value - count)
+  })
+
+  const remainingModels = computed(() =>
+    Math.max(0, modelLimit.value - modelCount.value)
   )
 
-  const remainingProjects = computed(() => projectLimit.value - projectCount.value)
-  const remainingModels = computed(() => modelLimit.value - modelCount.value)
-
   const canAddProject = computed(() => remainingProjects.value > 0)
+
   const canAddModels = (projectModelCount: number) =>
     remainingModels.value >= projectModelCount
 
-  const getLimitType = (project: { modelCount: { totalCount: number } }) => {
+  const canMoveProject = (projectModelCount: number) => {
+    return canAddProject.value && canAddModels(projectModelCount)
+  }
+
+  const getLimitType = (projectModelCount: number) => {
     if (!canAddProject.value) return 'project'
-    if (!canAddModels(project.modelCount.totalCount)) return 'model'
+    if (!canAddModels(projectModelCount)) return 'model'
     return null
   }
 
@@ -212,6 +225,7 @@ export const useWorkspacePlanLimits = (slug: string) => {
     remainingModels,
     canAddProject,
     canAddModels,
+    canMoveProject,
     getLimitType,
     getLimit
   }

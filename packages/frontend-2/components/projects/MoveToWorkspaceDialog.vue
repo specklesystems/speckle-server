@@ -54,11 +54,6 @@
       :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
       @confirm="onConfirmHandler"
     />
-    <WorkspacePlanLimitReachedDialog
-      v-model:open="showLimitReachedDialog"
-      :limit="limit"
-      :limit-type="limitType"
-    />
   </LayoutDialog>
 </template>
 
@@ -77,7 +72,6 @@ import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -135,13 +129,8 @@ const { result } = useQuery(query, null, () => ({
 }))
 const loading = useMutationLoading()
 const moveProject = useMoveProjectToWorkspace()
-const { getLimitType, getLimit } = useWorkspacePlanLimits(props.workspace?.slug || '')
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
-const showLimitReachedDialog = ref(false)
-
-const limitType = computed(() => getLimitType(props.project))
-const limit = computed(() => getLimit(limitType.value))
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
@@ -214,10 +203,6 @@ watch(
 )
 
 const onMoveClick = () => {
-  if (limitType.value) {
-    showLimitReachedDialog.value = true
-  } else {
-    triggerAction()
-  }
+  triggerAction()
 }
 </script>

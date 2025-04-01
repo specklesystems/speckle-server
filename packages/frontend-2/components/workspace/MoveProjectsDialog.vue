@@ -88,6 +88,7 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
+import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -163,34 +164,13 @@ const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null
 const showMoveToWorkspaceDialog = ref(false)
 const showLimitReachedDialog = ref(false)
 
-// TODO: Get these from the workspace plan composable
-const projectLimit = computed(() => {
-  return 3
-})
-const modelLimit = computed(() => {
-  return 8
-})
-const projectCount = computed(() => {
-  return 1
-})
-const modelCount = computed(() => {
-  return 2
-})
-
-const remainingProjects = computed(() => projectLimit.value - projectCount.value)
-const remainingModels = computed(() => modelLimit.value - modelCount.value)
+const { remainingProjects, remainingModels, canMoveProject, getLimitType, getLimit } =
+  useWorkspacePlanLimits(props.workspace.slug)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
 )
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
-
-const canMoveProject = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
-  return (
-    remainingProjects.value > 0 &&
-    project.modelCount.totalCount <= remainingModels.value
-  )
-}
 
 const moveableProjects = computed(() =>
   userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
@@ -207,18 +187,16 @@ const buttons = computed((): LayoutDialogButton[] => [
 ])
 
 const limitType = computed(() =>
-  selectedProject.value && canMoveProject(selectedProject.value) ? 'model' : 'project'
+  selectedProject.value
+    ? getLimitType(selectedProject.value.modelCount.totalCount)
+    : 'project'
 )
 
-const limit = computed(() =>
-  selectedProject.value && canMoveProject(selectedProject.value)
-    ? modelLimit.value
-    : projectLimit.value
-)
+const limit = computed(() => getLimit(limitType.value))
 
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  if (canMoveProject(project)) {
+  if (canMoveProject(project.modelCount.totalCount)) {
     showMoveToWorkspaceDialog.value = true
   } else {
     showLimitReachedDialog.value = true
