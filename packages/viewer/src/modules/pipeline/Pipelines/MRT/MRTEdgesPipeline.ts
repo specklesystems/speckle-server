@@ -1,7 +1,7 @@
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { BlendPass } from '../../Passes/BlendPass.js'
 import { GeometryPass } from '../../Passes/GeometryPass.js'
-import { EdgePass } from '../../Passes/EdgesPass.js'
+import { EdgesPass } from '../../Passes/EdgesPass.js'
 import { ClearFlags, ObjectVisibility } from '../../Passes/GPass.js'
 import { ProgressiveAOPass } from '../../Passes/ProgressiveAOPass.js'
 import { TAAPass } from '../../Passes/TAAPass.js'
@@ -56,12 +56,12 @@ export class MRTEdgesPipeline extends ProgressivePipeline {
     progressiveAOPass.setClearColor(0xffffff, 1)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
 
-    const edgesPass = new EdgePass()
+    const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
     edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
 
-    const edgesPassDynamic = new EdgePass()
+    const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalIdDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalIdDynamic.normalTexture)
     edgesPassDynamic.setTexture('tId', depthPassNormalIdDynamic.idTexture)

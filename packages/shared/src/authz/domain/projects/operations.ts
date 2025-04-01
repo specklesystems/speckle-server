@@ -1,10 +1,25 @@
+import { Result } from 'true-myth/result'
 import { StreamRoles } from '../../../core/constants.js'
 import { Project } from './types.js'
+import {
+  ProjectNoAccessError,
+  ProjectNotFoundError,
+  ProjectRoleNotFoundError,
+  WorkspaceSsoSessionNoAccessError
+} from '../authErrors.js'
 
-// TODO: this should probably just throw an error if the project doesn't exist
-export type GetProject = (args: { projectId: string }) => Promise<Project | null>
+export type GetProject = (args: {
+  projectId: string
+}) => Promise<
+  Result<
+    Project,
+    | InstanceType<typeof ProjectNotFoundError>
+    | InstanceType<typeof ProjectNoAccessError>
+    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
+  >
+>
 
 export type GetProjectRole = (args: {
   userId: string
   projectId: string
-}) => Promise<StreamRoles | null>
+}) => Promise<Result<StreamRoles, InstanceType<typeof ProjectRoleNotFoundError>>>

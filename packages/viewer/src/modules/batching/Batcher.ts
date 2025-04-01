@@ -543,7 +543,7 @@ export default class Batcher {
     }
   }
 
-  public getBatch(rv: NodeRenderView) {
+  public getBatch(rv: NodeRenderView): Batch | undefined {
     return this.batches[rv.batchId]
   }
 

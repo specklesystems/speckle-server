@@ -1,5 +1,8 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  WorkspaceMembersByRole
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -73,7 +76,8 @@ import {
   getWorkspaceCreationStateFactory,
   upsertWorkspaceCreationStateFactory,
   queryWorkspacesFactory,
-  countWorkspacesFactory
+  countWorkspacesFactory,
+  countWorkspaceRoleWithOptionalProjectRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -1206,7 +1210,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        }
+        },
+        membersByRole: (parent) =>
+          ({
+            admins: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            }),
+            members: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Member
+              })
+            }),
+            guests: async () => ({
+              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
+                db
+              })({
+                workspaceId: parent.id,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            })
+          } as unknown as WorkspaceMembersByRole)
       },
       WorkspaceSso: {
         provider: async ({ workspaceId }) => {
@@ -1430,15 +1461,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       LimitedUser: {
         workspaceDomainPolicyCompliant: async (parent, args) => {
-          const workspaceId = args.workspaceId
-          if (!workspaceId) return null
-
-          const userId = parent.id
+          const { id: userId } = parent
+          const { workspaceSlug } = args
+          if (!workspaceSlug) return null
 
           return await isUserWorkspaceDomainPolicyCompliantFactory({
-            findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
-          })({ workspaceId, userId })
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+            getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+            findEmailsByUserId: findEmailsByUserIdFactory({ db })
+          })({ workspaceSlug, userId })
         },
         workspaceRole: async (parent, args, context) => {
           const workspaceId = args.workspaceId

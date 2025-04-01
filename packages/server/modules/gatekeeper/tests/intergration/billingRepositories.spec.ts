@@ -10,10 +10,11 @@ import {
   upsertPaidWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   getWorkspaceSubscriptionBySubscriptionIdFactory,
-  getWorkspaceSubscriptionsPastBillingCycleEndFactory,
   changeExpiredTrialWorkspacePlanStatusesFactory,
   upsertTrialWorkspacePlanFactory,
-  getWorkspacesByPlanAgeFactory
+  getWorkspacesByPlanAgeFactory,
+  getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans,
+  upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
   createTestSubscriptionData,
@@ -43,8 +44,8 @@ const getWorkspaceSubscription = getWorkspaceSubscriptionFactory({ db })
 const getWorkspaceSubscriptionBySubscriptionId =
   getWorkspaceSubscriptionBySubscriptionIdFactory({ db })
 
-const getSubscriptionsAboutToEndBillingCycle =
-  getWorkspaceSubscriptionsPastBillingCycleEndFactory({ db })
+const getSubscriptionsAboutToEndBillingCycleOld =
+  getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans({ db })
 
 const changeExpiredTrialWorkspacePlanStatuses =
   changeExpiredTrialWorkspacePlanStatusesFactory({ db })
@@ -526,10 +527,18 @@ describe('billing repositories @gatekeeper', () => {
         const workspace2Subscription = createTestWorkspaceSubscription({
           workspaceId: workspace2Id
         })
+        await upsertWorkspacePlanFactory({ db })({
+          workspacePlan: {
+            workspaceId: workspace2Subscription.workspaceId,
+            name: 'plus',
+            status: 'valid',
+            createdAt: new Date()
+          }
+        })
         await upsertWorkspaceSubscription({
           workspaceSubscription: workspace2Subscription
         })
-        const subscriptions = await getSubscriptionsAboutToEndBillingCycle()
+        const subscriptions = await getSubscriptionsAboutToEndBillingCycleOld()
         expect(subscriptions).deep.equalInAnyOrder([workspace2Subscription])
       })
     })

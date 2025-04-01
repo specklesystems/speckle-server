@@ -1,5 +1,8 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type {
+  Resolvers,
+  WorkspaceSeatsByType
+} from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   ensureError,
@@ -67,6 +70,7 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -156,13 +160,79 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        },
+        seatType: async (parent, _args, context) => {
+          if (!context.userId) return null
+
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.id,
+            userId: context.userId
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        },
+        seatsByType: (parent) =>
+          ({
+            editors: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'editor'
+              })
+            }),
+            viewers: async () => ({
+              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+                workspaceId: parent.id,
+                type: 'viewer'
+              })
+            })
+          } as unknown as WorkspaceSeatsByType)
+      },
+      WorkspaceSubscription: {
+        seats: async (parent) => {
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId: parent.workspaceId
+          })
+          if (!workspacePlan || !isNewPlanType(workspacePlan.name)) {
+            return {
+              ...calculateSubscriptionSeats({
+                subscriptionData: parent.subscriptionData,
+                guestSeatProductId: getWorkspacePlanProductId({
+                  workspacePlan: 'guest'
+                })
+              }),
+              // These values have no reference in the old plans FF_WORKSPACES_NEW_PLANS_ENABLED
+              totalCount: 0,
+              assigned: 0
+            }
+          }
+          // Only editor seats are considered
+          const assignedSeatsCount = await countSeatsByTypeInWorkspaceFactory({ db })({
+            workspaceId: parent.workspaceId,
+            type: 'editor'
+          })
+          return {
+            assigned: assignedSeatsCount,
+            totalCount: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData: parent.subscriptionData
+            }),
+            viewersCount: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId: parent.workspaceId,
+              type: 'viewer'
+            }),
+            // These values have no reference in the new plans
+            guest: 0,
+            plan: 0
+          }
         }
       },
       WorkspaceCollaborator: {
         seatType: async (parent, _args, context) => {
-          const seat = await context.loaders
-            .gatekeeper!.getUserWorkspaceSeatType.forWorkspace(parent.workspaceId)
-            .load(parent.id)
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.workspaceId,
+            userId: parent.id
+          })
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
@@ -182,6 +252,17 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             monthly: price.monthly,
             yearly: 'yearly' in price ? price.yearly : null
           }))
+        }
+      },
+      ProjectCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders.gatekeeper!.getUserProjectSeat.load({
+            projectId: parent.projectId,
+            userId: parent.id
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
         }
       },
       WorkspaceMutations: {

@@ -115,6 +115,7 @@ graphql(`
       avatar
       name
       company
+      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
     }
     projectRoles {
       role
@@ -172,7 +173,8 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: [Roles.Workspace.Guest]
     },
-    slug: props.workspaceSlug
+    slug: props.workspaceSlug,
+    workspaceId: props.workspace?.id || ''
   }),
   () => ({
     enabled: !!search.value.length

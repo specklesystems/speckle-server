@@ -318,6 +318,20 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
+  membersByRole: WorkspaceMembersByRole
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceMembersByRole {
+  admins: WorkspaceRoleCollection
+  members: WorkspaceRoleCollection
+  guests: WorkspaceRoleCollection
+}
+
+type WorkspaceRoleCollection {
+  totalCount: Int!
 }
 
 type WorkspaceCreationState {
@@ -571,7 +585,7 @@ extend type Project {
 
 # case of using userSearch, and we alway expose this
 extend type LimitedUser {
-  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceDomainPolicyCompliant(workspaceSlug: String): Boolean
   workspaceRole(workspaceId: String): String
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication

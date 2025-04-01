@@ -10526,6 +10526,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@godaddy/terminus@npm:^4.12.1":
+  version: 4.12.1
+  resolution: "@godaddy/terminus@npm:4.12.1"
+  dependencies:
+    stoppable: "npm:^1.1.0"
+  checksum: 10/e1b6e0a079db5748c71211e22d2fc1ab76ee20763bb552e9e2b6003330c0b19fee10b20b1dd961218a402c6aadd3a8ecf7f03ecdfaa2c65ed072b2479eb9b517
+  languageName: node
+  linkType: hard
+
 "@godaddy/terminus@npm:^4.9.0":
   version: 4.10.2
   resolution: "@godaddy/terminus@npm:4.10.2"
@@ -16640,6 +16649,7 @@ __metadata:
     stylelint-config-standard: "npm:^26.0.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     tailwindcss: "npm:^3.4.1"
+    true-myth: "npm:^8.5.0"
     tweetnacl-sealedbox-js: "npm:^1.2.0"
     tweetnacl-util: "npm:^0.15.1"
     type-fest: "npm:^4.24.0"
@@ -16647,7 +16657,7 @@ __metadata:
     ua-parser-js: "npm:^1.0.38"
     vee-validate: "npm:4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
-    vue-tippy: "npm:^6.0.0"
+    vue-tippy: "npm:^6.7.0"
     vue-tsc: "npm:^2.2.2"
     wait-on: "npm:^6.0.1"
     ws: "npm:^8.17.1"
@@ -16692,6 +16702,28 @@ __metadata:
     vitest: "npm:^1.6.0"
     znv: "npm:^0.4.0"
     zod: "npm:^3.24.1"
+  languageName: unknown
+  linkType: soft
+
+"@speckle/objectloader2@workspace:^, @speckle/objectloader2@workspace:packages/objectloader2":
+  version: 0.0.0-use.local
+  resolution: "@speckle/objectloader2@workspace:packages/objectloader2"
+  dependencies:
+    "@speckle/shared": "workspace:^"
+    "@types/lodash": "npm:^4.17.5"
+    "@types/lodash-es": "npm:^4.17.6"
+    "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
+    "@typescript-eslint/parser": "npm:^7.12.0"
+    "@vitest/ui": "npm:^3.0.9"
+    dexie: "npm:^4.0.11"
+    eslint: "npm:^9.4.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    fake-indexeddb: "npm:^6.0.0"
+    prettier: "npm:^3.3.2"
+    tshy: "npm:^3.0.2"
+    typescript: "npm:^5.2.2"
+    vitest: "npm:^3.0.7"
+    vitest-fetch-mock: "npm:^0.4.5"
   languageName: unknown
   linkType: soft
 
@@ -16764,6 +16796,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/preview-service@workspace:packages/preview-service"
   dependencies:
+    "@godaddy/terminus": "npm:^4.12.1"
     "@speckle/shared": "workspace:^"
     "@swc/cli": "npm:^0.5.1"
     "@swc/core": "npm:^1.9.3"
@@ -16953,6 +16986,7 @@ __metadata:
     stripe: "npm:^17.1.0"
     subscriptions-transport-ws: "npm:^0.11.0"
     supertest: "npm:^4.0.2"
+    true-myth: "npm:^8.5.0"
     ts-node: "npm:^10.9.2"
     tsconfig-paths: "npm:^4.0.0"
     type-fest: "npm:^4.26.1"
@@ -16991,8 +17025,10 @@ __metadata:
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     mixpanel: "npm:^0.17.0"
+    nanoid: "npm:^5.1.5"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
+    true-myth: "npm:^8.5.0"
     tshy: "npm:^1.14.0"
     type-fest: "npm:^3.11.1"
     typescript: "npm:^4.5.4"
@@ -17117,6 +17153,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox"
   dependencies:
+    "@speckle/objectloader2": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@tweakpane/core": "npm:^1.0.9"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
@@ -28319,6 +28356,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dexie@npm:^4.0.11":
+  version: 4.0.11
+  resolution: "dexie@npm:4.0.11"
+  checksum: 10/52011f03655ce90aa6701f1e0724a10a3fd6b33d6e1ec72ba27b4392f500df54788e6ed23fd692a62eb50a21ab4fe146e08a85ceca19bbeb62e12269b124b4e2
+  languageName: node
+  linkType: hard
+
 "didyoumean@npm:^1.2.2":
   version: 1.2.2
   resolution: "didyoumean@npm:1.2.2"
@@ -31120,6 +31164,13 @@ __metadata:
   version: 1.4.1
   resolution: "extsprintf@npm:1.4.1"
   checksum: 10/bfd6d55f3c0c04d826fe0213264b383c03f32825af6b1ff777f3f2dc49467e599361993568d75b7b19a8ea1bb08c8e7cd8c3d87d179ced91bb0dcf81ca6938e0
+  languageName: node
+  linkType: hard
+
+"fake-indexeddb@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "fake-indexeddb@npm:6.0.0"
+  checksum: 10/b4098f050ae1f18e23edd5e87da17aee1b6a199e1d3dec0c35346db73416ffac59bd595e2011b9cd70f36fe25eb852d122d2a05c74f75754869f300d84159414
   languageName: node
   linkType: hard
 
@@ -40387,6 +40438,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^5.1.5":
+  version: 5.1.5
+  resolution: "nanoid@npm:5.1.5"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: 10/6de2d006b51c983be385ef7ee285f7f2a57bd96f8c0ca881c4111461644bd81fafc2544f8e07cb834ca0f3e0f3f676c1fe78052183f008b0809efe6e273119f5
+  languageName: node
+  linkType: hard
+
 "nanotar@npm:^0.1.1":
   version: 0.1.1
   resolution: "nanotar@npm:0.1.1"
@@ -43183,6 +43243,13 @@ __metadata:
   version: 4.0.1
   resolution: "polite-json@npm:4.0.1"
   checksum: 10/952c035eddac150c45f4e1daa0e558dbd1ad85b88136d8c4632774968144086f360bd9191fcfaf321abe35d8f5f3f0a6c77a2eb930d421bd5a9b16d0e041ab0e
+  languageName: node
+  linkType: hard
+
+"polite-json@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "polite-json@npm:5.0.0"
+  checksum: 10/2faeff490c14a88e08f336e13b39f7e8c80dbfda06b96b5cf858ea295a7392f3c857cac0582ef6a1dd989a2dc81b74a6e01e41017453336b382eff8afcb84f9a
   languageName: node
   linkType: hard
 
@@ -46391,6 +46458,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-import@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "resolve-import@npm:2.0.0"
+  dependencies:
+    glob: "npm:^11.0.0"
+    walk-up-path: "npm:^4.0.0"
+  checksum: 10/42806adf37f4bf916334ae7ac95ce0814100e5d9c23e072022bab706d056fe9c7809f45f5a4815db9d216b6ad5d81143643acfc2a50190fada0252cf12460827
+  languageName: node
+  linkType: hard
+
 "resolve-path@npm:^1.4.0":
   version: 1.4.0
   resolution: "resolve-path@npm:1.4.0"
@@ -46716,7 +46793,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:^6.0.1":
+"rimraf@npm:^6.0.0, rimraf@npm:^6.0.1":
   version: 6.0.1
   resolution: "rimraf@npm:6.0.1"
   dependencies:
@@ -49404,6 +49481,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sync-content@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "sync-content@npm:2.0.1"
+  dependencies:
+    glob: "npm:^11.0.0"
+    mkdirp: "npm:^3.0.1"
+    path-scurry: "npm:^2.0.0"
+    rimraf: "npm:^6.0.0"
+    tshy: "npm:^3.0.0"
+  bin:
+    sync-content: dist/esm/bin.mjs
+  checksum: 10/43d7afcc3a706c6a254960c6c210ed9cdaeb88c07f5578c1d4f33ce7ae338be637456a28ff4311eeaf74cae7aaeb060af3cff6013d997589c7586fa32daa8a2b
+  languageName: node
+  linkType: hard
+
 "synckit@npm:^0.9.1":
   version: 0.9.2
   resolution: "synckit@npm:0.9.2"
@@ -50223,6 +50315,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"true-myth@npm:^8.5.0":
+  version: 8.5.0
+  resolution: "true-myth@npm:8.5.0"
+  checksum: 10/f3f96d96df8f0bfb5d26c379bbe029b947349b9dabdd00afa939ff75e979864c951c647ba35b21a13d676a9b34d721bffd2a1e9f0750d5d2a588988f16de5bd0
+  languageName: node
+  linkType: hard
+
 "ts-api-utils@npm:^1.3.0":
   version: 1.3.0
   resolution: "ts-api-utils@npm:1.3.0"
@@ -50472,6 +50571,27 @@ __metadata:
   bin:
     tshy: dist/esm/index.js
   checksum: 10/a27ba190bbc6fdf91a0ecb0f9fc114a4d1e7ddf9cb081f2de6b824e4c2d5dbb1704da7e1466cf0bfd4995c9420bc1f8e9886de455f02f4affd0537a36c1885d0
+  languageName: node
+  linkType: hard
+
+"tshy@npm:^3.0.0, tshy@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "tshy@npm:3.0.2"
+  dependencies:
+    chalk: "npm:^5.3.0"
+    chokidar: "npm:^3.6.0"
+    foreground-child: "npm:^3.1.1"
+    minimatch: "npm:^10.0.0"
+    mkdirp: "npm:^3.0.1"
+    polite-json: "npm:^5.0.0"
+    resolve-import: "npm:^2.0.0"
+    rimraf: "npm:^6.0.0"
+    sync-content: "npm:^2.0.1"
+    typescript: "npm:^5.5.3"
+    walk-up-path: "npm:^4.0.0"
+  bin:
+    tshy: dist/esm/index.js
+  checksum: 10/48ae27425cd1bc37fe07323e9d3ca120e53c7ff5de57a1d189e72bffdc573193abd3ba283009777b08653445615c31e42445006c5648765331d27780a8930f30
   languageName: node
   linkType: hard
 
@@ -52668,6 +52788,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vitest-fetch-mock@npm:^0.4.5":
+  version: 0.4.5
+  resolution: "vitest-fetch-mock@npm:0.4.5"
+  peerDependencies:
+    vitest: ">=2.0.0"
+  checksum: 10/36b33ea63b582d614a9dfcb3552e4681c29d1168bcc6b023c4438a31143d8febd3ddc46c4593a32f8ffb958624d75c1ae3509b7d30c16173783d3243ee065a9b
+  languageName: node
+  linkType: hard
+
 "vitest@npm:^3.0.7":
   version: 3.0.7
   resolution: "vitest@npm:3.0.7"
@@ -53063,6 +53192,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-tippy@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "vue-tippy@npm:6.7.0"
+  dependencies:
+    tippy.js: "npm:^6.3.7"
+  peerDependencies:
+    vue: ^3.2.0
+  checksum: 10/5794a740b1cde284150ae7ce873b2c60afa6f09607c96f38b800f12954e7dfa949f8c9b332f0db416f032b7fb32056b305179cb4ebbfa6613936c7150b98e293
+  languageName: node
+  linkType: hard
+
 "vue-tsc@npm:^1.8.27":
   version: 1.8.27
   resolution: "vue-tsc@npm:1.8.27"
@@ -53185,6 +53325,13 @@ __metadata:
   version: 3.0.1
   resolution: "walk-up-path@npm:3.0.1"
   checksum: 10/9ffca02fe30fb65f6db531260582988c5e766f4c739cf86a6109380a7f791236b5d0b92b1dce37a6f73e22dca6bc9d93bf3700413e16251b2bd6bbd1ca2be316
+  languageName: node
+  linkType: hard
+
+"walk-up-path@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "walk-up-path@npm:4.0.0"
+  checksum: 10/6a230b20e5de296895116dc12b09dafaec1f72b8060c089533d296e241aff059dfaebe0d015c77467f857e4b40c78e08f7481add76f340233a1f34fa8af9ed63
   languageName: node
   linkType: hard
 

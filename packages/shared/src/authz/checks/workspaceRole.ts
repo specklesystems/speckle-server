@@ -1,29 +1,39 @@
 import { WorkspaceRoles } from '../../core/constants.js'
-import { AuthCheckContext } from '../domain/loaders.js'
-import { isMinimumWorkspaceRole } from '../domain/workspaces/logic.js'
+import { throwUncoveredError } from '../../core/index.js'
+import { isMinimumWorkspaceRole } from '../domain/logic/roles.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 
-export const requireAnyWorkspaceRole =
-  ({ loaders }: AuthCheckContext<'getWorkspaceRole'>) =>
-  async (args: { userId: string; workspaceId: string }): Promise<boolean> => {
-    const { userId, workspaceId } = args
-
+export const requireMinimumWorkspaceRole: AuthPolicyCheck<
+  'getWorkspaceRole',
+  { userId: string; workspaceId: string; role: WorkspaceRoles }
+> =
+  (loaders) =>
+  async ({ userId, workspaceId, role: requiredWorkspaceRole }) => {
     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
+    if (userWorkspaceRole.isErr) {
+      switch (userWorkspaceRole.error.code) {
+        case 'WorkspaceRoleNotFound':
+          return false
+        default:
+          throwUncoveredError(userWorkspaceRole.error.code)
+      }
+    }
 
-    return userWorkspaceRole !== null
+    return isMinimumWorkspaceRole(userWorkspaceRole.value, requiredWorkspaceRole)
   }
 
-export const requireMinimumWorkspaceRole =
-  ({ loaders }: AuthCheckContext<'getWorkspaceRole'>) =>
-  async (args: {
-    userId: string
-    workspaceId: string
-    role: WorkspaceRoles
-  }): Promise<boolean> => {
-    const { userId, workspaceId, role: requiredWorkspaceRole } = args
-
+export const hasAnyWorkspaceRole: AuthPolicyCheck<
+  'getWorkspaceRole',
+  { userId: string; workspaceId: string }
+> =
+  (loaders) =>
+  async ({ userId, workspaceId }) => {
     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
-
-    return userWorkspaceRole
-      ? isMinimumWorkspaceRole(userWorkspaceRole, requiredWorkspaceRole)
-      : false
+    if (userWorkspaceRole.isOk) return true
+    switch (userWorkspaceRole.error.code) {
+      case 'WorkspaceRoleNotFound':
+        return false
+      default:
+        throwUncoveredError(userWorkspaceRole.error.code)
+    }
   }

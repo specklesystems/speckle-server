@@ -213,6 +213,7 @@ export class ShadowcatcherPass extends BaseGPass {
         renderer.setRenderTarget(this.renderTargets[k])
         renderer.setClearColor(0x000000)
         renderer.setClearAlpha(1)
+        renderer.clear()
         renderer.render(this.scene, this.camera)
         this.scene.overrideMaterial = null
 
@@ -220,6 +221,7 @@ export class ShadowcatcherPass extends BaseGPass {
         renderer.setClearColor(0xffffff)
         renderer.setClearAlpha(1.0)
         renderer.clear()
+
         this.vBlurMaterial.uniforms['tDiffuse'].value = this.renderTargets[k].texture
         this.vBlurMaterial.uniforms['size'].value.set(
           this.renderTargets[k].width,

@@ -51,8 +51,6 @@ featureFlags:
   billingIntegrationEnabled: false
   ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
-  ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
-  fileImportIFCDotNetEnabled: false
   ## @param featureFlags.forceEmailVerification Forces email verification for all users
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
@@ -117,6 +115,12 @@ secretName: server-vars
 ## @param file_size_limit_mb This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle
 ##
 file_size_limit_mb: 100
+
+## @param file_import_time_limit_min The maximum time (unit is minutes) that a file import can take before it is considered to have failed
+## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
+##  please reach out to Speckle at https://speckle.community/
+##
+file_import_time_limit_min: 10
 
 ## @section Monitoring
 ## @descriptionStart
@@ -446,6 +450,10 @@ multiRegion:
     secretName: 'multi-region-config'
     ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
     secretKey: 'multi-region-config.json'
+
+## @param imagePullSecrets The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+## This is used to pull the Docker image from a private registry.  If this is not provided, no imagePullSecrets will be used.
+imagePullSecrets: []
 
 ## @section Server
 ## @descriptionStart
@@ -1337,7 +1345,8 @@ fileimport_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
-  ## @param fileimport_service.time_limit_min The maximum time that a file can take to be processed by the FileImport Service.
+
+  ## @param fileimport_service.time_limit_min DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.
   ## Files which take longer than this value to process will be cancelled.
   ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
   ##  please reach out to Speckle at https://speckle.community/

@@ -29,7 +29,8 @@ import {
   DeleteWorkspaceDomainDocument,
   CreateWorkspaceProjectDocument,
   DismissWorkspaceDocument,
-  GetActiveUserDiscoverableWorkspacesDocument
+  GetActiveUserDiscoverableWorkspacesDocument,
+  GetWorkspaceWithMembersByRoleDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -57,6 +58,7 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
@@ -767,6 +769,99 @@ describe('Workspaces GQL CRUD', () => {
         expect(res2.data?.workspace?.projects.totalCount).to.equal(0)
       })
     })
+
+    describe('workspace.membersByRole', () => {
+      it('should return admins and members and guests in the workspace', async () => {
+        const user = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true
+        })
+        const workspace = {
+          id: createRandomString(),
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 }),
+          ownerId: user.id
+        }
+        await createTestWorkspace(workspace, user, {
+          addPlan: { name: 'pro', status: 'valid' }
+        })
+        const guest1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          guest1,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Viewer
+        )
+        const guest2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          guest2,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Viewer
+        )
+
+        const member1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member1,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+        const member2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member2,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+        const member3 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member3,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+
+        const session = await login(user)
+
+        const res = await session.execute(GetWorkspaceWithMembersByRoleDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const seats = res.data?.workspace.membersByRole
+        expect(seats?.guests?.totalCount).to.eq(2)
+        expect(seats?.members?.totalCount).to.eq(3)
+        expect(seats?.admins?.totalCount).to.eq(1)
+      })
+    })
   })
 
   describe('management operations', () => {
@@ -834,7 +929,7 @@ describe('Workspaces GQL CRUD', () => {
           authorId: ''
         }
 
-        createTestCommit(testVersion, {
+        await createTestCommit(testVersion, {
           owner: testAdminUser,
           stream: workspaceProject
         })

@@ -39,7 +39,7 @@
               'This user does not comply with the domain policy set on this workspace'
             "
           >
-            <ExclamationCircleIcon class="text-danger w-5 w-4" />
+            <ExclamationCircleIcon class="text-danger w-4" />
           </div>
         </div>
       </template>
@@ -122,7 +122,7 @@ graphql(`
       avatar
       name
       company
-      workspaceDomainPolicyCompliant
+      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
     }
   }
 `)
@@ -166,10 +166,11 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         ? [roleFilter.value]
         : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    slug: props.workspaceSlug
+    slug: props.workspaceSlug,
+    workspaceId: props.workspace?.id || ''
   }),
   () => ({
-    enabled: !!search.value.length || !!roleFilter.value
+    enabled: !!search.value.length || !!roleFilter.value || !!props.workspace?.id
   })
 )
 
