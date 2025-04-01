@@ -1989,6 +1989,7 @@ export type PermissionCheckResult = {
   authorized: Scalars['Boolean']['output'];
   code: Scalars['String']['output'];
   message: Scalars['String']['output'];
+  payload?: Maybe<Scalars['JSONObject']['output']>;
 };
 
 export type Price = {
@@ -6418,6 +6419,7 @@ export type PermissionCheckResultResolvers<ContextType = GraphQLContext, ParentT
   authorized?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   code?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  payload?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

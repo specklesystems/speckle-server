@@ -44,4 +44,5 @@ type PermissionCheckResult {
   authorized: Boolean!
   code: String!
   message: String!
+  payload: JSONObject
 }

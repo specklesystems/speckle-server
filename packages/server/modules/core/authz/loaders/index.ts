@@ -3,6 +3,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 
+// TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
   const getStream = getStreamFactory({ db })
 

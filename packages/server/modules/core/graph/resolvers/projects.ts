@@ -91,6 +91,7 @@ import { has } from 'lodash'
 import { throwUncoveredError } from '@speckle/shared'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { Authz } from '@speckle/shared'
+import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -187,11 +188,16 @@ export = {
       if (!canQuery.isOk) {
         switch (canQuery.error.code) {
           case Authz.ProjectNotFoundError.code:
-            throw new StreamNotFoundError()
+            throw new StreamNotFoundError('Project not found')
           case Authz.ProjectNoAccessError.code:
           case Authz.WorkspaceNoAccessError.code:
-          case Authz.WorkspaceSsoSessionNoAccessError.code:
             throw new ForbiddenError(canQuery.error.message)
+          case Authz.WorkspaceSsoSessionNoAccessError.code:
+            throw new SsoSessionMissingOrExpiredError(canQuery.error.message, {
+              info: {
+                workspaceSlug: canQuery.error.payload.workspaceSlug
+              }
+            })
           case Authz.ServerNoAccessError.code:
           case Authz.ServerNoSessionError.code:
             throw new ForbiddenError(canQuery.error.message)

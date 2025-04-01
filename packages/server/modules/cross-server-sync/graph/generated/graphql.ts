@@ -1969,6 +1969,7 @@ export type PermissionCheckResult = {
   authorized: Scalars['Boolean']['output'];
   code: Scalars['String']['output'];
   message: Scalars['String']['output'];
+  payload?: Maybe<Scalars['JSONObject']['output']>;
 };
 
 export type Price = {

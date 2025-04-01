@@ -235,7 +235,11 @@ export const onWorkspaceAuthorizedFactory =
     const session = await getUserSsoSession({ userId, workspaceId })
     if (!session || !isValidSsoSession(session)) {
       const workspace = await getWorkspace({ workspaceId })
-      throw new SsoSessionMissingOrExpiredError(workspace?.slug)
+      throw new SsoSessionMissingOrExpiredError(workspace?.slug, {
+        info: {
+          workspaceSlug: workspace?.slug
+        }
+      })
     }
   }
 
