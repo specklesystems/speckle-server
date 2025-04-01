@@ -45,7 +45,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
           const results = await getWorkspacesProjectsCounts({
             workspaceIds: ids.slice()
           })
-          return ids.map((id) => results[id] || null)
+          return ids.map((id) => results[id] ?? null)
         })
       },
       workspaceDomains: {
