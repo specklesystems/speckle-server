@@ -28,9 +28,8 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'

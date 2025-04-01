@@ -136,3 +136,7 @@ export type ProjectCollaboratorGraphQLReturn = {
   role: StreamRoles
   projectId: string
 }
+
+export type ProjectPermissionChecksGraphQLReturn = {
+  projectId: string
+}

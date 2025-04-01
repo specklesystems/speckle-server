@@ -111,6 +111,7 @@ import {
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import {
+  Authz,
   Roles,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
@@ -183,7 +184,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
@@ -958,13 +959,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
             throw new RateLimitError(rateLimitResult)
           }
 
-          await authorizeResolver(
-            context.userId!,
-            args.input.workspaceId,
-            Roles.Workspace.Member,
-            context.resourceAccessRules,
-            OperationTypeNode.MUTATION
-          )
+          const canCreate = await context.authPolicies.workspace.canCreateProject({
+            userId: context.userId,
+            workspaceId: args.input.workspaceId
+          })
+
+          if (!canCreate.isOk) {
+            switch (canCreate.error.code) {
+              case Authz.WorkspacesNotEnabledError.code:
+              case Authz.WorkspaceNoAccessError.code:
+              case Authz.WorkspaceReadOnlyError.code:
+              case Authz.WorkspaceNoEditorSeatError.code:
+              case Authz.WorkspaceNotEnoughPermissionsError.code:
+              case Authz.WorkspaceSsoSessionNoAccessError.code:
+              case Authz.WorkspaceLimitsReachedError.code:
+              case Authz.ServerNoSessionError.code:
+              case Authz.ServerNoAccessError.code:
+                throw new ForbiddenError(canCreate.error.message)
+              default:
+                throwUncoveredError(canCreate.error)
+            }
+          }
 
           const createWorkspaceProject = createWorkspaceProjectFactory({
             getDefaultRegion: getDefaultRegionFactory({ db })

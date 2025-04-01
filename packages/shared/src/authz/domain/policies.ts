@@ -4,10 +4,6 @@ import { AuthError } from './authErrors.js'
 import { AuthCheckContextLoaderKeys, AuthCheckContextLoaders } from './loaders.js'
 import Maybe from 'true-myth/maybe'
 
-export type ProjectContext = { projectId: string }
-export type UserContext = { userId: string }
-export type MaybeUserContext = { userId?: string }
-
 // a complete policy always returns a full result
 export type AuthPolicy<
   LoaderKeys extends AuthCheckContextLoaderKeys,

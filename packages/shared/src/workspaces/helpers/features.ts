@@ -1,4 +1,5 @@
 import { WorkspaceRoles } from '../../core/constants.js'
+import { WorkspaceLimits } from './limits.js'
 import {
   PaidWorkspacePlans,
   UnpaidWorkspacePlans,
@@ -83,9 +84,15 @@ export type WorkspacePlanPriceStructure = {
   }
 }
 
+const unlimited: WorkspaceLimits = {
+  projectCount: null,
+  modelCount: null
+}
+
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
   plan: Plan
   features: readonly WorkspacePlanFeatures[]
+  limits: WorkspaceLimits
 }
 
 const baseFeatures = [
@@ -101,7 +108,8 @@ export const WorkspacePaidPlanConfigs: {
   // Old
   [PaidWorkspacePlans.Starter]: {
     plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures, WorkspacePlanFeatures.DomainSecurity]
+    features: [...baseFeatures, WorkspacePlanFeatures.DomainSecurity],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Plus]: {
     plan: PaidWorkspacePlans.Plus,
@@ -109,7 +117,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO
-    ]
+    ],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Business]: {
     plan: PaidWorkspacePlans.Business,
@@ -119,11 +128,16 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.PrioritySupport
-    ]
+    ],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
-    features: baseFeatures
+    features: baseFeatures,
+    limits: {
+      projectCount: 5,
+      modelCount: 25
+    }
   },
   [PaidWorkspacePlans.Pro]: {
     plan: PaidWorkspacePlans.Pro,
@@ -133,7 +147,11 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.PrioritySupport
-    ]
+    ],
+    limits: {
+      projectCount: 10,
+      modelCount: 50
+    }
   }
 }
 
@@ -149,7 +167,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.PrioritySupport
-    ]
+    ],
+    limits: unlimited
   },
   [UnpaidWorkspacePlans.Academia]: {
     plan: UnpaidWorkspacePlans.Academia,
@@ -159,7 +178,8 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.PrioritySupport
-    ]
+    ],
+    limits: unlimited
   },
   [UnpaidWorkspacePlans.StarterInvoiced]: {
     ...WorkspacePaidPlanConfigs.starter,
@@ -176,7 +196,11 @@ export const WorkspaceUnpaidPlanConfigs: {
   // New
   [UnpaidWorkspacePlans.Free]: {
     plan: UnpaidWorkspacePlans.Free,
-    features: baseFeatures
+    features: baseFeatures,
+    limits: {
+      projectCount: 1,
+      modelCount: 5
+    }
   }
 }
 
