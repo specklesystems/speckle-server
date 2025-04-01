@@ -64,6 +64,6 @@ const projectsInvites = computed(() => result.value?.activeUser?.projectInvites)
 const workspacesInvites = computed(() => result.value?.activeUser?.workspaceInvites)
 
 const hasNotifications = computed(
-  () => !projectsInvites.value?.length && !projectsInvites.value?.length
+  () => projectsInvites.value?.length || workspacesInvites.value?.length
 )
 </script>
