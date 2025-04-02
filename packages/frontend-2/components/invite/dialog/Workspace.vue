@@ -16,21 +16,13 @@
       ref="selectUsers"
       :invites="invites"
       :allowed-domains="allowedDomains"
-      :show-workspace-roles="!isWorkspaceNewPlansEnabled"
     >
-      <p v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
-        Inviting users may add seats to your current billing cycle. If there are
-        available seats, they will be used first. Your workspace is currently billed for
-        {{ memberSeatText }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
+      <p
+        v-if="isWorkspaceNewPlansEnabled"
+        class="text-body-2xs text-foreground-2 leading-5"
+      >
+        {{ infoText }}
       </p>
-      <template #info>
-        <p
-          v-if="isWorkspaceNewPlansEnabled"
-          class="text-body-2xs text-foreground-2 leading-5"
-        >
-          {{ infoText }}
-        </p>
-      </template>
     </InviteDialogSharedSelectUsers>
   </LayoutDialog>
 </template>
@@ -38,11 +30,9 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  type InviteDialogWorkspace_WorkspaceFragment,
-  type WorkspaceInviteCreateInput,
-  type WorkspacePlans,
-  WorkspacePlanStatuses
+import type {
+  InviteDialogWorkspace_WorkspaceFragment,
+  WorkspaceInviteCreateInput
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteWorkspaceItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
@@ -51,7 +41,6 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
 
@@ -63,16 +52,6 @@ graphql(`
     domains {
       domain
       id
-    }
-    plan {
-      status
-      name
-    }
-    subscription {
-      seats {
-        guest
-        plan
-      }
     }
   }
 `)
@@ -111,23 +90,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 
-const title = computed(() => {
-  if (isWorkspaceNewPlansEnabled.value) {
-    return isSelectingRole.value
-      ? 'Who are you inviting to the workspace?'
-      : `Invite ${getRoleLabel(
-          selectedRole.value
-        ).title.toLowerCase()}s to the workspace`
-  }
-  return 'Invite to Workspace'
-})
+const title = computed(() =>
+  isSelectingRole.value
+    ? 'Who are you inviting to the workspace?'
+    : `Invite ${getRoleLabel(selectedRole.value).title.toLowerCase()}s to the workspace`
+)
 
-const backButtonText = computed(() =>
-  isWorkspaceNewPlansEnabled.value && !isSelectingRole.value ? 'Back' : 'Cancel'
-)
-const nextButtonText = computed(() =>
-  isWorkspaceNewPlansEnabled.value && isSelectingRole.value ? 'Continue' : 'Invite'
-)
+const backButtonText = computed(() => (isSelectingRole.value ? 'Cancel' : 'Back'))
+const nextButtonText = computed(() => (isSelectingRole.value ? 'Continue' : 'Invite'))
 const allowedDomains = computed(() =>
   props.workspace?.domainBasedMembershipProtectionEnabled
     ? props.workspace.domains?.map((d) => d.domain)
@@ -140,40 +110,9 @@ const infoText = computed(() => {
 
   return `They don't work at ${props.workspace?.name}. They can collaborate on projects but can't create projects, invite others, add people, or be admins.`
 })
-// TODO: All of these billing info will not be used in the new flow, needs to be removed post-release
-const memberSeatText = computed(() => {
-  if (!props.workspace?.subscription) return ''
-  return `${props.workspace.subscription.seats.plan} member ${
-    props.workspace.subscription.seats.plan === 1 ? 'seat' : 'seats'
-  }`
-})
-const guestSeatText = computed(() => {
-  if (!props.workspace?.subscription) return ''
-  return `${props.workspace.subscription.seats.guest} guest ${
-    props.workspace.subscription.seats.guest === 1 ? 'seat' : 'seats'
-  }`
-})
-const hasGuestSeats = computed(() => {
-  return (
-    props.workspace?.subscription?.seats.guest &&
-    props.workspace.subscription.seats.guest > 0
-  )
-})
-const showBillingInfo = computed(() => {
-  if (
-    !props.workspace?.plan ||
-    !props.workspace?.subscription ||
-    isWorkspaceNewPlansEnabled.value
-  )
-    return false
-  return (
-    isPaidPlan(props.workspace.plan.name as unknown as WorkspacePlans) &&
-    props.workspace.plan.status === WorkspacePlanStatuses.Valid
-  )
-})
 
 const onBack = () => {
-  if (isSelectingRole.value || !isWorkspaceNewPlansEnabled.value) {
+  if (isSelectingRole.value) {
     isOpen.value = false
   } else {
     isSelectingRole.value = true
@@ -197,13 +136,9 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
   invites.value = updatedInvites
 
   const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
-    role: isWorkspaceNewPlansEnabled.value
-      ? canBeMember(invite.email)
-        ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
-        : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest)
-      : invite.workspaceRole
-      ? mapMainRoleToGqlWorkspaceRole(invite.workspaceRole)
-      : undefined,
+    role: canBeMember(invite.email)
+      ? mapMainRoleToGqlWorkspaceRole(selectedRole.value)
+      : mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Guest),
     email: invite.email,
     serverRole: invite.serverRole
       ? mapServerRoleToGqlServerRole(invite.serverRole)
@@ -227,8 +162,7 @@ const onSelectUsersSubmit = async (updatedInvites: InviteWorkspaceItem[]) => {
 
 watch(isOpen, (newVal) => {
   if (newVal) {
-    // Only show the first step for new plans
-    isSelectingRole.value = isWorkspaceNewPlansEnabled.value
+    isSelectingRole.value = true
     invites.value = [
       {
         ...emptyInviteWorkspaceItem,
