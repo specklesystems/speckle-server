@@ -4726,6 +4726,7 @@ export type WorkspacePlan = {
   name: WorkspacePlans;
   paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
+  usage: WorkspacePlanUsage;
 };
 
 export type WorkspacePlanPrice = {
@@ -4745,6 +4746,12 @@ export const WorkspacePlanStatuses = {
 } as const;
 
 export type WorkspacePlanStatuses = typeof WorkspacePlanStatuses[keyof typeof WorkspacePlanStatuses];
+export type WorkspacePlanUsage = {
+  __typename?: 'WorkspacePlanUsage';
+  modelCount: Scalars['Int']['output'];
+  projectCount: Scalars['Int']['output'];
+};
+
 export const WorkspacePlans = {
   Academia: 'academia',
   Business: 'business',
@@ -7480,6 +7487,7 @@ export type AllObjectTypes = {
   WorkspacePermissionChecks: WorkspacePermissionChecks,
   WorkspacePlan: WorkspacePlan,
   WorkspacePlanPrice: WorkspacePlanPrice,
+  WorkspacePlanUsage: WorkspacePlanUsage,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessage,
   WorkspaceRoleCollection: WorkspaceRoleCollection,
@@ -8761,11 +8769,16 @@ export type WorkspacePlanFieldArgs = {
   name: {},
   paymentMethod: {},
   status: {},
+  usage: {},
 }
 export type WorkspacePlanPriceFieldArgs = {
   id: {},
   monthly: {},
   yearly: {},
+}
+export type WorkspacePlanUsageFieldArgs = {
+  modelCount: {},
+  projectCount: {},
 }
 export type WorkspaceProjectMutationsFieldArgs = {
   create: WorkspaceProjectMutationsCreateArgs,
@@ -8977,6 +8990,7 @@ export type AllObjectFieldArgTypes = {
   WorkspacePermissionChecks: WorkspacePermissionChecksFieldArgs,
   WorkspacePlan: WorkspacePlanFieldArgs,
   WorkspacePlanPrice: WorkspacePlanPriceFieldArgs,
+  WorkspacePlanUsage: WorkspacePlanUsageFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,
   WorkspaceProjectsUpdatedMessage: WorkspaceProjectsUpdatedMessageFieldArgs,
   WorkspaceRoleCollection: WorkspaceRoleCollectionFieldArgs,
