@@ -4,9 +4,9 @@ import {
   discoverableWorkspacesRequestsQuery
 } from '../graphql/queries'
 import {
-  dashboardDismissDiscoverableWorkspaceMutation,
-  dashboardRequestToJoinWorkspaceMutation
-} from '~/lib/dashboard/graphql/mutations'
+  dismissDiscoverableWorkspaceMutation,
+  requestToJoinWorkspaceMutation
+} from '~/lib/workspaces/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import type { CacheObjectReference } from '~~/lib/common/helpers/graphql'
@@ -73,10 +73,8 @@ export const useDiscoverableWorkspaces = () => {
     }
   )
 
-  const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
-  const { mutate: dismissWorkspace } = useMutation(
-    dashboardDismissDiscoverableWorkspaceMutation
-  )
+  const { mutate: requestToJoin } = useMutation(requestToJoinWorkspaceMutation)
+  const { mutate: dismissWorkspace } = useMutation(dismissDiscoverableWorkspaceMutation)
 
   const { activeUser } = useActiveUser()
   const mixpanel = useMixpanel()
