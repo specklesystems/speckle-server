@@ -1,8 +1,4 @@
 import {
-  PaidWorkspacePlan,
-  TrialWorkspacePlan,
-  UnpaidWorkspacePlan,
-  WorkspacePlan,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
@@ -10,7 +6,11 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
   Nullable,
   Optional,
+  PaidWorkspacePlan,
   PaidWorkspacePlans,
+  TrialWorkspacePlan,
+  UnpaidWorkspacePlan,
+  WorkspacePlan,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'

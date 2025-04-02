@@ -10,13 +10,13 @@ import {
 } from '../domain/authErrors.js'
 import { err, ok } from 'true-myth/result'
 import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
-import { AuthPolicy, MaybeUserContext, ProjectContext } from '../domain/policies.js'
+import { AuthPolicy } from '../domain/policies.js'
 import { canUseAdminOverride, hasMinimumServerRole } from '../checks/serverRole.js'
 import { hasAnyWorkspaceRole } from '../checks/workspaceRole.js'
 import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../fragments/workspaceSso.js'
-import { throwUncoveredError } from '../../core/index.js'
+import { MaybeUserContext, ProjectContext } from '../domain/context.js'
 
-export const canQueryProjectPolicy: AuthPolicy<
+export const canReadProjectPolicy: AuthPolicy<
   | typeof AuthCheckContextLoaderKeys.getEnv
   | typeof AuthCheckContextLoaderKeys.getProject
   | typeof AuthCheckContextLoaderKeys.getProjectRole
@@ -37,22 +37,8 @@ export const canQueryProjectPolicy: AuthPolicy<
   async ({ userId, projectId }) => {
     const env = await loaders.getEnv()
 
-    // we prerolad the project and early return any loading errors
-    // this is a short circuit in the frontend, to surface any project load errors
-    // from the backend.
-    // make sure to expose all of the error types in the loader type,
-    // that we care about in this early return
     const project = await loaders.getProject({ projectId })
-    if (project.isErr) {
-      switch (project.error.code) {
-        case 'ProjectNoAccess':
-        case 'ProjectNotFound':
-        case 'WorkspaceSsoSessionNoAccess':
-          return err(project.error)
-        default:
-          throwUncoveredError(project.error)
-      }
-    }
+    if (!project) return err(new ProjectNotFoundError())
 
     // All users may read public projects
     if (await isPubliclyReadableProject(loaders)({ projectId })) return ok()
@@ -68,7 +54,8 @@ export const canQueryProjectPolicy: AuthPolicy<
     // When G O D M O D E is enabled
     if (await canUseAdminOverride(loaders)({ userId })) return ok()
 
-    const { workspaceId } = project.value
+    // todo
+    const { workspaceId } = project
     // When a project belongs to a workspace
     if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
       // User must have a workspace role to read project data

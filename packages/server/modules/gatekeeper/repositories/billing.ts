@@ -23,11 +23,14 @@ import {
   GetWorkspacesByPlanDaysTillExpiry,
   GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { PaidWorkspacePlansNew, PaidWorkspacePlansOld } from '@speckle/shared'
+import {
+  PaidWorkspacePlansNew,
+  PaidWorkspacePlansOld,
+  WorkspacePlan
+} from '@speckle/shared'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
 

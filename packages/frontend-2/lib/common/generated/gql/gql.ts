@@ -160,6 +160,7 @@ type Documents = {
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.CreateOnboardingProjectDocument,
+    "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": typeof types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": typeof types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": typeof types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": typeof types.AuthLoginPanelDocument,
@@ -169,15 +170,6 @@ type Documents = {
     "\n  query ActiveUserWorkspaceExistenceCheck {\n    activeUser {\n      id\n      verified\n      isOnboardingFinished\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces(limit: 0) {\n        totalCount\n        items {\n          id\n          slug\n        }\n      }\n      discoverableWorkspaces {\n        id\n      }\n      workspaceJoinRequests(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserWorkspaceExistenceCheckDocument,
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": typeof types.ProjectWorkspaceAccessCheckDocument,
-    "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": typeof types.AuthzProjectMetadataDocument,
-    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n": typeof types.AuthzGetProject_ProjectFragmentDoc,
-    "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": typeof types.AuthzGetProjectRole_ProjectFragmentDoc,
-    "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": typeof types.AuthzServerMetadataDocument,
-    "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": typeof types.AuthzGetServerRole_UserFragmentDoc,
-    "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n": typeof types.AuthzWorkspaceMetadataDocument,
-    "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n": typeof types.AuthzGetWorkspace_WorkspaceFragmentDoc,
-    "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n": typeof types.AuthzGetWorkspaceRole_WorkspaceFragmentDoc,
-    "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.AuthzGetWorkspaceSsoProviderSession_WorkspaceFragmentDoc,
     "\n  fragment FunctionRunStatusForSummary on AutomateFunctionRun {\n    id\n    status\n  }\n": typeof types.FunctionRunStatusForSummaryFragmentDoc,
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": typeof types.TriggeredAutomationsStatusSummaryFragmentDoc,
     "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    functionRuns {\n      ...FunctionRunStatusForSummary\n      statusMessage\n    }\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": typeof types.AutomationRunDetailsFragmentDoc,
@@ -262,7 +254,7 @@ type Documents = {
     "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n": typeof types.TriggerAutomationDocument,
     "\n  mutation CreateTestAutomation(\n    $projectId: ID!\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": typeof types.CreateTestAutomationDocument,
     "\n  mutation MoveProjectToWorkspace($workspaceId: String!, $projectId: String!) {\n    workspaceMutations {\n      projects {\n        moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {\n          id\n          workspace {\n            id\n            projects {\n              items {\n                id\n              }\n            }\n            ...ProjectsMoveToWorkspaceDialog_Workspace\n            ...MoveProjectsDialog_Workspace\n          }\n        }\n      }\n    }\n  }\n": typeof types.MoveProjectToWorkspaceDocument,
-    "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      visibility\n      workspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.ProjectAccessCheckDocument,
+    "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      permissions {\n        canRead {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.ProjectAccessCheckDocument,
     "\n  query ProjectRoleCheck($id: String!) {\n    project(id: $id) {\n      id\n      role\n    }\n  }\n": typeof types.ProjectRoleCheckDocument,
     "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        ...ProjectsDashboard_UserProjectCollection\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsHiddenProjectWarning_User\n    }\n  }\n": typeof types.ProjectsDashboardQueryDocument,
     "\n  query ProjectPageQuery($id: String!, $token: String) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n    projectInvite(projectId: $id, token: $token) {\n      ...ProjectsInviteBanner\n    }\n  }\n": typeof types.ProjectPageQueryDocument,
@@ -579,6 +571,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
+    "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": types.AuthLoginPanelDocument,
@@ -588,15 +581,6 @@ const documents: Documents = {
     "\n  query ActiveUserWorkspaceExistenceCheck {\n    activeUser {\n      id\n      verified\n      isOnboardingFinished\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces(limit: 0) {\n        totalCount\n        items {\n          id\n          slug\n        }\n      }\n      discoverableWorkspaces {\n        id\n      }\n      workspaceJoinRequests(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserWorkspaceExistenceCheckDocument,
     "\n  query ActiveUserActiveWorkspaceCheck {\n    activeUser {\n      id\n      isProjectsActive\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": types.ActiveUserActiveWorkspaceCheckDocument,
     "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n": types.ProjectWorkspaceAccessCheckDocument,
-    "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n": types.AuthzProjectMetadataDocument,
-    "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n": types.AuthzGetProject_ProjectFragmentDoc,
-    "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n": types.AuthzGetProjectRole_ProjectFragmentDoc,
-    "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n": types.AuthzServerMetadataDocument,
-    "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n": types.AuthzGetServerRole_UserFragmentDoc,
-    "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n": types.AuthzWorkspaceMetadataDocument,
-    "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n": types.AuthzGetWorkspace_WorkspaceFragmentDoc,
-    "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n": types.AuthzGetWorkspaceRole_WorkspaceFragmentDoc,
-    "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.AuthzGetWorkspaceSsoProviderSession_WorkspaceFragmentDoc,
     "\n  fragment FunctionRunStatusForSummary on AutomateFunctionRun {\n    id\n    status\n  }\n": types.FunctionRunStatusForSummaryFragmentDoc,
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": types.TriggeredAutomationsStatusSummaryFragmentDoc,
     "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    functionRuns {\n      ...FunctionRunStatusForSummary\n      statusMessage\n    }\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomationRunDetailsFragmentDoc,
@@ -681,7 +665,7 @@ const documents: Documents = {
     "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n": types.TriggerAutomationDocument,
     "\n  mutation CreateTestAutomation(\n    $projectId: ID!\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": types.CreateTestAutomationDocument,
     "\n  mutation MoveProjectToWorkspace($workspaceId: String!, $projectId: String!) {\n    workspaceMutations {\n      projects {\n        moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {\n          id\n          workspace {\n            id\n            projects {\n              items {\n                id\n              }\n            }\n            ...ProjectsMoveToWorkspaceDialog_Workspace\n            ...MoveProjectsDialog_Workspace\n          }\n        }\n      }\n    }\n  }\n": types.MoveProjectToWorkspaceDocument,
-    "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      visibility\n      workspace {\n        id\n        slug\n      }\n    }\n  }\n": types.ProjectAccessCheckDocument,
+    "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      permissions {\n        canRead {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.ProjectAccessCheckDocument,
     "\n  query ProjectRoleCheck($id: String!) {\n    project(id: $id) {\n      id\n      role\n    }\n  }\n": types.ProjectRoleCheckDocument,
     "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        ...ProjectsDashboard_UserProjectCollection\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsHiddenProjectWarning_User\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
     "\n  query ProjectPageQuery($id: String!, $token: String) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n    projectInvite(projectId: $id, token: $token) {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectPageQueryDocument,
@@ -1453,6 +1437,10 @@ export function graphql(source: "\n      mutation CreateOnboardingProject {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n"): (typeof documents)["\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1486,42 +1474,6 @@ export function graphql(source: "\n  query ActiveUserActiveWorkspaceCheck {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query projectWorkspaceAccessCheck($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      workspace {\n        id\n        slug\n        role\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n"): (typeof documents)["\n  query AuthzProjectMetadata($id: String!) {\n    project(id: $id) {\n      id\n      ...AuthzGetProject_Project\n      ...AuthzGetProjectRole_Project\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n"): (typeof documents)["\n  fragment AuthzGetProject_Project on Project {\n    id\n    visibility\n    workspaceId\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetProjectRole_Project on Project {\n    id\n    role\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n"): (typeof documents)["\n  query AuthzServerMetadata {\n    activeUser {\n      id\n      ...AuthzGetServerRole_User\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetServerRole_User on User {\n    id\n    role\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n"): (typeof documents)["\n  query AuthzWorkspaceMetadata($id: String!) {\n    workspace(id: $id) {\n      id\n      ...AuthzGetWorkspace_Workspace\n      ...AuthzGetWorkspaceRole_Workspace\n      ...AuthzGetWorkspaceSsoProviderSession_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspace_Workspace on Workspace {\n    id\n    slug\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspaceRole_Workspace on Workspace {\n    id\n    role\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AuthzGetWorkspaceSsoProviderSession_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1861,7 +1813,7 @@ export function graphql(source: "\n  mutation MoveProjectToWorkspace($workspaceI
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      visibility\n      workspace {\n        id\n        slug\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      visibility\n      workspace {\n        id\n        slug\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      permissions {\n        canRead {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n      permissions {\n        canRead {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
