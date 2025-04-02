@@ -68,8 +68,9 @@
       event-source="move-projects-dialog"
     />
     <WorkspacePlanLimitReachedDialog
+      v-if="activeLimit"
       v-model:open="showLimitReachedDialog"
-      :limit="limit"
+      :limit="activeLimit"
       :limit-type="limitType"
     />
   </LayoutDialog>
@@ -88,7 +89,10 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
+import {
+  useWorkspacePlanLimits,
+  useGetWorkspacePlanUsage
+} from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -164,8 +168,10 @@ const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null
 const showMoveToWorkspaceDialog = ref(false)
 const showLimitReachedDialog = ref(false)
 
-const { remainingProjects, remainingModels, canMoveProject, getLimitType, getLimit } =
-  useWorkspacePlanLimits(props.workspace.slug)
+const { projectCount, modelCount } = useGetWorkspacePlanUsage(props.workspace.slug)
+
+const { remainingProjects, remainingModels, limitType, activeLimit } =
+  useWorkspacePlanLimits(projectCount, modelCount)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
@@ -186,17 +192,9 @@ const buttons = computed((): LayoutDialogButton[] => [
   }
 ])
 
-const limitType = computed(() =>
-  selectedProject.value
-    ? getLimitType(selectedProject.value.modelCount.totalCount)
-    : 'project'
-)
-
-const limit = computed(() => getLimit(limitType.value))
-
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  if (canMoveProject(project.modelCount.totalCount)) {
+  if (!limitType.value) {
     showMoveToWorkspaceDialog.value = true
   } else {
     showLimitReachedDialog.value = true

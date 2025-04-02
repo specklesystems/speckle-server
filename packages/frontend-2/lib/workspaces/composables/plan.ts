@@ -159,74 +159,84 @@ export const useWorkspacePlan = (slug: string) => {
   }
 }
 
-export const useWorkspacePlanLimits = (slug: string) => {
-  const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-
+export const useGetWorkspacePlanUsage = (slug: string) => {
   const { result } = useQuery(
     workspacePlanLimitsQuery,
     () => ({
       slug
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled
+      enabled: !!slug
     })
   )
 
-  const projectLimit = computed(() => 3)
-  const modelLimit = computed(() => 8)
-
-  const projectCount = computed(() => {
-    return result.value?.workspaceBySlug?.projects?.totalCount ?? 0
-  })
-
-  const modelCount = computed(() => {
-    return (
+  const projectCount = computed(
+    () => result.value?.workspaceBySlug?.projects?.totalCount ?? 0
+  )
+  const modelCount = computed(
+    () =>
       result.value?.workspaceBySlug?.projects?.items?.reduce(
         (total, project) => total + (project?.models?.totalCount ?? 0),
         0
       ) ?? 0
-    )
-  })
-
-  const remainingProjects = computed(() => {
-    const count = projectCount.value ?? 0
-    return Math.max(0, projectLimit.value - count)
-  })
-
-  const remainingModels = computed(() =>
-    Math.max(0, modelLimit.value - modelCount.value)
   )
 
-  const canAddProject = computed(() => remainingProjects.value > 0)
-
-  const canAddModels = (projectModelCount: number) =>
-    remainingModels.value >= projectModelCount
-
-  const canMoveProject = (projectModelCount: number) => {
-    return canAddProject.value && canAddModels(projectModelCount)
+  return {
+    projectCount,
+    modelCount
   }
+}
 
-  const getLimitType = (projectModelCount: number) => {
-    if (!canAddProject.value) return 'project'
-    if (!canAddModels(projectModelCount)) return 'model'
+export const useWorkspacePlanLimits = (
+  projectCount: ComputedRef<number>,
+  modelCount: ComputedRef<number>
+) => {
+  const projectLimit = computed(() => 3)
+  const modelLimit = computed(() => 8)
+
+  const remainingProjects = computed(() => {
+    return projectLimit.value - projectCount.value
+  })
+
+  const remainingModels = computed(() => {
+    return modelLimit.value - modelCount.value
+  })
+
+  const limitType = computed(() => {
+    if (projectCount.value > projectLimit.value) {
+      return 'project'
+    }
+    if (modelCount.value > modelLimit.value) {
+      return 'model'
+    }
     return null
-  }
+  })
 
-  const getLimit = (limitType: 'project' | 'model' | null) => {
-    return limitType === 'model' ? modelLimit.value : projectLimit.value
-  }
+  const activeLimit = computed(() => {
+    const limit =
+      limitType.value === 'project'
+        ? projectLimit.value
+        : limitType.value === 'model'
+        ? modelLimit.value
+        : null
+    return limit
+  })
+
+  const canAddProject = computed(
+    () => remainingProjects.value !== null && remainingProjects.value > 0
+  )
+  const canAddModels = computed(
+    () => remainingModels.value !== null && remainingModels.value > 0
+  )
 
   return {
     projectLimit,
     modelLimit,
-    projectCount,
-    modelCount,
     remainingProjects,
     remainingModels,
     canAddProject,
     canAddModels,
-    canMoveProject,
-    getLimitType,
-    getLimit
+    limitType,
+    activeLimit
   }
 }

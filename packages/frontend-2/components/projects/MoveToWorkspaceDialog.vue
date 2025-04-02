@@ -54,6 +54,12 @@
       :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
       @confirm="onConfirmHandler"
     />
+    <WorkspacePlanLimitReachedDialog
+      v-if="activeLimit"
+      v-model:open="showLimitReachedDialog"
+      :limit="activeLimit"
+      :limit-type="limitType"
+    />
   </LayoutDialog>
 </template>
 
@@ -143,6 +149,16 @@ const modelText = computed(() =>
 const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
+
+const projectCount = computed(() => {
+  return 10
+})
+const modelCount = computed(() => {
+  return props.project.modelCount.totalCount
+})
+
+const { limitType, activeLimit } = useWorkspacePlanLimits(projectCount, modelCount)
+
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
   return hasWorkspaces.value
     ? [
@@ -206,12 +222,6 @@ watch(
 )
 
 const onMoveClick = () => {
-  const workspaceSlug = selectedWorkspace.value?.slug
-  if (!workspaceSlug) return
-
-  const { getLimitType, modelCount } = useWorkspacePlanLimits(workspaceSlug)
-  const limitType = computed(() => getLimitType(modelCount.value))
-
   if (limitType.value) {
     showLimitReachedDialog.value = true
   } else {
