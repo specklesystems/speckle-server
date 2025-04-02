@@ -229,9 +229,14 @@ export const leaveWorkspaceMutation = gql`
 `
 
 export const getProjectWorkspaceQuery = gql`
-  query ActiveUserProjectsWorkspace {
+  query ActiveUserProjectsWorkspace(
+    $limit: Int
+    $cursor: String
+    $filter: UserProjectsFilter
+  ) {
     activeUser {
-      projects {
+      projects(filter: $filter, limit: $limit, cursor: $cursor) {
+        totalCount
         items {
           id
           workspace {

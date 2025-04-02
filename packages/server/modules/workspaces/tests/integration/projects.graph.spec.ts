@@ -36,7 +36,7 @@ import {
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { Nullable, Optional, Roles } from '@speckle/shared'
+import { isNonNullable, Nullable, Optional, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -276,11 +276,12 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 
-  describe('when querying workspace projects', () => {
+  describe('when querying projects', () => {
     const PAGE_SIZE = 5
     const PAGE_COUNT = 3
     const TOTAL_COUNT = PAGE_COUNT * PAGE_SIZE
     const GUEST_PROJECT_COUNT = PAGE_SIZE + 1
+    const NON_WORKSPACE_PROJECT_COUNT = 5
 
     const queryWorkspace: BasicTestWorkspace = {
       id: '',
@@ -301,6 +302,7 @@ describe('Workspace project GQL CRUD', () => {
       name: 'Query Workspace Member'
     }
     let projects: BasicTestStream[]
+    let nonWorkspaceProjects: BasicTestStream[]
     let apollo: TestApolloServer
 
     before(async () => {
@@ -327,18 +329,37 @@ describe('Workspace project GQL CRUD', () => {
           workspaceId: queryWorkspace.id
         })
       )
-      await Promise.all(
-        projects.map((project) => createTestStream(project, workspaceAdmin))
+      nonWorkspaceProjects = times(
+        NON_WORKSPACE_PROJECT_COUNT,
+        (i): BasicTestStream => ({
+          id: '',
+          ownerId: '',
+          name: `Non Workspace Project - #${i}`,
+          isPublic: false
+        })
       )
 
-      // ONLY ADD EXPLICIT PROJECT ASSIGNMENTS TO GUEST
       // CREATE CONCURRENTLY TO TEST COMPOSITE CURSOR (same updatedAt)
-      // Assign guest to only first page + 1
+      await Promise.all([
+        ...projects.map((project) => createTestStream(project, workspaceAdmin)),
+        ...nonWorkspaceProjects.map((project) =>
+          createTestStream(project, workspaceGuest)
+        )
+      ])
+
+      // ONLY ADD EXPLICIT PROJECT ASSIGNMENTS TO GUEST
       const projectsToAssign = projects.slice(0, GUEST_PROJECT_COUNT)
       await Promise.all(
         projectsToAssign.map((project) =>
           addToStream(project, workspaceGuest, Roles.Stream.Contributor)
         )
+      )
+
+      // Add explicit single assignment to workspaceMember to 1st non-workspace project
+      await addToStream(
+        nonWorkspaceProjects[0],
+        workspaceMember,
+        Roles.Stream.Contributor
       )
 
       apollo = await testApolloServer({
@@ -350,146 +371,148 @@ describe('Workspace project GQL CRUD', () => {
       adminOverrideMock.disable()
     })
 
-    it('should return all projects for workspace members', async () => {
-      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: queryWorkspace.id,
-        limit: 999 // get everything
-      })
-
-      expect(res).to.not.haveGraphQLErrors()
-      const collection = res.data?.workspace.projects
-      expect(collection?.items.length).to.equal(TOTAL_COUNT)
-      expect(collection?.cursor).to.be.ok
-      expect(collection?.totalCount).to.eq(TOTAL_COUNT)
-
-      // validate sorting
-      const projects = collection?.items || []
-      let lastUpdatedAt: Optional<string> = undefined
-      for (const project of projects) {
-        const date = project.updatedAt
-        if (!lastUpdatedAt) {
-          lastUpdatedAt = date
-          continue
-        }
-        expect(
-          dayjs(date).isSame(dayjs(lastUpdatedAt)) ||
-            dayjs(date).isBefore(dayjs(lastUpdatedAt))
-        ).to.be.true
-        lastUpdatedAt = date
-      }
-    })
-
-    itEach(
-      [{ adminOverrideEnabled: true }, { adminOverrideEnabled: false }],
-      ({ adminOverrideEnabled }) =>
-        adminOverrideEnabled
-          ? 'should return all projects for server admins if override enabled'
-          : 'should fail retrieving projects for server admins if no override enabled',
-      async ({ adminOverrideEnabled }) => {
-        const apollo = await testApolloServer({
-          authUserId: serverAdminUser.id
-        })
-
-        adminOverrideMock.enable(adminOverrideEnabled)
+    describe('through Workspace.projects', () => {
+      it('should return all projects for workspace members', async () => {
         const res = await apollo.execute(GetWorkspaceProjectsDocument, {
           id: queryWorkspace.id,
           limit: 999 // get everything
         })
 
-        if (adminOverrideEnabled) {
-          expect(res).to.not.haveGraphQLErrors()
-          const collection = res.data?.workspace.projects
-          expect(collection?.items.length).to.equal(TOTAL_COUNT)
-          expect(collection?.cursor).to.be.ok
-          expect(collection?.totalCount).to.eq(TOTAL_COUNT)
-        } else {
-          expect(res).to.haveGraphQLErrors()
-          const collection = res.data?.workspace.projects
-          expect(collection).to.not.be.ok
+        expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.workspace.projects
+        expect(collection?.items.length).to.equal(TOTAL_COUNT)
+        expect(collection?.cursor).to.be.ok
+        expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+
+        // validate sorting
+        const projects = collection?.items || []
+        let lastUpdatedAt: Optional<string> = undefined
+        for (const project of projects) {
+          const date = project.updatedAt
+          if (!lastUpdatedAt) {
+            lastUpdatedAt = date
+            continue
+          }
+          expect(
+            dayjs(date).isSame(dayjs(lastUpdatedAt)) ||
+              dayjs(date).isBefore(dayjs(lastUpdatedAt))
+          ).to.be.true
+          lastUpdatedAt = date
         }
-      }
-    )
-
-    it('should return only explicitly assigned projects for guests', async () => {
-      const apollo = await testApolloServer({
-        authUserId: workspaceGuest.id
-      })
-      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: queryWorkspace.id,
-        limit: 999 // get everything
       })
 
-      expect(res).to.not.haveGraphQLErrors()
-      const collection = res.data?.workspace.projects
-      expect(collection?.items.length).to.equal(GUEST_PROJECT_COUNT)
-      expect(collection?.cursor).to.be.ok
-      expect(collection?.totalCount).to.equal(GUEST_PROJECT_COUNT)
-    })
-
-    it('should respect limits', async () => {
-      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: queryWorkspace.id,
-        limit: 1
-      })
-
-      expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.projects.items.length).to.equal(1)
-      expect(res.data?.workspace.projects.cursor).to.be.ok
-      expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
-    })
-
-    it('should only return totalCount if limit === 0', async () => {
-      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: queryWorkspace.id,
-        limit: 0
-      })
-
-      expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.projects.items.length).to.equal(0)
-      expect(res.data?.workspace.projects.cursor).to.be.null
-      expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
-    })
-
-    it('should respect pagination', async () => {
-      let newCursor: Nullable<string> = null
-      for (let page = 1; page <= PAGE_COUNT + 1; page++) {
-        const res: ExecuteOperationResponse<GetWorkspaceProjectsQuery> =
-          await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: queryWorkspace.id,
-            limit: PAGE_SIZE,
-            cursor: newCursor
+      itEach(
+        [{ adminOverrideEnabled: true }, { adminOverrideEnabled: false }],
+        ({ adminOverrideEnabled }) =>
+          adminOverrideEnabled
+            ? 'should return all projects for server admins if override enabled'
+            : 'should fail retrieving projects for server admins if no override enabled',
+        async ({ adminOverrideEnabled }) => {
+          const apollo = await testApolloServer({
+            authUserId: serverAdminUser.id
           })
-        newCursor = res.data?.workspace.projects.cursor || null
+
+          adminOverrideMock.enable(adminOverrideEnabled)
+          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: queryWorkspace.id,
+            limit: 999 // get everything
+          })
+
+          if (adminOverrideEnabled) {
+            expect(res).to.not.haveGraphQLErrors()
+            const collection = res.data?.workspace.projects
+            expect(collection?.items.length).to.equal(TOTAL_COUNT)
+            expect(collection?.cursor).to.be.ok
+            expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+          } else {
+            expect(res).to.haveGraphQLErrors()
+            const collection = res.data?.workspace.projects
+            expect(collection).to.not.be.ok
+          }
+        }
+      )
+
+      it('should return only explicitly assigned projects for guests', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceGuest.id
+        })
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          limit: 999 // get everything
+        })
 
         expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.workspace.projects
+        expect(collection?.items.length).to.equal(GUEST_PROJECT_COUNT)
+        expect(collection?.cursor).to.be.ok
+        expect(collection?.totalCount).to.equal(GUEST_PROJECT_COUNT)
+      })
+
+      it('should respect limits', async () => {
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          limit: 1
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.projects.items.length).to.equal(1)
+        expect(res.data?.workspace.projects.cursor).to.be.ok
         expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+      })
 
-        if (page <= PAGE_COUNT) {
-          expect(res.data?.workspace.projects.items.length).to.equal(PAGE_SIZE)
-          expect(res.data?.workspace.projects.cursor).to.be.ok
-        } else {
-          expect(res.data?.workspace.projects.items.length).to.eq(0)
-          expect(res.data?.workspace.projects.cursor).to.be.null
-        }
-      }
-    })
+      it('should only return totalCount if limit === 0', async () => {
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          limit: 0
+        })
 
-    it('should respect search filters', async () => {
-      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: queryWorkspace.id,
-        filter: {
-          search: 'Query Workspace Project - #0'
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.projects.items.length).to.equal(0)
+        expect(res.data?.workspace.projects.cursor).to.be.null
+        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+      })
+
+      it('should respect pagination', async () => {
+        let newCursor: Nullable<string> = null
+        for (let page = 1; page <= PAGE_COUNT + 1; page++) {
+          const res: ExecuteOperationResponse<GetWorkspaceProjectsQuery> =
+            await apollo.execute(GetWorkspaceProjectsDocument, {
+              id: queryWorkspace.id,
+              limit: PAGE_SIZE,
+              cursor: newCursor
+            })
+          newCursor = res.data?.workspace.projects.cursor || null
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+
+          if (page <= PAGE_COUNT) {
+            expect(res.data?.workspace.projects.items.length).to.equal(PAGE_SIZE)
+            expect(res.data?.workspace.projects.cursor).to.be.ok
+          } else {
+            expect(res.data?.workspace.projects.items.length).to.eq(0)
+            expect(res.data?.workspace.projects.cursor).to.be.null
+          }
         }
       })
 
-      expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.projects.items.length).to.equal(1)
-      expect(res.data?.workspace.projects.totalCount).to.equal(1)
-      expect(res.data?.workspace.projects.cursor).to.be.ok
+      it('should respect search filters', async () => {
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          filter: {
+            search: 'Query Workspace Project - #0'
+          }
+        })
 
-      const project = res.data?.workspace.projects.items[0]
-      expect(project).to.exist
-      expect(project?.name).to.equal('Query Workspace Project - #0')
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.projects.items.length).to.equal(1)
+        expect(res.data?.workspace.projects.totalCount).to.equal(1)
+        expect(res.data?.workspace.projects.cursor).to.be.ok
+
+        const project = res.data?.workspace.projects.items[0]
+        expect(project).to.exist
+        expect(project?.name).to.equal('Query Workspace Project - #0')
+      })
     })
 
     describe('for a specific one', () => {
@@ -582,20 +605,90 @@ describe('Workspace project GQL CRUD', () => {
         }
       )
     })
-  })
 
-  describe("when querying active user's projects", () => {
-    // TODO: Test workspaceId null or not
-    // Test personalOnly flag
+    describe('through ActiveUser.projects', () => {
+      let apollo: TestApolloServer
 
-    it('should return workspace info on project types', async () => {
-      const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {})
+      before(async () => {
+        apollo = await testApolloServer({
+          authUserId: workspaceGuest.id
+        })
+      })
 
-      const projects = res.data?.activeUser?.projects.items
+      it('should return all projects user is explicitly assigned to', async () => {
+        // guest
+        const apolloGuest = await testApolloServer({
+          authUserId: workspaceGuest.id
+        })
+        const guestRes = await apolloGuest.execute(
+          ActiveUserProjectsWorkspaceDocument,
+          { limit: 999 },
+          { assertNoErrors: true }
+        )
 
-      expect(res).to.not.haveGraphQLErrors()
-      expect(projects).to.exist
-      expect(projects?.every((project) => !!project?.workspace?.id)).to.be.ok
+        const guestCollection = guestRes.data?.activeUser?.projects
+        const expectedGuestCount = GUEST_PROJECT_COUNT + NON_WORKSPACE_PROJECT_COUNT
+        expect(guestCollection).to.be.ok
+        expect(guestCollection!.totalCount).to.equal(expectedGuestCount)
+        expect(guestCollection!.items.length).to.equal(expectedGuestCount)
+        expect(
+          guestCollection!.items.map((i) => i.workspace?.id).filter(isNonNullable)
+        ).to.have.length(GUEST_PROJECT_COUNT)
+
+        // member
+        const apolloMember = await testApolloServer({
+          authUserId: workspaceMember.id
+        })
+        const memberRes = await apolloMember.execute(
+          ActiveUserProjectsWorkspaceDocument,
+          { limit: 999 },
+          { assertNoErrors: true }
+        )
+        const memberCollection = memberRes.data?.activeUser?.projects
+        const expectedMemberCount = 1 // only 1 explicit assignment
+        expect(memberCollection).to.be.ok
+        expect(memberCollection!.totalCount).to.equal(expectedMemberCount)
+        expect(memberCollection!.items.length).to.equal(expectedMemberCount)
+        expect(memberCollection!.items[0].id).to.equal(nonWorkspaceProjects[0].id)
+      })
+
+      it('should only return workspace projects if filter set', async () => {
+        const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {
+          filter: {
+            workspaceId: queryWorkspace.id
+          },
+          limit: 999
+        })
+
+        const expectedCount = GUEST_PROJECT_COUNT
+        expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.activeUser?.projects
+        expect(collection).to.be.ok
+        expect(collection?.items.length).to.equal(expectedCount)
+        expect(collection?.totalCount).to.equal(expectedCount)
+        expect(
+          collection?.items.map((i) => i.workspace?.id).filter(isNonNullable)
+        ).to.have.length(expectedCount)
+      })
+
+      it('should only return non-workspace projects if filter set', async () => {
+        const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {
+          filter: {
+            personalOnly: true
+          },
+          limit: 999
+        })
+
+        const expectedCount = NON_WORKSPACE_PROJECT_COUNT
+        expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.activeUser?.projects
+        expect(collection).to.be.ok
+        expect(collection?.items.length).to.equal(expectedCount)
+        expect(collection?.totalCount).to.equal(expectedCount)
+        expect(
+          collection?.items.map((i) => i.workspace?.id).filter((v) => !v)
+        ).to.have.length(expectedCount)
+      })
     })
   })
 
