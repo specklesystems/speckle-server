@@ -14,6 +14,7 @@ import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelpe
 import {
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
+  GetProjectDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceProjectsQuery,
   GetWorkspaceTeamDocument,
@@ -28,7 +29,7 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { EnvHelperMock } from '@/test/mocks/global'
+import { mockAdminOverride } from '@/test/mocks/global'
 import {
   addToStream,
   BasicTestStream,
@@ -42,6 +43,7 @@ import dayjs from 'dayjs'
 import { times } from 'lodash'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const adminOverrideMock = mockAdminOverride()
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -321,7 +323,7 @@ describe('Workspace project GQL CRUD', () => {
           id: '',
           ownerId: '',
           name: `Query Workspace Project - #${i}`,
-          isPublic: false,
+          isPublic: false, // have to be private for tests below
           workspaceId: queryWorkspace.id
         })
       )
@@ -345,7 +347,7 @@ describe('Workspace project GQL CRUD', () => {
     })
 
     afterEach(async () => {
-      EnvHelperMock.resetMockedFunctions()
+      adminOverrideMock.disable()
     })
 
     it('should return all projects for workspace members', async () => {
@@ -388,7 +390,7 @@ describe('Workspace project GQL CRUD', () => {
           authUserId: serverAdminUser.id
         })
 
-        EnvHelperMock.mockFunction('adminOverrideEnabled', () => adminOverrideEnabled)
+        adminOverrideMock.enable(adminOverrideEnabled)
         const res = await apollo.execute(GetWorkspaceProjectsDocument, {
           id: queryWorkspace.id,
           limit: 999 // get everything
@@ -489,9 +491,103 @@ describe('Workspace project GQL CRUD', () => {
       expect(project).to.exist
       expect(project?.name).to.equal('Query Workspace Project - #0')
     })
+
+    describe('for a specific one', () => {
+      const randomServerGuy: BasicTestUser = {
+        id: '',
+        name: 'Random Server Guy',
+        email: ''
+      }
+
+      before(async () => {
+        await createTestUser(randomServerGuy)
+      })
+
+      // projects at the end have no explicit project assignments,
+      // and first X ones are explicitly assigned to guest user
+      const implicitProject = () => projects.at(-1)!
+      const explicitGuestProject = () => projects.at(0)!
+
+      it('it should be accessible to workspace member', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceMember.id
+        })
+        const res = await apollo.execute(GetProjectDocument, {
+          id: implicitProject().id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.project.id).to.be.ok
+      })
+
+      it('it should not be accessible to random outside workspace guy', async () => {
+        const apollo = await testApolloServer({
+          authUserId: randomServerGuy.id
+        })
+        const res = await apollo.execute(GetProjectDocument, {
+          id: implicitProject().id
+        })
+
+        expect(res).to.haveGraphQLErrors()
+        expect(res.data?.project).to.not.be.ok
+      })
+
+      itEach(
+        [{ explicit: false }, { explicit: true }],
+        ({ explicit }) =>
+          explicit
+            ? 'it should be accessible to workspace guest with explicit project role'
+            : 'it should not be accessible to workspace guest without explicit project role',
+        async ({ explicit }) => {
+          const apollo = await testApolloServer({
+            authUserId: workspaceGuest.id
+          })
+          const res = await apollo.execute(GetProjectDocument, {
+            id: explicit ? explicitGuestProject().id : implicitProject().id
+          })
+
+          if (explicit) {
+            expect(res).to.not.haveGraphQLErrors()
+            expect(res.data?.project.id).to.be.ok
+          } else {
+            expect(res).to.haveGraphQLErrors()
+            expect(res.data?.project).to.not.be.ok
+          }
+        }
+      )
+
+      itEach(
+        [{ adminOverrideEnabled: true }, { adminOverrideEnabled: false }],
+        ({ adminOverrideEnabled }) =>
+          adminOverrideEnabled
+            ? 'it should return project for server admins if override enabled'
+            : 'it should not return project for server admins if override disabled',
+        async ({ adminOverrideEnabled }) => {
+          const apollo = await testApolloServer({
+            authUserId: serverAdminUser.id
+          })
+
+          adminOverrideMock.enable(adminOverrideEnabled)
+          const res = await apollo.execute(GetProjectDocument, {
+            id: implicitProject().id
+          })
+
+          if (adminOverrideEnabled) {
+            expect(res).to.not.haveGraphQLErrors()
+            expect(res.data?.project.id).to.be.ok
+          } else {
+            expect(res).to.haveGraphQLErrors()
+            expect(res.data?.project).to.not.be.ok
+          }
+        }
+      )
+    })
   })
 
   describe("when querying active user's projects", () => {
+    // TODO: Test workspaceId null or not
+    // Test personalOnly flag
+
     it('should return workspace info on project types', async () => {
       const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {})
 

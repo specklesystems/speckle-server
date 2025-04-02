@@ -268,7 +268,7 @@ export function getServerMovedTo() {
 }
 
 export function adminOverrideEnabled() {
-  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
+  return getFeatureFlags().FF_ADMIN_OVERRIDE_ENABLED
 }
 
 export function enableMixpanel() {
