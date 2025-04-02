@@ -7,9 +7,14 @@
       >
         <div>
           <h3 class="text-body-xs text-foreground-2 pb-2">Editor seats</h3>
+          <div class="flex items-center gap-x-2">
+            <p class="text-body-xs text-foreground font-medium leading-none">4</p>
+            <CommonBadge rounded>2 unused</CommonBadge>
+          </div>
         </div>
         <div>
           <h3 class="text-body-xs text-foreground-2 pb-2">Viewer seats</h3>
+          <p class="text-body-xs text-foreground font-medium leading-none">4</p>
         </div>
       </div>
       <div class="flex xl:w-[34%] xl:justify-end">
