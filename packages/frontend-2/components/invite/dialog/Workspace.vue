@@ -17,10 +17,7 @@
       :invites="invites"
       :allowed-domains="allowedDomains"
     >
-      <p
-        v-if="isWorkspaceNewPlansEnabled"
-        class="text-body-2xs text-foreground-2 leading-5"
-      >
+      <p class="text-body-2xs text-foreground-2 leading-5">
         {{ infoText }}
       </p>
     </InviteDialogSharedSelectUsers>
@@ -63,7 +60,6 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const mixpanel = useMixpanel()
 const inviteToWorkspace = useInviteUserToWorkspace()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const isSelectingRole = ref(true)
 const selectedRole = ref<WorkspaceRoles>(Roles.Workspace.Member)
