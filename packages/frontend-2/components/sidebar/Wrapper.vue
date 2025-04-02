@@ -1,7 +1,7 @@
 <template>
   <div class="h-full">
-    <DashboardSidebarNew v-if="isWorkspaceNewPlansEnabled" />
-    <DashboardSidebar v-else />
+    <SidebarNew v-if="isWorkspaceNewPlansEnabled" />
+    <Sidebar v-else />
   </div>
 </template>
 

@@ -24,6 +24,7 @@
 
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { MenuItem } from '@headlessui/vue'
 
 defineProps<{
   name: MaybeNullOrUndefined<string>
