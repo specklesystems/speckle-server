@@ -16,3 +16,17 @@ export const navigationWorkspaceListQuery = graphql(`
     }
   }
 `)
+
+export const navigationInvitesQuery = graphql(`
+  query NavigationInvites {
+    activeUser {
+      id
+      projectInvites {
+        ...HeaderNavNotificationsProjectInvite_PendingStreamCollaborator
+      }
+      workspaceInvites {
+        ...HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaborator
+      }
+    }
+  }
+`)
