@@ -35,24 +35,6 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment WorkspacePlanLimits_Workspace on Workspace {
-    id
-    projects(limit: 0) {
-      totalCount
-      items {
-        id
-        models(limit: 0) {
-          totalCount
-        }
-      }
-    }
-    plan {
-      name
-    }
-  }
-`)
-
 export const useWorkspacePlan = (slug: string) => {
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 
@@ -158,6 +140,24 @@ export const useWorkspacePlan = (slug: string) => {
     editorSeats
   }
 }
+
+graphql(`
+  fragment WorkspacePlanLimits_Workspace on Workspace {
+    id
+    projects(limit: 0) {
+      totalCount
+      items {
+        id
+        models(limit: 0) {
+          totalCount
+        }
+      }
+    }
+    plan {
+      name
+    }
+  }
+`)
 
 export const useGetWorkspacePlanUsage = (slug: string) => {
   const { result } = useQuery(

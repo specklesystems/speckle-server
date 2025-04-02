@@ -16,7 +16,7 @@
       class="mb-2"
       v-on="on"
     />
-    <div v-if="isWorkspaceNewPlansEnabled" class="text-body-2xs py-2">
+    <div class="text-body-2xs py-2">
       You can move up to
       <span class="font-medium">{{ remainingProjects }} projects</span>
       and
@@ -97,9 +97,6 @@ import {
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
     id
-    plan {
-      name
-    }
     ...ProjectsMoveToWorkspaceDialog_Workspace
     projects {
       items {
@@ -134,8 +131,6 @@ graphql(`
 const props = defineProps<{
   workspace: MoveProjectsDialog_WorkspaceFragment
 }>()
-
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const open = defineModel<boolean>('open', { required: true })
 const search = defineModel<string>('search')
