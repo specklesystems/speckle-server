@@ -50,7 +50,6 @@ import {
   createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
-import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useRouter } from 'vue-router'
 
