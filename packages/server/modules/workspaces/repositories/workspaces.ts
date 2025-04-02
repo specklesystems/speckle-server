@@ -26,7 +26,6 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
-  GetWorkspacesModelsCounts,
   GetWorkspacesProjectsCounts,
   QueryWorkspaces,
   StoreWorkspaceDomain,
@@ -49,7 +48,6 @@ import {
 } from '@/modules/workspaces/helpers/db'
 import {
   knex,
-  Branches,
   ServerAcl,
   ServerInvites,
   StreamAcl,
@@ -533,35 +531,6 @@ export const getWorkspacesProjectsCountsFactory =
           count: string
         }[]
       >([Streams.col.workspaceId, knex.raw('count(*) as count')])
-      .whereIn(Streams.col.workspaceId, workspaceIds)
-      .groupBy(Streams.col.workspaceId)
-
-    const res = await q
-
-    for (const { workspaceId, count } of res) {
-      ret[workspaceId] = parseInt(count)
-    }
-
-    return ret
-  }
-
-export const getWorkspacesModelsCountsFactory =
-  (deps: { db: Knex }): GetWorkspacesModelsCounts =>
-  async ({ workspaceIds }) => {
-    const ret = workspaceIds.reduce((acc, workspaceId) => {
-      acc[workspaceId] = 0
-      return acc
-    }, {} as Record<string, number>)
-
-    const q = tables
-      .branches(deps.db)
-      .select<
-        {
-          workspaceId: string
-          count: string
-        }[]
-      >([Streams.col.workspaceId, knex.raw('count(*) as count')])
-      .join(Streams.name, Streams.col.id, Branches.col.streamId)
       .whereIn(Streams.col.workspaceId, workspaceIds)
       .groupBy(Streams.col.workspaceId)
 

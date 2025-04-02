@@ -240,12 +240,6 @@ export type GetWorkspacesProjectsCounts = (params: {
   [workspaceId: string]: number
 }>
 
-export type GetWorkspacesModelsCounts = (params: {
-  workspaceIds: string[]
-}) => Promise<{
-  [workspaceId: string]: number
-}>
-
 /** Workspace Project Roles */
 
 type GrantWorkspaceProjectRolesArgs = {

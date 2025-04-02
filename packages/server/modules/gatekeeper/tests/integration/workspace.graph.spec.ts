@@ -20,6 +20,7 @@ import {
 } from '@/test/authHelper'
 import {
   GetWorkspaceDocument,
+  GetWorkspacePlanUsageDocument,
   GetWorkspaceWithSeatsByTypeDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/test/graphql/generated/graphql'
@@ -29,6 +30,8 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -333,6 +336,76 @@ describe('Workspaces Billing', () => {
         expect(seats?.viewers?.totalCount).to.eq(2)
         expect(seats?.editors?.totalCount).to.eq(3)
       })
+    }
+  )
+  ;(FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
+    'workspace.subscription.usage',
+    async () => {
+      const user = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.Admin,
+        verified: true
+      })
+      const workspace = {
+        id: createRandomString(),
+        name: createRandomString(),
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user, {
+        addPlan: { name: 'pro', status: 'valid' }
+      })
+
+      const project: BasicTestStream = {
+        id: createRandomString(),
+        name: createRandomString(),
+        ownerId: user.id,
+        isPublic: true
+      }
+      await createTestStream(project, user)
+      await createTestBranches([
+        {
+          owner: user,
+          stream: project,
+          branch: {
+            id: createRandomString(),
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
+          }
+        },
+        {
+          owner: user,
+          stream: project,
+          branch: {
+            id: createRandomString(),
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
+          }
+        },
+        {
+          owner: user,
+          stream: project,
+          branch: {
+            id: createRandomString(),
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
+          }
+        }
+      ])
+
+      const session = await login(user)
+
+      const res = await session.execute(GetWorkspacePlanUsageDocument, {
+        workspaceId: workspace.id
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res?.data?.workspace?.plan?.usage?.projectCount).to.equal(31)
+      expect(res?.data?.workspace?.plan?.usage?.modelCount).to.equal(3)
     }
   )
 })
