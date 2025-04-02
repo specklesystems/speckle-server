@@ -123,8 +123,7 @@ type Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": typeof types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": typeof types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": typeof types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n      createdAt\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceBillingPageNew_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n": typeof types.WorkspaceBillingPageNew_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n": typeof types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersChangeRoleDialog_Workspace on Workspace {\n    id\n    plan {\n      status\n      name\n    }\n    subscription {\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersChangeRoleDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    ...SettingsSharedDeleteUserDialog_Workspace\n    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace\n    team(limit: 250) {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
@@ -323,8 +322,7 @@ type Documents = {
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": typeof types.SettingsSidebarDocument,
     "\n  query SettingsSidebarAutomateFunctions {\n    activeUser {\n      ...Sidebar_User\n    }\n  }\n": typeof types.SettingsSidebarAutomateFunctionsDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceGeneralDocument,
-    "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
-    "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPageNew_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingNewDocument,
+    "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": typeof types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": typeof types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesMembers_Workspace\n    }\n  }\n": typeof types.SettingsWorkspacesMembersDocument,
@@ -537,8 +535,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n      createdAt\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceBillingPageNew_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n": types.WorkspaceBillingPageNew_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n": types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersChangeRoleDialog_Workspace on Workspace {\n    id\n    plan {\n      status\n      name\n    }\n    subscription {\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersChangeRoleDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    ...SettingsSharedDeleteUserDialog_Workspace\n    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace\n    team(limit: 250) {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
@@ -737,8 +734,7 @@ const documents: Documents = {
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsSidebarAutomateFunctions {\n    activeUser {\n      ...Sidebar_User\n    }\n  }\n": types.SettingsSidebarAutomateFunctionsDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
-    "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
-    "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPageNew_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingNewDocument,
+    "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesMembers_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
@@ -1295,11 +1291,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditSlugD
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n      createdAt\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n      createdAt\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment WorkspaceBillingPageNew_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceBillingPageNew_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    ...PricingTable_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2095,11 +2087,7 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($slug: Strin
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPageNew_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBillingNew($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPageNew_Workspace\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

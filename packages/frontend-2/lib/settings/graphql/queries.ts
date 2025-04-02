@@ -28,17 +28,7 @@ export const settingsWorkspaceBillingQuery = graphql(`
   query SettingsWorkspaceBilling($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
-      ...SettingsWorkspacesBilling_Workspace
-    }
-  }
-`)
-
-// TODO: Remove old one post-migration
-export const settingsWorkspaceBillingQueryNew = graphql(`
-  query SettingsWorkspaceBillingNew($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      id
-      ...WorkspaceBillingPageNew_Workspace
+      ...WorkspaceBillingPage_Workspace
     }
   }
 `)

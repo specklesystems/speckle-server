@@ -2,53 +2,49 @@
   <div
     class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
-    <div class="lg:h-32">
-      <div class="flex items-center gap-x-2">
-        <h4 class="text-body font-medium">
-          {{ formatName(plan) }}
-        </h4>
-        <CommonBadge v-if="badgeText" rounded>
-          {{ badgeText }}
-        </CommonBadge>
-      </div>
-      <p class="text-body mt-1">
-        <span class="font-medium">
-          {{ planPrice }}
-        </span>
-        per seat/month
-      </p>
-      <p
-        v-if="plan === WorkspacePlans.Free"
-        class="text-body-xs text-foreground-2 mt-2.5"
-      >
-        For individuals and small teams trying Speckle.
-      </p>
-      <template v-else>
-        <div class="flex items-center gap-x-2 mt-3 px-1">
-          <FormSwitch
-            v-model="isYearlyIntervalSelected"
-            :show-label="false"
-            name="billing-interval"
-            @update:model-value="
-              (newValue) => $emit('onYearlyIntervalSelected', newValue)
-            "
-          />
-          <span class="text-body-2xs">Billed yearly</span>
-          <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
-            -10%
+    <div class="lg:h-32 flex flex-col">
+      <div class="flex-1">
+        <div class="flex items-center gap-x-2">
+          <h4 class="text-body font-medium">
+            {{ formatName(plan) }}
+          </h4>
+          <CommonBadge v-if="badgeText" rounded>
+            {{ badgeText }}
           </CommonBadge>
         </div>
-        <div class="w-full mt-4">
-          <FormButton
-            :color="buttonColor"
-            :disabled="!isSelectable"
-            full-width
-            @click="handleUpgradeClick"
-          >
-            {{ buttonText }}
-          </FormButton>
-        </div>
-      </template>
+        <p class="text-body mt-1">
+          <span class="font-medium">
+            {{ planPrice }}
+          </span>
+          per seat/month
+        </p>
+        <template v-if="plan !== WorkspacePlans.Free">
+          <div class="flex items-center gap-x-2 mt-3 px-1">
+            <FormSwitch
+              v-model="isYearlyIntervalSelected"
+              :show-label="false"
+              name="billing-interval"
+              @update:model-value="
+                (newValue) => $emit('onYearlyIntervalSelected', newValue)
+              "
+            />
+            <span class="text-body-2xs">Billed yearly</span>
+            <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
+              -10%
+            </CommonBadge>
+          </div>
+        </template>
+      </div>
+      <div class="w-full mt-4">
+        <FormButton
+          :color="buttonColor"
+          :disabled="!isSelectable"
+          full-width
+          @click="handleUpgradeClick"
+        >
+          {{ buttonText }}
+        </FormButton>
+      </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <li
@@ -151,9 +147,12 @@ const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
-const isCurrentPlan = computed(
-  () => isMatchingInterval.value && props.currentPlan?.name === props.plan
-)
+const isCurrentPlan = computed(() => {
+  if (props.plan === WorkspacePlans.Free) {
+    return props.currentPlan?.name === props.plan
+  }
+  return isMatchingInterval.value && props.currentPlan?.name === props.plan
+})
 
 const isAnnualToMonthly = computed(() => {
   return (
@@ -173,6 +172,9 @@ const isMonthlyToAnnual = computed(() => {
 
 const isSelectable = computed(() => {
   if (!props.isAdmin) return false
+  // Free CTA has no clickable scenario
+  if (props.plan === WorkspacePlans.Free) return false
+
   // Always enable buttons during expired or canceled state
   if (
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
@@ -210,6 +212,10 @@ const buttonColor = computed(() => {
 })
 
 const buttonText = computed(() => {
+  // Current plan case
+  if (isCurrentPlan.value) {
+    return 'Current plan'
+  }
   // Allow if current plan is Free, or the current plan is expired/canceled
   if (
     props.currentPlan?.name === WorkspacePlans.Free ||
@@ -217,10 +223,6 @@ const buttonText = computed(() => {
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
     return `Subscribe to ${formatName(props.plan)}`
-  }
-  // Current plan case
-  if (isCurrentPlan.value) {
-    return 'Current plan'
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
