@@ -4366,6 +4366,7 @@ export type Workspace = {
   sso?: Maybe<WorkspaceSso>;
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
+  teamByRole: WorkspaceTeamByRole;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -4446,7 +4447,6 @@ export type WorkspaceCollaboratorCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<WorkspaceCollaborator>;
   totalCount: Scalars['Int']['output'];
-  totalCountByRole?: Maybe<WorkspaceMembersByRole>;
 };
 
 export type WorkspaceCollection = {
@@ -4609,13 +4609,6 @@ export const WorkspaceJoinRequestStatus = {
 } as const;
 
 export type WorkspaceJoinRequestStatus = typeof WorkspaceJoinRequestStatus[keyof typeof WorkspaceJoinRequestStatus];
-export type WorkspaceMembersByRole = {
-  __typename?: 'WorkspaceMembersByRole';
-  admins?: Maybe<WorkspaceRoleCollection>;
-  guests?: Maybe<WorkspaceRoleCollection>;
-  members?: Maybe<WorkspaceRoleCollection>;
-};
-
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4928,6 +4921,13 @@ export type WorkspaceSubscriptionSeats = {
   __typename?: 'WorkspaceSubscriptionSeats';
   editors: WorkspaceSubscriptionSeatCount;
   viewers: WorkspaceSubscriptionSeatCount;
+};
+
+export type WorkspaceTeamByRole = {
+  __typename?: 'WorkspaceTeamByRole';
+  admins?: Maybe<WorkspaceRoleCollection>;
+  guests?: Maybe<WorkspaceRoleCollection>;
+  members?: Maybe<WorkspaceRoleCollection>;
 };
 
 export type WorkspaceTeamFilter = {

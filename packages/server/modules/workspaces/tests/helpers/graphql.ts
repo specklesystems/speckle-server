@@ -410,17 +410,15 @@ export const getWorkspaceWithMembersByRole = gql`
   query GetWorkspaceWithMembersByRole($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...BasicWorkspace
-      team {
-        totalCountByRole {
-          admins {
-            totalCount
-          }
-          members {
-            totalCount
-          }
-          guests {
-            totalCount
-          }
+      teamByRole {
+        admins {
+          totalCount
+        }
+        members {
+          totalCount
+        }
+        guests {
+          totalCount
         }
       }
     }

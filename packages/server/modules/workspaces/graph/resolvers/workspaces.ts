@@ -1112,7 +1112,35 @@ export = FF_WORKSPACES_MODULE_ENABLED
             limit: args.limit,
             cursor: args.cursor ?? undefined
           })
-          return { ...team, workspaceId: parent.id }
+          return team
+        },
+        teamByRole: async (parent) => {
+          const { id: workspaceId } = parent
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
+
+          return {
+            admins: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            },
+            members: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Member
+              })
+            },
+            guests: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            }
+          }
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
@@ -1246,36 +1274,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceId: parent.workspaceId
           })
-        }
-      },
-      WorkspaceCollaboratorCollection: {
-        totalCountByRole: async (parent) => {
-          const { workspaceId } = parent
-
-          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
-            db
-          })
-
-          return {
-            admins: {
-              totalCount: await countWorkspaceRole({
-                workspaceId,
-                workspaceRole: Roles.Workspace.Admin
-              })
-            },
-            members: {
-              totalCount: await countWorkspaceRole({
-                workspaceId,
-                workspaceRole: Roles.Workspace.Member
-              })
-            },
-            guests: {
-              totalCount: await countWorkspaceRole({
-                workspaceId,
-                workspaceRole: Roles.Workspace.Guest
-              })
-            }
-          }
         }
       },
       WorkspaceCollaborator: {

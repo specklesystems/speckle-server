@@ -1,8 +1,5 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type {
-  Resolvers,
-  WorkspaceSeatsByType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   ensureError,
@@ -40,7 +37,6 @@ import {
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
-  calculateSubscriptionSeats,
   CreateCheckoutSession,
   CreateCheckoutSessionOld,
   WorkspaceSeatType
