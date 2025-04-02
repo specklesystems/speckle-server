@@ -36,14 +36,23 @@
         </template>
       </div>
       <div class="w-full mt-4">
-        <FormButton
-          :color="buttonColor"
-          :disabled="!isSelectable"
-          full-width
-          @click="handleUpgradeClick"
+        <div v-if="hasCta">
+          <slot name="cta" />
+        </div>
+        <div
+          v-else
+          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
+          v-tippy="buttonTooltip"
         >
-          {{ buttonText }}
-        </FormButton>
+          <FormButton
+            :color="buttonColor"
+            :disabled="!isSelectable"
+            full-width
+            @click="handleUpgradeClick"
+          >
+            {{ buttonText }}
+          </FormButton>
+        </div>
       </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
@@ -91,6 +100,7 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { SetupContext } from 'vue'
 
 defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -99,13 +109,14 @@ defineEmits<{
 const props = defineProps<{
   plan: WorkspacePlans
   yearlyIntervalSelected: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  isAdmin: boolean
-  activeBillingInterval: MaybeNullOrUndefined<BillingInterval>
-  hasSubscription: boolean
-  workspaceId: MaybeNullOrUndefined<string>
+  canUpgrade: boolean
+  workspaceId?: MaybeNullOrUndefined<string>
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
+  hasSubscription?: MaybeNullOrUndefined<boolean>
 }>()
 
+const slots: SetupContext['slots'] = useSlots()
 const { pricesNew } = useWorkspacePlanPrices()
 const { upgradePlan, redirectToCheckout } = useBillingActions()
 
@@ -125,6 +136,8 @@ const planPrice = computed(() => {
     currencySymbol: '£'
   })
 })
+
+const hasCta = computed(() => !!slots.cta)
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -171,7 +184,7 @@ const isMonthlyToAnnual = computed(() => {
 })
 
 const isSelectable = computed(() => {
-  if (!props.isAdmin) return false
+  if (!props.canUpgrade) return false
   // Free CTA has no clickable scenario
   if (props.plan === WorkspacePlans.Free) return false
 
@@ -237,6 +250,37 @@ const buttonText = computed(() => {
   }
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${formatName(props.plan)}` : ''
+})
+
+const buttonTooltip = computed(() => {
+  if (!props.canUpgrade) {
+    return 'You must be a workspace admin.'
+  }
+
+  if (
+    isCurrentPlan.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
+  )
+    return undefined
+
+  if (isDowngrade.value) {
+    return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
+  }
+
+  if (isAnnualToMonthly.value) {
+    return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
+  }
+
+  if (
+    props.activeBillingInterval === BillingInterval.Yearly &&
+    !props.yearlyIntervalSelected &&
+    canUpgradeToPlan.value
+  ) {
+    return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
+  }
+
+  return undefined
 })
 
 const badgeText = computed(() =>

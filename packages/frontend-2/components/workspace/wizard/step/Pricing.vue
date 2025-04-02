@@ -2,32 +2,28 @@
   <WorkspaceWizardStep title="Choose a plan">
     <div class="flex flex-col max-w-5xl w-full items-center">
       <div class="grid lg:grid-cols-3 gap-y-2 gap-x-2 w-full">
-        <SettingsWorkspacesBillingPricingTablePlan
-          v-for="plan in oldPlans"
+        <PricingTablePlan
+          v-for="plan in plans"
           :key="plan"
           :plan="plan"
           :yearly-interval-selected="isYearlySelected"
-          :badge-text="
-            plan === WorkspacePlans.Starter && !isYearlySelected
-              ? '30-day free trial'
-              : undefined
-          "
+          can-upgrade
           @on-yearly-interval-selected="onYearlyIntervalSelected"
         >
           <template #cta>
             <FormButton
-              :color="plan === WorkspacePlans.Starter ? 'primary' : 'outline'"
+              :color="plan === WorkspacePlans.Free ? 'primary' : 'outline'"
               full-width
               @click="onCtaClick(plan)"
             >
               {{
-                plan === WorkspacePlans.Starter && !isYearlySelected
-                  ? 'Start 30-day free trial'
+                plan === WorkspacePlans.Free && !isYearlySelected
+                  ? 'Get started for free'
                   : `Subscribe to ${startCase(plan)}`
               }}
             </FormButton>
           </template>
-        </SettingsWorkspacesBillingPricingTablePlan>
+        </PricingTablePlan>
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
@@ -39,22 +35,22 @@
 </template>
 
 <script setup lang="ts">
-import {
-  type PaidWorkspacePlans,
-  BillingInterval,
-  WorkspacePlans
-} from '~/lib/common/generated/gql/graphql'
+import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { WorkspacePlans, type PaidWorkspacePlans } from '@speckle/shared'
 import { startCase } from 'lodash'
-import { PaidWorkspacePlansOld } from '@speckle/shared'
 
 const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 
 const isYearlySelected = ref(false)
 
-const oldPlans = computed(() => Object.values(PaidWorkspacePlansOld))
+const plans = computed(() => [
+  WorkspacePlans.Free,
+  WorkspacePlans.Team,
+  WorkspacePlans.Pro
+])
 
 const onCtaClick = (plan: WorkspacePlans) => {
   state.value.plan = plan as unknown as PaidWorkspacePlans
@@ -76,8 +72,8 @@ const onYearlyIntervalSelected = (newValue: boolean) => {
 
 watch(
   () => state.value.billingInterval,
-  () => {
-    isYearlySelected.value = state.value.billingInterval === BillingInterval.Yearly
+  (newVal) => {
+    isYearlySelected.value = newVal === BillingInterval.Yearly
   },
   { immediate: true }
 )

@@ -80,7 +80,7 @@ import { graphql } from '~/lib/common/generated/gql'
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
     id
-    ...PricingTable_Workspace
+    role
   }
 `)
 
