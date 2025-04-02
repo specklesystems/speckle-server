@@ -35,16 +35,6 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsHiddenProjectWarning_User
-      ...ProjectsDashboardHeaderProjects_User
-    }
-  }
-`)
-
-export const projectsDashboardWorkspaceQuery = graphql(`
-  query ProjectsDashboardWorkspaceQuery {
-    activeUser {
-      id
-      ...ProjectsDashboardHeaderWorkspaces_User
     }
   }
 `)
