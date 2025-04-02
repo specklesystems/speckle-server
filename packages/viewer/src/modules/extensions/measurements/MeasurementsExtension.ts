@@ -11,10 +11,12 @@ import { Extension } from '../Extension.js'
 import { InputEvent } from '../../input/Input.js'
 import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
+import { AreaMeasurement } from './AreaMeasurement.js'
 
 export enum MeasurementType {
   PERPENDICULAR,
-  POINTTOPOINT
+  POINTTOPOINT,
+  AREA
 }
 
 export interface MeasurementOptions {
@@ -27,7 +29,7 @@ export interface MeasurementOptions {
 
 const DefaultMeasurementsOptions = {
   visible: true,
-  type: MeasurementType.POINTTOPOINT,
+  type: MeasurementType.AREA,
   vertexSnap: true,
   units: 'm',
   precision: 2
@@ -169,19 +171,26 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.isVisible = true
     }
 
-    if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
-      this._activeMeasurement.startPoint.copy(this.pointBuff)
-      this._activeMeasurement.startNormal.copy(this.normalBuff)
-    } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
-      const normal = this._activeMeasurement.startNormal
-      const point = this._activeMeasurement.startPoint
-      const dir = new Vector3().subVectors(this.pointBuff, point).normalize()
-      const dot = dir.dot(normal)
-      if (dot < 0) this._activeMeasurement.flipStartNormal = true
-      else this._activeMeasurement.flipStartNormal = false
+    if (this._activeMeasurement instanceof AreaMeasurement) {
+      ;(this.activeMeasurement as AreaMeasurement).setPointAndNormal(
+        this.pointBuff,
+        this.normalBuff
+      )
+    } else {
+      if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
+        this._activeMeasurement.startPoint.copy(this.pointBuff)
+        this._activeMeasurement.startNormal.copy(this.normalBuff)
+      } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+        const normal = this._activeMeasurement.startNormal
+        const point = this._activeMeasurement.startPoint
+        const dir = new Vector3().subVectors(this.pointBuff, point).normalize()
+        const dot = dir.dot(normal)
+        if (dot < 0) this._activeMeasurement.flipStartNormal = true
+        else this._activeMeasurement.flipStartNormal = false
 
-      this._activeMeasurement.endPoint.copy(this.pointBuff)
-      this._activeMeasurement.endNormal.copy(this.normalBuff)
+        this._activeMeasurement.endPoint.copy(this.pointBuff)
+        this._activeMeasurement.endNormal.copy(this.normalBuff)
+      }
     }
     void this._activeMeasurement.update().then(() => {
       this.viewer.requestRender()
@@ -212,10 +221,14 @@ export class MeasurementsExtension extends Extension {
 
     if (!this._sceneHit) return
 
-    if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
-      this._activeMeasurement.state = MeasurementState.DANGLING_END
-    else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
-      this.finishMeasurement()
+    if (this._activeMeasurement instanceof AreaMeasurement) {
+      this._activeMeasurement.addPoint()
+    } else {
+      if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
+        this._activeMeasurement.state = MeasurementState.DANGLING_END
+      else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+        this.finishMeasurement()
+      }
     }
   }
 
@@ -297,7 +310,12 @@ export class MeasurementsExtension extends Extension {
       measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
       measurement = new PointToPointMeasurement()
-    else throw new Error('Unsupported measurement type!')
+    else if (this._options.type === MeasurementType.AREA) {
+      measurement = new AreaMeasurement()
+      this.viewer
+        .getRenderer()
+        .scene.add((measurement as AreaMeasurement).projectionPlaneHelper)
+    } else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
     measurement.units =
