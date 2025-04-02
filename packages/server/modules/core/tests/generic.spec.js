@@ -1,12 +1,4 @@
 /* istanbul ignore file */
-const { mockRequireModule } = require('@/test/mockHelper')
-const envHelperMock = mockRequireModule(
-  [
-    '@/modules/shared/helpers/envHelper',
-    require.resolve('../../shared/helpers/envHelper')
-  ],
-  ['@/modules/shared/index']
-)
 const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
@@ -73,7 +65,9 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { EnvHelperMock } = require('@/test/mocks/global')
 
+const envHelperMock = EnvHelperMock
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -268,7 +262,6 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.disable()
     })
     after(() => {
-      envHelperMock.destroy()
       envHelperMock.resetMockedFunctions()
     })
     it('should allow stream:owners to be stream:owners', async () => {

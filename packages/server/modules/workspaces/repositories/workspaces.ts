@@ -12,6 +12,10 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetPaginatedWorkspaceProjects,
+  GetPaginatedWorkspaceProjectsArgs,
+  GetPaginatedWorkspaceProjectsItems,
+  GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
@@ -35,7 +39,11 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  ServerAclRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -56,15 +64,21 @@ import {
   InvitesRetrievalValidityFilter
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { clamp } from 'lodash'
+import { clamp, has, isObjectLike } from 'lodash'
 import {
   WorkspaceCreationState,
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'
+import {
+  decodeCompositeCursor,
+  encodeCompositeCursor
+} from '@/modules/shared/helpers/graphqlHelper'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
@@ -536,4 +550,147 @@ export const getWorkspacesProjectsCountsFactory =
     }
 
     return ret
+  }
+
+const getPaginatedWorkspaceProjectsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>) => {
+    const { workspaceId, userId, filter } = params
+    const { search } = filter || {}
+
+    const query = tables
+      .streams(deps.db)
+      .where(Streams.col.workspaceId, workspaceId)
+      .select<StreamRecord[]>(Streams.cols)
+
+    /**
+     * If userId is set:
+     * - If no workspace role, user should be server admin w/ admin override enabled
+     * - If workspace role is guest, user should have explicit stream roles
+     * - If workspace role other than guest, just get all workspace streams
+     */
+    if (userId) {
+      query
+        .leftJoin(DbWorkspaceAcl.name, (j) => {
+          j.on(DbWorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+            DbWorkspaceAcl.col.userId,
+            userId
+          )
+        })
+        .andWhere((w) => {
+          // Check server_acl exist first, so subsequent checks can be optimized away
+          if (adminOverrideEnabled()) {
+            w.whereExists(
+              tables
+                .serverAcl(deps.db)
+                .select('*')
+                .where(ServerAcl.col.userId, userId)
+                .andWhere(ServerAcl.col.role, Roles.Server.Admin)
+            )
+          }
+
+          w.orWhere((w2) => {
+            // Ensure workspace role exists and its not guest or the user has explicit stream roles
+            w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
+              w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest).orWhereExists(
+                tables
+                  .streamAcl(deps.db)
+                  .select('*')
+                  .where(StreamAcl.col.userId, userId)
+                  .andWhere(StreamAcl.col.resourceId, knex.ref(Streams.col.id))
+              )
+            })
+          })
+        })
+    }
+
+    if (search?.length) {
+      query.andWhere((w) => {
+        w.where(Streams.col.name, 'ILIKE', `%${search}%`).orWhere(
+          Streams.col.description,
+          'ILIKE',
+          `%${search}%`
+        )
+      })
+    }
+
+    return query
+  }
+
+export const getPaginatedWorkspaceProjectsItemsFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjectsItems =>
+  async (params) => {
+    type CursorType = { updatedAt: string; id: string }
+    const query = getPaginatedWorkspaceProjectsBaseQueryFactory(deps)(params)
+
+    const limit = clamp(params.limit || 25, 1, 50)
+    const cursor = decodeCompositeCursor<CursorType>(
+      params.cursor,
+      (c) => isObjectLike(c) && has(c, 'id') && has(c, 'updatedAt')
+    )
+
+    if (cursor) {
+      // filter by date, and if there's duplicate dates, filter by id too
+      query.andWhereRaw('(??, ??) < (?, ?)', [
+        Streams.col.updatedAt,
+        Streams.col.id,
+        cursor.updatedAt,
+        cursor.id
+      ])
+    }
+
+    query
+      .orderBy([
+        { column: Streams.col.updatedAt, order: 'desc' },
+        { column: Streams.col.id, order: 'desc' }
+      ])
+      .limit(limit)
+
+    const rows = await query
+    const newCursorRow = rows.at(-1)
+    const newCursor = newCursorRow
+      ? encodeCompositeCursor<CursorType>({
+          updatedAt: newCursorRow.updatedAt.toISOString(),
+          id: newCursorRow.id
+        })
+      : null
+
+    return {
+      items: rows,
+      cursor: newCursor
+    }
+  }
+
+export const getPaginatedWorkspaceProjectsTotalCountFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjectsTotalCount =>
+  async (params) => {
+    const query = getPaginatedWorkspaceProjectsBaseQueryFactory(deps)(params)
+    const [res] = await query.clearSelect().count()
+    const count = parseInt(res.count.toString())
+    return count
+  }
+
+export const getPaginatedWorkspaceProjectsFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjects =>
+  async (params) => {
+    const getItems = getPaginatedWorkspaceProjectsItemsFactory(deps)
+    const getTotalCount = getPaginatedWorkspaceProjectsTotalCountFactory(deps)
+
+    const [items, totalCount] = await Promise.all([
+      params.limit !== 0 ? getItems(params) : undefined,
+      getTotalCount(params)
+    ])
+
+    if (!items) {
+      return {
+        items: [],
+        cursor: null,
+        totalCount
+      }
+    }
+
+    return {
+      ...items,
+      totalCount
+    }
   }

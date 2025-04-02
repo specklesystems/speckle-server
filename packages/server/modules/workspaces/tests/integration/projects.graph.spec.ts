@@ -1,25 +1,21 @@
 import { db } from '@/db/knex'
-import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   assignToWorkspace,
+  assignToWorkspaces,
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { describeEach } from '@/test/assertionHelper'
-import {
-  BasicTestUser,
-  createAuthTokenForUser,
-  createTestUser,
-  createTestUsers
-} from '@/test/authHelper'
+import { describeEach, itEach } from '@/test/assertionHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
   GetWorkspaceProjectsDocument,
+  GetWorkspaceProjectsQuery,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
   ProjectUpdateRoleInput,
@@ -27,20 +23,23 @@ import {
   UpdateWorkspaceProjectRoleDocument
 } from '@/test/graphql/generated/graphql'
 import {
-  createTestContext,
+  ExecuteOperationResponse,
   testApolloServer,
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { EnvHelperMock } from '@/test/mocks/global'
 import {
   addToStream,
   BasicTestStream,
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { Roles } from '@speckle/shared'
+import { Nullable, Optional, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
+import { times } from 'lodash'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -71,15 +70,8 @@ describe('Workspace project GQL CRUD', () => {
   before(async () => {
     await beforeEachContext()
     await createTestUsers([serverAdminUser, serverMemberUser])
-    const token = await createAuthTokenForUser(serverAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: await createTestContext({
-        auth: true,
-        userId: serverAdminUser.id,
-        token,
-        role: serverAdminUser.role,
-        scopes: AllScopes
-      })
+      authUserId: serverAdminUser.id
     })
 
     await createTestWorkspace(workspace, serverAdminUser)
@@ -283,63 +275,223 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when querying workspace projects', () => {
-    it('should return multiple projects', async () => {
+    const PAGE_SIZE = 5
+    const PAGE_COUNT = 3
+    const TOTAL_COUNT = PAGE_COUNT * PAGE_SIZE
+    const GUEST_PROJECT_COUNT = PAGE_SIZE + 1
+
+    const queryWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      slug: '',
+      name: 'Query Workspace'
+    }
+
+    const workspaceGuest: BasicTestUser = {
+      id: '',
+      email: '',
+      name: 'Query Workspace Guest'
+    }
+    const workspaceAdmin = serverMemberUser
+    const workspaceMember: BasicTestUser = {
+      id: '',
+      email: '',
+      name: 'Query Workspace Member'
+    }
+    let projects: BasicTestStream[]
+    let apollo: TestApolloServer
+
+    before(async () => {
+      await createTestUsers([workspaceGuest, workspaceMember])
+      await createTestWorkspace(queryWorkspace, workspaceAdmin, {
+        addPlan: { name: 'team', status: 'valid' }
+      })
+      await assignToWorkspaces([
+        [
+          queryWorkspace,
+          workspaceGuest,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Editor
+        ],
+        [queryWorkspace, workspaceMember, Roles.Workspace.Member]
+      ])
+      projects = times(
+        TOTAL_COUNT,
+        (i): BasicTestStream => ({
+          id: '',
+          ownerId: '',
+          name: `Query Workspace Project - #${i}`,
+          isPublic: false,
+          workspaceId: queryWorkspace.id
+        })
+      )
+      await Promise.all(
+        projects.map((project) => createTestStream(project, workspaceAdmin))
+      )
+
+      // ONLY ADD EXPLICIT PROJECT ASSIGNMENTS TO GUEST
+      // CREATE CONCURRENTLY TO TEST COMPOSITE CURSOR (same updatedAt)
+      // Assign guest to only first page + 1
+      const projectsToAssign = projects.slice(0, GUEST_PROJECT_COUNT)
+      await Promise.all(
+        projectsToAssign.map((project) =>
+          addToStream(project, workspaceGuest, Roles.Stream.Contributor)
+        )
+      )
+
+      apollo = await testApolloServer({
+        authUserId: workspaceAdmin.id
+      })
+    })
+
+    afterEach(async () => {
+      EnvHelperMock.resetMockedFunctions()
+    })
+
+    it('should return all projects for workspace members', async () => {
       const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id
+        id: queryWorkspace.id,
+        limit: 999 // get everything
       })
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.projects.items.length).to.be.greaterThanOrEqual(3)
+      const collection = res.data?.workspace.projects
+      expect(collection?.items.length).to.equal(TOTAL_COUNT)
+      expect(collection?.cursor).to.be.ok
+      expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+
+      // validate sorting
+      const projects = collection?.items || []
+      let lastUpdatedAt: Optional<string> = undefined
+      for (const project of projects) {
+        const date = project.updatedAt
+        if (!lastUpdatedAt) {
+          lastUpdatedAt = date
+          continue
+        }
+        expect(
+          dayjs(date).isSame(dayjs(lastUpdatedAt)) ||
+            dayjs(date).isBefore(dayjs(lastUpdatedAt))
+        ).to.be.true
+        lastUpdatedAt = date
+      }
+    })
+
+    itEach(
+      [{ adminOverrideEnabled: true }, { adminOverrideEnabled: false }],
+      ({ adminOverrideEnabled }) =>
+        adminOverrideEnabled
+          ? 'should return all projects for server admins if override enabled'
+          : 'should fail retrieving projects for server admins if no override enabled',
+      async ({ adminOverrideEnabled }) => {
+        const apollo = await testApolloServer({
+          authUserId: serverAdminUser.id
+        })
+
+        EnvHelperMock.mockFunction('adminOverrideEnabled', () => adminOverrideEnabled)
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          limit: 999 // get everything
+        })
+
+        if (adminOverrideEnabled) {
+          expect(res).to.not.haveGraphQLErrors()
+          const collection = res.data?.workspace.projects
+          expect(collection?.items.length).to.equal(TOTAL_COUNT)
+          expect(collection?.cursor).to.be.ok
+          expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+        } else {
+          expect(res).to.haveGraphQLErrors()
+          const collection = res.data?.workspace.projects
+          expect(collection).to.not.be.ok
+        }
+      }
+    )
+
+    it('should return only explicitly assigned projects for guests', async () => {
+      const apollo = await testApolloServer({
+        authUserId: workspaceGuest.id
+      })
+      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: queryWorkspace.id,
+        limit: 999 // get everything
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      const collection = res.data?.workspace.projects
+      expect(collection?.items.length).to.equal(GUEST_PROJECT_COUNT)
+      expect(collection?.cursor).to.be.ok
+      expect(collection?.totalCount).to.equal(GUEST_PROJECT_COUNT)
     })
 
     it('should respect limits', async () => {
       const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id,
+        id: queryWorkspace.id,
         limit: 1
       })
 
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.workspace.projects.items.length).to.equal(1)
+      expect(res.data?.workspace.projects.cursor).to.be.ok
+      expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+    })
+
+    it('should only return totalCount if limit === 0', async () => {
+      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: queryWorkspace.id,
+        limit: 0
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res.data?.workspace.projects.items.length).to.equal(0)
+      expect(res.data?.workspace.projects.cursor).to.be.null
+      expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
     })
 
     it('should respect pagination', async () => {
-      const resA = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id,
-        limit: 10
-      })
+      let newCursor: Nullable<string> = null
+      for (let page = 1; page <= PAGE_COUNT + 1; page++) {
+        const res: ExecuteOperationResponse<GetWorkspaceProjectsQuery> =
+          await apollo.execute(GetWorkspaceProjectsDocument, {
+            id: queryWorkspace.id,
+            limit: PAGE_SIZE,
+            cursor: newCursor
+          })
+        newCursor = res.data?.workspace.projects.cursor || null
 
-      const resB = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id,
-        limit: 10,
-        cursor: resA.data?.workspace.projects.cursor
-      })
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
 
-      const projectA = resA.data?.workspace.projects.items[0]
-      const projectB = resB.data?.workspace.projects.items[0]
-
-      expect(resA).to.not.haveGraphQLErrors()
-      expect(resB).to.not.haveGraphQLErrors()
-      expect(projectA).to.exist
-      expect(projectB).to.not.exist
-      expect(projectA?.name).to.not.equal(projectB?.name)
+        if (page <= PAGE_COUNT) {
+          expect(res.data?.workspace.projects.items.length).to.equal(PAGE_SIZE)
+          expect(res.data?.workspace.projects.cursor).to.be.ok
+        } else {
+          expect(res.data?.workspace.projects.items.length).to.eq(0)
+          expect(res.data?.workspace.projects.cursor).to.be.null
+        }
+      }
     })
 
     it('should respect search filters', async () => {
       const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-        id: workspace.id,
-        limit: 1,
+        id: queryWorkspace.id,
         filter: {
-          search: 'Workspace Project B'
+          search: 'Query Workspace Project - #0'
         }
       })
 
-      const project = res.data?.workspace.projects.items[0]
-
       expect(res).to.not.haveGraphQLErrors()
-      expect(project).to.exist
-      expect(project?.name).to.equal('Workspace Project B')
-    })
+      expect(res.data?.workspace.projects.items.length).to.equal(1)
+      expect(res.data?.workspace.projects.totalCount).to.equal(1)
+      expect(res.data?.workspace.projects.cursor).to.be.ok
 
+      const project = res.data?.workspace.projects.items[0]
+      expect(project).to.exist
+      expect(project?.name).to.equal('Query Workspace Project - #0')
+    })
+  })
+
+  describe("when querying active user's projects", () => {
     it('should return workspace info on project types', async () => {
       const res = await apollo.execute(ActiveUserProjectsWorkspaceDocument, {})
 

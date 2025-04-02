@@ -27,3 +27,13 @@ export const MultiRegionConfigMock = mockRequireModule<
 export const StripeClientMock = mockRequireModule<
   typeof import('@/modules/gatekeeper/clients/stripe')
 >(['@/modules/gatekeeper/clients/stripe'])
+
+export const EnvHelperMock = mockRequireModule<
+  typeof import('@/modules/shared/helpers/envHelper')
+>(
+  [
+    '@/modules/shared/helpers/envHelper',
+    require.resolve('../../modules/shared/helpers/envHelper')
+  ],
+  ['@/modules/shared/index']
+)

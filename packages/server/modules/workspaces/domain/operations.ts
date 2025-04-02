@@ -240,6 +240,47 @@ export type GetWorkspacesProjectsCounts = (params: {
   [workspaceId: string]: number
 }>
 
+export type GetPaginatedWorkspaceProjectsArgs = {
+  workspaceId: string
+  /**
+   * If set, will take the user's workspace role into account when fetching projects.
+   * E.g. guests will only see projects they have explicit access to.
+   */
+  userId?: string
+  cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 25, if unset
+   */
+  limit?: MaybeNullOrUndefined<number>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      /**
+       * Search for projects by name
+       */
+      search: MaybeNullOrUndefined<string>
+    }>
+  >
+}
+
+export type GetPaginatedWorkspaceProjectsItems = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  items: Stream[]
+  cursor: string | null
+}>
+
+export type GetPaginatedWorkspaceProjectsTotalCount = (
+  params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>
+) => Promise<number>
+
+export type GetPaginatedWorkspaceProjects = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  cursor: string | null
+  items: Stream[]
+  totalCount: number
+}>
+
 /** Workspace Project Roles */
 
 type GrantWorkspaceProjectRolesArgs = {
