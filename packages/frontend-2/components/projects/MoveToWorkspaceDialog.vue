@@ -72,10 +72,12 @@ import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
+import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
     id
+    slug
     role
     name
     logo
@@ -131,6 +133,7 @@ const loading = useMutationLoading()
 const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
+const showLimitReachedDialog = ref(false)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
@@ -203,6 +206,16 @@ watch(
 )
 
 const onMoveClick = () => {
-  triggerAction()
+  const workspaceSlug = selectedWorkspace.value?.slug
+  if (!workspaceSlug) return
+
+  const { getLimitType, modelCount } = useWorkspacePlanLimits(workspaceSlug)
+  const limitType = computed(() => getLimitType(modelCount.value))
+
+  if (limitType.value) {
+    showLimitReachedDialog.value = true
+  } else {
+    triggerAction()
+  }
 }
 </script>

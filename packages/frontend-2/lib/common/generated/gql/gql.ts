@@ -104,7 +104,7 @@ type Documents = {
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": typeof types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": typeof types.ProjectsHiddenProjectWarning_UserFragmentDoc,
-    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    slug\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
     "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialogDocument,
@@ -520,7 +520,7 @@ const documents: Documents = {
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
-    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    slug\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
     "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialogDocument,
@@ -1223,7 +1223,7 @@ export function graphql(source: "\n  fragment ProjectsHiddenProjectWarning_User 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    slug\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    slug\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
