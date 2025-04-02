@@ -358,7 +358,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => { }
+          eventEmit: async () => {}
         })({
           workspaceId: workspace.id,
           userId: memberEditor.id,
@@ -370,7 +370,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => { }
+          eventEmit: async () => {}
         })({
           workspaceId: otherWorkspace.id,
           userId: memberEditor.id,
@@ -388,7 +388,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => { }
+          eventEmit: async () => {}
         })({
           workspaceId: workspace.id,
           userId: memberViewer.id,
@@ -563,14 +563,14 @@ describe('Workspaces GQL CRUD', () => {
           ...(FF_GATEKEEPER_FORCE_FREE_PLAN
             ? []
             : [
-              {
-                role: Roles.Stream.Reviewer,
-                project: {
-                  id: project2Id,
-                  name: project2Name
+                {
+                  role: Roles.Stream.Reviewer,
+                  project: {
+                    id: project2Id,
+                    name: project2Name
+                  }
                 }
-              }
-            ])
+              ])
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest

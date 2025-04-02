@@ -38,7 +38,8 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
 
 export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
 
-export type WorkspaceCollaboratorCollectionGraphQLReturn = Collection<WorkspaceTeamMember> & { workspaceId: string }
+export type WorkspaceCollaboratorCollectionGraphQLReturn =
+  Collection<WorkspaceTeamMember> & { workspaceId: string }
 
 export type WorkspacePermissionChecksGraphQLReturn = {
   workspaceId: string
