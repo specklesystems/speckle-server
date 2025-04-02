@@ -346,17 +346,15 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
           getProjectObjectStorage({ projectId: streamId })
         ])
 
-        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
         const deleteBlob = fullyDeleteBlobFactory({
-          getBlobMetadata,
-          deleteBlob: deleteBlobFactory({ db: projectDb })
+          getBlobMetadata: getBlobMetadataFactory({ db: projectDb }),
+          deleteBlob: deleteBlobFactory({ db: projectDb }),
+          deleteObject: deleteObjectFactory({ storage: projectStorage })
         })
-        const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
         await deleteBlob({
           streamId: req.params.streamId,
-          blobId: req.params.blobId,
-          deleteObject
+          blobId: req.params.blobId
         })
         res.status(204).send()
       })

@@ -30,14 +30,17 @@ import {
   updateAutomationFactory,
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
-  upsertAutomationRunFactory
+  upsertAutomationRunFactory,
+  deleteAutomationFactory as repoDeleteAutomationFactory,
+  queryAllAutomationFunctionRunsFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatusFactory,
-  validateAndUpdateAutomationFactory
+  validateAndUpdateAutomationFactory,
+  deleteAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -125,6 +128,14 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { fullyDeleteBlobFactory } from '@/modules/blobstorage/services/management'
+import {
+  deleteBlobFactory,
+  getBlobMetadataFactory
+} from '@/modules/blobstorage/repositories'
+import { deleteObjectFactory } from '@/modules/blobstorage/repositories/blobs'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { commandFactory } from '@/modules/shared/command'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -615,6 +626,40 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             userId: ctx.userId!,
             projectId: parent.projectId,
             userResourceAccessRules: ctx.resourceAccessRules
+          })
+        },
+        async delete(parent, input, context) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const projectStorage = await getProjectObjectStorage({
+            projectId: parent.projectId
+          })
+
+          await authorizeResolver(
+            context.userId,
+            parent.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+
+          const deleteAutomation = commandFactory({
+            db: projectDb,
+            operationFactory: ({ db }) =>
+              deleteAutomationFactory({
+                deleteAutomation: repoDeleteAutomationFactory({ db }),
+                queryAllAutomationFunctionRuns: queryAllAutomationFunctionRunsFactory({
+                  db
+                }),
+                deleteBlob: fullyDeleteBlobFactory({
+                  getBlobMetadata: getBlobMetadataFactory({ db }),
+                  deleteBlob: deleteBlobFactory({ db }),
+                  deleteObject: deleteObjectFactory({ storage: projectStorage })
+                })
+              })
+          })
+
+          return await deleteAutomation({
+            automationId: input.automationId,
+            projectId: parent.projectId
           })
         },
         async createRevision(parent, { input }, ctx) {

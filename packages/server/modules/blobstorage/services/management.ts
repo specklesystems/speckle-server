@@ -137,20 +137,16 @@ export const markUploadOverFileSizeLimitFactory =
   }
 
 export const fullyDeleteBlobFactory =
-  (deps: { getBlobMetadata: GetBlobMetadata; deleteBlob: DeleteBlob }) =>
-  async ({
-    streamId,
-    blobId,
-    deleteObject
-  }: {
-    streamId: string
-    blobId: string
-    deleteObject: (params: ObjectKeyPayload) => MaybeAsync<void>
-  }) => {
+  (deps: {
+    getBlobMetadata: GetBlobMetadata
+    deleteBlob: DeleteBlob
+    deleteObject: DeleteObjectFromStorage
+  }) =>
+  async ({ streamId, blobId }: { streamId: string; blobId: string }) => {
     const { objectKey } = await deps.getBlobMetadata({
       streamId,
       blobId
     })
-    await deleteObject({ objectKey: objectKey! })
+    await deps.deleteObject({ objectKey: objectKey! })
     await deps.deleteBlob({ id: blobId, streamId })
   }
