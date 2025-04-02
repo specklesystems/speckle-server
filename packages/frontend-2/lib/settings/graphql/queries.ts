@@ -75,7 +75,6 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   query SettingsWorkspacesMembersTable($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersTable_Workspace
-      ...SettingsWorkspacesNewMembersTable_Workspace
     }
   }
 `)
@@ -84,7 +83,6 @@ export const settingsWorkspacesMembersGuestsQuery = graphql(`
   query SettingsWorkspacesMembersGuests($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersGuestsTable_Workspace
-      ...SettingsWorkspacesMembersNewGuestsTable_Workspace
     }
   }
 `)
@@ -113,7 +111,6 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
-          ...SettingsWorkspacesNewMembersTable_WorkspaceCollaborator
         }
       }
     }

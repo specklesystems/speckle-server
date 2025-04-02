@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import {
   SeatTypes,
   type WorkspaceSeatType,
@@ -38,15 +38,15 @@ import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   user: UserItem
   workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+    | SettingsWorkspacesMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
 }>()
 
