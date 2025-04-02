@@ -5,7 +5,7 @@ import {
 } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled, useActiveUser } from '~/composables/globals'
 import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import { graphql } from '~/lib/common/generated/gql'
 import {

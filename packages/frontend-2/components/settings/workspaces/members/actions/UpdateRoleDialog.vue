@@ -50,14 +50,14 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
@@ -66,8 +66,8 @@ const props = defineProps<{
   newRole: MaybeNullOrUndefined<string>
   isDomainCompliant?: MaybeNullOrUndefined<boolean>
   workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+    | SettingsWorkspacesMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
 }>()
 

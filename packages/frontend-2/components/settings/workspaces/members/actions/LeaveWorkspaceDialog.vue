@@ -23,16 +23,16 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<
-    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+    | SettingsWorkspacesMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
   isOnlyAdmin: boolean
 }>()

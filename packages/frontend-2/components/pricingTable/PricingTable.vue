@@ -7,7 +7,7 @@
       :current-plan="currentPlan"
       :yearly-interval-selected="isYearlySelected"
       :active-billing-interval="billingInterval"
-      :is-admin="isAdmin"
+      :can-upgrade="isAdmin"
       :workspace-id="props.workspaceId"
       :has-subscription="!!subscription"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
@@ -19,15 +19,7 @@
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlans } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
-import { graphql } from '~/lib/common/generated/gql'
 import { type MaybeNullOrUndefined, type WorkspaceRoles, Roles } from '@speckle/shared'
-
-graphql(`
-  fragment PricingTable_Workspace on Workspace {
-    id
-    role
-  }
-`)
 
 const props = defineProps<{
   slug: string

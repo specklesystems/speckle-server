@@ -1,23 +1,34 @@
 <template>
   <div>
+    <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
+      <template #description>
+        Workspace members can have a viewer or editor seat. Admins must be editors. Read
+        more about
+        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
+          Speckle roles and seats.
+        </NuxtLink>
+      </template>
+    </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       v-model:role="roleFilter"
+      v-model:seat-type="seatTypeFilter"
       search-placeholder="Search members..."
       :workspace="workspace"
       show-role-filter
+      show-seat-filter
       show-invite-button
     />
     <LayoutTable
-      class="mt-6 md:mt-8 mb-12"
+      class="mt-6 mb-12"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        { id: 'name', header: 'Name', classes: 'col-span-4' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-4 flex items-center justify-end'
+          classes: 'col-span-3 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -28,8 +39,21 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar hide-tooltip :user="item" />
+          <UserAvatar
+            hide-tooltip
+            :user="item"
+            light-style
+            class="bg-foundation"
+            no-bg
+          />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
+          <CommonBadge
+            v-if="item.role === Roles.Workspace.Admin"
+            rounded
+            color-classes="bg-highlight-3 text-foreground-2"
+          >
+            Admin
+          </CommonBadge>
           <div
             v-if="
               item.workspaceDomainPolicyCompliant === false &&
@@ -39,59 +63,23 @@
               'This user does not comply with the domain policy set on this workspace'
             "
           >
-            <ExclamationCircleIcon class="text-danger w-4" />
+            <ExclamationCircleIcon class="text-danger w-5" />
           </div>
         </div>
       </template>
-      <template #company="{ item }">
-        <span class="text-body-xs text-foreground">
-          {{ item.company ? item.company : '-' }}
-        </span>
+      <template #seat="{ item }">
+        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
       </template>
-      <template #role="{ item }">
-        <span class="text-foreground-2">
-          <span>
-            {{ isWorkspaceRole(item.role) ? getRoleLabel(item.role).title : '' }}
-          </span>
-        </span>
+      <template #joined="{ item }">
+        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
-        <LayoutMenu
-          v-if="filteredActionsItems(item).length"
-          v-model:open="showActionsMenu[item.id]"
-          :items="filteredActionsItems(item)"
-          mount-menu-on-body
-          :menu-position="HorizontalDirection.Left"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
-        >
-          <FormButton
-            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
-            hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="toggleMenu(item.id)"
-          />
-        </LayoutMenu>
-        <div v-else />
+        <SettingsWorkspacesMembersActionsMenu
+          :target-user="item"
+          :workspace="workspace"
+        />
       </template>
     </LayoutTable>
-    <SettingsWorkspacesMembersChangeRoleDialog
-      v-model:open="showChangeUserRoleDialog"
-      :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
-      :current-role="currentUserRole"
-      :workspace="workspace"
-      @update-role="onUpdateRole"
-    />
-    <SettingsSharedDeleteUserDialog
-      v-model:open="showDeleteUserRoleDialog"
-      :name="userToModify?.name ?? ''"
-      :workspace="workspace"
-      @remove-user="onRemoveUser"
-    />
-    <SettingsWorkspacesGeneralLeaveDialog
-      v-if="workspace"
-      v-model:open="showLeaveDialog"
-      :workspace="workspace"
-    />
   </div>
 </template>
 
@@ -99,29 +87,25 @@
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
 import {
-  EllipsisHorizontalIcon,
-  ExclamationCircleIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
-import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { getRoleLabel } from '~~/lib/settings/helpers/utils'
-
-type UserItem = (typeof members)['value'][0]
+  WorkspaceSeatType,
+  type SettingsWorkspacesMembersTable_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
+export type UserItem = (typeof members)['value'][0]
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
+    seatType
+    joinDate
     user {
       id
       avatar
       name
-      company
       workspaceDomainPolicyCompliant(workspaceSlug: $slug)
     }
   }
@@ -130,10 +114,10 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
     id
+    slug
     name
     ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
     team(limit: 250) {
       items {
         id
@@ -143,12 +127,6 @@ graphql(`
   }
 `)
 
-enum ActionTypes {
-  RemoveMember = 'remove-member',
-  ChangeRole = 'change-role',
-  LeaveWorkspace = 'leave-workspace'
-}
-
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
@@ -156,6 +134,7 @@ const props = defineProps<{
 
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
+const seatTypeFilter = ref<WorkspaceSeatType>()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
@@ -164,133 +143,34 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: roleFilter.value
         ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member]
+        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      seatType: seatTypeFilter.value
     },
     slug: props.workspaceSlug,
     workspaceId: props.workspace?.id || ''
   }),
   () => ({
-    enabled: !!search.value.length || !!roleFilter.value || !!props.workspace?.id
+    enabled: !!search.value.length || !!roleFilter.value || !!seatTypeFilter.value
   })
 )
 
-const updateUserRole = useWorkspaceUpdateRole()
-const { activeUser } = useActiveUser()
-
-const showChangeUserRoleDialog = ref(false)
-const showDeleteUserRoleDialog = ref(false)
-const showLeaveDialog = ref(false)
-const newRole = ref<WorkspaceRoles>()
-const userToModify = ref<UserItem>()
-
-const showActionsMenu = ref<Record<string, boolean>>({})
-
 const members = computed(() => {
   const memberArray =
-    search.value.length || roleFilter.value
+    search.value.length || roleFilter.value || seatTypeFilter.value
       ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
   return (memberArray || [])
-    .map(({ user, ...rest }) => ({
+    .map(({ user, seatType, ...rest }) => ({
       ...user,
+      seatType: seatType || WorkspaceSeatType.Viewer,
       ...rest
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
-const isActiveUserCurrentUser = computed(
-  () => (user: UserItem) => activeUser.value?.id === user.id
-)
-const canRemoveMember = computed(
-  () => (user: UserItem) => activeUser.value?.id !== user.id && isWorkspaceAdmin.value
-)
 const hasNoResults = computed(
   () =>
-    (search.value.length || roleFilter.value) &&
+    (search.value.length || roleFilter.value || seatTypeFilter.value) &&
     searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
-
-const currentUserRole = computed<WorkspaceRoles | undefined>(() => {
-  if (userToModify.value?.role && isWorkspaceRole(userToModify.value.role)) {
-    return userToModify.value.role
-  }
-  return undefined
-})
-
-const filteredActionsItems = (user: UserItem) => {
-  const baseItems: LayoutMenuItem[][] = []
-
-  // Allow role change if the active user is an admin
-  if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
-    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
-  }
-
-  // Allow the current user to leave the workspace
-  if (isActiveUserCurrentUser.value(user)) {
-    baseItems.push([{ title: 'Leave workspace...', id: ActionTypes.LeaveWorkspace }])
-  }
-
-  // Allow removing a member if the active user is an admin and not the current user
-  if (canRemoveMember.value(user)) {
-    baseItems.push([{ title: 'Remove user...', id: ActionTypes.RemoveMember }])
-  }
-
-  return baseItems
-}
-
-const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
-  return ['workspace:admin', 'workspace:member', 'workspace:guest'].includes(role)
-}
-
-const openChangeUserRoleDialog = (user: UserItem) => {
-  userToModify.value = user
-  newRole.value = user.role as WorkspaceRoles
-  showChangeUserRoleDialog.value = true
-}
-
-const openDeleteUserRoleDialog = (user: UserItem) => {
-  userToModify.value = user
-  showDeleteUserRoleDialog.value = true
-}
-
-const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userToModify.value.id,
-    role: newRoleValue,
-    workspaceId: props.workspace.id
-  })
-}
-
-const onRemoveUser = async () => {
-  if (!userToModify.value?.id || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userToModify.value.id,
-    role: null,
-    workspaceId: props.workspace.id
-  })
-}
-
-const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
-  userToModify.value = user
-
-  switch (actionItem.id) {
-    case ActionTypes.RemoveMember:
-      openDeleteUserRoleDialog(user)
-      break
-    case ActionTypes.ChangeRole:
-      openChangeUserRoleDialog(user)
-      break
-    case ActionTypes.LeaveWorkspace:
-      showLeaveDialog.value = true
-      break
-  }
-}
-
-const toggleMenu = (itemId: string) => {
-  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
-}
 </script>
