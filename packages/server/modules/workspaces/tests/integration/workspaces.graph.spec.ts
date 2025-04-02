@@ -358,7 +358,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => {}
+          eventEmit: async () => { }
         })({
           workspaceId: workspace.id,
           userId: memberEditor.id,
@@ -370,7 +370,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => {}
+          eventEmit: async () => { }
         })({
           workspaceId: otherWorkspace.id,
           userId: memberEditor.id,
@@ -388,7 +388,7 @@ describe('Workspaces GQL CRUD', () => {
         await assignWorkspaceSeatFactory({
           createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          eventEmit: async () => {}
+          eventEmit: async () => { }
         })({
           workspaceId: workspace.id,
           userId: memberViewer.id,
@@ -563,14 +563,14 @@ describe('Workspaces GQL CRUD', () => {
           ...(FF_GATEKEEPER_FORCE_FREE_PLAN
             ? []
             : [
-                {
-                  role: Roles.Stream.Reviewer,
-                  project: {
-                    id: project2Id,
-                    name: project2Name
-                  }
+              {
+                role: Roles.Stream.Reviewer,
+                project: {
+                  id: project2Id,
+                  name: project2Name
                 }
-              ])
+              }
+            ])
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest
@@ -856,10 +856,10 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.membersByRole
-        expect(seats?.guests?.totalCount).to.eq(2)
-        expect(seats?.members?.totalCount).to.eq(3)
-        expect(seats?.admins?.totalCount).to.eq(1)
+        const roles = res.data?.workspace.team.totalCountByRole
+        expect(roles?.guests?.totalCount).to.eq(2)
+        expect(roles?.members?.totalCount).to.eq(3)
+        expect(roles?.admins?.totalCount).to.eq(1)
       })
     })
   })

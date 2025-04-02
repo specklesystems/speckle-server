@@ -373,11 +373,13 @@ export const getWorkspaceWithSubscriptionQuery = gql`
         currentBillingCycleEnd
         billingInterval
         seats {
-          guest
-          plan
-          assigned
-          totalCount
-          viewersCount
+          editors {
+            available
+            assigned
+          }
+          viewers {
+            assigned
+          }
         }
       }
     }
@@ -385,16 +387,18 @@ export const getWorkspaceWithSubscriptionQuery = gql`
   ${basicWorkspaceFragment}
 `
 
-export const getWorkspaceWithSeatsByType = gql`
-  query GetWorkspaceWithSeatsByType($workspaceId: String!) {
+export const getWorkspaceSeatCounts = gql`
+  query GetWorkspaceSeatCounts($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...BasicWorkspace
-      seatsByType {
-        editors {
-          totalCount
-        }
-        viewers {
-          totalCount
+      subscription {
+        seats {
+          editors {
+            assigned
+          }
+          viewers {
+            assigned
+          }
         }
       }
     }
@@ -406,15 +410,17 @@ export const getWorkspaceWithMembersByRole = gql`
   query GetWorkspaceWithMembersByRole($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...BasicWorkspace
-      membersByRole {
-        admins {
-          totalCount
-        }
-        members {
-          totalCount
-        }
-        guests {
-          totalCount
+      team {
+        totalCountByRole {
+          admins {
+            totalCount
+          }
+          members {
+            totalCount
+          }
+          guests {
+            totalCount
+          }
         }
       }
     }

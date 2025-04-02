@@ -20,7 +20,7 @@ import {
 } from '@/test/authHelper'
 import {
   GetWorkspaceDocument,
-  GetWorkspaceWithSeatsByTypeDocument,
+  GetWorkspaceSeatCountsDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/test/graphql/generated/graphql'
 import {
@@ -62,120 +62,201 @@ describe('Workspaces Billing', () => {
       })
     })
   })
-  ;(FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
-    'query workspace.readOnly',
-    () => {
-      it('should return false for workspace plan status valid', async () => {
-        const workspace = {
-          id: '',
-          name: 'test ws',
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: ''
-        }
-        await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'valid' }
-        })
-
-        const res = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: workspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace?.readOnly).to.be.false
-      })
-      it('should return true for workspace plan status expired', async () => {
-        const workspace = {
-          id: '',
-          name: 'test ws',
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: ''
-        }
-        await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'expired' }
-        })
-
-        const res = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: workspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace?.readOnly).to.be.true
-      })
-      it('should return false for workspace plan status trial', async () => {
-        const workspace = {
-          id: '',
-          name: 'test ws',
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: ''
-        }
-        await createTestWorkspace(workspace, testAdminUser, {
-          addPlan: { name: 'business', status: 'trial' }
-        })
-
-        const res = await apollo.execute(GetWorkspaceDocument, {
-          workspaceId: workspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspace?.readOnly).to.be.false
-      })
-    }
-  )
-  ;(FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
-    'workspace.subscription',
-    () => {
-      describe('subscription.seats', () => {
-        it('should return the number of assigned seats', async () => {
-          const user = await createTestUser({
-            name: createRandomString(),
-            email: createRandomEmail(),
-            role: Roles.Server.Admin,
-            verified: true
-          })
+    ; (FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
+      'query workspace.readOnly',
+      () => {
+        it('should return false for workspace plan status valid', async () => {
           const workspace = {
-            id: createRandomString(),
-            name: createRandomString(),
+            id: '',
+            name: 'test ws',
             slug: cryptoRandomString({ length: 10 }),
-            ownerId: user.id
+            ownerId: ''
           }
-          await createTestWorkspace(workspace, user, {
-            addPlan: { name: 'pro', status: 'valid' }
+          await createTestWorkspace(workspace, testAdminUser, {
+            addPlan: { name: 'business', status: 'valid' }
           })
-          await upsertWorkspaceSubscriptionFactory({ db })({
-            workspaceSubscription: {
-              workspaceId: workspace.id,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
-              billingInterval: 'monthly',
-              subscriptionData: {
-                subscriptionId: cryptoRandomString({ length: 10 }),
-                customerId: cryptoRandomString({ length: 10 }),
-                cancelAt: null,
-                status: 'active',
-                currentPeriodEnd: new Date(),
-                products: [
-                  {
-                    priceId: createRandomString(),
-                    quantity: 12,
-                    productId: createRandomString(),
-                    subscriptionItemId: createRandomString()
-                  }
-                ]
-              }
-            }
-          })
-          const session = await login(user)
 
-          const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
+          const res = await apollo.execute(GetWorkspaceDocument, {
             workspaceId: workspace.id
           })
 
           expect(res).to.not.haveGraphQLErrors()
-          const seats = res.data?.workspace.subscription?.seats
-          expect(seats?.assigned).to.eq(1)
+          expect(res.data?.workspace?.readOnly).to.be.false
         })
-        it('should return the number of viewers', async () => {
+        it('should return true for workspace plan status expired', async () => {
+          const workspace = {
+            id: '',
+            name: 'test ws',
+            slug: cryptoRandomString({ length: 10 }),
+            ownerId: ''
+          }
+          await createTestWorkspace(workspace, testAdminUser, {
+            addPlan: { name: 'business', status: 'expired' }
+          })
+
+          const res = await apollo.execute(GetWorkspaceDocument, {
+            workspaceId: workspace.id
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspace?.readOnly).to.be.true
+        })
+        it('should return false for workspace plan status trial', async () => {
+          const workspace = {
+            id: '',
+            name: 'test ws',
+            slug: cryptoRandomString({ length: 10 }),
+            ownerId: ''
+          }
+          await createTestWorkspace(workspace, testAdminUser, {
+            addPlan: { name: 'business', status: 'trial' }
+          })
+
+          const res = await apollo.execute(GetWorkspaceDocument, {
+            workspaceId: workspace.id
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspace?.readOnly).to.be.false
+        })
+      }
+    )
+    ; (FF_BILLING_INTEGRATION_ENABLED ? describe : describe.skip)(
+      'workspace.subscription',
+      () => {
+        describe('subscription.seats', () => {
+          it('should return the number of assigned seats', async () => {
+            const user = await createTestUser({
+              name: createRandomString(),
+              email: createRandomEmail(),
+              role: Roles.Server.Admin,
+              verified: true
+            })
+            const workspace = {
+              id: createRandomString(),
+              name: createRandomString(),
+              slug: cryptoRandomString({ length: 10 }),
+              ownerId: user.id
+            }
+            await createTestWorkspace(workspace, user, {
+              addPlan: { name: 'pro', status: 'valid' }
+            })
+            await upsertWorkspaceSubscriptionFactory({ db })({
+              workspaceSubscription: {
+                workspaceId: workspace.id,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
+                billingInterval: 'monthly',
+                subscriptionData: {
+                  subscriptionId: cryptoRandomString({ length: 10 }),
+                  customerId: cryptoRandomString({ length: 10 }),
+                  cancelAt: null,
+                  status: 'active',
+                  currentPeriodEnd: new Date(),
+                  products: [
+                    {
+                      priceId: createRandomString(),
+                      quantity: 12,
+                      productId: createRandomString(),
+                      subscriptionItemId: createRandomString()
+                    }
+                  ]
+                }
+              }
+            })
+            const session = await login(user)
+
+            const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
+              workspaceId: workspace.id
+            })
+
+            expect(res).to.not.haveGraphQLErrors()
+            const seats = res.data?.workspace.subscription?.seats
+            expect(seats?.editors.assigned).to.eq(1)
+          })
+          it('should return the number of viewers', async () => {
+            const user = await createTestUser({
+              name: createRandomString(),
+              email: createRandomEmail(),
+              role: Roles.Server.Admin,
+              verified: true
+            })
+            const workspace = {
+              id: createRandomString(),
+              name: createRandomString(),
+              slug: cryptoRandomString({ length: 10 }),
+              ownerId: user.id
+            }
+            await createTestWorkspace(workspace, user, {
+              addPlan: { name: 'pro', status: 'valid' }
+            })
+            await upsertWorkspaceSubscriptionFactory({ db })({
+              workspaceSubscription: {
+                workspaceId: workspace.id,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
+                billingInterval: 'monthly',
+                subscriptionData: {
+                  subscriptionId: cryptoRandomString({ length: 10 }),
+                  customerId: cryptoRandomString({ length: 10 }),
+                  cancelAt: null,
+                  status: 'active',
+                  currentPeriodEnd: new Date(),
+                  products: [
+                    {
+                      priceId: createRandomString(),
+                      quantity: 12,
+                      productId: createRandomString(),
+                      subscriptionItemId: createRandomString()
+                    }
+                  ]
+                }
+              }
+            })
+            const viewer1 = await createTestUser({
+              name: createRandomString(),
+              email: createRandomEmail(),
+              role: Roles.Server.User,
+              verified: true
+            })
+            await assignToWorkspace(
+              workspace,
+              viewer1,
+              Roles.Workspace.Member,
+              WorkspaceSeatType.Viewer
+            )
+            const viewer2 = await createTestUser({
+              name: createRandomString(),
+              email: createRandomEmail(),
+              role: Roles.Server.User,
+              verified: true
+            })
+            await assignToWorkspace(
+              workspace,
+              viewer2,
+              Roles.Workspace.Member,
+              WorkspaceSeatType.Viewer
+            )
+
+            const session = await login(user)
+
+            const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
+              workspaceId: workspace.id
+            })
+
+            expect(res).to.not.haveGraphQLErrors()
+            const seats = res.data?.workspace.subscription?.seats
+            expect(seats?.viewers.assigned).to.eq(2)
+          })
+        })
+      }
+    )
+    ; (FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
+      'workspace.subscription.seats',
+      () => {
+        it('should return the number of editors and viewers in a workspace', async () => {
           const user = await createTestUser({
             name: createRandomString(),
             email: createRandomEmail(),
@@ -190,30 +271,6 @@ describe('Workspaces Billing', () => {
           }
           await createTestWorkspace(workspace, user, {
             addPlan: { name: 'pro', status: 'valid' }
-          })
-          await upsertWorkspaceSubscriptionFactory({ db })({
-            workspaceSubscription: {
-              workspaceId: workspace.id,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
-              billingInterval: 'monthly',
-              subscriptionData: {
-                subscriptionId: cryptoRandomString({ length: 10 }),
-                customerId: cryptoRandomString({ length: 10 }),
-                cancelAt: null,
-                status: 'active',
-                currentPeriodEnd: new Date(),
-                products: [
-                  {
-                    priceId: createRandomString(),
-                    quantity: 12,
-                    productId: createRandomString(),
-                    subscriptionItemId: createRandomString()
-                  }
-                ]
-              }
-            }
           })
           const viewer1 = await createTestUser({
             name: createRandomString(),
@@ -240,99 +297,42 @@ describe('Workspaces Billing', () => {
             WorkspaceSeatType.Viewer
           )
 
+          const editor1 = await createTestUser({
+            name: createRandomString(),
+            email: createRandomEmail(),
+            role: Roles.Server.User,
+            verified: true
+          })
+          await assignToWorkspace(
+            workspace,
+            editor1,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          )
+          const editor2 = await createTestUser({
+            name: createRandomString(),
+            email: createRandomEmail(),
+            role: Roles.Server.User,
+            verified: true
+          })
+          await assignToWorkspace(
+            workspace,
+            editor2,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          )
+
           const session = await login(user)
 
-          const res = await session.execute(GetWorkspaceWithSubscriptionDocument, {
+          const res = await session.execute(GetWorkspaceSeatCountsDocument, {
             workspaceId: workspace.id
           })
 
           expect(res).to.not.haveGraphQLErrors()
           const seats = res.data?.workspace.subscription?.seats
-          expect(seats?.viewersCount).to.eq(2)
+          expect(seats?.viewers?.assigned).to.eq(2)
+          expect(seats?.editors?.assigned).to.eq(3)
         })
-      })
-    }
-  )
-  ;(FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
-    'workspace.seatsByType',
-    () => {
-      it('should return the number of editors and viewers in a workspace', async () => {
-        const user = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.Admin,
-          verified: true
-        })
-        const workspace = {
-          id: createRandomString(),
-          name: createRandomString(),
-          slug: cryptoRandomString({ length: 10 }),
-          ownerId: user.id
-        }
-        await createTestWorkspace(workspace, user, {
-          addPlan: { name: 'pro', status: 'valid' }
-        })
-        const viewer1 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          viewer1,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Viewer
-        )
-        const viewer2 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          viewer2,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Viewer
-        )
-
-        const editor1 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          editor1,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Editor
-        )
-        const editor2 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          editor2,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Editor
-        )
-
-        const session = await login(user)
-
-        const res = await session.execute(GetWorkspaceWithSeatsByTypeDocument, {
-          workspaceId: workspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.seatsByType
-        expect(seats?.viewers?.totalCount).to.eq(2)
-        expect(seats?.editors?.totalCount).to.eq(3)
-      })
-    }
-  )
+      }
+    )
 })
