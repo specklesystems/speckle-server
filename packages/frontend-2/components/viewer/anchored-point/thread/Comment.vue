@@ -30,7 +30,9 @@
           readonly
           @created="emit('mounted')"
         />
+
         <ViewerAnchoredPointThreadCommentLimitAlert :limit="10" />
+
         <ViewerAnchoredPointThreadCommentAttachments
           :attachments="comment"
           :project-id="projectId"

@@ -76,7 +76,7 @@ import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
+import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {

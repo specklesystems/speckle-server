@@ -89,10 +89,8 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
-import {
-  useWorkspacePlanLimits,
-  useGetWorkspacePlanUsage
-} from '~/lib/workspaces/composables/plan'
+import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/limits'
+import { useGetWorkspacePlanUsage } from '~/lib/workspaces/composables/usage'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
