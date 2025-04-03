@@ -1,6 +1,6 @@
 <template>
   <div>
-    <template v-if="!hasValidPlan">
+    <template v-if="showBillingAlert">
       <CommonAlert :color="alertColor" :actions="actions">
         <template #title>
           {{ title }}
@@ -76,7 +76,12 @@ const description = computed(() => {
       return ''
   }
 })
-const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
+const showBillingAlert = computed(
+  () =>
+    planStatus.value === WorkspacePlanStatuses.PaymentFailed ||
+    planStatus.value === WorkspacePlanStatuses.Canceled ||
+    planStatus.value === WorkspacePlanStatuses.CancelationScheduled
+)
 
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
