@@ -172,7 +172,7 @@ export class MeasurementsExtension extends Extension {
     }
 
     if (this._activeMeasurement instanceof AreaMeasurement) {
-      ;(this.activeMeasurement as AreaMeasurement).setPointAndNormal(
+      ;(this.activeMeasurement as AreaMeasurement).locationUpdated(
         this.pointBuff,
         this.normalBuff
       )
@@ -222,7 +222,9 @@ export class MeasurementsExtension extends Extension {
     if (!this._sceneHit) return
 
     if (this._activeMeasurement instanceof AreaMeasurement) {
-      this._activeMeasurement.addPoint()
+      this._activeMeasurement.locationSelected()
+      if (this._activeMeasurement.state === MeasurementState.COMPLETE)
+        this.finishMeasurement()
     } else {
       if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
         this._activeMeasurement.state = MeasurementState.DANGLING_END
@@ -312,9 +314,6 @@ export class MeasurementsExtension extends Extension {
       measurement = new PointToPointMeasurement()
     else if (this._options.type === MeasurementType.AREA) {
       measurement = new AreaMeasurement()
-      this.viewer
-        .getRenderer()
-        .scene.add((measurement as AreaMeasurement).projectionPlaneHelper)
     } else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
