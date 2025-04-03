@@ -102,7 +102,6 @@ graphql(`
       cursor
       items {
         ...ProjectsMoveToWorkspaceDialog_Project
-        role
         workspace {
           id
         }
