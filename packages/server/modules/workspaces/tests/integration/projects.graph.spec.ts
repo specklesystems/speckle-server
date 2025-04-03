@@ -317,7 +317,12 @@ describe('Workspace project GQL CRUD', () => {
           Roles.Workspace.Guest,
           WorkspaceSeatType.Editor
         ],
-        [queryWorkspace, workspaceMember, Roles.Workspace.Member]
+        [
+          queryWorkspace,
+          workspaceMember,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        ]
       ])
       projects = times(
         TOTAL_COUNT,
@@ -355,12 +360,12 @@ describe('Workspace project GQL CRUD', () => {
         )
       )
 
-      // Add explicit single assignment to workspaceMember to 1st non-workspace project
-      await addToStream(
-        nonWorkspaceProjects[0],
-        workspaceMember,
-        Roles.Stream.Contributor
-      )
+      await Promise.all([
+        // Add explicit single assignment to workspaceMember to 1st non-workspace project
+        addToStream(nonWorkspaceProjects[0], workspaceMember, Roles.Stream.Contributor),
+        // Add explicit single assignment to workspaceMember to 1st workspace project
+        addToStream(projects[0], workspaceMember, Roles.Stream.Contributor)
+      ])
 
       apollo = await testApolloServer({
         authUserId: workspaceAdmin.id
@@ -513,6 +518,25 @@ describe('Workspace project GQL CRUD', () => {
         expect(project).to.exist
         expect(project?.name).to.equal('Query Workspace Project - #0')
       })
+
+      it('should respect withProjectRoleOnly flag', async () => {
+        const apollo = await testApolloServer({
+          authUserId: workspaceMember.id
+        })
+        const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+          id: queryWorkspace.id,
+          filter: {
+            withProjectRoleOnly: true
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const collection = res.data?.workspace.projects
+        expect(collection).to.be.ok
+        expect(collection?.items.length).to.equal(1)
+        expect(collection?.items[0].id).to.equal(projects[0].id)
+        expect(collection?.totalCount).to.equal(1)
+      })
     })
 
     describe('for a specific one', () => {
@@ -645,11 +669,14 @@ describe('Workspace project GQL CRUD', () => {
           { assertNoErrors: true }
         )
         const memberCollection = memberRes.data?.activeUser?.projects
-        const expectedMemberCount = 1 // only 1 explicit assignment
+        const expectedMemberCount = 2 // only 2 explicit assignments
         expect(memberCollection).to.be.ok
         expect(memberCollection!.totalCount).to.equal(expectedMemberCount)
         expect(memberCollection!.items.length).to.equal(expectedMemberCount)
-        expect(memberCollection!.items[0].id).to.equal(nonWorkspaceProjects[0].id)
+        expect([
+          memberCollection!.items[0].id,
+          memberCollection!.items[1].id
+        ]).to.deep.equalInAnyOrder([nonWorkspaceProjects[0].id, projects[0].id])
       })
 
       it('should only return workspace projects if filter set', async () => {

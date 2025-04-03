@@ -258,6 +258,10 @@ export type GetPaginatedWorkspaceProjectsArgs = {
        * Search for projects by name
        */
       search: MaybeNullOrUndefined<string>
+      /**
+       * Only get projects that the active user has an explicit role in
+       */
+      withProjectRoleOnly: MaybeNullOrUndefined<boolean>
     }>
   >
 }

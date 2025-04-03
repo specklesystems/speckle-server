@@ -556,7 +556,7 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
   (deps: { db: Knex }) =>
   (params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>) => {
     const { workspaceId, userId, filter } = params
-    const { search } = filter || {}
+    const { search, withProjectRoleOnly } = filter || {}
 
     const query = tables
       .streams(deps.db)
@@ -568,6 +568,8 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
      * - If no workspace role, user should be server admin w/ admin override enabled
      * - If workspace role is guest, user should have explicit stream roles
      * - If workspace role other than guest, just get all workspace streams
+     *
+     * If withProjectRoleOnly is set: Require project role always
      */
     if (userId) {
       query
@@ -579,7 +581,7 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
         })
         .andWhere((w) => {
           // Check server_acl exist first, so subsequent checks can be optimized away
-          if (adminOverrideEnabled()) {
+          if (adminOverrideEnabled() && !withProjectRoleOnly) {
             w.whereExists(
               tables
                 .serverAcl(deps.db)
@@ -592,7 +594,11 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
           w.orWhere((w2) => {
             // Ensure workspace role exists and its not guest or the user has explicit stream roles
             w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
-              w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest).orWhereExists(
+              if (!withProjectRoleOnly) {
+                w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest)
+              }
+
+              w3.orWhereExists(
                 tables
                   .streamAcl(deps.db)
                   .select('*')
