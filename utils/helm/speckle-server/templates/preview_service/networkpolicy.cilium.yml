@@ -1,4 +1,4 @@
-{{- if .Values.preview_service.deployInCluster }}
+{{- if .Values.preview_service.enabled }}
 {{- if (and (.Values.preview_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
