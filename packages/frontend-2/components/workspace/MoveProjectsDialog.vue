@@ -18,9 +18,9 @@
     />
     <div class="text-body-2xs py-2">
       You can move up to
-      <span class="font-medium">{{ remainingProjects }} projects</span>
+      <span class="font-medium">{{ remainingProjectsMinZero }} projects</span>
       and
-      <span class="font-medium">{{ remainingModels }} models</span>
+      <span class="font-medium">{{ remainingModelsMinZero }} models</span>
       in total.
     </div>
     <div
@@ -167,6 +167,14 @@ const { projectCount, modelCount } = useGetWorkspacePlanUsage(props.workspace.sl
 
 const { remainingProjects, remainingModels, limitType, activeLimit } =
   useWorkspacePlanLimits(projectCount, modelCount)
+
+const remainingProjectsMinZero = computed(() => {
+  return Math.max(0, remainingProjects.value)
+})
+
+const remainingModelsMinZero = computed(() => {
+  return Math.max(0, remainingModels.value)
+})
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
