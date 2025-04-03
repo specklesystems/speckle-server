@@ -63,6 +63,8 @@ generates:
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceJoinRequestMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
+        WorkspacePlan: '@/modules/gatekeeperCore/helpers/graphTypes#WorkspacePlanGraphQLReturn'
+        WorkspacePlanUsage: '@/modules/gatekeeperCore/helpers/graphTypes#WorkspacePlanUsageGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
