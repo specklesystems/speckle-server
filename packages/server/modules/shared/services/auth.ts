@@ -4,6 +4,7 @@ import {
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
+import { GetWorkspaceRoleAndSeat } from '@/modules/gatekeeper/domain/billing'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -31,6 +32,12 @@ export const validateScopesFactory = (): ValidateScopes => async (scopes, scope)
     throw new ForbiddenError(errMsg, { info: { scope } })
 }
 
+const workspaceRoleImplicitProjectRoleMap = <const>{
+  [Roles.Workspace.Admin]: Roles.Stream.Owner,
+  [Roles.Workspace.Member]: Roles.Stream.Reviewer,
+  [Roles.Workspace.Guest]: null
+}
+
 /**
  * Checks the userId against the resource's acl.
  */
@@ -41,6 +48,7 @@ export const authorizeResolverFactory =
     getUserServerRole: GetUserServerRole
     getStream: GetStream
     getUserAclRole: GetUserAclRole
+    getWorkspaceRoleAndSeat: GetWorkspaceRoleAndSeat
     emitWorkspaceEvent: EventBusEmit
   }): AuthorizeResolver =>
   async (userId, resourceId, requiredRole, userResourceAccessLimits, operationType) => {
@@ -97,7 +105,7 @@ export const authorizeResolverFactory =
       targetWorkspaceId = resourceId
     }
 
-    const userAclRole = userId
+    let userAclRole = userId
       ? await deps.getUserAclRole({
           aclTableName: role.aclTableName,
           userId,
@@ -106,7 +114,27 @@ export const authorizeResolverFactory =
       : null
 
     if (!userAclRole) {
-      throw new ForbiddenError('You are not authorized to access this resource.')
+      // TODO: Could be more optimized (caching?) but we're moving away from this towards
+      // auth policies anyway
+      // Check if workspace role allows for stream actions
+      if (
+        role.resourceTarget === RoleResourceTargets.Streams &&
+        targetWorkspaceId &&
+        userId
+      ) {
+        const workspaceRoleAndSeat = await deps.getWorkspaceRoleAndSeat({
+          workspaceId: targetWorkspaceId,
+          userId
+        })
+        const implicitStreamRole =
+          workspaceRoleAndSeat?.role.role &&
+          workspaceRoleImplicitProjectRoleMap[workspaceRoleAndSeat.role.role]
+        userAclRole = implicitStreamRole
+      }
+
+      if (!userAclRole) {
+        throw new ForbiddenError('You are not authorized to access this resource.')
+      }
     }
 
     const fullRole = roles.find((r) => r.name === userAclRole)
@@ -117,7 +145,7 @@ export const authorizeResolverFactory =
 
     if (!isNullOrUndefined(targetWorkspaceId)) {
       await deps.emitWorkspaceEvent({
-        eventName: WorkspaceEvents.Authorized,
+        eventName: WorkspaceEvents.Authorizing,
         payload: {
           workspaceId: targetWorkspaceId,
           userId
