@@ -856,7 +856,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const roles = res.data?.workspace.team.totalCountByRole
+        const roles = res.data?.workspace.teamByRole
         expect(roles?.guests?.totalCount).to.eq(2)
         expect(roles?.members?.totalCount).to.eq(3)
         expect(roles?.admins?.totalCount).to.eq(1)

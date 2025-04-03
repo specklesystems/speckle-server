@@ -1,6 +1,5 @@
 import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
-import { Collection } from '@/modules/shared/helpers/graphqlHelper'
 import { WorkspaceSsoProviderRecord } from '@/modules/workspaces/domain/sso/types'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { Workspace, WorkspaceJoinRequest } from '@/modules/workspacesCore/domain/types'
