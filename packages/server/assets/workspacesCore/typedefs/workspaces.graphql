@@ -25,6 +25,13 @@ extend type Query {
     options: WorkspaceInviteLookupOptions
   ): PendingWorkspaceCollaborator
   """
+  Returns list of users that will be added to target workspace if project is moved to it.
+  """
+  workspaceProjectMovePreflight(
+    projectId: String!
+    workspaceId: String!
+  ): [LimitedUser!]!
+  """
   Validates the slug, to make sure it contains only valid characters and its not taken.
   """
   validateWorkspaceSlug(slug: String!): Boolean!
