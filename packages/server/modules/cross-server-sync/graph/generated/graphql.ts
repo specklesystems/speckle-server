@@ -4729,6 +4729,7 @@ export type WorkspacePlan = {
   name: WorkspacePlans;
   paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
+  usage: WorkspacePlanUsage;
 };
 
 export type WorkspacePlanPrice = {
@@ -4748,6 +4749,12 @@ export const WorkspacePlanStatuses = {
 } as const;
 
 export type WorkspacePlanStatuses = typeof WorkspacePlanStatuses[keyof typeof WorkspacePlanStatuses];
+export type WorkspacePlanUsage = {
+  __typename?: 'WorkspacePlanUsage';
+  modelCount: Scalars['Int']['output'];
+  projectCount: Scalars['Int']['output'];
+};
+
 export const WorkspacePlans = {
   Academia: 'academia',
   Business: 'business',

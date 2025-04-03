@@ -22,6 +22,10 @@ graphql(`
       createdAt
       name
       paymentMethod
+      usage {
+        projectCount
+        modelCount
+      }
     }
     subscription {
       billingInterval
