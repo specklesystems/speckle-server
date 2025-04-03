@@ -84,11 +84,17 @@ enum WorkspacePaymentMethod {
   billing
 }
 
+type WorkspacePlanUsage {
+  projectCount: Int!
+  modelCount: Int!
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
   paymentMethod: WorkspacePaymentMethod!
+  usage: WorkspacePlanUsage!
 }
 
 type WorkspaceSubscriptionSeats {

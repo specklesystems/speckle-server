@@ -11,7 +11,7 @@ export const settingsSidebarQuery = graphql(`
 export const settingsSidebarAutomateFunctionsQuery = graphql(`
   query SettingsSidebarAutomateFunctions {
     activeUser {
-      ...Sidebar_User
+      ...SettingsSidebar_User
     }
   }
 `)

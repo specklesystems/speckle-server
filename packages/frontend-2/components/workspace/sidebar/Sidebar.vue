@@ -3,13 +3,6 @@
     <div class="w-full">
       <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
-          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
-            <BillingAlert
-              :workspace="workspaceInfo"
-              :actions="billingAlertAction"
-              condensed
-            />
-          </div>
           <div class="px-4 py-2">
             <WorkspaceSidebarAbout
               :workspace-info="workspaceInfo"
@@ -35,13 +28,9 @@
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import { LayoutSidebar, type AlertAction } from '@speckle/ui-components'
-import {
-  WorkspacePlanStatuses,
-  type WorkspaceProjectList_WorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
+import { LayoutSidebar } from '@speckle/ui-components'
+import type { WorkspaceProjectList_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
@@ -67,29 +56,8 @@ const props = defineProps<{
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
-
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
-
-const isInTrial = computed(
-  () =>
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
-    !props.workspaceInfo.plan
-)
-
 const hasDomains = computed(() => props.workspaceInfo.domains?.length)
-
-const billingAlertAction = computed<Array<AlertAction>>(() => {
-  if (isInTrial.value && isWorkspaceAdmin.value) {
-    return [
-      {
-        title: 'Subscribe',
-        onClick: () =>
-          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
-      }
-    ]
-  }
-  return []
-})
 </script>

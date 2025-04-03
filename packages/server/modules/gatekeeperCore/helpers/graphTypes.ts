@@ -1,6 +1,7 @@
 import { Price } from '@/modules/core/graph/generated/graphql'
-import { WorkspaceSubscription } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePlan } from '@speckle/shared'
 
 export type PriceGraphQLReturn = Omit<Price, 'currencySymbol'>
 
-export type WorkspaceSubscriptionSeatsGraphQLReturn = WorkspaceSubscription
+export type WorkspacePlanGraphQLReturn = WorkspacePlan & { workspaceId: string }
+export type WorkspacePlanUsageGraphQLReturn = { workspaceId: string }
