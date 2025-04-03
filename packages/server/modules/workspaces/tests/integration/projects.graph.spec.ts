@@ -417,7 +417,7 @@ describe('Workspace project GQL CRUD', () => {
       const memberProjectRole = team?.find((role) => role.id === serverMemberUser.id)
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(memberProjectRole?.role).to.equal(Roles.Stream.Contributor)
+      expect(memberProjectRole?.role).to.equal(Roles.Stream.Reviewer)
     })
 
     it('should grant workspace roles to project members that are not already in the target workspace', async () => {
