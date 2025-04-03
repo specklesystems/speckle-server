@@ -40,20 +40,17 @@
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   <span v-if="statusIsTrial">
                     <span class="line-through mr-1">
-                      {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
-                      seat/month
+                      {{ formattedSeatPrice }} per seat/month
                     </span>
                     Free
                   </span>
                   <span
                     v-else-if="currentPlan?.status === WorkspacePlanStatuses.Expired"
                   >
-                    {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
-                    seat/month
+                    {{ formattedSeatPrice }} per seat/month
                   </span>
                   <span v-else>
-                    {{ formatPrice(seatPrice?.[Roles.Workspace.Member]) }} per
-                    seat/month, billed
+                    {{ formattedSeatPrice }} per seat/month, billed
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
                         ? 'annually'
@@ -283,6 +280,16 @@ const selectedPlanName = ref<PaidWorkspacePlansOld>()
 const selectedPlanCycle = ref<BillingInterval>()
 const isUpgradeDialogOpen = ref(false)
 
+const formattedSeatPrice = computed(() => {
+  const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
+  const price = seatPrice.value?.[Roles.Workspace.Member]
+  if (!price) return ''
+  return formatPrice({
+    amount: isAnnual ? price?.amount / 12 : price.amount,
+    currencySymbol: price?.currencySymbol
+  })
+})
+
 const seatPrices = computed(() => ({
   [WorkspacePlans.Starter]: prices.value?.[WorkspacePlans.Starter],
   [WorkspacePlans.Plus]: prices.value?.[WorkspacePlans.Plus],
@@ -352,8 +359,7 @@ const summaryBillValue = computed(() => {
   const memberPrice =
     seatPrice.value[Roles.Workspace.Member].amount * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
-  return isPurchasablePlan.value ? `£${isAnnual ? totalPrice * 12 : totalPrice}` : '£0'
+  return isPurchasablePlan.value ? `£${totalPrice}` : '£0'
 })
 const summaryBillDescription = computed(() => {
   const memberText =
