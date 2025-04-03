@@ -448,6 +448,7 @@ export class OrientedSectionTool extends SectionTool {
     }
     this.translateControls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.translateControls.setSize(0.75)
+    this.translateControls.space = 'local'
     this.display.add(this.translateControls._root)
 
     /** Rotate */
@@ -464,6 +465,7 @@ export class OrientedSectionTool extends SectionTool {
     this.rotateControls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.rotateControls.setSize(0.5)
     this.rotateControls.mode = 'rotate'
+    this.rotateControls.space = 'local'
     this.display.add(this.rotateControls._root)
 
     /** Scale */
