@@ -2,24 +2,26 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Move project to workspace</template>
     <div class="flex flex-col space-y-4">
-      <ProjectsWorkspaceSelect
-        v-if="hasWorkspaces"
-        v-model="selectedWorkspace"
-        :items="workspaces"
-        :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
-        disabled-item-tooltip="Only workspace admins can move projects into a workspace."
-        label="Select a workspace"
-        help="Once a project is moved to a workspace, it cannot be moved out from it."
-        show-label
-      />
-      <div v-else class="flex flex-col gap-y-2">
-        <p class="text-body-xs text-foreground font-medium">
-          You're not a member of any workspaces.
-        </p>
-        <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
-      </div>
+      <template v-if="!workspace">
+        <ProjectsWorkspaceSelect
+          v-if="hasWorkspaces"
+          v-model="selectedWorkspace"
+          :items="workspaces"
+          :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+          disabled-item-tooltip="Only workspace admins can move projects into a workspace."
+          label="Select a workspace"
+          help="Once a project is moved to a workspace, it cannot be moved out from it."
+          show-label
+        />
+        <div v-else class="flex flex-col gap-y-2">
+          <p class="text-body-xs text-foreground font-medium">
+            You're not a member of any workspaces.
+          </p>
+          <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
+        </div>
+      </template>
 
-      <div v-if="project && selectedWorkspace" class="text-body-xs">
+      <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
         <div class="text-body-xs text-foreground flex flex-col gap-y-4">
           <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
             <p>
@@ -27,7 +29,7 @@
               <span class="font-medium">{{ project.name }}</span>
               to
               <span class="font-medium">
-                {{ selectedWorkspace?.name }}
+                {{ selectedWorkspace?.name ?? workspace?.name }}
               </span>
             </p>
             <p class="text-foreground-3">
@@ -126,6 +128,7 @@ const query = graphql(`
 
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
+  workspace?: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
   eventSource?: string // Used for mixpanel tracking
 }>()
 const open = defineModel<boolean>('open', { required: true })
@@ -173,7 +176,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
           text: 'Move',
           props: {
             color: 'primary',
-            disabled: !selectedWorkspace.value || loading.value
+            disabled: (!selectedWorkspace.value && !props.workspace) || loading.value
           },
           onClick: () => onMoveClick()
         }
@@ -190,8 +193,8 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
 })
 
 const onMoveProject = async () => {
-  const workspaceId = selectedWorkspace.value?.id
-  const workspaceName = selectedWorkspace.value?.name
+  const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
+  const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
   if (!workspaceId || !workspaceName) return
 
   const res = await moveProject({
@@ -207,7 +210,7 @@ const onMoveProject = async () => {
 
 const { showRegionStaticDataDisclaimer, triggerAction, onConfirmHandler } =
   useWorkspaceCustomDataResidencyDisclaimer({
-    workspace: computed(() => selectedWorkspace.value),
+    workspace: computed(() => selectedWorkspace.value ?? props.workspace),
     onConfirmAction: onMoveProject
   })
 
