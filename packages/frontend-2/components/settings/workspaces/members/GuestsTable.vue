@@ -22,11 +22,12 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
+        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-2 flex items-center justify-end'
+          classes: 'col-span-1 flex items-center justify-end'
         }
       ]"
       :items="guests"
@@ -59,16 +60,25 @@
           {{ formattedFullDate(item.joinDate) }}
         </span>
       </template>
+      <template #projects="{ item }">
+        <button
+          v-if="
+            item.projectRoles.length > 0 &&
+            isWorkspaceAdmin &&
+            item.role !== Roles.Workspace.Admin
+          "
+          class="text-foreground-2 max-w-max text-body-2xs select-none"
+        >
+          {{ item.projectRoles.length }} projects
+        </button>
+        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
+          {{ item.projectRoles.length }} projects
+        </div>
+      </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           v-if="isWorkspaceAdmin"
-          :target-user="{
-            ...item.user,
-            role: item.role,
-            seatType: item.seatType,
-            joinDate: item.joinDate,
-            workspaceDomainPolicyCompliant: item.user.workspaceDomainPolicyCompliant
-          }"
+          :target-user="item"
           :workspace="workspace"
         />
         <span v-else />
@@ -80,54 +90,15 @@
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
+  type SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
-    id
-    role
-    seatType
-    joinDate
-    user {
-      id
-      avatar
-      name
-      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
-    }
-    projectRoles {
-      role
-      project {
-        id
-        name
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {
-    id
-    slug
-    name
-    ...SettingsWorkspacesMembersTableHeader_Workspace
-    ...SettingsSharedDeleteUserDialog_Workspace
-    team(limit: 250) {
-      items {
-        id
-        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
-      }
-    }
-  }
-`)
-
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersGuestsTable_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 

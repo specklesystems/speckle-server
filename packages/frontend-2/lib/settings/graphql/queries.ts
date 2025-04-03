@@ -11,7 +11,7 @@ export const settingsSidebarQuery = graphql(`
 export const settingsSidebarAutomateFunctionsQuery = graphql(`
   query SettingsSidebarAutomateFunctions {
     activeUser {
-      ...Sidebar_User
+      ...SettingsSidebar_User
     }
   }
 `)
@@ -65,14 +65,6 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   query SettingsWorkspacesMembersTable($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersTable_Workspace
-    }
-  }
-`)
-
-export const settingsWorkspacesMembersGuestsQuery = graphql(`
-  query SettingsWorkspacesMembersGuests($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersGuestsTable_Workspace
     }
   }
 `)

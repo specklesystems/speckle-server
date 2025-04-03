@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
     <div class="flex flex-col mb-4">
-      <p class="text-body-sm mb-4">Confirm {{ user.name }}'s new seat.</p>
+      <p class="text-body-sm mb-4">Confirm {{ user.user.name }}'s new seat.</p>
 
       <SeatTransitionCards
         :is-upgrading="isUpgrading"
@@ -27,7 +27,6 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import {
   SeatTypes,
   type WorkspaceSeatType,
@@ -38,16 +37,13 @@ import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
   SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  user: UserItem
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  user: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
