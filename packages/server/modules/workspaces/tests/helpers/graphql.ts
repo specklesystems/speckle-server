@@ -387,25 +387,6 @@ export const getWorkspaceWithSubscriptionQuery = gql`
   ${basicWorkspaceFragment}
 `
 
-export const getWorkspaceSeatCounts = gql`
-  query GetWorkspaceSeatCounts($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      ...BasicWorkspace
-      subscription {
-        seats {
-          editors {
-            assigned
-          }
-          viewers {
-            assigned
-          }
-        }
-      }
-    }
-  }
-  ${basicWorkspaceFragment}
-`
-
 export const getWorkspacePlanUsage = gql`
   query GetWorkspacePlanUsage($workspaceId: String!) {
     workspace(id: $workspaceId) {
