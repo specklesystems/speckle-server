@@ -56,7 +56,7 @@
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">
-          {{ formattedFullDate(item.joinDate) }}
+          {{ formattedDate(item.joinDate) }}
         </span>
       </template>
       <template #actions="{ item }">

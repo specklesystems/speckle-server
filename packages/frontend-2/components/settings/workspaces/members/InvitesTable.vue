@@ -48,7 +48,7 @@
       </template>
       <template #lastRemindedOn="{ item }">
         <span class="text-body-xs text-foreground-2">
-          {{ formattedFullDate(item.updatedAt) }}
+          {{ formattedDate(item.updatedAt) }}
         </span>
       </template>
       <template #actions="{ item }">

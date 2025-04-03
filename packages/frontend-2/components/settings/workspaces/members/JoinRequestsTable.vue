@@ -25,7 +25,7 @@
       </template>
       <template #createdAt="{ item }">
         <p class="text-body-xs text-foreground">
-          {{ formattedFullDate(item.createdAt) }}
+          {{ formattedDate(item.createdAt) }}
         </p>
       </template>
       <template #status="{ item }">

@@ -51,6 +51,9 @@ const isTimeframe = (date: ConfigType) => {
  * @example
  * formattedFullDate('2023-12-01') - returns "Dec 12, 2023"
  */
+export const formattedDate = (date: ConfigType): string =>
+  dayjs(date).format('MMM D, YYYY')
+
 export const formattedFullDate = (date: ConfigType): string =>
   dayjs(date).format('MMM D, YYYY, H:mm')
 

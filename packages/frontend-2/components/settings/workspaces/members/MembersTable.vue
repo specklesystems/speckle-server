@@ -71,7 +71,9 @@
         <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
       </template>
       <template #joined="{ item }">
-        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
+        <span class="text-foreground-2">
+          {{ formattedDate(item.joinDate) }}
+        </span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
