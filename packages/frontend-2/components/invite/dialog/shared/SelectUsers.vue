@@ -1,7 +1,7 @@
 <template>
   <form>
     <div class="flex flex-col gap-y-3 text-foreground">
-      <slot name="info" />
+      <slot />
 
       <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
         <div class="flex flex-col gap-y-3 flex-1">
@@ -59,8 +59,6 @@
       <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
         Add another user
       </FormButton>
-
-      <slot />
     </div>
   </form>
 </template>
