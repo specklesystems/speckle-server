@@ -21,17 +21,20 @@
         class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col"
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
-        <CommonTiptapTextEditor
-          v-if="comment.text.doc"
-          :model-value="comment.text.doc"
-          :schema-options="{ multiLine: false }"
-          :project-id="projectId"
-          disable-invitation-cta
-          readonly
-          @created="emit('mounted')"
-        />
-
-        <ViewerAnchoredPointThreadCommentLimitAlert :limit="10" />
+        <template v-if="isCommentLimited">
+          <ViewerAnchoredPointThreadCommentLimitAlert />
+        </template>
+        <template v-else>
+          <CommonTiptapTextEditor
+            v-if="comment.text.doc"
+            :model-value="comment.text.doc"
+            :schema-options="{ multiLine: false }"
+            :project-id="projectId"
+            disable-invitation-cta
+            readonly
+            @created="emit('mounted')"
+          />
+        </template>
 
         <ViewerAnchoredPointThreadCommentAttachments
           :attachments="comment"
@@ -44,6 +47,7 @@
 <script setup lang="ts">
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/limits'
 
 const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
@@ -55,11 +59,16 @@ const emit = defineEmits<{
 }>()
 
 const { isEmbedEnabled } = useEmbed()
+const { isCommentOlderThanLimit } = useWorkspacePlanLimits()
 
 const createdAt = computed(() => {
   return {
     full: formattedFullDate(props.comment.createdAt),
     relative: formattedRelativeDate(props.comment.createdAt, { capitalize: true })
   }
+})
+
+const isCommentLimited = computed(() => {
+  return isCommentOlderThanLimit(props.comment.createdAt)
 })
 </script>

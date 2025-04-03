@@ -46,6 +46,8 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="sm"
         text
+        :disabled="isLimited"
+        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
         @click.stop="handleViewChanges"
       >
         View Changes
@@ -56,16 +58,41 @@
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
-      <div class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md shadow">
-        <PreviewImage :preview-url="version.previewUrl" />
+      <div
+        class="limited-version-card bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+      >
+        <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
+          >
+            <LockClosedIcon class="h-4 w-4 text-foreground-3" />
+          </div>
+        </div>
+        <PreviewImage v-else :preview-url="version.previewUrl" />
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <div class="truncate text-xs">
+          <div v-if="isLimited" class="text-body-3xs text-foreground-2 pr-8">
+            Upgrade to view versions older than 7 days.
+          </div>
+          <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="text-primary inline-block rounded-full pl-1 text-xs font-medium">
+        <FormButton
+          v-if="isLimited"
+          color="outline"
+          size="sm"
+          @click="
+            navigateTo(settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug || ''))
+          "
+        >
+          Upgrade
+        </FormButton>
+        <div
+          v-else
+          class="text-primary inline-block rounded-full pl-1 text-xs font-medium"
+        >
           {{ version.sourceApplication }}
         </div>
       </div>
@@ -73,12 +100,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { ChevronDownIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import { keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 dayjs.extend(localizedFormat)
 
@@ -91,13 +120,16 @@ const props = withDefaults(
     showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
+    isLimited: boolean
   }>(),
   {
     clickable: true,
     default: false,
     showTimeline: true,
     last: false,
-    lastLoaded: false
+    lastLoaded: false,
+    // TODO: remove this once we have a way to check if the version is limited
+    isLimited: true
   }
 )
 
@@ -119,6 +151,7 @@ const createdAt = computed(() => {
 const author = computed(() => props.version.authorUser)
 
 const mp = useMixpanel()
+const { activeWorkspaceSlug } = useNavigation()
 
 const handleClick = () => {
   if (props.clickable) emit('changeVersion', props.version.id)
@@ -137,3 +170,14 @@ const handleViewChanges = () => {
   })
 }
 </script>
+
+<style scoped>
+.limited-version-card {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    #eaeaea 7px
+  );
+}
+</style>

@@ -76,7 +76,10 @@ import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/limits'
+import {
+  useWorkspaceModelLimits,
+  useWorkspaceProjectLimits
+} from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -157,7 +160,28 @@ const projectCount = computed(() => {
   return selectedWorkspace.value?.projectCount.totalCount ?? 0
 })
 
-const { limitType, activeLimit } = useWorkspacePlanLimits(projectCount, modelCount)
+const { canAddProject, projectLimit } = useWorkspaceProjectLimits(projectCount)
+const { canAddModel, modelLimit } = useWorkspaceModelLimits(modelCount)
+
+const limitType = computed(() => {
+  if (!canAddProject.value) {
+    return 'project'
+  }
+  if (!canAddModel.value) {
+    return 'model'
+  }
+  return null
+})
+
+const activeLimit = computed(() => {
+  if (!canAddProject.value) {
+    return projectLimit.value
+  }
+  if (!canAddModel.value) {
+    return modelLimit.value
+  }
+  return null
+})
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
   return hasWorkspaces.value
