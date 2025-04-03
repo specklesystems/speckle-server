@@ -32,13 +32,14 @@ export const RoleInfo = Object.freeze(<const>{
       weight: 1000
     },
     [Roles.Stream.Contributor]: {
-      title: 'Contributor',
-      description: 'Can create models, publish model versions, and comment',
+      title: 'Can edit',
+      description:
+        'Can publish and load models from connectors and view and comment in the web viewer',
       weight: 500
     },
     [Roles.Stream.Reviewer]: {
-      title: 'Reviewer',
-      description: 'Can view models, load model data, and comment',
+      title: 'Can view',
+      description: 'Can view and comment on models in the web viewer',
       weight: 100
     }
   },
@@ -89,6 +90,16 @@ export type WorkspaceRoles =
 export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream']]
 
 export type AvailableRoles = ServerRoles | StreamRoles | WorkspaceRoles
+
+/**
+ * Workspace seat type constants
+ */
+export const SeatTypes = Object.freeze(<const>{
+  Editor: 'editor',
+  Viewer: 'viewer'
+})
+
+export type WorkspaceSeatType = (typeof SeatTypes)[keyof typeof SeatTypes]
 
 /**
  * Speckle scope constants

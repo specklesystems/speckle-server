@@ -23,7 +23,8 @@ import {
   type SpeckleView,
   type SunLightConfiguration,
   type ViewerParams,
-  StencilOutlineType
+  StencilOutlineType,
+  UpdateFlags
 } from '../IViewer.js'
 import { Viewer } from './Viewer.js'
 import { SectionOutlines } from './extensions/sections/SectionOutlines.js'
@@ -212,6 +213,7 @@ export class LegacyViewer extends Viewer {
     this.selection.clearSelection()
     if (this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects.length = 0
+    this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
     return Promise.resolve(this.filtering.filteringState)
   }
 

@@ -26,6 +26,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesProjectsCounts,
   QueryWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
@@ -326,7 +327,14 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, roles } = filter || {}
+    const { search, roles, seatType } = filter || {}
+
+    if (seatType) {
+      query
+        .join('workspace_seats', 'workspace_seats.userId', DbWorkspaceAcl.col.userId)
+        .andWhere('workspace_seats.type', seatType)
+        .andWhere('workspace_seats.workspaceId', workspaceId)
+    }
 
     if (search) {
       query.andWhere((builder) => {
@@ -500,4 +508,32 @@ export const upsertWorkspaceCreationStateFactory =
       .insert(workspaceCreationState)
       .onConflict('workspaceId')
       .merge()
+  }
+
+export const getWorkspacesProjectsCountsFactory =
+  (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
+  async (params) => {
+    const ret = params.workspaceIds.reduce((acc, workspaceId) => {
+      acc[workspaceId] = 0
+      return acc
+    }, {} as Record<string, number>)
+
+    const q = tables
+      .streams(deps.db)
+      .select<
+        {
+          workspaceId: string
+          count: string
+        }[]
+      >([Streams.col.workspaceId, knex.raw('count(*) as count')])
+      .whereIn(Streams.col.workspaceId, params.workspaceIds)
+      .groupBy(Streams.col.workspaceId)
+
+    const res = await q
+
+    for (const { workspaceId, count } of res) {
+      ret[workspaceId] = parseInt(count)
+    }
+
+    return ret
   }

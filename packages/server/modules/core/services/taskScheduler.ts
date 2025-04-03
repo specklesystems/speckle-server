@@ -46,7 +46,7 @@ export const scheduledCallbackWrapper = async (
       'The triggered task execution {taskName} failed at {scheduledTime}'
     )
   } finally {
-    releaseTaskLock(lock)
+    await releaseTaskLock(lock)
   }
 }
 

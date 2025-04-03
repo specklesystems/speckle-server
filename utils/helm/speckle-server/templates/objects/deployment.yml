@@ -127,6 +127,12 @@ spec:
 
       {{- if .Values.objects.serviceAccount.create }}
       serviceAccountName: {{ include "objects.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: 310
       volumes:

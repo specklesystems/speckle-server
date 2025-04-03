@@ -3,7 +3,9 @@ import type {
   Nullable,
   ServerRoles,
   StreamRoles,
-  WorkspaceRoles
+  WorkspaceRoles,
+  WorkspaceSeatType,
+  MaybeNullOrUndefined
 } from '@speckle/shared'
 import type { LimitedUserAvatarFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -15,6 +17,7 @@ export type ProjectCollaboratorListItem = {
   inviteId: Nullable<string>
   serverRole: Nullable<ServerRoles>
   workspaceRole: Nullable<WorkspaceRoles>
+  seatType: MaybeNullOrUndefined<WorkspaceSeatType>
 }
 
 export type SelectableStreamRoleSelectItem = {

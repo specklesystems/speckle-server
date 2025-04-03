@@ -12,30 +12,6 @@ export const mentionsUserSearchQuery = graphql(`
   }
 `)
 
-export const userSearchQuery = graphql(`
-  query UserSearch(
-    $query: String!
-    $limit: Int
-    $cursor: String
-    $archived: Boolean
-    $workspaceId: String
-  ) {
-    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
-      cursor
-      items {
-        id
-        name
-        bio
-        company
-        avatar
-        verified
-        role
-        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
-      }
-    }
-  }
-`)
-
 export const serverInfoBlobSizeLimitQuery = graphql(`
   query ServerInfoBlobSizeLimit {
     serverInfo {

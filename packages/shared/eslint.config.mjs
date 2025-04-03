@@ -36,6 +36,12 @@ const configs = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'off'
     }
+  },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off' // so we can easily make sync mocked loaders -> async
+    }
   }
 ]
 

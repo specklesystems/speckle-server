@@ -22,6 +22,7 @@
     "wrangler": "wrangler"
   },
   "dependencies": {
+    "@speckle/objectloader2": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "tweakpane": "^3.0.8"
   },

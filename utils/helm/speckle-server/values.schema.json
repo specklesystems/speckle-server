@@ -75,11 +75,6 @@
           "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
           "default": false
         },
-        "fileImportIFCDotNetEnabled": {
-          "type": "boolean",
-          "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
-          "default": false
-        },
         "forceEmailVerification": {
           "type": "boolean",
           "description": "Forces email verification for all users",
@@ -171,6 +166,11 @@
       "type": "number",
       "description": "This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle",
       "default": 100
+    },
+    "file_import_time_limit_min": {
+      "type": "number",
+      "description": "The maximum time (unit is minutes) that a file import can take before it is considered to have failed",
+      "default": 10
     },
     "enable_prometheus_monitoring": {
       "type": "boolean",
@@ -612,6 +612,12 @@
           }
         }
       }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+      "default": [],
+      "items": {}
     },
     "server": {
       "type": "object",
@@ -2232,7 +2238,7 @@
         },
         "time_limit_min": {
           "type": "number",
-          "description": "The maximum time that a file can take to be processed by the FileImport Service.",
+          "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
           "default": 10
         }
       }

@@ -7,7 +7,7 @@ import type {
 import type {
   DocumentParameter,
   OptionsParameter
-} from '@vue/apollo-composable/dist/useQuery'
+} from '@vue/apollo-composable/dist/useQuery.js'
 import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
@@ -141,6 +141,20 @@ export const usePaginatedQuery = <
   } = params
   const cacheBusterKey = ref(0)
 
+  // can't be a computed, because we have to invoke it on the result of the fetchMore call,
+  // before the result has been merged into the cache and the results become merged with results
+  // of previous pages
+  const hasMoreToLoad = (result: BasicPaginatedResult | undefined) => {
+    if (isUndefined(result)) return true
+
+    const itemCount = result.items.length
+    const totalCount = result.totalCount
+    const hasMoreItemsAccordingToCount = itemCount < totalCount
+    const hasEmptyResponse = !result.items.length && !result.cursor?.length
+
+    return hasMoreItemsAccordingToCount && !hasEmptyResponse
+  }
+
   const useQueryReturn = useQuery(query, baseVariables, options || {})
   const queryKey = computed(
     () =>
@@ -149,14 +163,6 @@ export const usePaginatedQuery = <
   const currentResult = computed(() =>
     resolveCurrentResult(useQueryReturn.result.value)
   )
-  const hasMoreToLoad = computed(() => {
-    const currentRes = currentResult.value
-    if (isUndefined(currentRes)) return true
-
-    const itemCount = currentRes.items.length
-    const totalCount = currentRes.totalCount
-    return itemCount < totalCount
-  })
 
   const getCursorForNextPage = () => {
     const currRes = currentResult.value
@@ -169,12 +175,14 @@ export const usePaginatedQuery = <
 
   const onInfiniteLoad = async (state: InfiniteLoaderState) => {
     const cursor = getCursorForNextPage()
-    if (!hasMoreToLoad.value || !cursor) return state.complete()
+    let loadMore = hasMoreToLoad(currentResult.value)
+    if (!loadMore || !cursor) return state.complete()
 
     try {
-      await useQueryReturn.fetchMore({
+      const res = await useQueryReturn.fetchMore({
         variables: resolveNextPageVariables(baseVariables.value, cursor)
       })
+      loadMore = hasMoreToLoad(resolveCurrentResult(res?.data))
     } catch (e) {
       logger.error(e)
       state.error()
@@ -182,7 +190,7 @@ export const usePaginatedQuery = <
     }
 
     state.loaded()
-    if (!hasMoreToLoad.value) {
+    if (!loadMore) {
       state.complete()
     }
   }

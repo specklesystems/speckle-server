@@ -36,3 +36,7 @@ export type PendingWorkspaceCollaboratorGraphQLReturn = {
 }
 
 export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
+
+export type WorkspacePermissionChecksGraphQLReturn = {
+  workspaceId: string
+}

@@ -1041,6 +1041,10 @@ export type GendoAiRenderInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type InvitableCollaboratorsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type JoinWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -1155,7 +1159,7 @@ export type LimitedUserTimelineArgs = {
  * to another user
  */
 export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1951,6 +1955,14 @@ export type PendingWorkspaceCollaboratorsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type PermissionCheckResult = {
+  __typename?: 'PermissionCheckResult';
+  authorized: Scalars['Boolean']['output'];
+  code: Scalars['String']['output'];
+  message: Scalars['String']['output'];
+  payload?: Maybe<Scalars['JSONObject']['output']>;
+};
+
 export type Price = {
   __typename?: 'Price';
   amount: Scalars['Float']['output'];
@@ -1974,6 +1986,7 @@ export type Project = {
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
@@ -1995,6 +2008,7 @@ export type Project = {
   pendingAccessRequests?: Maybe<Array<ProjectAccessRequest>>;
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
+  permissions: ProjectPermissionChecks;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   /** Source apps used in any models of this project */
@@ -2007,7 +2021,7 @@ export type Project = {
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
-  visibility: ProjectVisibility;
+  visibility: SimpleProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
@@ -2047,6 +2061,13 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectInvitableCollaboratorsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<InvitableCollaboratorsFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2223,6 +2244,8 @@ export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
   id: Scalars['ID']['output'];
   role: Scalars['String']['output'];
+  /** The collaborator's workspace seat type for the workspace this project is in */
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
@@ -2479,6 +2502,11 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectPermissionChecks = {
+  __typename?: 'ProjectPermissionChecks';
+  canRead: PermissionCheckResult;
+};
 
 export type ProjectRole = {
   __typename?: 'ProjectRole';
@@ -3104,6 +3132,12 @@ export enum SessionPaymentStatus {
 export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
 };
+
+/** Visbility without the "discoverable" option */
+export enum SimpleProjectVisibility {
+  Private = 'PRIVATE',
+  Unlisted = 'UNLISTED'
+}
 
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
@@ -4266,7 +4300,10 @@ export type Workspace = {
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
-  /** The default role workspace members will receive for workspace projects. */
+  /**
+   * The default role workspace members will receive for workspace projects.
+   * @deprecated Always the reviewer role. Will be removed in the future.
+   */
   defaultProjectRole: Scalars['String']['output'];
   /**
    * The default region where project data will be stored, if set. If undefined, defaults to main/default
@@ -4286,13 +4323,18 @@ export type Workspace = {
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
+  membersByRole?: Maybe<WorkspaceMembersByRole>;
   name: Scalars['String']['output'];
+  permissions: WorkspacePermissionChecks;
   plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
   /** A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed */
   readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
+  /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
+  seatType?: Maybe<WorkspaceSeatType>;
+  seatsByType?: Maybe<WorkspaceSeatsByType>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
@@ -4365,8 +4407,11 @@ export type WorkspaceBillingMutationsUpgradePlanArgs = {
 export type WorkspaceCollaborator = {
   __typename?: 'WorkspaceCollaborator';
   id: Scalars['ID']['output'];
+  /** Date that the user joined the workspace. */
+  joinDate: Scalars['DateTime']['output'];
   projectRoles: Array<ProjectRole>;
   role: Scalars['String']['output'];
+  seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
 };
 
@@ -4535,6 +4580,13 @@ export enum WorkspaceJoinRequestStatus {
   Pending = 'pending'
 }
 
+export type WorkspaceMembersByRole = {
+  __typename?: 'WorkspaceMembersByRole';
+  admins?: Maybe<WorkspaceRoleCollection>;
+  guests?: Maybe<WorkspaceRoleCollection>;
+  members?: Maybe<WorkspaceRoleCollection>;
+};
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4555,6 +4607,7 @@ export type WorkspaceMutations = {
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
   updateRole: Workspace;
+  updateSeatType: Workspace;
 };
 
 
@@ -4623,11 +4676,21 @@ export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+
+export type WorkspaceMutationsUpdateSeatTypeArgs = {
+  input: WorkspaceUpdateSeatTypeInput;
+};
+
 export enum WorkspacePaymentMethod {
   Billing = 'billing',
   Invoice = 'invoice',
   Unpaid = 'unpaid'
 }
+
+export type WorkspacePermissionChecks = {
+  __typename?: 'WorkspacePermissionChecks';
+  canCreateProject: PermissionCheckResult;
+};
 
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
@@ -4755,6 +4818,11 @@ export enum WorkspaceRole {
   Member = 'MEMBER'
 }
 
+export type WorkspaceRoleCollection = {
+  __typename?: 'WorkspaceRoleCollection';
+  totalCount: Scalars['Int']['output'];
+};
+
 export type WorkspaceRoleDeleteInput = {
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
@@ -4765,6 +4833,22 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceSeatCollection = {
+  __typename?: 'WorkspaceSeatCollection';
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum WorkspaceSeatType {
+  Editor = 'editor',
+  Viewer = 'viewer'
+}
+
+export type WorkspaceSeatsByType = {
+  __typename?: 'WorkspaceSeatsByType';
+  editors?: Maybe<WorkspaceSeatCollection>;
+  viewers?: Maybe<WorkspaceSeatCollection>;
 };
 
 export type WorkspaceSso = {
@@ -4799,8 +4883,16 @@ export type WorkspaceSubscription = {
 
 export type WorkspaceSubscriptionSeats = {
   __typename?: 'WorkspaceSubscriptionSeats';
+  /** Number assigned seats in the current billing cycle */
+  assigned: Scalars['Int']['output'];
+  /** @deprecated No longer supported */
   guest: Scalars['Int']['output'];
+  /** @deprecated No longer supported */
   plan: Scalars['Int']['output'];
+  /** Total number of seats purchased and available in the current subscription cycle */
+  totalCount: Scalars['Int']['output'];
+  /** Number of viewer seats currently assigned in the workspace */
+  viewersCount: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {
@@ -4808,10 +4900,10 @@ export type WorkspaceTeamFilter = {
   roles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Search for team members by name or email */
   search?: InputMaybe<Scalars['String']['input']>;
+  seatType?: InputMaybe<WorkspaceSeatType>;
 };
 
 export type WorkspaceUpdateInput = {
-  defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   domainBasedMembershipProtectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4820,6 +4912,12 @@ export type WorkspaceUpdateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceUpdateSeatTypeInput = {
+  seatType: WorkspaceSeatType;
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdatedMessage = {

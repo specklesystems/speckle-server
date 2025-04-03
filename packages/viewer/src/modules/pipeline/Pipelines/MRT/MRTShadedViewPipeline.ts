@@ -2,7 +2,7 @@ import { ObjectLayers, AssetType } from '../../../../index.js'
 import SpeckleRenderer from '../../../SpeckleRenderer.js'
 import { BlendPass } from '../../Passes/BlendPass.js'
 import { GeometryPass } from '../../Passes/GeometryPass.js'
-import { EdgePass } from '../../Passes/EdgesPass.js'
+import { EdgesPass } from '../../Passes/EdgesPass.js'
 import { ClearFlags, ObjectVisibility } from '../../Passes/GPass.js'
 import { StencilMaskPass } from '../../Passes/StencilMaskPass.js'
 import { StencilPass } from '../../Passes/StencilPass.js'
@@ -50,12 +50,12 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
     const shadowcatcherPass = new GeometryPass()
     shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
 
-    const edgesPass = new EdgePass()
+    const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
     edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
 
-    const edgesPassDynamic = new EdgePass()
+    const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalIdDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalIdDynamic.normalTexture)
     edgesPassDynamic.setTexture('tId', depthPassNormalIdDynamic.idTexture)

@@ -21,9 +21,11 @@ export abstract class Measurement extends Object3D {
   public startPoint: Vector3 = new Vector3()
   public endPoint: Vector3 = new Vector3()
   public startNormal: Vector3 = new Vector3()
+  public flipStartNormal: boolean = false
   public endNormal: Vector3 = new Vector3()
-  public startLineLength!: number
-  public endLineLength!: number
+  public flipEndNormal: boolean = false
+  public startLineLength: number
+  public endLineLength: number
   public value = 0
   public units = 'm'
   public precision = 2

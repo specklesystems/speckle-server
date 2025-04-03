@@ -1,0 +1,62 @@
+import { db } from '@/db/knex'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { defineModuleLoaders } from '@/modules/loaders'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderRecordFactory
+} from '@/modules/workspaces/repositories/sso'
+import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
+import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
+
+// TODO: Move everything to use dataLoaders
+export default defineModuleLoaders(async () => {
+  const getWorkspacePlan = getWorkspacePlanFactory({ db })
+
+  return {
+    getWorkspace: async ({ workspaceId }, { dataLoaders }) => {
+      return (await dataLoaders.workspaces!.getWorkspace.load(workspaceId)) || null
+    },
+    getWorkspaceRole: async ({ userId, workspaceId }) => {
+      const role = await getWorkspaceRoleForUserFactory({ db })({
+        userId,
+        workspaceId
+      })
+      return role?.role || null
+    },
+    getWorkspaceSsoSession: async ({ userId, workspaceId }) => {
+      const ssoSession = await getUserSsoSessionFactory({ db })({
+        userId,
+        workspaceId
+      })
+      return ssoSession || null
+    },
+    getWorkspaceSsoProvider: async ({ workspaceId }) => {
+      const ssoProvider = await getWorkspaceSsoProviderRecordFactory({ db })({
+        workspaceId
+      })
+      return ssoProvider || null
+    },
+    getWorkspaceSeat: async ({ userId, workspaceId }, { dataLoaders }) => {
+      return (
+        (
+          await dataLoaders.gatekeeper!.getUserWorkspaceSeat.load({
+            userId,
+            workspaceId
+          })
+        )?.type || null
+      )
+    },
+    getWorkspaceProjectCount: async ({ workspaceId }, { dataLoaders }) => {
+      return await dataLoaders.workspaces!.getProjectCount.load(workspaceId)
+    },
+    getWorkspacePlan: async ({ workspaceId }) => {
+      return await getWorkspacePlan({ workspaceId })
+    },
+    getWorkspaceLimits: async ({ workspaceId }) => {
+      const plan = await getWorkspacePlan({ workspaceId })
+      if (!plan) return null
+      const config = { ...WorkspacePaidPlanConfigs, ...WorkspaceUnpaidPlanConfigs }
+      return config[plan.name]?.limits ?? null
+    }
+  }
+})

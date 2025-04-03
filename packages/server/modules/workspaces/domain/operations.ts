@@ -122,6 +122,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      * Optionally filter by user name or email
      */
     search?: string
+    seatType?: WorkspaceSeatType
   }
 }
 
@@ -232,6 +233,12 @@ type QueryAllWorkspaceProjectsArgs = {
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
 ) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
+
+export type GetWorkspacesProjectsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
+  [workspaceId: string]: number
+}>
 
 /** Workspace Project Roles */
 

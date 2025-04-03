@@ -1,5 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
-import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
+import {
+  workspacePlanLimitsQuery,
+  workspacePlanQuery
+} from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
   isNewWorkspacePlan,
@@ -22,6 +25,12 @@ graphql(`
     }
     subscription {
       billingInterval
+      currentBillingCycleEnd
+      seats {
+        totalCount
+        assigned
+        viewersCount
+      }
     }
   }
 `)
@@ -78,14 +87,17 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
+
+  const billingCycleEnd = computed(() => subscription.value?.currentBillingCycleEnd)
+
   // TODO: Replace with value from API call, this a placeholder value
-  const seatPrice = 15
+  const editorSeatPrice = 15
 
   const totalCost = computed(() => {
     return isPurchasablePlan.value
       ? intervalIsYearly.value
-        ? seatPrice * 12
-        : seatPrice
+        ? editorSeatPrice * 12
+        : editorSeatPrice
       : 0
   })
 
@@ -98,6 +110,19 @@ export const useWorkspacePlan = (slug: string) => {
       : 'Not applicable'
   })
 
+  const editorSeats = computed(() => {
+    const seats = subscription.value?.seats
+    if (!seats)
+      return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
+
+    return {
+      limit: seats.totalCount,
+      used: seats.assigned,
+      hasSeatAvailable: seats.totalCount > seats.assigned,
+      seatPrice: editorSeatPrice
+    }
+  })
+
   return {
     plan,
     isNewPlan,
@@ -105,10 +130,113 @@ export const useWorkspacePlan = (slug: string) => {
     statusIsCanceled,
     isPurchasablePlan,
     isActivePlan,
+    isFreePlan,
     billingInterval,
     intervalIsYearly,
+    billingCycleEnd,
     totalCostFormatted,
     statusIsCancelationScheduled,
-    subscription
+    subscription,
+    editorSeats
+  }
+}
+
+graphql(`
+  fragment WorkspacePlanLimits_Workspace on Workspace {
+    id
+    projects(limit: 0) {
+      totalCount
+      items {
+        id
+        models(limit: 0) {
+          totalCount
+        }
+      }
+    }
+    plan {
+      name
+    }
+  }
+`)
+
+export const useGetWorkspacePlanUsage = (slug: string) => {
+  const { result } = useQuery(
+    workspacePlanLimitsQuery,
+    () => ({
+      slug
+    }),
+    () => ({
+      enabled: !!slug
+    })
+  )
+
+  const projectCount = computed(
+    () => result.value?.workspaceBySlug?.projects?.totalCount ?? 0
+  )
+  const modelCount = computed(
+    () =>
+      result.value?.workspaceBySlug?.projects?.items?.reduce(
+        (total, project) => total + (project?.models?.totalCount ?? 0),
+        0
+      ) ?? 0
+  )
+
+  return {
+    projectCount,
+    modelCount
+  }
+}
+
+export const useWorkspacePlanLimits = (
+  projectCount: ComputedRef<number>,
+  modelCount: ComputedRef<number>
+) => {
+  const projectLimit = computed(() => 3)
+  const modelLimit = computed(() => 8)
+
+  const remainingProjects = computed(() => {
+    return projectLimit.value - projectCount.value
+  })
+
+  const remainingModels = computed(() => {
+    return modelLimit.value - modelCount.value
+  })
+
+  const limitType = computed(() => {
+    if (projectCount.value > projectLimit.value) {
+      return 'project'
+    }
+    if (modelCount.value > modelLimit.value) {
+      return 'model'
+    }
+    return null
+  })
+
+  const activeLimit = computed(() => {
+    const limit =
+      limitType.value === 'project'
+        ? projectLimit.value
+        : limitType.value === 'model'
+        ? modelLimit.value
+        : null
+    return limit
+  })
+
+  const canAddProject = computed(
+    () => remainingProjects.value !== null && remainingProjects.value > 0
+  )
+  const canAddModels = computed(
+    () => remainingModels.value !== null && remainingModels.value > 0
+  )
+
+  return {
+    projectLimit,
+    modelLimit,
+    remainingProjects,
+    remainingModels,
+    canAddProject,
+    canAddModels,
+    limitType,
+    activeLimit
   }
 }
