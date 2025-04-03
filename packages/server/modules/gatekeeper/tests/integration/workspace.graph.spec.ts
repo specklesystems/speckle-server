@@ -279,7 +279,8 @@ describe('Workspaces Billing', () => {
           id: createRandomString(),
           name: createRandomString(),
           ownerId: user.id,
-          isPublic: true
+          isPublic: true,
+          workspaceId: workspace.id
         }
         await createTestStream(project, user)
         await createTestBranches([
@@ -322,7 +323,7 @@ describe('Workspaces Billing', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        expect(res?.data?.workspace?.plan?.usage?.projectCount).to.equal(31)
+        expect(res?.data?.workspace?.plan?.usage?.projectCount).to.equal(1)
         expect(res?.data?.workspace?.plan?.usage?.modelCount).to.equal(3)
       })
     }
