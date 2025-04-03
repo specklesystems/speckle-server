@@ -57,7 +57,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
-  GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
   UpsertProjectRole,
@@ -684,12 +683,6 @@ export const getStreamCollaboratorsFactory =
       role: i.role
     }))
     return items
-  }
-
-export const getProjectCollaboratorsFactory =
-  (deps: { db: Knex }): GetProjectCollaborators =>
-  async ({ projectId }) => {
-    return await getStreamCollaboratorsFactory(deps)(projectId)
   }
 
 /**
