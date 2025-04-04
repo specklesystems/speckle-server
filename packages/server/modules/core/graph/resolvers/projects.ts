@@ -284,6 +284,13 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      const canCreate = await context.authPolicies.project.canCreateLegacy({
+        userId: context.userId
+      })
+      if (canCreate.isErr) {
+        throw canCreate.error
+      }
+
       const regionKey = await getValidDefaultProjectRegionKey()
       const projectDb = await getDb({ regionKey })
 

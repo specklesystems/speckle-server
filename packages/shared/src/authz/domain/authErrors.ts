@@ -1,10 +1,11 @@
+import { get, isObjectLike } from '#lodash'
 import { WorkspaceLimits } from '../../workspaces/helpers/limits.js'
 
 export type AuthError<ErrorCode extends string = string, Payload = undefined> = {
   readonly code: ErrorCode
   readonly message: string
   readonly payload: Payload
-}
+} & Error
 
 export const defineAuthError = <
   ErrorCode extends string,
@@ -20,10 +21,11 @@ export const defineAuthError = <
   ): AuthError<ErrorCode, Payload>
   code: ErrorCode
 } => {
-  return class AuthErrorClass {
+  return class AuthErrorClass extends Error {
     readonly message: string
     readonly code: ErrorCode
     readonly payload: Payload
+    readonly isAuthPolicyError = true
 
     static code: ErrorCode = definition.code
 
@@ -33,13 +35,20 @@ export const defineAuthError = <
         : [params: { payload: Payload; message?: string }]
     ) {
       const [params] = args
+      const message = params?.message || definition.message
+      super(message)
 
       this.code = definition.code
       this.payload =
         params && 'payload' in params ? params.payload : (undefined as Payload)
       this.message = params?.message || definition.message
+      this.name = definition.code + 'Error'
     }
   }
+}
+
+export const isAuthPolicyError = (err: unknown): err is AuthError => {
+  return isObjectLike(err) && get(err, 'isAuthPolicyError') === true
 }
 
 export const ProjectNotFoundError = defineAuthError({

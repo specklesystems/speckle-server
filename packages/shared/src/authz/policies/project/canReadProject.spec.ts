@@ -1,8 +1,8 @@
 import { describe, expect, it, assert } from 'vitest'
 import { canReadProjectPolicy } from './canReadProject.js'
-import { parseFeatureFlags } from '../../environment/index.js'
+import { parseFeatureFlags } from '../../../environment/index.js'
 import crs from 'crypto-random-string'
-import { Roles } from '../../core/constants.js'
+import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -10,11 +10,11 @@ import {
   ServerNoSessionError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
-import { getProjectFake } from '../../tests/fakes.js'
+} from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 import { err, ok } from 'true-myth/result'
 import cryptoRandomString from 'crypto-random-string'
-import { AuthCheckContextLoaders } from '../domain/loaders.js'
+import { AuthCheckContextLoaders } from '../../domain/loaders.js'
 
 const canReadProjectArgs = () => {
   const projectId = crs({ length: 10 })

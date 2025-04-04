@@ -9,13 +9,13 @@ import {
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
+} from '../../domain/authErrors.js'
 import { nanoid } from 'nanoid'
 import { canCreateWorkspaceProjectPolicy } from './canCreateWorkspaceProject.js'
-import { parseFeatureFlags } from '../../environment/index.js'
+import { parseFeatureFlags } from '../../../environment/index.js'
 import cryptoRandomString from 'crypto-random-string'
-import { WorkspacePlan } from '../../workspaces/index.js'
-import { Workspace, WorkspaceSsoProvider } from '../domain/workspaces/types.js'
+import { WorkspacePlan } from '../../../workspaces/index.js'
+import { Workspace, WorkspaceSsoProvider } from '../../domain/workspaces/types.js'
 import { err, ok } from 'true-myth/result'
 
 const canCreateArgs = () => ({

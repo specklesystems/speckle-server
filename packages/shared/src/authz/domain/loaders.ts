@@ -56,6 +56,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession'
 }
+export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
 
 export type AuthCheckContextLoaderKeys =

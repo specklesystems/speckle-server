@@ -1,5 +1,8 @@
-import { Roles } from '../../core/constants.js'
-import { hasMinimumProjectRole, isPubliclyReadableProject } from '../checks/projects.js'
+import { Roles } from '../../../core/constants.js'
+import {
+  hasMinimumProjectRole,
+  isPubliclyReadableProject
+} from '../../checks/projects.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -7,14 +10,14 @@ import {
   ServerNoSessionError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
+} from '../../domain/authErrors.js'
 import { err, ok } from 'true-myth/result'
-import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
-import { AuthPolicy } from '../domain/policies.js'
-import { canUseAdminOverride, hasMinimumServerRole } from '../checks/serverRole.js'
-import { hasAnyWorkspaceRole } from '../checks/workspaceRole.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../fragments/workspaceSso.js'
-import { MaybeUserContext, ProjectContext } from '../domain/context.js'
+import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
+import { AuthPolicy } from '../../domain/policies.js'
+import { canUseAdminOverride, hasMinimumServerRole } from '../../checks/serverRole.js'
+import { hasAnyWorkspaceRole } from '../../checks/workspaceRole.js'
+import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
+import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 
 export const canReadProjectPolicy: AuthPolicy<
   | typeof AuthCheckContextLoaderKeys.getEnv
