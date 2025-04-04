@@ -19,11 +19,13 @@
     <div class="text-body-2xs py-2">
       You can move up to
       <span class="font-medium">
-        {{ remainingProjects }} {{ remainingProjects === 1 ? 'project' : 'projects' }}
+        {{ Math.max(0, remainingProjectCount) }}
+        {{ remainingProjectCount === 1 ? 'project' : 'projects' }}
       </span>
       and
       <span class="font-medium">
-        {{ remainingModels }} {{ remainingModels === 1 ? 'model' : 'models' }}
+        {{ Math.max(0, remainingModelCount) }}
+        {{ remainingModelCount === 1 ? 'model' : 'models' }}
       </span>
       in total.
     </div>
@@ -70,12 +72,6 @@
       :workspace="workspace"
       :project="selectedProject"
       event-source="move-projects-dialog"
-    />
-    <WorkspacePlanLimitReachedDialog
-      v-if="activeLimit"
-      v-model:open="showLimitReachedDialog"
-      :limit="activeLimit"
-      :limit-type="limitType"
     />
   </LayoutDialog>
 </template>
@@ -156,15 +152,10 @@ const {
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
-const showLimitReachedDialog = ref(false)
 
-const { projectLimitInfo, modelLimitInfo, getHitLimit, getHitLimitValue } =
-  useWorkspaceLimits(props.workspace.slug)
-
-const remainingProjects = computed(() => projectLimitInfo.value.remaining ?? Infinity)
-const remainingModels = computed(() => modelLimitInfo.value.remaining ?? Infinity)
-const limitType = computed(() => getHitLimit())
-const activeLimit = computed(() => getHitLimitValue())
+const { remainingModelCount, remainingProjectCount } = useWorkspaceLimits(
+  props.workspace.slug
+)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
@@ -175,6 +166,7 @@ const moveableProjects = computed(() =>
   userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
 )
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
+
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Done',
@@ -187,10 +179,6 @@ const buttons = computed((): LayoutDialogButton[] => [
 
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  if (!limitType.value) {
-    showMoveToWorkspaceDialog.value = true
-  } else {
-    showLimitReachedDialog.value = true
-  }
+  showMoveToWorkspaceDialog.value = true
 }
 </script>

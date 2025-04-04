@@ -25,8 +25,6 @@ graphql(`
   }
 `)
 
-export type LimitType = 'project' | 'model' | null
-
 export const useWorkspaceLimits = (slug: string) => {
   const { result } = useQuery(
     workspacePlanLimitsQuery,
@@ -49,51 +47,39 @@ export const useWorkspaceLimits = (slug: string) => {
   // Plan limits
   const limits = computed(() => {
     const planName = result.value?.workspaceBySlug?.plan?.name
-    if (!planName) return { projectCount: null, modelCount: null }
+    if (!planName) return { projectCount: 0, modelCount: 0 }
 
     const planConfig = WorkspacePlanConfigs[planName]
-    return planConfig?.limits ?? { projectCount: null, modelCount: null }
+    return planConfig?.limits
   })
 
-  // Limit checking
-  const getLimitInfo = (limit: number | null, current: number) => {
-    if (limit === null) return { remaining: null, canAdd: true }
-    const remaining = Math.max(0, limit - current)
-    return {
-      remaining,
-      canAdd: remaining > 0
+  const remainingProjectCount = computed(() =>
+    limits.value.projectCount ? limits.value.projectCount - projectCount.value : 0
+  )
+  const remainingModelCount = computed(() =>
+    limits.value.modelCount ? limits.value.modelCount - modelCount.value : 0
+  )
+
+  const canAddProject = computed(() => {
+    if (limits.value.projectCount === null) return false
+    return projectCount.value + 1 <= limits.value.projectCount
+  })
+
+  const canAddModels = (additionalModels?: number) => {
+    if (limits.value.modelCount === null) return false
+    if (!additionalModels) {
+      return remainingModelCount.value > 1
     }
-  }
-
-  const projectLimitInfo = computed(() =>
-    getLimitInfo(limits.value.projectCount, projectCount.value)
-  )
-  const modelLimitInfo = computed(() =>
-    getLimitInfo(limits.value.modelCount, modelCount.value)
-  )
-
-  // Check which limit has been hit
-  const getHitLimit = (): LimitType => {
-    if (!projectLimitInfo.value.canAdd) return 'project'
-    if (!modelLimitInfo.value.canAdd) return 'model'
-    return null
-  }
-
-  // Get the value of the limit that was hit
-  const getHitLimitValue = (): number => {
-    const hitLimit = getHitLimit()
-    if (hitLimit === 'project') return limits.value.projectCount ?? 0
-    if (hitLimit === 'model') return limits.value.modelCount ?? 0
-    return 0
+    return modelCount.value + additionalModels <= limits.value.modelCount
   }
 
   return {
     projectCount,
     modelCount,
     limits,
-    projectLimitInfo,
-    modelLimitInfo,
-    getHitLimit,
-    getHitLimitValue
+    remainingProjectCount,
+    remainingModelCount,
+    canAddProject,
+    canAddModels
   }
 }

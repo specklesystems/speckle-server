@@ -86,6 +86,7 @@ graphql(`
     role
     name
     logo
+    slug
     ...WorkspaceHasCustomDataResidency_Workspace
     ...ProjectsWorkspaceSelect_Workspace
   }
@@ -140,8 +141,13 @@ const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
 
-const { getHitLimit, getHitLimitValue } = useWorkspaceLimits(
-  selectedWorkspace.value?.slug ?? ''
+const activeWorkspaceSlug = computed(
+  () => selectedWorkspace.value?.slug || props.workspace?.slug || ''
+)
+
+// Get workspace limits
+const { canAddProject, canAddModels, limits } = useWorkspaceLimits(
+  activeWorkspaceSlug.value
 )
 
 const showLimitReachedDialog = ref(false)
@@ -155,9 +161,22 @@ const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
 
-const limitType = computed(() => getHitLimit())
+// Determine which limit type is hit
+const limitType = computed((): 'project' | 'model' | null => {
+  if (!canAddProject.value) return 'project'
 
-const activeLimit = computed(() => getHitLimitValue())
+  const projectModelCount = props.project.modelCount.totalCount
+  if (!canAddModels(projectModelCount)) return 'model'
+
+  return null
+})
+
+// Get the value of the limit that's hit
+const activeLimit = computed(() => {
+  if (limitType.value === 'project') return limits.value.projectCount ?? 0
+  if (limitType.value === 'model') return limits.value.modelCount ?? 0
+  return 0
+})
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
   return hasWorkspaces.value
@@ -222,7 +241,10 @@ watch(
 )
 
 const onMoveClick = () => {
-  if (limitType.value) {
+  const projectModelCount = props.project.modelCount.totalCount
+
+  // Check if we can add this project to the workspace
+  if (!canAddProject.value || !canAddModels(projectModelCount)) {
     showLimitReachedDialog.value = true
   } else {
     triggerAction()

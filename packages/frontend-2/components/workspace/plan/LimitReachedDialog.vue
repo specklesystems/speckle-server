@@ -47,7 +47,7 @@ import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const props = defineProps<{
-  limit: number
+  limit: Nullable<number>
   limitType: Nullable<'project' | 'model'>
 }>()
 </script>
