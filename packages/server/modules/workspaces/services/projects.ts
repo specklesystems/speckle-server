@@ -1,9 +1,9 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
-  GetWorkspaceCollaborators,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
+  IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -53,7 +53,6 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
-import { LimitedUser } from '@/modules/core/domain/users/types'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -360,23 +359,16 @@ export const createWorkspaceProjectFactory =
     return project
   }
 
-export const getWorkspaceProjectMovePreflight =
+export const getMoveProjectToWorkspaceDryRunFactory =
   (deps: {
-    getProjectCollaborators: GetStreamCollaborators
-    getWorkspaceCollaborators: GetWorkspaceCollaborators
+    intersectProjectCollaboratorsAndWorkspaceCollaborators: IntersectProjectCollaboratorsAndWorkspaceCollaborators
   }) =>
-  async (args: { projectId: string; workspaceId: string }): Promise<LimitedUser[]> => {
-    const { workspaceId, projectId } = args
+  async (args: { projectId: string; workspaceId: string }) => {
+    const addedToWorkspace =
+      await deps.intersectProjectCollaboratorsAndWorkspaceCollaborators({
+        projectId: args.projectId,
+        workspaceId: args.workspaceId
+      })
 
-    // Get workspace team
-    const workspaceTeam = await deps.getWorkspaceCollaborators({ workspaceId })
-
-    // Get project team
-    const projectTeam = await deps.getProjectCollaborators(projectId)
-
-    // Map to limited user
-    return projectTeam.filter(
-      (projectUser) =>
-        !workspaceTeam.some((workspaceUser) => workspaceUser.id === projectUser.id)
-    )
+    return { addedToWorkspace }
   }

@@ -101,7 +101,6 @@ import {
 } from '@/modules/workspaces/services/management'
 import {
   createWorkspaceProjectFactory,
-  getWorkspaceProjectMovePreflight,
   getWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
@@ -361,12 +360,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               ? { workspaceSlug: args.workspaceId }
               : { workspaceId: args.workspaceId })
           })
-        },
-        workspaceProjectMovePreflight: async (_parent, args) => {
-          return await getWorkspaceProjectMovePreflight({
-            getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
-            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db })
-          })(args)
         },
         validateWorkspaceSlug: async (_parent, args) => {
           const validateSlug = validateSlugFactory({
