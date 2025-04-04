@@ -20,7 +20,7 @@ import {
 } from '@/test/authHelper'
 import {
   GetWorkspaceDocument,
-  GetWorkspaceWithSeatsByTypeDocument,
+  GetWorkspacePlanUsageDocument,
   GetWorkspaceWithSubscriptionDocument
 } from '@/test/graphql/generated/graphql'
 import {
@@ -29,6 +29,8 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -173,7 +175,7 @@ describe('Workspaces Billing', () => {
 
           expect(res).to.not.haveGraphQLErrors()
           const seats = res.data?.workspace.subscription?.seats
-          expect(seats?.assigned).to.eq(1)
+          expect(seats?.editors.assigned).to.eq(1)
         })
         it('should return the number of viewers', async () => {
           const user = await createTestUser({
@@ -248,15 +250,15 @@ describe('Workspaces Billing', () => {
 
           expect(res).to.not.haveGraphQLErrors()
           const seats = res.data?.workspace.subscription?.seats
-          expect(seats?.viewersCount).to.eq(2)
+          expect(seats?.viewers.assigned).to.eq(2)
         })
       })
     }
   )
   ;(FF_WORKSPACES_MODULE_ENABLED ? describe : describe.skip)(
-    'workspace.seatsByType',
+    'workspace.subscription.usage',
     () => {
-      it('should return the number of editors and viewers in a workspace', async () => {
+      it('should return accurate usage information', async () => {
         const user = await createTestUser({
           name: createRandomString(),
           email: createRandomEmail(),
@@ -272,66 +274,57 @@ describe('Workspaces Billing', () => {
         await createTestWorkspace(workspace, user, {
           addPlan: { name: 'pro', status: 'valid' }
         })
-        const viewer1 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          viewer1,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Viewer
-        )
-        const viewer2 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          viewer2,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Viewer
-        )
 
-        const editor1 = await createTestUser({
+        const project: BasicTestStream = {
+          id: createRandomString(),
           name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          editor1,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Editor
-        )
-        const editor2 = await createTestUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          role: Roles.Server.User,
-          verified: true
-        })
-        await assignToWorkspace(
-          workspace,
-          editor2,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Editor
-        )
+          ownerId: user.id,
+          isPublic: true,
+          workspaceId: workspace.id
+        }
+        await createTestStream(project, user)
+        await createTestBranches([
+          {
+            owner: user,
+            stream: project,
+            branch: {
+              id: createRandomString(),
+              streamId: project.id,
+              authorId: user.id,
+              name: createRandomString()
+            }
+          },
+          {
+            owner: user,
+            stream: project,
+            branch: {
+              id: createRandomString(),
+              streamId: project.id,
+              authorId: user.id,
+              name: createRandomString()
+            }
+          },
+          {
+            owner: user,
+            stream: project,
+            branch: {
+              id: createRandomString(),
+              streamId: project.id,
+              authorId: user.id,
+              name: createRandomString()
+            }
+          }
+        ])
 
         const session = await login(user)
 
-        const res = await session.execute(GetWorkspaceWithSeatsByTypeDocument, {
+        const res = await session.execute(GetWorkspacePlanUsageDocument, {
           workspaceId: workspace.id
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.seatsByType
-        expect(seats?.viewers?.totalCount).to.eq(2)
-        expect(seats?.editors?.totalCount).to.eq(3)
+        expect(res?.data?.workspace?.plan?.usage?.projectCount).to.equal(1)
+        expect(res?.data?.workspace?.plan?.usage?.modelCount).to.equal(3)
       })
     }
   )

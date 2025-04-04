@@ -72,19 +72,19 @@ import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
-import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 
 const props = defineProps<{
   targetUser: UserItem
   workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+    | SettingsWorkspacesMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
 }>()
 

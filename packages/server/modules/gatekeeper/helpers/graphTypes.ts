@@ -6,3 +6,4 @@ export type WorkspaceBillingMutationsGraphQLReturn = MutationsObjectGraphQLRetur
 export type WorkspaceSubscriptionGraphQLReturn = WorkspaceSubscription & {
   parent: Workspace
 }
+export type WorkspaceSubscriptionSeatsGraphQLReturn = WorkspaceSubscription

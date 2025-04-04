@@ -1,8 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  WorkspaceMembersByRole
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -488,7 +485,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           if (workspacePlan) {
             switch (workspacePlan.name) {
               case 'team':
+              case 'teamUnlimited':
               case 'pro':
+              case 'proUnlimited':
               case 'starter':
               case 'plus':
               case 'business':
@@ -510,6 +509,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'starterInvoiced':
               case 'plusInvoiced':
               case 'businessInvoiced':
+              case 'proUnlimitedInvoiced':
+              case 'teamUnlimitedInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)
@@ -1117,6 +1118,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           return team
         },
+        teamByRole: async (parent) => {
+          const { id: workspaceId } = parent
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
+
+          return {
+            admins: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            },
+            members: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Member
+              })
+            },
+            guests: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            }
+          }
+        },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
             queryAllResourceInvites: queryAllResourceInvitesFactory({
@@ -1225,34 +1254,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        },
-        membersByRole: (parent) =>
-          ({
-            admins: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Admin
-              })
-            }),
-            members: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Member
-              })
-            }),
-            guests: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Guest
-              })
-            })
-          } as unknown as WorkspaceMembersByRole)
+        }
       },
       WorkspaceSso: {
         provider: async ({ workspaceId }) => {

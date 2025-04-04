@@ -1,19 +1,12 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type {
-  Resolvers,
-  WorkspaceSeatsByType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import {
-  ensureError,
-  PaidWorkspacePlansNew,
-  Roles,
-  throwUncoveredError
-} from '@speckle/shared'
+import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -40,7 +33,6 @@ import {
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
-  calculateSubscriptionSeats,
   CreateCheckoutSession,
   CreateCheckoutSessionOld,
   WorkspaceSeatType
@@ -71,6 +63,10 @@ import {
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -96,7 +92,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'plus':
             case 'business':
             case 'team':
+            case 'teamUnlimited':
             case 'pro':
+            case 'proUnlimited':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
@@ -107,6 +105,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starterInvoiced':
             case 'plusInvoiced':
             case 'businessInvoiced':
+            case 'proUnlimitedInvoiced':
+            case 'teamUnlimitedInvoiced':
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -119,12 +119,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const subscription = await getWorkspaceSubscriptionFactory({ db })({
             workspaceId
           })
-          if (!subscription) return subscription
-          const seats = calculateSubscriptionSeats({
-            subscriptionData: subscription.subscriptionData,
-            guestSeatProductId: getWorkspacePlanProductId({ workspacePlan: 'guest' })
-          })
-          return { ...subscription, seats }
+          return subscription
         },
         customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
@@ -171,59 +166,83 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
+      WorkspacePlan: {
+        usage: async (parent) => {
+          return { workspaceId: parent.workspaceId }
+        }
+      },
+      WorkspacePlanUsage: {
+        projectCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesProjectsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
         },
-        seatsByType: (parent) =>
-          ({
-            editors: async () => ({
-              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
-                workspaceId: parent.id,
-                type: 'editor'
-              })
-            }),
-            viewers: async () => ({
-              totalCount: await countSeatsByTypeInWorkspaceFactory({ db })({
-                workspaceId: parent.id,
-                type: 'viewer'
-              })
-            })
-          } as unknown as WorkspaceSeatsByType)
+        modelCount: async (parent) => {
+          const { workspaceId } = parent
+
+          let modelCount = 0
+
+          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+            getStreams: legacyGetStreamsFactory({ db })
+          })
+
+          for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+            for (const project of projects) {
+              const regionDb = await getProjectDbClient({ projectId: project.id })
+              const projectModelCount =
+                await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+                  project.id,
+                  {}
+                )
+              modelCount = modelCount + projectModelCount
+            }
+          }
+
+          return modelCount
+        }
       },
       WorkspaceSubscription: {
         seats: async (parent) => {
+          return parent
+        }
+      },
+      WorkspaceSubscriptionSeats: {
+        editors: async (parent) => {
+          const { workspaceId, subscriptionData } = parent
+
           const workspacePlan = await getWorkspacePlanFactory({ db })({
-            workspaceId: parent.workspaceId
+            workspaceId
           })
-          if (!workspacePlan || !isNewPlanType(workspacePlan.name)) {
+
+          if (!workspacePlan) {
             return {
-              ...calculateSubscriptionSeats({
-                subscriptionData: parent.subscriptionData,
-                guestSeatProductId: getWorkspacePlanProductId({
-                  workspacePlan: 'guest'
-                })
-              }),
-              // These values have no reference in the old plans FF_WORKSPACES_NEW_PLANS_ENABLED
-              totalCount: 0,
-              assigned: 0
+              assigned: 0,
+              available: 0
             }
           }
-          // Only editor seats are considered
-          const assignedSeatsCount = await countSeatsByTypeInWorkspaceFactory({ db })({
-            workspaceId: parent.workspaceId,
-            type: 'editor'
-          })
+
           return {
-            assigned: assignedSeatsCount,
-            totalCount: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-              workspacePlan,
-              subscriptionData: parent.subscriptionData
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
+              type: 'editor'
             }),
-            viewersCount: await countSeatsByTypeInWorkspaceFactory({ db })({
-              workspaceId: parent.workspaceId,
+            available: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData
+            })
+          }
+        },
+        viewers: async ({ workspaceId }) => {
+          return {
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
               type: 'viewer'
             }),
-            // These values have no reference in the new plans
-            guest: 0,
-            plan: 0
+            available: 0
           }
         }
       },
@@ -429,7 +448,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                 })
           await upgradeWorkspaceSubscription({
             workspaceId,
-            targetPlan: workspacePlan as PaidWorkspacePlansNew, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
             billingInterval
           })
           return true

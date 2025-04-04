@@ -55,13 +55,11 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -558,19 +556,7 @@ describe('Workspaces GQL CRUD', () => {
               id: project1Id,
               name: project1Name
             }
-          },
-          // No longer auto-assigned in new plan world (until we rework auth & queries)
-          ...(FF_GATEKEEPER_FORCE_FREE_PLAN
-            ? []
-            : [
-                {
-                  role: Roles.Stream.Reviewer,
-                  project: {
-                    id: project2Id,
-                    name: project2Name
-                  }
-                }
-              ])
+          }
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest
@@ -856,10 +842,10 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.membersByRole
-        expect(seats?.guests?.totalCount).to.eq(2)
-        expect(seats?.members?.totalCount).to.eq(3)
-        expect(seats?.admins?.totalCount).to.eq(1)
+        const roles = res.data?.workspace.teamByRole
+        expect(roles?.guests?.totalCount).to.eq(2)
+        expect(roles?.members?.totalCount).to.eq(3)
+        expect(roles?.admins?.totalCount).to.eq(1)
       })
     })
   })

@@ -19,7 +19,6 @@ workflows:
       - test-server: &test-server-job-definition
           context:
             - speckle-server-licensing
-            - stripe-integration
             - speckle-server-codecov
           filters: &filters-allow-all
             tags:
@@ -511,7 +510,7 @@ jobs:
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
-          command: touch .env.test
+          command: cp .env.test-example .env.test
           working_directory: 'packages/server'
 
       - run:
@@ -996,7 +995,7 @@ jobs:
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Template Helm Chart
+          name: Template Speckle Server Helm Chart
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \
