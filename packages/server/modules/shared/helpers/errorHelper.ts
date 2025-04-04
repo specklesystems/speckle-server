@@ -49,3 +49,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       throwUncoveredError(e)
   }
 }
+
+export const throwIfAuthNotOk = (result: Authz.AuthPolicyResult) => {
+  if (result.isOk) return
+  throw mapAuthToServerError(result.error)
+}

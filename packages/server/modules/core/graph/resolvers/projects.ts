@@ -87,7 +87,7 @@ import {
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -180,10 +180,7 @@ export = {
         projectId: args.id,
         userId: context.userId
       })
-
-      if (!canQuery.isOk) {
-        throw mapAuthToServerError(canQuery.error)
-      }
+      throwIfAuthNotOk(canQuery)
 
       const project = await getStream({ streamId: args.id })
 
@@ -266,9 +263,7 @@ export = {
       const canCreate = await context.authPolicies.project.canCreateLegacy({
         userId: context.userId
       })
-      if (canCreate.isErr) {
-        throw mapAuthToServerError(canCreate.error)
-      }
+      throwIfAuthNotOk(canCreate)
 
       const regionKey = await getValidDefaultProjectRegionKey()
       const projectDb = await getDb({ regionKey })
