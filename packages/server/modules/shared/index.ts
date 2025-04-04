@@ -1,6 +1,5 @@
 import { db } from '@/db/knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getWorkspaceRoleAndSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getUserAclRoleFactory,
@@ -18,6 +17,7 @@ import {
   CommitSubscriptions,
   BranchSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 
 export {
   pubsub,

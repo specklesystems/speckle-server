@@ -4,7 +4,6 @@ import {
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
-import { GetWorkspaceRoleAndSeat } from '@/modules/gatekeeper/domain/billing'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -16,6 +15,7 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
 import { OperationTypeNode } from 'graphql'
 
