@@ -48,6 +48,9 @@ spec:
           limits:
             cpu: {{ .Values.preview_service.limits.cpu }}
             memory: {{ .Values.preview_service.limits.memory }}
+            {{- if (and .Values.preview_service.nvidiaGPUEnabled (get .Values.preview_service.limits "nvidia.com/gpu"))}}
+            nvidia.com/gpu: {{ (get .Values.preview_service.limits "nvidia.com/gpu") }}
+            {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false

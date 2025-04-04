@@ -1123,6 +1123,9 @@ preview_service:
   ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
   ##
   dedicatedPreviewsQueue: false
+  ## @param preview_service.nvidiaGPUEnabled If enabled, the Preview Service will be deployed with GPU support. This is only available on Kubernetes clusters with GPU support.
+  ##
+  nvidiaGPUEnabled: false
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1171,6 +1174,9 @@ preview_service:
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
     memory: 4Gi
+    ## @param preview_service.limits.nvidia.com/gpu The maximum number of GPUs that will be made available to the Preview Service Pod. Ignored if preview_service.nvidiaGPUEnabled is false.
+    ## If this limit is exceeded, processes within the pod that request additional GPUs may be paused.
+    nvidia.com/gpu: 1
   autoscaling:
     ## @param preview_service.autoscaling.enabled
     ## @descriptionStart

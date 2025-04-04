@@ -1915,6 +1915,11 @@
           "description": "Allows using a dedicated redis url for the preview service job queue",
           "default": false
         },
+        "nvidiaGPUEnabled": {
+          "type": "boolean",
+          "description": "If enabled, the Preview Service will be deployed with GPU support. This is only available on Kubernetes clusters with GPU support.",
+          "default": false
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
