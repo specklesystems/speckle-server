@@ -138,6 +138,8 @@ export const init = async (params: { app: Express; metricsRegister: Registry }) 
     await module.finalize?.({ app, isInitial, metricsRegister })
   }
 
+  // Reset some caches
+
   // Validate & cache authz loaders
   await moduleAuthLoaders({
     dataLoaders: undefined

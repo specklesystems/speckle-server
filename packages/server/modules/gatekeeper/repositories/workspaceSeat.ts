@@ -1,10 +1,6 @@
-import { buildTableHelper, StreamAcl, Streams } from '@/modules/core/dbSchema'
+import { StreamAcl, Streams } from '@/modules/core/dbSchema'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import {
-  GetWorkspaceRoleAndSeat,
-  GetWorkspaceRolesAndSeats,
-  WorkspaceSeat
-} from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import {
   CountSeatsByTypeInWorkspace,
   CreateWorkspaceSeat,
@@ -14,18 +10,13 @@ import {
   GetWorkspaceUserSeat,
   GetWorkspaceUserSeats
 } from '@/modules/gatekeeper/domain/operations'
-import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
+import { WorkspaceAcl, WorkspaceSeats } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
-
-const WorkspaceSeats = buildTableHelper('workspace_seats', [
-  'workspaceId',
-  'userId',
-  'type',
-  'createdAt',
-  'updatedAt'
-])
+export {
+  getWorkspaceRoleAndSeatFactory,
+  getWorkspaceRolesAndSeatsFactory
+} from '@/modules/workspacesCore/repositories/rolesSeats'
 
 const tables = {
   workspaceSeats: (db: Knex) => db<WorkspaceSeat>(WorkspaceSeats.name),
@@ -91,55 +82,6 @@ export const getWorkspaceUserSeatFactory =
       userIds: [userId]
     })
     return seats[userId]
-  }
-
-export const getWorkspaceRolesAndSeatsFactory =
-  (deps: { db: Knex }): GetWorkspaceRolesAndSeats =>
-  async ({ workspaceId, userIds }) => {
-    const q = tables
-      .workspaceAcl(deps.db)
-      .select<Array<{ seats: WorkspaceSeat[]; roles: WorkspaceAclRecord[] }>>([
-        // There's only ever gonna be 1 role and seat per user, but this way we can avoid having to group
-        // by many columns and we can get everything in 1 query
-        WorkspaceAcl.groupArray('roles'),
-        WorkspaceSeats.groupArray('seats')
-      ])
-      .leftJoin(WorkspaceSeats.name, (j1) => {
-        j1.on(WorkspaceSeats.col.userId, WorkspaceAcl.col.userId).andOnVal(
-          WorkspaceSeats.col.workspaceId,
-          workspaceId
-        )
-      })
-      .where(WorkspaceAcl.col.workspaceId, workspaceId)
-      .groupBy(WorkspaceAcl.col.userId)
-
-    if (userIds?.length) {
-      q.whereIn(WorkspaceAcl.col.userId, userIds)
-    }
-
-    const res = await q
-    return res.reduce((acc, row) => {
-      const role = formatJsonArrayRecords(row.roles)[0]
-      if (!role) return acc
-
-      acc[role.userId] = {
-        role,
-        seat: formatJsonArrayRecords(row.seats || [])[0] || null,
-        userId: role.userId
-      }
-      return acc
-    }, {} as Awaited<ReturnType<GetWorkspaceRolesAndSeats>>)
-  }
-
-export const getWorkspaceRoleAndSeatFactory =
-  (deps: { db: Knex }): GetWorkspaceRoleAndSeat =>
-  async ({ workspaceId, userId }) => {
-    const getWorkspaceRolesAndSeats = getWorkspaceRolesAndSeatsFactory(deps)
-    const rolesAndSeats = await getWorkspaceRolesAndSeats({
-      workspaceId,
-      userIds: [userId]
-    })
-    return rolesAndSeats[userId]
   }
 
 export const getWorkspacesUsersSeatsFactory =

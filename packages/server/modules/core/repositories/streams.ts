@@ -705,7 +705,8 @@ const getUserStreamsQueryBaseFactory =
     withRoles,
     streamIdWhitelist,
     workspaceId,
-    onlyWithActiveSsoSession
+    onlyWithActiveSsoSession,
+    personalOnly
   }: BaseUserStreamsQueryParams) => {
     const query = tables
       .streamAcl(deps.db)
@@ -740,8 +741,10 @@ const getUserStreamsQueryBaseFactory =
         })
     }
 
-    if (!isUndefined(workspaceId)) {
+    if (workspaceId?.length) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
+    } else if (personalOnly) {
+      query.andWhere(Streams.col.workspaceId, null)
     }
 
     if (ownedOnly || withRoles?.length) {

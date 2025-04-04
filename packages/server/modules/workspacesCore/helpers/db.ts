@@ -36,3 +36,11 @@ export const WorkspaceJoinRequests = buildTableHelper('workspace_join_requests',
   'createdAt',
   'updatedAt'
 ])
+
+export const WorkspaceSeats = buildTableHelper('workspace_seats', [
+  'workspaceId',
+  'userId',
+  'type',
+  'createdAt',
+  'updatedAt'
+])

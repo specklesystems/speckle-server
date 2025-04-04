@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { hasMinimumServerRole, canUseAdminOverride } from './serverRole.js'
 import cryptoRandomString from 'crypto-random-string'
-import { parseFeatureFlags } from '../../environment/index.js'
 
 describe('hasMinimumServerRole returns a function, that', () => {
   it('turns non existing server roles into false ', async () => {
@@ -33,7 +32,7 @@ describe('hasMinimumServerRole returns a function, that', () => {
 describe('canUseAdminOverride returns a function, that', () => {
   it('returns false for admins if admin override is not enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({}),
+      getAdminOverrideEnabled: async () => false,
       getServerRole: async () => {
         expect.fail()
       }
@@ -42,21 +41,21 @@ describe('canUseAdminOverride returns a function, that', () => {
   })
   it('returns false for non admins if admin override is not enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({}),
+      getAdminOverrideEnabled: async () => false,
       getServerRole: async () => 'server:user'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(false)
   })
   it('returns false for non admins if admin override is enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
+      getAdminOverrideEnabled: async () => true,
       getServerRole: async () => 'server:user'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(false)
   })
   it('returns true for admins if admin override is enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
+      getAdminOverrideEnabled: async () => true,
       getServerRole: async () => 'server:admin'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(true)

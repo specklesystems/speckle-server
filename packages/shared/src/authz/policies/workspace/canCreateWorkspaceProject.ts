@@ -1,4 +1,4 @@
-import { AuthPolicy } from '../domain/policies.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
@@ -9,18 +9,18 @@ import {
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
+} from '../../domain/authErrors.js'
 import { err, ok } from 'true-myth/result'
-import { hasMinimumServerRole } from '../checks/serverRole.js'
-import { Roles } from '../../core/constants.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../fragments/workspaceSso.js'
-import { throwUncoveredError } from '../../core/index.js'
-import { hasEditorSeat } from '../checks/workspaceSeat.js'
-import { MaybeUserContext, WorkspaceContext } from '../domain/context.js'
+import { hasMinimumServerRole } from '../../checks/serverRole.js'
+import { Roles } from '../../../core/constants.js'
+import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
+import { throwUncoveredError } from '../../../core/index.js'
+import { hasEditorSeat } from '../../checks/workspaceSeat.js'
+import { MaybeUserContext, WorkspaceContext } from '../../domain/context.js'
 import {
   isNewWorkspacePlan,
   isWorkspacePlanStatusReadOnly
-} from '../../workspaces/index.js'
+} from '../../../workspaces/index.js'
 
 export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getEnv'

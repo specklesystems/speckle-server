@@ -342,12 +342,17 @@ export const unassignFromWorkspaces = async (
 }
 
 export const assignToWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser, MaybeNullOrUndefined<WorkspaceRoles>][]
+  pairs: [
+    BasicTestWorkspace,
+    BasicTestUser,
+    MaybeNullOrUndefined<WorkspaceRoles>,
+    seatType?: MaybeNullOrUndefined<WorkspaceSeatType>
+  ][]
 ) => {
   // Serial execution is somehow faster with bigger batch sizes, assignToWorkspace
   // may be quite heavy on the DB
-  for (const [workspace, user, role] of pairs) {
-    await assignToWorkspace(workspace, user, role || undefined)
+  for (const [workspace, user, role, seatType] of pairs) {
+    await assignToWorkspace(workspace, user, role || undefined, seatType || undefined)
   }
 }
 

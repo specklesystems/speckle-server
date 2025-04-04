@@ -1,5 +1,34 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const projectPageTeamDialogFragment = graphql(`
+  fragment ProjectPageTeamDialog on Project {
+    id
+    name
+    role
+    allowPublicComments
+    visibility
+    team {
+      id
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    invitedTeam {
+      id
+      title
+      inviteId
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    ...ProjectsPageTeamDialogManagePermissions_Project
+  }
+`)
+
 export const projectDashboardItemNoModelsFragment = graphql(`
   fragment ProjectDashboardItemNoModels on Project {
     id

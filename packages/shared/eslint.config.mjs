@@ -13,6 +13,9 @@ const configs = [
       }
     }
   },
+  {
+    ignores: ['**/html/**']
+  },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
     files: [...(c.files || []), '**/*.ts', '**/*.d.ts']

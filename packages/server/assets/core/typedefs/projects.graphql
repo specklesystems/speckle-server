@@ -208,7 +208,15 @@ input UserProjectsFilter {
   """
   onlyWithRoles: [String!]
 
+  """
+  Only include projects in the specified workspace
+  """
   workspaceId: ID
+
+  """
+  Only include personal projects (not in any workspace)
+  """
+  personalOnly: Boolean
 }
 
 enum UserProjectsUpdatedMessageType {

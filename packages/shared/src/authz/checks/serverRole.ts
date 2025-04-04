@@ -1,5 +1,6 @@
 import { Roles, ServerRoles } from '../../core/constants.js'
 import { UserContext } from '../domain/context.js'
+import { Loaders } from '../domain/loaders.js'
 import { isMinimumServerRole } from '../domain/logic/roles.js'
 import { AuthPolicyCheck } from '../domain/policies.js'
 
@@ -15,13 +16,13 @@ export const hasMinimumServerRole: AuthPolicyCheck<
   }
 
 export const canUseAdminOverride: AuthPolicyCheck<
-  'getEnv' | 'getServerRole',
+  typeof Loaders.getAdminOverrideEnabled | 'getServerRole',
   UserContext
 > =
   (loaders) =>
   async ({ userId }) => {
-    const { FF_ADMIN_OVERRIDE_ENABLED } = await loaders.getEnv()
-    if (!FF_ADMIN_OVERRIDE_ENABLED) return false
+    const adminOverrideEnabled = await loaders.getAdminOverrideEnabled()
+    if (!adminOverrideEnabled) return false
     return await hasMinimumServerRole(loaders)({
       userId,
       role: Roles.Server.Admin

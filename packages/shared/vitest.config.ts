@@ -11,6 +11,7 @@ export default defineConfig({
       enabled: true,
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}']
-    }
+    },
+    setupFiles: ['./src/tests/setup.ts']
   }
 })
