@@ -5,7 +5,7 @@ import {
   getUserAclRoleFactory,
   getUserServerRoleFactory
 } from '@/modules/shared/repositories/acl'
-import { getCachedRolesFactory } from '@/modules/shared/repositories/roles'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import {
   authorizeResolverFactory,
   validateScopesFactory
@@ -28,7 +28,7 @@ export {
 
 export const validateScopes = validateScopesFactory()
 export const authorizeResolver = authorizeResolverFactory({
-  getRoles: getCachedRolesFactory({ db }),
+  getRoles: getRolesFactory({ db }),
   adminOverrideEnabled,
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),

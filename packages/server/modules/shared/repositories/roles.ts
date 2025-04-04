@@ -3,10 +3,6 @@ import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Knex } from 'knex'
 import { DatabaseError } from '@/modules/shared/errors'
 import { UserRoles } from '@/modules/core/dbSchema'
-import {
-  inMemoryCacheProviderFactory,
-  wrapFactoryWithCache
-} from '@/modules/shared/utils/caching'
 
 let roles: UserRole[]
 
@@ -31,13 +27,6 @@ export const getRolesFactory =
     }
     return roles
   }
-
-export const getCachedRolesFactory = wrapFactoryWithCache({
-  factory: getRolesFactory,
-  name: 'modules/shared/repositories/roles::getRolesFactory',
-  ttlMs: 1000 * 60 * 60, // an hour,
-  cacheProvider: inMemoryCacheProviderFactory()
-})
 
 export const registerOrUpdateRole =
   ({ db }: { db: Knex }): UpsertRole =>
