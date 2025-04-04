@@ -16,7 +16,7 @@
         <p class="text-body-xs text-foreground font-medium">
           You're not a member of any workspaces.
         </p>
-        <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
+        <FormButton :to="workspaceCreateRoute">Create a workspace</FormButton>
       </div>
 
       <div v-if="project && selectedWorkspace" class="text-body-xs">
@@ -71,7 +71,7 @@ import { useMutationLoading, useQuery } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
-import { workspacesRoute } from '~/lib/common/helpers/route'
+import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant

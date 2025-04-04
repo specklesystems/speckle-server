@@ -88,6 +88,9 @@ networkPlugin:
 ## @descriptionEnd
 ##
 ingress:
+  ## @param ingress.enabled If enabled, the ingress resources will be deployed
+  ##
+  enabled: true
   ## @param ingress.namespace The namespace in which the ingress controller is deployed.
   namespace: ingress-nginx
   ## @param ingress.controllerName The name of the Kubernetes pod in which the ingress controller is deployed.
@@ -95,7 +98,7 @@ ingress:
 
 ## @section Common parameters
 ##
-## @param docker_image_tag Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
+## @param docker_image_tag DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
 ##
 docker_image_tag: '2'
 
@@ -461,6 +464,9 @@ imagePullSecrets: []
 ## @descriptionEnd
 ##
 server:
+  ## @param server.enabled If enabled, the Speckle server will be deployed
+  ##
+  enabled: true
   ## @param server.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -936,6 +942,9 @@ server:
 ## @descriptionEnd
 ##
 objects:
+  ## @param objects.enabled If enabled, the Speckle server will be deployed with the Objects component enabled.
+  ##
+  enabled: true
   ## @param objects.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1109,11 +1118,12 @@ frontend_2:
 ## @descriptionEnd
 ##
 preview_service:
-  ## @param preview_service.deployInCluster If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
-  deployInCluster: true
+  ## @param preview_service.enabled If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
+  enabled: true
   ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
   ##
   dedicatedPreviewsQueue: false
+
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1162,6 +1172,28 @@ preview_service:
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
     memory: 4Gi
+  autoscaling:
+    ## @param preview_service.autoscaling.enabled
+    ## @descriptionStart
+    ## Enables the Horizontal Pod Autoscaler
+    ## @descriptionEnd
+    enabled: false
+    ## @param preview_service.autoscaling.minReplicas
+    ## @descriptionStart
+    ## Minimum number of replicas to scale down to
+    ## @descriptionEnd
+    minReplicas: 1
+    ## @param preview_service.autoscaling.maxReplicas
+    ## @descriptionStart
+    ## Maximum number of replicas to scale up to
+    ## @descriptionEnd
+    maxReplicas: 10
+    ## @param preview_service.autoscaling.targetCPUUtilizationPercentage
+    ## @descriptionStart
+    ## Target CPU utilization percentage
+    ## @descriptionEnd
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
   networkPolicy:
     ## @param preview_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
     ## If enabled, the `db.networkPolicy` parameters need be configured.
@@ -1198,6 +1230,8 @@ preview_service:
 ## @descriptionEnd
 ##
 webhook_service:
+  ## @param webhook_service.enabled If enabled, the Webhook Service will be deployed within the cluster.
+  enabled: true
   ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1271,6 +1305,8 @@ webhook_service:
 ## @descriptionEnd
 ##
 fileimport_service:
+  ## @param fileimport_service.enabled If enabled, the File Import Service will be deployed within the cluster.
+  enabled: true
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1359,6 +1395,8 @@ fileimport_service:
 ## @descriptionEnd
 ##
 monitoring:
+  ## @param monitoring.enabled If enabled, database monitoring will be deployed within the cluster.
+  enabled: true
   ## @param monitoring.replicas The number of instances of the Monitoring pod to be deployed within the cluster.
   ##
   replicas: 1
