@@ -1,5 +1,7 @@
 import {
   Box3,
+  BufferAttribute,
+  BufferGeometry,
   Camera,
   DoubleSide,
   Matrix4,
@@ -17,6 +19,7 @@ import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { getConversionFactor } from '../../converter/Units.js'
+import { Geometry } from '../../converter/Geometry.js'
 
 export class AreaMeasurement extends Measurement {
   private pointGizmos: MeasurementPointGizmo[]
@@ -30,6 +33,7 @@ export class AreaMeasurement extends Measurement {
 
   private planeMesh: Mesh
   private fillMesh: Mesh
+  private fillPolygon: Mesh
 
   public set isVisible(value: boolean) {
     this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
@@ -76,7 +80,8 @@ export class AreaMeasurement extends Measurement {
           color: 0xff0000,
           side: DoubleSide,
           opacity: 0.5,
-          transparent: true
+          transparent: true,
+          visible: false
         })
       )
       this.fillMesh.layers.set(ObjectLayers.MEASUREMENTS)
@@ -95,6 +100,41 @@ export class AreaMeasurement extends Measurement {
     box.applyMatrix4(mat)
     box.getSize(this.fillMesh.scale)
     this.fillMesh.quaternion.copy(quaternion)
+  }
+
+  private updateFillMesh() {
+    if (!this.fillPolygon) {
+      this.fillPolygon = new Mesh(
+        new BufferGeometry(),
+        new MeshBasicMaterial({
+          color: 0x00ff00,
+          side: DoubleSide,
+          opacity: 0.75,
+          transparent: true
+        })
+      )
+      this.fillPolygon.layers.set(ObjectLayers.MEASUREMENTS)
+      this.add(this.fillPolygon)
+    }
+    const geometry = this.fillPolygon.geometry
+
+    const buffer = new Float32Array(this.measuredPoints.length * 3)
+    this.measuredPoints.forEach((point: Vector3, index) =>
+      point.toArray(buffer, index * 3)
+    )
+
+    const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    const projectedPoints = this.measuredPoints.map(
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      (p) => new Vector2(p[axis1], p[axis2])
+    )
+    const indices = Geometry.triangulatePolygon(projectedPoints)
+    geometry.setAttribute('position', new BufferAttribute(buffer, 3))
+    geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
+    geometry.computeBoundingBox()
   }
 
   public locationUpdated(point: Vector3, normal: Vector3) {
@@ -136,7 +176,10 @@ export class AreaMeasurement extends Measurement {
     this.pointIndex++
 
     void this.update()
-    if (this.points.length > 2) this.updateFillPlane()
+    if (this.points.length > 2) {
+      this.updateFillPlane()
+      this.updateFillMesh()
+    }
 
     console.warn('Area -> ', this.shoelaceArea3D(this.measuredPoints, this.planeNormal))
   }
@@ -183,6 +226,11 @@ export class AreaMeasurement extends Measurement {
     }
 
     if (this._state === MeasurementState.COMPLETE) {
+      this.pointGizmos[this.pointIndex - 1].updateLine([
+        this.points[this.pointIndex - 2],
+        this.points[0]
+      ])
+      this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
       this.pointGizmos[this.pointIndex].enable(false, false, false, false)
       this.planeMesh.visible = false
     }
