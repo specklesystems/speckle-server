@@ -29,12 +29,12 @@ graphql(`
       currentBillingCycleEnd
       seats {
         editors {
-          available
           assigned
+          available
         }
         viewers {
-          available
           assigned
+          available
         }
       }
     }
@@ -122,9 +122,9 @@ export const useWorkspacePlan = (slug: string) => {
       return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
 
     return {
-      limit: seats.editors.assigned + seats.editors.available,
+      limit: seats.editors.available,
       used: seats.editors.assigned,
-      hasSeatAvailable: seats.editors.available > 0,
+      hasSeatAvailable: seats.editors.available > seats.editors.assigned,
       seatPrice: editorSeatPrice
     }
   })
