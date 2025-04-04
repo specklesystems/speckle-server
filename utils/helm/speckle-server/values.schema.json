@@ -831,184 +831,94 @@
               }
             },
             "workspaceGuestSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.",
-                  "default": "workspaceGuestSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Guest Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyGuestSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyGuestSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Guest Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyGuestSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyGuestSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Guest Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceStarterSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.",
-                  "default": "workspaceStarterSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Starter Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyStarterSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyStarterSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Starter Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyStarterSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyStarterSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Starter Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspacePlusSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.",
-                  "default": "workspacePlusSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Plus Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyPlusSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyPlusSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Plus Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyPlusSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyPlusSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Plus Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceBusinessSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.",
-                  "default": "workspaceBusinessSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Business Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyBusinessSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Business Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyBusinessSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Business Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceTeamSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
-                  "default": "workspaceTeamSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Team Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyTeamSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyTeamSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyTeamSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyTeamSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceProSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
-                  "default": "workspaceProSeatStripeProductId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Pro Seat Product Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceMonthlyProSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyProSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
+              "default": ""
             },
             "workspaceYearlyProSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyProSeatStripePriceId"
-                }
-              }
+              "type": "string",
+              "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+              "default": ""
             }
           }
         },
