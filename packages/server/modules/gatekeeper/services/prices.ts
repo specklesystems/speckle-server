@@ -5,15 +5,12 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePlanProductPrices } from '@/modules/gatekeeperCore/domain/billing'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   redisCacheProviderFactory,
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
-import { Optional, PaidWorkspacePlansNew, TIME } from '@speckle/shared'
+import { Optional, TIME } from '@speckle/shared'
 import { set } from 'lodash'
-
-const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const getFreshWorkspacePlanProductPricesFactory =
   (deps: {
@@ -26,12 +23,6 @@ export const getFreshWorkspacePlanProductPricesFactory =
 
     const ret = Object.entries(productAndPriceIds).reduce((acc, [plan, planIds]) => {
       const { productId, monthly } = planIds
-      if (
-        !FF_WORKSPACES_NEW_PLANS_ENABLED &&
-        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
-      ) {
-        return acc // skipping new plans
-      }
 
       const monthlyPrice = productPrices.find(
         (p) => p.id === monthly && p.productId === productId
@@ -76,7 +67,7 @@ export const getFreshWorkspacePlanProductPricesFactory =
 
 export const getWorkspacePlanProductPricesFactory = wrapFactoryWithCache({
   factory: getFreshWorkspacePlanProductPricesFactory,
-  name: `modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory:withNewPlans=${FF_WORKSPACES_NEW_PLANS_ENABLED}`,
+  name: `modules/gatekeeper/services/prices:getWorkspacePlanPricesFactory`,
   ttlMs: 1000 * TIME.day, // 1 day
   cacheProvider: redisCacheProviderFactory()
 })

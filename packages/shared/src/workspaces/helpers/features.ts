@@ -102,6 +102,16 @@ const baseFeatures = [
   WorkspacePlanFeatures.PrivateAutomateFunctions
 ] as const
 
+const teamFeatures = [...baseFeatures]
+
+const proFeatures = [
+  ...teamFeatures,
+  WorkspacePlanFeatures.DomainSecurity,
+  WorkspacePlanFeatures.SSO,
+  WorkspacePlanFeatures.CustomDataRegion,
+  WorkspacePlanFeatures.PrioritySupport
+]
+
 export const WorkspacePaidPlanConfigs: {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
@@ -133,24 +143,34 @@ export const WorkspacePaidPlanConfigs: {
   },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
-    features: baseFeatures,
+    features: teamFeatures,
     limits: {
       projectCount: 5,
       modelCount: 25
     }
   },
+  [PaidWorkspacePlans.TeamUnlimited]: {
+    plan: PaidWorkspacePlans.TeamUnlimited,
+    features: teamFeatures,
+    limits: {
+      projectCount: null,
+      modelCount: null
+    }
+  },
   [PaidWorkspacePlans.Pro]: {
     plan: PaidWorkspacePlans.Pro,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ],
+    features: proFeatures,
     limits: {
       projectCount: 10,
       modelCount: 50
+    }
+  },
+  [PaidWorkspacePlans.ProUnlimited]: {
+    plan: PaidWorkspacePlans.ProUnlimited,
+    features: proFeatures,
+    limits: {
+      projectCount: null,
+      modelCount: null
     }
   }
 }
@@ -194,6 +214,14 @@ export const WorkspaceUnpaidPlanConfigs: {
     plan: UnpaidWorkspacePlans.BusinessInvoiced
   },
   // New
+  [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
+    ...WorkspacePaidPlanConfigs.teamUnlimited,
+    plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
+  },
+  [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
+    ...WorkspacePaidPlanConfigs.proUnlimited,
+    plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
+  },
   [UnpaidWorkspacePlans.Free]: {
     plan: UnpaidWorkspacePlans.Free,
     features: baseFeatures,

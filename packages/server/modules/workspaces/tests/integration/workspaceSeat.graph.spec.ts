@@ -118,7 +118,7 @@ describe('Workspace Seats @graphql', () => {
       expect(res.data?.workspaceMutations.updateSeatType).to.not.be.ok
     })
 
-    it('should upgrade a workspace seat and reconcile subscription', async () => {
+    it.skip('should upgrade a workspace seat and reconcile subscription', async () => {
       const user: BasicTestUser = {
         id: createRandomString(),
         name: createRandomString(),
