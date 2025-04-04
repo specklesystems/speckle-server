@@ -34,12 +34,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.objects.requests }}
           requests:
-            cpu: {{ .Values.objects.requests.cpu }}
-            memory: {{ .Values.objects.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.objects.limits }}
           limits:
-            cpu: {{ .Values.objects.limits.cpu }}
-            memory: {{ .Values.objects.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
