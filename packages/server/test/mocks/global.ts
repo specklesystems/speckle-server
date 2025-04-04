@@ -1,5 +1,4 @@
 import { createGlobalMock, mockRequireModule } from '@/test/mockHelper'
-import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 /**
  * Global mocks that can be re-used. Early setup ensures that mocks work.
@@ -41,15 +40,10 @@ export const EnvHelperMock = mockRequireModule<
 
 export const mockAdminOverride = () => {
   const enable = (enabled: boolean) => {
-    EnvHelperMock.mockFunction('getFeatureFlags', () => ({
-      ...Environment.getFeatureFlags(),
-      FF_ADMIN_OVERRIDE_ENABLED: enabled
-    }))
     EnvHelperMock.mockFunction('adminOverrideEnabled', () => enabled)
   }
 
   const disable = () => {
-    EnvHelperMock.resetMockedFunction('getFeatureFlags')
     EnvHelperMock.resetMockedFunction('adminOverrideEnabled')
   }
 

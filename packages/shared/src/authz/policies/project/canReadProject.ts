@@ -20,6 +20,7 @@ import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/work
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 
 export const canReadProjectPolicy: AuthPolicy<
+  | typeof AuthCheckContextLoaderKeys.getAdminOverrideEnabled
   | typeof AuthCheckContextLoaderKeys.getEnv
   | typeof AuthCheckContextLoaderKeys.getProject
   | typeof AuthCheckContextLoaderKeys.getProjectRole

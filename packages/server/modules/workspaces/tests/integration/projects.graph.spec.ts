@@ -45,7 +45,7 @@ import { times } from 'lodash'
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const adminOverrideMock = mockAdminOverride()
 
-describe('Workspace project GQL CRUD', () => {
+describe('BABABOOEYWorkspace project GQL CRUD', () => {
   let apollo: TestApolloServer
 
   const workspace: BasicTestWorkspace = {

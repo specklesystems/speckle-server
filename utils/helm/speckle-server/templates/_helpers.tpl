@@ -865,7 +865,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{ end }}
 
 {{- if .Values.server.adminOverrideEnabled }}
-- name: FF_ADMIN_OVERRIDE_ENABLED
+- name: ADMIN_OVERRIDE_ENABLED
   value: "true"
 {{- end }}
 
