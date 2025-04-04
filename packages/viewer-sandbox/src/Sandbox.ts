@@ -148,7 +148,7 @@ export default class Sandbox {
   public measurementsParams = {
     enabled: false,
     visible: true,
-    type: MeasurementType.POINTTOPOINT,
+    type: MeasurementType.AREA,
     vertexSnap: true,
     units: 'm',
     precision: 2
@@ -1203,7 +1203,8 @@ export default class Sandbox {
         label: 'Type',
         options: {
           PERPENDICULAR: MeasurementType.PERPENDICULAR,
-          POINTTOPOINT: MeasurementType.POINTTOPOINT
+          POINTTOPOINT: MeasurementType.POINTTOPOINT,
+          AREA: MeasurementType.AREA
         }
       })
       .on('change', () => {
