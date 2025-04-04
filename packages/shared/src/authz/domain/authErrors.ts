@@ -1,4 +1,5 @@
 import { get, isObjectLike } from '#lodash'
+import { ValueOf } from 'type-fest'
 import { WorkspaceLimits } from '../../workspaces/helpers/limits.js'
 
 export type AuthError<ErrorCode extends string = string, Payload = undefined> = {
@@ -113,3 +114,13 @@ export const ServerNoSessionError = defineAuthError({
   code: 'ServerNoSession',
   message: 'You are not logged in to this server'
 })
+
+// Resolve all exported error types
+export type AllAuthErrors = ValueOf<{
+  [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...args: any[]
+  ) => infer R
+    ? R
+    : never
+}>
