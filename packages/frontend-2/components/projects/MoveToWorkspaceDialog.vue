@@ -1,66 +1,68 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Move project to workspace</template>
-    <div class="flex flex-col space-y-4">
-      <template v-if="!workspace">
-        <ProjectsWorkspaceSelect
-          v-if="hasWorkspaces"
-          v-model="selectedWorkspace"
-          :items="workspaces"
-          :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
-          disabled-item-tooltip="Only workspace admins can move projects into a workspace."
-          label="Select a workspace"
-          help="Once a project is moved to a workspace, it cannot be moved out from it."
-          show-label
-        />
-        <div v-else class="flex flex-col gap-y-2">
-          <p class="text-body-xs text-foreground font-medium">
-            You're not a member of any workspaces.
-          </p>
-          <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
-        </div>
-      </template>
+  <div>
+    <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+      <template #header>Move project to workspace</template>
+      <div class="flex flex-col space-y-4">
+        <template v-if="!workspace">
+          <ProjectsWorkspaceSelect
+            v-if="hasWorkspaces"
+            v-model="selectedWorkspace"
+            :items="workspaces"
+            :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+            disabled-item-tooltip="Only workspace admins can move projects into a workspace."
+            label="Select a workspace"
+            help="Once a project is moved to a workspace, it cannot be moved out from it."
+            show-label
+          />
+          <div v-else class="flex flex-col gap-y-2">
+            <p class="text-body-xs text-foreground font-medium">
+              You're not a member of any workspaces.
+            </p>
+            <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
+          </div>
+        </template>
 
-      <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
-        <div class="text-body-xs text-foreground flex flex-col gap-y-4">
-          <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
-            <p>
-              Move
-              <span class="font-medium">{{ project.name }}</span>
-              to
-              <span class="font-medium">
-                {{ selectedWorkspace?.name ?? workspace?.name }}
+        <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
+          <div class="text-body-xs text-foreground flex flex-col gap-y-4">
+            <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
+              <p>
+                Move
+                <span class="font-medium">{{ project.name }}</span>
+                to
+                <span class="font-medium">
+                  {{ selectedWorkspace?.name ?? workspace?.name }}
+                </span>
+              </p>
+              <p class="text-foreground-3">
+                {{ project.modelCount.totalCount }} {{ modelText }},
+                {{ project.versions.totalCount }} {{ versionsText }}
+              </p>
+            </div>
+            <p class="text-body-2xs text-foreground-2">
+              The project, including models and versions, will be moved to the
+              workspace, where all existing members and admins will have access.
+              <span class="pt-2 block">
+                The project's collaborators will become workspace members and keep their
+                project roles.
               </span>
             </p>
-            <p class="text-foreground-3">
-              {{ project.modelCount.totalCount }} {{ modelText }},
-              {{ project.versions.totalCount }} {{ versionsText }}
-            </p>
           </div>
-          <p class="text-body-2xs text-foreground-2">
-            The project, including models and versions, will be moved to the workspace,
-            where all existing members and admins will have access.
-            <span class="pt-2 block">
-              The project's collaborators will become workspace members and keep their
-              project roles.
-            </span>
-          </p>
         </div>
       </div>
-    </div>
-    <WorkspaceRegionStaticDataDisclaimer
-      v-if="showRegionStaticDataDisclaimer"
-      v-model:open="showRegionStaticDataDisclaimer"
-      :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
-      @confirm="onConfirmHandler"
-    />
+      <WorkspaceRegionStaticDataDisclaimer
+        v-if="showRegionStaticDataDisclaimer"
+        v-model:open="showRegionStaticDataDisclaimer"
+        :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
+        @confirm="onConfirmHandler"
+      />
+    </LayoutDialog>
     <WorkspacePlanLimitReachedDialog
       v-if="activeLimit"
       v-model:open="showLimitReachedDialog"
       :limit="activeLimit"
       :limit-type="limitType"
     />
-  </LayoutDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -245,6 +247,7 @@ const onMoveClick = () => {
 
   // Check if we can add this project to the workspace
   if (!canAddProject.value || !canAddModels(projectModelCount)) {
+    open.value = false
     showLimitReachedDialog.value = true
   } else {
     triggerAction()
