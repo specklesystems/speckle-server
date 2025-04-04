@@ -402,6 +402,20 @@ export const getWorkspaceWithSeatsByType = gql`
   ${basicWorkspaceFragment}
 `
 
+export const getWorkspacePlanUsage = gql`
+  query GetWorkspacePlanUsage($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      plan {
+        usage {
+          projectCount
+          modelCount
+        }
+      }
+    }
+  }
+`
+
 export const getWorkspaceWithMembersByRole = gql`
   query GetWorkspaceWithMembersByRole($workspaceId: String!) {
     workspace(id: $workspaceId) {

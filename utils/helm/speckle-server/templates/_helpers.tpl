@@ -806,7 +806,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 # *** Preview service ***
-{{- if .Values.preview_service.deployInCluster }}
+{{- if .Values.preview_service.enabled }}
 - name: PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL
   value: "true"
 {{- end }}

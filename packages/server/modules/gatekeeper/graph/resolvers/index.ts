@@ -13,7 +13,8 @@ import {
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -71,6 +72,10 @@ import {
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -187,6 +192,41 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               })
             })
           } as unknown as WorkspaceSeatsByType)
+      },
+      WorkspacePlan: {
+        usage: async (parent) => {
+          return { workspaceId: parent.workspaceId }
+        }
+      },
+      WorkspacePlanUsage: {
+        projectCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesProjectsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
+        },
+        modelCount: async (parent) => {
+          const { workspaceId } = parent
+
+          let modelCount = 0
+
+          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+            getStreams: legacyGetStreamsFactory({ db })
+          })
+
+          for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+            for (const project of projects) {
+              const regionDb = await getProjectDbClient({ projectId: project.id })
+              const projectModelCount = await getStreamBranchCountFactory({
+                db: regionDb
+              })(project.id)
+              modelCount = modelCount + projectModelCount
+            }
+          }
+
+          return modelCount
+        }
       },
       WorkspaceSubscription: {
         seats: async (parent) => {

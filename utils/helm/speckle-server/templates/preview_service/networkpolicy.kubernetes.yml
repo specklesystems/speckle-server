@@ -1,4 +1,4 @@
-{{- if .Values.preview_service.deployInCluster }}
+{{- if .Values.preview_service.enabled }}
 {{- if (and (.Values.preview_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

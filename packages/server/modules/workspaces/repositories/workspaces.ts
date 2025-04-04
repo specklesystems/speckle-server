@@ -41,6 +41,7 @@ import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
 import {
   ServerAclRecord,
+  BranchRecord,
   StreamAclRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
@@ -76,6 +77,7 @@ import {
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
+  branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name),
@@ -526,8 +528,8 @@ export const upsertWorkspaceCreationStateFactory =
 
 export const getWorkspacesProjectsCountsFactory =
   (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
-  async (params) => {
-    const ret = params.workspaceIds.reduce((acc, workspaceId) => {
+  async ({ workspaceIds }) => {
+    const ret = workspaceIds.reduce((acc, workspaceId) => {
       acc[workspaceId] = 0
       return acc
     }, {} as Record<string, number>)
@@ -540,7 +542,7 @@ export const getWorkspacesProjectsCountsFactory =
           count: string
         }[]
       >([Streams.col.workspaceId, knex.raw('count(*) as count')])
-      .whereIn(Streams.col.workspaceId, params.workspaceIds)
+      .whereIn(Streams.col.workspaceId, workspaceIds)
       .groupBy(Streams.col.workspaceId)
 
     const res = await q
