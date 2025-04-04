@@ -30,12 +30,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.monitoring.requests }}
           requests:
-            cpu: {{ .Values.monitoring.requests.cpu }}
-            memory: {{ .Values.monitoring.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.monitoring.limits }}
           limits:
-            cpu: {{ .Values.monitoring.limits.cpu }}
-            memory: {{ .Values.monitoring.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false

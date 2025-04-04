@@ -42,12 +42,14 @@ spec:
             port: metrics
 
         resources:
+          {{- with .Values.preview_service.requests }}
           requests:
-            cpu: {{ .Values.preview_service.requests.cpu }}
-            memory: {{ .Values.preview_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.preview_service.limits }}
           limits:
-            cpu: {{ .Values.preview_service.limits.cpu }}
-            memory: {{ .Values.preview_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
