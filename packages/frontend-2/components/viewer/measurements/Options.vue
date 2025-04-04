@@ -133,6 +133,13 @@ const measurementTypeOptions = [
     icon: IconPerpendicular,
     value: MeasurementType.PERPENDICULAR,
     description: 'Tip: Double-click to quick-measure'
+  },
+  // TODO: Add area measurement descripion and icon
+  {
+    title: 'Area',
+    icon: IconPerpendicular,
+    value: MeasurementType.AREA,
+    description: 'Area description'
   }
 ]
 </script>
