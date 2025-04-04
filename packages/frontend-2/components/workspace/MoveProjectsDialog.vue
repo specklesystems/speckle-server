@@ -18,9 +18,13 @@
     />
     <div class="text-body-2xs py-2">
       You can move up to
-      <span class="font-medium">{{ remainingProjects }} projects</span>
+      <span class="font-medium">
+        {{ remainingProjects }} {{ remainingProjects === 1 ? 'project' : 'projects' }}
+      </span>
       and
-      <span class="font-medium">{{ remainingModels }} models</span>
+      <span class="font-medium">
+        {{ remainingModels }} {{ remainingModels === 1 ? 'model' : 'models' }}
+      </span>
       in total.
     </div>
     <div
@@ -89,10 +93,7 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
-import {
-  useWorkspacePlanLimits,
-  useGetWorkspacePlanUsage
-} from '~/lib/workspaces/composables/plan'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -101,12 +102,6 @@ graphql(`
     projects {
       items {
         id
-        modelCount: models(limit: 0) {
-          totalCount
-        }
-        versions(limit: 0) {
-          totalCount
-        }
       }
     }
   }
@@ -163,10 +158,13 @@ const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null
 const showMoveToWorkspaceDialog = ref(false)
 const showLimitReachedDialog = ref(false)
 
-const { projectCount, modelCount } = useGetWorkspacePlanUsage(props.workspace.slug)
+const { projectLimitInfo, modelLimitInfo, getHitLimit, getHitLimitValue } =
+  useWorkspaceLimits(props.workspace.slug)
 
-const { remainingProjects, remainingModels, limitType, activeLimit } =
-  useWorkspacePlanLimits(projectCount, modelCount)
+const remainingProjects = computed(() => projectLimitInfo.value.remaining ?? Infinity)
+const remainingModels = computed(() => modelLimitInfo.value.remaining ?? Infinity)
+const limitType = computed(() => getHitLimit())
+const activeLimit = computed(() => getHitLimitValue())
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)

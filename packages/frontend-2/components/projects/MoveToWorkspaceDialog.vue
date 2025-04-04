@@ -76,15 +76,12 @@ import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/plan'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
     id
     role
-    projectCount: projects(limit: 0) {
-      totalCount
-    }
     name
     logo
     ...WorkspaceHasCustomDataResidency_Workspace
@@ -128,6 +125,7 @@ const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
   eventSource?: string // Used for mixpanel tracking
 }>()
+
 const open = defineModel<boolean>('open', { required: true })
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -138,6 +136,11 @@ const loading = useMutationLoading()
 const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
+
+const { getHitLimit, getHitLimitValue } = useWorkspaceLimits(
+  selectedWorkspace.value?.slug ?? ''
+)
+
 const showLimitReachedDialog = ref(false)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
@@ -149,15 +152,9 @@ const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
 
-const modelCount = computed(() => {
-  return props.project.modelCount.totalCount
-})
+const limitType = computed(() => getHitLimit())
 
-const projectCount = computed(() => {
-  return selectedWorkspace.value?.projectCount.totalCount ?? 0
-})
-
-const { limitType, activeLimit } = useWorkspacePlanLimits(projectCount, modelCount)
+const activeLimit = computed(() => getHitLimitValue())
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
   return hasWorkspaces.value
