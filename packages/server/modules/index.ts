@@ -4,7 +4,7 @@
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
-import { values, merge, camelCase, reduce, intersection, difference } from 'lodash'
+import { values, merge, camelCase, reduce, intersection, difference, set } from 'lodash'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
@@ -24,12 +24,17 @@ import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LoaderConfigurationError, LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
-import type { defineModuleLoaders } from '@/modules/loaders'
+import type {
+  defineModuleLoaders,
+  ServerLoaders,
+  ServerLoadersContext
+} from '@/modules/loaders'
 import {
   inMemoryCacheProviderFactory,
   wrapWithCache
 } from '@/modules/shared/utils/caching'
 import TTLCache from '@isaacs/ttlcache'
+import { buildRequestLoaders, RequestDataLoaders } from '@/modules/core/loaders'
 
 /**
  * Cached speckle module requires
@@ -134,7 +139,9 @@ export const init = async (params: { app: Express; metricsRegister: Registry }) 
   }
 
   // Validate & cache authz loaders
-  await moduleAuthLoaders()
+  await moduleAuthLoaders({
+    dataLoaders: undefined
+  })
 
   hasInitializationOccurred = true
 }
@@ -316,10 +323,16 @@ export const moduleMockConfigs = (
   return mockConfigs
 }
 
-export const moduleAuthLoaders = async () => {
+export const moduleAuthLoaders = async (params: {
+  dataLoaders?: RequestDataLoaders
+}) => {
   const enabledModuleNames = getEnabledModuleNames()
 
   let loaders: Partial<Authz.AuthCheckContextLoaders> = {}
+  const dataLoaders = params.dataLoaders || (await buildRequestLoaders({ auth: false }))
+  const ctx: ServerLoadersContext = {
+    dataLoaders
+  }
 
   // load auth loaders from /modules and in same order as the whitelist
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
@@ -334,9 +347,29 @@ export const moduleAuthLoaders = async () => {
       .map((l) => l.default)
       .filter(isNonNullable)[0] as Optional<ReturnType<typeof defineModuleLoaders>>
 
+    // Load the actual loaders
+    const newLoaders = await moduleLoadersBuilderFn?.()
+    const newServerLoaders: Partial<Authz.AuthCheckContextLoaders> = Object.entries(
+      newLoaders || {}
+    ).reduce((acc, entry) => {
+      const key = entry[0] as Authz.AuthCheckContextLoaderKeys
+      const loader = entry[1] as Required<ServerLoaders>[typeof key]
+
+      // Feed in ctx to all loader functions
+      const wrappedLoader = (...args: any[]) => {
+        const newArgs = [...args, ctx]
+        return loader(...newArgs)
+      }
+
+      // Using set because of TS typing difficulty
+      set(acc, key, wrappedLoader)
+
+      return acc
+    }, {} as Partial<Authz.AuthCheckContextLoaders>)
+
     loaders = {
       ...loaders,
-      ...(await moduleLoadersBuilderFn?.())
+      ...newServerLoaders
     }
   }
 
@@ -381,6 +414,9 @@ export const moduleAuthLoaders = async () => {
 
   return {
     loaders: loadersWithCache,
-    clearCache: () => cache.clear()
+    clearCache: () => {
+      cache.clear()
+      dataLoaders.clearAll()
+    }
   }
 }

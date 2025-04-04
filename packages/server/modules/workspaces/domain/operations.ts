@@ -234,6 +234,12 @@ export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
 ) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
 
+export type GetWorkspacesProjectsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
+  [workspaceId: string]: number
+}>
+
 /** Workspace Project Roles */
 
 type GrantWorkspaceProjectRolesArgs = {

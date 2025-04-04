@@ -63,10 +63,13 @@ generates:
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceJoinRequestMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
+        WorkspacePlan: '@/modules/gatekeeperCore/helpers/graphTypes#WorkspacePlanGraphQLReturn'
+        WorkspacePlanUsage: '@/modules/gatekeeperCore/helpers/graphTypes#WorkspacePlanUsageGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        WorkspaceSubscriptionSeats: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionSeatsGraphQLReturn'
         WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
         LimitedWorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceJoinRequestGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
@@ -86,6 +89,8 @@ generates:
         ServerRegionItem: '@/modules/multiregion/helpers/graphTypes#ServerRegionItemGraphQLReturn'
         Price: '@/modules/gatekeeperCore/helpers/graphTypes#PriceGraphQLReturn'
         WorkspaceSubscription: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionGraphQLReturn'
+        ProjectPermissionChecks: '@/modules/core/helpers/graphTypes#ProjectPermissionChecksGraphQLReturn'
+        WorkspacePermissionChecks: '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

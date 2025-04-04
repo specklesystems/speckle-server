@@ -157,3 +157,11 @@ export const workspaceLastAdminCheckQuery = graphql(`
     }
   }
 `)
+
+export const workspacePlanLimitsQuery = graphql(`
+  query WorkspacePlanLimits($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacePlanLimits_Workspace
+    }
+  }
+`)

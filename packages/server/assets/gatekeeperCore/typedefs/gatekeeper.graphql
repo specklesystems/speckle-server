@@ -84,28 +84,33 @@ enum WorkspacePaymentMethod {
   billing
 }
 
+type WorkspacePlanUsage {
+  projectCount: Int!
+  modelCount: Int!
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
   paymentMethod: WorkspacePaymentMethod!
+  usage: WorkspacePlanUsage!
 }
 
 type WorkspaceSubscriptionSeats {
-  plan: Int! @deprecated
-  guest: Int! @deprecated
+  editors: WorkspaceSubscriptionSeatCount!
+  viewers: WorkspaceSubscriptionSeatCount!
+}
+
+type WorkspaceSubscriptionSeatCount {
   """
   Total number of seats purchased and available in the current subscription cycle
   """
-  totalCount: Int!
+  available: Int!
   """
-  Number assigned seats in the current billing cycle
+  Total number of seats in use by workspace users
   """
   assigned: Int!
-  """
-  Number of viewer seats currently assigned in the workspace
-  """
-  viewersCount: Int!
 }
 
 type WorkspaceSubscription {

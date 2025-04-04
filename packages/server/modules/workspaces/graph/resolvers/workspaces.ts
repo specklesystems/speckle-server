@@ -1,8 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  WorkspaceMembersByRole
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -111,6 +108,7 @@ import {
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import {
+  Authz,
   Roles,
   WorkspaceRoles,
   removeNullOrUndefinedKeys,
@@ -183,7 +181,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
@@ -958,13 +956,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
             throw new RateLimitError(rateLimitResult)
           }
 
-          await authorizeResolver(
-            context.userId!,
-            args.input.workspaceId,
-            Roles.Workspace.Member,
-            context.resourceAccessRules,
-            OperationTypeNode.MUTATION
-          )
+          const canCreate = await context.authPolicies.workspace.canCreateProject({
+            userId: context.userId,
+            workspaceId: args.input.workspaceId
+          })
+
+          if (!canCreate.isOk) {
+            switch (canCreate.error.code) {
+              case Authz.WorkspacesNotEnabledError.code:
+              case Authz.WorkspaceNoAccessError.code:
+              case Authz.WorkspaceReadOnlyError.code:
+              case Authz.WorkspaceNoEditorSeatError.code:
+              case Authz.WorkspaceNotEnoughPermissionsError.code:
+              case Authz.WorkspaceSsoSessionNoAccessError.code:
+              case Authz.WorkspaceLimitsReachedError.code:
+              case Authz.ServerNoSessionError.code:
+              case Authz.ServerNoAccessError.code:
+                throw new ForbiddenError(canCreate.error.message)
+              default:
+                throwUncoveredError(canCreate.error)
+            }
+          }
 
           const createWorkspaceProject = createWorkspaceProjectFactory({
             getDefaultRegion: getDefaultRegionFactory({ db })
@@ -1102,6 +1114,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           return team
         },
+        teamByRole: async (parent) => {
+          const { id: workspaceId } = parent
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
+
+          return {
+            admins: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            },
+            members: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Member
+              })
+            },
+            guests: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            }
+          }
+        },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
             queryAllResourceInvites: queryAllResourceInvitesFactory({
@@ -1210,34 +1250,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        },
-        membersByRole: (parent) =>
-          ({
-            admins: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Admin
-              })
-            }),
-            members: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Member
-              })
-            }),
-            guests: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Guest
-              })
-            })
-          } as unknown as WorkspaceMembersByRole)
+        }
       },
       WorkspaceSso: {
         provider: async ({ workspaceId }) => {

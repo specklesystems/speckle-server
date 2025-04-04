@@ -1,53 +1,65 @@
-import { throwUncoveredError } from '@speckle/shared'
-import {
-  ProjectNoAccessError,
-  ProjectNotFoundError,
-  ServerNoAccessError,
-  ServerNoSessionError,
-  WorkspaceNoAccessError,
-  WorkspaceSsoSessionNoAccessError
-} from '@speckle/shared/authz'
-import { useAuthPolicies } from '~/lib/auth/composables/authPolicies'
-import { ActiveUserId } from '~/lib/auth/helpers/authPolicies'
-import { loginRoute } from '~/lib/common/helpers/route'
+import type { Optional } from '@speckle/shared'
+
+import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
+import { errorsToAuthResult } from '~/lib/common/helpers/graphql'
+import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
+import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
-  const authPolicies = useAuthPolicies()
-  const canAccess = await authPolicies.noCache().project.canQuery({
-    projectId,
-    userId: ActiveUserId
-  })
-  if (canAccess.isErr) {
-    switch (canAccess.error.code) {
-      case WorkspaceSsoSessionNoAccessError.code: {
+  const client = useApolloClientFromNuxt()
+
+  const { data, errors } = await client
+    .query({
+      query: projectAccessCheckQuery,
+      variables: { id: projectId },
+      context: {
+        skipLoggingErrors: true
+      },
+      fetchPolicy: 'network-only'
+    })
+    .catch(convertThrowIntoFetchResult)
+
+  // we may not even get to the authResult because of project() resolver errors, hence the mapping
+  // from errors to authResult
+  const authResult = data?.project.permissions.canRead || errorsToAuthResult({ errors })
+  if (!authResult.authorized) {
+    switch (authResult.code) {
+      case WorkspaceSsoErrorCodes.SESSION_MISSING_OR_EXPIRED: {
         // Redirect to the SSO error page
-        const workspaceSlug = canAccess.error.payload.workspaceSlug
-        return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+        const payload = authResult.payload as Optional<{
+          workspaceSlug: string
+        }>
+        const workspaceSlug = payload?.workspaceSlug
+        if (workspaceSlug) {
+          return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+        }
       }
-      case ProjectNotFoundError.code: {
-        return abortNavigation(
-          createError({ statusCode: 404, message: 'Project not found' })
-        )
-      }
-      case WorkspaceNoAccessError.code:
-      case ProjectNoAccessError.code: {
+      // eslint-disable-next-line no-fallthrough
+      case 'FORBIDDEN':
         return abortNavigation(
           createError({
             statusCode: 403,
-            message: 'You do not have access to this project'
+            message: authResult.message
           })
         )
-      }
-      case ServerNoAccessError.code:
-      case ServerNoSessionError.code:
-        return navigateTo(loginRoute)
-      default: {
-        throwUncoveredError(canAccess.error)
-      }
+      case 'STREAM_NOT_FOUND':
+        return abortNavigation(
+          createError({
+            statusCode: 404,
+            message: authResult.message
+          })
+        )
+      default:
+        return abortNavigation(
+          createError({
+            statusCode: 500,
+            message: authResult.message
+          })
+        )
     }
   }
 })

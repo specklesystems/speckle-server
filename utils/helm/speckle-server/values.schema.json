@@ -135,6 +135,11 @@
     "ingress": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the ingress resources will be deployed",
+          "default": true
+        },
         "namespace": {
           "type": "string",
           "description": "The namespace in which the ingress controller is deployed.",
@@ -149,7 +154,7 @@
     },
     "docker_image_tag": {
       "type": "string",
-      "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
+      "description": "DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
       "default": "2"
     },
     "imagePullPolicy": {
@@ -622,6 +627,11 @@
     "server": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -1616,6 +1626,11 @@
     "objects": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed with the Objects component enabled.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -1890,7 +1905,7 @@
     "preview_service": {
       "type": "object",
       "properties": {
-        "deployInCluster": {
+        "enabled": {
           "type": "boolean",
           "description": "If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.",
           "default": true
@@ -1975,6 +1990,31 @@
             }
           }
         },
+        "autoscaling": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "minReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 1
+            },
+            "maxReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 10
+            },
+            "targetCPUUtilizationPercentage": {
+              "type": "number",
+              "description": "",
+              "default": 80
+            }
+          }
+        },
         "networkPolicy": {
           "type": "object",
           "properties": {
@@ -2022,6 +2062,11 @@
     "webhook_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Webhook Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Webhook Service pod to be deployed within the cluster.",
@@ -2124,6 +2169,11 @@
     "fileimport_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the File Import Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
@@ -2246,6 +2296,11 @@
     "monitoring": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, database monitoring will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Monitoring pod to be deployed within the cluster.",

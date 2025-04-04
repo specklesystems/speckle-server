@@ -26,19 +26,19 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/new/MembersTable.vue'
+import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesNewMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
   user: UserItem
   workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesNewMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersNewGuestsTable_WorkspaceFragment
+    | SettingsWorkspacesMembersTable_WorkspaceFragment
+    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
 }>()
 
