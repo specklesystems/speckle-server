@@ -54,7 +54,7 @@ export const useWorkspaceLimits = (slug: string) => {
     if (limits.value.modelCount === null) return true
 
     if (!additionalModels) {
-      return remainingModelCount.value > 1
+      return remainingModelCount.value > 0
     }
     return modelCount.value + additionalModels <= limits.value.modelCount
   }
