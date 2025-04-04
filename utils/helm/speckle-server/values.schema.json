@@ -1920,6 +1920,16 @@
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
           "default": 1
         },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `RollingUpdate`.",
+              "default": "RollingUpdate"
+            }
+          }
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",

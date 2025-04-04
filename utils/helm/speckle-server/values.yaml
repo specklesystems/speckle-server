@@ -1127,6 +1127,10 @@ preview_service:
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param preview_service.deploymentStrategy.type The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `RollingUpdate`.
+    ##
+    type: 'RollingUpdate'
   ## @param preview_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
