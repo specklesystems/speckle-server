@@ -4,12 +4,7 @@ import type {
   WorkspaceSeatsByType
 } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import {
-  ensureError,
-  PaidWorkspacePlansNew,
-  Roles,
-  throwUncoveredError
-} from '@speckle/shared'
+import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
@@ -96,7 +91,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'plus':
             case 'business':
             case 'team':
+            case 'teamUnlimited':
             case 'pro':
+            case 'proUnlimited':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
@@ -107,6 +104,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starterInvoiced':
             case 'plusInvoiced':
             case 'businessInvoiced':
+            case 'proUnlimitedInvoiced':
+            case 'teamUnlimitedInvoiced':
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -429,7 +428,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                 })
           await upgradeWorkspaceSubscription({
             workspaceId,
-            targetPlan: workspacePlan as PaidWorkspacePlansNew, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
             billingInterval
           })
           return true

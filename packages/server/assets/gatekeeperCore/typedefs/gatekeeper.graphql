@@ -8,7 +8,9 @@ enum PaidWorkspacePlans {
   business
   # New plans
   team
+  teamUnlimited
   pro
+  proUnlimited
 }
 
 enum BillingInterval {

@@ -177,15 +177,12 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
+type Products = 'guest' | PaidWorkspacePlans
 
-export type GetWorkspacePlanProductAndPriceIds = () => Omit<
-  Record<Products, { productId: string; monthly: string; yearly: string }>,
-  'team' | 'pro'
-> & {
-  team?: { productId: string; monthly: string }
-  pro?: { productId: string; monthly: string; yearly: string }
-}
+export type GetWorkspacePlanProductAndPriceIds = () => Record<
+  Products,
+  { productId: string; monthly: string; yearly: string }
+>
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
