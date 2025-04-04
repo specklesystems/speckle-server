@@ -5,7 +5,7 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -50,6 +50,12 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { getLimitedReferencedObjectFactory } from '@/modules/core/services/versions/limits'
+
+const {
+  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED,
+  FF_WEB_2944_VERSIONS_LIMITS_ENABLED
+} = getFeatureFlags()
 
 export = {
   Project: {
@@ -93,6 +99,32 @@ export = {
         })
       const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
+    },
+    referencedObject: async (parent, _args, ctx) => {
+      if (!FF_WEB_2944_VERSIONS_LIMITS_ENABLED) {
+        return parent.referencedObject
+      }
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const project = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitStream.load(parent.id)
+
+      if (!project) {
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      }
+
+      const lastVersion = await ctx.loaders.streams.getLastVersion.load(project.id)
+      if (lastVersion?.id === parent.id) return parent.referencedObject
+
+      return await getLimitedReferencedObjectFactory({
+        environment: {
+          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+        }
+        // getWorkspacePlan: ctx.loaders.gatekeeper?.getWorkspacePlan
+        //   .load as GetWorkspacePlan
+      })({ version: parent, project })
     }
   },
   Mutation: {

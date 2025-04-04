@@ -83,6 +83,16 @@ export const parseFeatureFlags = (
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Enable limits on personal projects
+    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
+    // Temporary FF to enable WIP on version limits
+    FF_WEB_2944_VERSIONS_LIMITS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -113,6 +123,8 @@ export type FeatureFlags = {
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
+  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_WEB_2944_VERSIONS_LIMITS_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {
