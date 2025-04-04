@@ -1830,6 +1830,16 @@
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
           "default": 1
         },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as preview service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
@@ -1982,6 +1992,16 @@
           "description": "The number of instances of the Webhook Service pod to be deployed within the cluster.",
           "default": 1
         },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the Webhook Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as webhook service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
@@ -2088,6 +2108,16 @@
           "type": "number",
           "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the FileImport Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as file import service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
         },
         "logLevel": {
           "type": "string",
