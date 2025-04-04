@@ -43,12 +43,16 @@ export const useWorkspaceLimits = (slug: string) => {
   )
 
   const canAddProject = computed(() => {
-    if (limits.value.projectCount === null) return false
+    // Unlimited
+    if (limits.value.projectCount === null) return true
+
     return projectCount.value + 1 <= limits.value.projectCount
   })
 
   const canAddModels = (additionalModels?: number) => {
-    if (limits.value.modelCount === null) return false
+    // Unlimited
+    if (limits.value.modelCount === null) return true
+
     if (!additionalModels) {
       return remainingModelCount.value > 1
     }
