@@ -100,17 +100,17 @@ WORKDIR /speckle-server/packages/preview-service
 
 RUN yarn workspaces focus --production
 
-RUN groupadd -g 30000 -r pptruser && \
-    useradd -r -g pptruser -G audio,video -u 800 pptruser && \
-    mkdir -p /home/pptruser/Downloads && \
-    chown -R pptruser:pptruser /home/pptruser && \
-    chown -R pptruser:pptruser ./node_modules && \
-    chown -R pptruser:pptruser ./package.json
+# RUN groupadd -g 30000 -r pptruser && \
+#     useradd -r -g pptruser -G audio,video -u 800 pptruser && \
+#     mkdir -p /home/pptruser/Downloads && \
+#     chown -R pptruser:pptruser /home/pptruser && \
+#     chown -R pptruser:pptruser ./node_modules && \
+#     chown -R pptruser:pptruser ./package.json
 
 # overriding this value via `--build-arg CACHE_BUST=$(date +%s)` will cause the latest google chrome to be fetched
 ARG CACHE_BUST=1
 
-# install google chrome
+# install google chrome and nvidia drivers
 # hadolint ignore=DL3008
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -126,7 +126,8 @@ RUN apt-get update && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
-    google-chrome-stable && \
+    google-chrome-stable \
+    nvidia-detect && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -135,6 +136,6 @@ ENV CHROMIUM_EXECUTABLE_PATH="/usr/bin/google-chrome"
 ENV USER_DATA_DIR='/tmp/puppeteer'
 
 # Run everything after as non-privileged user.
-USER pptruser
+# USER pptruser
 
 CMD [ "tini", "--", "node", "--loader=./dist/bootstrap.js", "dist/main.js" ]
