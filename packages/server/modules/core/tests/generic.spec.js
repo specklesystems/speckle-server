@@ -128,7 +128,7 @@ const createUser = createUserFactory({
 })
 const adminOverrideMock = mockAdminOverride()
 
-describe('BABABOOEYGeneric AuthN & AuthZ controller tests', () => {
+describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
     await beforeEachContext()
   })
