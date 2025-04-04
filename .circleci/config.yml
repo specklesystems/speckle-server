@@ -996,7 +996,7 @@ jobs:
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Template Helm Chart
+          name: Template Speckle Server Helm Chart
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \

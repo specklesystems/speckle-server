@@ -210,7 +210,7 @@ export const useProcessWorkspaceInvite = () => {
     if (data?.workspaceMutations.invites.use) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+        title: input.accept ? 'Workspace invite accepted' : 'Workspace invite dismissed'
       })
 
       mp.track('Workspace Joined', {
