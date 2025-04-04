@@ -856,10 +856,10 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(res).to.not.haveGraphQLErrors()
-        const seats = res.data?.workspace.membersByRole
-        expect(seats?.guests?.totalCount).to.eq(2)
-        expect(seats?.members?.totalCount).to.eq(3)
-        expect(seats?.admins?.totalCount).to.eq(1)
+        const roles = res.data?.workspace.teamByRole
+        expect(roles?.guests?.totalCount).to.eq(2)
+        expect(roles?.members?.totalCount).to.eq(3)
+        expect(roles?.admins?.totalCount).to.eq(1)
       })
     })
   })

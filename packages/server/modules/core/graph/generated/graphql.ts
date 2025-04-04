@@ -7,7 +7,7 @@ import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectRoleGraphQLReturn, WorkspacePermissionChecksGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { WorkspacePlanGraphQLReturn, WorkspacePlanUsageGraphQLReturn, PriceGraphQLReturn } from '@/modules/gatekeeperCore/helpers/graphTypes';
-import { WorkspaceBillingMutationsGraphQLReturn, WorkspaceSubscriptionGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
+import { WorkspaceBillingMutationsGraphQLReturn, WorkspaceSubscriptionSeatsGraphQLReturn, WorkspaceSubscriptionGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
 import { SmartTextEditorValueGraphQLReturn } from '@/modules/core/services/richTextEditorService';
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types';
@@ -4374,7 +4374,6 @@ export type Workspace = {
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
-  membersByRole?: Maybe<WorkspaceMembersByRole>;
   name: Scalars['String']['output'];
   permissions: WorkspacePermissionChecks;
   plan?: Maybe<WorkspacePlan>;
@@ -4385,12 +4384,12 @@ export type Workspace = {
   role?: Maybe<Scalars['String']['output']>;
   /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   seatType?: Maybe<WorkspaceSeatType>;
-  seatsByType?: Maybe<WorkspaceSeatsByType>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
+  teamByRole: WorkspaceTeamByRole;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -4633,13 +4632,6 @@ export const WorkspaceJoinRequestStatus = {
 } as const;
 
 export type WorkspaceJoinRequestStatus = typeof WorkspaceJoinRequestStatus[keyof typeof WorkspaceJoinRequestStatus];
-export type WorkspaceMembersByRole = {
-  __typename?: 'WorkspaceMembersByRole';
-  admins?: Maybe<WorkspaceRoleCollection>;
-  guests?: Maybe<WorkspaceRoleCollection>;
-  members?: Maybe<WorkspaceRoleCollection>;
-};
-
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4949,18 +4941,25 @@ export type WorkspaceSubscription = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type WorkspaceSubscriptionSeatCount = {
+  __typename?: 'WorkspaceSubscriptionSeatCount';
+  /** Total number of seats in use by workspace users */
+  assigned: Scalars['Int']['output'];
+  /** Total number of seats purchased and available in the current subscription cycle */
+  available: Scalars['Int']['output'];
+};
+
 export type WorkspaceSubscriptionSeats = {
   __typename?: 'WorkspaceSubscriptionSeats';
-  /** Number assigned seats in the current billing cycle */
-  assigned: Scalars['Int']['output'];
-  /** @deprecated Field no longer supported */
-  guest: Scalars['Int']['output'];
-  /** @deprecated Field no longer supported */
-  plan: Scalars['Int']['output'];
-  /** Total number of seats purchased and available in the current subscription cycle */
-  totalCount: Scalars['Int']['output'];
-  /** Number of viewer seats currently assigned in the workspace */
-  viewersCount: Scalars['Int']['output'];
+  editors: WorkspaceSubscriptionSeatCount;
+  viewers: WorkspaceSubscriptionSeatCount;
+};
+
+export type WorkspaceTeamByRole = {
+  __typename?: 'WorkspaceTeamByRole';
+  admins?: Maybe<WorkspaceRoleCollection>;
+  guests?: Maybe<WorkspaceRoleCollection>;
+  members?: Maybe<WorkspaceRoleCollection>;
 };
 
 export type WorkspaceTeamFilter = {
@@ -5361,7 +5360,6 @@ export type ResolversTypes = {
   WorkspaceJoinRequestFilter: WorkspaceJoinRequestFilter;
   WorkspaceJoinRequestMutations: ResolverTypeWrapper<WorkspaceJoinRequestMutationsGraphQLReturn>;
   WorkspaceJoinRequestStatus: WorkspaceJoinRequestStatus;
-  WorkspaceMembersByRole: ResolverTypeWrapper<WorkspaceMembersByRole>;
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspacePaymentMethod: WorkspacePaymentMethod;
   WorkspacePermissionChecks: ResolverTypeWrapper<WorkspacePermissionChecksGraphQLReturn>;
@@ -5388,7 +5386,9 @@ export type ResolversTypes = {
   WorkspaceSsoProvider: ResolverTypeWrapper<WorkspaceSsoProvider>;
   WorkspaceSsoSession: ResolverTypeWrapper<WorkspaceSsoSession>;
   WorkspaceSubscription: ResolverTypeWrapper<WorkspaceSubscriptionGraphQLReturn>;
-  WorkspaceSubscriptionSeats: ResolverTypeWrapper<WorkspaceSubscriptionSeats>;
+  WorkspaceSubscriptionSeatCount: ResolverTypeWrapper<WorkspaceSubscriptionSeatCount>;
+  WorkspaceSubscriptionSeats: ResolverTypeWrapper<WorkspaceSubscriptionSeatsGraphQLReturn>;
+  WorkspaceTeamByRole: ResolverTypeWrapper<WorkspaceTeamByRole>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceUpdateSeatTypeInput: WorkspaceUpdateSeatTypeInput;
@@ -5662,7 +5662,6 @@ export type ResolversParentTypes = {
   WorkspaceJoinRequestCollection: Omit<WorkspaceJoinRequestCollection, 'items'> & { items: Array<ResolversParentTypes['WorkspaceJoinRequest']> };
   WorkspaceJoinRequestFilter: WorkspaceJoinRequestFilter;
   WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsGraphQLReturn;
-  WorkspaceMembersByRole: WorkspaceMembersByRole;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspacePermissionChecks: WorkspacePermissionChecksGraphQLReturn;
   WorkspacePlan: WorkspacePlanGraphQLReturn;
@@ -5683,7 +5682,9 @@ export type ResolversParentTypes = {
   WorkspaceSsoProvider: WorkspaceSsoProvider;
   WorkspaceSsoSession: WorkspaceSsoSession;
   WorkspaceSubscription: WorkspaceSubscriptionGraphQLReturn;
-  WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeats;
+  WorkspaceSubscriptionSeatCount: WorkspaceSubscriptionSeatCount;
+  WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeatsGraphQLReturn;
+  WorkspaceTeamByRole: WorkspaceTeamByRole;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceUpdateSeatTypeInput: WorkspaceUpdateSeatTypeInput;
@@ -7187,7 +7188,6 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  membersByRole?: Resolver<Maybe<ResolversTypes['WorkspaceMembersByRole']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['WorkspacePermissionChecks'], ParentType, ContextType>;
   plan?: Resolver<Maybe<ResolversTypes['WorkspacePlan']>, ParentType, ContextType>;
@@ -7195,11 +7195,11 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   readOnly?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seatType?: Resolver<Maybe<ResolversTypes['WorkspaceSeatType']>, ParentType, ContextType>;
-  seatsByType?: Resolver<Maybe<ResolversTypes['WorkspaceSeatsByType']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sso?: Resolver<Maybe<ResolversTypes['WorkspaceSso']>, ParentType, ContextType>;
   subscription?: Resolver<Maybe<ResolversTypes['WorkspaceSubscription']>, ParentType, ContextType>;
   team?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<WorkspaceTeamArgs, 'limit'>>;
+  teamByRole?: Resolver<ResolversTypes['WorkspaceTeamByRole'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7275,13 +7275,6 @@ export type WorkspaceJoinRequestCollectionResolvers<ContextType = GraphQLContext
 export type WorkspaceJoinRequestMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceJoinRequestMutations'] = ResolversParentTypes['WorkspaceJoinRequestMutations']> = {
   approve?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceJoinRequestMutationsApproveArgs, 'input'>>;
   deny?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceJoinRequestMutationsDenyArgs, 'input'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type WorkspaceMembersByRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMembersByRole'] = ResolversParentTypes['WorkspaceMembersByRole']> = {
-  admins?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
-  guests?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
-  members?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7394,12 +7387,22 @@ export type WorkspaceSubscriptionResolvers<ContextType = GraphQLContext, ParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type WorkspaceSubscriptionSeatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSubscriptionSeats'] = ResolversParentTypes['WorkspaceSubscriptionSeats']> = {
+export type WorkspaceSubscriptionSeatCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSubscriptionSeatCount'] = ResolversParentTypes['WorkspaceSubscriptionSeatCount']> = {
   assigned?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  guest?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  plan?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  viewersCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  available?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceSubscriptionSeatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSubscriptionSeats'] = ResolversParentTypes['WorkspaceSubscriptionSeats']> = {
+  editors?: Resolver<ResolversTypes['WorkspaceSubscriptionSeatCount'], ParentType, ContextType>;
+  viewers?: Resolver<ResolversTypes['WorkspaceSubscriptionSeatCount'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceTeamByRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceTeamByRole'] = ResolversParentTypes['WorkspaceTeamByRole']> = {
+  admins?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
+  guests?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
+  members?: Resolver<Maybe<ResolversTypes['WorkspaceRoleCollection']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7565,7 +7568,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceJoinRequest?: WorkspaceJoinRequestResolvers<ContextType>;
   WorkspaceJoinRequestCollection?: WorkspaceJoinRequestCollectionResolvers<ContextType>;
   WorkspaceJoinRequestMutations?: WorkspaceJoinRequestMutationsResolvers<ContextType>;
-  WorkspaceMembersByRole?: WorkspaceMembersByRoleResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
   WorkspacePermissionChecks?: WorkspacePermissionChecksResolvers<ContextType>;
   WorkspacePlan?: WorkspacePlanResolvers<ContextType>;
@@ -7580,7 +7582,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceSsoProvider?: WorkspaceSsoProviderResolvers<ContextType>;
   WorkspaceSsoSession?: WorkspaceSsoSessionResolvers<ContextType>;
   WorkspaceSubscription?: WorkspaceSubscriptionResolvers<ContextType>;
+  WorkspaceSubscriptionSeatCount?: WorkspaceSubscriptionSeatCountResolvers<ContextType>;
   WorkspaceSubscriptionSeats?: WorkspaceSubscriptionSeatsResolvers<ContextType>;
+  WorkspaceTeamByRole?: WorkspaceTeamByRoleResolvers<ContextType>;
   WorkspaceUpdatedMessage?: WorkspaceUpdatedMessageResolvers<ContextType>;
 };
 

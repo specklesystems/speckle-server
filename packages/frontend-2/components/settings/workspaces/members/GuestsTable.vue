@@ -116,7 +116,6 @@ graphql(`
     slug
     name
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    ...SettingsSharedDeleteUserDialog_Workspace
     team(limit: 250) {
       items {
         id

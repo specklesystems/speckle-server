@@ -275,6 +275,7 @@ type Workspace {
     cursor: String
     filter: WorkspaceTeamFilter
   ): WorkspaceCollaboratorCollection!
+  teamByRole: WorkspaceTeamByRole!
   """
   Only available to workspace owners/members
   """
@@ -318,13 +319,9 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
-  membersByRole: WorkspaceMembersByRole
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "workspace:read")
-    @hasWorkspaceRole(role: ADMIN)
 }
 
-type WorkspaceMembersByRole {
+type WorkspaceTeamByRole {
   admins: WorkspaceRoleCollection
   members: WorkspaceRoleCollection
   guests: WorkspaceRoleCollection

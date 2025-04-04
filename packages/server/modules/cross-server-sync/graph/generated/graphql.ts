@@ -4354,7 +4354,6 @@ export type Workspace = {
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
-  membersByRole?: Maybe<WorkspaceMembersByRole>;
   name: Scalars['String']['output'];
   permissions: WorkspacePermissionChecks;
   plan?: Maybe<WorkspacePlan>;
@@ -4365,12 +4364,12 @@ export type Workspace = {
   role?: Maybe<Scalars['String']['output']>;
   /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   seatType?: Maybe<WorkspaceSeatType>;
-  seatsByType?: Maybe<WorkspaceSeatsByType>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
+  teamByRole: WorkspaceTeamByRole;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -4613,13 +4612,6 @@ export const WorkspaceJoinRequestStatus = {
 } as const;
 
 export type WorkspaceJoinRequestStatus = typeof WorkspaceJoinRequestStatus[keyof typeof WorkspaceJoinRequestStatus];
-export type WorkspaceMembersByRole = {
-  __typename?: 'WorkspaceMembersByRole';
-  admins?: Maybe<WorkspaceRoleCollection>;
-  guests?: Maybe<WorkspaceRoleCollection>;
-  members?: Maybe<WorkspaceRoleCollection>;
-};
-
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4929,18 +4921,25 @@ export type WorkspaceSubscription = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type WorkspaceSubscriptionSeatCount = {
+  __typename?: 'WorkspaceSubscriptionSeatCount';
+  /** Total number of seats in use by workspace users */
+  assigned: Scalars['Int']['output'];
+  /** Total number of seats purchased and available in the current subscription cycle */
+  available: Scalars['Int']['output'];
+};
+
 export type WorkspaceSubscriptionSeats = {
   __typename?: 'WorkspaceSubscriptionSeats';
-  /** Number assigned seats in the current billing cycle */
-  assigned: Scalars['Int']['output'];
-  /** @deprecated Field no longer supported */
-  guest: Scalars['Int']['output'];
-  /** @deprecated Field no longer supported */
-  plan: Scalars['Int']['output'];
-  /** Total number of seats purchased and available in the current subscription cycle */
-  totalCount: Scalars['Int']['output'];
-  /** Number of viewer seats currently assigned in the workspace */
-  viewersCount: Scalars['Int']['output'];
+  editors: WorkspaceSubscriptionSeatCount;
+  viewers: WorkspaceSubscriptionSeatCount;
+};
+
+export type WorkspaceTeamByRole = {
+  __typename?: 'WorkspaceTeamByRole';
+  admins?: Maybe<WorkspaceRoleCollection>;
+  guests?: Maybe<WorkspaceRoleCollection>;
+  members?: Maybe<WorkspaceRoleCollection>;
 };
 
 export type WorkspaceTeamFilter = {
