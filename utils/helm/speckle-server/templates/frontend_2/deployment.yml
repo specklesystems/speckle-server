@@ -35,12 +35,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.frontend_2.requests }}
           requests:
-            cpu: {{ .Values.frontend_2.requests.cpu }}
-            memory: {{ .Values.frontend_2.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.frontend_2.limits }}
           limits:
-            cpu: {{ .Values.frontend_2.limits.cpu }}
-            memory: {{ .Values.frontend_2.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:

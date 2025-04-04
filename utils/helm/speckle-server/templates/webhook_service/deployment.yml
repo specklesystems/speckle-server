@@ -39,12 +39,14 @@ spec:
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 30 * 1000)
 
         resources:
+          {{- with .Values.webhook_service.requests }}
           requests:
-            cpu: {{ .Values.webhook_service.requests.cpu }}
-            memory: {{ .Values.webhook_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.webhook_service.limits }}
           limits:
-            cpu: {{ .Values.webhook_service.limits.cpu }}
-            memory: {{ .Values.webhook_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
