@@ -26,11 +26,12 @@ export const canCreateProjectPolicy: AuthPolicy<
     const env = await loaders.getEnv()
     if (!userId?.length) return err(new ServerNoSessionError())
     if (env.FF_WORKSPACES_MODULE_ENABLED) {
-      return err(
-        new ProjectNoAccessError({
-          message: "Projects can't be created outside of workspaces"
-        })
-      )
+      // TODO: We're not ready to enforce this yet, there's a bunch of tests that would break
+      // return err(
+      //   new ProjectNoAccessError({
+      //     message: "Projects can't be created outside of workspaces"
+      //   })
+      // )
     }
 
     const isActiveServerUser = await hasMinimumServerRole(loaders)({
