@@ -27,9 +27,6 @@ export const canCreateProjectPolicy: AuthPolicy<
     if (!userId?.length) return err(new ServerNoSessionError())
     if (env.FF_WORKSPACES_MODULE_ENABLED) {
       return err(
-        new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug: 'aa' } })
-      )
-      return err(
         new ProjectNoAccessError({
           message: "Projects can't be created outside of workspaces"
         })
