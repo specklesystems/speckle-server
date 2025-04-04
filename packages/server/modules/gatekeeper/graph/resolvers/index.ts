@@ -71,7 +71,7 @@ import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/s
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -194,9 +194,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
             for (const project of projects) {
               const regionDb = await getProjectDbClient({ projectId: project.id })
-              const projectModelCount = await getStreamBranchCountFactory({
-                db: regionDb
-              })(project.id)
+              const projectModelCount =
+                await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+                  project.id,
+                  {}
+                )
               modelCount = modelCount + projectModelCount
             }
           }
