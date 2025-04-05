@@ -68,7 +68,10 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType
+          :seat-type="item.seatType"
+          :role="Roles.Workspace.Member"
+        />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
