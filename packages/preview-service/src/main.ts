@@ -142,6 +142,25 @@ const onShutdown = async () => {
 }
 
 createTerminus(server, {
+  healthChecks: {
+    '/liveness': () => Promise.resolve('ok'),
+    '/readiness': async (args: { state: { isShuttingDown: boolean } }) => {
+      const { isShuttingDown } = args.state
+      if (isShuttingDown) {
+        return Promise.reject(new Error('Preview service is shutting down'))
+      }
+
+      const isReady = await jobQueue.isReady()
+      if (!isReady)
+        return Promise.reject(
+          new Error(
+            'Preview service is not ready. Redis or Bull is not either reachable or ready.'
+          )
+        )
+
+      return Promise.resolve('ok')
+    }
+  },
   beforeShutdown,
   onShutdown,
   logger: (msg, err) => {

@@ -8,14 +8,6 @@ export const settingsSidebarQuery = graphql(`
   }
 `)
 
-export const settingsSidebarAutomateFunctionsQuery = graphql(`
-  query SettingsSidebarAutomateFunctions {
-    activeUser {
-      ...SettingsSidebar_User
-    }
-  }
-`)
-
 export const settingsWorkspaceGeneralQuery = graphql(`
   query SettingsWorkspaceGeneral($slug: String!) {
     workspaceBySlug(slug: $slug) {
