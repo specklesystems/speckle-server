@@ -46,7 +46,15 @@
             class="bg-foundation"
             no-bg
           />
-          <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
+          <span class="truncate text-body-xs text-foreground">
+            {{ item.name }}
+            <span
+              v-if="item.id === activeUser?.id"
+              class="text-foreground-3 text-body-3xs"
+            >
+              (You)
+            </span>
+          </span>
           <CommonBadge
             v-if="item.role === Roles.Workspace.Admin"
             rounded
@@ -137,6 +145,8 @@ const props = defineProps<{
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
 const seatTypeFilter = ref<WorkspaceSeatType>()
+
+const { activeUser } = useActiveUser()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
