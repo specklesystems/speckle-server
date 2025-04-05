@@ -1,4 +1,4 @@
-import { InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
+import { AutomationTemplate, InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
 import {
   AutomationRevisionFunctionRecord,
   AutomationFunctionRunRecord,
@@ -63,9 +63,9 @@ export type GetLatestVersionAutomationRuns = (
 
 export type GetFunctionRun = (functionRunId: string) => Promise<
   | (AutomationFunctionRunRecord & {
-      automationId: string
-      automationRevisionId: string
-    })
+    automationId: string
+    automationRevisionId: string
+  })
   | null
 >
 
@@ -208,3 +208,15 @@ export type TriggerAutomationRevisionRun = <
 export type GetProjectAutomationCount = (params: {
   projectId: string
 }) => Promise<number>
+
+export type GetAutomationTemplates = (params: {
+  workspaceId: string
+}) => Promise<AutomationTemplate[]>
+
+export type CreateAutomationTemplate = (params: {
+  template: AutomationTemplate
+}) => Promise<AutomationTemplate>
+
+export type DeleteAutomationTemplate = (params: {
+  templateId: string
+}) => Promise<boolean>

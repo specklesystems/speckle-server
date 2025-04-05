@@ -62,6 +62,7 @@ type Automation {
   name: String!
   enabled: Boolean!
   isTestAutomation: Boolean!
+  templateId: String
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -445,4 +446,16 @@ type TestAutomationRunTrigger {
 type TestAutomationRunTriggerPayload {
   modelId: String!
   versionId: String!
+}
+
+type AutomationTemplate {
+  id: ID!
+  name: String!
+  enableAutoCreate: Boolean!
+  workspaceId: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  functionId: String!
+  functionRevisionId: String!
+  functionInputs: String
 }

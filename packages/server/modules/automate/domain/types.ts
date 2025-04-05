@@ -16,3 +16,13 @@ export type AutomationRunFullTrigger<
   versions: CommitRecord[]
   models: BranchRecord[]
 }
+
+export type AutomationTemplate = {
+  id: string
+  name: string
+  enableAutoCreate: boolean
+  workspaceId: string
+  functionId: string
+  functionRevisionId: string
+  functionInputs: string | null
+}
