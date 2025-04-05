@@ -4,12 +4,12 @@
 
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { settingsWorkspacesMembersGuestsQuery } from '~/lib/settings/graphql/queries'
+import { settingsWorkspacesMembersTableQuery } from '~/lib/settings/graphql/queries'
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { result } = useQuery(settingsWorkspacesMembersGuestsQuery, () => ({
+const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
   slug: slug.value
 }))
 

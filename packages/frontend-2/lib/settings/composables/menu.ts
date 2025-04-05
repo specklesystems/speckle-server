@@ -5,7 +5,6 @@ import {
 } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled, useActiveUser } from '~/composables/globals'
 import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -14,6 +13,7 @@ import {
   settingsServerRoutes
 } from '~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '@speckle/ui-components'
+import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
@@ -142,7 +142,7 @@ export const useSettingsMenuState = () =>
 
 export const useSettingsMembersActions = (params: {
   workspaceRole?: MaybeNullOrUndefined<string>
-  targetUser: UserItem
+  targetUser: SettingsWorkspacesMembersActionsMenu_UserFragment
 }) => {
   const { activeUser } = useActiveUser()
 
@@ -198,6 +198,8 @@ export const useSettingsMembersActions = (params: {
     () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Admin
   )
 
+  const canUpdateProjectPermissions = computed(() => canModifyUser.value)
+
   const canLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
   const canResignAdmin = computed(
@@ -238,6 +240,14 @@ export const useSettingsMembersActions = (params: {
         id: WorkspaceUserActionTypes.DowngradeEditor
       })
     }
+    if (canUpdateProjectPermissions.value) {
+      mainItems.push({
+        title: 'Manage project access...',
+        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+        disabled: params.targetUser.projectRoles.length === 0,
+        disabledTooltip: 'User is not in any projects'
+      })
+    }
 
     if (canRemoveAdmin.value) {
       footerItems.push({
@@ -274,6 +284,7 @@ export const useSettingsMembersActions = (params: {
     actionItems,
     isActiveUserWorkspaceAdmin,
     isActiveUserTargetUser,
+    canUpdateProjectPermissions,
     canMakeAdmin,
     canRemoveAdmin,
     canMakeGuest,

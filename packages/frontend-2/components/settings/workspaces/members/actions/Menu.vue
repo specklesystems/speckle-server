@@ -25,7 +25,7 @@
       :new-role="newRole"
       :is-active-user-target-user="isActiveUserTargetUser"
       :is-only-admin="hasSingleAdmin"
-      :is-domain-compliant="targetUser.workspaceDomainPolicyCompliant"
+      :is-domain-compliant="targetUser.user.workspaceDomainPolicyCompliant"
       @success="onDialogSuccess"
     />
 
@@ -63,6 +63,14 @@
       :is-only-admin="hasSingleAdmin"
       @success="onDialogSuccess"
     />
+
+    <SettingsWorkspacesMembersActionsProjectPermissionsDialog
+      v-if="dialogToShow.projectPermissions"
+      v-model:open="showDialog"
+      :user="targetUser"
+      :workspace-id="workspace?.id || ''"
+      @success="onDialogSuccess"
+    />
   </div>
 </template>
 
@@ -72,20 +80,33 @@ import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
   SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspacesMembersActionsMenu_User on WorkspaceCollaborator {
+    id
+    role
+    seatType
+    joinDate
+    user {
+      id
+      name
+      avatar
+      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
+    }
+    ...SettingsWorkspacesMembersActionsProjectPermissionsDialog_User
+  }
+`)
 
 const props = defineProps<{
-  targetUser: UserItem
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  targetUser: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
 }>()
 
 const showMenu = ref(false)
@@ -114,7 +135,9 @@ const dialogToShow = computed(() => ({
     dialogType.value === WorkspaceUserActionTypes.DowngradeEditor,
   removeFromWorkspace:
     dialogType.value === WorkspaceUserActionTypes.RemoveFromWorkspace,
-  leaveWorkspace: dialogType.value === WorkspaceUserActionTypes.LeaveWorkspace
+  leaveWorkspace: dialogType.value === WorkspaceUserActionTypes.LeaveWorkspace,
+  projectPermissions:
+    dialogType.value === WorkspaceUserActionTypes.UpdateProjectPermissions
 }))
 
 const newRole = computed(() => {
@@ -127,7 +150,8 @@ const newRole = computed(() => {
     [WorkspaceUserActionTypes.UpgradeEditor]: undefined,
     [WorkspaceUserActionTypes.DowngradeEditor]: undefined,
     [WorkspaceUserActionTypes.RemoveFromWorkspace]: undefined,
-    [WorkspaceUserActionTypes.LeaveWorkspace]: undefined
+    [WorkspaceUserActionTypes.LeaveWorkspace]: undefined,
+    [WorkspaceUserActionTypes.UpdateProjectPermissions]: Roles.Workspace.Admin
   }
   return dialogType.value ? roleMap[dialogType.value] : undefined
 })

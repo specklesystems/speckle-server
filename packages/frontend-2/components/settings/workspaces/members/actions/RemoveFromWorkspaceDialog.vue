@@ -6,12 +6,12 @@
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
             hide-tooltip
-            :user="user"
+            :user="user.user"
             light-style
             class="bg-foundation"
             no-bg
           />
-          {{ user.name }}
+          {{ user.user.name }}
         </div>
       </CommonCard>
 
@@ -26,20 +26,16 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
   SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
-  user: UserItem
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  user: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
