@@ -24,8 +24,7 @@ export enum WorkspaceUserActionTypes {
   MakeGuest = 'make-guest',
   MakeMember = 'make-member',
   UpgradeEditor = 'upgrade-editor',
-  DowngradeEditor = 'downgrade-editor',
-  ResignAdmin = 'resign-admin'
+  DowngradeEditor = 'downgrade-editor'
 }
 
 export type WorkspaceUserUpdateShowOptions = {

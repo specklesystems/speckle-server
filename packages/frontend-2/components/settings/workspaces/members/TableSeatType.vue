@@ -8,12 +8,15 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspaceSeatType } from '@speckle/shared'
-import { WorkspaceSeatTypeDescriptions } from '~/lib/settings/helpers/constants'
+import type { WorkspaceSeatType, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceSeatTypeDescription } from '~/lib/settings/helpers/constants'
 
 const props = defineProps<{
   seatType: WorkspaceSeatType
+  role: WorkspaceRoles
 }>()
 
-const description = computed(() => WorkspaceSeatTypeDescriptions[props.seatType])
+const description = computed(
+  () => WorkspaceSeatTypeDescription[props.role][props.seatType]
+)
 </script>

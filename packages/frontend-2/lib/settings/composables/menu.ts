@@ -14,10 +14,12 @@ import {
   settingsServerRoutes
 } from '~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '@speckle/ui-components'
+import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
     id
+    slug
     sso {
       provider {
         id
@@ -142,9 +144,14 @@ export const useSettingsMenuState = () =>
 
 export const useSettingsMembersActions = (params: {
   workspaceRole?: MaybeNullOrUndefined<string>
+  workspaceSlug?: MaybeNullOrUndefined<string>
   targetUser: UserItem
 }) => {
   const { activeUser } = useActiveUser()
+
+  const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+    workspaceSlug: params.workspaceSlug || ''
+  })
 
   const targetUserRole = computed(() => {
     return params.targetUser.role
@@ -156,6 +163,10 @@ export const useSettingsMembersActions = (params: {
     () => params.workspaceRole === Roles.Workspace.Admin
   )
 
+  const isOnlyAdmin = computed(
+    () => hasSingleAdmin.value && isActiveUserWorkspaceAdmin.value
+  )
+
   const isActiveUserTargetUser = computed(
     () => activeUser.value?.id === params.targetUser.id
   )
@@ -164,103 +175,95 @@ export const useSettingsMembersActions = (params: {
     () => isActiveUserWorkspaceAdmin.value && !isActiveUserTargetUser.value
   )
 
-  const canMakeAdmin = computed(
+  const showMakeAdmin = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
   )
 
-  const canRemoveAdmin = computed(
+  const showRemoveAdmin = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Admin
   )
 
-  const canMakeGuest = computed(
-    () =>
-      canModifyUser.value &&
-      targetUserRole.value !== Roles.Workspace.Guest &&
-      targetUserRole.value !== Roles.Workspace.Admin
+  const showMakeGuest = computed(
+    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Guest
   )
 
-  const canMakeMember = computed(
+  const showMakeMember = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Guest
   )
 
-  const canUpgradeEditor = computed(
+  const showUpgradeEditor = computed(
     () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Viewer
   )
 
-  const canDowngradeEditor = computed(
-    () =>
-      canModifyUser.value &&
-      targetUserSeatType.value === SeatTypes.Editor &&
-      targetUserRole.value !== Roles.Workspace.Admin
+  const showDowngradeEditor = computed(
+    () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Editor
   )
 
-  const canRemoveFromWorkspace = computed(
-    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Admin
-  )
+  const showRemoveFromWorkspace = computed(() => canModifyUser.value)
 
-  const canLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
-
-  const canResignAdmin = computed(
-    () => isActiveUserTargetUser.value && isActiveUserWorkspaceAdmin.value
-  )
+  const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
   const actionItems = computed(() => {
     const mainItems: LayoutMenuItem[] = []
     const footerItems: LayoutMenuItem[] = []
 
-    if (canMakeAdmin.value) {
+    if (showMakeAdmin.value) {
       mainItems.push({
         title: 'Make admin...',
         id: WorkspaceUserActionTypes.MakeAdmin
       })
     }
-    if (canMakeGuest.value) {
+    if (showMakeGuest.value) {
       mainItems.push({
         title: 'Make guest...',
-        id: WorkspaceUserActionTypes.MakeGuest
+        id: WorkspaceUserActionTypes.MakeGuest,
+        disabled: targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'Admins must be on an Member seat'
       })
     }
-    if (canMakeMember.value) {
+    if (showMakeMember.value) {
       mainItems.push({
         title: 'Make member...',
         id: WorkspaceUserActionTypes.MakeMember
       })
     }
-    if (canUpgradeEditor.value) {
+    if (showUpgradeEditor.value) {
       mainItems.push({
         title: 'Upgrade to editor...',
         id: WorkspaceUserActionTypes.UpgradeEditor
       })
     }
-    if (canDowngradeEditor.value) {
+    if (showDowngradeEditor.value) {
       mainItems.push({
         title: 'Downgrade to viewer...',
-        id: WorkspaceUserActionTypes.DowngradeEditor
+        id: WorkspaceUserActionTypes.DowngradeEditor,
+        disabled: targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'Admins must be on an Editor seat'
       })
     }
 
-    if (canRemoveAdmin.value) {
+    if (showRemoveAdmin.value) {
       footerItems.push({
-        title: 'Remove admin...',
-        id: WorkspaceUserActionTypes.RemoveAdmin
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
-    if (canResignAdmin.value) {
-      footerItems.push({
-        title: 'Resign as admin...',
-        id: WorkspaceUserActionTypes.ResignAdmin
-      })
-    }
-    if (canRemoveFromWorkspace.value) {
+    if (showRemoveFromWorkspace.value) {
       footerItems.push({
         title: 'Remove from workspace...',
-        id: WorkspaceUserActionTypes.RemoveFromWorkspace
+        id: WorkspaceUserActionTypes.RemoveFromWorkspace,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
-    if (canLeaveWorkspace.value) {
+    if (showLeaveWorkspace.value) {
       footerItems.push({
         title: 'Leave workspace...',
-        id: WorkspaceUserActionTypes.LeaveWorkspace
+        id: WorkspaceUserActionTypes.LeaveWorkspace,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'You are the only admin of this workspace'
       })
     }
 
@@ -274,14 +277,13 @@ export const useSettingsMembersActions = (params: {
     actionItems,
     isActiveUserWorkspaceAdmin,
     isActiveUserTargetUser,
-    canMakeAdmin,
-    canRemoveAdmin,
-    canMakeGuest,
-    canMakeMember,
-    canUpgradeEditor,
-    canDowngradeEditor,
-    canRemoveFromWorkspace,
-    canLeaveWorkspace,
-    canResignAdmin
+    showMakeAdmin,
+    showRemoveAdmin,
+    showMakeGuest,
+    showMakeMember,
+    showUpgradeEditor,
+    showDowngradeEditor,
+    showRemoveFromWorkspace,
+    showLeaveWorkspace
   }
 }
