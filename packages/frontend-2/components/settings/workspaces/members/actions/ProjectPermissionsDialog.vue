@@ -171,6 +171,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: () => {
       if (projectToRemove.value?.id) {
         updateProjectRole(projectToRemove.value.id, null)
+        if (projectCount.value === 0) {
+          open.value = false
+        }
         showRemoveUserFromProjectConfirmationDialog.value = false
         projectToRemove.value = null
       }
