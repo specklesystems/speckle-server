@@ -16,7 +16,8 @@ import {
   GetWorkspaceSubscriptions,
   UpsertTrialWorkspacePlan,
   UpsertUnpaidWorkspacePlan,
-  GetWorkspaceWithPlan
+  GetWorkspaceWithPlan,
+  GetWorkspacePlansByWorkspaceId
 } from '@/modules/gatekeeper/domain/billing'
 import {
   ChangeExpiredTrialWorkspacePlanStatuses,
@@ -91,6 +92,15 @@ export const getWorkspacePlanFactory =
       .where({ workspaceId })
       .first()
     return workspacePlan ?? null
+  }
+
+export const getWorkspacePlansByWorkspaceIdFactory =
+  ({ db }: { db: Knex }): GetWorkspacePlansByWorkspaceId =>
+  async ({ workspaceIds }) => {
+    const results = await tables
+      .workspacePlans(db)
+      .whereIn(WorkspacePlans.col.workspaceId, workspaceIds)
+    return results.reduce((acc, curr) => ({ ...acc, [curr.workspaceId]: curr }), {})
   }
 
 export const upsertWorkspacePlanFactory =
