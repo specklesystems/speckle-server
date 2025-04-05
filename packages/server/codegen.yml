@@ -72,6 +72,7 @@ generates:
         WorkspaceSubscriptionSeats: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionSeatsGraphQLReturn'
         WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
         LimitedWorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceJoinRequestGraphQLReturn'
+        ProjectMoveToWorkspaceDryRun: '@/modules/workspacesCore/helpers/graphTypes#ProjectMoveToWorkspaceDryRunGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueGraphQLReturn'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'

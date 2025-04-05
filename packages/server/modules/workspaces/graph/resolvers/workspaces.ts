@@ -2,7 +2,6 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
-  getProjectCollaboratorsFactory,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -12,7 +11,8 @@ import {
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
   getUserStreamsPageFactory,
-  getUserStreamsCountFactory
+  getUserStreamsCountFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -1027,7 +1027,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getProject: getProjectFactory({ db }),
                 updateProject: updateProjectFactory({ db }),
                 upsertProjectRole: upsertProjectRoleFactory({ db }),
-                getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
+                getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -1519,7 +1519,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
-            limit: args.limit,
+            limit: args.limit ?? 100,
             cursor: args.cursor ?? undefined
           })
           return team
