@@ -1,9 +1,22 @@
+import { graphql } from '~/lib/common/generated/gql/gql'
 import { useQuery } from '@vue/apollo-composable'
-import { workspacePlanLimitsQuery } from '~/lib/workspaces/graphql/queries'
+import { workspaceUsageQuery } from '~/lib/workspaces/graphql/queries'
 
-export const useGetWorkspacePlanUsage = (slug: string) => {
+graphql(`
+  fragment WorkspaceUsage_Workspace on Workspace {
+    id
+    plan {
+      usage {
+        projectCount
+        modelCount
+      }
+    }
+  }
+`)
+
+export const useWorkspaceUsage = (slug: string) => {
   const { result } = useQuery(
-    workspacePlanLimitsQuery,
+    workspaceUsageQuery,
     () => ({
       slug
     }),
@@ -13,14 +26,10 @@ export const useGetWorkspacePlanUsage = (slug: string) => {
   )
 
   const projectCount = computed(
-    () => result.value?.workspaceBySlug?.projects?.totalCount ?? 0
+    () => result.value?.workspaceBySlug?.plan?.usage.projectCount ?? 0
   )
   const modelCount = computed(
-    () =>
-      result.value?.workspaceBySlug?.projects?.items?.reduce(
-        (total, project) => total + (project?.models?.totalCount ?? 0),
-        0
-      ) ?? 0
+    () => result.value?.workspaceBySlug?.plan?.usage.modelCount ?? 0
   )
 
   return {

@@ -1,64 +1,68 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Move project to workspace</template>
-    <div class="flex flex-col space-y-4">
-      <ProjectsWorkspaceSelect
-        v-if="hasWorkspaces"
-        v-model="selectedWorkspace"
-        :items="workspaces"
-        :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
-        disabled-item-tooltip="Only workspace admins can move projects into a workspace."
-        label="Select a workspace"
-        help="Once a project is moved to a workspace, it cannot be moved out from it."
-        show-label
-      />
-      <div v-else class="flex flex-col gap-y-2">
-        <p class="text-body-xs text-foreground font-medium">
-          You're not a member of any workspaces.
-        </p>
-        <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
-      </div>
+  <div>
+    <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+      <template #header>Move project to workspace</template>
+      <div class="flex flex-col space-y-4">
+        <template v-if="!workspace">
+          <ProjectsWorkspaceSelect
+            v-if="hasWorkspaces"
+            v-model="selectedWorkspace"
+            :items="workspaces"
+            :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+            disabled-item-tooltip="Only workspace admins can move projects into a workspace."
+            label="Select a workspace"
+            help="Once a project is moved to a workspace, it cannot be moved out from it."
+            show-label
+          />
+          <div v-else class="flex flex-col gap-y-2">
+            <p class="text-body-xs text-foreground font-medium">
+              You're not a member of any workspaces.
+            </p>
+            <FormButton :to="workspaceCreateRoute">Learn about workspaces</FormButton>
+          </div>
+        </template>
 
-      <div v-if="project && selectedWorkspace" class="text-body-xs">
-        <div class="text-body-xs text-foreground flex flex-col gap-y-4">
-          <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
-            <p>
-              Move
-              <span class="font-medium">{{ project.name }}</span>
-              to
-              <span class="font-medium">
-                {{ selectedWorkspace?.name }}
+        <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
+          <div class="text-body-xs text-foreground flex flex-col gap-y-4">
+            <div class="rounded border bg-foundation-2 border-outline-3 py-2 px-4">
+              <p>
+                Move
+                <span class="font-medium">{{ project.name }}</span>
+                to
+                <span class="font-medium">
+                  {{ selectedWorkspace?.name ?? workspace?.name }}
+                </span>
+              </p>
+              <p class="text-foreground-3">
+                {{ project.modelCount.totalCount }} {{ modelText }},
+                {{ project.versions.totalCount }} {{ versionsText }}
+              </p>
+            </div>
+            <p class="text-body-2xs text-foreground-2">
+              The project, including models and versions, will be moved to the
+              workspace, where all existing members and admins will have access.
+              <span class="pt-2 block">
+                The project's collaborators will become workspace members and keep their
+                project roles.
               </span>
             </p>
-            <p class="text-foreground-3">
-              {{ project.modelCount.totalCount }} {{ modelText }},
-              {{ project.versions.totalCount }} {{ versionsText }}
-            </p>
           </div>
-          <p class="text-body-2xs text-foreground-2">
-            The project, including models and versions, will be moved to the workspace,
-            where all existing members and admins will have access.
-            <span class="pt-2 block">
-              The project's collaborators will become workspace members and keep their
-              project roles.
-            </span>
-          </p>
         </div>
       </div>
-    </div>
-    <WorkspaceRegionStaticDataDisclaimer
-      v-if="showRegionStaticDataDisclaimer"
-      v-model:open="showRegionStaticDataDisclaimer"
-      :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
-      @confirm="onConfirmHandler"
-    />
+      <WorkspaceRegionStaticDataDisclaimer
+        v-if="showRegionStaticDataDisclaimer"
+        v-model:open="showRegionStaticDataDisclaimer"
+        :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
+        @confirm="onConfirmHandler"
+      />
+    </LayoutDialog>
     <WorkspacePlanLimitReachedDialog
       v-if="activeLimit"
       v-model:open="showLimitReachedDialog"
       :limit="activeLimit"
       :limit-type="limitType"
     />
-  </LayoutDialog>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -71,25 +75,19 @@ import { useMutationLoading, useQuery } from '@vue/apollo-composable'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
-import { workspacesRoute } from '~/lib/common/helpers/route'
+import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 import {
   useWorkspaceCustomDataResidencyDisclaimer,
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
-import {
-  useWorkspaceModelLimits,
-  useWorkspaceProjectLimits
-} from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
     id
     role
-    projectCount: projects(limit: 0) {
-      totalCount
-    }
     name
     logo
+    slug
     ...WorkspaceHasCustomDataResidency_Workspace
     ...ProjectsWorkspaceSelect_Workspace
   }
@@ -129,8 +127,10 @@ const query = graphql(`
 
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
+  workspace?: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
   eventSource?: string // Used for mixpanel tracking
 }>()
+
 const open = defineModel<boolean>('open', { required: true })
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -141,6 +141,16 @@ const loading = useMutationLoading()
 const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
+
+const activeWorkspaceSlug = computed(
+  () => selectedWorkspace.value?.slug || props.workspace?.slug || ''
+)
+
+// Get workspace limits
+const { canAddProject, canAddModels, limits } = useWorkspaceLimits(
+  activeWorkspaceSlug.value
+)
+
 const showLimitReachedDialog = ref(false)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
@@ -152,35 +162,21 @@ const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
 
-const modelCount = computed(() => {
-  return props.project.modelCount.totalCount
-})
+// Determine which limit type is hit
+const limitType = computed((): 'project' | 'model' | null => {
+  if (!canAddProject.value) return 'project'
 
-const projectCount = computed(() => {
-  return selectedWorkspace.value?.projectCount.totalCount ?? 0
-})
+  const projectModelCount = props.project.modelCount.totalCount
+  if (!canAddModels(projectModelCount)) return 'model'
 
-const { canAddProject, projectLimit } = useWorkspaceProjectLimits(projectCount)
-const { canAddModel, modelLimit } = useWorkspaceModelLimits(modelCount)
-
-const limitType = computed(() => {
-  if (!canAddProject.value) {
-    return 'project'
-  }
-  if (!canAddModel.value) {
-    return 'model'
-  }
   return null
 })
 
+// Get the value of the limit that's hit
 const activeLimit = computed(() => {
-  if (!canAddProject.value) {
-    return projectLimit.value
-  }
-  if (!canAddModel.value) {
-    return modelLimit.value
-  }
-  return null
+  if (limitType.value === 'project') return limits.value.projectCount ?? 0
+  if (limitType.value === 'model') return limits.value.modelCount ?? 0
+  return 0
 })
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
@@ -197,7 +193,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
           text: 'Move',
           props: {
             color: 'primary',
-            disabled: !selectedWorkspace.value || loading.value
+            disabled: (!selectedWorkspace.value && !props.workspace) || loading.value
           },
           onClick: () => onMoveClick()
         }
@@ -214,8 +210,8 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
 })
 
 const onMoveProject = async () => {
-  const workspaceId = selectedWorkspace.value?.id
-  const workspaceName = selectedWorkspace.value?.name
+  const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
+  const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
   if (!workspaceId || !workspaceName) return
 
   const res = await moveProject({
@@ -231,7 +227,7 @@ const onMoveProject = async () => {
 
 const { showRegionStaticDataDisclaimer, triggerAction, onConfirmHandler } =
   useWorkspaceCustomDataResidencyDisclaimer({
-    workspace: computed(() => selectedWorkspace.value),
+    workspace: computed(() => selectedWorkspace.value ?? props.workspace),
     onConfirmAction: onMoveProject
   })
 
@@ -246,7 +242,11 @@ watch(
 )
 
 const onMoveClick = () => {
-  if (limitType.value) {
+  const projectModelCount = props.project.modelCount.totalCount
+
+  // Check if we can add this project to the workspace
+  if (!canAddProject.value || !canAddModels(projectModelCount)) {
+    open.value = false
     showLimitReachedDialog.value = true
   } else {
     triggerAction()

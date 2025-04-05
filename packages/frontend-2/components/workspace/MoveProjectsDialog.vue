@@ -18,9 +18,15 @@
     />
     <div class="text-body-2xs py-2">
       You can move up to
-      <span class="font-medium">{{ remainingProjects }} projects</span>
+      <span class="font-medium">
+        {{ Math.max(0, remainingProjectCount) }}
+        {{ remainingProjectCount === 1 ? 'project' : 'projects' }}
+      </span>
       and
-      <span class="font-medium">{{ remainingModels }} models</span>
+      <span class="font-medium">
+        {{ Math.max(0, remainingModelCount) }}
+        {{ remainingModelCount === 1 ? 'model' : 'models' }}
+      </span>
       in total.
     </div>
     <div
@@ -67,12 +73,6 @@
       :project="selectedProject"
       event-source="move-projects-dialog"
     />
-    <WorkspacePlanLimitReachedDialog
-      v-if="activeLimit"
-      v-model:open="showLimitReachedDialog"
-      :limit="activeLimit"
-      :limit-type="limitType"
-    />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -89,11 +89,7 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
-import {
-  useWorkspaceModelLimits,
-  useWorkspaceProjectLimits
-} from '~/lib/workspaces/composables/limits'
-import { useGetWorkspacePlanUsage } from '~/lib/workspaces/composables/usage'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -102,12 +98,6 @@ graphql(`
     projects {
       items {
         id
-        modelCount: models(limit: 0) {
-          totalCount
-        }
-        versions(limit: 0) {
-          totalCount
-        }
       }
     }
   }
@@ -162,13 +152,10 @@ const {
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
-const showLimitReachedDialog = ref(false)
 
-const { projectCount, modelCount } = useGetWorkspacePlanUsage(props.workspace.slug)
-
-const { remainingProjects, canAddProject, projectLimit } =
-  useWorkspaceProjectLimits(projectCount)
-const { remainingModels, canAddModel, modelLimit } = useWorkspaceModelLimits(modelCount)
+const { remainingModelCount, remainingProjectCount } = useWorkspaceLimits(
+  props.workspace.slug
+)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
@@ -179,6 +166,7 @@ const moveableProjects = computed(() =>
   userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
 )
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
+
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Done',
@@ -189,34 +177,8 @@ const buttons = computed((): LayoutDialogButton[] => [
   }
 ])
 
-const limitReached = computed(() => !canAddProject.value || !canAddModel.value)
-
-const limitType = computed(() => {
-  if (!canAddProject.value) {
-    return 'project'
-  }
-  if (!canAddModel.value) {
-    return 'model'
-  }
-  return null
-})
-
-const activeLimit = computed(() => {
-  if (!canAddProject.value) {
-    return projectLimit.value
-  }
-  if (!canAddModel.value) {
-    return modelLimit.value
-  }
-  return null
-})
-
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  if (limitReached.value) {
-    showLimitReachedDialog.value = true
-  } else {
-    showMoveToWorkspaceDialog.value = true
-  }
+  showMoveToWorkspaceDialog.value = true
 }
 </script>

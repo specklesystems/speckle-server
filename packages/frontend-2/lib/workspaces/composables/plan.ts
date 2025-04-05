@@ -28,9 +28,14 @@ graphql(`
       billingInterval
       currentBillingCycleEnd
       seats {
-        totalCount
-        assigned
-        viewersCount
+        editors {
+          assigned
+          available
+        }
+        viewers {
+          assigned
+          available
+        }
       }
     }
   }
@@ -117,9 +122,9 @@ export const useWorkspacePlan = (slug: string) => {
       return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
 
     return {
-      limit: seats.totalCount,
-      used: seats.assigned,
-      hasSeatAvailable: seats.totalCount > seats.assigned,
+      limit: seats.editors.available,
+      used: seats.editors.assigned,
+      hasSeatAvailable: seats.editors.available > seats.editors.assigned,
       seatPrice: editorSeatPrice
     }
   })
@@ -141,21 +146,3 @@ export const useWorkspacePlan = (slug: string) => {
     editorSeats
   }
 }
-
-graphql(`
-  fragment WorkspacePlanLimits_Workspace on Workspace {
-    id
-    projects(limit: 0) {
-      totalCount
-      items {
-        id
-        models(limit: 0) {
-          totalCount
-        }
-      }
-    }
-    plan {
-      name
-    }
-  }
-`)

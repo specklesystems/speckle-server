@@ -32,12 +32,14 @@ spec:
             - name: LOG_PRETTY
               value: {{ .Values.test.logPretty | quote }}
           resources:
+            {{- with .Values.test.requests }}
             requests:
-              cpu: {{ .Values.test.requests.cpu }}
-              memory: {{ .Values.test.requests.memory }}
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- with .Values.test.limits }}
             limits:
-              cpu: {{ .Values.test.limits.cpu }}
-              memory: {{ .Values.test.limits.memory }}
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,12 +30,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.monitoring.requests }}
           requests:
-            cpu: {{ .Values.monitoring.requests.cpu }}
-            memory: {{ .Values.monitoring.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.monitoring.limits }}
           limits:
-            cpu: {{ .Values.monitoring.limits.cpu }}
-            memory: {{ .Values.monitoring.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -169,3 +172,4 @@ spec:
       {{- if .Values.monitoring.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
+{{- end }}
