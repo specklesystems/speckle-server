@@ -559,65 +559,48 @@ server:
     stripeEndpointSigningKey:
       ## @param server.billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
       secretKey: 'stripeEndpointSigningKey'
-    workspaceGuestSeatStripeProductId:
-      ## @param server.billing.workspaceGuestSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.
-      secretKey: 'workspaceGuestSeatStripeProductId'
-    workspaceMonthlyGuestSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyGuestSeatStripePriceId'
-    workspaceYearlyGuestSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyGuestSeatStripePriceId'
 
-    workspaceStarterSeatStripeProductId:
-      ## @param server.billing.workspaceStarterSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.
-      secretKey: 'workspaceStarterSeatStripeProductId'
-    workspaceMonthlyStarterSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyStarterSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyStarterSeatStripePriceId'
-    workspaceYearlyStarterSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyStarterSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyStarterSeatStripePriceId'
+    ## @param server.billing.workspaceGuestSeatStripeProductId The workspace Guest Seat Product Id as configured in Stripe.
+    workspaceGuestSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId The workspace Monthly Guest Seat Price Id as configured in Stripe.
+    workspaceMonthlyGuestSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyGuestSeatStripePriceId The workspace Yearly Guest Seat Price Id as configured in Stripe.
+    workspaceYearlyGuestSeatStripePriceId: ''
 
-    workspacePlusSeatStripeProductId:
-      ## @param server.billing.workspacePlusSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.
-      secretKey: 'workspacePlusSeatStripeProductId'
-    workspaceMonthlyPlusSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyPlusSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyPlusSeatStripePriceId'
-    workspaceYearlyPlusSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyPlusSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyPlusSeatStripePriceId'
+    ## @param server.billing.workspaceStarterSeatStripeProductId The workspace Starter Seat Product Id as configured in Stripe.
+    workspaceStarterSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyStarterSeatStripePriceId The workspace Monthly Starter Seat Price Id as configured in Stripe.
+    workspaceMonthlyStarterSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyStarterSeatStripePriceId The workspace Yearly Starter Seat Price Id as configured in Stripe.
+    workspaceYearlyStarterSeatStripePriceId: ''
 
-    workspaceBusinessSeatStripeProductId:
-      ## @param server.billing.workspaceBusinessSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.
-      secretKey: 'workspaceBusinessSeatStripeProductId'
-    workspaceMonthlyBusinessSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyBusinessSeatStripePriceId'
-    workspaceYearlyBusinessSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyBusinessSeatStripePriceId'
+    ## @param server.billing.workspacePlusSeatStripeProductId The workspace Plus Seat Product Id as configured in Stripe.
+    workspacePlusSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyPlusSeatStripePriceId The workspace Monthly Plus Seat Price Id as configured in Stripe.
+    workspaceMonthlyPlusSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyPlusSeatStripePriceId The workspace Yearly Plus Seat Price Id as configured in Stripe.
+    workspaceYearlyPlusSeatStripePriceId: ''
 
-    workspaceTeamSeatStripeProductId:
-      ## @param server.billing.workspaceTeamSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.
-      secretKey: 'workspaceTeamSeatStripeProductId'
-    workspaceMonthlyTeamSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyTeamSeatStripePriceId'
-    workspaceYearlyTeamSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyTeamSeatStripePriceId'
+    ## @param server.billing.workspaceBusinessSeatStripeProductId The workspace Business Seat Product Id as configured in Stripe.
+    workspaceBusinessSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId The workspace Monthly Business Seat Price Id as configured in Stripe.
+    workspaceMonthlyBusinessSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId The workspace Yearly Business Seat Price Id as configured in Stripe.
+    workspaceYearlyBusinessSeatStripePriceId: ''
 
-    workspaceProSeatStripeProductId:
-      ## @param server.billing.workspaceProSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.
-      secretKey: 'workspaceProSeatStripeProductId'
-    workspaceMonthlyProSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyProSeatStripePriceId'
-    workspaceYearlyProSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyProSeatStripePriceId'
+    ## @param server.billing.workspaceTeamSeatStripeProductId The workspace Team Seat Product Id as configured in Stripe.
+    workspaceTeamSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId The workspace Monthly Team Seat Price Id as configured in Stripe.
+    workspaceMonthlyTeamSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyTeamSeatStripePriceId The workspace Yearly Team Seat Price Id as configured in Stripe.
+    workspaceYearlyTeamSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceProSeatStripeProductId The workspace Pro Seat Product Id as configured in Stripe.
+    workspaceProSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyProSeatStripePriceId The workspace Monthly Pro Seat Price Id as configured in Stripe.
+    workspaceMonthlyProSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyProSeatStripePriceId The workspace Yearly Pro Seat Price Id as configured in Stripe.
+    workspaceYearlyProSeatStripePriceId: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -1127,6 +1110,10 @@ preview_service:
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param preview_service.deploymentStrategy.type The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as preview service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param preview_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -1235,6 +1222,10 @@ webhook_service:
   ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param webhook_service.deploymentStrategy.type The deployment strategy type to be used for the Webhook Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as webhook service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param webhook_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -1310,6 +1301,10 @@ fileimport_service:
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param fileimport_service.deploymentStrategy.type The deployment strategy type to be used for the FileImport Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as file import service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param fileimport_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'

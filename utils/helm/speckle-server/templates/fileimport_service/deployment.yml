@@ -13,8 +13,10 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  {{- with .Values.fileimport_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
