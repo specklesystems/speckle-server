@@ -14,11 +14,14 @@ export const intersectProjectCollaboratorsAndWorkspaceCollaboratorsFactory =
   async ({ projectId, workspaceId }) => {
     return await tables
       .streamAcl(deps.db)
-      .select<UserRecord[]>(...Users.cols, ...StreamAcl.cols, ...WorkspaceAcl.cols)
+      .select<UserRecord[]>(...Users.cols)
       .join(Users.name, Users.col.id, StreamAcl.col.userId)
-      .leftJoin(WorkspaceAcl.name, WorkspaceAcl.col.userId, StreamAcl.col.userId)
       .where(StreamAcl.col.resourceId, projectId)
-      .where(WorkspaceAcl.col.workspaceId, workspaceId)
-      .whereNull(WorkspaceAcl.col.role)
-      .distinctOn(Users.col.id)
+      .except((builder) => {
+        return builder
+          .select(...Users.cols)
+          .from(WorkspaceAcl.name)
+          .join(Users.name, Users.col.id, WorkspaceAcl.col.userId)
+          .where(WorkspaceAcl.col.workspaceId, workspaceId)
+      })
   }
