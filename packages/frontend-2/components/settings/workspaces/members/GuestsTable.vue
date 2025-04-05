@@ -61,18 +61,28 @@
         </span>
       </template>
       <template #projects="{ item }">
-        <button
+        <FormButton
           v-if="
             item.projectRoles.length > 0 &&
             isWorkspaceAdmin &&
             item.role !== Roles.Workspace.Admin
           "
-          class="text-foreground-2 max-w-max text-body-2xs select-none"
+          color="subtle"
+          size="sm"
+          class="!font-normal !text-foreground-2 -ml-2"
+          @click="
+            () => {
+              targetUser = item
+              showProjectPermissionsDialog = true
+            }
+          "
         >
-          {{ item.projectRoles.length }} projects
-        </button>
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </FormButton>
         <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
-          {{ item.projectRoles.length }} projects
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </div>
       </template>
       <template #actions="{ item }">
@@ -84,12 +94,18 @@
         <span v-else />
       </template>
     </LayoutTable>
+    <SettingsWorkspacesMembersActionsProjectPermissionsDialog
+      v-model:open="showProjectPermissionsDialog"
+      :user="targetUser"
+      :workspace-id="workspace?.id || ''"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
+  type SettingsWorkspacesMembersActionsMenu_UserFragment,
   type SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
@@ -104,6 +120,10 @@ const props = defineProps<{
 
 const search = ref('')
 const seatTypeFilter = ref<WorkspaceSeatType>()
+const showProjectPermissionsDialog = ref(false)
+const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undefined>(
+  undefined
+)
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,

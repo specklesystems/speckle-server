@@ -243,7 +243,9 @@ export const useSettingsMembersActions = (params: {
     if (canUpdateProjectPermissions.value) {
       mainItems.push({
         title: 'Manage project access...',
-        id: WorkspaceUserActionTypes.UpdateProjectPermissions
+        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+        disabled: params.targetUser.projectRoles.length === 0,
+        disabledTooltip: 'User is not in any projects'
       })
     }
 
