@@ -361,12 +361,3 @@ export const projectBlobInfoQuery = graphql(`
     }
   }
 `)
-
-export const projectWorkspaceSelectQuery = graphql(`
-  query ProjectWorkspaceSelect {
-    activeUser {
-      id
-      ...ProjectsAddDialog_User
-    }
-  }
-`)
