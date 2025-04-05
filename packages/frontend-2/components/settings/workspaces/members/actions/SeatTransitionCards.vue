@@ -7,7 +7,7 @@
           <div class="text-primary">Free</div>
         </template>
         <template v-else>
-          <div class="text-foreground">£{{ seatPrice }}/month</div>
+          <div class="text-foreground text-primary">£{{ seatPrice }}/month</div>
         </template>
       </div>
       <div v-else class="ml-auto text-primary font-medium">Free</div>
