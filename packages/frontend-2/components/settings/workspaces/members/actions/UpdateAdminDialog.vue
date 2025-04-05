@@ -1,20 +1,7 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
-    <CommonAlert
-      v-if="isOnlyAdmin && props.action === 'resign'"
-      color="danger"
-      hide-icon
-      size="xs"
-    >
-      <template #title>You are the only admin of this workspace</template>
-      <template #description>
-        <span class="text-body-2xs">
-          Please transfer the admin role to another user before leaving the workspace.
-        </span>
-      </template>
-    </CommonAlert>
-    <div v-else class="flex flex-col gap-4 mb-4 -mt-1">
+    <div class="flex flex-col gap-4 mb-4 -mt-1">
       <CommonCard class="bg-foundation-2 text-body-2xs !p-2">
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
@@ -83,8 +70,7 @@ const props = defineProps<{
     | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   >
   isActiveUserTargetUser: boolean
-  isOnlyAdmin: boolean
-  action?: 'make' | 'remove' | 'resign'
+  action?: 'make' | 'remove'
 }>()
 
 const emit = defineEmits<{
@@ -105,9 +91,7 @@ const title = computed(() => {
     case 'make':
       return 'Make an admin?'
     case 'remove':
-      return 'Remove admin?'
-    case 'resign':
-      return 'Resign as admin?'
+      return 'Revoke admin access?'
     default:
       return ''
   }
@@ -118,9 +102,7 @@ const buttonText = computed(() => {
     case 'make':
       return needsEditorUpgrade.value ? 'Upgrade and make admin' : 'Make an admin'
     case 'remove':
-      return 'Remove admin'
-    case 'resign':
-      return 'Become a member'
+      return 'Revoke admin access'
     default:
       return ''
   }
@@ -132,8 +114,6 @@ const mainMessage = computed(() => {
       return 'They will be able to manage the full workspace, including settings, members, and all projects.'
     case 'remove':
       return 'They will be able to create and own projects, but will no longer have admin privileges.'
-    case 'resign':
-      return 'You will no longer be able to manage workspace settings, members, or billing. You will still be able to create and own projects as a member.'
     default:
       return ''
   }
@@ -167,8 +147,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: buttonText.value,
     props: {
-      color: 'primary',
-      disabled: props.isOnlyAdmin && props.action === 'resign'
+      color: 'primary'
     },
     onClick: handleConfirm
   }
