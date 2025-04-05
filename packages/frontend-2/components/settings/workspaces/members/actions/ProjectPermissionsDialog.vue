@@ -27,7 +27,16 @@
             class="flex items-center relative"
           >
             <div class="text-body-xs flex-1 relative z-10 mr-40">
-              {{ projectRole.project.name }}
+              <NuxtLink
+                :to="projectRoute(projectRole.project.id)"
+                target="_blank"
+                class="group flex gap-1 items-center max-w-max border-b border-transparent hover:border-gray-300/90"
+              >
+                {{ projectRole.project.name }}
+                <ArrowTopRightOnSquareIcon
+                  class="hidden group-hover:block w-3 h-3 opacity-60"
+                />
+              </NuxtLink>
             </div>
             <div class="flex items-center gap-2 absolute right-0">
               <ProjectPageTeamPermissionSelect
@@ -90,6 +99,8 @@ import { useUpdateUserRole } from '~~/lib/projects/composables/projectManagement
 import { useDebouncedTextInput, type LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
+import { projectRoute } from '~~/lib/common/helpers/route'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {
