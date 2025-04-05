@@ -151,7 +151,7 @@ const mainMessage = computed(() => {
 
 const roleInfo = computed(() => {
   return props.action === 'make'
-    ? WorkspaceRoleDescriptions[Roles.Workspace.Admin]
+    ? undefined
     : WorkspaceRoleDescriptions[Roles.Workspace.Member]
 })
 
