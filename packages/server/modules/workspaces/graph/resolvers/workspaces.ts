@@ -4,7 +4,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
   updateProjectFactory,
-  upsertProjectRoleFactory,
   getRolesByUserIdFactory,
   getStreamFactory,
   deleteStreamFactory,
@@ -99,7 +98,6 @@ import {
 import {
   createWorkspaceProjectFactory,
   getWorkspaceProjectsFactory,
-  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
@@ -1026,7 +1024,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               moveProjectToWorkspaceFactory({
                 getProject: getProjectFactory({ db }),
                 updateProject: updateProjectFactory({ db }),
-                upsertProjectRole: upsertProjectRoleFactory({ db }),
+                updateProjectRole: updateStreamRoleAndNotify,
                 getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
@@ -1043,11 +1041,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     eventEmit: emit
                   })
                 }),
+                createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
                 getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
-                getWorkspaceRoleToDefaultProjectRoleMapping:
-                  getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-                    getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-                  })
+                getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
+                getUserEmails: findEmailsByUserIdFactory({ db })
               })
           })
 
