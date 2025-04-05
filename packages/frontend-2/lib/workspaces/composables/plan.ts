@@ -129,6 +129,10 @@ export const useWorkspacePlan = (slug: string) => {
     }
   })
 
+  const isUnlimitedPlan = computed(
+    () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
+  )
+
   return {
     plan,
     isNewPlan,
@@ -143,6 +147,7 @@ export const useWorkspacePlan = (slug: string) => {
     totalCostFormatted,
     statusIsCancelationScheduled,
     subscription,
-    editorSeats
+    editorSeats,
+    isUnlimitedPlan
   }
 }
