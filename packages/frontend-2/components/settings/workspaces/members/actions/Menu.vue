@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :key="computedKey">
     <LayoutMenu
       v-if="actionItems.length"
       v-model:open="showMenu"
@@ -116,10 +116,12 @@ const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
   workspaceSlug: props.workspace?.slug || ''
 })
 
+const computedKey = computed(() => `${props.targetUser.id}-${props.targetUser.role}`)
+
 const { actionItems, isActiveUserTargetUser } = useSettingsMembersActions({
-  workspaceRole: props.workspace?.role,
-  workspaceSlug: props.workspace?.slug,
-  targetUser: props.targetUser
+  workspaceRole: computed(() => props.workspace?.role),
+  workspaceSlug: computed(() => props.workspace?.slug),
+  targetUser: computed(() => props.targetUser)
 })
 
 const dialogToShow = computed(() => ({

@@ -143,24 +143,24 @@ export const useSettingsMenuState = () =>
   }))
 
 export const useSettingsMembersActions = (params: {
-  workspaceRole?: MaybeNullOrUndefined<string>
-  workspaceSlug?: MaybeNullOrUndefined<string>
-  targetUser: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspaceRole: ComputedRef<MaybeNullOrUndefined<string>>
+  workspaceSlug: ComputedRef<MaybeNullOrUndefined<string>>
+  targetUser: ComputedRef<SettingsWorkspacesMembersActionsMenu_UserFragment>
 }) => {
   const { activeUser } = useActiveUser()
 
   const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
-    workspaceSlug: params.workspaceSlug || ''
+    workspaceSlug: params.workspaceSlug.value || ''
   })
 
   const targetUserRole = computed(() => {
-    return params.targetUser.role
+    return params.targetUser.value.role
   })
 
-  const targetUserSeatType = computed(() => params.targetUser.seatType)
+  const targetUserSeatType = computed(() => params.targetUser.value.seatType)
 
   const isActiveUserWorkspaceAdmin = computed(
-    () => params.workspaceRole === Roles.Workspace.Admin
+    () => params.workspaceRole.value === Roles.Workspace.Admin
   )
 
   const isOnlyAdmin = computed(
@@ -168,7 +168,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const isActiveUserTargetUser = computed(
-    () => activeUser.value?.id === params.targetUser.id
+    () => activeUser.value?.id === params.targetUser.value.id
   )
 
   const canModifyUser = computed(
@@ -247,7 +247,7 @@ export const useSettingsMembersActions = (params: {
       mainItems.push({
         title: 'Manage project access...',
         id: WorkspaceUserActionTypes.UpdateProjectPermissions,
-        disabled: params.targetUser.projectRoles.length === 0,
+        disabled: params.targetUser.value.projectRoles.length === 0,
         disabledTooltip: 'User is not in any projects'
       })
     }
