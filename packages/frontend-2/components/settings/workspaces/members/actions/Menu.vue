@@ -35,7 +35,6 @@
       :user="targetUser"
       :workspace="workspace"
       :is-active-user-target-user="isActiveUserTargetUser"
-      :is-only-admin="hasSingleAdmin"
       :action="adminAction"
       @success="onDialogSuccess"
     />
@@ -119,6 +118,7 @@ const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
 
 const { actionItems, isActiveUserTargetUser } = useSettingsMembersActions({
   workspaceRole: props.workspace?.role,
+  workspaceSlug: props.workspace?.slug,
   targetUser: props.targetUser
 })
 
@@ -128,8 +128,7 @@ const dialogToShow = computed(() => ({
     dialogType.value === WorkspaceUserActionTypes.MakeMember,
   updateAdmin:
     dialogType.value === WorkspaceUserActionTypes.MakeAdmin ||
-    dialogType.value === WorkspaceUserActionTypes.RemoveAdmin ||
-    dialogType.value === WorkspaceUserActionTypes.ResignAdmin,
+    dialogType.value === WorkspaceUserActionTypes.RemoveAdmin,
   updateSeatType:
     dialogType.value === WorkspaceUserActionTypes.UpgradeEditor ||
     dialogType.value === WorkspaceUserActionTypes.DowngradeEditor,
@@ -146,7 +145,6 @@ const newRole = computed(() => {
     [WorkspaceUserActionTypes.MakeMember]: Roles.Workspace.Member,
     [WorkspaceUserActionTypes.MakeGuest]: Roles.Workspace.Guest,
     [WorkspaceUserActionTypes.RemoveAdmin]: Roles.Workspace.Member,
-    [WorkspaceUserActionTypes.ResignAdmin]: Roles.Workspace.Member,
     [WorkspaceUserActionTypes.UpgradeEditor]: undefined,
     [WorkspaceUserActionTypes.DowngradeEditor]: undefined,
     [WorkspaceUserActionTypes.RemoveFromWorkspace]: undefined,
@@ -162,8 +160,6 @@ const adminAction = computed(() => {
       return 'make' as const
     case WorkspaceUserActionTypes.RemoveAdmin:
       return 'remove' as const
-    case WorkspaceUserActionTypes.ResignAdmin:
-      return 'resign' as const
     default:
       return undefined
   }

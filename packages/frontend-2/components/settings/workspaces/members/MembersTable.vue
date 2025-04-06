@@ -49,6 +49,12 @@
           />
           <span class="truncate text-body-xs text-foreground">
             {{ item.user.name }}
+            <span
+              v-if="item.id === activeUser?.id"
+              class="text-foreground-3 text-body-3xs"
+            >
+              (You)
+            </span>
           </span>
           <CommonBadge
             v-if="item.role === Roles.Workspace.Admin"
@@ -71,7 +77,10 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType
+          :seat-type="item.seatType"
+          :role="Roles.Workspace.Member"
+        />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
@@ -170,6 +179,8 @@ const showProjectPermissionsDialog = ref(false)
 const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undefined>(
   undefined
 )
+
+const { activeUser } = useActiveUser()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,

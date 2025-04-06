@@ -7,6 +7,8 @@
       <SeatTransitionCards
         :is-upgrading="isUpgrading"
         :is-free-plan="isFreePlan"
+        :is-unlimited-plan="isUnlimitedPlan"
+        :is-guest="user.role === Roles.Workspace.Guest"
         :has-available-seat="editorSeats.hasSeatAvailable"
         :seat-price="editorSeats.seatPrice"
       />
@@ -40,6 +42,7 @@ import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
   SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import { Roles } from '@speckle/shared'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
@@ -59,7 +62,8 @@ const {
   billingCycleEnd,
   isPurchasablePlan,
   isFreePlan,
-  intervalIsYearly
+  intervalIsYearly,
+  isUnlimitedPlan
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)

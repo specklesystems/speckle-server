@@ -53,7 +53,10 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType
+          :seat-type="item.seatType"
+          :role="Roles.Workspace.Guest"
+        />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">
