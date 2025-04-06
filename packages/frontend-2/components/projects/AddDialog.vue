@@ -38,7 +38,6 @@ import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
-import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 type FormValues = {
   name: string
@@ -58,7 +57,6 @@ const logger = useLogger()
 const { handleSubmit, isSubmitting } = useForm<FormValues>()
 
 const visibility = ref(SimpleProjectVisibility.Unlisted)
-const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
 const isLoading = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
@@ -117,7 +115,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
 
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    selectedWorkspace.value = undefined
     isLoading.value = false
   }
 })
