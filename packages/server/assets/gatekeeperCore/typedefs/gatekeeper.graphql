@@ -67,8 +67,13 @@ enum WorkspacePlans {
   starterInvoiced
   plusInvoiced
   businessInvoiced
+  # New plans
   team
+  teamUnlimited
+  teamUnlimitedInvoiced
   pro
+  proUnlimited
+  proUnlimitedInvoiced
 }
 
 enum WorkspacePlanStatuses {
