@@ -289,7 +289,7 @@ type Documents = {
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": typeof types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": typeof types.InviteServerUserDocument,
     "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": typeof types.AddDomainWorkspaceFragmentDoc,
-    "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.SettingsMenu_WorkspaceFragmentDoc,
+    "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": typeof types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": typeof types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": typeof types.SettingsCreateUserEmailDocument,
     "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": typeof types.SettingsDeleteUserEmailDocument,
@@ -689,7 +689,7 @@ const documents: Documents = {
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
     "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
-    "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
+    "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.SettingsCreateUserEmailDocument,
     "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.SettingsDeleteUserEmailDocument,
@@ -1931,7 +1931,7 @@ export function graphql(source: "\n                      fragment AddDomainWorks
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    slug\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
