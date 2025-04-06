@@ -433,9 +433,11 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  isAutoCreated: Scalars['Boolean']['output'];
   isTestAutomation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   runs: AutomateRunCollection;
+  templateId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -476,6 +478,27 @@ export type AutomationRevisionFunction = {
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
+
+export type AutomationTemplate = {
+  __typename?: 'AutomationTemplate';
+  createdAt: Scalars['DateTime']['output'];
+  enableAutoCreate: Scalars['Boolean']['output'];
+  functionId: Scalars['String']['output'];
+  functionInputs?: Maybe<Scalars['String']['output']>;
+  functionRevisionId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  workspaceId: Scalars['String']['output'];
+};
+
+export type AutomationTemplateCreateInput = {
+  functionId: Scalars['String']['input'];
+  functionInputs?: InputMaybe<Scalars['String']['input']>;
+  functionRevisionId: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
 
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
@@ -4321,6 +4344,7 @@ export type Workspace = {
   /** Get all join requests for all the workspaces the user is an admin of */
   adminWorkspacesJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
   automateFunctions: AutomateFunctionCollection;
+  automationTemplates: Array<AutomationTemplate>;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
@@ -4611,6 +4635,7 @@ export type WorkspaceMutations = {
   addDomain: Workspace;
   billing: WorkspaceBillingMutations;
   create: Workspace;
+  createAutomationTemplate: AutomationTemplate;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
@@ -4637,6 +4662,11 @@ export type WorkspaceMutationsAddDomainArgs = {
 
 export type WorkspaceMutationsCreateArgs = {
   input: WorkspaceCreateInput;
+};
+
+
+export type WorkspaceMutationsCreateAutomationTemplateArgs = {
+  input: AutomationTemplateCreateInput;
 };
 
 
@@ -5043,12 +5073,6 @@ export type FormSelectProjects_ProjectFragment = { __typename?: 'Project', id: s
 
 export type FormUsersSelectItemFragment = { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null };
 
-export type HeaderNavShare_ProjectFragment = { __typename?: 'Project', id: string, visibility: SimpleProjectVisibility, role?: string | null };
-
-export type HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment = { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
-
-export type HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, workspaceId: string, workspaceName: string, token?: string | null, workspaceSlug: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
-
 export type HeaderWorkspaceSwitcherActiveWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number }, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
 export type HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, slug: string, creationState?: { __typename?: 'WorkspaceCreationState', completed: boolean } | null, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null };
@@ -5058,6 +5082,12 @@ export type HeaderWorkspaceSwitcherWorkspaceList_UserFragment = { __typename?: '
 export type HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragment = { __typename?: 'LimitedWorkspace', id: string, slug: string, name: string, logo?: string | null };
 
 export type HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number }, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
+
+export type HeaderNavShare_ProjectFragment = { __typename?: 'Project', id: string, visibility: SimpleProjectVisibility, role?: string | null };
+
+export type HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment = { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
+
+export type HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, workspaceId: string, workspaceName: string, token?: string | null, workspaceSlug: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
 
 export type InviteDialogWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, domainBasedMembershipProtectionEnabled: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
@@ -7312,6 +7342,7 @@ export type AllObjectTypes = {
   AutomationCollection: AutomationCollection,
   AutomationRevision: AutomationRevision,
   AutomationRevisionFunction: AutomationRevisionFunction,
+  AutomationTemplate: AutomationTemplate,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata,
   BlobMetadata: BlobMetadata,
   BlobMetadataCollection: BlobMetadataCollection,
@@ -7616,9 +7647,11 @@ export type AutomationFieldArgs = {
   currentRevision: {},
   enabled: {},
   id: {},
+  isAutoCreated: {},
   isTestAutomation: {},
   name: {},
   runs: AutomationRunsArgs,
+  templateId: {},
   updatedAt: {},
 }
 export type AutomationCollectionFieldArgs = {
@@ -7634,6 +7667,17 @@ export type AutomationRevisionFieldArgs = {
 export type AutomationRevisionFunctionFieldArgs = {
   parameters: {},
   release: {},
+}
+export type AutomationTemplateFieldArgs = {
+  createdAt: {},
+  enableAutoCreate: {},
+  functionId: {},
+  functionInputs: {},
+  functionRevisionId: {},
+  id: {},
+  name: {},
+  updatedAt: {},
+  workspaceId: {},
 }
 export type BasicGitRepositoryMetadataFieldArgs = {
   id: {},
@@ -8609,6 +8653,7 @@ export type WebhookEventCollectionFieldArgs = {
 export type WorkspaceFieldArgs = {
   adminWorkspacesJoinRequests: WorkspaceAdminWorkspacesJoinRequestsArgs,
   automateFunctions: WorkspaceAutomateFunctionsArgs,
+  automationTemplates: {},
   createdAt: {},
   creationState: {},
   customerPortalUrl: {},
@@ -8694,6 +8739,7 @@ export type WorkspaceMutationsFieldArgs = {
   addDomain: WorkspaceMutationsAddDomainArgs,
   billing: {},
   create: WorkspaceMutationsCreateArgs,
+  createAutomationTemplate: WorkspaceMutationsCreateAutomationTemplateArgs,
   delete: WorkspaceMutationsDeleteArgs,
   deleteDomain: WorkspaceMutationsDeleteDomainArgs,
   deleteSsoProvider: WorkspaceMutationsDeleteSsoProviderArgs,
@@ -8816,6 +8862,7 @@ export type AllObjectFieldArgTypes = {
   AutomationCollection: AutomationCollectionFieldArgs,
   AutomationRevision: AutomationRevisionFieldArgs,
   AutomationRevisionFunction: AutomationRevisionFunctionFieldArgs,
+  AutomationTemplate: AutomationTemplateFieldArgs,
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadataFieldArgs,
   BlobMetadata: BlobMetadataFieldArgs,
   BlobMetadataCollection: BlobMetadataCollectionFieldArgs,

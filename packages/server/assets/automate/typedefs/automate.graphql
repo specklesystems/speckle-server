@@ -62,6 +62,7 @@ type Automation {
   name: String!
   enabled: Boolean!
   isTestAutomation: Boolean!
+  isAutoCreated: Boolean!
   templateId: String
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision

@@ -7,7 +7,7 @@ extend type Workspace {
   automationTemplates: [AutomationTemplate!]!
 }
 
-extend type WorkpsaceMutations {
+extend type WorkspaceMutations {
   createAutomationTemplate(input: AutomationTemplateCreateInput!): AutomationTemplate!
 }
 

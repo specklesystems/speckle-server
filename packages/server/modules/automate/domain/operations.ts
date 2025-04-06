@@ -1,4 +1,7 @@
-import { AutomationTemplate, InsertableAutomationFunctionRun } from '@/modules/automate/domain/types'
+import {
+  AutomationTemplate,
+  InsertableAutomationFunctionRun
+} from '@/modules/automate/domain/types'
 import {
   AutomationRevisionFunctionRecord,
   AutomationFunctionRunRecord,
@@ -63,9 +66,9 @@ export type GetLatestVersionAutomationRuns = (
 
 export type GetFunctionRun = (functionRunId: string) => Promise<
   | (AutomationFunctionRunRecord & {
-    automationId: string
-    automationRevisionId: string
-  })
+      automationId: string
+      automationRevisionId: string
+    })
   | null
 >
 
@@ -213,9 +216,9 @@ export type GetAutomationTemplates = (params: {
   workspaceId: string
 }) => Promise<AutomationTemplate[]>
 
-export type CreateAutomationTemplate = (params: {
+export type UpsertAutomationTemplate = (params: {
   template: AutomationTemplate
-}) => Promise<AutomationTemplate>
+}) => Promise<void>
 
 export type DeleteAutomationTemplate = (params: {
   templateId: string

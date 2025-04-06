@@ -431,9 +431,11 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  isAutoCreated: Scalars['Boolean']['output'];
   isTestAutomation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   runs: AutomateRunCollection;
+  templateId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -474,6 +476,27 @@ export type AutomationRevisionFunction = {
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
+
+export type AutomationTemplate = {
+  __typename?: 'AutomationTemplate';
+  createdAt: Scalars['DateTime']['output'];
+  enableAutoCreate: Scalars['Boolean']['output'];
+  functionId: Scalars['String']['output'];
+  functionInputs?: Maybe<Scalars['String']['output']>;
+  functionRevisionId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  workspaceId: Scalars['String']['output'];
+};
+
+export type AutomationTemplateCreateInput = {
+  functionId: Scalars['String']['input'];
+  functionInputs?: InputMaybe<Scalars['String']['input']>;
+  functionRevisionId: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
 
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
@@ -4324,6 +4347,7 @@ export type Workspace = {
   /** Get all join requests for all the workspaces the user is an admin of */
   adminWorkspacesJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
   automateFunctions: AutomateFunctionCollection;
+  automationTemplates: Array<AutomationTemplate>;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
@@ -4614,6 +4638,7 @@ export type WorkspaceMutations = {
   addDomain: Workspace;
   billing: WorkspaceBillingMutations;
   create: Workspace;
+  createAutomationTemplate: AutomationTemplate;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
@@ -4640,6 +4665,11 @@ export type WorkspaceMutationsAddDomainArgs = {
 
 export type WorkspaceMutationsCreateArgs = {
   input: WorkspaceCreateInput;
+};
+
+
+export type WorkspaceMutationsCreateAutomationTemplateArgs = {
+  input: AutomationTemplateCreateInput;
 };
 
 

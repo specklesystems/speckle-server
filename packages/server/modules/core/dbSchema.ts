@@ -556,6 +556,18 @@ export const AutomationRevisions = buildTableHelper('automation_revisions', [
   'publicKey'
 ])
 
+export const AutomationTemplates = buildTableHelper('automation_templates', [
+  'id',
+  'name',
+  'enableAutoCreate',
+  'workspaceId',
+  'createdAt',
+  'updatedAt',
+  'functionId',
+  'functionRevisionId',
+  'functionInputs'
+])
+
 export const AutomationTokens = buildTableHelper('automation_tokens', [
   'automationId',
   'automateToken'

@@ -451,9 +451,11 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  isAutoCreated: Scalars['Boolean']['output'];
   isTestAutomation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   runs: AutomateRunCollection;
+  templateId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -494,6 +496,27 @@ export type AutomationRevisionFunction = {
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
+
+export type AutomationTemplate = {
+  __typename?: 'AutomationTemplate';
+  createdAt: Scalars['DateTime']['output'];
+  enableAutoCreate: Scalars['Boolean']['output'];
+  functionId: Scalars['String']['output'];
+  functionInputs?: Maybe<Scalars['String']['output']>;
+  functionRevisionId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+  workspaceId: Scalars['String']['output'];
+};
+
+export type AutomationTemplateCreateInput = {
+  functionId: Scalars['String']['input'];
+  functionInputs?: InputMaybe<Scalars['String']['input']>;
+  functionRevisionId: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
 
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
@@ -4344,6 +4367,7 @@ export type Workspace = {
   /** Get all join requests for all the workspaces the user is an admin of */
   adminWorkspacesJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
   automateFunctions: AutomateFunctionCollection;
+  automationTemplates: Array<AutomationTemplate>;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
@@ -4634,6 +4658,7 @@ export type WorkspaceMutations = {
   addDomain: Workspace;
   billing: WorkspaceBillingMutations;
   create: Workspace;
+  createAutomationTemplate: AutomationTemplate;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
@@ -4660,6 +4685,11 @@ export type WorkspaceMutationsAddDomainArgs = {
 
 export type WorkspaceMutationsCreateArgs = {
   input: WorkspaceCreateInput;
+};
+
+
+export type WorkspaceMutationsCreateAutomationTemplateArgs = {
+  input: AutomationTemplateCreateInput;
 };
 
 
@@ -5110,6 +5140,8 @@ export type ResolversTypes = {
   AutomationRevisionFunction: ResolverTypeWrapper<AutomationRevisionFunctionGraphQLReturn>;
   AutomationRevisionTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   AutomationRunTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
+  AutomationTemplate: ResolverTypeWrapper<AutomationTemplate>;
+  AutomationTemplateCreateInput: AutomationTemplateCreateInput;
   BasicGitRepositoryMetadata: ResolverTypeWrapper<BasicGitRepositoryMetadata>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']['output']>;
   BillingInterval: BillingInterval;
@@ -5436,6 +5468,8 @@ export type ResolversParentTypes = {
   AutomationRevisionFunction: AutomationRevisionFunctionGraphQLReturn;
   AutomationRevisionTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   AutomationRunTrigger: AutomationRunTriggerGraphQLReturn;
+  AutomationTemplate: AutomationTemplate;
+  AutomationTemplateCreateInput: AutomationTemplateCreateInput;
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata;
   BigInt: Scalars['BigInt']['output'];
   BlobMetadata: BlobStorageItem;
@@ -5928,9 +5962,11 @@ export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends
   currentRevision?: Resolver<Maybe<ResolversTypes['AutomationRevision']>, ParentType, ContextType>;
   enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isAutoCreated?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isTestAutomation?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   runs?: Resolver<ResolversTypes['AutomateRunCollection'], ParentType, ContextType, Partial<AutomationRunsArgs>>;
+  templateId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -5961,6 +5997,19 @@ export type AutomationRevisionTriggerDefinitionResolvers<ContextType = GraphQLCo
 
 export type AutomationRunTriggerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationRunTrigger'] = ResolversParentTypes['AutomationRunTrigger']> = {
   __resolveType: TypeResolveFn<'VersionCreatedTrigger', ParentType, ContextType>;
+};
+
+export type AutomationTemplateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationTemplate'] = ResolversParentTypes['AutomationTemplate']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  enableAutoCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  functionInputs?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  functionRevisionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BasicGitRepositoryMetadataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BasicGitRepositoryMetadata'] = ResolversParentTypes['BasicGitRepositoryMetadata']> = {
@@ -7170,6 +7219,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
   adminWorkspacesJoinRequests?: Resolver<Maybe<ResolversTypes['WorkspaceJoinRequestCollection']>, ParentType, ContextType, RequireFields<WorkspaceAdminWorkspacesJoinRequestsArgs, 'limit'>>;
   automateFunctions?: Resolver<ResolversTypes['AutomateFunctionCollection'], ParentType, ContextType, RequireFields<WorkspaceAutomateFunctionsArgs, 'limit'>>;
+  automationTemplates?: Resolver<Array<ResolversTypes['AutomationTemplate']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   creationState?: Resolver<Maybe<ResolversTypes['WorkspaceCreationState']>, ParentType, ContextType>;
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -7277,6 +7327,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   addDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsAddDomainArgs, 'input'>>;
   billing?: Resolver<ResolversTypes['WorkspaceBillingMutations'], ParentType, ContextType>;
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
+  createAutomationTemplate?: Resolver<ResolversTypes['AutomationTemplate'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateAutomationTemplateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
   deleteDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteDomainArgs, 'input'>>;
   deleteSsoProvider?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteSsoProviderArgs, 'workspaceId'>>;
@@ -7437,6 +7488,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AutomationRevisionFunction?: AutomationRevisionFunctionResolvers<ContextType>;
   AutomationRevisionTriggerDefinition?: AutomationRevisionTriggerDefinitionResolvers<ContextType>;
   AutomationRunTrigger?: AutomationRunTriggerResolvers<ContextType>;
+  AutomationTemplate?: AutomationTemplateResolvers<ContextType>;
   BasicGitRepositoryMetadata?: BasicGitRepositoryMetadataResolvers<ContextType>;
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;

@@ -25,4 +25,6 @@ export type AutomationTemplate = {
   functionId: string
   functionRevisionId: string
   functionInputs: string | null
+  createdAt: Date
+  updatedAt: Date
 }
