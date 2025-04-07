@@ -42,6 +42,7 @@
           :style="`z-index: ${items.length - i};`"
           :selectable="!!selectedItems.length"
           :selection-disabled="disabledSelections[item.id]"
+          :limited="true"
           @select="onSelect(item)"
           @chosen="onSingleActionChosen($event, item)"
           @embed="handleEmbed(item.id)"

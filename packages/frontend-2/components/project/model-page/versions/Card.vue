@@ -35,9 +35,10 @@
             class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
           />
           <template v-else>
-            <NuxtLink :href="viewerRoute" class="h-full w-full">
+            <NuxtLink v-if="!props.limited" :href="viewerRoute" class="h-full w-full">
               <PreviewImage :preview-url="version.previewUrl" />
             </NuxtLink>
+            <div v-else class="h-full w-full line-pattern">nope</div>
             <div
               v-if="
                 isAutomateModuleEnabled &&
@@ -141,6 +142,7 @@ const props = defineProps<{
   selectable?: boolean
   selected?: boolean
   selectionDisabled?: boolean
+  limited?: boolean
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()

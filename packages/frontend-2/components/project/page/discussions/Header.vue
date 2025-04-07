@@ -18,7 +18,6 @@
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 graphql(`
   fragment ProjectDiscussionsPageHeader_Project on Project {
@@ -34,7 +33,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   project: ProjectDiscussionsPageHeader_ProjectFragment
   includeArchived: Optional<true>
-  gridOrList: GridListToggleValue
 }>()
 
 const finalIncludeArchived = computed({

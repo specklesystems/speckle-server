@@ -29,7 +29,7 @@ const props = defineProps<{
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const showDialog = computed(() => {
-  return true
+  return false
 })
 
 const limitDays = computed(() => {

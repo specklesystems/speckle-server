@@ -2,7 +2,6 @@
   <div>
     <div v-if="project">
       <ProjectPageDiscussionsHeader
-        v-model:grid-or-list="gridOrList"
         v-model:include-archived="includeArchived"
         :project="project"
       />
@@ -16,10 +15,8 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import type { Optional } from '@speckle/shared'
-import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 import { projectDiscussionsPageQuery } from '~~/lib/projects/graphql/queries'
 
-const gridOrList = useProjectPageItemViewType('Discussions')
 const includeArchived = ref(undefined as Optional<true>)
 
 const route = useRoute()

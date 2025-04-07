@@ -337,6 +337,10 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
         '@apply max-w-[1312px]': {}
       }
     },
+    // Limit reached gradient styling
+    '.line-pattern': {
+      background: 'linear-gradient(319.64deg, rgb(5 52 255 / 0%) 34.17%, #010c3d 100%)'
+    },
     // Simple scrollbar (OSX-like) to use instead of the ugly browser one
     '.simple-scrollbar': {
       'scrollbar-width': 'var(--simple-scrollbar-width)',
