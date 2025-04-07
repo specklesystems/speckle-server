@@ -21,6 +21,7 @@ import { ObjectLayers } from '../../../IViewer.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Geometry } from '../../converter/Geometry.js'
 import polylabel from 'polylabel'
+import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 
 export class AreaMeasurement extends Measurement {
   private pointGizmos: MeasurementPointGizmo[]
@@ -124,6 +125,7 @@ export class AreaMeasurement extends Measurement {
     this.pointIndex++
 
     void this.update()
+
     if (this.points.length >= 2) {
       this.projectOnPlane(
         this.surfacePoint,
@@ -134,8 +136,6 @@ export class AreaMeasurement extends Measurement {
       this.updateFillPolygon(this.polygonPoints)
       this.updatePoleOfInnacessibility(this.measuredPoints)
     }
-
-    console.warn('Area -> ', this.shoelaceArea3D(this.measuredPoints, this.planeNormal))
   }
 
   public update(): Promise<void> {
@@ -208,15 +208,17 @@ export class AreaMeasurement extends Measurement {
 
   private updateFillPolygon(points: Vector3[]) {
     if (!this.fillPolygon) {
-      this.fillPolygon = new Mesh(
-        new BufferGeometry(),
-        new MeshBasicMaterial({
-          color: 0x00ff00,
-          side: DoubleSide,
-          opacity: 0.75,
-          transparent: true
-        })
-      )
+      const material = new SpeckleBasicMaterial({
+        color: 0x047efb,
+        side: DoubleSide,
+        opacity: 0.5,
+        transparent: true,
+        toneMapped: false
+      })
+      material.color.convertSRGBToLinear()
+      this.fillPolygon = new Mesh(new BufferGeometry(), material)
+
+      this.fillPolygon.frustumCulled = false
       this.fillPolygon.layers.set(ObjectLayers.MEASUREMENTS)
       this.add(this.fillPolygon)
     }
