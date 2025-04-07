@@ -148,7 +148,7 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 5,
       modelCount: 25,
-      versionsHistory: { value: 1, unit: 'week' }
+      versionsHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.TeamUnlimited]: {
@@ -157,7 +157,7 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: { value: 1, unit: 'week' }
+      versionsHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -166,7 +166,7 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 10,
       modelCount: 50,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: null
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -175,7 +175,7 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: null
     }
   }
 }
