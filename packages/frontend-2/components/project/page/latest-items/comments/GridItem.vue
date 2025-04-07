@@ -1,39 +1,49 @@
 <template>
   <NuxtLink
-    class="group relative h-60 rounded-md flex items-stretch overflow-hidden transition-all border border-outline-3 hover:border-outline-5 bg-foundation-page"
-    :to="threadLink"
+    class="group relative h-60 rounded-md flex flex-col overflow-hidden transition-all border border-outline-3 bg-foundation-page"
+    :to="limited ? undefined : threadLink"
+    :class="limited ? 'cursor-default' : 'cursor-pointer hover:border-outline-5'"
   >
     <!-- Image preview -->
+    <div v-if="!limited" class="w-full h-44 overflow-hidden">
+      <div
+        class="w-full h-full cover scale-125 group-hover:scale-100 transition"
+        :style="{
+          backgroundImage: `url(${screenshot})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center'
+        }"
+      />
+    </div>
     <div
-      class="absolute w-full h-full cover scale-125 group-hover:scale-100 transition xxxduration-700"
-      :style="{
-        backgroundImage: `url(${screenshot})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center center'
-      }"
-    ></div>
-    <div class="absolute w-full h-full flex items-end">
-      <div class="flex flex-col w-full">
-        <div class="flex items-center w-full px-2">
-          <UserAvatarGroup
-            v-if="!thread.archived"
-            v-tippy="
-              `${thread.author.name} ${
-                allAvatars.length !== 1
-                  ? '& ' + (allAvatars.length - 1) + ' others'
-                  : ''
-              }`
-            "
-            :users="allAvatars"
-            :max-count="4"
-          />
-          <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
-        </div>
-        <div class="mt-2 p-2 bg-foundation-2 border-t">
-          <div class="truncate text-body-xs text-foreground-3">
+      v-else
+      class="w-full h-48 flex items-center justify-center diagonal-stripes px-3 pb-8"
+    >
+      <ViewerResourcesUpgradeLimitAlert
+        class="!bg-foundation"
+        text="Upgrade to see comments older than (count) days."
+      />
+    </div>
+    <div class="flex items-center w-full px-3 h-8 -mt-10">
+      <UserAvatarGroup
+        v-if="!thread.archived"
+        v-tippy="
+          `${thread.author.name} ${
+            allAvatars.length !== 1 ? '& ' + (allAvatars.length - 1) + ' others' : ''
+          }`
+        "
+        :users="allAvatars"
+        :max-count="4"
+      />
+      <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
+    </div>
+    <div class="w-full" :class="limited ? 'h-14' : 'h-16'">
+      <div class="flex flex-col w-full h-full">
+        <div class="mt-2 py-2 px-4 bg-foundation border-t h-full">
+          <div v-if="!limited" class="truncate text-body-xs text-foreground">
             {{ thread.rawText }}
           </div>
-          <div class="space-x-2">
+          <div class="space-x-2" :class="limited ? 'mt-0.5' : ''">
             <span class="text-body-2xs font-medium text-primary">
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
@@ -58,6 +68,7 @@ import type { AvatarUserWithId } from '@speckle/ui-components'
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
   projectId: string
+  limited?: boolean
 }>()
 
 const { screenshot } = useCommentScreenshotImage(

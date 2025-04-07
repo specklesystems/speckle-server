@@ -1,12 +1,14 @@
 <template>
-  <div class="grid grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
     <template v-if="projectId">
+      <!-- TODO: remove this once we have a way to limit the number of comments -->
       <ProjectPageLatestItemsCommentsGridItem
         v-for="item in items"
         :key="item.id"
         class="col-span-4 md:col-span-2 lg:col-span-1"
         :thread="item"
         :project-id="projectId"
+        :limited="true"
       />
     </template>
   </div>
