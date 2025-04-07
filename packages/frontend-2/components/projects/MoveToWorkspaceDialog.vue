@@ -18,7 +18,7 @@
             <p class="text-body-xs text-foreground font-medium">
               You're not a member of any workspaces.
             </p>
-            <FormButton :to="workspaceCreateRoute">Learn about workspaces</FormButton>
+            <FormButton :to="workspaceCreateRoute()">Learn about workspaces</FormButton>
           </div>
         </template>
 
@@ -41,11 +41,28 @@
             <p class="text-body-2xs text-foreground-2">
               The project, including models and versions, will be moved to the
               workspace, where all existing members and admins will have access.
-              <span class="pt-2 block">
-                The project's collaborators will become workspace members and keep their
-                project roles.
-              </span>
             </p>
+            <div v-if="dryRunResultMembers" class="pt-2 gap-y-2 flex flex-col">
+              <p class="text-body-2xs text-foreground-2">
+                The following members will be added to the workspace
+              </p>
+              <div class="w-full">
+                <div
+                  v-for="user in dryRunResultMembers"
+                  :key="`dry-run-user-${user.id}`"
+                  class="bg-foundation flex items-center py-1.5 px-2 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg gap-x-1.5"
+                >
+                  <UserAvatar hide-tooltip :user="user" size="sm" />
+                  <p class="text-foreground text-body-2xs">{{ user.name }}</p>
+                </div>
+              </div>
+              <p
+                v-if="dryRunResultMembersInfoText"
+                class="text-body-2xs text-foreground-2"
+              >
+                {{ dryRunResultMembersInfoText }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -81,6 +98,7 @@ import {
   RegionStaticDataDisclaimerVariant
 } from '~/lib/workspaces/composables/region'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
+import { moveToWorkspaceDryRunQuery } from '~/lib/projects/graphql/queries'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -143,6 +161,18 @@ const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
 
+const { result: dryRunResult } = useQuery(
+  moveToWorkspaceDryRunQuery,
+  () => ({
+    projectId: props.project.id,
+    workspaceId: selectedWorkspace.value!.id,
+    limit: 20
+  }),
+  () => ({
+    enabled: !!selectedWorkspace.value?.id
+  })
+)
+
 const activeWorkspaceSlug = computed(
   () => selectedWorkspace.value?.slug || props.workspace?.slug || ''
 )
@@ -162,6 +192,22 @@ const modelText = computed(() =>
 const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
+const dryRunResultMembers = computed(
+  () => dryRunResult.value?.project.moveToWorkspaceDryRun.addedToWorkspace
+)
+const dryRunResultMembersCount = computed(
+  () => dryRunResult.value?.project.moveToWorkspaceDryRun.addedToWorkspaceTotalCount
+)
+const dryRunResultMembersInfoText = computed(() => {
+  if (!dryRunResultMembers.value || !dryRunResultMembersCount.value) return ''
+
+  if (dryRunResultMembers.value?.length > 20 && dryRunResultMembersCount.value > 20) {
+    const diff = dryRunResultMembersCount.value - dryRunResultMembers.value.length
+    return `and ${diff} more`
+  }
+
+  return ''
+})
 
 // Determine which limit type is hit
 const limitType = computed((): 'project' | 'model' | null => {
