@@ -156,7 +156,8 @@ export const WorkspacePaidPlanConfigs: {
     features: teamFeatures,
     limits: {
       projectCount: null,
-      modelCount: null
+      modelCount: null,
+      versionsHistory: { value: 1, unit: 'week' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -165,7 +166,7 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 10,
       modelCount: 50,
-      versionsHistory: { value: 1, unit: 'week' }
+      versionsHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -173,7 +174,8 @@ export const WorkspacePaidPlanConfigs: {
     features: proFeatures,
     limits: {
       projectCount: null,
-      modelCount: null
+      modelCount: null,
+      versionsHistory: { value: 30, unit: 'day' }
     }
   }
 }
