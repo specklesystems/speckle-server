@@ -2008,6 +2008,8 @@ export type Project = {
    * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
   modelsTree: ModelsTreeItemCollection;
+  /** Returns information about the potential effects of moving a project to a given workspace. */
+  moveToWorkspaceDryRun: ProjectMoveToWorkspaceDryRun;
   name: Scalars['String']['output'];
   object?: Maybe<Object>;
   /** Pending project access requests */
@@ -2103,6 +2105,11 @@ export type ProjectModelsTreeArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectModelsTreeFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type ProjectMoveToWorkspaceDryRunArgs = {
+  workspaceId: Scalars['String']['input'];
 };
 
 
@@ -2426,6 +2433,17 @@ export const ProjectModelsUpdatedMessageType = {
 } as const;
 
 export type ProjectModelsUpdatedMessageType = typeof ProjectModelsUpdatedMessageType[keyof typeof ProjectModelsUpdatedMessageType];
+export type ProjectMoveToWorkspaceDryRun = {
+  __typename?: 'ProjectMoveToWorkspaceDryRun';
+  addedToWorkspace: Array<LimitedUser>;
+  addedToWorkspaceTotalCount: Scalars['Int']['output'];
+};
+
+
+export type ProjectMoveToWorkspaceDryRunAddedToWorkspaceArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
   /** Access request related mutations */
@@ -7364,6 +7382,7 @@ export type AllObjectTypes = {
   ProjectFileImportUpdatedMessage: ProjectFileImportUpdatedMessage,
   ProjectInviteMutations: ProjectInviteMutations,
   ProjectModelsUpdatedMessage: ProjectModelsUpdatedMessage,
+  ProjectMoveToWorkspaceDryRun: ProjectMoveToWorkspaceDryRun,
   ProjectMutations: ProjectMutations,
   ProjectPendingModelsUpdatedMessage: ProjectPendingModelsUpdatedMessage,
   ProjectPendingVersionsUpdatedMessage: ProjectPendingVersionsUpdatedMessage,
@@ -8039,6 +8058,7 @@ export type ProjectFieldArgs = {
   modelChildrenTree: ProjectModelChildrenTreeArgs,
   models: ProjectModelsArgs,
   modelsTree: ProjectModelsTreeArgs,
+  moveToWorkspaceDryRun: ProjectMoveToWorkspaceDryRunArgs,
   name: {},
   object: ProjectObjectArgs,
   pendingAccessRequests: {},
@@ -8120,6 +8140,10 @@ export type ProjectModelsUpdatedMessageFieldArgs = {
   id: {},
   model: {},
   type: {},
+}
+export type ProjectMoveToWorkspaceDryRunFieldArgs = {
+  addedToWorkspace: ProjectMoveToWorkspaceDryRunAddedToWorkspaceArgs,
+  addedToWorkspaceTotalCount: {},
 }
 export type ProjectMutationsFieldArgs = {
   accessRequestMutations: {},
@@ -8868,6 +8892,7 @@ export type AllObjectFieldArgTypes = {
   ProjectFileImportUpdatedMessage: ProjectFileImportUpdatedMessageFieldArgs,
   ProjectInviteMutations: ProjectInviteMutationsFieldArgs,
   ProjectModelsUpdatedMessage: ProjectModelsUpdatedMessageFieldArgs,
+  ProjectMoveToWorkspaceDryRun: ProjectMoveToWorkspaceDryRunFieldArgs,
   ProjectMutations: ProjectMutationsFieldArgs,
   ProjectPendingModelsUpdatedMessage: ProjectPendingModelsUpdatedMessageFieldArgs,
   ProjectPendingVersionsUpdatedMessage: ProjectPendingVersionsUpdatedMessageFieldArgs,
