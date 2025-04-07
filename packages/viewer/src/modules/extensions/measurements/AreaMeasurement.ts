@@ -4,6 +4,7 @@ import {
   BufferGeometry,
   Camera,
   DoubleSide,
+  DynamicDrawUsage,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -30,6 +31,7 @@ export class AreaMeasurement extends Measurement {
   private planeNormal: Vector3 = new Vector3()
   private points: Vector3[] = []
   private measuredPoints: Vector3[] = []
+  private polygonPoints: Vector3[] = []
 
   private planeMesh: Mesh
   private fillMesh: Mesh
@@ -63,6 +65,8 @@ export class AreaMeasurement extends Measurement {
     )
     this.planeMesh.layers.set(ObjectLayers.MEASUREMENTS)
     this.add(this.planeMesh)
+
+    this.polygonPoints.push(new Vector3())
   }
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
@@ -70,6 +74,108 @@ export class AreaMeasurement extends Measurement {
     this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.frameUpdate(camera, bounds)
     })
+  }
+
+  public locationUpdated(point: Vector3, normal: Vector3) {
+    this.surfacePoint.copy(point)
+    this.surfaceNormal.copy(normal)
+
+    this.planeMesh.position.copy(this.surfacePoint)
+    this.planeMesh.quaternion.copy(
+      new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), this.surfaceNormal)
+    )
+    this.projectOnPlane(
+      this.surfacePoint,
+      this.planeOrigin,
+      this.planeNormal,
+      this.polygonPoints[0]
+    )
+    this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
+    this.updateFillPolygon(this.polygonPoints)
+  }
+
+  public locationSelected() {
+    if (this.pointIndex === 0) {
+      this.planeOrigin.copy(this.surfacePoint)
+      this.planeNormal.copy(this.surfaceNormal)
+    }
+
+    const measuredPoint = new Vector3().copy(this.surfacePoint)
+    if (this.pointIndex > 0) {
+      measuredPoint.copy(
+        this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
+      )
+      const distanceToFirst = this.measuredPoints[0].distanceTo(measuredPoint)
+      if (distanceToFirst < 0.1) {
+        this._state = MeasurementState.COMPLETE
+        measuredPoint.copy(this.measuredPoints[0])
+        this.surfacePoint.copy(this.points[0])
+      }
+    }
+
+    const gizmo = new MeasurementPointGizmo()
+    gizmo.enable(false, true, true, false)
+    this.pointGizmos.push(gizmo)
+    this.add(gizmo)
+
+    this.points.push(this.surfacePoint.clone())
+    this.measuredPoints.push(measuredPoint)
+    this.polygonPoints.push(measuredPoint)
+    this.pointIndex++
+
+    void this.update()
+    if (this.points.length >= 2) {
+      this.updateFillPlane()
+      this.projectOnPlane(
+        this.surfacePoint,
+        this.planeOrigin,
+        this.planeNormal,
+        this.polygonPoints[0]
+      )
+      this.updateFillPolygon(this.polygonPoints)
+    }
+
+    console.warn('Area -> ', this.shoelaceArea3D(this.measuredPoints, this.planeNormal))
+  }
+
+  public update(): Promise<void> {
+    let ret: Promise<void> = Promise.resolve()
+
+    if (this.pointIndex === 0) {
+      this.pointGizmos[this.pointIndex].updateDisc(
+        this.surfacePoint,
+        this.surfaceNormal
+      )
+      this.pointGizmos[this.pointIndex].updatePoint(this.surfacePoint)
+    } else {
+      const currentPoint = this.surfacePoint
+      const prevPoint = this.points[this.pointIndex - 1]
+      this.pointGizmos[this.pointIndex].updateLine([prevPoint, currentPoint])
+      this.pointGizmos[this.pointIndex].updatePoint(currentPoint)
+
+      if (this.fillMesh) {
+        ret = this.pointGizmos[0].updateText(
+          `${(this.value * getConversionFactor('m', this.units)).toFixed(
+            this.precision
+          )} ${this.units}²`,
+          this.fillMesh.position
+        )
+        this.pointGizmos[0].enable(false, true, true, true)
+      }
+      this.pointGizmos[this.pointIndex].enable(false, true, true, false)
+    }
+
+    if (this._state === MeasurementState.COMPLETE) {
+      this.pointGizmos[this.pointIndex - 1].updateLine([
+        this.points[this.pointIndex - 2],
+        this.points[0]
+      ])
+      this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
+      this.pointGizmos[this.pointIndex].enable(false, false, false, false)
+      this.planeMesh.visible = false
+    }
+
+    return ret
   }
 
   private updateFillPlane() {
@@ -102,7 +208,7 @@ export class AreaMeasurement extends Measurement {
     this.fillMesh.quaternion.copy(quaternion)
   }
 
-  private updateFillMesh() {
+  private updateFillPolygon(points: Vector3[]) {
     if (!this.fillPolygon) {
       this.fillPolygon = new Mesh(
         new BufferGeometry(),
@@ -117,125 +223,41 @@ export class AreaMeasurement extends Measurement {
       this.add(this.fillPolygon)
     }
     const geometry = this.fillPolygon.geometry
+    const position = geometry.getAttribute('position')
+    const index = geometry.getIndex()
 
-    const buffer = new Float32Array(this.measuredPoints.length * 3)
-    this.measuredPoints.forEach((point: Vector3, index) =>
-      point.toArray(buffer, index * 3)
-    )
+    if (points.length < 3) return
 
     const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
-    const projectedPoints = this.measuredPoints.map(
+    const projectedPoints = points.map(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
       (p) => new Vector2(p[axis1], p[axis2])
     )
     const indices = Geometry.triangulatePolygon(projectedPoints)
-    geometry.setAttribute('position', new BufferAttribute(buffer, 3))
-    geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
-    geometry.computeBoundingBox()
-  }
 
-  public locationUpdated(point: Vector3, normal: Vector3) {
-    this.surfacePoint.copy(point)
-    this.surfaceNormal.copy(normal)
-
-    this.planeMesh.position.copy(this.surfacePoint)
-    this.planeMesh.quaternion.copy(
-      new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), this.surfaceNormal)
-    )
-  }
-
-  public locationSelected() {
-    if (this.pointIndex === 0) {
-      this.planeOrigin.copy(this.surfacePoint)
-      this.planeNormal.copy(this.surfaceNormal)
-    }
-
-    const measuredPoint = new Vector3().copy(this.surfacePoint)
-    if (this.pointIndex > 0) {
-      measuredPoint.copy(
-        this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
-      )
-      const distanceToFirst = this.measuredPoints[0].distanceTo(measuredPoint)
-      if (distanceToFirst < 0.1) {
-        this._state = MeasurementState.COMPLETE
-        measuredPoint.copy(this.measuredPoints[0])
-        this.surfacePoint.copy(this.points[0])
-      }
-    }
-
-    const gizmo = new MeasurementPointGizmo()
-    gizmo.enable(false, true, true, false)
-    this.pointGizmos.push(gizmo)
-    this.add(gizmo)
-
-    this.points.push(this.surfacePoint.clone())
-    this.measuredPoints.push(measuredPoint)
-    this.pointIndex++
-
-    void this.update()
-    if (this.points.length > 2) {
-      this.updateFillPlane()
-      this.updateFillMesh()
-    }
-
-    console.warn('Area -> ', this.shoelaceArea3D(this.measuredPoints, this.planeNormal))
-  }
-
-  public update(): Promise<void> {
-    let ret: Promise<void> = Promise.resolve()
-
-    if (this.pointIndex === 0) {
-      this.pointGizmos[this.pointIndex].updateDisc(
-        this.surfacePoint,
-        this.surfaceNormal
-      )
-      this.pointGizmos[this.pointIndex].updatePoint(this.surfacePoint)
+    if (!position || position.count !== points.length) {
+      const buffer = new Float32Array(points.length * 3)
+      points.forEach((point: Vector3, index) => point.toArray(buffer, index * 3))
+      const posAttribute = new BufferAttribute(buffer, 3)
+      posAttribute.setUsage(DynamicDrawUsage)
+      geometry.setAttribute('position', posAttribute)
     } else {
-      const currentPoint = this.surfacePoint
-      const prevPoint = this.points[this.pointIndex - 1]
-      this.startLineLength = currentPoint.distanceTo(prevPoint)
-      this.value = this.startLineLength
-
-      const endStartDir = Measurement.vec3Buff0
-        .copy(currentPoint)
-        .sub(prevPoint)
-        .normalize()
-      const lineEndPoint = Measurement.vec3Buff1
-        .copy(prevPoint)
-        .add(
-          Measurement.vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength)
-        )
-
-      this.pointGizmos[this.pointIndex].updateLine([prevPoint, lineEndPoint])
-      this.pointGizmos[this.pointIndex].updatePoint(lineEndPoint)
-      if (this.fillMesh) {
-        this.value = this.shoelaceArea3D(this.measuredPoints, this.planeNormal)
-        ret = this.pointGizmos[0].updateText(
-          `${(
-            this.shoelaceArea3D(this.measuredPoints, this.planeNormal) *
-            getConversionFactor('m', this.units)
-          ).toFixed(this.precision)} ${this.units}²`,
-          this.fillMesh.position
-        )
-        this.pointGizmos[0].enable(false, true, true, true)
-      }
-      this.pointGizmos[this.pointIndex].enable(false, true, true, false)
+      points.forEach((point: Vector3, index) =>
+        point.toArray(position.array, index * 3)
+      )
+      position.needsUpdate = true
     }
 
-    if (this._state === MeasurementState.COMPLETE) {
-      this.pointGizmos[this.pointIndex - 1].updateLine([
-        this.points[this.pointIndex - 2],
-        this.points[0]
-      ])
-      this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
-      this.pointGizmos[this.pointIndex].enable(false, false, false, false)
-      this.planeMesh.visible = false
+    if (!index || index.count !== indices.length) {
+      geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
+    } else {
+      ;(index.array as Uint16Array).set(indices, 0)
+      index.needsUpdate = true
     }
-
-    return ret
+    geometry.computeBoundingBox()
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
@@ -304,13 +326,20 @@ export class AreaMeasurement extends Measurement {
     return this.shoelaceArea(projectedPoints)
   }
 
-  private projectOnPlane(point: Vector3, planeOrigin: Vector3, planeNormal: Vector3) {
+  private projectOnPlane(
+    point: Vector3,
+    planeOrigin: Vector3,
+    planeNormal: Vector3,
+    destination?: Vector3
+  ) {
     const p = new Vector3().copy(point)
     const o = new Vector3().copy(planeOrigin)
     const n = new Vector3().copy(planeNormal).normalize()
 
     const v = p.sub(o)
     const dist = v.dot(n)
-    return new Vector3().copy(point).sub(n.multiplyScalar(dist))
+    return (destination ? destination : new Vector3())
+      .copy(point)
+      .sub(n.multiplyScalar(dist))
   }
 }
