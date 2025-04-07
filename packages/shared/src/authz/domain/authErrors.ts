@@ -90,6 +90,11 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
+export const WorkspaceRequiredError = defineAuthError({
+  code: 'WorkspaceRequiredError',
+  message: 'You must be in a workspace to perform this action.'
+})
+
 export const WorkspaceSsoSessionNoAccessError = defineAuthError<
   'WorkspaceSsoSessionNoAccess',
   {

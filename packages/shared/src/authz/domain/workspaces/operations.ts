@@ -21,6 +21,8 @@ export type GetWorkspaceProjectCount = (
   args: WorkspaceContext
 ) => Promise<number | null>
 
+export type GetWorkspaceModelCount = (args: WorkspaceContext) => Promise<number | null>
+
 export type GetWorkspaceSeat = (
   args: UserContext & WorkspaceContext
 ) => Promise<WorkspaceSeatType | null>
