@@ -120,7 +120,7 @@ const props = withDefaults(
     showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
-    isLimited: boolean
+    isLimited?: boolean
   }>(),
   {
     clickable: true,
