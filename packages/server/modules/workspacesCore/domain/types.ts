@@ -72,3 +72,18 @@ export type WorkspaceJoinRequest = {
   createdAt: Date
   updatedAt: Date
 }
+
+export const WorkspaceSeatType = <const>{
+  Viewer: 'viewer',
+  Editor: 'editor'
+}
+export type WorkspaceSeatType =
+  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
+  createdAt: Date
+  updatedAt: Date
+}
