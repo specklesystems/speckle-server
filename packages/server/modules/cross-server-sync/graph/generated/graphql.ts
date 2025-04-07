@@ -1887,8 +1887,10 @@ export const PaidWorkspacePlans = {
   Business: 'business',
   Plus: 'plus',
   Pro: 'pro',
+  ProUnlimited: 'proUnlimited',
   Starter: 'starter',
-  Team: 'team'
+  Team: 'team',
+  TeamUnlimited: 'teamUnlimited'
 } as const;
 
 export type PaidWorkspacePlans = typeof PaidWorkspacePlans[keyof typeof PaidWorkspacePlans];
@@ -4778,9 +4780,13 @@ export const WorkspacePlans = {
   Plus: 'plus',
   PlusInvoiced: 'plusInvoiced',
   Pro: 'pro',
+  ProUnlimited: 'proUnlimited',
+  ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
   Starter: 'starter',
   StarterInvoiced: 'starterInvoiced',
   Team: 'team',
+  TeamUnlimited: 'teamUnlimited',
+  TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
   Unlimited: 'unlimited'
 } as const;
 

@@ -58,10 +58,7 @@ export const useIsGendoModuleEnabled = () => {
 }
 
 export const useWorkspaceNewPlansEnabled = () => {
-  const {
-    public: { FF_WORKSPACES_NEW_PLANS_ENABLED }
-  } = useRuntimeConfig()
-  return ref(FF_WORKSPACES_NEW_PLANS_ENABLED)
+  return ref(true)
 }
 
 export const useIsBillingIntegrationEnabled = () => {

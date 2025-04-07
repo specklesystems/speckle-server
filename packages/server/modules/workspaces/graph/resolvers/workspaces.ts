@@ -532,7 +532,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           if (workspacePlan) {
             switch (workspacePlan.name) {
               case 'team':
+              case 'teamUnlimited':
               case 'pro':
+              case 'proUnlimited':
               case 'starter':
               case 'plus':
               case 'business':
@@ -554,6 +556,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'starterInvoiced':
               case 'plusInvoiced':
               case 'businessInvoiced':
+              case 'proUnlimitedInvoiced':
+              case 'teamUnlimitedInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)
