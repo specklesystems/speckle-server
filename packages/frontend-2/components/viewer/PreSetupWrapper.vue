@@ -56,10 +56,11 @@
 
           <ViewerLimitsDialog
             v-if="project?.workspace"
+            v-model:open="showLimitsDialog"
             :workspace-slug="workspaceSlug"
             :project-id="project?.id"
             :resource-id-string="resourceIdString"
-            limit-type="version"
+            :limit-type="limitsDialogType"
           />
 
           <!-- Viewer Object Selection Info Display -->
@@ -119,8 +120,7 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
-import { projectsRoute } from '~~/lib/common/helpers/route'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 
@@ -163,9 +163,59 @@ emit('setup', state)
 
 const {
   resources: {
-    response: { project }
-  }
+    response: { project, resourceItems, modelsAndVersionIds }
+  },
+  urlHashState: { focusedThreadId }
 } = state
+
+const showLimitsDialog = ref(false)
+const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
+
+// Check for missing referencedObject in versions (out of plan limits)
+const hasMissingReferencedObject = computed(() => {
+  return modelsAndVersionIds.value.some((item) => {
+    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+    return version && version.referencedObject === null
+  })
+})
+
+// Check for missing thread when a threadId is present (out of plan limits)
+const hasMissingThread = computed(() => {
+  return (
+    !!focusedThreadId.value &&
+    state.resources.response.commentThreads.value.length === 0
+  )
+})
+
+const isFederated = computed(
+  () => state.resources.response.resourceItems.value.length > 1
+)
+
+// Watch for plan limit conditions and show dialog if needed
+watch(
+  [hasMissingReferencedObject, hasMissingThread, resourceItems],
+  ([missingObject, missingThread]) => {
+    // If no workspace, don't show dialog
+    if (!project.value?.workspace) {
+      showLimitsDialog.value = false
+      return
+    }
+    if (missingObject) {
+      if (isFederated.value) {
+        limitsDialogType.value = 'federated'
+      } else {
+        limitsDialogType.value = 'version'
+      }
+      showLimitsDialog.value = true
+    } else if (missingThread) {
+      limitsDialogType.value = 'comment'
+      showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
+    }
+  },
+  { immediate: true }
+)
 
 graphql(`
   fragment ModelPageProject on Project {

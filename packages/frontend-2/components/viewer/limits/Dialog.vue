@@ -1,6 +1,6 @@
 <template>
   <WorkspacePlanLimitReachedDialog
-    v-model:open="showDialog"
+    v-model:open="dialogOpen"
     :title="title"
     :buttons="buttons"
     prevent-close
@@ -24,12 +24,18 @@ const props = defineProps<{
   workspaceSlug?: string
   projectId: string
   resourceIdString: string
+  open?: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:open': [value: boolean]
 }>()
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
-const showDialog = computed(() => {
-  return false
+const dialogOpen = computed({
+  get: () => props.open || false,
+  set: (value) => emit('update:open', value)
 })
 
 const limitDays = computed(() => {
