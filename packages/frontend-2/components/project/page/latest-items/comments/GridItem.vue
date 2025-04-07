@@ -1,11 +1,11 @@
 <template>
   <NuxtLink
     class="group relative h-60 rounded-md flex flex-col overflow-hidden transition-all border border-outline-3 bg-foundation-page"
-    :to="limited ? undefined : threadLink"
-    :class="limited ? 'cursor-default' : 'cursor-pointer hover:border-outline-5'"
+    :to="isLimited ? undefined : threadLink"
+    :class="isLimited ? 'cursor-default' : 'cursor-pointer hover:border-outline-5'"
   >
     <!-- Image preview -->
-    <div v-if="!limited" class="w-full h-44 overflow-hidden">
+    <div v-if="!isLimited" class="w-full h-44 overflow-hidden">
       <div
         class="w-full h-full cover scale-125 group-hover:scale-100 transition"
         :style="{
@@ -37,13 +37,13 @@
       />
       <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
     </div>
-    <div class="w-full" :class="limited ? 'h-14' : 'h-16'">
+    <div class="w-full" :class="isLimited ? 'h-14' : 'h-16'">
       <div class="flex flex-col w-full h-full">
         <div class="mt-2 py-2 px-4 bg-foundation border-t h-full">
-          <div v-if="!limited" class="truncate text-body-xs text-foreground">
+          <div v-if="!isLimited" class="truncate text-body-xs text-foreground">
             {{ thread.rawText }}
           </div>
-          <div class="space-x-2" :class="limited ? 'mt-0.5' : ''">
+          <div class="space-x-2" :class="isLimited ? 'mt-0.5' : ''">
             <span class="text-body-2xs font-medium text-primary">
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
@@ -68,12 +68,15 @@ import type { AvatarUserWithId } from '@speckle/ui-components'
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
   projectId: string
-  limited?: boolean
 }>()
 
 const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
+
+const isLimited = computed(() => {
+  return !props.thread.rawText
+})
 
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length

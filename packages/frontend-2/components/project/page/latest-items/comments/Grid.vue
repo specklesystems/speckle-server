@@ -8,7 +8,6 @@
         class="col-span-4 md:col-span-2 lg:col-span-1"
         :thread="item"
         :project-id="projectId"
-        :limited="true"
       />
     </template>
   </div>

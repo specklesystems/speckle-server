@@ -171,20 +171,40 @@ const {
 const showLimitsDialog = ref(false)
 const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
 
-// Check for missing referencedObject in versions (out of plan limits)
+// Check for missing referencedObject in url referenced versions (out of plan limits)
 const hasMissingReferencedObject = computed(() => {
+  const resourceIds = resourceIdString.value.split(',')
+
+  // For each model/version in our loaded data, check if it matches a URL resource
+  // and has a null referencedObject
   return modelsAndVersionIds.value.some((item) => {
     const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
-    return version && version.referencedObject === null
+
+    // Only count as missing if this version is specifically requested in URL
+    // and its referencedObject is null
+    if (version && version.referencedObject === null) {
+      // Check if this model+version is in the URL
+      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
+      const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+      return isInUrl
+    }
+
+    return false
   })
 })
 
-// Check for missing thread when a threadId is present (out of plan limits)
+// Check for missing thread when a specific threadId is present in URL
 const hasMissingThread = computed(() => {
-  return (
-    !!focusedThreadId.value &&
-    state.resources.response.commentThreads.value.length === 0
+  // If there's no threadId in URL, there's no missing thread
+  if (!focusedThreadId.value) return false
+
+  // If threads are loaded, check if the specific threadId from URL is among them
+  const threadIdFromUrl = focusedThreadId.value
+  const isThreadMissing = !state.resources.response.commentThreads.value.some(
+    (thread) => thread.id === threadIdFromUrl
   )
+
+  return isThreadMissing
 })
 
 const isFederated = computed(
