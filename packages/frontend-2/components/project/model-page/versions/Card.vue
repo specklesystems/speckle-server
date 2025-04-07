@@ -45,7 +45,7 @@
             >
               <ViewerResourcesUpgradeLimitAlert
                 class="!bg-foundation !text-foreground-2"
-                text="Upgrade to view versions older than 7 days."
+                text="Upgrade to view versions older than (count) days."
               />
             </div>
             <div

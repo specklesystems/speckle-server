@@ -73,7 +73,7 @@
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
           <div v-if="limited" class="text-body-3xs text-foreground-2 pr-8 select-none">
-            Upgrade to view versions older than 7 days.
+            Upgrade to view versions older than (count) days.
           </div>
           <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
