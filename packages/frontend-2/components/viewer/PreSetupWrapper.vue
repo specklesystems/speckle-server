@@ -57,7 +57,7 @@
           <ViewerLimitsDialog
             v-if="project?.workspace"
             v-model:open="showLimitsDialog"
-            :workspace-slug="workspaceSlug"
+            :workspace-slug="project?.workspace?.slug"
             :project-id="project?.id"
             :resource-id-string="resourceIdString"
             :limit-type="limitsDialogType"
@@ -282,8 +282,6 @@ const lastUpdate = computed(() => {
     return 'Created ' + dayjs(project.value.createdAt).fromNow()
   } else return undefined
 })
-
-const workspaceSlug = computed(() => project.value?.workspace?.slug)
 
 useHead({ title })
 

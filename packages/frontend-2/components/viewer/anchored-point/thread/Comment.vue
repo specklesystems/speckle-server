@@ -21,7 +21,7 @@
         class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col"
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
-        <template v-if="isCommentLimited">
+        <template v-if="isLimited">
           <ViewerResourcesUpgradeLimitAlert
             text="Upgrade to view comments older than (count) days."
           />
@@ -68,7 +68,5 @@ const createdAt = computed(() => {
   }
 })
 
-const isCommentLimited = computed(() => {
-  return true
-})
+const isLimited = computed(() => !props.comment.rawText)
 </script>
