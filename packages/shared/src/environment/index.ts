@@ -13,11 +13,6 @@ export const parseFeatureFlags = (
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
   const res = parseEnv(input, {
-    // Enables the admin override feature
-    FF_ADMIN_OVERRIDE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -99,7 +94,6 @@ export const parseFeatureFlags = (
 let parsedFlags: FeatureFlags | undefined
 
 export type FeatureFlags = {
-  FF_ADMIN_OVERRIDE_ENABLED: boolean
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean

@@ -123,6 +123,7 @@ export type CreateValidatedUser = (
   },
   options?: Partial<{
     skipPropertyValidation: boolean
+    allowPersonalEmail: boolean
   }>
 ) => Promise<string>
 
