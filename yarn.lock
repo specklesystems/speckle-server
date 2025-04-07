@@ -17183,6 +17183,7 @@ __metadata:
     "@types/earcut": "npm:3.0.0"
     "@types/flat": "npm:^5.0.2"
     "@types/lodash-es": "npm:4.17.12"
+    "@types/polylabel": "npm:1.1.3"
     "@types/three": "npm:^0.140.0"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
@@ -17195,6 +17196,7 @@ __metadata:
     js-logger: "npm:1.6.1"
     jsdom: "npm:^24.0.0"
     lodash-es: "npm:^4.17.21"
+    polylabel: "npm:2.0.1"
     prettier: "npm:^2.5.1"
     regenerator-runtime: "npm:^0.13.7"
     rollup: "npm:^2.70.1"
@@ -20410,6 +20412,13 @@ __metadata:
     "@types/pino-std-serializers": "npm:*"
     sonic-boom: "npm:^2.1.0"
   checksum: 10/c7e49c483fdf9a2ff9cc922c8246fdc54eede07b2b42ee9c8bc4ceefe7416002191f3508355968e36452d603d1c0b97db3fe709d5133434942396f19e0ec8a47
+  languageName: node
+  linkType: hard
+
+"@types/polylabel@npm:1.1.3":
+  version: 1.1.3
+  resolution: "@types/polylabel@npm:1.1.3"
+  checksum: 10/e51ec7b7ce9d3e576e78013825bc9ec2ed595aeaddbe15a95fa209fddc229a5e73411f1ed57e80cadd9679603bbdcd8c350733ed794c3af7b519bf570371d906
   languageName: node
   linkType: hard
 
@@ -43269,6 +43278,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"polylabel@npm:2.0.1":
+  version: 2.0.1
+  resolution: "polylabel@npm:2.0.1"
+  dependencies:
+    tinyqueue: "npm:^3.0.0"
+  checksum: 10/cfd4043487720e725710b19eca84f675c930e4754c60317f113a222d0b807c46cf0d2d4c2d854bae737433daa048cc6220c41e786f30929e7301015458f16c74
+  languageName: node
+  linkType: hard
+
 "portal-vue@npm:^3.0.0":
   version: 3.0.0
   resolution: "portal-vue@npm:3.0.0"
@@ -50101,6 +50119,13 @@ __metadata:
   version: 1.0.2
   resolution: "tinypool@npm:1.0.2"
   checksum: 10/6109322f14b3763f65c8fa49fddab72cd3edd96b82dd50e05e63de74867329ff5353bff4377281ec963213d9314f37f4a353e9ee34bbac85fd4c1e4a568d6076
+  languageName: node
+  linkType: hard
+
+"tinyqueue@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "tinyqueue@npm:3.0.0"
+  checksum: 10/44195ae628e98f4de49acefac1fafa63a7f2b5d8a5c23ace6f49917109db3435db8ec9854f87c0d50f8a8c6a73f1526f3941921618a071e4ee1d246afacf69bb
   languageName: node
   linkType: hard
 

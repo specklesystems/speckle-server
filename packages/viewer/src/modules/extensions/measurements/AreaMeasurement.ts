@@ -5,7 +5,6 @@ import {
   Camera,
   DoubleSide,
   DynamicDrawUsage,
-  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Plane,
@@ -21,6 +20,7 @@ import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Geometry } from '../../converter/Geometry.js'
+import polylabel from 'polylabel'
 
 export class AreaMeasurement extends Measurement {
   private pointGizmos: MeasurementPointGizmo[]
@@ -29,12 +29,12 @@ export class AreaMeasurement extends Measurement {
   private surfaceNormal: Vector3 = new Vector3()
   private planeOrigin: Vector3 = new Vector3()
   private planeNormal: Vector3 = new Vector3()
+  private labelPoint: Vector3 = new Vector3()
   private points: Vector3[] = []
   private measuredPoints: Vector3[] = []
   private polygonPoints: Vector3[] = []
 
   private planeMesh: Mesh
-  private fillMesh: Mesh
   private fillPolygon: Mesh
 
   public set isVisible(value: boolean) {
@@ -90,7 +90,7 @@ export class AreaMeasurement extends Measurement {
       this.planeNormal,
       this.polygonPoints[0]
     )
-    this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
+
     this.updateFillPolygon(this.polygonPoints)
   }
 
@@ -125,7 +125,6 @@ export class AreaMeasurement extends Measurement {
 
     void this.update()
     if (this.points.length >= 2) {
-      this.updateFillPlane()
       this.projectOnPlane(
         this.surfacePoint,
         this.planeOrigin,
@@ -133,6 +132,7 @@ export class AreaMeasurement extends Measurement {
         this.polygonPoints[0]
       )
       this.updateFillPolygon(this.polygonPoints)
+      this.updatePoleOfInnacessibility(this.measuredPoints)
     }
 
     console.warn('Area -> ', this.shoelaceArea3D(this.measuredPoints, this.planeNormal))
@@ -153,12 +153,13 @@ export class AreaMeasurement extends Measurement {
       this.pointGizmos[this.pointIndex].updateLine([prevPoint, currentPoint])
       this.pointGizmos[this.pointIndex].updatePoint(currentPoint)
 
-      if (this.fillMesh) {
+      if (this.measuredPoints.length > 1) {
+        this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
         ret = this.pointGizmos[0].updateText(
           `${(this.value * getConversionFactor('m', this.units)).toFixed(
             this.precision
           )} ${this.units}²`,
-          this.fillMesh.position
+          this.labelPoint
         )
         this.pointGizmos[0].enable(false, true, true, true)
       }
@@ -178,34 +179,31 @@ export class AreaMeasurement extends Measurement {
     return ret
   }
 
-  private updateFillPlane() {
-    if (!this.fillMesh) {
-      this.fillMesh = new Mesh(
-        new PlaneGeometry(1, 1),
-        new MeshBasicMaterial({
-          color: 0xff0000,
-          side: DoubleSide,
-          opacity: 0.5,
-          transparent: true,
-          visible: false
-        })
-      )
-      this.fillMesh.layers.set(ObjectLayers.MEASUREMENTS)
-      this.add(this.fillMesh)
-    }
-    const quaternion = new Quaternion().setFromUnitVectors(
-      new Vector3(0, 0, 1),
-      this.planeNormal
+  private updatePoleOfInnacessibility(points: Vector3[]) {
+    const q = new Quaternion().setFromUnitVectors(
+      this.planeNormal,
+      new Vector3(0, 0, 1)
     )
+    const invQ = new Quaternion().copy(q).invert()
+    const vector = new Vector3()
+    const flatPoints = points.map((p: Vector3) => {
+      vector.copy(p)
+      vector.applyQuaternion(q)
+      return [vector.x, vector.y]
+    })
 
-    const box = new Box3().setFromPoints(this.points)
-    box.getCenter(this.fillMesh.position)
-    const mat = new Matrix4()
-      .setPosition(this.fillMesh.position)
-      .multiply(new Matrix4().makeRotationFromQuaternion(quaternion))
-    box.applyMatrix4(mat)
-    box.getSize(this.fillMesh.scale)
-    this.fillMesh.quaternion.copy(quaternion)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    const p = polylabel([flatPoints], 0.1)
+
+    this.labelPoint.set(p[0], p[1], this.planeOrigin.z)
+    this.labelPoint.applyQuaternion(invQ)
+    this.projectOnPlane(
+      this.labelPoint,
+      this.planeOrigin,
+      this.planeNormal,
+      this.labelPoint
+    )
   }
 
   private updateFillPolygon(points: Vector3[]) {
@@ -229,8 +227,7 @@ export class AreaMeasurement extends Measurement {
     if (points.length < 3) return
 
     const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
+
     const projectedPoints = points.map(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
@@ -295,11 +292,11 @@ export class AreaMeasurement extends Measurement {
       .set(Math.abs(normal.x), Math.abs(normal.y), Math.abs(normal.z))
 
     if (absNormal.z >= absNormal.x && absNormal.z >= absNormal.y) {
-      return ['x', 'y'] // Project to XY plane
+      return ['x', 'y', 'z'] // Project to XY plane
     } else if (absNormal.y >= absNormal.x && absNormal.y >= absNormal.z) {
-      return ['x', 'z'] // Project to XZ plane
+      return ['x', 'z', 'y'] // Project to XZ plane
     } else {
-      return ['y', 'z'] // Project to YZ plane
+      return ['y', 'z', 'x'] // Project to YZ plane
     }
   }
 
