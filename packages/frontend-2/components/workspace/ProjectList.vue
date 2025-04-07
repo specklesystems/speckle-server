@@ -105,7 +105,6 @@ graphql(`
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
     ...BillingAlert_Workspace
-    ...MoveProjectsDialog_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
