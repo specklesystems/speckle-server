@@ -7,7 +7,6 @@
         :project="project"
       />
       <ProjectPageDiscussionsResults
-        :grid-or-list="gridOrList"
         :project="project"
         :include-archived="!!includeArchived"
       />

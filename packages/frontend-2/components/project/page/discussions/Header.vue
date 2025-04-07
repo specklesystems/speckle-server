@@ -10,7 +10,6 @@
           :value="true"
           label="Include resolved"
         />
-        <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
       </div>
     </div>
   </div>
@@ -29,7 +28,6 @@ graphql(`
 `)
 
 const emit = defineEmits<{
-  (e: 'update:grid-or-list', val: GridListToggleValue): void
   (e: 'update:include-archived', val: boolean): void
 }>()
 
@@ -38,11 +36,6 @@ const props = defineProps<{
   includeArchived: Optional<true>
   gridOrList: GridListToggleValue
 }>()
-
-const finalGridOrList = computed({
-  get: () => props.gridOrList,
-  set: (newVal) => emit('update:grid-or-list', newVal)
-})
 
 const finalIncludeArchived = computed({
   get: () => props.includeArchived,
