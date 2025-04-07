@@ -2,7 +2,7 @@ import { err, ok } from 'true-myth/result'
 import { AuthPolicyFragment } from '../domain/policies.js'
 import {
   hasAnyWorkspaceRole,
-  requireMinimumWorkspaceRole
+  hasMinimumWorkspaceRole
 } from '../checks/workspaceRole.js'
 import { just, nothing } from 'true-myth/maybe'
 import {
@@ -29,7 +29,7 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
     const hasAnyRole = await hasAnyWorkspaceRole(loaders)({ userId, workspaceId })
     if (!hasAnyRole) return just(err(new WorkspaceNoAccessError()))
 
-    const hasMinimumMemberRole = await requireMinimumWorkspaceRole(loaders)({
+    const hasMinimumMemberRole = await hasMinimumWorkspaceRole(loaders)({
       userId,
       workspaceId,
       role: 'workspace:member'

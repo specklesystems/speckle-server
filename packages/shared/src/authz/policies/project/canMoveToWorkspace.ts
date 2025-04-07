@@ -1,21 +1,27 @@
 import { err, ok } from 'true-myth/result'
 import {
-  ProjectNotFoundError,
   ProjectNoAccessError,
-  WorkspaceNoAccessError,
-  WorkspaceSsoSessionNoAccessError,
-  WorkspaceLimitsReachedError,
-  ServerNoSessionError,
+  ProjectNotFoundError,
   ServerNoAccessError,
-  WorkspaceRequiredError,
-  WorkspaceReadOnlyError
+  ServerNoSessionError,
+  WorkspaceLimitsReachedError,
+  WorkspaceNoAccessError,
+  WorkspaceProjectMoveInvalidError,
+  WorkspaceReadOnlyError,
+  WorkspacesNotEnabledError,
+  WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
+import {
+  MaybeUserContext,
+  ProjectContext,
+  WorkspaceContext
+} from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { hasMinimumServerRole } from '../../checks/serverRole.js'
 import { Roles } from '../../../core/constants.js'
 import { hasMinimumProjectRole } from '../../checks/projects.js'
+import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
 import { throwUncoveredError } from '../../../core/index.js'
 import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
@@ -31,9 +37,9 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
   | typeof AuthCheckContextLoaderKeys.getWorkspaceLimits
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceModelCount
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceProjectCount
 
-type PolicyArgs = MaybeUserContext & ProjectContext
+type PolicyArgs = MaybeUserContext & ProjectContext & WorkspaceContext
 
 type PolicyErrors =
   | InstanceType<typeof ProjectNotFoundError>
@@ -42,42 +48,45 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceReadOnlyError>
   | InstanceType<typeof WorkspaceLimitsReachedError>
-  | InstanceType<typeof WorkspaceRequiredError>
+  | InstanceType<typeof WorkspacesNotEnabledError>
+  | InstanceType<typeof WorkspaceProjectMoveInvalidError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
 
-export const canCreateModelPolicy: AuthPolicy<
+export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors
 > =
   (loaders) =>
-  async ({ userId, projectId }) => {
+  async ({ userId, projectId, workspaceId }) => {
     const env = await loaders.getEnv()
     if (!userId) return err(new ServerNoSessionError())
-
-    const hasServerRole = await hasMinimumServerRole(loaders)({
-      userId,
-      role: Roles.Server.Guest
-    })
-    if (!hasServerRole) return err(new ServerNoAccessError())
-
-    const isStreamContributor = await hasMinimumProjectRole(loaders)({
-      userId,
-      projectId,
-      role: Roles.Stream.Contributor
-    })
-    if (!isStreamContributor) return err(new ProjectNoAccessError())
-
-    if (!env.FF_WORKSPACES_MODULE_ENABLED) {
-      // Self-hosted servers may create models in "personal" projects
-      return ok()
-    }
+    if (!env.FF_WORKSPACES_MODULE_ENABLED) return err(new WorkspacesNotEnabledError())
 
     const project = await loaders.getProject({ projectId })
-    if (!project?.workspaceId) return err(new WorkspaceRequiredError())
+    if (!project) return err(new ProjectNotFoundError())
+    if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
 
-    const { workspaceId } = project
+    const isServerUser = await hasMinimumServerRole(loaders)({
+      userId,
+      role: Roles.Server.User
+    })
+    if (!isServerUser) return err(new ServerNoAccessError())
+
+    const isProjectOwner = await hasMinimumProjectRole(loaders)({
+      userId,
+      projectId,
+      role: Roles.Stream.Owner
+    })
+    if (!isProjectOwner) return err(new ProjectNoAccessError())
+
+    const isWorkspaceAdmin = await hasMinimumWorkspaceRole(loaders)({
+      userId,
+      workspaceId,
+      role: Roles.Workspace.Admin
+    })
+    if (!isWorkspaceAdmin) return err(new WorkspaceNoAccessError())
 
     const maybeMemberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
       loaders
@@ -104,13 +113,13 @@ export const canCreateModelPolicy: AuthPolicy<
     const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
     if (!workspaceLimits) return err(new WorkspaceNoAccessError())
 
-    if (workspaceLimits.modelCount === null) return ok()
+    if (workspaceLimits.projectCount === null) return ok()
 
-    const currentModelCount = await loaders.getWorkspaceModelCount({ workspaceId })
+    const currentProjectCount = await loaders.getWorkspaceProjectCount({ workspaceId })
 
-    if (currentModelCount === null) return err(new WorkspaceNoAccessError())
+    if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
 
-    return currentModelCount < workspaceLimits.modelCount
+    return currentProjectCount < workspaceLimits.projectCount
       ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'modelCount' } }))
+      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
   }
