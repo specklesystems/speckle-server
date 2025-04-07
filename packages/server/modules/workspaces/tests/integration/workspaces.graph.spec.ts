@@ -55,7 +55,6 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   createUserEmailFactory,
@@ -96,7 +95,6 @@ const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
     renderEmail
   })
 })
-const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -593,19 +591,7 @@ describe('Workspaces GQL CRUD', () => {
               id: project1Id,
               name: project1Name
             }
-          },
-          // No longer auto-assigned in new plan world (until we rework auth & queries)
-          ...(FF_GATEKEEPER_FORCE_FREE_PLAN
-            ? []
-            : [
-                {
-                  role: Roles.Stream.Reviewer,
-                  project: {
-                    id: project2Id,
-                    name: project2Name
-                  }
-                }
-              ])
+          }
         ])
         const guestRoles = items.find(
           (item) => item.role === Roles.Workspace.Guest
