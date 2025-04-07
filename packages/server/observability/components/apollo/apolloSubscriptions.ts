@@ -35,7 +35,7 @@ export const onOperationHandlerFactory = (deps: {
     }
 
     const logger = ctx.log || subscriptionLogger
-    logger.info(
+    logger.debug(
       {
         graphql_operation_name: baseParams.operationName,
         userId: baseParams.context.userId,
