@@ -36,20 +36,18 @@
             :is-free-plan="isFreePlan"
             :is-unlimited-plan="isUnlimitedPlan"
             :is-guest="false"
-            :has-available-seat="editorSeats.hasSeatAvailable"
-            :seat-price="editorSeats.seatPrice"
+            :has-available-seat="hasAvailableEditorSeats"
+            :seat-price="editorSeatPriceFormatted"
           />
           <p
-            v-if="needsEditorUpgrade && !editorSeats.hasSeatAvailable"
+            v-if="needsEditorUpgrade && !hasAvailableEditorSeats"
             class="text-foreground-2 text-body-xs mt-4"
           >
             You have an unused Editor seat that is already paid for, so the change will
             not incur any charges.
           </p>
           <p
-            v-if="
-              needsEditorUpgrade && !editorSeats.hasSeatAvailable && !isUnlimitedPlan
-            "
+            v-if="needsEditorUpgrade && !hasAvailableEditorSeats && !isUnlimitedPlan"
             class="text-foreground-2 text-body-xs mt-4"
           >
             Note that the Editor seat is a paid seat type and this change will incur
@@ -109,8 +107,13 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserRole = useWorkspaceUpdateRole()
-const { editorSeats, isFreePlan, isUnlimitedPlan, isPurchasablePlan } =
-  useWorkspacePlan(props.workspace?.slug || '')
+const {
+  hasAvailableEditorSeats,
+  isFreePlan,
+  isUnlimitedPlan,
+  isPurchasablePlan,
+  editorSeatPriceFormatted
+} = useWorkspacePlan(props.workspace?.slug || '')
 
 const needsEditorUpgrade = computed(() => {
   return props.action === 'make' && props.user.seatType === SeatTypes.Viewer
