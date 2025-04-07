@@ -117,6 +117,8 @@ type Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": typeof types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": typeof types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": typeof types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace on Workspace {\n    id\n    automationTemplates {\n      id\n      name\n      functionId\n      functionRevisionId\n    }\n  }\n": typeof types.SettingsWorkspacesAutomationAutomationTemplatesTable_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesAutomationFunctionsTable_Workspace on Workspace {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        logo\n      }\n      totalCount\n    }\n  }\n": typeof types.SettingsWorkspacesAutomationFunctionsTable_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n": typeof types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    seatType\n    joinDate\n    user {\n      id\n      avatar\n      name\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    slug\n    name\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team(limit: 250) {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
@@ -305,6 +307,7 @@ type Documents = {
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": typeof types.SettingsBillingCancelCheckoutSessionDocument,
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": typeof types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceGeneralDocument,
+    "\n  query SettingsWorkspaceAutomation($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesAutomation_Workspace\n    }\n  }\n  ": typeof types.SettingsWorkspaceAutomationDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": typeof types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": typeof types.SettingsWorkspaceRegionsDocument,
@@ -407,6 +410,7 @@ type Documents = {
     "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n": typeof types.ProjectPageSettingsTab_ProjectFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": typeof types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n": typeof types.SettingsServerRegionsDocument,
+    "\n  fragment SettingsWorkspacesAutomation_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace\n    ...SettingsWorkspacesAutomationFunctionsTable_Workspace\n  }\n": typeof types.SettingsWorkspacesAutomation_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace\n    id\n    name\n    slug\n    description\n    logo\n    role\n    plan {\n      status\n      name\n    }\n  }\n": typeof types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam {\n      user {\n        id\n      }\n    }\n    adminWorkspacesJoinRequests {\n      items {\n        id\n        status\n      }\n      totalCount\n    }\n  }\n": typeof types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": typeof types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
@@ -518,6 +522,8 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace on Workspace {\n    id\n    automationTemplates {\n      id\n      name\n      functionId\n      functionRevisionId\n    }\n  }\n": types.SettingsWorkspacesAutomationAutomationTemplatesTable_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesAutomationFunctionsTable_Workspace on Workspace {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        logo\n      }\n      totalCount\n    }\n  }\n": types.SettingsWorkspacesAutomationFunctionsTable_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n": types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    seatType\n    joinDate\n    user {\n      id\n      avatar\n      name\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    slug\n    name\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team(limit: 250) {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
@@ -706,6 +712,7 @@ const documents: Documents = {
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": types.SettingsBillingCancelCheckoutSessionDocument,
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
+    "\n  query SettingsWorkspaceAutomation($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesAutomation_Workspace\n    }\n  }\n  ": types.SettingsWorkspaceAutomationDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n    serverInfo {\n      ...SettingsWorkspacesRegions_ServerInfo\n    }\n  }\n": types.SettingsWorkspaceRegionsDocument,
@@ -808,6 +815,7 @@ const documents: Documents = {
     "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n": types.ProjectPageSettingsTab_ProjectFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n": types.SettingsServerRegionsDocument,
+    "\n  fragment SettingsWorkspacesAutomation_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace\n    ...SettingsWorkspacesAutomationFunctionsTable_Workspace\n  }\n": types.SettingsWorkspacesAutomation_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace\n    id\n    name\n    slug\n    description\n    logo\n    role\n    plan {\n      status\n      name\n    }\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam {\n      user {\n        id\n      }\n    }\n    adminWorkspacesJoinRequests {\n      items {\n        id\n        status\n      }\n      totalCount\n    }\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsWorkspacesProjects_ProjectCollectionFragmentDoc,
@@ -1242,6 +1250,14 @@ export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditAvata
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace on Workspace {\n    id\n    automationTemplates {\n      id\n      name\n      functionId\n      functionRevisionId\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace on Workspace {\n    id\n    automationTemplates {\n      id\n      name\n      functionId\n      functionRevisionId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesAutomationFunctionsTable_Workspace on Workspace {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        logo\n      }\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesAutomationFunctionsTable_Workspace on Workspace {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        logo\n      }\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1997,6 +2013,10 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($slug: Strin
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query SettingsWorkspaceAutomation($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesAutomation_Workspace\n    }\n  }\n  "): (typeof documents)["\n  query SettingsWorkspaceAutomation($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesAutomation_Workspace\n    }\n  }\n  "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -2402,6 +2422,10 @@ export function graphql(source: "\n  fragment SettingsServerProjects_ProjectColl
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsWorkspacesAutomation_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace\n    ...SettingsWorkspacesAutomationFunctionsTable_Workspace\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesAutomation_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesAutomationAutomationTemplatesTable_Workspace\n    ...SettingsWorkspacesAutomationFunctionsTable_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -63,6 +63,10 @@ export const settingsWorkspaceRoutes = {
     name: 'settings-workspaces-slug-projects',
     route: (slug: string) => `/settings/workspaces/${slug}/projects`
   },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug: string) => `/settings/workspaces/${slug}/automation`
+  },
   security: {
     name: 'settings-workspaces-slug-security',
     route: (slug: string) => `/settings/workspaces/${slug}/security`
@@ -97,8 +101,7 @@ export const modelRoute = (
   resourceIdString: string,
   hashState?: Partial<Record<ViewerHashStateKeys, string>>
 ) =>
-  `/projects/${projectId}/models/${resourceIdString}${
-    hashState ? serializeHashState(hashState) || '' : ''
+  `/projects/${projectId}/models/${resourceIdString}${hashState ? serializeHashState(hashState) || '' : ''
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
@@ -119,9 +122,8 @@ export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
 export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
-  return `/api/automate/auth/githubapp${
-    workspaceSlug ? `?workspaceSlug=${workspaceSlug}` : ''
-  }`
+  return `/api/automate/auth/githubapp${workspaceSlug ? `?workspaceSlug=${workspaceSlug}` : ''
+    }`
 }
 
 export const publicAutomateFunctionsRoute = '/functions'

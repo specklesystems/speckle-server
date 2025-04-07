@@ -55,6 +55,12 @@ export const useSettingsMenu = () => {
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
+      title: 'Automation',
+      name: settingsWorkspaceRoutes.automation.name,
+      route: (slug: string) => settingsWorkspaceRoutes.automation.route(slug),
+      permission: [Roles.Workspace.Admin]
+    },
+    {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
       route: (slug: string) => settingsWorkspaceRoutes.security.route(slug),
@@ -73,12 +79,12 @@ export const useSettingsMenu = () => {
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(!isMultiRegionEnabled
         ? {
-            disabled: true,
-            tooltipText: 'Data residency management is not enabled on this server'
-          }
+          disabled: true,
+          tooltipText: 'Data residency management is not enabled on this server'
+        }
         : {
-            disabled: false
-          })
+          disabled: false
+        })
     }
   ])
 
@@ -97,11 +103,11 @@ export const useSettingsMenu = () => {
     },
     ...(isMultipleEmailsEnabled
       ? [
-          {
-            title: 'Emails',
-            route: settingsUserRoutes.emails
-          }
-        ]
+        {
+          title: 'Emails',
+          route: settingsUserRoutes.emails
+        }
+      ]
       : [])
   ])
 
@@ -120,11 +126,11 @@ export const useSettingsMenu = () => {
     },
     ...(isMultiRegionEnabled
       ? [
-          {
-            title: 'Regions',
-            route: settingsServerRoutes.regions
-          }
-        ]
+        {
+          title: 'Regions',
+          route: settingsServerRoutes.regions
+        }
+      ]
       : [])
   ])
 

@@ -16,6 +16,14 @@ export const settingsWorkspaceGeneralQuery = graphql(`
   }
 `)
 
+export const settingsWorkspaceAutomationQuery = graphql(`
+  query SettingsWorkspaceAutomation($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsWorkspacesAutomation_Workspace
+    }
+  }
+  `)
+
 export const settingsWorkspaceBillingQuery = graphql(`
   query SettingsWorkspaceBilling($slug: String!) {
     workspaceBySlug(slug: $slug) {
