@@ -121,9 +121,8 @@ export = {
       return await getLimitedReferencedObjectFactory({
         environment: {
           personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        }
-        // getWorkspacePlan: ctx.loaders.gatekeeper?.getWorkspacePlan
-        //   .load as GetWorkspacePlan
+        },
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
       })({ version: parent, project })
     }
   },
