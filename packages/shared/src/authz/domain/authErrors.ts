@@ -1,10 +1,12 @@
+import { get, isObjectLike } from '#lodash'
+import { ValueOf } from 'type-fest'
 import { WorkspaceLimits } from '../../workspaces/helpers/limits.js'
 
 export type AuthError<ErrorCode extends string = string, Payload = undefined> = {
   readonly code: ErrorCode
   readonly message: string
   readonly payload: Payload
-}
+} & Error
 
 export const defineAuthError = <
   ErrorCode extends string,
@@ -20,10 +22,11 @@ export const defineAuthError = <
   ): AuthError<ErrorCode, Payload>
   code: ErrorCode
 } => {
-  return class AuthErrorClass {
+  return class AuthErrorClass extends Error {
     readonly message: string
     readonly code: ErrorCode
     readonly payload: Payload
+    readonly isAuthPolicyError = true
 
     static code: ErrorCode = definition.code
 
@@ -33,13 +36,20 @@ export const defineAuthError = <
         : [params: { payload: Payload; message?: string }]
     ) {
       const [params] = args
+      const message = params?.message || definition.message
+      super(message)
 
       this.code = definition.code
       this.payload =
         params && 'payload' in params ? params.payload : (undefined as Payload)
       this.message = params?.message || definition.message
+      this.name = definition.code + 'Error'
     }
   }
+}
+
+export const isAuthPolicyError = (err: unknown): err is AuthError => {
+  return isObjectLike(err) && get(err, 'isAuthPolicyError') === true
 }
 
 export const ProjectNotFoundError = defineAuthError({
@@ -104,3 +114,13 @@ export const ServerNoSessionError = defineAuthError({
   code: 'ServerNoSession',
   message: 'You are not logged in to this server'
 })
+
+// Resolve all exported error types
+export type AllAuthErrors = ValueOf<{
+  [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...args: any[]
+  ) => infer R
+    ? R
+    : never
+}>
