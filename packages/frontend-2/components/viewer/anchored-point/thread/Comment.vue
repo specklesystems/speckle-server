@@ -47,7 +47,6 @@
 <script setup lang="ts">
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useWorkspacePlanLimits } from '~/lib/workspaces/composables/limits'
 
 const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
@@ -59,7 +58,6 @@ const emit = defineEmits<{
 }>()
 
 const { isEmbedEnabled } = useEmbed()
-const { isCommentOlderThanLimit } = useWorkspacePlanLimits()
 
 const createdAt = computed(() => {
   return {
@@ -69,6 +67,6 @@ const createdAt = computed(() => {
 })
 
 const isCommentLimited = computed(() => {
-  return isCommentOlderThanLimit(props.comment.createdAt)
+  return true
 })
 </script>
