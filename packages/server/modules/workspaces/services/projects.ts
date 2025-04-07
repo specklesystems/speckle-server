@@ -4,6 +4,7 @@ import {
   GetWorkspaceDomains,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
+  IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -12,14 +13,11 @@ import {
   WorkspaceNotFoundError,
   WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
-import {
-  GetProject,
-  GetProjectCollaborators,
-  UpdateProject
-} from '@/modules/core/domain/projects/operations'
+import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
 import { chunk } from 'lodash'
 import { Roles } from '@speckle/shared'
 import {
+  GetStreamCollaborators,
   GetUserStreamsPage,
   LegacyGetStreams,
   UpdateStreamRole
@@ -149,7 +147,7 @@ export const moveProjectToWorkspaceFactory =
     getProject: GetProject
     updateProject: UpdateProject
     updateProjectRole: UpdateStreamRole
-    getProjectCollaborators: GetProjectCollaborators
+    getProjectCollaborators: GetStreamCollaborators
     getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
     updateWorkspaceRole: UpdateWorkspaceRole
@@ -174,7 +172,7 @@ export const moveProjectToWorkspaceFactory =
 
     const [workspace, projectTeam, workspaceTeam] = await Promise.all([
       getWorkspaceWithPlan({ workspaceId }),
-      getProjectCollaborators({ projectId }),
+      getProjectCollaborators(projectId),
       getWorkspaceRolesAndSeats({ workspaceId })
     ])
     if (!workspace) throw new WorkspaceNotFoundError()
@@ -377,4 +375,18 @@ export const createWorkspaceProjectFactory =
     })
 
     return project
+  }
+
+export const getMoveProjectToWorkspaceDryRunFactory =
+  (deps: {
+    intersectProjectCollaboratorsAndWorkspaceCollaborators: IntersectProjectCollaboratorsAndWorkspaceCollaborators
+  }) =>
+  async (args: { projectId: string; workspaceId: string }) => {
+    const addedToWorkspace =
+      await deps.intersectProjectCollaboratorsAndWorkspaceCollaborators({
+        projectId: args.projectId,
+        workspaceId: args.workspaceId
+      })
+
+    return { addedToWorkspace }
   }

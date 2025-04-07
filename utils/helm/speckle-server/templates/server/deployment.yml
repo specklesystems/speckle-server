@@ -1,3 +1,4 @@
+{{- if .Values.server.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,12 +34,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.server.requests }}
           requests:
-            cpu: {{ .Values.server.requests.cpu }}
-            memory: {{ .Values.server.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.server.limits }}
           limits:
-            cpu: {{ .Values.server.limits.cpu }}
-            memory: {{ .Values.server.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -156,3 +159,4 @@ spec:
             - key: {{ .Values.multiRegion.config.secretKey }}
               path: "multi-region-config.json"
       {{- end }}
+{{- end }}

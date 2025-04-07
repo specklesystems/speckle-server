@@ -1,4 +1,9 @@
-import { Roles, type WorkspaceSeatType, SeatTypes } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceSeatType,
+  SeatTypes,
+  type WorkspaceRoles
+} from '@speckle/shared'
 
 export const WorkspaceRoleDescriptions: Record<string, string> = {
   [Roles.Workspace.Admin]:
@@ -9,7 +14,24 @@ export const WorkspaceRoleDescriptions: Record<string, string> = {
     'Guests cannot create projects, their project access is limited to select projects, and they don’t need to authenticate through SSO.'
 }
 
-export const WorkspaceSeatTypeDescriptions: Record<WorkspaceSeatType, string> = {
-  [SeatTypes.Editor]: 'Can create new models and versions',
-  [SeatTypes.Viewer]: 'Can view and receive models, but not send to them'
+export const WorkspaceSeatTypeDescription: Record<
+  WorkspaceRoles,
+  Record<WorkspaceSeatType, string>
+> = {
+  [Roles.Workspace.Admin]: {
+    [SeatTypes.Editor]:
+      'Members on an editor seat can create and contribute to projects',
+    [SeatTypes.Viewer]: 'Members on a viewer seat can view and comment on projects'
+  },
+  [Roles.Workspace.Member]: {
+    [SeatTypes.Editor]:
+      'Members on an editor seat can create and contribute to projects',
+    [SeatTypes.Viewer]: 'Members on a viewer seat can view and comment on projects'
+  },
+  [Roles.Workspace.Guest]: {
+    [SeatTypes.Editor]:
+      "Guests on an editor seat can contribute to the projects they're invited to",
+    [SeatTypes.Viewer]:
+      "Guests on a viewer seat can view and comment on the projects they're invited to"
+  }
 }

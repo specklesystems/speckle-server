@@ -1,11 +1,7 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  WorkspaceMembersByRole
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
-  getProjectCollaboratorsFactory,
   updateProjectFactory,
   getRolesByUserIdFactory,
   getStreamFactory,
@@ -14,7 +10,8 @@ import {
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
   getUserStreamsPageFactory,
-  getUserStreamsCountFactory
+  getUserStreamsCountFactory,
+  getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -1028,7 +1025,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getProject: getProjectFactory({ db }),
                 updateProject: updateProjectFactory({ db }),
                 updateProjectRole: updateStreamRoleAndNotify,
-                getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
+                getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
                 updateWorkspaceRole: updateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -1113,6 +1110,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
             cursor: args.cursor ?? undefined
           })
           return team
+        },
+        teamByRole: async (parent) => {
+          const { id: workspaceId } = parent
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
+
+          return {
+            admins: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Admin
+              })
+            },
+            members: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Member
+              })
+            },
+            guests: {
+              totalCount: await countWorkspaceRole({
+                workspaceId,
+                workspaceRole: Roles.Workspace.Guest
+              })
+            }
+          }
         },
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
@@ -1222,34 +1247,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        },
-        membersByRole: (parent) =>
-          ({
-            admins: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Admin
-              })
-            }),
-            members: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Member
-              })
-            }),
-            guests: async () => ({
-              totalCount: await countWorkspaceRoleWithOptionalProjectRoleFactory({
-                db
-              })({
-                workspaceId: parent.id,
-                workspaceRole: Roles.Workspace.Guest
-              })
-            })
-          } as unknown as WorkspaceMembersByRole)
+        }
       },
       WorkspaceSso: {
         provider: async ({ workspaceId }) => {
@@ -1518,7 +1516,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
-            limit: args.limit,
+            limit: args.limit ?? 100,
             cursor: args.cursor ?? undefined
           })
           return team

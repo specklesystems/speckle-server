@@ -14,7 +14,7 @@
     :disabled="disabled"
     :clearable="clearable"
   >
-    <template #nothing-selected>Select seat type</template>
+    <template #nothing-selected>Filter by seat</template>
     <template #something-selected="{ value }">
       <div class="truncate text-foreground capitalize">
         {{ value }}

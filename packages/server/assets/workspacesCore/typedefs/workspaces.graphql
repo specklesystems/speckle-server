@@ -275,6 +275,7 @@ type Workspace {
     cursor: String
     filter: WorkspaceTeamFilter
   ): WorkspaceCollaboratorCollection!
+  teamByRole: WorkspaceTeamByRole!
   """
   Only available to workspace owners/members
   """
@@ -318,13 +319,9 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
-  membersByRole: WorkspaceMembersByRole
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "workspace:read")
-    @hasWorkspaceRole(role: ADMIN)
 }
 
-type WorkspaceMembersByRole {
+type WorkspaceTeamByRole {
   admins: WorkspaceRoleCollection
   members: WorkspaceRoleCollection
   guests: WorkspaceRoleCollection
@@ -553,6 +550,15 @@ extend type User {
 
 extend type Project {
   workspace: Workspace
+  """
+  Returns information about the potential effects of moving a project to a given workspace.
+  """
+  moveToWorkspaceDryRun(workspaceId: String!): ProjectMoveToWorkspaceDryRun!
+}
+
+type ProjectMoveToWorkspaceDryRun {
+  addedToWorkspace(limit: Int): [LimitedUser!]!
+  addedToWorkspaceTotalCount: Int!
 }
 
 type ServerWorkspacesInfo {
