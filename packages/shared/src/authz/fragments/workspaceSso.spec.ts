@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { maybeMemberRoleWithValidSsoSessionIfNeeded } from './workspaceSso.js'
 import cryptoRandomString from 'crypto-random-string'
-import { err, ok } from 'true-myth/result'
 import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
-import { just, nothing } from 'true-myth/maybe'
 
 describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
@@ -25,7 +23,9 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    await expect(result).resolves.toStrictEqual(just(err(new WorkspaceNoAccessError())))
+    await expect(result).resolves.toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
   })
   it('returns WorkspaceNoAccessError if the user does not have a workspace role', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
@@ -44,7 +44,9 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    expect(result).toStrictEqual(just(err(new WorkspaceNoAccessError())))
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
   })
   it('returns nothing if user does not have a minimum workspace:member role', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
@@ -63,7 +65,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    expect(result).toStrictEqual(nothing())
+    expect(result).toBeNothingResult()
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
     const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
@@ -80,7 +82,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    expect(result).toStrictEqual(just(ok()))
+    expect(result).toBeAuthOKResult()
   })
   it('returns WorkspaceSsoSessionInvalidError if user does not have an SSO session', async () => {
     const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
@@ -97,11 +99,11 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    await expect(result).resolves.toStrictEqual(
-      just(
-        err(new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug: 'bbb' } }))
-      )
-    )
+
+    await expect(result).resolves.toBeAuthErrorResult({
+      code: WorkspaceSsoSessionNoAccessError.code,
+      payload: { workspaceSlug: 'bbb' }
+    })
   })
   it('returns WorkspaceSsoSessionInvalidError if user has an expired sso session', async () => {
     const userId = cryptoRandomString({ length: 10 })
@@ -125,11 +127,11 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId,
       workspaceId
     })
-    expect(result).toStrictEqual(
-      just(
-        err(new WorkspaceSsoSessionNoAccessError({ payload: { workspaceSlug: 'bbb' } }))
-      )
-    )
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceSsoSessionNoAccessError.code,
+      payload: { workspaceSlug: 'bbb' }
+    })
   })
   it('returns true if user has a valid sso session', async () => {
     const userId = cryptoRandomString({ length: 10 })
@@ -153,6 +155,6 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId,
       workspaceId
     })
-    expect(result).toStrictEqual(just(ok()))
+    expect(result).toBeAuthOKResult()
   })
 })

@@ -14,7 +14,8 @@
           <div class="flex flex-col justify-between h-full px-5 py-4">
             <NuxtImg src="/images/logo.png" alt="Speckle logo" class="h-8 w-8" />
             <h3 class="text-white limit-reached-text-shadow text-base">
-              Plan limit reached.
+              <span class="capitalize">{{ props.limitType }}</span>
+              limit reached.
             </h3>
           </div>
         </div>
@@ -46,7 +47,7 @@ import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const props = defineProps<{
-  limit: number
+  limit: Nullable<number>
   limitType: Nullable<'project' | 'model'>
 }>()
 </script>
