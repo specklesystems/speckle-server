@@ -44,7 +44,11 @@ export const downscaleWorkspaceSubscriptionFactoryOld =
 
     switch (workspacePlan.name) {
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
+      case 'proUnlimitedInvoiced':
+      case 'teamUnlimitedInvoiced':
         // Cause seat types matter, a future issue
         throw new NotImplementedError()
       case 'starter':
@@ -113,7 +117,9 @@ export const downscaleWorkspaceSubscriptionFactoryNew =
 
     switch (workspacePlan.name) {
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
         break
       case 'starter':
       case 'plus':
@@ -123,6 +129,8 @@ export const downscaleWorkspaceSubscriptionFactoryNew =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'proUnlimitedInvoiced':
+      case 'teamUnlimitedInvoiced':
       case 'free':
         throw new WorkspacePlanMismatchError()
       default:
