@@ -1,10 +1,10 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation-2 group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
+    :class="`group relative block w-full space-y-2 rounded-md pb-2 text-left ${
+      clickable && !limited ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
     }
-    ${isLoaded ? '' : ''}
+    ${isLoaded ? 'bg-highlight-3' : 'bg-highlight-1'}
     `"
     @click="handleClick"
     @keypress="keyboardClick(handleClick)"
@@ -46,14 +46,14 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="sm"
         text
-        :disabled="isLimited"
-        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
+        :disabled="limited"
+        :class="limited ? '!text-foreground-3 font-medium' : 'font-medium'"
         @click.stop="handleViewChanges"
       >
-        View Changes
+        View changes
       </FormButton>
       <FormButton v-else size="sm" text class="cursor-not-allowed">
-        Currently Viewing
+        Currently viewing
       </FormButton>
     </div>
     <!-- Main stuff -->
@@ -61,7 +61,7 @@
       <div
         class="diagonal-stripes bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
       >
-        <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
+        <div v-if="limited" class="flex items-center justify-center w-full h-full">
           <div
             class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
           >
@@ -72,7 +72,7 @@
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <div v-if="isLimited" class="text-body-3xs text-foreground-2 pr-8">
+          <div v-if="limited" class="text-body-3xs text-foreground-2 pr-8 select-none">
             Upgrade to view versions older than 7 days.
           </div>
           <div v-else class="truncate text-xs">
@@ -80,7 +80,7 @@
           </div>
         </div>
         <FormButton
-          v-if="isLimited"
+          v-if="limited"
           color="outline"
           size="sm"
           @click="
@@ -120,7 +120,7 @@ const props = withDefaults(
     showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
-    isLimited?: boolean
+    limited?: boolean
   }>(),
   {
     clickable: true,
@@ -129,7 +129,7 @@ const props = withDefaults(
     last: false,
     lastLoaded: false,
     // TODO: remove this once we have a way to check if the version is limited
-    isLimited: true
+    limited: true
   }
 )
 
@@ -154,6 +154,7 @@ const mp = useMixpanel()
 const { activeWorkspaceSlug } = useNavigation()
 
 const handleClick = () => {
+  if (props.limited) return
   if (props.clickable) emit('changeVersion', props.version.id)
   mp.track('Viewer Action', {
     type: 'action',

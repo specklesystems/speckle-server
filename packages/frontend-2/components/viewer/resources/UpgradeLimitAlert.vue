@@ -1,17 +1,16 @@
 <template>
-  <CommonAlert
-    class="!bg-foundation !text-foreground-2"
-    size="2xs"
-    hide-icon
-    :actions="actions"
-  >
-    <template #description>Upgrade to view versions older than 7 days.</template>
+  <CommonAlert class="select-none" size="2xs" color="info" hide-icon :actions="actions">
+    <template #description>{{ text }}</template>
   </CommonAlert>
 </template>
 <script setup lang="ts">
 import type { AlertAction } from '@speckle/ui-components'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { settingsWorkspaceRoutes } from '~~/lib/common/helpers/route'
+
+defineProps<{
+  text: string
+}>()
 
 const { activeWorkspaceSlug } = useNavigation()
 

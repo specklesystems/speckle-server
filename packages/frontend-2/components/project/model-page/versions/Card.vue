@@ -3,7 +3,8 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
+    class="group rounded-xl bg-foundation border border-outline-3"
+    :class="limited ? '' : 'hover:border-outline-5'"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
@@ -42,7 +43,10 @@
               v-else
               class="h-full w-full diagonal-stripes flex items-center justify-center p-2"
             >
-              <ViewerResourcesVersionLimitAlert />
+              <ViewerResourcesUpgradeLimitAlert
+                class="!bg-foundation !text-foreground-2"
+                text="Upgrade to view versions older than 7 days."
+              />
             </div>
             <div
               v-if="

@@ -22,7 +22,9 @@
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
         <template v-if="isCommentLimited">
-          <ViewerAnchoredPointThreadCommentLimitAlert />
+          <ViewerResourcesUpgradeLimitAlert
+            text="Upgrade to view comments older than (count) days."
+          />
         </template>
         <template v-else>
           <CommonTiptapTextEditor
