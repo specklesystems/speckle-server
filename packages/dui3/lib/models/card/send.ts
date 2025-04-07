@@ -16,6 +16,7 @@ export interface SendFilterObjectIdentifier {
 
 export interface ISendFilter extends IDiscriminatedObject {
   id: string
+  type: string
   name: string
   summary: string
   isDefault: boolean

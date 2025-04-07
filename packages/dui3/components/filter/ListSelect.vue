@@ -33,6 +33,19 @@
       </div>
       <div
         v-else-if="
+          selectedFilter.type === 'Select' &&
+          store.availableSelectSendFilters[selectedFilter.id]
+        "
+      >
+        <FilterFormSelect
+          :label="selectedFilter.name"
+          :items="(store.availableSelectSendFilters[selectedFilter.id].items as ISendFilterSelectItem[])"
+          :filter="(selectedFilter as SendFilterSelect)"
+          @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
+        />
+      </div>
+      <div
+        v-else-if="
           selectedFilter.id === 'selection' || selectedFilter.name === 'Selection' // TODO: damn. remove name check later, if we remove now it will break production... we should differentiate its id and display name
         "
       >
@@ -41,7 +54,6 @@
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
-      <div v-else-if="selectedFilter.id === 'layers'">TODO</div>
       <div v-else-if="selectedFilter.id === 'revitViews'">
         <FilterRevitViews
           :filter="(selectedFilter as RevitViewsSendFilter)"
@@ -54,6 +66,7 @@
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
+      <!-- Below should have been implemented as sendFilterSelect as above, we can delete it later -->
       <div v-else-if="selectedFilter.id === 'navisworksSavedSets'">
         <FilterFormSelect
           label="Saved Sets"
