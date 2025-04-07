@@ -1,8 +1,13 @@
 import Result from 'true-myth/result'
 import Unit from 'true-myth/unit'
-import { AuthError } from './authErrors.js'
+import { AllAuthErrors, AuthError } from './authErrors.js'
 import { AuthCheckContextLoaderKeys, AuthCheckContextLoaders } from './loaders.js'
 import Maybe from 'true-myth/maybe'
+
+export type AuthPolicyResult<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ExpectedAuthErrors extends AuthError<any, any> = AllAuthErrors
+> = Result<Unit, ExpectedAuthErrors>
 
 // a complete policy always returns a full result
 export type AuthPolicy<

@@ -17,6 +17,7 @@ import {
   CommitSubscriptions,
   BranchSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 
 export {
   pubsub,
@@ -32,5 +33,6 @@ export const authorizeResolver = authorizeResolverFactory({
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),
   getUserAclRole: getUserAclRoleFactory({ db }),
-  emitWorkspaceEvent: getEventBus().emit
+  emitWorkspaceEvent: getEventBus().emit,
+  getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db })
 })

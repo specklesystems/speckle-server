@@ -8,7 +8,11 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
-import { getStripeClient, getWorkspacePlanProductId } from '@/modules/gatekeeper/stripe'
+import {
+  getStripeClient,
+  getWorkspacePlanProductAndPriceIds,
+  getWorkspacePlanProductId
+} from '@/modules/gatekeeper/stripe'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -229,6 +233,8 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
+        // this validates that product and priceId-s can be loaded on server startup
+        getWorkspacePlanProductAndPriceIds()
         app.use(getBillingRouter())
 
         const eventBus = getEventBus()

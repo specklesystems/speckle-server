@@ -29,7 +29,14 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
+import {
+  BasicTestBranch,
+  createTestBranches
+} from '@/test/speckle-helpers/branchHelper'
+import {
+  createTestCommits,
+  createTestObject
+} from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -283,36 +290,49 @@ describe('Workspaces Billing', () => {
           workspaceId: workspace.id
         }
         await createTestStream(project, user)
-        await createTestBranches([
+
+        const models: BasicTestBranch[] = [
           {
-            owner: user,
-            stream: project,
-            branch: {
-              id: createRandomString(),
-              streamId: project.id,
-              authorId: user.id,
-              name: createRandomString()
-            }
+            id: '',
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
           },
           {
-            owner: user,
-            stream: project,
-            branch: {
-              id: createRandomString(),
-              streamId: project.id,
-              authorId: user.id,
-              name: createRandomString()
-            }
+            id: '',
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
           },
           {
+            id: '',
+            streamId: project.id,
+            authorId: user.id,
+            name: createRandomString()
+          }
+        ]
+        await createTestBranches(
+          models.map((branch) => ({
             owner: user,
             stream: project,
-            branch: {
-              id: createRandomString(),
-              streamId: project.id,
-              authorId: user.id,
-              name: createRandomString()
-            }
+            branch
+          }))
+        )
+        const objectId = await createTestObject({ projectId: project.id })
+        await createTestCommits([
+          {
+            id: '',
+            authorId: user.id,
+            objectId,
+            streamId: project.id,
+            branchName: models[0].name
+          },
+          {
+            id: '',
+            authorId: user.id,
+            objectId,
+            streamId: project.id,
+            branchName: models[1].name
           }
         ])
 
@@ -324,7 +344,7 @@ describe('Workspaces Billing', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res?.data?.workspace?.plan?.usage?.projectCount).to.equal(1)
-        expect(res?.data?.workspace?.plan?.usage?.modelCount).to.equal(3)
+        expect(res?.data?.workspace?.plan?.usage?.modelCount).to.equal(2)
       })
     }
   )

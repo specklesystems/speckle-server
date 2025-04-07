@@ -196,7 +196,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               const projectModelCount =
                 await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
                   project.id,
-                  {}
+                  {
+                    filter: {
+                      onlyWithVersions: true
+                    }
+                  }
                 )
               modelCount = modelCount + projectModelCount
             }

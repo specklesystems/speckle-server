@@ -13,8 +13,10 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  {{- with .Values.fileimport_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -45,12 +47,14 @@ spec:
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
 
         resources:
+          {{- with .Values.fileimport_service.requests }}
           requests:
-            cpu: {{ .Values.fileimport_service.requests.cpu }}
-            memory: {{ .Values.fileimport_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.fileimport_service.limits }}
           limits:
-            cpu: {{ .Values.fileimport_service.limits.cpu }}
-            memory: {{ .Values.fileimport_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false

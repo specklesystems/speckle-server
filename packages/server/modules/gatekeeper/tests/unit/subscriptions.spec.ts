@@ -6,7 +6,6 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  UnsupportedWorkspacePlanError,
   WorkspaceNotPaidPlanError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
@@ -2000,7 +1999,7 @@ describe('subscriptions @gatekeeper', () => {
           })
         })
 
-        expect(err.message).to.equal(new UnsupportedWorkspacePlanError().message)
+        expect(err.message).to.equal(new WorkspaceNotPaidPlanError().message)
       })
     })
     ;(['team', 'pro'] as const).forEach((plan) => {

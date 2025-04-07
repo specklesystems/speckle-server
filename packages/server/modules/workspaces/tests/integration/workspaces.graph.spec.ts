@@ -55,11 +55,46 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { itEach } from '@/test/assertionHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification: requestNewEmailVerificationFactory({
+    findEmail: findEmailFactory({ db }),
+    getUser: getUserFactory({ db }),
+    getServerInfo: getServerInfoFactory({ db }),
+    deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+    sendEmail,
+    renderEmail
+  })
+})
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -868,6 +903,107 @@ describe('Workspaces GQL CRUD', () => {
         expect(getRes.data?.workspace).to.exist
         expect(getRes.data?.workspace?.name).to.equal(workspaceName)
         expect(getRes.data?.workspace?.slug).to.equal(workspaceSlug)
+      })
+
+      describe('when attempting to enable domain discoverability', () => {
+        const guyWithNoVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with no verified emails',
+          email: 'guy-with-no-verified-emails@bozo1.org',
+          verified: false
+        }
+
+        const guyWithMultipleVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with multiple verified emails',
+          email: 'guy-with-multiple-verified-emails@bozo2.org',
+          verified: true
+        }
+
+        const guyWithOneVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one verified email',
+          email: 'guy-with-one-verified-email@bozo3.org',
+          verified: true
+        }
+
+        const guyWithOneBlockedVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one blocked verified email',
+          email: 'guy-with-one-blocked-verified-email@gmail.com',
+          verified: true,
+          allowPersonalEmail: true
+        }
+
+        const getDomain = (user: BasicTestUser) => user.email.split('@')[1]
+
+        before(async () => {
+          await createTestUsers([
+            guyWithNoVerifiedEmails,
+            guyWithMultipleVerifiedEmails,
+            guyWithOneVerifiedEmail,
+            guyWithOneBlockedVerifiedEmail
+          ])
+
+          await Promise.all([
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo22.org',
+                verified: true
+              }
+            }),
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo23.org',
+                verified: true
+              }
+            })
+          ])
+        })
+
+        itEach(
+          [guyWithOneVerifiedEmail, guyWithMultipleVerifiedEmails],
+          (user) => `${user.name} can create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
+
+            expect(createRes).to.not.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create.id).to.be.ok
+            expect(createRes.data!.workspaceMutations.create.discoverabilityEnabled).to
+              .be.true
+          }
+        )
+
+        itEach(
+          [guyWithNoVerifiedEmails, guyWithOneBlockedVerifiedEmail],
+          (user) => `${user.name} can not create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
+
+            expect(createRes).to.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create).to.not.be.ok
+          }
+        )
       })
     })
 

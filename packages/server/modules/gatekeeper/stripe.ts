@@ -7,13 +7,7 @@ import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envH
 import { InvalidBillingIntervalError } from '@/modules/gatekeeper/errors/billing'
 import { Stripe } from 'stripe'
 import { get, has } from 'lodash'
-import {
-  MisconfiguredEnvironmentError,
-  NotImplementedError
-} from '@/modules/shared/errors'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-
-const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
+import { NotImplementedError } from '@/modules/shared/errors'
 
 let stripeClient: Stripe | undefined = undefined
 
@@ -66,14 +60,11 @@ const loadProductAndPriceIds: GetWorkspacePlanProductAndPriceIds = () => ({
   }
 })
 
-const priceIds = FF_BILLING_INTEGRATION_ENABLED ? loadProductAndPriceIds() : null
+let priceIds: ReturnType<typeof getWorkspacePlanProductAndPriceIds> | null = null
 
 export const getWorkspacePlanProductAndPriceIds: GetWorkspacePlanProductAndPriceIds =
   () => {
-    if (!FF_BILLING_INTEGRATION_ENABLED || !priceIds)
-      throw new MisconfiguredEnvironmentError(
-        'Server is not billing enabled, do not ask for product and price Ids'
-      )
+    if (!priceIds) priceIds = loadProductAndPriceIds()
     return priceIds
   }
 
