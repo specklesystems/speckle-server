@@ -17,7 +17,7 @@
           class="w-full object-cover h-full"
         />
 
-        <div class="absolute top-0 left-0 w-full h-full line-pattern" />
+        <div class="absolute top-0 left-0 w-full h-full limit-reached-gradient" />
 
         <div class="absolute top-0 left-0 w-full h-full z-10">
           <div class="flex flex-col justify-between h-full px-5 py-4">
@@ -57,3 +57,9 @@ defineProps<{
   condensed?: boolean
 }>()
 </script>
+
+<style scoped>
+.limit-reached-gradient {
+  background: linear-gradient(319.64deg, rgb(5 52 255 / 0%) 34.17%, #010c3d 100%);
+}
+</style>

@@ -38,7 +38,12 @@
             <NuxtLink v-if="!props.limited" :href="viewerRoute" class="h-full w-full">
               <PreviewImage :preview-url="version.previewUrl" />
             </NuxtLink>
-            <div v-else class="h-full w-full line-pattern">nope</div>
+            <div
+              v-else
+              class="h-full w-full diagonal-stripes flex items-center justify-center p-2"
+            >
+              <ViewerResourcesVersionLimitAlert />
+            </div>
             <div
               v-if="
                 isAutomateModuleEnabled &&

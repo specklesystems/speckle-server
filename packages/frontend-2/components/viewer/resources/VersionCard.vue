@@ -59,7 +59,7 @@
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
       <div
-        class="limited-version-card bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+        class="diagonal-stripes bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
       >
         <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
           <div
@@ -170,14 +170,3 @@ const handleViewChanges = () => {
   })
 }
 </script>
-
-<style scoped>
-.limited-version-card {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 5px,
-    #eaeaea 7px
-  );
-}
-</style>
