@@ -499,7 +499,7 @@ export const workspaceTrackingFactory =
         break
       case 'gatekeeper.workspace-trial-expired':
         break
-      case 'workspace.authorized':
+      case WorkspaceEvents.Authorizing:
         break
       case 'workspace.created':
         // we're setting workspace props and attributing to speckle users
@@ -732,7 +732,7 @@ export const initializeEventListenersFactory =
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
         })(payload)
       }),
-      eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
+      eventBus.listen(WorkspaceEvents.Authorizing, async ({ payload }) => {
         const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
           getWorkspace,
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),

@@ -126,8 +126,5 @@ export const settingsWorkspacesSecurityQuery = graphql(`
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
     }
-    activeUser {
-      ...SettingsWorkspacesSecurity_User
-    }
   }
 `)

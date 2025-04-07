@@ -109,7 +109,7 @@ export type BasicTestStream = {
 export async function createTestStreams(
   streamOwnerPairs: [BasicTestStream, BasicTestUser][]
 ) {
-  await Promise.all(streamOwnerPairs.map((p) => createTestStream(p[0], p[1])))
+  return await Promise.all(streamOwnerPairs.map((p) => createTestStream(p[0], p[1])))
 }
 
 /**
@@ -145,6 +145,7 @@ export async function createTestStream(
 
   streamObj.id = id
   streamObj.ownerId = owner.id
+  return streamObj
 }
 
 export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {
