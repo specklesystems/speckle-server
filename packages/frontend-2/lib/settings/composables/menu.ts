@@ -5,7 +5,6 @@ import {
 } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled, useActiveUser } from '~/composables/globals'
 import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -14,6 +13,7 @@ import {
   settingsServerRoutes
 } from '~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '@speckle/ui-components'
+import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 
 graphql(`
@@ -143,24 +143,24 @@ export const useSettingsMenuState = () =>
   }))
 
 export const useSettingsMembersActions = (params: {
-  workspaceRole?: MaybeNullOrUndefined<string>
-  workspaceSlug?: MaybeNullOrUndefined<string>
-  targetUser: UserItem
+  workspaceRole: ComputedRef<MaybeNullOrUndefined<string>>
+  workspaceSlug: ComputedRef<MaybeNullOrUndefined<string>>
+  targetUser: ComputedRef<SettingsWorkspacesMembersActionsMenu_UserFragment>
 }) => {
   const { activeUser } = useActiveUser()
 
   const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
-    workspaceSlug: params.workspaceSlug || ''
+    workspaceSlug: params.workspaceSlug.value || ''
   })
 
   const targetUserRole = computed(() => {
-    return params.targetUser.role
+    return params.targetUser.value.role
   })
 
-  const targetUserSeatType = computed(() => params.targetUser.seatType)
+  const targetUserSeatType = computed(() => params.targetUser.value.seatType)
 
   const isActiveUserWorkspaceAdmin = computed(
-    () => params.workspaceRole === Roles.Workspace.Admin
+    () => params.workspaceRole.value === Roles.Workspace.Admin
   )
 
   const isOnlyAdmin = computed(
@@ -168,7 +168,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const isActiveUserTargetUser = computed(
-    () => activeUser.value?.id === params.targetUser.id
+    () => activeUser.value?.id === params.targetUser.value.id
   )
 
   const canModifyUser = computed(
@@ -202,6 +202,8 @@ export const useSettingsMembersActions = (params: {
   const showRemoveFromWorkspace = computed(() => canModifyUser.value)
 
   const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
+
+  const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
     const mainItems: LayoutMenuItem[] = []
@@ -239,6 +241,14 @@ export const useSettingsMembersActions = (params: {
         id: WorkspaceUserActionTypes.DowngradeEditor,
         disabled: targetUserRole.value === Roles.Workspace.Admin,
         disabledTooltip: 'Admins must be on an Editor seat'
+      })
+    }
+    if (showUpdateProjectPermissions.value) {
+      mainItems.push({
+        title: 'Manage project access...',
+        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+        disabled: params.targetUser.value.projectRoles.length === 0,
+        disabledTooltip: 'User is not in any projects'
       })
     }
 
