@@ -51,7 +51,6 @@
         </FormButton>
       </div>
       <div class="flex flex-col gap-y-1 p-1">
-        <!-- TODO: remove this once we have a way to limit the number of comments -->
         <ViewerCommentsListItem
           v-for="thread in commentThreads"
           :key="thread.id"

@@ -337,7 +337,7 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
         '@apply max-w-[1312px]': {}
       }
     },
-    // Limit reached gradient styling
+    // Limit reached pattern
     '.diagonal-stripes': {
       backgroundImage:
         'repeating-linear-gradient(-45deg, transparent, transparent 5px, var(--outline-3) 7px)'

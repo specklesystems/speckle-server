@@ -27,7 +27,7 @@
         </div>
         <ViewerResourcesUpgradeLimitAlert
           v-else
-          text="Upgrade to see comments older than 30 days."
+          text="Upgrade to see comments older than (count) days."
         />
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <div
@@ -105,7 +105,6 @@ const {
   }
 } = useInjectedViewerState()
 
-// Determine if thread is plan limited based on missing rawText
 const isLimited = computed(() => {
   return !props.thread.rawText || props.thread.rawText.trim() === ''
 })
