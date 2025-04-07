@@ -86,7 +86,7 @@ export const validateStoredAuthCodeFactory =
 
     // Token is valid, confirm user is authorized to access specified resources.
     if (resources?.workspaceId) {
-      emit({
+      await emit({
         eventName: 'workspace.authorized',
         payload: { userId: payload.userId, workspaceId: resources?.workspaceId }
       })

@@ -4,10 +4,10 @@ export const projectAccessCheckQuery = graphql(`
   query ProjectAccessCheck($id: String!) {
     project(id: $id) {
       id
-      visibility
-      workspace {
-        id
-        slug
+      permissions {
+        canRead {
+          ...FullPermissionCheckResult
+        }
       }
     }
   }
@@ -35,16 +35,6 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsHiddenProjectWarning_User
-      ...ProjectsDashboardHeaderProjects_User
-    }
-  }
-`)
-
-export const projectsDashboardWorkspaceQuery = graphql(`
-  query ProjectsDashboardWorkspaceQuery {
-    activeUser {
-      id
-      ...ProjectsDashboardHeaderWorkspaces_User
     }
   }
 `)
@@ -368,15 +358,6 @@ export const projectBlobInfoQuery = graphql(`
         fileSize
         createdAt
       }
-    }
-  }
-`)
-
-export const projectWorkspaceSelectQuery = graphql(`
-  query ProjectWorkspaceSelect {
-    activeUser {
-      id
-      ...ProjectsAddDialog_User
     }
   }
 `)

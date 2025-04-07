@@ -136,7 +136,7 @@ const isMultiregionJob = (job: Bull.Job): job is Bull.Job<MultiregionJob> => {
  */
 export const startQueue = async () => {
   const queue = getQueue()
-  queue.process(async (job) => {
+  void queue.process(async (job) => {
     if (!isMultiregionJob(job)) {
       throw new MultiRegionInvalidJobError()
     }

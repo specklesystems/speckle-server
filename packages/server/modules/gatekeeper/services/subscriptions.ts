@@ -1,18 +1,15 @@
-import type { Logger } from '@/observability/logging'
 import {
   GetWorkspacePlan,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
-  GetWorkspaceSubscriptions,
   ReconcileSubscriptionData,
   SubscriptionData,
   SubscriptionDataInput,
   UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
-  WorkspaceSeatType,
-  WorkspaceSubscription
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanMismatchError,
@@ -25,11 +22,10 @@ import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/
 import {
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
+  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
-import { cloneDeep, isEqual, sum } from 'lodash'
-import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
-import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
+import { cloneDeep, sum } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 
 export const handleSubscriptionUpdateFactory =
@@ -298,116 +294,27 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
     })
   }
 
-type DownscaleWorkspaceSubscription = (args: {
-  workspaceSubscription: WorkspaceSubscription
-}) => Promise<boolean>
-
-export const downscaleWorkspaceSubscriptionFactory =
+export const getTotalSeatsCountByPlanFactory =
   ({
-    getWorkspacePlan,
-    countWorkspaceRole,
-    getWorkspacePlanProductId,
-    reconcileSubscriptionData
+    getWorkspacePlanProductId
   }: {
-    getWorkspacePlan: GetWorkspacePlan
-    countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
     getWorkspacePlanProductId: GetWorkspacePlanProductId
-    reconcileSubscriptionData: ReconcileSubscriptionData
-  }): DownscaleWorkspaceSubscription =>
-  async ({ workspaceSubscription }) => {
-    const workspaceId = workspaceSubscription.workspaceId
-
-    const workspacePlan = await getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) throw new WorkspacePlanNotFoundError()
-
-    switch (workspacePlan.name) {
-      case 'team':
-      case 'pro':
-        // Cause seat types matter, a future issue
-        throw new NotImplementedError()
-      case 'starter':
-      case 'plus':
-      case 'business':
-        break
-      case 'unlimited':
-      case 'academia':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
-      case 'free':
-        throw new WorkspacePlanMismatchError()
-      default:
-        throwUncoveredError(workspacePlan)
-    }
-
-    if (workspacePlan.status === 'canceled') return false
-
-    // TODO: Guests will be able to have a paid seat
-    const [guestCount, memberCount, adminCount] = await Promise.all([
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' }),
-      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' })
-    ])
-
-    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
-
-    mutateSubscriptionDataWithNewValidSeatNumbers({
-      seatCount: guestCount,
-      workspacePlan: 'guest',
-      getWorkspacePlanProductId,
-      subscriptionData
-    })
-    mutateSubscriptionDataWithNewValidSeatNumbers({
-      seatCount: memberCount + adminCount,
-      workspacePlan: workspacePlan.name,
-      getWorkspacePlanProductId,
-      subscriptionData
-    })
-
-    if (!isEqual(subscriptionData, workspaceSubscription.subscriptionData)) {
-      await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-      return true
-    }
-    return false
-  }
-
-export const manageSubscriptionDownscaleFactory =
-  ({
-    getWorkspaceSubscriptions,
-    downscaleWorkspaceSubscription,
-    updateWorkspaceSubscription
-  }: {
-    getWorkspaceSubscriptions: GetWorkspaceSubscriptions
-    downscaleWorkspaceSubscription: DownscaleWorkspaceSubscription
-    updateWorkspaceSubscription: UpsertWorkspaceSubscription
   }) =>
-  async (context: { logger: Logger }) => {
-    const { logger } = context
-    const subscriptions = await getWorkspaceSubscriptions()
-    for (const workspaceSubscription of subscriptions) {
-      const log = logger.child({ workspaceId: workspaceSubscription.workspaceId })
-      try {
-        const subDownscaled = await downscaleWorkspaceSubscription({
-          workspaceSubscription
-        })
-        if (subDownscaled) {
-          log.info(
-            'Downscaled workspace subscription to match the current workspace team'
-          )
-        } else {
-          log.info('Did not need to downscale the workspace subscription')
-        }
-      } catch (err) {
-        log.error({ err }, 'Failed to downscale workspace subscription')
-      }
-      const newBillingCycleEnd = calculateNewBillingCycleEnd({ workspaceSubscription })
-      const updatedWorkspaceSubscription = {
-        ...workspaceSubscription,
-        currentBillingCycleEnd: newBillingCycleEnd
-      }
-      await updateWorkspaceSubscription({
-        workspaceSubscription: updatedWorkspaceSubscription
-      })
-      log.info({ updatedWorkspaceSubscription }, 'Updated workspace billing cycle end')
+  ({
+    workspacePlan,
+    subscriptionData
+  }: {
+    workspacePlan: Pick<WorkspacePlan, 'name'>
+    subscriptionData: Pick<SubscriptionData, 'products'>
+  }) => {
+    if (workspacePlan.name === 'free') {
+      return 3 // Max editors seats in the free plan
     }
+    const productId = getWorkspacePlanProductId({
+      workspacePlan: workspacePlan.name as 'pro' | 'team'
+    })
+    const product = subscriptionData.products.find(
+      (product) => product.productId === productId
+    )
+    return product?.quantity ?? 0
   }

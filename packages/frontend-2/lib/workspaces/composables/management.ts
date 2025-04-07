@@ -5,7 +5,12 @@ import {
   type Optional,
   type WorkspaceSeatType
 } from '@speckle/shared'
-import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
+import {
+  useApolloClient,
+  useMutation,
+  useSubscription,
+  useQuery
+} from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   OnWorkspaceUpdatedSubscription,
@@ -42,6 +47,7 @@ import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscri
 import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
 import type { ApolloCache } from '@apollo/client/core'
+import { workspaceLastAdminCheckQuery } from '../graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -204,7 +210,7 @@ export const useProcessWorkspaceInvite = () => {
     if (data?.workspaceMutations.invites.use) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+        title: input.accept ? 'Workspace invite accepted' : 'Workspace invite dismissed'
       })
 
       mp.track('Workspace Joined', {
@@ -618,5 +624,22 @@ export const useOnWorkspaceUpdated = (params: {
       if (!result.data?.workspaceUpdated) return
       handler(result.data.workspaceUpdated, apollo.cache)
     })
+  }
+}
+
+export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) => {
+  const { workspaceSlug } = params
+
+  const { result } = useQuery(workspaceLastAdminCheckQuery, {
+    slug: workspaceSlug
+  })
+
+  const hasSingleAdmin = computed(() => {
+    const admins = result.value?.workspaceBySlug?.team.items || []
+    return admins.length === 1
+  })
+
+  return {
+    hasSingleAdmin
   }
 }

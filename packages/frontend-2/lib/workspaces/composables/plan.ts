@@ -19,9 +19,24 @@ graphql(`
       createdAt
       name
       paymentMethod
+      usage {
+        projectCount
+        modelCount
+      }
     }
     subscription {
       billingInterval
+      currentBillingCycleEnd
+      seats {
+        editors {
+          assigned
+          available
+        }
+        viewers {
+          assigned
+          available
+        }
+      }
     }
   }
 `)
@@ -78,14 +93,17 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
+
+  const billingCycleEnd = computed(() => subscription.value?.currentBillingCycleEnd)
+
   // TODO: Replace with value from API call, this a placeholder value
-  const seatPrice = 15
+  const editorSeatPrice = 15
 
   const totalCost = computed(() => {
     return isPurchasablePlan.value
       ? intervalIsYearly.value
-        ? seatPrice * 12
-        : seatPrice
+        ? editorSeatPrice * 12
+        : editorSeatPrice
       : 0
   })
 
@@ -98,6 +116,23 @@ export const useWorkspacePlan = (slug: string) => {
       : 'Not applicable'
   })
 
+  const editorSeats = computed(() => {
+    const seats = subscription.value?.seats
+    if (!seats)
+      return { limit: 0, used: 0, hasSeatAvailable: false, seatPrice: editorSeatPrice }
+
+    return {
+      limit: seats.editors.available,
+      used: seats.editors.assigned,
+      hasSeatAvailable: seats.editors.available > seats.editors.assigned,
+      seatPrice: editorSeatPrice
+    }
+  })
+
+  const isUnlimitedPlan = computed(
+    () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
+  )
+
   return {
     plan,
     isNewPlan,
@@ -105,10 +140,14 @@ export const useWorkspacePlan = (slug: string) => {
     statusIsCanceled,
     isPurchasablePlan,
     isActivePlan,
+    isFreePlan,
     billingInterval,
     intervalIsYearly,
+    billingCycleEnd,
     totalCostFormatted,
     statusIsCancelationScheduled,
-    subscription
+    subscription,
+    editorSeats,
+    isUnlimitedPlan
   }
 }

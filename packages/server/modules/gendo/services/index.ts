@@ -55,7 +55,7 @@ export const createRenderRequestFactory =
       id: crs({ length: 10 })
     })
 
-    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
+    await deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
       projectVersionGendoAIRenderCreated: newRecord
     })
 
@@ -109,7 +109,7 @@ export const updateRenderRequestFactory =
       input: { ...input, updatedAt: new Date() },
       id: baseRequest.id
     })
-    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
+    await deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
       projectVersionGendoAIRenderUpdated: record
     })
 

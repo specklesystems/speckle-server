@@ -6,7 +6,8 @@
     "../src/**/*.tsx"
   ],
   "exclude": [
-    "../**/*.spec.ts"
+    "../**/*.spec.ts",
+    "../src/tests/**/*.ts"
   ],
   "compilerOptions": {
     "outDir": "../.tshy-build/esm"

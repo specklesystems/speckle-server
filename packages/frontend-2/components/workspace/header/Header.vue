@@ -1,14 +1,7 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="!isWorkspaceGuest && !isInTrial && !hasValidPlan">
+    <div v-if="!isWorkspaceGuest">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
-    </div>
-    <div v-if="!isWorkspaceGuest && isInTrial" class="lg:hidden">
-      <BillingAlert
-        :workspace="workspaceInfo"
-        :actions="billingAlertAction"
-        condensed
-      />
     </div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 lg:gap-4">
@@ -121,20 +114,12 @@ const { activeUser } = useActiveUser()
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
-const isInTrial = computed(
-  () =>
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
-    !props.workspaceInfo.plan
-)
-const hasValidPlan = computed(
-  () => props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Valid
-)
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
 const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (
-    (isInTrial.value && isWorkspaceAdmin.value) ||
+    isWorkspaceAdmin.value ||
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
   ) {
     return [

@@ -10,7 +10,8 @@ import {
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -37,7 +38,6 @@ import {
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
-  calculateSubscriptionSeats,
   CreateCheckoutSession,
   CreateCheckoutSessionOld,
   WorkspaceSeatType
@@ -67,6 +67,11 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -115,12 +120,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const subscription = await getWorkspaceSubscriptionFactory({ db })({
             workspaceId
           })
-          if (!subscription) return subscription
-          const seats = calculateSubscriptionSeats({
-            subscriptionData: subscription.subscriptionData,
-            guestSeatProductId: getWorkspacePlanProductId({ workspacePlan: 'guest' })
-          })
-          return { ...subscription, seats }
+          return subscription
         },
         customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
@@ -156,13 +156,107 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        },
+        seatType: async (parent, _args, context) => {
+          if (!context.userId) return null
+
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.id,
+            userId: context.userId
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
+      WorkspacePlan: {
+        usage: async (parent) => {
+          return { workspaceId: parent.workspaceId }
+        }
+      },
+      WorkspacePlanUsage: {
+        projectCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesProjectsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
+        },
+        modelCount: async (parent) => {
+          const { workspaceId } = parent
+
+          let modelCount = 0
+
+          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+            getStreams: legacyGetStreamsFactory({ db })
+          })
+
+          for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+            for (const project of projects) {
+              const regionDb = await getProjectDbClient({ projectId: project.id })
+              const projectModelCount =
+                await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+                  project.id,
+                  {
+                    filter: {
+                      onlyWithVersions: true
+                    }
+                  }
+                )
+              modelCount = modelCount + projectModelCount
+            }
+          }
+
+          return modelCount
+        }
+      },
+      WorkspaceSubscription: {
+        seats: async (parent) => {
+          return parent
+        }
+      },
+      WorkspaceSubscriptionSeats: {
+        editors: async (parent) => {
+          const { workspaceId, subscriptionData } = parent
+
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId
+          })
+
+          if (!workspacePlan) {
+            return {
+              assigned: 0,
+              available: 0
+            }
+          }
+
+          return {
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
+              type: 'editor'
+            }),
+            available: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData
+            })
+          }
+        },
+        viewers: async ({ workspaceId }) => {
+          return {
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
+              type: 'viewer'
+            }),
+            available: 0
+          }
         }
       },
       WorkspaceCollaborator: {
         seatType: async (parent, _args, context) => {
-          const seat = await context.loaders
-            .gatekeeper!.getUserWorkspaceSeatType.forWorkspace(parent.workspaceId)
-            .load(parent.id)
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.workspaceId,
+            userId: parent.id
+          })
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
@@ -182,6 +276,17 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             monthly: price.monthly,
             yearly: 'yearly' in price ? price.yearly : null
           }))
+        }
+      },
+      ProjectCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders.gatekeeper!.getUserProjectSeat.load({
+            projectId: parent.projectId,
+            userId: parent.id
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
         }
       },
       WorkspaceMutations: {

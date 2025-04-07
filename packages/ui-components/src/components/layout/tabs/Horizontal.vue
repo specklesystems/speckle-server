@@ -59,7 +59,7 @@
               :class="
                 activeItem?.id === item.id
                   ? 'text-primary bg-info-lighter dark:text-foreground'
-                  : 'text-foreground-2 bg-foundation-2'
+                  : 'text-foreground-2 bg-highlight-3'
               "
             >
               <span>{{ item.count }}</span>

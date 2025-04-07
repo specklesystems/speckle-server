@@ -25,7 +25,7 @@ export interface InviteProjectForm {
 }
 
 // Workspace
-export type InviteGenericItem = {
+export type InviteWorkspaceItem = {
   email: string
   workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
@@ -33,6 +33,6 @@ export type InviteGenericItem = {
   matchesDomainPolicy?: boolean
 }
 
-export interface InviteGenericForm {
-  fields: InviteGenericItem[]
+export interface InviteWorkspaceForm {
+  fields: InviteWorkspaceItem[]
 }
