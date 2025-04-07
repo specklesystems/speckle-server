@@ -4496,6 +4496,8 @@ export type WorkspaceCollection = {
 
 export type WorkspaceCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Add this domain to the workspace as a verified domain and enable domain discoverability */
+  enableDomainDiscoverabilityForDomain?: InputMaybe<Scalars['String']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];

@@ -1,3 +1,4 @@
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type {
   BillingInterval,
   WorkspacePlans,
@@ -38,6 +39,7 @@ export type WorkspaceWizardState = {
   billingInterval: BillingInterval | null
   id: string
   region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+  enableDomainDiscoverabilityForDomain: MaybeNullOrUndefined<string>
 }
 
 export enum WizardSteps {
