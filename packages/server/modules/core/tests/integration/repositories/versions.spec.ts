@@ -61,7 +61,7 @@ describe('Versions repositories @core', () => {
         projectIds: [project1.id, project2.id]
       })
       const lastVersionProject1 = result[project1.id]
-      const lastVersionProject2 = result[project1.id]
+      const lastVersionProject2 = result[project2.id]
       expect(lastVersionProject1.projectId).to.eq(project1.id)
       expect(lastVersionProject2.projectId).to.eq(project2.id)
     })
