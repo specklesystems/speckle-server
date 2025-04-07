@@ -25,10 +25,11 @@
         { id: 'name', header: 'Name', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
         { id: 'joined', header: 'Joined', classes: 'col-span-3' },
+        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-3 flex items-center justify-end'
+          classes: 'col-span-1 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -41,13 +42,13 @@
         <div class="flex items-center gap-2">
           <UserAvatar
             hide-tooltip
-            :user="item"
+            :user="item.user"
             light-style
             class="bg-foundation"
             no-bg
           />
           <span class="truncate text-body-xs text-foreground">
-            {{ item.name }}
+            {{ item.user.name }}
             <span
               v-if="item.id === activeUser?.id"
               class="text-foreground-3 text-body-3xs"
@@ -64,7 +65,7 @@
           </CommonBadge>
           <div
             v-if="
-              item.workspaceDomainPolicyCompliant === false &&
+              item.user.workspaceDomainPolicyCompliant === false &&
               item.role !== Roles.Workspace.Guest
             "
             v-tippy="
@@ -84,13 +85,44 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
+      <template #projects="{ item }">
+        <FormButton
+          v-if="
+            item.projectRoles.length > 0 &&
+            isWorkspaceAdmin &&
+            item.role !== Roles.Workspace.Admin
+          "
+          color="subtle"
+          size="sm"
+          class="!font-normal !text-foreground-2 -ml-2"
+          @click="
+            () => {
+              targetUser = item
+              showProjectPermissionsDialog = true
+            }
+          "
+        >
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </FormButton>
+        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </div>
+      </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
           :workspace="workspace"
+          :initial-action="selectedAction[item.id]"
         />
       </template>
     </LayoutTable>
+    <SettingsWorkspacesMembersActionsProjectPermissionsDialog
+      v-model:open="showProjectPermissionsDialog"
+      :user="targetUser"
+      :workspace-id="workspace?.id || ''"
+    />
   </div>
 </template>
 
@@ -100,25 +132,23 @@ import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/qu
 import { useQuery } from '@vue/apollo-composable'
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment
+  type SettingsWorkspacesMembersTable_WorkspaceFragment,
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
-export type UserItem = (typeof members)['value'][0]
+import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
-    role
-    seatType
-    joinDate
-    user {
-      id
-      avatar
-      name
-      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
+    projectRoles {
+      project {
+        id
+      }
     }
+    ...SettingsWorkspacesMembersActionsMenu_User
   }
 `)
 
@@ -145,6 +175,10 @@ const props = defineProps<{
 const search = ref('')
 const roleFilter = ref<WorkspaceRoles>()
 const seatTypeFilter = ref<WorkspaceSeatType>()
+const showProjectPermissionsDialog = ref(false)
+const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undefined>(
+  undefined
+)
 
 const { activeUser } = useActiveUser()
 
@@ -172,10 +206,9 @@ const members = computed(() => {
       ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
   return (memberArray || [])
-    .map(({ user, seatType, ...rest }) => ({
-      ...user,
-      seatType: seatType || WorkspaceSeatType.Viewer,
-      ...rest
+    .map((member) => ({
+      ...member,
+      seatType: member.seatType || WorkspaceSeatType.Viewer
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
@@ -185,4 +218,8 @@ const hasNoResults = computed(
     (search.value.length || roleFilter.value || seatTypeFilter.value) &&
     searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
+
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+
+const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 </script>
