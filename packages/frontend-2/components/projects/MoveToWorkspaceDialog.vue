@@ -165,11 +165,11 @@ const { result: dryRunResult } = useQuery(
   moveToWorkspaceDryRunQuery,
   () => ({
     projectId: props.project.id,
-    workspaceId: selectedWorkspace.value!.id,
+    workspaceId: (selectedWorkspace.value?.id ?? props.workspace?.id)!,
     limit: 20
   }),
   () => ({
-    enabled: !!selectedWorkspace.value?.id
+    enabled: !!selectedWorkspace.value?.id || !!props.workspace?.id
   })
 )
 
