@@ -71,14 +71,19 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'teamUnlimitedInvoiced':
+      case 'proUnlimitedInvoiced':
       case 'free': // TODO: Don't we want to allow upgrades from free to paid?
         throw new WorkspaceNotPaidPlanError()
       case 'starter':
       case 'plus':
       case 'business':
-      case 'team':
-      case 'pro':
         break
+      case 'team':
+      case 'teamUnlimited':
+      case 'pro':
+      case 'proUnlimited':
+        throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
     }
@@ -106,7 +111,9 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       starter: 1,
       // new
       team: 1,
-      pro: 2
+      teamUnlimited: 2,
+      pro: 3,
+      proUnlimited: 4
     }
 
     if (isNewPlanType(workspacePlan.name) || isNewPlanType(targetPlan)) {
@@ -263,24 +270,35 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
     const workspacePlan = await getWorkspacePlan({
       workspaceId
     })
-
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
-    if (!isNewPlanType(workspacePlan.name) || !isNewPlanType(targetPlan)) {
-      throw new UnsupportedWorkspacePlanError(null, {
-        info: { currentPlan: workspacePlan.name, targetPlan }
-      })
-    }
 
     switch (workspacePlan.name) {
       case 'unlimited':
       case 'academia':
+      case 'teamUnlimitedInvoiced':
+      case 'businessInvoiced':
+      case 'plusInvoiced':
+      case 'starterInvoiced':
+      case 'proUnlimitedInvoiced':
       case 'free': // Upgrade from free is handled through startCheckout since it is from free to paid
         throw new WorkspaceNotPaidPlanError()
+      case 'starter':
+      case 'plus':
+      case 'business':
+        throw new WorkspacePlanMismatchError()
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
         break
       default:
-        throwUncoveredError(workspacePlan as never)
+        throwUncoveredError(workspacePlan)
+    }
+
+    if (!isNewPlanType(workspacePlan.name) || !isNewPlanType(targetPlan)) {
+      throw new UnsupportedWorkspacePlanError(null, {
+        info: { currentPlan: workspacePlan.name, targetPlan }
+      })
     }
 
     switch (workspacePlan.status) {
@@ -305,7 +323,9 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
 
     const planOrder: Record<PaidWorkspacePlansNew, number> = {
       team: 1,
-      pro: 2
+      teamUnlimited: 2,
+      pro: 3,
+      proUnlimited: 4
     }
     if (
       !isUpgradeWorkspacePlanValid({ current: workspacePlan.name, upgrade: targetPlan })
