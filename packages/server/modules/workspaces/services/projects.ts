@@ -23,7 +23,6 @@ import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
 import {
   GetStreamCollaborators,
-  GetUserStreamsPage,
   LegacyGetStreams
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
@@ -85,44 +84,6 @@ export const queryAllWorkspaceProjectsFactory = ({
       cursor = cursorDate
       iterationCount++
     } while (!!cursor)
-  }
-
-type GetWorkspaceProjectsArgs = {
-  workspaceId: string
-}
-
-type GetWorkspaceProjectsOptions = {
-  limit: number | null
-  cursor: string | null
-  filter: {
-    search?: string | null
-    userId: string
-  }
-}
-
-type GetWorkspaceProjectsReturnValue = {
-  items: StreamRecord[]
-  cursor: string | null
-}
-
-export const getWorkspaceProjectsFactory =
-  ({ getStreams }: { getStreams: GetUserStreamsPage }) =>
-  async (
-    args: GetWorkspaceProjectsArgs,
-    opts: GetWorkspaceProjectsOptions
-  ): Promise<GetWorkspaceProjectsReturnValue> => {
-    const { streams, cursor } = await getStreams({
-      cursor: opts.cursor,
-      limit: opts.limit || 25,
-      searchQuery: opts.filter?.search || undefined,
-      workspaceId: args.workspaceId,
-      userId: opts.filter.userId
-    })
-
-    return {
-      items: streams,
-      cursor
-    }
   }
 
 type MoveProjectToWorkspaceArgs = {

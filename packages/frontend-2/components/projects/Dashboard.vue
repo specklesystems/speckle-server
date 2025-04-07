@@ -103,7 +103,7 @@ const {
   filter: {
     search: (search.value || '').trim() || null,
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null,
-    workspaceId: isWorkspaceNewPlansEnabled ? (null as Nullable<string>) : undefined
+    personalOnly: isWorkspaceNewPlansEnabled.value
   },
   cursor: null as Nullable<string>
 }))

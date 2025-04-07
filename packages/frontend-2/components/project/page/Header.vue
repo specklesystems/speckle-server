@@ -42,11 +42,8 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 graphql(`
   fragment ProjectPageProjectHeader on Project {
     id
-    role
     name
     description
-    visibility
-    allowPublicComments
     workspace {
       id
       slug

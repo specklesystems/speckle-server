@@ -178,7 +178,15 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string | null
+  /**
+   * Only allow streams in the specified workspace to be returned
+   */
+  workspaceId?: MaybeNullOrUndefined<string>
+
+  /**
+   * Only allow personal (non-workspace) streams to be returned
+   */
+  personalOnly?: MaybeNullOrUndefined<boolean>
 
   /**
    * Only with active sso session

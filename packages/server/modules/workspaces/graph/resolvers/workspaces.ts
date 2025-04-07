@@ -10,8 +10,6 @@ import {
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
-  getUserStreamsPageFactory,
-  getUserStreamsCountFactory,
   getStreamCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
@@ -74,7 +72,8 @@ import {
   upsertWorkspaceCreationStateFactory,
   queryWorkspacesFactory,
   countWorkspacesFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getPaginatedWorkspaceProjectsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -98,7 +97,6 @@ import {
 } from '@/modules/workspaces/services/management'
 import {
   createWorkspaceProjectFactory,
-  getWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
@@ -288,8 +286,6 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   }),
   removeStreamCollaborator
 })
-const getUserStreams = getUserStreamsPageFactory({ db })
-const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_MOVE_PROJECT_REGION_ENABLED } =
   getFeatureFlags()
@@ -1207,33 +1203,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getPendingTeam({ workspaceId: parent.id, filter: args.filter })
         },
         projects: async (parent, args, ctx) => {
-          if (!ctx.userId) return []
-          const getWorkspaceProjects = getWorkspaceProjectsFactory({
-            getStreams: getUserStreams
+          const getWorkspaceProjects = getPaginatedWorkspaceProjectsFactory({ db })
+          return await getWorkspaceProjects({
+            workspaceId: parent.id,
+            userId: ctx.userId!,
+            ...args
           })
-          const filter = {
-            ...(args.filter || {}),
-            userId: ctx.userId,
-            workspaceId: parent.id
-          }
-          const { items, cursor } = await getWorkspaceProjects(
-            {
-              workspaceId: parent.id
-            },
-            {
-              limit: args.limit || 25,
-              cursor: args.cursor || null,
-              filter
-            }
-          )
-          return {
-            items,
-            cursor,
-            totalCount: await getUserStreamsCount({
-              ...filter,
-              searchQuery: filter.search || undefined
-            })
-          }
         },
         automateFunctions: async (parent, args, context) => {
           try {
