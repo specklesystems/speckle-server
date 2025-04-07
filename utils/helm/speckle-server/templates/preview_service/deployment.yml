@@ -99,6 +99,11 @@ spec:
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
 
+          {{- if .Values.preview_service.gpu.enabled }}
+          - name: GPU_ENABLED
+            value: {{ .Values.preview_service.gpu.enabled | quote }}
+          {{- end }}
+
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
       {{- end }}

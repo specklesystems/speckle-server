@@ -1855,6 +1855,16 @@
           "description": "Allows using a dedicated redis url for the preview service job queue",
           "default": false
         },
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, the Preview Service will be deployed with GPU support. Assumes Vulkan driver is available on the host node.",
+              "default": false
+            }
+          }
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
