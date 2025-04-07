@@ -59,9 +59,11 @@
     <WorkspacePlanLimitReachedDialog
       v-if="activeLimit"
       v-model:open="showLimitReachedDialog"
-      :limit="activeLimit"
-      :limit-type="limitType"
-    />
+      :title="dialogTitle"
+    >
+      The {{ activeLimit }} {{ limitType }} limit for this workspace has been reached.
+      Upgrade the workspace plan to create or move more projects.
+    </WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 
@@ -146,6 +148,12 @@ const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
 const activeWorkspaceSlug = computed(
   () => selectedWorkspace.value?.slug || props.workspace?.slug || ''
 )
+
+const dialogTitle = computed(() => {
+  if (limitType.value === 'project') return 'Project limit reached'
+  if (limitType.value === 'model') return 'Model limit reached'
+  return 'Limit reached'
+})
 
 // Get workspace limits
 const { canAddProject, canAddModels, limits } = useWorkspaceLimits(

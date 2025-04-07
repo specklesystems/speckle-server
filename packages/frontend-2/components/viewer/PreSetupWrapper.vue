@@ -54,6 +54,15 @@
           <!-- Sidebar controls -->
           <ViewerControls v-if="showControls" class="relative z-20" />
 
+          <ViewerLimitsDialog
+            v-if="project?.workspace"
+            :open="true"
+            :workspace-slug="workspaceSlug"
+            :project-id="project?.id"
+            :resource-id-string="resourceIdString"
+            limit-type="version"
+          />
+
           <!-- Viewer Object Selection Info Display -->
           <Transition
             v-if="!hideSelectionInfo"
@@ -203,6 +212,8 @@ const lastUpdate = computed(() => {
     return 'Created ' + dayjs(project.value.createdAt).fromNow()
   } else return undefined
 })
+
+const workspaceSlug = computed(() => project.value?.workspace?.slug)
 
 useHead({ title })
 
