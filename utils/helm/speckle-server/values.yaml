@@ -595,12 +595,26 @@ server:
     ## @param server.billing.workspaceYearlyTeamSeatStripePriceId The workspace Yearly Team Seat Price Id as configured in Stripe.
     workspaceYearlyTeamSeatStripePriceId: ''
 
+    ## @param server.billing.workspaceTeamUnlimitedSeatStripeProductId The workspace Team Unlimited Seat Product Id as configured in Stripe.
+    workspaceTeamUnlimitedSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.
+    workspaceMonthlyTeamUnlimitedSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyTeamUnlimitedSeatStripePriceId The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.
+    workspaceYearlyTeamUnlimitedSeatStripePriceId: ''
+
     ## @param server.billing.workspaceProSeatStripeProductId The workspace Pro Seat Product Id as configured in Stripe.
     workspaceProSeatStripeProductId: ''
     ## @param server.billing.workspaceMonthlyProSeatStripePriceId The workspace Monthly Pro Seat Price Id as configured in Stripe.
     workspaceMonthlyProSeatStripePriceId: ''
     ## @param server.billing.workspaceYearlyProSeatStripePriceId The workspace Yearly Pro Seat Price Id as configured in Stripe.
     workspaceYearlyProSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceProUnlimitedSeatStripeProductId The workspace Pro Unlimited Seat Product Id as configured in Stripe.
+    workspaceProUnlimitedSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyProUnlimitedSeatStripePriceId The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.
+    workspaceMonthlyProUnlimitedSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyProUnlimitedSeatStripePriceId The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.
+    workspaceYearlyProUnlimitedSeatStripePriceId: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets

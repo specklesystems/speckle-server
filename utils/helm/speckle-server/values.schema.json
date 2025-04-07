@@ -905,6 +905,21 @@
               "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
               "default": ""
             },
+            "workspaceTeamUnlimitedSeatStripeProductId": {
+              "type": "string",
+              "description": "The workspace Team Unlimited Seat Product Id as configured in Stripe.",
+              "default": ""
+            },
+            "workspaceMonthlyTeamUnlimitedSeatStripePriceId": {
+              "type": "string",
+              "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
+              "default": ""
+            },
+            "workspaceYearlyTeamUnlimitedSeatStripePriceId": {
+              "type": "string",
+              "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
+              "default": ""
+            },
             "workspaceProSeatStripeProductId": {
               "type": "string",
               "description": "The workspace Pro Seat Product Id as configured in Stripe.",
@@ -918,6 +933,21 @@
             "workspaceYearlyProSeatStripePriceId": {
               "type": "string",
               "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+              "default": ""
+            },
+            "workspaceProUnlimitedSeatStripeProductId": {
+              "type": "string",
+              "description": "The workspace Pro Unlimited Seat Product Id as configured in Stripe.",
+              "default": ""
+            },
+            "workspaceMonthlyProUnlimitedSeatStripePriceId": {
+              "type": "string",
+              "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
+              "default": ""
+            },
+            "workspaceYearlyProUnlimitedSeatStripePriceId": {
+              "type": "string",
+              "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
               "default": ""
             }
           }
