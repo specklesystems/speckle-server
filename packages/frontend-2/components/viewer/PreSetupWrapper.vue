@@ -195,16 +195,17 @@ const hasMissingReferencedObject = computed(() => {
 
 // Check for missing thread when a specific threadId is present in URL
 const hasMissingThread = computed(() => {
-  // If there's no threadId in URL, there's no missing thread
-  if (!focusedThreadId.value) return false
-
-  // If threads are loaded, check if the specific threadId from URL is among them
   const threadIdFromUrl = focusedThreadId.value
-  const isThreadMissing = !state.resources.response.commentThreads.value.some(
+
+  // If there's no threadId in URL, there's no missing thread
+  if (!threadIdFromUrl) return false
+
+  // Find the thread with this ID
+  const thread = state.resources.response.commentThreads.value.find(
     (thread) => thread.id === threadIdFromUrl
   )
 
-  return isThreadMissing
+  return !thread || !thread.rawText
 })
 
 const isFederated = computed(

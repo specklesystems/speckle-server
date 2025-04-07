@@ -56,7 +56,6 @@
           v-for="thread in commentThreads"
           :key="thread.id"
           :thread="thread"
-          :limited="true"
         />
         <div v-if="commentThreads.length === 0" class="pb-4">
           <ProjectPageLatestItemsCommentsEmptyState

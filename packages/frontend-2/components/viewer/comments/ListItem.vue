@@ -4,9 +4,9 @@
   <div
     :class="`p-1.5 pb-1 flex flex-col rounded-md
       ${isOpenInViewer ? 'bg-highlight-2' : ''}
-      ${limited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
+      ${isLimited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
     `"
-    @click="limited ? null : open(thread.id)"
+    @click="isLimited ? null : open(thread.id)"
   >
     <div class="flex w-full items-center">
       <div class="flex-1 flex flex-col gap-y-1.5">
@@ -20,14 +20,14 @@
           </span>
         </div>
         <div
-          v-if="!limited"
+          v-if="!isLimited"
           class="truncate text-body-2xs text-foreground dark:text-foreground-2"
         >
           {{ thread.rawText }}
         </div>
         <ViewerResourcesUpgradeLimitAlert
           v-else
-          text="Upgrade to see comments older than (count) days."
+          text="Upgrade to see comments older than 30 days."
         />
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <div
@@ -57,7 +57,7 @@
         </div>
       </div>
       <FormButton
-        v-if="!limited"
+        v-if="!isLimited"
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
         text
@@ -89,7 +89,6 @@ import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   thread: LoadedCommentThread
-  limited?: boolean
 }>()
 
 const {
@@ -105,6 +104,11 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+
+// Determine if thread is plan limited based on missing rawText
+const isLimited = computed(() => {
+  return !props.thread.rawText || props.thread.rawText.trim() === ''
+})
 
 const mp = useMixpanel()
 const open = (id: string) => {

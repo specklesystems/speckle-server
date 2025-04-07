@@ -2,7 +2,9 @@
 <template>
   <div
     :class="`group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable && !limited ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
+      clickable && !isLimited
+        ? 'hover:bg-primary-muted cursor-pointer'
+        : 'cursor-default'
     }
     ${isLoaded ? 'bg-highlight-3' : 'bg-highlight-1'}
     `"
@@ -46,8 +48,8 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="sm"
         text
-        :disabled="limited"
-        :class="limited ? '!text-foreground-3 font-medium' : 'font-medium'"
+        :disabled="isLimited"
+        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
         @click.stop="handleViewChanges"
       >
         View changes
@@ -59,9 +61,10 @@
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
       <div
-        class="diagonal-stripes bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+        class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+        :class="isLimited ? 'diagonal-stripes' : ''"
       >
-        <div v-if="limited" class="flex items-center justify-center w-full h-full">
+        <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
           <div
             class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
           >
@@ -72,15 +75,18 @@
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <div v-if="limited" class="text-body-3xs text-foreground-2 pr-8 select-none">
-            Upgrade to view versions older than (count) days.
+          <div
+            v-if="isLimited"
+            class="text-body-3xs text-foreground-2 pr-8 select-none"
+          >
+            Upgrade to view versions older than {{ limitDays }} days.
           </div>
           <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
         <FormButton
-          v-if="limited"
+          v-if="isLimited"
           color="outline"
           size="sm"
           @click="
@@ -120,16 +126,13 @@ const props = withDefaults(
     showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
-    limited?: boolean
   }>(),
   {
     clickable: true,
     default: false,
     showTimeline: true,
     last: false,
-    lastLoaded: false,
-    // TODO: remove this once we have a way to check if the version is limited
-    limited: true
+    lastLoaded: false
   }
 )
 
@@ -140,6 +143,14 @@ const emit = defineEmits<{
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
+
+// Check if version is limited by plan restrictions
+const isLimited = computed(() => {
+  return props.version.referencedObject === null
+})
+
+// Todo: Number of days in the version history limit
+const limitDays = computed(() => 30)
 
 const createdAt = computed(() => {
   return {
@@ -154,7 +165,7 @@ const mp = useMixpanel()
 const { activeWorkspaceSlug } = useNavigation()
 
 const handleClick = () => {
-  if (props.limited) return
+  if (isLimited.value) return
   if (props.clickable) emit('changeVersion', props.version.id)
   mp.track('Viewer Action', {
     type: 'action',
