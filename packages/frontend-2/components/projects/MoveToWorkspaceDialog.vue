@@ -44,7 +44,7 @@
             </p>
             <div v-if="dryRunResultMembers" class="pt-2 gap-y-2 flex flex-col">
               <p class="text-body-2xs text-foreground-2">
-                The following members will be added to the workspace
+                The following people will be added to the workspace
               </p>
               <div class="w-full">
                 <div
