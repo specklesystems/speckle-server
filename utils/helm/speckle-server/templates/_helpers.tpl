@@ -605,86 +605,86 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: STRIPE_API_KEY
   valueFrom:
     secretKeyRef:
-      name: "{{ default .Values.secretName .Values.billing.secretName }}"
-      key: {{ .Values.billing.stripeApiKey.secretKey }}
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.stripeApiKey.secretKey }}
 
 - name: STRIPE_ENDPOINT_SIGNING_KEY
   valueFrom:
     secretKeyRef:
-      name: "{{ default .Values.secretName .Values.billing.secretName }}"
-      key: {{ .Values.billing.stripeEndpointSigningKey.secretKey }}
+      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
+      key: {{ .Values.server.billing.stripeEndpointSigningKey.secretKey }}
 
 - name: WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceGuestSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceGuestSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyGuestSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyGuestSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyGuestSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyGuestSeatStripePriceId }}
 
 - name: WORKSPACE_STARTER_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceStarterSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceStarterSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_STARTER_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyStarterSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyStarterSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_STARTER_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyStarterSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyStarterSeatStripePriceId }}
 
 - name: WORKSPACE_PLUS_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspacePlusSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspacePlusSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_PLUS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyPlusSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyPlusSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_PLUS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyPlusSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyPlusSeatStripePriceId }}
 
 - name: WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceBusinessSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceBusinessSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyBusinessSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyBusinessSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyBusinessSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId }}
 
 - name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceTeamSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceTeamSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyTeamSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyTeamSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyTeamSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyTeamSeatStripePriceId }}
 
 - name: WORKSPACE_TEAM_UNLIMITED_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceTeamUnlimitedSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceTeamUnlimitedSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_TEAM_UNLIMITED_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_TEAM_UNLIMITED_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyTeamUnlimitedSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyTeamUnlimitedSeatStripePriceId }}
 
 - name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceProSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceProSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyProSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyProSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyProSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyProSeatStripePriceId }}
 
 - name: WORKSPACE_PRO_UNLIMITED_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceProUnlimitedSeatStripeProductId }}
+  value: {{ .Values.server.billing.workspaceProUnlimitedSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_PRO_UNLIMITED_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyProUnlimitedSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceMonthlyProUnlimitedSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_PRO_UNLIMITED_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyProUnlimitedSeatStripePriceId }}
+  value: {{ .Values.server.billing.workspaceYearlyProUnlimitedSeatStripePriceId }}
 
 {{- end }}
 

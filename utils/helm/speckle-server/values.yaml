@@ -458,74 +458,6 @@ multiRegion:
 ## This is used to pull the Docker image from a private registry.  If this is not provided, no imagePullSecrets will be used.
 imagePullSecrets: []
 
-## @extra billing Values to enable billing integration
-billing:
-  ## @param billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
-  secretName: ''
-
-  stripeApiKey:
-    ## @param billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
-    secretKey: 'stripeApiKey'
-  stripeEndpointSigningKey:
-    ## @param billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
-    secretKey: 'stripeEndpointSigningKey'
-
-  ## @param billing.workspaceGuestSeatStripeProductId The workspace Guest Seat Product Id as configured in Stripe.
-  workspaceGuestSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyGuestSeatStripePriceId The workspace Monthly Guest Seat Price Id as configured in Stripe.
-  workspaceMonthlyGuestSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyGuestSeatStripePriceId The workspace Yearly Guest Seat Price Id as configured in Stripe.
-  workspaceYearlyGuestSeatStripePriceId: ''
-
-  ## @param billing.workspaceStarterSeatStripeProductId The workspace Starter Seat Product Id as configured in Stripe.
-  workspaceStarterSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyStarterSeatStripePriceId The workspace Monthly Starter Seat Price Id as configured in Stripe.
-  workspaceMonthlyStarterSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyStarterSeatStripePriceId The workspace Yearly Starter Seat Price Id as configured in Stripe.
-  workspaceYearlyStarterSeatStripePriceId: ''
-
-  ## @param billing.workspacePlusSeatStripeProductId The workspace Plus Seat Product Id as configured in Stripe.
-  workspacePlusSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyPlusSeatStripePriceId The workspace Monthly Plus Seat Price Id as configured in Stripe.
-  workspaceMonthlyPlusSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyPlusSeatStripePriceId The workspace Yearly Plus Seat Price Id as configured in Stripe.
-  workspaceYearlyPlusSeatStripePriceId: ''
-
-  ## @param billing.workspaceBusinessSeatStripeProductId The workspace Business Seat Product Id as configured in Stripe.
-  workspaceBusinessSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyBusinessSeatStripePriceId The workspace Monthly Business Seat Price Id as configured in Stripe.
-  workspaceMonthlyBusinessSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyBusinessSeatStripePriceId The workspace Yearly Business Seat Price Id as configured in Stripe.
-  workspaceYearlyBusinessSeatStripePriceId: ''
-
-  ## @param billing.workspaceTeamSeatStripeProductId The workspace Team Seat Product Id as configured in Stripe.
-  workspaceTeamSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyTeamSeatStripePriceId The workspace Monthly Team Seat Price Id as configured in Stripe.
-  workspaceMonthlyTeamSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyTeamSeatStripePriceId The workspace Yearly Team Seat Price Id as configured in Stripe.
-  workspaceYearlyTeamSeatStripePriceId: ''
-
-  ## @param billing.workspaceTeamUnlimitedSeatStripeProductId The workspace Team Unlimited Seat Product Id as configured in Stripe.
-  workspaceTeamUnlimitedSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.
-  workspaceMonthlyTeamUnlimitedSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyTeamUnlimitedSeatStripePriceId The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.
-  workspaceYearlyTeamUnlimitedSeatStripePriceId: ''
-
-  ## @param billing.workspaceProSeatStripeProductId The workspace Pro Seat Product Id as configured in Stripe.
-  workspaceProSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyProSeatStripePriceId The workspace Monthly Pro Seat Price Id as configured in Stripe.
-  workspaceMonthlyProSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyProSeatStripePriceId The workspace Yearly Pro Seat Price Id as configured in Stripe.
-  workspaceYearlyProSeatStripePriceId: ''
-
-  ## @param billing.workspaceProUnlimitedSeatStripeProductId The workspace Pro Unlimited Seat Product Id as configured in Stripe.
-  workspaceProUnlimitedSeatStripeProductId: ''
-  ## @param billing.workspaceMonthlyProUnlimitedSeatStripePriceId The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.
-  workspaceMonthlyProUnlimitedSeatStripePriceId: ''
-  ## @param billing.workspaceYearlyProUnlimitedSeatStripePriceId The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.
-  workspaceYearlyProUnlimitedSeatStripePriceId: ''
-
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
@@ -615,6 +547,74 @@ server:
     ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
     ##
     secretKey: ''
+
+  ## @extra server.billing Values to enable billing integration on the server
+  billing:
+    ## @param server.billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    secretName: ''
+
+    stripeApiKey:
+      ## @param server.billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
+      secretKey: 'stripeApiKey'
+    stripeEndpointSigningKey:
+      ## @param server.billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
+      secretKey: 'stripeEndpointSigningKey'
+
+    ## @param server.billing.workspaceGuestSeatStripeProductId The workspace Guest Seat Product Id as configured in Stripe.
+    workspaceGuestSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId The workspace Monthly Guest Seat Price Id as configured in Stripe.
+    workspaceMonthlyGuestSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyGuestSeatStripePriceId The workspace Yearly Guest Seat Price Id as configured in Stripe.
+    workspaceYearlyGuestSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceStarterSeatStripeProductId The workspace Starter Seat Product Id as configured in Stripe.
+    workspaceStarterSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyStarterSeatStripePriceId The workspace Monthly Starter Seat Price Id as configured in Stripe.
+    workspaceMonthlyStarterSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyStarterSeatStripePriceId The workspace Yearly Starter Seat Price Id as configured in Stripe.
+    workspaceYearlyStarterSeatStripePriceId: ''
+
+    ## @param server.billing.workspacePlusSeatStripeProductId The workspace Plus Seat Product Id as configured in Stripe.
+    workspacePlusSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyPlusSeatStripePriceId The workspace Monthly Plus Seat Price Id as configured in Stripe.
+    workspaceMonthlyPlusSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyPlusSeatStripePriceId The workspace Yearly Plus Seat Price Id as configured in Stripe.
+    workspaceYearlyPlusSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceBusinessSeatStripeProductId The workspace Business Seat Product Id as configured in Stripe.
+    workspaceBusinessSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId The workspace Monthly Business Seat Price Id as configured in Stripe.
+    workspaceMonthlyBusinessSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId The workspace Yearly Business Seat Price Id as configured in Stripe.
+    workspaceYearlyBusinessSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceTeamSeatStripeProductId The workspace Team Seat Product Id as configured in Stripe.
+    workspaceTeamSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId The workspace Monthly Team Seat Price Id as configured in Stripe.
+    workspaceMonthlyTeamSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyTeamSeatStripePriceId The workspace Yearly Team Seat Price Id as configured in Stripe.
+    workspaceYearlyTeamSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceTeamUnlimitedSeatStripeProductId The workspace Team Unlimited Seat Product Id as configured in Stripe.
+    workspaceTeamUnlimitedSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.
+    workspaceMonthlyTeamUnlimitedSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyTeamUnlimitedSeatStripePriceId The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.
+    workspaceYearlyTeamUnlimitedSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceProSeatStripeProductId The workspace Pro Seat Product Id as configured in Stripe.
+    workspaceProSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyProSeatStripePriceId The workspace Monthly Pro Seat Price Id as configured in Stripe.
+    workspaceMonthlyProSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyProSeatStripePriceId The workspace Yearly Pro Seat Price Id as configured in Stripe.
+    workspaceYearlyProSeatStripePriceId: ''
+
+    ## @param server.billing.workspaceProUnlimitedSeatStripeProductId The workspace Pro Unlimited Seat Product Id as configured in Stripe.
+    workspaceProUnlimitedSeatStripeProductId: ''
+    ## @param server.billing.workspaceMonthlyProUnlimitedSeatStripePriceId The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.
+    workspaceMonthlyProUnlimitedSeatStripePriceId: ''
+    ## @param server.billing.workspaceYearlyProUnlimitedSeatStripePriceId The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.
+    workspaceYearlyProUnlimitedSeatStripePriceId: ''
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
