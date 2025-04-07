@@ -26,6 +26,7 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
 import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -490,3 +491,8 @@ export type SetUserActiveWorkspace = (args: {
   /** Is the user in a "personal project" outside of a workspace? */
   isProjectsActive?: boolean
 }) => Promise<void>
+
+export type IntersectProjectCollaboratorsAndWorkspaceCollaborators = (params: {
+  projectId: string
+  workspaceId: string
+}) => Promise<UserRecord[]>

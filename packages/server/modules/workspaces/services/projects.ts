@@ -3,6 +3,7 @@ import {
   GetDefaultRegion,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
+  IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -13,7 +14,6 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import {
   GetProject,
-  GetProjectCollaborators,
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
@@ -21,7 +21,10 @@ import { chunk, intersection } from 'lodash'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
 import coreUserRoles from '@/modules/core/roles'
-import { LegacyGetStreams } from '@/modules/core/domain/streams/operations'
+import {
+  GetStreamCollaborators,
+  LegacyGetStreams
+} from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
 import {
@@ -103,7 +106,7 @@ export const moveProjectToWorkspaceFactory =
     getProject: GetProject
     updateProject: UpdateProject
     upsertProjectRole: UpsertProjectRole
-    getProjectCollaborators: GetProjectCollaborators
+    getProjectCollaborators: GetStreamCollaborators
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
     getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     updateWorkspaceRole: UpdateWorkspaceRole
@@ -127,7 +130,7 @@ export const moveProjectToWorkspaceFactory =
     // Update roles for current project members
     const [workspace, projectTeam, workspaceTeam] = await Promise.all([
       getWorkspaceWithPlan({ workspaceId }),
-      getProjectCollaborators({ projectId }),
+      getProjectCollaborators(projectId),
       getWorkspaceRolesAndSeats({ workspaceId })
     ])
     if (!workspace) throw new WorkspaceNotFoundError()
@@ -315,4 +318,18 @@ export const createWorkspaceProjectFactory =
     })
 
     return project
+  }
+
+export const getMoveProjectToWorkspaceDryRunFactory =
+  (deps: {
+    intersectProjectCollaboratorsAndWorkspaceCollaborators: IntersectProjectCollaboratorsAndWorkspaceCollaborators
+  }) =>
+  async (args: { projectId: string; workspaceId: string }) => {
+    const addedToWorkspace =
+      await deps.intersectProjectCollaboratorsAndWorkspaceCollaborators({
+        projectId: args.projectId,
+        workspaceId: args.workspaceId
+      })
+
+    return { addedToWorkspace }
   }
