@@ -918,6 +918,8 @@ server:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  ## @param server.additionalEnvVars Additional environment variables to be passed to the server pod
+  additionalEnvVars: []
 
 ## @section Server
 ## @descriptionStart
@@ -1011,6 +1013,8 @@ objects:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  ## @param objects.additionalEnvVars Additional environment variables to be passed to the objects pod
+  additionalEnvVars: []
 
 ## @section frontend_2
 ## @descriptionStart
@@ -1094,6 +1098,8 @@ frontend_2:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param frontend_2.additionalEnvVars Additional environment variables to be passed to the frontend_2 pod
+  additionalEnvVars: []
 
 ## @section Preview Service
 ## @descriptionStart
@@ -1210,6 +1216,8 @@ preview_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param preview_service.additionalEnvVars Additional environment variables to be passed to the Preview service pod
+  additionalEnvVars: []
 
 ## @section Webhook Service
 ## @descriptionStart
@@ -1289,6 +1297,8 @@ webhook_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param webhook_service.additionalEnvVars Additional environment variables to be passed to the Webhook service pod
+  additionalEnvVars: []
 
 ## @section File Import Service
 ## @descriptionStart
@@ -1376,6 +1386,8 @@ fileimport_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param fileimport_service.additionalEnvVars Additional environment variables to be passed to the FileImport service pod
+  additionalEnvVars: []
 
   ## @param fileimport_service.time_limit_min DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.
   ## Files which take longer than this value to process will be cancelled.
@@ -1467,6 +1479,8 @@ monitoring:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param monitoring.additionalEnvVars Additional environment variables to be passed to the Monitoring pod
+  additionalEnvVars: []
 
 ## @section Testing
 ## @descriptionStart
@@ -1523,3 +1537,5 @@ test:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param test.additionalEnvVars Additional environment variables to be passed to the Test pod
+  additionalEnvVars: []

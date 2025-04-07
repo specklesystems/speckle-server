@@ -1530,6 +1530,12 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the server pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1682,6 +1688,12 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the objects pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1809,6 +1821,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the frontend_2 pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1976,6 +1994,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Preview service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2093,6 +2117,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Webhook service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2226,6 +2256,12 @@
             }
           }
         },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the FileImport service pod",
+          "default": [],
+          "items": {}
+        },
         "time_limit_min": {
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
@@ -2347,6 +2383,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Monitoring pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2422,6 +2464,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Test pod",
+          "default": [],
+          "items": {}
         }
       }
     }
