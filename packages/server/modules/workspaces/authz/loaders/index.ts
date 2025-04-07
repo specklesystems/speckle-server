@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { defineModuleLoaders } from '@/modules/loaders'
 import {
@@ -6,6 +7,8 @@ import {
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
 
 // TODO: Move everything to use dataLoaders
@@ -45,6 +48,14 @@ export default defineModuleLoaders(async () => {
           })
         )?.type || null
       )
+    },
+    getWorkspaceModelCount: async ({ workspaceId }) => {
+      // TODO: Dataloader that has to dynamically pick regional dbs?
+      return await getWorkspaceModelCountFactory({
+        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+          getStreams: legacyGetStreamsFactory({ db })
+        })
+      })({ workspaceId })
     },
     getWorkspaceProjectCount: async ({ workspaceId }, { dataLoaders }) => {
       return await dataLoaders.workspaces!.getProjectCount.load(workspaceId)

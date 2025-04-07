@@ -70,8 +70,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
+import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -185,29 +184,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         modelCount: async (parent) => {
           const { workspaceId } = parent
 
-          let modelCount = 0
-
-          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-            getStreams: legacyGetStreamsFactory({ db })
-          })
-
-          for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
-            for (const project of projects) {
-              const regionDb = await getProjectDbClient({ projectId: project.id })
-              const projectModelCount =
-                await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
-                  project.id,
-                  {
-                    filter: {
-                      onlyWithVersions: true
-                    }
-                  }
-                )
-              modelCount = modelCount + projectModelCount
-            }
-          }
-
-          return modelCount
+          return await getWorkspaceModelCountFactory({
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams: legacyGetStreamsFactory({ db })
+            })
+          })({ workspaceId })
         }
       },
       WorkspaceSubscription: {

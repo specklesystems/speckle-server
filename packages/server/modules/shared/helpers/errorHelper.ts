@@ -33,6 +33,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspaceReadOnlyError.code:
     case Authz.WorkspaceLimitsReachedError.code:
     case Authz.WorkspaceNoEditorSeatError.code:
+    case Authz.WorkspaceRequiredError.code:
+    case Authz.WorkspaceProjectMoveInvalidError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {

@@ -17,6 +17,9 @@ export default defineModuleLoaders(() => ({
   getWorkspaceSeat: async () => {
     throw new LoaderUnsupportedError()
   },
+  getWorkspaceModelCount: async () => {
+    throw new LoaderUnsupportedError()
+  },
   getWorkspaceProjectCount: async () => {
     throw new LoaderUnsupportedError()
   },
