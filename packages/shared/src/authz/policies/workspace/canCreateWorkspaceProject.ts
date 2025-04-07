@@ -1,4 +1,4 @@
-import { AuthPolicy } from '../../domain/policies.js'
+import { AuthPolicy, ErrorsOf, LoadersOf } from '../../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
@@ -11,16 +11,19 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { err, ok } from 'true-myth/result'
-import { hasMinimumServerRole } from '../../checks/serverRole.js'
 import { Roles } from '../../../core/constants.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
-import { throwUncoveredError } from '../../../core/index.js'
+import {
+  ensureWorkspaceRoleAndSessionFragment,
+  ensureWorkspacesEnabledFragment
+} from '../../fragments/workspaces.js'
 import { hasEditorSeat } from '../../checks/workspaceSeat.js'
 import { MaybeUserContext, WorkspaceContext } from '../../domain/context.js'
 import {
   isNewWorkspacePlan,
   isWorkspacePlanStatusReadOnly
 } from '../../../workspaces/index.js'
+import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+import { requireMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 
 export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getEnv'
@@ -32,7 +35,10 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getWorkspaceLimits'
   | 'getWorkspaceProjectCount'
   | 'getWorkspaceSsoProvider'
-  | 'getWorkspaceSsoSession',
+  | 'getWorkspaceSsoSession'
+  | LoadersOf<typeof ensureWorkspacesEnabledFragment>
+  | LoadersOf<typeof ensureMinimumServerRoleFragment>
+  | LoadersOf<typeof ensureWorkspaceRoleAndSessionFragment>,
   MaybeUserContext & WorkspaceContext,
   | InstanceType<typeof WorkspacesNotEnabledError>
   | InstanceType<typeof WorkspaceNoAccessError>
@@ -43,43 +49,44 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | ErrorsOf<typeof ensureWorkspacesEnabledFragment>
+  | ErrorsOf<typeof ensureMinimumServerRoleFragment>
+  | ErrorsOf<typeof ensureWorkspaceRoleAndSessionFragment>
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {
-    const env = await loaders.getEnv()
-    if (!userId) return err(new ServerNoSessionError())
-    if (!env.FF_WORKSPACES_MODULE_ENABLED) return err(new WorkspacesNotEnabledError())
+    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
+    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
 
-    const isActiveServerUser = await hasMinimumServerRole(loaders)({
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.User
     })
-    if (!isActiveServerUser) return err(new ServerNoAccessError())
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const memberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
-      loaders
-    )({
-      userId,
-      workspaceId
-    })
+    const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
+      {
+        userId: userId!,
+        workspaceId
+      }
+    )
+    if (ensuredWorkspaceAccess.isErr) {
+      return err(ensuredWorkspaceAccess.error)
+    }
+
     // guests cannot create projects in the workspace
-    if (memberWithSsoSession.isNothing)
+    const isNotGuest = await requireMinimumWorkspaceRole(loaders)({
+      userId: userId!,
+      workspaceId,
+      role: Roles.Workspace.Member
+    })
+
+    if (!isNotGuest)
       return err(
         new WorkspaceNotEnoughPermissionsError({
           message: 'Guests cannot create projects in the workspace'
         })
       )
-
-    // if sso session is not valid, return errors
-    if (memberWithSsoSession.value.isErr) {
-      switch (memberWithSsoSession.value.error.code) {
-        case 'WorkspaceNoAccess':
-        case 'WorkspaceSsoSessionNoAccess':
-          return err(memberWithSsoSession.value.error)
-        default:
-          throwUncoveredError(memberWithSsoSession.value.error)
-      }
-    }
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
     if (!workspacePlan) return err(new WorkspaceNoAccessError())
@@ -89,7 +96,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
 
     if (isNewWorkspacePlan(workspacePlan.name)) {
       const isEditor = await hasEditorSeat(loaders)({
-        userId,
+        userId: userId!,
         workspaceId
       })
       if (!isEditor) return err(new WorkspaceNoEditorSeatError())

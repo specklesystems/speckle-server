@@ -2540,6 +2540,7 @@ export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVers
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
   canRead: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
 };
 
 export type ProjectRole = {
@@ -2956,6 +2957,11 @@ export type Role = {
   description: Scalars['String']['output'];
   name: Scalars['String']['output'];
   resourceTarget: Scalars['String']['output'];
+};
+
+export type RootPermissionChecks = {
+  __typename?: 'RootPermissionChecks';
+  canCreatePersonalProject: PermissionCheckResult;
 };
 
 /** Available scopes. */
@@ -3829,6 +3835,7 @@ export type User = {
   isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
+  permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
   projectAccessRequest?: Maybe<ProjectAccessRequest>;

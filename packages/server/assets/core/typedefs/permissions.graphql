@@ -4,4 +4,13 @@ extend type Project {
 
 type ProjectPermissionChecks {
   canRead: PermissionCheckResult!
+  canUpdate: PermissionCheckResult!
+}
+
+type RootPermissionChecks {
+  canCreatePersonalProject: PermissionCheckResult!
+}
+
+extend type User {
+  permissions: RootPermissionChecks! @isOwner
 }

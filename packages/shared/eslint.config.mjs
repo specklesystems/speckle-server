@@ -31,7 +31,8 @@ const configs = [
       }
     },
     rules: {
-      '@typescript-eslint/restrict-template-expressions': 'off' // to restrictive
+      '@typescript-eslint/restrict-template-expressions': 'off', // to restrictive
+      '@typescript-eslint/no-duplicate-type-constituents': 'off' // we want all policies to define deps
     }
   },
   {
