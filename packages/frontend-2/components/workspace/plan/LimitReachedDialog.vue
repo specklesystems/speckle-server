@@ -1,15 +1,16 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    is-transparent
+    :is-transparent="!condensed"
     max-width="xs"
     fullscreen="none"
     :buttons="buttons"
     :hide-closer="preventClose"
     :prevent-close-on-click-outside="preventClose"
+    :title="condensed ? title : undefined"
   >
-    <div class="flex flex-col items-stretch">
-      <div class="relative bg-primary h-40">
+    <div class="flex flex-col">
+      <div v-if="!condensed" class="relative bg-primary h-40 select-none">
         <NuxtImg
           src="/images/workspace/cubes.png"
           alt="Speckle cubes"
@@ -21,13 +22,16 @@
         <div class="absolute top-0 left-0 w-full h-full z-10">
           <div class="flex flex-col justify-between h-full px-5 py-4">
             <NuxtImg src="/images/logo.png" alt="Speckle logo" class="h-8 w-8" />
-            <h3 class="text-white limit-reached-text-shadow text-base select-none">
+            <h3 class="text-white limit-reached-text-shadow text-base">
               {{ title }}
             </h3>
           </div>
         </div>
       </div>
-      <div class="w-full bg-foundation-page p-6 flex flex-col">
+      <div
+        class="w-full bg-foundation-page flex flex-col"
+        :class="condensed ? '' : 'p-6'"
+      >
         <div class="flex flex-col gap-y-4 select-none">
           <h4 v-if="subtitle" class="text-heading-sm text-foreground">
             {{ subtitle }}
@@ -50,6 +54,7 @@ defineProps<{
   subtitle?: string
   buttons?: LayoutDialogButton[]
   preventClose?: boolean
+  condensed?: boolean
 }>()
 </script>
 

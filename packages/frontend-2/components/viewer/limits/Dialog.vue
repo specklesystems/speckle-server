@@ -4,6 +4,7 @@
     :title="title"
     :buttons="buttons"
     prevent-close
+    :condensed="isEmbedEnabled || undefined"
   >
     <template #header>{{ title }}</template>
     <div class="mb-2">
@@ -14,6 +15,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 type LimitType = 'version' | 'comment' | 'federated'
 
@@ -24,7 +26,11 @@ const props = defineProps<{
   resourceIdString: string
 }>()
 
-const showDialog = defineModel<boolean>('open', { required: true })
+const { isEnabled: isEmbedEnabled } = useEmbed()
+
+const showDialog = computed(() => {
+  return true
+})
 
 const title = computed(() => {
   switch (props.limitType) {
@@ -66,22 +72,13 @@ const explorePlansButton: LayoutDialogButton = {
     navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
 }
 
-const cancelButton: LayoutDialogButton = {
-  text: 'Cancel',
-  props: { color: 'outline' },
-  onClick: () => {
-    showDialog.value = false
-  }
-}
-
-// Button configurations by limit type
 const buttons = computed((): LayoutDialogButton[] => {
   const buttons: Record<LimitType, LayoutDialogButton[]> = {
-    version: [loadLatestButton(), explorePlansButton],
+    version: [loadLatestButton(false), explorePlansButton],
     federated: [loadLatestButton(false), explorePlansButton],
-    comment: [loadLatestButton()]
+    comment: [loadLatestButton(true)]
   }
 
-  return buttons[props.limitType] || [cancelButton, loadLatestButton()]
+  return buttons[props.limitType]
 })
 </script>

@@ -56,7 +56,6 @@
 
           <ViewerLimitsDialog
             v-if="project?.workspace"
-            :open="true"
             :workspace-slug="workspaceSlug"
             :project-id="project?.id"
             :resource-id-string="resourceIdString"
