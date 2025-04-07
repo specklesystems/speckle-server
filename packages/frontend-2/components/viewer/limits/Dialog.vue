@@ -32,6 +32,10 @@ const showDialog = computed(() => {
   return true
 })
 
+const limitDays = computed(() => {
+  return 30
+})
+
 const title = computed(() => {
   switch (props.limitType) {
     case 'version':
@@ -48,11 +52,11 @@ const title = computed(() => {
 const message = computed(() => {
   switch (props.limitType) {
     case 'version':
-      return "The version you're trying to load is older than the 30-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access."
+      return `The version you're trying to load is older than the ${limitDays.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'federated':
-      return 'One of the models is older than the 30-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.'
+      return `One of the models is older than the ${limitDays.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'comment':
-      return 'Loading a comment in a federated model view, where one of the models is an old version (= the "Load full context" button)'
+      return 'Loading a comment in a federated model view, where one of the models is an old version'
     default:
       return "You've reached the limit of your plan. Please upgrade to continue."
   }

@@ -10,11 +10,11 @@
     :title="condensed ? title : undefined"
   >
     <div class="flex flex-col">
-      <div v-if="!condensed" class="relative bg-primary h-40 select-none">
+      <div v-if="!condensed" class="relative bg-primary h-32 md:h-48 select-none">
         <NuxtImg
           src="/images/workspace/cubes.png"
           alt="Speckle cubes"
-          class="w-full object-cover h-40"
+          class="w-full object-cover h-full"
         />
 
         <div class="absolute top-0 left-0 w-full h-full limit-reached-gradient" />
