@@ -57,7 +57,8 @@
           <ViewerLimitsDialog
             v-if="project?.workspace"
             v-model:open="showLimitsDialog"
-            :workspace="project?.workspace"
+            :workspace-slug="project?.workspace.slug"
+            :workspace-role="project?.workspace.role"
             :project-id="project?.id"
             :resource-id-string="resourceIdString"
             :limit-type="limitsDialogType"
@@ -134,6 +135,7 @@ graphql(`
       id
       slug
       name
+      role
     }
   }
 `)

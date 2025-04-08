@@ -13,9 +13,8 @@
   </WorkspacePlanLimitReachedDialog>
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { Workspace } from '~/lib/common/generated/gql/graphql'
 import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
@@ -23,7 +22,8 @@ type LimitType = 'version' | 'comment' | 'federated'
 
 const props = defineProps<{
   limitType: LimitType
-  workspace?: Workspace
+  workspaceSlug: string
+  workspaceRole: MaybeNullOrUndefined<string>
   projectId: string
   resourceIdString: string
   open?: boolean
@@ -97,10 +97,10 @@ const loadLatestButton = (isPrimary = true): LayoutDialogButton => ({
 
 const explorePlansButton: LayoutDialogButton = {
   text: 'Explore plans',
-  disabled: props.workspace?.role === Roles.Workspace.Guest,
+  disabled: props.workspaceRole === Roles.Workspace.Guest,
   disabledMessage: 'As a Guest you cannot access plans and billing',
   onClick: () =>
-    navigateTo(settingsWorkspaceRoutes.billing.route(props.workspace?.slug || ''))
+    navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
 }
 
 const buttons = computed((): LayoutDialogButton[] => {
