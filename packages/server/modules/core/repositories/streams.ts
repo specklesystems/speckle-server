@@ -57,7 +57,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
-  GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
   UpsertProjectRole,
@@ -686,12 +685,6 @@ export const getStreamCollaboratorsFactory =
     return items
   }
 
-export const getProjectCollaboratorsFactory =
-  (deps: { db: Knex }): GetProjectCollaborators =>
-  async ({ projectId }) => {
-    return await getStreamCollaboratorsFactory(deps)(projectId)
-  }
-
 /**
  * Get base query for finding or counting user streams
  */
@@ -705,7 +698,8 @@ const getUserStreamsQueryBaseFactory =
     withRoles,
     streamIdWhitelist,
     workspaceId,
-    onlyWithActiveSsoSession
+    onlyWithActiveSsoSession,
+    personalOnly
   }: BaseUserStreamsQueryParams) => {
     const query = tables
       .streamAcl(deps.db)
@@ -740,8 +734,10 @@ const getUserStreamsQueryBaseFactory =
         })
     }
 
-    if (!isUndefined(workspaceId)) {
+    if (workspaceId?.length) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
+    } else if (personalOnly) {
+      query.andWhere(Streams.col.workspaceId, null)
     }
 
     if (ownedOnly || withRoles?.length) {

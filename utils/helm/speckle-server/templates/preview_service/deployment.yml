@@ -12,8 +12,10 @@ spec:
     matchLabels:
       app: speckle-preview-service
       project: speckle-server
+  {{- with .Values.preview_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -95,6 +97,15 @@ spec:
           {{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
           - name: PREVIEW_TIMEOUT
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
+          {{- end }}
+
+          {{- if .Values.preview_service.gpu.enabled }}
+          - name: GPU_ENABLED
+            value: {{ .Values.preview_service.gpu.enabled | quote }}
+          {{- end }}
+
+          {{- with .Values.preview_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10 }}
           {{- end }}
 
       {{- if .Values.preview_service.affinity }}

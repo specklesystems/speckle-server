@@ -54,7 +54,12 @@ const configs = [
       '@typescript-eslint/unbound-method': 'off', // too many false positives
       '@typescript-eslint/no-unnecessary-type-assertion': 'off', // false positives - sometimes they are actually necessary
       '@typescript-eslint/no-empty-object-type': 'off', // too restrictive
-      '@typescript-eslint/only-throw-error': ['error', { allow: ['AssertionError'] }],
+      '@typescript-eslint/only-throw-error': [
+        'error',
+        {
+          allow: ['AssertionError']
+        }
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

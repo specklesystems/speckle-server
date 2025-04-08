@@ -5,7 +5,6 @@ import {
 } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled, useActiveUser } from '~/composables/globals'
 import { Roles, SeatTypes, type MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -14,10 +13,13 @@ import {
   settingsServerRoutes
 } from '~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '@speckle/ui-components'
+import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
+import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
     id
+    slug
     sso {
       provider {
         id
@@ -141,126 +143,137 @@ export const useSettingsMenuState = () =>
   }))
 
 export const useSettingsMembersActions = (params: {
-  workspaceRole?: MaybeNullOrUndefined<string>
-  targetUser: UserItem
+  workspaceRole: ComputedRef<MaybeNullOrUndefined<string>>
+  workspaceSlug: ComputedRef<MaybeNullOrUndefined<string>>
+  targetUser: ComputedRef<SettingsWorkspacesMembersActionsMenu_UserFragment>
 }) => {
   const { activeUser } = useActiveUser()
 
-  const targetUserRole = computed(() => {
-    return params.targetUser.role
+  const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+    workspaceSlug: params.workspaceSlug.value || ''
   })
 
-  const targetUserSeatType = computed(() => params.targetUser.seatType)
+  const targetUserRole = computed(() => {
+    return params.targetUser.value.role
+  })
+
+  const targetUserSeatType = computed(() => params.targetUser.value.seatType)
 
   const isActiveUserWorkspaceAdmin = computed(
-    () => params.workspaceRole === Roles.Workspace.Admin
+    () => params.workspaceRole.value === Roles.Workspace.Admin
+  )
+
+  const isOnlyAdmin = computed(
+    () => hasSingleAdmin.value && isActiveUserWorkspaceAdmin.value
   )
 
   const isActiveUserTargetUser = computed(
-    () => activeUser.value?.id === params.targetUser.id
+    () => activeUser.value?.id === params.targetUser.value.id
   )
 
   const canModifyUser = computed(
     () => isActiveUserWorkspaceAdmin.value && !isActiveUserTargetUser.value
   )
 
-  const canMakeAdmin = computed(
+  const showMakeAdmin = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
   )
 
-  const canRemoveAdmin = computed(
+  const showRemoveAdmin = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Admin
   )
 
-  const canMakeGuest = computed(
-    () =>
-      canModifyUser.value &&
-      targetUserRole.value !== Roles.Workspace.Guest &&
-      targetUserRole.value !== Roles.Workspace.Admin
+  const showMakeGuest = computed(
+    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Guest
   )
 
-  const canMakeMember = computed(
+  const showMakeMember = computed(
     () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Guest
   )
 
-  const canUpgradeEditor = computed(
+  const showUpgradeEditor = computed(
     () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Viewer
   )
 
-  const canDowngradeEditor = computed(
-    () =>
-      canModifyUser.value &&
-      targetUserSeatType.value === SeatTypes.Editor &&
-      targetUserRole.value !== Roles.Workspace.Admin
+  const showDowngradeEditor = computed(
+    () => canModifyUser.value && targetUserSeatType.value === SeatTypes.Editor
   )
 
-  const canRemoveFromWorkspace = computed(
-    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Admin
-  )
+  const showRemoveFromWorkspace = computed(() => canModifyUser.value)
 
-  const canLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
+  const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
-  const canResignAdmin = computed(
-    () => isActiveUserTargetUser.value && isActiveUserWorkspaceAdmin.value
-  )
+  const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
     const mainItems: LayoutMenuItem[] = []
     const footerItems: LayoutMenuItem[] = []
 
-    if (canMakeAdmin.value) {
+    if (showMakeAdmin.value) {
       mainItems.push({
         title: 'Make admin...',
         id: WorkspaceUserActionTypes.MakeAdmin
       })
     }
-    if (canMakeGuest.value) {
+    if (showMakeGuest.value) {
       mainItems.push({
         title: 'Make guest...',
-        id: WorkspaceUserActionTypes.MakeGuest
+        id: WorkspaceUserActionTypes.MakeGuest,
+        disabled: targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'Admins must be on an Member seat'
       })
     }
-    if (canMakeMember.value) {
+    if (showMakeMember.value) {
       mainItems.push({
         title: 'Make member...',
         id: WorkspaceUserActionTypes.MakeMember
       })
     }
-    if (canUpgradeEditor.value) {
+    if (showUpgradeEditor.value) {
       mainItems.push({
         title: 'Upgrade to editor...',
         id: WorkspaceUserActionTypes.UpgradeEditor
       })
     }
-    if (canDowngradeEditor.value) {
+    if (showDowngradeEditor.value) {
       mainItems.push({
         title: 'Downgrade to viewer...',
-        id: WorkspaceUserActionTypes.DowngradeEditor
+        id: WorkspaceUserActionTypes.DowngradeEditor,
+        disabled: targetUserRole.value === Roles.Workspace.Admin,
+        disabledTooltip: 'Admins must be on an Editor seat'
+      })
+    }
+    if (showUpdateProjectPermissions.value) {
+      mainItems.push({
+        title: 'Manage project access...',
+        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+        disabled: params.targetUser.value.projectRoles.length === 0,
+        disabledTooltip: 'User is not in any projects'
       })
     }
 
-    if (canRemoveAdmin.value) {
+    if (showRemoveAdmin.value) {
       footerItems.push({
-        title: 'Remove admin...',
-        id: WorkspaceUserActionTypes.RemoveAdmin
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
-    if (canResignAdmin.value) {
-      footerItems.push({
-        title: 'Resign as admin...',
-        id: WorkspaceUserActionTypes.ResignAdmin
-      })
-    }
-    if (canRemoveFromWorkspace.value) {
+    if (showRemoveFromWorkspace.value) {
       footerItems.push({
         title: 'Remove from workspace...',
-        id: WorkspaceUserActionTypes.RemoveFromWorkspace
+        id: WorkspaceUserActionTypes.RemoveFromWorkspace,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
-    if (canLeaveWorkspace.value) {
+    if (showLeaveWorkspace.value) {
       footerItems.push({
         title: 'Leave workspace...',
-        id: WorkspaceUserActionTypes.LeaveWorkspace
+        id: WorkspaceUserActionTypes.LeaveWorkspace,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'You are the only admin of this workspace'
       })
     }
 
@@ -274,14 +287,13 @@ export const useSettingsMembersActions = (params: {
     actionItems,
     isActiveUserWorkspaceAdmin,
     isActiveUserTargetUser,
-    canMakeAdmin,
-    canRemoveAdmin,
-    canMakeGuest,
-    canMakeMember,
-    canUpgradeEditor,
-    canDowngradeEditor,
-    canRemoveFromWorkspace,
-    canLeaveWorkspace,
-    canResignAdmin
+    showMakeAdmin,
+    showRemoveAdmin,
+    showMakeGuest,
+    showMakeMember,
+    showUpgradeEditor,
+    showDowngradeEditor,
+    showRemoveFromWorkspace,
+    showLeaveWorkspace
   }
 }

@@ -8,7 +8,11 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
-import { getStripeClient, getWorkspacePlanProductId } from '@/modules/gatekeeper/stripe'
+import {
+  getStripeClient,
+  getWorkspacePlanProductAndPriceIds,
+  getWorkspacePlanProductId
+} from '@/modules/gatekeeper/stripe'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -49,6 +53,7 @@ import {
   manageSubscriptionDownscaleFactoryOld
 } from '@/modules/gatekeeper/services/subscriptions/manageSubscriptionDownscale'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { migrateOldWorkspacePlans } from '@/modules/gatekeeper/services/planMigration'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -102,6 +107,21 @@ const scheduleWorkspaceSubscriptionDownscale = ({
         manageSubscriptionDownscaleOld({ logger }), // Only takes old plans subscriptions
         manageSubscriptionDownscaleNew({ logger }) // Only takes new plans subscriptions
       ])
+    }
+  )
+}
+
+const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
+  let isMigrationComplete = false
+  const cronExpression = '*/5 * * * * *' // every 5 seconds
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceNewPlanMigration',
+    async (_scheduledTime, { logger }) => {
+      if (isMigrationComplete) return
+      await migrateOldWorkspacePlans({ db, stripe: getStripeClient(), logger })()
+
+      isMigrationComplete = true
     }
   )
 }
@@ -213,6 +233,8 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
+        // this validates that product and priceId-s can be loaded on server startup
+        getWorkspacePlanProductAndPriceIds()
         app.use(getBillingRouter())
 
         const eventBus = getEventBus()
@@ -225,7 +247,8 @@ const gatekeeperModule: SpeckleModule = {
         scheduledTasks = [
           scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
           scheduleWorkspaceTrialEmails({ scheduleExecution }),
-          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit }),
+          scheduleWorkspacePlanMigrations(scheduleExecution)
         ]
 
         quitListeners = initializeEventListenersFactory({

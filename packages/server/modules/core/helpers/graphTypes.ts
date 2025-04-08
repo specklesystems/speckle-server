@@ -140,3 +140,5 @@ export type ProjectCollaboratorGraphQLReturn = {
 export type ProjectPermissionChecksGraphQLReturn = {
   projectId: string
 }
+
+export type RootPermissionChecksGraphQLReturn = GraphQLEmptyReturn

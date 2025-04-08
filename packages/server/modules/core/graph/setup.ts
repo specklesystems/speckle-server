@@ -1,6 +1,7 @@
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
+import { Authz } from '@speckle/shared'
 import { GraphQLError } from 'graphql'
-import _ from 'lodash'
+import _, { isObjectLike } from 'lodash'
 import { VError } from 'verror'
 import { ZodError } from 'zod'
 import { fromZodError } from 'zod-validation-error'
@@ -35,29 +36,34 @@ export function buildErrorFormatter(params: {
       }
     }
 
-    // If error isn't a VError child, don't do anything extra
-    if (!(realError instanceof VError)) {
-      return formattedError
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let extensions: { [key: string]: any } = {
+      ...(formattedError.extensions || {})
     }
 
-    // Converting VError based error to Apollo's format
-    const extensions = {
-      ...(formattedError.extensions || {}),
-      ...(VError.info(realError) || {})
+    if (realError instanceof VError) {
+      extensions = _.omit(
+        {
+          ...extensions,
+          ...(VError.info(realError) || {}),
+          stacktrace: VError.fullStack(realError)
+        },
+        VERROR_TRASH_PROPS
+      )
+    } else if (Authz.isAuthPolicyError(realError)) {
+      extensions = {
+        ...extensions,
+        code: realError.code,
+        ...(isObjectLike(realError.payload)
+          ? realError.payload
+          : { payload: realError.payload })
+      }
     }
 
     // Getting rid of redundant info
     delete extensions.originalError
-
-    // Updating exception metadata in extensions
-    if (extensions.exception) {
-      extensions.exception = _.omit(extensions.exception, VERROR_TRASH_PROPS)
-
-      if (includeStacktraceInErrorResponses) {
-        extensions.exception.stacktrace = VError.fullStack(realError)
-      } else {
-        delete extensions.exception.stacktrace
-      }
+    if (!includeStacktraceInErrorResponses) {
+      delete extensions.stacktrace
     }
 
     return {

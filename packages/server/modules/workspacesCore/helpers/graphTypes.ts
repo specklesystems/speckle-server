@@ -40,3 +40,5 @@ export type WorkspaceCollaboratorGraphQLReturn = WorkspaceTeamMember
 export type WorkspacePermissionChecksGraphQLReturn = {
   workspaceId: string
 }
+
+export type ProjectMoveToWorkspaceDryRunGraphQLReturn = LimitedUserRecord[]

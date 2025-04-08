@@ -64,7 +64,10 @@ RUN apt-get update && \
     fonts-thai-tlwg=1:0.7.3-1 \
     fonts-kacst=2.01+mry-15 \
     fonts-freefont-ttf=20120503-10 \
-    libxss1=1:1.2.3-1 && \
+    libxss1=1:1.2.3-1 \
+    # libegl1 & libxext6 are required for hardware accelarated rendering to work (vulkan support)
+    libegl1=1.6.0-1 \
+    libxext6=2:1.3.4-1+b1 && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

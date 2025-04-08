@@ -3,9 +3,11 @@ import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
 import type { GetProject, GetProjectRole } from './projects/operations.js'
 import type {
+  GetAdminOverrideEnabled,
   GetEnv,
   GetWorkspace,
   GetWorkspaceLimits,
+  GetWorkspaceModelCount,
   GetWorkspacePlan,
   GetWorkspaceProjectCount,
   GetWorkspaceRole,
@@ -50,12 +52,15 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspace: 'getWorkspace',
   getWorkspaceRole: 'getWorkspaceRole',
   getWorkspaceSeat: 'getWorkspaceSeat',
+  getWorkspaceModelCount: 'getWorkspaceModelCount',
   getWorkspaceProjectCount: 'getWorkspaceProjectCount',
   getWorkspacePlan: 'getWorkspacePlan',
   getWorkspaceLimits: 'getWorkspaceLimits',
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
-  getWorkspaceSsoSession: 'getWorkspaceSsoSession'
+  getWorkspaceSsoSession: 'getWorkspaceSsoSession',
+  getAdminOverrideEnabled: 'getAdminOverrideEnabled'
 }
+export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
 
 export type AuthCheckContextLoaderKeys =
@@ -63,6 +68,7 @@ export type AuthCheckContextLoaderKeys =
 
 export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
+  getAdminOverrideEnabled: GetAdminOverrideEnabled
   getProject: GetProject
   getProjectRole: GetProjectRole
   getServerRole: GetServerRole
@@ -72,6 +78,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspacePlan: GetWorkspacePlan
   getWorkspaceSeat: GetWorkspaceSeat
   getWorkspaceProjectCount: GetWorkspaceProjectCount
+  getWorkspaceModelCount: GetWorkspaceModelCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
 }>

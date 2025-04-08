@@ -12,8 +12,10 @@ spec:
     matchLabels:
       app: speckle-webhook-service
       project: speckle-server
+  {{- with .Values.webhook_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -100,6 +102,9 @@ spec:
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
+          {{- end }}
+          {{- with .Values.webhook_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
           {{- end }}
 
       {{- if .Values.webhook_service.affinity }}

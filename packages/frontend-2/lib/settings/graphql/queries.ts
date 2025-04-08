@@ -61,14 +61,6 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   }
 `)
 
-export const settingsWorkspacesMembersGuestsQuery = graphql(`
-  query SettingsWorkspacesMembersGuests($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersGuestsTable_Workspace
-    }
-  }
-`)
-
 export const settingsWorkspacesMembersInvitesQuery = graphql(`
   query SettingsWorkspacesMembersInvites($slug: String!) {
     workspaceBySlug(slug: $slug) {
@@ -133,9 +125,6 @@ export const settingsWorkspacesSecurityQuery = graphql(`
   query SettingsWorkspaceSecurity($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
-    }
-    activeUser {
-      ...SettingsWorkspacesSecurity_User
     }
   }
 `)

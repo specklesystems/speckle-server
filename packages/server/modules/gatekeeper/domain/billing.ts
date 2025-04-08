@@ -2,7 +2,11 @@ import {
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
 import {
   Nullable,
   Optional,
@@ -16,9 +20,19 @@ import {
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
+export { WorkspaceSeat, WorkspaceSeatType }
+export {
+  GetWorkspaceRoleAndSeat,
+  GetWorkspaceRolesAndSeats
+} from '@/modules/workspacesCore/domain/operations'
+
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type GetWorkspacePlansByWorkspaceId = (args: {
+  workspaceIds: string[]
+}) => Promise<Record<string, WorkspacePlan>>
 
 export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
@@ -177,15 +191,12 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
+type Products = 'guest' | PaidWorkspacePlans
 
-export type GetWorkspacePlanProductAndPriceIds = () => Omit<
-  Record<Products, { productId: string; monthly: string; yearly: string }>,
-  'team' | 'pro'
-> & {
-  team?: { productId: string; monthly: string }
-  pro?: { productId: string; monthly: string; yearly: string }
-}
+export type GetWorkspacePlanProductAndPriceIds = () => Record<
+  Products,
+  { productId: string; monthly: string; yearly: string }
+>
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
@@ -199,20 +210,6 @@ export type ReconcileSubscriptionData = (args: {
   prorationBehavior: 'always_invoice' | 'create_prorations' | 'none'
 }) => Promise<void>
 
-export const WorkspaceSeatType = <const>{
-  Viewer: 'viewer',
-  Editor: 'editor'
-}
-export type WorkspaceSeatType =
-  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
-
-export type WorkspaceSeat = {
-  workspaceId: string
-  userId: string
-  type: WorkspaceSeatType
-  createdAt: Date
-  updatedAt: Date
-}
 // Prices
 export type GetRecurringPrices = () => Promise<
   {
@@ -224,26 +221,3 @@ export type GetRecurringPrices = () => Promise<
 >
 
 export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>
-
-export type GetWorkspaceRolesAndSeats = (params: {
-  workspaceId: string
-  userIds?: string[]
-}) => Promise<{
-  [userId: string]: {
-    role: WorkspaceAcl
-    seat: Nullable<WorkspaceSeat>
-    userId: string
-  }
-}>
-
-export type GetWorkspaceRoleAndSeat = (params: {
-  workspaceId: string
-  userId: string
-}) => Promise<
-  | {
-      role: WorkspaceAcl
-      seat: Nullable<WorkspaceSeat>
-      userId: string
-    }
-  | undefined
->

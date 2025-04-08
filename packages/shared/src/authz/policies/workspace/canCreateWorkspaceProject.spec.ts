@@ -9,14 +9,13 @@ import {
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
-} from '../domain/authErrors.js'
+} from '../../domain/authErrors.js'
 import { nanoid } from 'nanoid'
 import { canCreateWorkspaceProjectPolicy } from './canCreateWorkspaceProject.js'
-import { parseFeatureFlags } from '../../environment/index.js'
+import { parseFeatureFlags } from '../../../environment/index.js'
 import cryptoRandomString from 'crypto-random-string'
-import { WorkspacePlan } from '../../workspaces/index.js'
-import { Workspace, WorkspaceSsoProvider } from '../domain/workspaces/types.js'
-import { err, ok } from 'true-myth/result'
+import { WorkspacePlan } from '../../../workspaces/index.js'
+import { Workspace, WorkspaceSsoProvider } from '../../domain/workspaces/types.js'
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 10 }),
@@ -60,7 +59,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspacesNotEnabledError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspacesNotEnabledError.code
+      })
     })
   })
 
@@ -97,7 +98,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })({ workspaceId: '' })
 
-      expect(result).toStrictEqual(err(new ServerNoSessionError()))
+      expect(result).toBeAuthErrorResult({
+        code: ServerNoSessionError.code
+      })
     })
     it('forbids creation for anyone not having minimum server:user role', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -131,7 +134,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new ServerNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: ServerNoAccessError.code
+      })
     })
   })
 
@@ -170,7 +175,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
 
     it('forbids creation when sso session is not found', async () => {
@@ -207,15 +214,12 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(
-        err(
-          new WorkspaceSsoSessionNoAccessError({
-            payload: { workspaceSlug }
-          })
-        )
-      )
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceSsoSessionNoAccessError.code,
+        payload: { workspaceSlug }
+      })
     })
-    it('throws UncoveredError from unexpected sso session errors')
+    // it('throws UncoveredError from unexpected sso session errors')
   })
 
   describe('user workspace roles', () => {
@@ -251,7 +255,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
     it('WorkspaceNotEnoughPermissionsError for workspace guests', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -285,13 +291,10 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(
-        err(
-          new WorkspaceNotEnoughPermissionsError({
-            message: 'Guests cannot create projects in the workspace'
-          })
-        )
-      )
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNotEnoughPermissionsError.code,
+        message: 'Guests cannot create projects in the workspace'
+      })
     })
     it('forbids non-editor seats from creating projects', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -328,7 +331,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoEditorSeatError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoEditorSeatError.code
+      })
     })
   })
 
@@ -365,7 +370,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
     it('forbids creation if plan is read-only', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -401,7 +408,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceReadOnlyError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceReadOnlyError.code
+      })
     })
   })
 
@@ -440,7 +449,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
     it('allows creation if plan has no limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -465,7 +476,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: null,
-            modelCount: null
+            modelCount: null,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -479,7 +491,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(ok())
+      expect(result).toBeAuthOKResult()
     })
     it('forbids creation if current project count fails to load', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -504,7 +516,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -518,7 +531,9 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(err(new WorkspaceNoAccessError()))
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
     it('allows creation if new project is within plan limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -543,7 +558,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -557,7 +573,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(ok())
+      expect(result).toBeAuthOKResult()
     })
     it('forbids creation if new project is not within plan limits', async () => {
       const result = await canCreateWorkspaceProjectPolicy({
@@ -582,7 +598,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -596,9 +613,10 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         }
       })(canCreateArgs())
 
-      expect(result).toStrictEqual(
-        err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
-      )
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceLimitsReachedError.code,
+        payload: { limit: 'projectCount' }
+      })
     })
   })
 })

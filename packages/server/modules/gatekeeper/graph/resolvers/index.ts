@@ -1,12 +1,7 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import {
-  ensureError,
-  PaidWorkspacePlansNew,
-  Roles,
-  throwUncoveredError
-} from '@speckle/shared'
+import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
@@ -70,6 +65,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
@@ -97,7 +93,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'plus':
             case 'business':
             case 'team':
+            case 'teamUnlimited':
             case 'pro':
+            case 'proUnlimited':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
@@ -108,6 +106,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starterInvoiced':
             case 'plusInvoiced':
             case 'businessInvoiced':
+            case 'proUnlimitedInvoiced':
+            case 'teamUnlimitedInvoiced':
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -185,29 +185,18 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         modelCount: async (parent) => {
           const { workspaceId } = parent
 
-          let modelCount = 0
-
-          const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-            getStreams: legacyGetStreamsFactory({ db })
-          })
-
-          for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
-            for (const project of projects) {
-              const regionDb = await getProjectDbClient({ projectId: project.id })
-              const projectModelCount =
-                await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
-                  project.id,
-                  {
-                    filter: {
-                      onlyWithVersions: true
-                    }
-                  }
-                )
-              modelCount = modelCount + projectModelCount
+          return await getWorkspaceModelCountFactory({
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams: legacyGetStreamsFactory({ db })
+            }),
+            getPaginatedProjectModelsTotalCount: async (projectId, params) => {
+              const regionDb = await getProjectDbClient({ projectId })
+              return await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+                projectId,
+                params
+              )
             }
-          }
-
-          return modelCount
+          })({ workspaceId })
         }
       },
       WorkspaceSubscription: {
@@ -453,7 +442,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                 })
           await upgradeWorkspaceSubscription({
             workspaceId,
-            targetPlan: workspacePlan as PaidWorkspacePlansNew, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
             billingInterval
           })
           return true
