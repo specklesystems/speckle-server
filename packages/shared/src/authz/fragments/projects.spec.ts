@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { ensureMinimumProjectRoleFragment } from './projects.js'
+import { assert, describe, expect, it } from 'vitest'
+import {
+  checkIfPubliclyReadableProjectFragment,
+  ensureMinimumProjectRoleFragment
+} from './projects.js'
 import { Roles } from '../../core/constants.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import {
@@ -145,5 +148,82 @@ describe('ensureMinimumProjectRoleFragment', () => {
         code: WorkspaceNoAccessError.code
       })
     })
+  })
+})
+
+describe('checkIfPubliclyReadableProjectFragment', () => {
+  const buildSUT = (
+    overrides?: Partial<Parameters<typeof checkIfPubliclyReadableProjectFragment>[0]>
+  ) =>
+    checkIfPubliclyReadableProjectFragment({
+      getProject: async () => ({
+        id: 'projectId',
+        workspaceId: null,
+        isDiscoverable: false,
+        isPublic: false
+      }),
+      getEnv: async () => parseFeatureFlags({}),
+      ...overrides
+    })
+
+  it('returns result if project is found', async () => {
+    const result = await buildSUT()({
+      projectId: 'projectId'
+    })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('fails if project is not found', async () => {
+    const result = await buildSUT({
+      getProject: async () => null
+    })({
+      projectId: 'projectId'
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNotFoundError.code
+    })
+  })
+
+  it('returns true if project is public', async () => {
+    const sut = buildSUT({
+      getProject: async () => ({
+        id: 'projectId',
+        workspaceId: null,
+        isDiscoverable: false,
+        isPublic: true
+      })
+    })
+
+    const result = await sut({
+      projectId: 'projectId'
+    })
+
+    expect(result).toBeAuthOKResult()
+    if (!result.isOk) {
+      return assert.fail()
+    }
+
+    expect(result.value).toBe(true)
+  })
+
+  it('returns false if project is not public', async () => {
+    const sut = buildSUT({
+      getProject: async () => ({
+        id: 'projectId',
+        workspaceId: null,
+        isDiscoverable: false,
+        isPublic: false
+      })
+    })
+    const result = await sut({
+      projectId: 'projectId'
+    })
+    expect(result).toBeAuthOKResult()
+    if (!result.isOk) {
+      return assert.fail()
+    }
+    expect(result.value).toBe(false)
   })
 })
