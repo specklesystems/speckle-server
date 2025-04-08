@@ -1,6 +1,7 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
+  GetWorkspaceDomains,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
   IntersectProjectCollaboratorsAndWorkspaceCollaborators,
@@ -12,18 +13,13 @@ import {
   WorkspaceNotFoundError,
   WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
-import {
-  GetProject,
-  UpdateProject,
-  UpsertProjectRole
-} from '@/modules/core/domain/projects/operations'
-import { chunk, intersection } from 'lodash'
-import { Roles, StreamRoles } from '@speckle/shared'
-import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
-import coreUserRoles from '@/modules/core/roles'
+import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
+import { chunk } from 'lodash'
+import { Roles } from '@speckle/shared'
 import {
   GetStreamCollaborators,
-  LegacyGetStreams
+  LegacyGetStreams,
+  UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
@@ -52,6 +48,10 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -96,21 +96,25 @@ export const moveProjectToWorkspaceFactory =
   ({
     getProject,
     updateProject,
-    upsertProjectRole,
+    updateProjectRole,
     getProjectCollaborators,
+    getWorkspaceDomains,
     getWorkspaceRolesAndSeats,
-    getWorkspaceRoleToDefaultProjectRoleMapping,
     updateWorkspaceRole,
-    getWorkspaceWithPlan
+    createWorkspaceSeat,
+    getWorkspaceWithPlan,
+    getUserEmails
   }: {
     getProject: GetProject
     updateProject: UpdateProject
-    upsertProjectRole: UpsertProjectRole
+    updateProjectRole: UpdateStreamRole
     getProjectCollaborators: GetStreamCollaborators
+    getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
-    getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     updateWorkspaceRole: UpdateWorkspaceRole
+    createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceWithPlan: GetWorkspaceWithPlan
+    getUserEmails: FindEmailsByUserId
   }) =>
   async ({
     projectId,
@@ -127,7 +131,6 @@ export const moveProjectToWorkspaceFactory =
       )
     }
 
-    // Update roles for current project members
     const [workspace, projectTeam, workspaceTeam] = await Promise.all([
       getWorkspaceWithPlan({ workspaceId }),
       getProjectCollaborators(projectId),
@@ -135,59 +138,74 @@ export const moveProjectToWorkspaceFactory =
     ])
     if (!workspace) throw new WorkspaceNotFoundError()
 
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
-    const roleMapping = isNewPlan
-      ? undefined
-      : await getWorkspaceRoleToDefaultProjectRoleMapping({
-          workspaceId
-        })
-
     for (const projectMembers of chunk(projectTeam, 5)) {
       await Promise.all(
-        projectMembers.map(
-          async ({ id: userId, role: serverRole, streamRole: currentProjectRole }) => {
-            // Update workspace role. Prefer existing workspace role if there is one.
-            const currentWorkspaceRole = workspaceTeam[userId]?.role
+        projectMembers.map(async ({ id: userId, streamRole: currentProjectRole }) => {
+          // Grant new workspace roles and seats for users without them
+          if (!workspaceTeam[userId]) {
+            let isUserDomainCompliant = true
 
-            const nextWorkspaceRole = currentWorkspaceRole
-              ? currentWorkspaceRole
-              : {
-                  userId,
-                  workspaceId,
-                  role:
-                    serverRole === Roles.Server.Guest
-                      ? Roles.Workspace.Guest
-                      : Roles.Workspace.Member,
-                  createdAt: new Date()
-                }
+            // Check user against domain protection if enabled on the workspace
+            if (workspace.domainBasedMembershipProtectionEnabled) {
+              const workspaceDomains = await getWorkspaceDomains({
+                workspaceIds: [workspace.id]
+              })
+              const userEmails = await getUserEmails({ userId })
+
+              isUserDomainCompliant = userEmailsCompliantWithWorkspaceDomains({
+                userEmails,
+                workspaceDomains
+              })
+            }
+
+            // Grant workspace role
+            const workspaceRole: WorkspaceAcl = {
+              userId,
+              workspaceId,
+              role: isUserDomainCompliant
+                ? Roles.Workspace.Member
+                : Roles.Workspace.Guest,
+              createdAt: new Date()
+            }
 
             await updateWorkspaceRole({
-              ...nextWorkspaceRole,
+              ...workspaceRole,
               updatedByUserId: movedByUserId
             })
 
-            // Upsert project role. Prefer default workspace project role if more permissive.
-            // (Does not apply to new plans)
-            if (isNewPlan) return
-
-            const defaultProjectRole =
-              roleMapping?.default[nextWorkspaceRole.role] ?? Roles.Stream.Reviewer
-            const allowedProjectRoles =
-              roleMapping?.allowed[nextWorkspaceRole.role] ?? []
-            const rolePicks = intersection(
-              [currentProjectRole, defaultProjectRole],
-              allowedProjectRoles
-            )
-            const nextProjectRole = orderByWeight(rolePicks, coreUserRoles)[0]
-
-            // TODO: Shouldn't this be the service call that also fires events?
-            await upsertProjectRole({
+            // Grant viewer seat
+            const workspaceSeat = await createWorkspaceSeat({
               userId,
-              projectId,
-              role: nextProjectRole.name as StreamRoles
+              workspaceId,
+              type: 'viewer'
             })
+
+            // Update workspace team in-memory
+            workspaceTeam[userId] = {
+              role: workspaceRole,
+              seat: workspaceSeat,
+              userId
+            }
           }
-        )
+
+          // Demote user if seat type does not allow current project role
+          const requiresEditorSeat =
+            currentProjectRole === Roles.Stream.Owner ||
+            currentProjectRole === Roles.Stream.Contributor
+          const hasEditorSeat = workspaceTeam[userId]?.seat?.type === 'editor'
+
+          if (requiresEditorSeat && !hasEditorSeat) {
+            await updateProjectRole(
+              {
+                userId,
+                projectId,
+                role: Roles.Stream.Reviewer
+              },
+              movedByUserId,
+              null
+            )
+          }
+        })
       )
     }
 
