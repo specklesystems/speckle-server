@@ -97,11 +97,9 @@ const server = app.listen(port, host, async () => {
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
     let jobLogger = logger.child({ payloadId: payload.id })
-    let browser: Browser | undefined = undefined
-    let encounteredError = false
     try {
       jobDoneCallback = done
-      browser = await launchBrowser()
+      const browser = await launchBrowser()
       const parseResult = jobPayload.safeParse(payload.data)
       if (!parseResult.success) {
         jobLogger.error(
@@ -126,17 +124,15 @@ const server = app.listen(port, host, async () => {
       // with removeOnComplete, the job response potentially containing a large images,
       // is cleared from the response queue
       await resultsQueue.add(result, { removeOnComplete: true })
+      await browser.close()
+      done()
     } catch (err) {
       jobLogger.error({ err }, 'Processing {jobId} failed')
       if (err instanceof Error) {
-        encounteredError = true
         done(err)
       } else {
         throw err
       }
-    } finally {
-      if (browser) await browser.close()
-      if (!encounteredError) done()
     }
     jobDoneCallback = undefined
   })
