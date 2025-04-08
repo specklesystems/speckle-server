@@ -23,7 +23,7 @@ import {
   isWorkspacePlanStatusReadOnly
 } from '../../../workspaces/index.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
-import { requireMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
+import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 
 export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getEnv'
@@ -69,7 +69,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
     }
 
     // guests cannot create projects in the workspace
-    const isNotGuest = await requireMinimumWorkspaceRole(loaders)({
+    const isNotGuest = await hasMinimumWorkspaceRole(loaders)({
       userId: userId!,
       workspaceId,
       role: Roles.Workspace.Member

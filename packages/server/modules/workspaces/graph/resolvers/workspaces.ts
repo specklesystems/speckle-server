@@ -193,7 +193,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { OperationTypeNode } from 'graphql'
 import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { UsersMeta } from '@/modules/core/dbSchema'
@@ -209,6 +208,7 @@ import {
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1057,20 +1057,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
 
-          await authorizeResolver(
-            context.userId,
-            projectId,
-            Roles.Stream.Owner,
-            context.resourceAccessRules,
-            OperationTypeNode.MUTATION
-          )
-          await authorizeResolver(
-            context.userId,
-            workspaceId,
-            Roles.Workspace.Admin,
-            context.resourceAccessRules,
-            OperationTypeNode.MUTATION
-          )
+          const canMoveToWorkspace =
+            await context.authPolicies.project.canMoveToWorkspace({
+              userId: context.userId,
+              projectId,
+              workspaceId
+            })
+
+          if (!canMoveToWorkspace.isOk) {
+            throw mapAuthToServerError(canMoveToWorkspace.error)
+          }
 
           const moveProjectToWorkspace = commandFactory({
             db,

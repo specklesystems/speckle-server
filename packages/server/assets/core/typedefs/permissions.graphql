@@ -3,6 +3,8 @@ extend type Project {
 }
 
 type ProjectPermissionChecks {
+  canCreateModel: PermissionCheckResult!
+  canMoveToWorkspace(workspaceId: String!): PermissionCheckResult!
   canRead: PermissionCheckResult!
 }
 
