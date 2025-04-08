@@ -6,25 +6,23 @@ import {
   DoubleSide,
   DynamicDrawUsage,
   Mesh,
-  MeshBasicMaterial,
   Plane,
-  PlaneGeometry,
   Quaternion,
   Raycaster,
   Vector2,
   Vector3,
   type Intersection
 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Geometry } from '../../converter/Geometry.js'
 import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
+import { MeasurementPointGizmo2 } from './MeasurementPointGizmo2.js'
 
 export class AreaMeasurement extends Measurement {
-  private pointGizmos: MeasurementPointGizmo[]
+  private pointGizmos: MeasurementPointGizmo2[]
   private pointIndex: number = 0
   private surfacePoint: Vector3 = new Vector3()
   private surfaceNormal: Vector3 = new Vector3()
@@ -35,11 +33,10 @@ export class AreaMeasurement extends Measurement {
   private measuredPoints: Vector3[] = []
   private polygonPoints: Vector3[] = []
 
-  private planeMesh: Mesh
   private fillPolygon: Mesh
 
   public set isVisible(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
       gizmo.enable(value, value, value, value)
     })
   }
@@ -48,32 +45,19 @@ export class AreaMeasurement extends Measurement {
     super()
     this.type = 'AreaMeasurement'
     this.pointGizmos = []
-    const gizmo = new MeasurementPointGizmo()
+    const gizmo = new MeasurementPointGizmo2()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(this.pointGizmos[0])
     this.layers.set(ObjectLayers.MEASUREMENTS)
-
-    const planeGeometry = new PlaneGeometry(1, 1)
-    this.planeMesh = new Mesh(
-      planeGeometry,
-      new MeshBasicMaterial({
-        color: 0xffff00,
-        side: DoubleSide,
-        opacity: 0.5,
-        transparent: true
-      })
-    )
-    this.planeMesh.layers.set(ObjectLayers.MEASUREMENTS)
-    this.add(this.planeMesh)
 
     this.polygonPoints.push(new Vector3())
   }
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
-      gizmo.frameUpdate(camera, bounds)
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+      gizmo.frameUpdate(camera, size)
     })
   }
 
@@ -81,10 +65,6 @@ export class AreaMeasurement extends Measurement {
     this.surfacePoint.copy(point)
     this.surfaceNormal.copy(normal)
 
-    this.planeMesh.position.copy(this.surfacePoint)
-    this.planeMesh.quaternion.copy(
-      new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), this.surfaceNormal)
-    )
     this.projectOnPlane(
       this.surfacePoint,
       this.planeOrigin,
@@ -114,7 +94,7 @@ export class AreaMeasurement extends Measurement {
       }
     }
 
-    const gizmo = new MeasurementPointGizmo()
+    const gizmo = new MeasurementPointGizmo2()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(gizmo)
@@ -141,29 +121,29 @@ export class AreaMeasurement extends Measurement {
   public update(): Promise<void> {
     let ret: Promise<void> = Promise.resolve()
 
-    if (this.pointIndex === 0) {
-      this.pointGizmos[this.pointIndex].updateDisc(
-        this.surfacePoint,
-        this.surfaceNormal
-      )
-      this.pointGizmos[this.pointIndex].updatePoint(this.surfacePoint)
-    } else {
-      const currentPoint = this.surfacePoint
-      const prevPoint = this.points[this.pointIndex - 1]
-      this.pointGizmos[this.pointIndex].updateLine([prevPoint, currentPoint])
-      this.pointGizmos[this.pointIndex].updatePoint(currentPoint)
+    this.pointGizmos[this.pointIndex].updateNormalIndicator(
+      this.surfacePoint,
+      this.surfaceNormal
+    )
+    this.pointGizmos[this.pointIndex].updatePoint(this.surfacePoint)
 
-      if (this.measuredPoints.length > 1) {
-        this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
-        ret = this.pointGizmos[0].updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}²`,
-          this.labelPoint
-        )
-        this.pointGizmos[0].enable(false, true, true, true)
-      }
-      this.pointGizmos[this.pointIndex].enable(false, true, true, false)
+    if (this.pointIndex === 0) return ret
+
+    const currentPoint = this.surfacePoint
+    const prevPoint = this.points[this.pointIndex - 1]
+    this.pointGizmos[this.pointIndex].updateLine([prevPoint, currentPoint])
+    this.pointGizmos[this.pointIndex].enable(true, true, true, false)
+
+    if (this.measuredPoints.length > 1) {
+      this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
+      ret = this.pointGizmos[0].updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}²`,
+        this.labelPoint
+      )
+      this.pointGizmos[0].enable(false, true, true, true)
+      this.pointGizmos[this.pointIndex - 1].enable(false, true, true, false)
     }
 
     if (this._state === MeasurementState.COMPLETE) {
@@ -173,7 +153,6 @@ export class AreaMeasurement extends Measurement {
       ])
       this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
       this.pointGizmos[this.pointIndex].enable(false, false, false, false)
-      this.planeMesh.visible = false
     }
 
     return ret
@@ -261,7 +240,7 @@ export class AreaMeasurement extends Measurement {
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     const results: Array<Intersection> = []
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
       gizmo.raycast(raycaster, results)
     })
     if (results.length) {
@@ -277,13 +256,13 @@ export class AreaMeasurement extends Measurement {
   }
 
   public highlight(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
       gizmo.highlight = value
     })
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
       gizmo.updateClippingPlanes(planes)
     })
   }
