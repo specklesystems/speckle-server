@@ -15,6 +15,13 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canRead)
+    },
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdate)
     }
   },
   RootPermissionChecks: {

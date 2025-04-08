@@ -2542,6 +2542,7 @@ export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVers
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
   canRead: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
 };
 
 export type ProjectRole = {

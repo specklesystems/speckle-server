@@ -12,7 +12,11 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import {
+  isResourceAllowed,
+  throwIfResourceAccessNotAllowed,
+  toProjectIdWhitelist
+} from '@/modules/core/helpers/token'
 import {
   createBranchFactory,
   getBatchedStreamBranchesFactory,
@@ -238,13 +242,19 @@ export = {
         logger: log
       })
     },
-    async update(_parent, { update }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        update.id,
-        Roles.Stream.Owner,
+    async update(_parent, { update }, { userId, resourceAccessRules, authPolicies }) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: update.id,
+        resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules
-      )
+      })
+
+      const canUpdate = await authPolicies.project.canUpdate({
+        projectId: update.id,
+        userId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const projectDB = await getProjectDbClient({ projectId: update.id })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: projectDB }),
