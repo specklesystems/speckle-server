@@ -6,7 +6,6 @@ import {
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   ProjectVisibility,
   Resolvers,
@@ -88,9 +87,7 @@ import {
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
-import { throwUncoveredError } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
-import { Authz } from '@speckle/shared'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -179,26 +176,11 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const canQuery = await context.authPolicies.project.canQuery({
+      const canQuery = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
       })
-
-      if (!canQuery.isOk) {
-        switch (canQuery.error.code) {
-          case Authz.ProjectNotFoundError.code:
-            throw new StreamNotFoundError()
-          case Authz.ProjectNoAccessError.code:
-          case Authz.WorkspaceNoAccessError.code:
-          case Authz.WorkspaceSsoSessionNoAccessError.code:
-            throw new ForbiddenError(canQuery.error.message)
-          case Authz.ServerNoAccessError.code:
-          case Authz.ServerNoSessionError.code:
-            throw new ForbiddenError(canQuery.error.message)
-          default:
-            throwUncoveredError(canQuery.error)
-        }
-      }
+      throwIfAuthNotOk(canQuery)
 
       const project = await getStream({ streamId: args.id })
 
@@ -278,6 +260,11 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      const canCreate = await context.authPolicies.project.canCreatePersonal({
+        userId: context.userId
+      })
+      throwIfAuthNotOk(canCreate)
+
       const regionKey = await getValidDefaultProjectRegionKey()
       const projectDb = await getDb({ regionKey })
 
@@ -338,7 +325,8 @@ export = {
           searchQuery: args.filter?.search || undefined,
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
-          workspaceId: args.filter?.workspaceId
+          workspaceId: args.filter?.workspaceId,
+          personalOnly: args.filter?.personalOnly
         }),
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -347,7 +335,8 @@ export = {
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
-          workspaceId: args.filter?.workspaceId
+          workspaceId: args.filter?.workspaceId,
+          personalOnly: args.filter?.personalOnly
         }),
         getUserStreams({
           userId: ctx.userId!,
@@ -358,7 +347,8 @@ export = {
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
-          workspaceId: args.filter?.workspaceId
+          workspaceId: args.filter?.workspaceId,
+          personalOnly: args.filter?.personalOnly
         })
       ])
 
@@ -382,7 +372,8 @@ export = {
       return users.map((u) => ({
         user: u,
         role: u.streamRole,
-        id: u.id
+        id: u.id,
+        projectId: parent.id
       }))
     },
     async sourceApps(parent, _args, ctx) {

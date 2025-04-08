@@ -100,7 +100,8 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  getWorkspaceWithPlanFactory
+  getWorkspaceWithPlanFactory,
+  upsertUnpaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
@@ -119,6 +120,9 @@ import {
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { isNewPaidPlanType, isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
 export const onProjectCreatedFactory =
   (deps: {
@@ -235,7 +239,11 @@ export const onWorkspaceAuthorizedFactory =
     const session = await getUserSsoSession({ userId, workspaceId })
     if (!session || !isValidSsoSession(session)) {
       const workspace = await getWorkspace({ workspaceId })
-      throw new SsoSessionMissingOrExpiredError(workspace?.slug)
+      throw new SsoSessionMissingOrExpiredError(workspace?.slug, {
+        info: {
+          workspaceSlug: workspace?.slug
+        }
+      })
     }
   }
 
@@ -425,6 +433,9 @@ export const workspaceTrackingFactory =
     getUserEmails: FindEmailsByUserId
   }) =>
   async (params: EventPayload<'workspace.*'> | EventPayload<'gatekeeper.*'>) => {
+    // temp ignoring tracking for this, if billing is not enabled
+    // this should be sorted with a better separation between workspaces and the gatekeeper module
+    if (!FF_BILLING_INTEGRATION_ENABLED) return
     const { eventName, payload } = params
     const mixpanel = getClient()
     if (!mixpanel) return
@@ -490,7 +501,7 @@ export const workspaceTrackingFactory =
         break
       case 'gatekeeper.workspace-trial-expired':
         break
-      case 'workspace.authorized':
+      case WorkspaceEvents.Authorizing:
         break
       case 'workspace.created':
         // we're setting workspace props and attributing to speckle users
@@ -723,7 +734,7 @@ export const initializeEventListenersFactory =
           getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
         })(payload)
       }),
-      eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
+      eventBus.listen(WorkspaceEvents.Authorizing, async ({ payload }) => {
         const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
           getWorkspace,
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
@@ -731,6 +742,16 @@ export const initializeEventListenersFactory =
           getUserSsoSession: getUserSsoSessionFactory({ db })
         })
         await onWorkspaceAuthorized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
+        await upsertUnpaidWorkspacePlanFactory({ db })({
+          workspacePlan: {
+            name: 'free',
+            status: 'valid',
+            workspaceId: payload.workspace.id,
+            createdAt: new Date()
+          }
+        })
       }),
       eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
         const trx = await db.transaction()

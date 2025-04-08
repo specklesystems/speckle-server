@@ -2,43 +2,48 @@
   <div
     class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
-    <div class="lg:h-32">
-      <div class="flex items-center gap-x-2">
-        <h4 class="text-body font-medium">
-          {{ formatName(plan) }}
-        </h4>
-        <CommonBadge v-if="badgeText" rounded>
-          {{ badgeText }}
-        </CommonBadge>
-      </div>
-      <p class="text-body mt-1">
-        <span class="font-medium">
-          {{ planPrice }}
-        </span>
-        per seat/month
-      </p>
-      <p
-        v-if="plan === WorkspacePlans.Free"
-        class="text-body-xs text-foreground-2 mt-2.5"
-      >
-        For individuals and small teams trying Speckle.
-      </p>
-      <template v-else>
-        <div class="flex items-center gap-x-2 mt-3 px-1">
-          <FormSwitch
-            v-model="isYearlyIntervalSelected"
-            :show-label="false"
-            name="billing-interval"
-            @update:model-value="
-              (newValue) => $emit('onYearlyIntervalSelected', newValue)
-            "
-          />
-          <span class="text-body-2xs">Billed yearly</span>
-          <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
-            -10%
+    <div class="lg:h-32 flex flex-col">
+      <div class="flex-1">
+        <div class="flex items-center gap-x-2">
+          <h4 class="text-body font-medium">
+            {{ formatName(plan) }}
+          </h4>
+          <CommonBadge v-if="badgeText" rounded>
+            {{ badgeText }}
           </CommonBadge>
         </div>
-        <div class="w-full mt-4">
+        <p class="text-body mt-1">
+          <span class="font-medium">
+            {{ planPrice }}
+          </span>
+          per seat/month
+        </p>
+        <template v-if="plan !== WorkspacePlans.Free">
+          <div class="flex items-center gap-x-2 mt-3 px-1">
+            <FormSwitch
+              v-model="isYearlyIntervalSelected"
+              :show-label="false"
+              name="billing-interval"
+              @update:model-value="
+                (newValue) => $emit('onYearlyIntervalSelected', newValue)
+              "
+            />
+            <span class="text-body-2xs">Billed yearly</span>
+            <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
+              -10%
+            </CommonBadge>
+          </div>
+        </template>
+      </div>
+      <div class="w-full mt-4">
+        <div v-if="hasCta">
+          <slot name="cta" />
+        </div>
+        <div
+          v-else
+          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
+          v-tippy="buttonTooltip"
+        >
           <FormButton
             :color="buttonColor"
             :disabled="!isSelectable"
@@ -48,7 +53,7 @@
             {{ buttonText }}
           </FormButton>
         </div>
-      </template>
+      </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <li
@@ -95,6 +100,7 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { SetupContext } from 'vue'
 
 defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -103,14 +109,15 @@ defineEmits<{
 const props = defineProps<{
   plan: WorkspacePlans
   yearlyIntervalSelected: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  isAdmin: boolean
-  activeBillingInterval: MaybeNullOrUndefined<BillingInterval>
-  hasSubscription: boolean
-  workspaceId: MaybeNullOrUndefined<string>
+  canUpgrade: boolean
+  workspaceId?: MaybeNullOrUndefined<string>
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
+  hasSubscription?: MaybeNullOrUndefined<boolean>
 }>()
 
-const { pricesNew } = useWorkspacePlanPrices()
+const slots: SetupContext['slots'] = useSlots()
+const { prices } = useWorkspacePlanPrices()
 const { upgradePlan, redirectToCheckout } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
@@ -119,7 +126,7 @@ const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
     return formatPrice(
-      pricesNew.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
+      prices.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
     )
   }
 
@@ -129,6 +136,8 @@ const planPrice = computed(() => {
     currencySymbol: '£'
   })
 })
+
+const hasCta = computed(() => !!slots.cta)
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -151,9 +160,12 @@ const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
-const isCurrentPlan = computed(
-  () => isMatchingInterval.value && props.currentPlan?.name === props.plan
-)
+const isCurrentPlan = computed(() => {
+  if (props.plan === WorkspacePlans.Free) {
+    return props.currentPlan?.name === props.plan
+  }
+  return isMatchingInterval.value && props.currentPlan?.name === props.plan
+})
 
 const isAnnualToMonthly = computed(() => {
   return (
@@ -172,7 +184,10 @@ const isMonthlyToAnnual = computed(() => {
 })
 
 const isSelectable = computed(() => {
-  if (!props.isAdmin) return false
+  if (!props.canUpgrade) return false
+  // Free CTA has no clickable scenario
+  if (props.plan === WorkspacePlans.Free) return false
+
   // Always enable buttons during expired or canceled state
   if (
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
@@ -210,6 +225,10 @@ const buttonColor = computed(() => {
 })
 
 const buttonText = computed(() => {
+  // Current plan case
+  if (isCurrentPlan.value) {
+    return 'Current plan'
+  }
   // Allow if current plan is Free, or the current plan is expired/canceled
   if (
     props.currentPlan?.name === WorkspacePlans.Free ||
@@ -217,10 +236,6 @@ const buttonText = computed(() => {
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
     return `Subscribe to ${formatName(props.plan)}`
-  }
-  // Current plan case
-  if (isCurrentPlan.value) {
-    return 'Current plan'
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
@@ -235,6 +250,37 @@ const buttonText = computed(() => {
   }
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${formatName(props.plan)}` : ''
+})
+
+const buttonTooltip = computed(() => {
+  if (!props.canUpgrade) {
+    return 'You must be a workspace admin.'
+  }
+
+  if (
+    isCurrentPlan.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
+  )
+    return undefined
+
+  if (isDowngrade.value) {
+    return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
+  }
+
+  if (isAnnualToMonthly.value) {
+    return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
+  }
+
+  if (
+    props.activeBillingInterval === BillingInterval.Yearly &&
+    !props.yearlyIntervalSelected &&
+    canUpgradeToPlan.value
+  ) {
+    return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
+  }
+
+  return undefined
 })
 
 const badgeText = computed(() =>

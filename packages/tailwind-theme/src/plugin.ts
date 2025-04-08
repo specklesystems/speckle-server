@@ -337,6 +337,11 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
         '@apply max-w-[1312px]': {}
       }
     },
+    // Limit reached pattern
+    '.diagonal-stripes': {
+      backgroundImage:
+        'repeating-linear-gradient(-45deg, transparent, transparent 5px, var(--outline-3) 7px)'
+    },
     // Simple scrollbar (OSX-like) to use instead of the ugly browser one
     '.simple-scrollbar': {
       'scrollbar-width': 'var(--simple-scrollbar-width)',

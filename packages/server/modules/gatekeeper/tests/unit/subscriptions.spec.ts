@@ -6,7 +6,6 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  UnsupportedWorkspacePlanError,
   WorkspaceNotPaidPlanError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
@@ -28,9 +27,8 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspacePlan } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
@@ -459,6 +457,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'plus':
               case 'team':
               case 'pro':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'guest':
                 return priceId
@@ -529,6 +529,8 @@ describe('subscriptions @gatekeeper', () => {
                 case 'guest':
                 case 'team':
                 case 'pro':
+                case 'teamUnlimited':
+                case 'proUnlimited':
                   expect.fail()
                 case 'starter':
                   return priceId
@@ -607,6 +609,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'team':
               case 'pro':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -683,6 +687,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'team':
               case 'pro':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -856,6 +862,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'plus':
               case 'guest':
               case 'pro':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'team':
                 return priceId
@@ -928,6 +936,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'pro':
               case 'starter':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'team':
                 return priceId
@@ -996,6 +1006,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'guest':
               case 'pro':
               case 'starter':
+              case 'teamUnlimited':
+              case 'proUnlimited':
                 expect.fail()
               case 'team':
                 return priceId
@@ -1857,8 +1869,12 @@ describe('subscriptions @gatekeeper', () => {
               return 'guestProduct'
             case 'team':
               return 'teamProduct'
+            case 'teamUnlimited':
+              return 'teamUnlimitedProduct'
             case 'pro':
               return 'proProduct'
+            case 'proUnlimited':
+              return 'proUnlimitedProduct'
           }
         },
         getWorkspacePlanPriceId: () => {
@@ -1983,7 +1999,7 @@ describe('subscriptions @gatekeeper', () => {
           })
         })
 
-        expect(err.message).to.equal(new UnsupportedWorkspacePlanError().message)
+        expect(err.message).to.equal(new WorkspaceNotPaidPlanError().message)
       })
     })
     ;(['team', 'pro'] as const).forEach((plan) => {
@@ -2304,8 +2320,12 @@ describe('subscriptions @gatekeeper', () => {
               return 'guestProduct'
             case 'team':
               return 'teamProduct'
+            case 'teamUnlimited':
+              return 'teamUnlimitedProduct'
             case 'pro':
               return 'proProduct'
+            case 'proUnlimited':
+              return 'proUnlimitedProduct'
           }
         },
         getWorkspacePlanPriceId: () => {

@@ -93,6 +93,21 @@ const pageFunction = async ({
     logger.error({ err }, 'Page crashed')
     throw err
   })
+  page.on('console', (msg) => {
+    switch (msg.type()) {
+      case 'debug':
+        logger.debug(msg.text())
+      case 'error':
+        logger.error({ err: msg }, 'Page error')
+        break
+      case 'warn':
+        logger.warn({ err: msg }, msg.text())
+        break
+      default:
+        logger.info({ msg }, msg.text())
+        break
+    }
+  })
   await page.goto(`http://127.0.0.1:${port}/index.html`)
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {

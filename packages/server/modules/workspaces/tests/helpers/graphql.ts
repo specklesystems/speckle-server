@@ -373,11 +373,47 @@ export const getWorkspaceWithSubscriptionQuery = gql`
         currentBillingCycleEnd
         billingInterval
         seats {
-          guest
-          plan
-          assigned
+          editors {
+            available
+            assigned
+          }
+          viewers {
+            assigned
+          }
+        }
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`
+
+export const getWorkspacePlanUsage = gql`
+  query GetWorkspacePlanUsage($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      plan {
+        usage {
+          projectCount
+          modelCount
+        }
+      }
+    }
+  }
+`
+
+export const getWorkspaceWithMembersByRole = gql`
+  query GetWorkspaceWithMembersByRole($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      teamByRole {
+        admins {
           totalCount
-          viewersCount
+        }
+        members {
+          totalCount
+        }
+        guests {
+          totalCount
         }
       }
     }
@@ -409,6 +445,24 @@ export const updateWorkspaceSeatTypeMutation = gql`
             id
             role
             seatType
+          }
+        }
+      }
+    }
+  }
+`
+
+export const invitableUsersInProjectQuery = gql`
+  query GetProjectInvitableCollaborators($projectId: String!, $search: String) {
+    project(id: $projectId) {
+      id
+      name
+      invitableCollaborators(filter: { search: $search }) {
+        totalCount
+        items {
+          id
+          user {
+            name
           }
         }
       }

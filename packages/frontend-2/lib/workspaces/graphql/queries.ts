@@ -149,3 +149,35 @@ export const workspacePlanQuery = graphql(`
     }
   }
 `)
+
+export const activeWorkspaceQuery = graphql(`
+  query activeWorkspace($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...ActiveWorkspace_Workspace
+    }
+  }
+`)
+
+export const workspaceLastAdminCheckQuery = graphql(`
+  query WorkspaceLastAdminCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceLastAdminCheck_Workspace
+    }
+  }
+`)
+
+export const workspaceLimitsQuery = graphql(`
+  query WorkspaceLimits($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacePlanLimits_Workspace
+    }
+  }
+`)
+
+export const workspaceUsageQuery = graphql(`
+  query WorkspaceUsage($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceUsage_Workspace
+    }
+  }
+`)

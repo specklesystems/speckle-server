@@ -14,7 +14,8 @@ import {
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
   USER_DATA_DIR,
-  PREVIEW_TIMEOUT
+  PREVIEW_TIMEOUT,
+  GPU_ENABLED
 } from '@/config.js'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
@@ -77,15 +78,28 @@ const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
   appState = AppState.RUNNING
 
+  const gpuWithVulkanArgs = [
+    '--use-angle=vulkan',
+    '--enable-features=Vulkan',
+    '--disable-vulkan-surface',
+    '--enable-unsafe-webgpu'
+  ]
+
   const launchBrowser = async (): Promise<Browser> => {
     logger.debug('Starting browser')
     return await puppeteer.launch({
       headless: !PREVIEWS_HEADED,
       executablePath: CHROMIUM_EXECUTABLE_PATH,
       userDataDir: USER_DATA_DIR,
+      // slowMo: 3000, // Use for debugging during development
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        ...(GPU_ENABLED ? gpuWithVulkanArgs : [])
+      ],
       protocolTimeout: PREVIEW_TIMEOUT,
       // handle closing of the browser by the preview-service, not puppeteer
       // this is important for the preview-service to be able to shut down gracefully,
@@ -192,6 +206,25 @@ const onShutdown = async () => {
 }
 
 createTerminus(server, {
+  healthChecks: {
+    '/liveness': () => Promise.resolve('ok'),
+    '/readiness': async (args: { state: { isShuttingDown: boolean } }) => {
+      const { isShuttingDown } = args.state
+      if (isShuttingDown) {
+        return Promise.reject(new Error('Preview service is shutting down'))
+      }
+
+      const isReady = await jobQueue.isReady()
+      if (!isReady)
+        return Promise.reject(
+          new Error(
+            'Preview service is not ready. Redis or Bull is not either reachable or ready.'
+          )
+        )
+
+      return Promise.resolve('ok')
+    }
+  },
   beforeShutdown,
   onShutdown,
   logger: (msg, err) => {

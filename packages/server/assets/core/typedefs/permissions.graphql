@@ -1,0 +1,15 @@
+extend type Project {
+  permissions: ProjectPermissionChecks!
+}
+
+type ProjectPermissionChecks {
+  canRead: PermissionCheckResult!
+}
+
+type RootPermissionChecks {
+  canCreatePersonalProject: PermissionCheckResult!
+}
+
+extend type User {
+  permissions: RootPermissionChecks! @isOwner
+}

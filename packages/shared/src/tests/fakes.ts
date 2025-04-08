@@ -1,20 +1,19 @@
 import { merge } from 'lodash'
 import { Project } from '../authz/domain/projects/types.js'
-import { ok, Result } from 'true-myth/result'
 import { nanoid } from 'nanoid'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: T) =>
   (overrides?: Partial<T>) =>
-  (): Promise<Result<T, never>> => {
+  (): Promise<T> => {
     if (overrides) {
-      return Promise.resolve(ok(merge(defaults, overrides)))
+      return Promise.resolve(merge(defaults, overrides))
     }
-    return Promise.resolve(ok(defaults))
+    return Promise.resolve(defaults)
   }
 
 export const getProjectFake = fakeGetFactory<Project>({
-  id: nanoid(),
+  id: nanoid(10),
   isPublic: false,
   isDiscoverable: false,
   workspaceId: null

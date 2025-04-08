@@ -1,43 +1,38 @@
-import Result from 'true-myth/result'
-import { WorkspaceRoles } from '../../../core/constants.js'
+import { WorkspaceRoles, WorkspaceSeatType } from '../../../core/constants.js'
 import { FeatureFlags } from '../../../environment/index.js'
+import { WorkspaceLimits } from '../../../workspaces/helpers/limits.js'
+import { WorkspacePlan } from '../../../workspaces/index.js'
+import { UserContext, WorkspaceContext } from '../context.js'
 import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
-import {
-  WorkspaceNoAccessError,
-  WorkspaceNotFoundError,
-  WorkspaceRoleNotFoundError,
-  WorkspaceSsoProviderNotFoundError,
-  WorkspaceSsoSessionNoAccessError,
-  WorkspaceSsoSessionNotFoundError
-} from '../authErrors.js'
 
-export type GetWorkspace = (args: {
-  workspaceId: string
-}) => Promise<
-  Result<
-    Workspace,
-    | InstanceType<typeof WorkspaceNotFoundError>
-    | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
-    | InstanceType<typeof WorkspaceNoAccessError>
-  >
->
+export type GetWorkspace = (args: WorkspaceContext) => Promise<Workspace | null>
 
-export type GetWorkspaceRole = (args: {
-  userId: string
-  workspaceId: string
-}) => Promise<Result<WorkspaceRoles, InstanceType<typeof WorkspaceRoleNotFoundError>>>
+export type GetWorkspaceRole = (
+  args: UserContext & WorkspaceContext
+) => Promise<WorkspaceRoles | null>
 
-export type GetWorkspaceSsoProvider = (args: {
-  workspaceId: string
-}) => Promise<
-  Result<WorkspaceSsoProvider, InstanceType<typeof WorkspaceSsoProviderNotFoundError>>
->
+export type GetWorkspaceLimits = (
+  args: WorkspaceContext
+) => Promise<WorkspaceLimits | null>
 
-export type GetWorkspaceSsoSession = (args: {
-  userId: string
-  workspaceId: string
-}) => Promise<
-  Result<WorkspaceSsoSession, InstanceType<typeof WorkspaceSsoSessionNotFoundError>>
->
+export type GetWorkspacePlan = (args: WorkspaceContext) => Promise<WorkspacePlan | null>
+
+export type GetWorkspaceProjectCount = (
+  args: WorkspaceContext
+) => Promise<number | null>
+
+export type GetWorkspaceSeat = (
+  args: UserContext & WorkspaceContext
+) => Promise<WorkspaceSeatType | null>
+
+export type GetWorkspaceSsoProvider = (
+  args: WorkspaceContext
+) => Promise<WorkspaceSsoProvider | null>
+
+export type GetWorkspaceSsoSession = (
+  args: UserContext & WorkspaceContext
+) => Promise<WorkspaceSsoSession | null>
 
 export type GetEnv = () => Promise<FeatureFlags>
+
+export type GetAdminOverrideEnabled = () => Promise<boolean>

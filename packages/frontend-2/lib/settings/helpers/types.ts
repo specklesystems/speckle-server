@@ -17,14 +17,15 @@ export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
 }
 
 export enum WorkspaceUserActionTypes {
-  RemoveMember = 'remove-member',
+  RemoveFromWorkspace = 'remove-from-workspace',
   LeaveWorkspace = 'leave-workspace',
   MakeAdmin = 'make-admin',
   RemoveAdmin = 'remove-admin',
   MakeGuest = 'make-guest',
   MakeMember = 'make-member',
   UpgradeEditor = 'upgrade-editor',
-  DowngradeEditor = 'downgrade-editor'
+  DowngradeEditor = 'downgrade-editor',
+  UpdateProjectPermissions = 'update-project-permissions'
 }
 
 export type WorkspaceUserUpdateShowOptions = {
@@ -33,22 +34,4 @@ export type WorkspaceUserUpdateShowOptions = {
   targetUserCurrentRole?: string
   targetUserCurrentSeatType?: WorkspaceSeatType
   isDomainCompliant?: boolean
-}
-
-type WorkspaceUserActionsMenuConfig = {
-  title: string
-  show: (options: WorkspaceUserUpdateShowOptions) => boolean
-}
-
-export type WorkspaceUserActionsDialogConfig = {
-  title: string
-  mainMessage: string | ((seatType?: WorkspaceSeatType) => string)
-  showRoleInfo?: boolean
-  buttonText: string
-  seatCountMessage?: boolean
-}
-
-export type WorkspaceUserActionConfig = {
-  menu: WorkspaceUserActionsMenuConfig
-  dialog: WorkspaceUserActionsDialogConfig
 }

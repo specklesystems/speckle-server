@@ -2,14 +2,15 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`p-1.5 pb-1 flex flex-col rounded-md cursor-pointer hover:bg-highlight-3
+    :class="`p-1.5 pb-1 flex flex-col rounded-md
       ${isOpenInViewer ? 'bg-highlight-2' : ''}
+      ${isLimited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
     `"
-    @click="open(thread.id)"
+    @click="isLimited ? null : open(thread.id)"
   >
     <div class="flex w-full items-center">
       <div class="flex-1 flex flex-col gap-y-1.5">
-        <div class="flex items-center space-x-1.5">
+        <div class="flex items-center space-x-1.5 select-none">
           <UserAvatarGroup :users="threadAuthors" size="sm" />
           <span class="grow truncate text-body-2xs text-foreground">
             {{ thread.author.name }}
@@ -18,9 +19,16 @@
             </span>
           </span>
         </div>
-        <div class="truncate text-body-2xs text-foreground dark:text-foreground-2">
+        <div
+          v-if="!isLimited"
+          class="truncate text-body-2xs text-foreground dark:text-foreground-2"
+        >
           {{ thread.rawText }}
         </div>
+        <ViewerResourcesUpgradeLimitAlert
+          v-else
+          text="Upgrade to see comments older than (count) days."
+        />
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <div
             v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
@@ -49,6 +57,7 @@
         </div>
       </div>
       <FormButton
+        v-if="!isLimited"
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
         text
@@ -95,6 +104,10 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+
+const isLimited = computed(() => {
+  return !props.thread.rawText || props.thread.rawText.trim() === ''
+})
 
 const mp = useMixpanel()
 const open = (id: string) => {

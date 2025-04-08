@@ -209,10 +209,8 @@ export async function buildContext(params?: {
     await wait(delay)
   }
 
-  const [authLoaders, dataLoaders] = await Promise.all([
-    moduleAuthLoaders(),
-    buildRequestLoaders(ctx, { cleanLoadersEarly })
-  ])
+  const dataLoaders = await buildRequestLoaders(ctx, { cleanLoadersEarly })
+  const authLoaders = await moduleAuthLoaders({ dataLoaders })
   const authPolicies = Authz.authPoliciesFactory(authLoaders.loaders)
 
   return {
@@ -224,7 +222,8 @@ export async function buildContext(params?: {
       clearCache: () => {
         authLoaders.clearCache()
       }
-    }
+    },
+    authLoaders: authLoaders.loaders
   }
 }
 

@@ -1,34 +1,28 @@
 import { Roles, ServerRoles } from '../../core/constants.js'
-import { throwUncoveredError } from '../../core/index.js'
+import { UserContext } from '../domain/context.js'
+import { Loaders } from '../domain/loaders.js'
 import { isMinimumServerRole } from '../domain/logic/roles.js'
 import { AuthPolicyCheck } from '../domain/policies.js'
 
 export const hasMinimumServerRole: AuthPolicyCheck<
   'getServerRole',
-  { userId: string; role: ServerRoles }
+  UserContext & { role: ServerRoles }
 > =
   (loaders) =>
   async ({ userId, role: requiredServerRole }) => {
     const userServerRole = await loaders.getServerRole({ userId })
-    if (userServerRole.isErr) {
-      switch (userServerRole.error.code) {
-        case 'ServerRoleNotFound':
-          return false
-        default:
-          throwUncoveredError(userServerRole.error.code)
-      }
-    }
-    return isMinimumServerRole(userServerRole.value, requiredServerRole)
+    if (!userServerRole) return false
+    return isMinimumServerRole(userServerRole, requiredServerRole)
   }
 
 export const canUseAdminOverride: AuthPolicyCheck<
-  'getEnv' | 'getServerRole',
-  { userId: string }
+  typeof Loaders.getAdminOverrideEnabled | 'getServerRole',
+  UserContext
 > =
   (loaders) =>
   async ({ userId }) => {
-    const { FF_ADMIN_OVERRIDE_ENABLED } = await loaders.getEnv()
-    if (!FF_ADMIN_OVERRIDE_ENABLED) return false
+    const adminOverrideEnabled = await loaders.getAdminOverrideEnabled()
+    if (!adminOverrideEnabled) return false
     return await hasMinimumServerRole(loaders)({
       userId,
       role: Roles.Server.Admin

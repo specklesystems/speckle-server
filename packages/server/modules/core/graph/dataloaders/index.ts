@@ -97,6 +97,7 @@ import {
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
 import { logger } from '@/observability/logging'
+import { getLastVersionByProjectIdFactory } from '@/modules/core/repositories/versions'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -145,6 +146,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
     const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
+    const getLastVersionByProjectId = getLastVersionByProjectIdFactory({ db })
 
     return {
       streams: {
@@ -358,7 +360,16 @@ const dataLoadersDefinition = defineRequestDataloaders(
               return loader
             }
           }
-        })()
+        })(),
+        getLastVersion: createLoader<string, Nullable<CommitRecord>>(
+          async (projectIds) => {
+            const results = keyBy(
+              await getLastVersionByProjectId({ projectIds }),
+              (c) => c.projectId
+            )
+            return projectIds.map((projectId) => results[projectId] || null)
+          }
+        )
       },
       branches: {
         getCommitCount: createLoader<string, number>(async (branchIds) => {

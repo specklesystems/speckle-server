@@ -22,11 +22,11 @@ import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/
 import {
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
+  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
 import { cloneDeep, sum } from 'lodash'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -77,13 +77,17 @@ export const handleSubscriptionUpdateFactory =
         case 'plus':
         case 'business':
         case 'team':
+        case 'teamUnlimited':
         case 'pro':
+        case 'proUnlimited':
           break
         case 'unlimited':
         case 'academia':
         case 'starterInvoiced':
         case 'plusInvoiced':
         case 'businessInvoiced':
+        case 'proUnlimitedInvoiced':
+        case 'teamUnlimitedInvoiced':
         case 'free':
           throw new WorkspacePlanMismatchError()
         default:
@@ -141,7 +145,9 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
 
     switch (workspacePlan.name) {
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
         // If viewer seat type, we don't need to do anything
         if (seatType === WorkspaceSeatType.Viewer) return
       case 'starter':
@@ -153,6 +159,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'proUnlimitedInvoiced':
+      case 'teamUnlimitedInvoiced':
       case 'free':
         throw new WorkspacePlanMismatchError()
       default:
@@ -223,7 +231,9 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
 
     switch (workspacePlan.name) {
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
         throw new NotImplementedError()
       case 'starter':
       case 'plus':
@@ -234,6 +244,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'proUnlimitedInvoiced':
+      case 'teamUnlimitedInvoiced':
       case 'free':
         throw new WorkspacePlanMismatchError()
       default:

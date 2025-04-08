@@ -1,9 +1,15 @@
 import { AllAuthCheckContextLoaders } from '../domain/loaders.js'
-import { canQueryProjectPolicy } from './canQueryProject.js'
+import { canCreateWorkspaceProjectPolicy } from './workspace/canCreateWorkspaceProject.js'
+import { canReadProjectPolicy } from './project/canReadProject.js'
+import { canCreatePersonalProjectPolicy } from './project/canCreatePersonal.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
-    canQuery: canQueryProjectPolicy(loaders)
+    canRead: canReadProjectPolicy(loaders),
+    canCreatePersonal: canCreatePersonalProjectPolicy(loaders)
+  },
+  workspace: {
+    canCreateProject: canCreateWorkspaceProjectPolicy(loaders)
   }
 })
 

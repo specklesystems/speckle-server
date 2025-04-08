@@ -1,34 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { hasMinimumServerRole, canUseAdminOverride } from './serverRole.js'
 import cryptoRandomString from 'crypto-random-string'
-import { err, ok } from 'true-myth/result'
-import {
-  ServerRoleNotFoundError,
-  ProjectRoleNotFoundError
-} from '../domain/authErrors.js'
-import { parseFeatureFlags } from '../../environment/index.js'
 
 describe('hasMinimumServerRole returns a function, that', () => {
-  it('throws uncoveredError for unexpected loader errors', async () => {
-    await expect(
-      hasMinimumServerRole({
-        // @ts-expect-error deliberately testing an unexpected loader error
-        getServerRole: async () => err(new ProjectRoleNotFoundError())
-      })({ userId: cryptoRandomString({ length: 10 }), role: 'server:user' })
-    ).rejects.toThrowError(/Uncovered error/)
+  it('turns non existing server roles into false ', async () => {
+    const result = await hasMinimumServerRole({
+      getServerRole: async () => null
+    })({ userId: cryptoRandomString({ length: 10 }), role: 'server:user' })
+    expect(result).toEqual(false)
   })
-  it.each([ServerRoleNotFoundError])(
-    'turns expected loader error $code into false ',
-    async (loaderError) => {
-      const result = await hasMinimumServerRole({
-        getServerRole: async () => err(new loaderError())
-      })({ userId: cryptoRandomString({ length: 10 }), role: 'server:user' })
-      expect(result).toEqual(false)
-    }
-  )
   it('returns false for smaller roles', async () => {
     const result = await hasMinimumServerRole({
-      getServerRole: async () => Promise.resolve(ok('server:user'))
+      getServerRole: async () => 'server:user'
     })({
       userId: cryptoRandomString({ length: 9 }),
       role: 'server:admin'
@@ -37,7 +20,7 @@ describe('hasMinimumServerRole returns a function, that', () => {
   })
   it('returns true for roles with enough power', async () => {
     const result = await hasMinimumServerRole({
-      getServerRole: () => Promise.resolve(ok('server:admin'))
+      getServerRole: async () => 'server:admin'
     })({
       userId: cryptoRandomString({ length: 9 }),
       role: 'server:guest'
@@ -49,7 +32,7 @@ describe('hasMinimumServerRole returns a function, that', () => {
 describe('canUseAdminOverride returns a function, that', () => {
   it('returns false for admins if admin override is not enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({}),
+      getAdminOverrideEnabled: async () => false,
       getServerRole: async () => {
         expect.fail()
       }
@@ -58,22 +41,22 @@ describe('canUseAdminOverride returns a function, that', () => {
   })
   it('returns false for non admins if admin override is not enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({}),
-      getServerRole: async () => ok('server:user')
+      getAdminOverrideEnabled: async () => false,
+      getServerRole: async () => 'server:user'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(false)
   })
   it('returns false for non admins if admin override is enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
-      getServerRole: async () => ok('server:user')
+      getAdminOverrideEnabled: async () => true,
+      getServerRole: async () => 'server:user'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(false)
   })
   it('returns true for admins if admin override is enabled', async () => {
     const result = await canUseAdminOverride({
-      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
-      getServerRole: async () => ok('server:admin')
+      getAdminOverrideEnabled: async () => true,
+      getServerRole: async () => 'server:admin'
     })({ userId: cryptoRandomString({ length: 10 }) })
     expect(result).toEqual(true)
   })
