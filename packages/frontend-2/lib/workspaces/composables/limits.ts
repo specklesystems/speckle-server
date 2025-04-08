@@ -29,10 +29,18 @@ export const useWorkspaceLimits = (slug: string) => {
   // Plan limits
   const limits = computed(() => {
     const planName = result.value?.workspaceBySlug?.plan?.name
-    if (!planName) return { projectCount: 0, modelCount: 0 }
+    if (!planName) return { projectCount: 0, modelCount: 0, versionsHistory: null }
 
     const planConfig = WorkspacePlanConfigs[planName]
     return planConfig?.limits
+  })
+
+  const versionLimitFormatted = computed(() => {
+    const versionsHistory = limits.value?.versionsHistory
+    if (!versionsHistory) return 'Unlimited'
+
+    const { value, unit } = versionsHistory
+    return `${value} ${unit}`
   })
 
   const remainingProjectCount = computed(() =>
@@ -42,6 +50,7 @@ export const useWorkspaceLimits = (slug: string) => {
     limits.value.modelCount ? limits.value.modelCount - modelCount.value : 0
   )
 
+  // TODO; move to permissions
   const canAddProject = computed(() => {
     // Unlimited
     if (limits.value.projectCount === null) return true
@@ -49,6 +58,7 @@ export const useWorkspaceLimits = (slug: string) => {
     return projectCount.value + 1 <= limits.value.projectCount
   })
 
+  // TODO; move to permissions
   const canAddModels = (additionalModels?: number) => {
     // Unlimited
     if (limits.value.modelCount === null) return true
@@ -66,6 +76,7 @@ export const useWorkspaceLimits = (slug: string) => {
     remainingProjectCount,
     remainingModelCount,
     canAddProject,
-    canAddModels
+    canAddModels,
+    versionLimitFormatted
   }
 }

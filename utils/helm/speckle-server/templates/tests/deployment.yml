@@ -31,6 +31,10 @@ spec:
               value: {{ .Values.test.logLevel }}
             - name: LOG_PRETTY
               value: {{ .Values.test.logPretty | quote }}
+
+            {{- with .Values.test.additionalEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
             {{- with .Values.test.requests }}
             requests:

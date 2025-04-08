@@ -260,7 +260,7 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const canCreate = await context.authPolicies.project.canCreateLegacy({
+      const canCreate = await context.authPolicies.project.canCreatePersonal({
         userId: context.userId
       })
       throwIfAuthNotOk(canCreate)

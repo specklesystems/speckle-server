@@ -86,7 +86,8 @@ export type WorkspacePlanPriceStructure = {
 
 const unlimited: WorkspaceLimits = {
   projectCount: null,
-  modelCount: null
+  modelCount: null,
+  versionsHistory: null
 }
 
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
@@ -146,7 +147,8 @@ export const WorkspacePaidPlanConfigs: {
     features: teamFeatures,
     limits: {
       projectCount: 5,
-      modelCount: 25
+      modelCount: 25,
+      versionsHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.TeamUnlimited]: {
@@ -154,7 +156,8 @@ export const WorkspacePaidPlanConfigs: {
     features: teamFeatures,
     limits: {
       projectCount: null,
-      modelCount: null
+      modelCount: null,
+      versionsHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -162,7 +165,8 @@ export const WorkspacePaidPlanConfigs: {
     features: proFeatures,
     limits: {
       projectCount: 10,
-      modelCount: 50
+      modelCount: 50,
+      versionsHistory: null
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -170,7 +174,8 @@ export const WorkspacePaidPlanConfigs: {
     features: proFeatures,
     limits: {
       projectCount: null,
-      modelCount: null
+      modelCount: null,
+      versionsHistory: null
     }
   }
 }
@@ -227,7 +232,8 @@ export const WorkspaceUnpaidPlanConfigs: {
     features: baseFeatures,
     limits: {
       projectCount: 1,
-      modelCount: 5
+      modelCount: 5,
+      versionsHistory: { value: 1, unit: 'week' }
     }
   }
 }

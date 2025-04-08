@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from './workspaceSso.js'
+import { ensureWorkspaceRoleAndSessionFragment } from './workspaces.js'
 import cryptoRandomString from 'crypto-random-string'
 import {
   WorkspaceNoAccessError,
@@ -8,7 +8,7 @@ import {
 
 describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
-    const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => null,
       getWorkspaceRole: async () => {
         expect.fail()
@@ -28,7 +28,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     })
   })
   it('returns WorkspaceNoAccessError if the user does not have a workspace role', async () => {
-    const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'
@@ -48,8 +48,8 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       code: WorkspaceNoAccessError.code
     })
   })
-  it('returns nothing if user does not have a minimum workspace:member role', async () => {
-    const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+  it('returns ok w/o checking session if user is a workspace guest', async () => {
+    const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'
@@ -65,10 +65,10 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    expect(result).toBeNothingResult()
+    expect(result).toBeAuthOKResult()
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
-    const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'
@@ -85,7 +85,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     expect(result).toBeAuthOKResult()
   })
   it('returns WorkspaceSsoSessionInvalidError if user does not have an SSO session', async () => {
-    const result = maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'
@@ -113,7 +113,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     const validUntil = new Date()
     validUntil.setDate(validUntil.getDate() - 1)
 
-    const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'
@@ -141,7 +141,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
     const validUntil = new Date()
     validUntil.setDate(validUntil.getDate() + 100)
 
-    const result = await maybeMemberRoleWithValidSsoSessionIfNeeded({
+    const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
         slug: 'bbb'

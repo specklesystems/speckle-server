@@ -13,6 +13,7 @@ import type { ConditionalKeys, SetRequired } from 'type-fest'
 import type { Logger } from 'pino'
 import type { BaseContext } from '@apollo/server'
 import type { Registry } from 'prom-client'
+import { AuthCheckContextLoaders } from '@speckle/shared/dist/commonjs/authz'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -61,6 +62,7 @@ export type GraphQLContext = BaseContext &
     loaders: RequestDataLoaders
 
     log: Logger
+    authLoaders: AuthCheckContextLoaders
   }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

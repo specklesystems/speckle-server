@@ -1,8 +1,17 @@
 import { Roles } from '../../../core/constants.js'
+import { err, ok } from 'true-myth/result'
+import { AuthPolicy } from '../../domain/policies.js'
+import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 import {
-  hasMinimumProjectRole,
-  isPubliclyReadableProject
-} from '../../checks/projects.js'
+  checkIfPubliclyReadableProjectFragment,
+  ensureMinimumProjectRoleFragment,
+  ensureProjectWorkspaceAccessFragment
+} from '../../fragments/projects.js'
+import {
+  checkIfAdminOverrideEnabledFragment,
+  ensureMinimumServerRoleFragment
+} from '../../fragments/server.js'
+import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -11,85 +20,73 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
-import { err, ok } from 'true-myth/result'
-import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
-import { AuthPolicy } from '../../domain/policies.js'
-import { canUseAdminOverride, hasMinimumServerRole } from '../../checks/serverRole.js'
-import { hasAnyWorkspaceRole } from '../../checks/workspaceRole.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 
 export const canReadProjectPolicy: AuthPolicy<
-  | typeof AuthCheckContextLoaderKeys.getAdminOverrideEnabled
-  | typeof AuthCheckContextLoaderKeys.getEnv
-  | typeof AuthCheckContextLoaderKeys.getProject
-  | typeof AuthCheckContextLoaderKeys.getProjectRole
-  | typeof AuthCheckContextLoaderKeys.getServerRole
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
-  | typeof AuthCheckContextLoaderKeys.getWorkspace,
+  | typeof Loaders.getProject
+  | typeof Loaders.getEnv
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getProjectRole
+  | typeof Loaders.getAdminOverrideEnabled,
   MaybeUserContext & ProjectContext,
-  | InstanceType<typeof ProjectNotFoundError>
-  | InstanceType<typeof ProjectNoAccessError>
-  | InstanceType<typeof WorkspaceNoAccessError>
-  | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
-  | InstanceType<typeof ServerNoSessionError>
-  | InstanceType<typeof ServerNoAccessError>
+  InstanceType<
+    | typeof ProjectNotFoundError
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof ProjectNoAccessError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceSsoSessionNoAccessError
+  >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    const env = await loaders.getEnv()
-
-    const project = await loaders.getProject({ projectId })
-    if (!project) return err(new ProjectNotFoundError())
-
     // All users may read public projects
-    if (await isPubliclyReadableProject(loaders)({ projectId })) return ok()
+    const isPubliclyReadable = await checkIfPubliclyReadableProjectFragment(loaders)({
+      projectId
+    })
+    if (isPubliclyReadable.isErr) {
+      return err(isPubliclyReadable.error)
+    }
+    if (isPubliclyReadable.value) return ok()
 
-    // From this point on, you cannot pass as an unknown user, need to log in
-    if (!userId) return err(new ServerNoSessionError())
-    const isActiveServerUser = await hasMinimumServerRole(loaders)({
+    // Not public. Ensure user is authed
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.Guest
     })
-    if (!isActiveServerUser) return err(new ServerNoAccessError())
-
-    // When G O D M O D E is enabled
-    if (await canUseAdminOverride(loaders)({ userId })) return ok()
-
-    // todo
-    const { workspaceId } = project
-    // When a project belongs to a workspace
-    if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
-      // User must have a workspace role to read project data
-      if (!(await hasAnyWorkspaceRole(loaders)({ userId, workspaceId })))
-        return err(new WorkspaceNoAccessError())
-
-      const memberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
-        loaders
-      )({
-        userId,
-        workspaceId
-      })
-
-      if (memberWithSsoSession.isJust) {
-        // if a member, make sure it has a valid sso session
-        return memberWithSsoSession.value.isOk
-          ? ok()
-          : err(memberWithSsoSession.value.error)
-      } else {
-        // just fall through to the generic project role check for workspace:guest-s
-        // they do not need an sso session
-      }
+    if (ensuredServerRole.isErr) {
+      return err(ensuredServerRole.error)
     }
 
-    // User must have at least stream:reviewer role to read project data
-    return (await hasMinimumProjectRole(loaders)({
-      userId,
-      projectId,
-      role: 'stream:reviewer'
-    }))
-      ? ok()
-      : err(new ProjectNoAccessError())
+    // Check if user has admin override enabled
+    const isAdminOverrideEnabled = await checkIfAdminOverrideEnabledFragment(loaders)({
+      userId
+    })
+    if (isAdminOverrideEnabled.isErr) {
+      return err(isAdminOverrideEnabled.error)
+    }
+    if (isAdminOverrideEnabled.value) return ok()
+
+    // No god mode, ensure workspace access
+    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
+      userId: userId!,
+      projectId
+    })
+    if (ensuredWorkspaceAccess.isErr) {
+      return err(ensuredWorkspaceAccess.error)
+    }
+
+    // And ensure (implicit/explicit) project role
+    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+      userId: userId!,
+      projectId
+    })
+    if (ensuredProjectRole.isErr) {
+      return err(ensuredProjectRole.error)
+    }
+
+    return ok()
   }
