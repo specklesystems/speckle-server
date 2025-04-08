@@ -7,7 +7,7 @@
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
         <p class="text-heading-lg text-foreground capitalize">
-          {{ plan?.name }}
+          {{ formatName(plan?.name) }}
         </p>
       </div>
 
@@ -20,7 +20,7 @@
           <template v-else>Bill</template>
         </h3>
         <p class="text-heading-lg text-foreground inline-block">
-          {{ totalCostFormatted }}
+          TODO
           <span v-if="isPurchasablePlan">per {{ billingInterval }}</span>
         </p>
         <NuxtLink
@@ -61,7 +61,8 @@
 <script setup lang="ts">
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { type MaybeNullOrUndefined, WorkspacePlanStatuses } from '@speckle/shared'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 defineProps<{
   workspaceId?: MaybeNullOrUndefined<string>
@@ -71,10 +72,12 @@ const { billingPortalRedirect } = useBillingActions()
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { plan, isPurchasablePlan, isActivePlan, totalCostFormatted, billingInterval } =
-  useWorkspacePlan(slug.value)
+const { plan, isPurchasablePlan, billingInterval } = useWorkspacePlan(slug.value)
 
 const showBillingPortalLink = computed(
-  () => isActivePlan.value && isPurchasablePlan.value
+  () =>
+    plan.value?.status === WorkspacePlanStatuses.Valid ||
+    plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
+    plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
 )
 </script>

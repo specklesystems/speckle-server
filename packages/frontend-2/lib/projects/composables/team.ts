@@ -25,6 +25,7 @@ graphql(`
     }
     team {
       role
+      seatType
       user {
         id
         role
@@ -69,7 +70,7 @@ export function useTeamManagePermissionsInternals(
 
 export function useTeamInternals(
   projectData: ComputedRef<ProjectPageTeamInternals_ProjectFragment | undefined>,
-  workspace?: Ref<ProjectPageTeamInternals_WorkspaceFragment | undefined>
+  workspace?: Ref<ProjectPageTeamInternals_WorkspaceFragment | undefined | null>
 ) {
   const { isOwner, activeUser, isServerGuest } =
     useTeamManagePermissionsInternals(projectData)
@@ -85,7 +86,8 @@ export function useTeamInternals(
         role: invitedUser.role,
         inviteId: invitedUser.inviteId,
         serverRole: (invitedUser.user?.role || null) as Nullable<ServerRoles>,
-        workspaceRole: null
+        workspaceRole: null,
+        seatType: null
       })
     }
 
@@ -101,7 +103,8 @@ export function useTeamInternals(
         role: collaborator.role,
         inviteId: null,
         serverRole: collaborator.user.role as ServerRoles,
-        workspaceRole: workspaceRole as WorkspaceRoles
+        workspaceRole: workspaceRole as WorkspaceRoles,
+        seatType: collaborator.seatType
       })
     }
 

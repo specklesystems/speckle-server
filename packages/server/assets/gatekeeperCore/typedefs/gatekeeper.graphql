@@ -8,7 +8,9 @@ enum PaidWorkspacePlans {
   business
   # New plans
   team
+  teamUnlimited
   pro
+  proUnlimited
 }
 
 enum BillingInterval {
@@ -65,8 +67,13 @@ enum WorkspacePlans {
   starterInvoiced
   plusInvoiced
   businessInvoiced
+  # New plans
   team
+  teamUnlimited
+  teamUnlimitedInvoiced
   pro
+  proUnlimited
+  proUnlimitedInvoiced
 }
 
 enum WorkspacePlanStatuses {
@@ -84,16 +91,33 @@ enum WorkspacePaymentMethod {
   billing
 }
 
+type WorkspacePlanUsage {
+  projectCount: Int!
+  modelCount: Int!
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
   paymentMethod: WorkspacePaymentMethod!
+  usage: WorkspacePlanUsage!
 }
 
 type WorkspaceSubscriptionSeats {
-  plan: Int!
-  guest: Int!
+  editors: WorkspaceSubscriptionSeatCount!
+  viewers: WorkspaceSubscriptionSeatCount!
+}
+
+type WorkspaceSubscriptionSeatCount {
+  """
+  Total number of seats purchased and available in the current subscription cycle
+  """
+  available: Int!
+  """
+  Total number of seats in use by workspace users
+  """
+  assigned: Int!
 }
 
 type WorkspaceSubscription {

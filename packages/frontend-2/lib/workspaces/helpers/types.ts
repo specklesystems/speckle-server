@@ -1,6 +1,7 @@
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type {
   BillingInterval,
-  PaidWorkspacePlans,
+  WorkspacePlans,
   SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
 } from '~/lib/common/generated/gql/graphql'
 
@@ -34,10 +35,11 @@ export type WorkspaceWizardState = {
   name: string
   slug: string
   invites: string[]
-  plan: PaidWorkspacePlans | null
+  plan: WorkspacePlans | null
   billingInterval: BillingInterval | null
   id: string
   region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+  enableDomainDiscoverabilityForDomain: MaybeNullOrUndefined<string>
 }
 
 export enum WizardSteps {

@@ -1,23 +1,22 @@
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
-  getWorkspaceSubscriptionFactory,
-  upsertTrialWorkspacePlanFactory,
-  upsertUnpaidWorkspacePlanFactory
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  addWorkspaceSubscriptionSeatIfNeededFactoryNew,
+  addWorkspaceSubscriptionSeatIfNeededFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions'
 import {
   getWorkspacePlanPriceId,
   getWorkspacePlanProductId
 } from '@/modules/gatekeeper/stripe'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import Stripe from 'stripe'
-
-const { FF_GATEKEEPER_FORCE_FREE_PLAN } = getFeatureFlags()
 
 export const initializeEventListenersFactory =
   ({ db, stripe }: { db: Knex; stripe: Stripe }) =>
@@ -26,7 +25,7 @@ export const initializeEventListenersFactory =
     const quitCbs = [
       eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
         const addWorkspaceSubscriptionSeatIfNeeded =
-          addWorkspaceSubscriptionSeatIfNeededFactory({
+          addWorkspaceSubscriptionSeatIfNeededFactoryOld({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
@@ -34,32 +33,32 @@ export const initializeEventListenersFactory =
             }),
             getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe })
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            })
           })
 
-        await addWorkspaceSubscriptionSeatIfNeeded(payload)
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.acl
+        })
       }),
-      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
-        // TODO: based on a feature flag, we can force new workspaces into the free plan here
-        if (FF_GATEKEEPER_FORCE_FREE_PLAN) {
-          await upsertUnpaidWorkspacePlanFactory({ db })({
-            workspacePlan: {
-              name: 'free',
-              status: 'valid',
-              workspaceId: payload.workspace.id,
-              createdAt: new Date()
-            }
+      eventBus.listen(WorkspaceEvents.SeatUpdated, async ({ payload }) => {
+        const addWorkspaceSubscriptionSeatIfNeeded =
+          addWorkspaceSubscriptionSeatIfNeededFactoryNew({
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+            getWorkspacePlanPriceId,
+            getWorkspacePlanProductId,
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
-        } else {
-          await upsertTrialWorkspacePlanFactory({ db })({
-            workspacePlan: {
-              name: 'starter',
-              status: 'trial',
-              workspaceId: payload.workspace.id,
-              createdAt: new Date()
-            }
-          })
-        }
+
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.seat,
+          seatType: payload.seat.type
+        })
       })
     ]
 

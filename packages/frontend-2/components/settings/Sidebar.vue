@@ -19,10 +19,7 @@
         </NuxtLink>
       </div>
     </Portal>
-    <div
-      class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
-      :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
-    >
+    <div :class="wrapperClasses">
       <LayoutSidebar
         class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
       >
@@ -68,61 +65,47 @@
               />
             </NuxtLink>
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
-            <LayoutSidebarMenuGroup
-              v-for="workspaceItem in workspaceItems"
-              :key="`workspace-item-${workspaceItem.slug}`"
-              :title="workspaceItem.name"
-              collapsible
-              :collapsed="slug !== workspaceItem.slug"
-              :tag="
-                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
-                !workspaceItem.plan?.status
-                  ? 'TRIAL'
-                  : undefined
-              "
-              nested
-            >
-              <template #title-icon>
-                <WorkspaceAvatar
-                  :logo="workspaceItem.logo"
-                  :name="workspaceItem.name"
-                  size="sm"
-                />
-              </template>
+          <LayoutSidebarMenuGroup
+            v-if="showWorkspaceSettings"
+            title="Workspace settings"
+          >
+            <template #title-icon>
+              <IconWorkspaces class="size-4" />
+            </template>
+            <template v-if="activeWorkspaceItem">
               <NuxtLink
                 v-for="workspaceMenuItem in workspaceMenuItems"
-                :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
+                :key="`workspace-menu-item-${workspaceMenuItem.name}-${activeWorkspaceItem}`"
                 :to="
                   !isAdmin &&
                   (workspaceMenuItem.disabled ||
-                    needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
                     ? undefined
-                    : workspaceMenuItem.route(workspaceItem.slug)
+                    : workspaceMenuItem.route(activeWorkspaceItem.slug)
                 "
                 @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem
-                  v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                  v-if="workspaceMenuItem.permission?.includes(activeWorkspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
                   :active="
                     route.name?.toString().startsWith(workspaceMenuItem.name) &&
-                    route.params.slug === workspaceItem.slug
+                    route.params.slug === activeWorkspaceItem.slug
                   "
                   :tooltip-text="
-                    needsSsoSession(workspaceItem, workspaceMenuItem.name)
+                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name)
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
                   :disabled="
                     !isAdmin &&
                     (workspaceMenuItem.disabled ||
-                      needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                      needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
                   "
                   class="!pl-8"
                 />
               </NuxtLink>
-            </LayoutSidebarMenuGroup>
+            </template>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -144,16 +127,19 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { homeRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import {
-  WorkspacePlanStatuses,
-  type SettingsMenu_WorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
+  homeRoute,
+  projectsRoute,
+  settingsWorkspaceRoutes,
+  workspaceRoute
+} from '~/lib/common/helpers/route'
+import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
+import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 graphql(`
-  fragment SettingsDialog_Workspace on Workspace {
+  fragment SettingsSidebar_Workspace on Workspace {
     ...SettingsMenu_Workspace
     id
     slug
@@ -162,6 +148,7 @@ graphql(`
     logo
     plan {
       status
+      name
     }
     creationState {
       completed
@@ -170,20 +157,21 @@ graphql(`
 `)
 
 graphql(`
-  fragment SettingsDialog_User on User {
+  fragment SettingsSidebar_User on User {
     id
     workspaces {
       items {
-        ...SettingsDialog_Workspace
+        ...SettingsSidebar_Workspace
       }
     }
   }
 `)
 
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { activeWorkspaceSlug } = useNavigation()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin } = useActiveUser()
 const route = useRoute()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: computed(() => isWorkspacesEnabled.value)
 })
@@ -193,13 +181,22 @@ const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 
-const slug = computed(() => route.params.slug as string)
 const workspaceItems = computed(
   () =>
     workspaceResult.value?.activeUser?.workspaces.items.filter(
       (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
     ) || []
 )
+const activeWorkspaceItem = computed(() =>
+  workspaceItems.value.find((item) => item.slug === activeWorkspaceSlug.value)
+)
+const wrapperClasses = computed(() => {
+  return [
+    'absolute z-40 lg:static h-full flex shrink-0 transition-all',
+    `w-[13rem]`,
+    isOpenMobile.value ? '' : `-translate-x-[13rem] lg:translate-x-0`
+  ]
+})
 
 const needsSsoSession = (
   workspace: SettingsMenu_WorkspaceFragment,
@@ -212,9 +209,18 @@ const needsSsoSession = (
 }
 
 const exitSettingsRoute = computed(() => {
-  if (import.meta.server || !settingsMenuState.value.previousRoute) {
-    return homeRoute
+  if (import.meta.server) return homeRoute
+  if (!settingsMenuState.value.previousRoute) {
+    return activeWorkspaceSlug.value
+      ? workspaceRoute(activeWorkspaceSlug.value)
+      : projectsRoute
   }
+
   return settingsMenuState.value.previousRoute
+})
+
+const showWorkspaceSettings = computed(() => {
+  if (!isWorkspacesEnabled.value) return false
+  return !!activeWorkspaceSlug.value
 })
 </script>

@@ -43,3 +43,5 @@ storybook-static
 packages/fileimport-service/ifc-dotnet/
 packages/fileimport-service/stl/
 packages/fileimport-service/obj/
+
+packages/shared/html

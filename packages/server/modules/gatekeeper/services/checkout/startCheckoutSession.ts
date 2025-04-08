@@ -13,16 +13,15 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
+import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
 import { NotFoundError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import {
   PaidWorkspacePlans,
   Roles,
   throwUncoveredError,
-  WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  WorkspacePlanBillingIntervals
 } from '@speckle/shared'
-import { z } from 'zod'
 
 export const startCheckoutSessionFactoryOld =
   ({
@@ -128,27 +127,6 @@ export const startCheckoutSessionFactoryOld =
     await saveCheckoutSession({ checkoutSession })
     return checkoutSession
   }
-
-const WorkspacePlansUpgradeMapping = z.union([
-  z.object({
-    current: z.literal('free'),
-    upgrade: z.union([z.literal('team'), z.literal('pro')])
-  }),
-  z.object({
-    current: z.literal('team'),
-    upgrade: z.literal('pro')
-  })
-])
-
-const isUpgradeWorkspacePlanValid = ({
-  current,
-  upgrade
-}: {
-  current: WorkspacePlans
-  upgrade: WorkspacePlans
-}): boolean => {
-  return WorkspacePlansUpgradeMapping.safeParse({ current, upgrade }).success
-}
 
 export const startCheckoutSessionFactoryNew =
   ({
@@ -259,6 +237,9 @@ export const startCheckoutSessionFactoryNew =
       workspaceId,
       type: 'editor'
     })
+    if (!editorsCount) {
+      throw new InvalidWorkspacePlanUpgradeError('Workspace has no seats')
+    }
 
     const checkoutSession = await createCheckoutSession({
       workspaceId,

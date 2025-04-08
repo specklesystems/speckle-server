@@ -66,6 +66,7 @@ export const parseSubscriptionData = (
     cancelAt: stripeSubscription.cancel_at
       ? new Date(stripeSubscription.cancel_at * 1000)
       : null,
+    currentPeriodEnd: stripeSubscription.current_period_end * 1000, // this value arrives as a UNIX timestamp
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
         typeof subscriptionItem.price.product === 'string'
@@ -84,14 +85,14 @@ export const parseSubscriptionData = (
       }
     })
   }
-  return subscriptionData
+  return SubscriptionData.parse(subscriptionData)
 }
 
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
 // on each change, we're reconciling that state to stripe
 export const reconcileWorkspaceSubscriptionFactory =
   ({ stripe }: { stripe: Stripe }): ReconcileSubscriptionData =>
-  async ({ subscriptionData, applyProrotation }) => {
+  async ({ subscriptionData, prorationBehavior }) => {
     const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
       subscriptionId: subscriptionData.subscriptionId
     })
@@ -126,7 +127,7 @@ export const reconcileWorkspaceSubscriptionFactory =
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
     await stripe.subscriptions.update(subscriptionData.subscriptionId, {
       items,
-      proration_behavior: applyProrotation ? 'create_prorations' : 'none'
+      proration_behavior: prorationBehavior
     })
   }
 

@@ -13,11 +13,7 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge
-              v-if="project.role"
-              rounded
-              :color-classes="'text-foreground-2 bg-primary-muted'"
-            >
+            <CommonBadge v-if="project.role" rounded color="secondary">
               <span class="capitalize">
                 {{ project.role?.split(':').reverse()[0] }}
               </span>
@@ -25,7 +21,7 @@
           </div>
           <div class="flex flex-row gap-x-3">
             <div v-tippy="collaboratorsTooltip">
-              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : ''">
+              <NuxtLink :to="hasRole ? projectRoute(project.id, 'collaborators') : ''">
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
@@ -74,7 +70,6 @@ import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 import { canEditProject } from '~~/lib/projects/helpers/permissions'
-import { projectCollaboratorsRoute } from '~~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -228,6 +223,11 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
   if (hasRole.value) {
     items.push({
+      title: 'Collaborators',
+      id: 'collaborators'
+    })
+
+    items.push({
       title: 'Settings',
       id: 'settings'
     })
@@ -248,6 +248,8 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/collaborators\/?/i.test(path) && hasRole.value)
+      return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
     return findTabById('models')
   },
@@ -262,6 +264,11 @@ const activePageTab = computed({
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
+        break
+      case 'collaborators':
+        if (hasRole.value) {
+          router.push({ path: projectRoute(projectId.value, 'collaborators') })
+        }
         break
       case 'settings':
         if (hasRole.value) {

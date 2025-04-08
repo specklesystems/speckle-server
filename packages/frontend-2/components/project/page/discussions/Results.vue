@@ -1,11 +1,7 @@
 <template>
   <div>
     <template v-if="hasItems">
-      <ProjectPageLatestItemsCommentsGrid
-        v-if="gridOrList === GridListToggleValue.Grid"
-        :threads="result"
-      />
-      <ProjectPageLatestItemsCommentsList v-else :threads="result" />
+      <ProjectPageLatestItemsCommentsGrid :threads="result" />
       <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
     </template>
 
@@ -17,7 +13,6 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectDiscussionsPageResults_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import type { Nullable } from '@speckle/shared'
@@ -30,7 +25,6 @@ graphql(`
 
 const props = defineProps<{
   project: ProjectDiscussionsPageResults_ProjectFragment
-  gridOrList: GridListToggleValue
   includeArchived: boolean
 }>()
 

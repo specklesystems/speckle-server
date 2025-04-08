@@ -13,6 +13,7 @@ import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainCons
 import {
   BranchRecord,
   CommitRecord,
+  LimitedUserRecord,
   ObjectRecord,
   ServerInfo,
   StreamRecord,
@@ -128,3 +129,16 @@ export type StreamCollaboratorGraphQLReturn = {
 }
 
 export type ServerInfoGraphQLReturn = ServerInfo
+
+export type ProjectCollaboratorGraphQLReturn = {
+  id: string
+  user: LimitedUserRecord
+  role: StreamRoles
+  projectId: string
+}
+
+export type ProjectPermissionChecksGraphQLReturn = {
+  projectId: string
+}
+
+export type RootPermissionChecksGraphQLReturn = GraphQLEmptyReturn

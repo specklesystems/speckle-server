@@ -2,7 +2,7 @@ import {
   Load,
   LoadArgs,
   PreviewGenerator,
-  PreviewResult,
+  PreviewPageResult,
   TakeScreenshot
 } from '@speckle/shared/dist/esm/previews/interface.js'
 import {
@@ -61,7 +61,7 @@ const waitForAnimation = async (ms = 70) =>
 
 const takeScreenshot: TakeScreenshot = async () => {
   if (!viewer) viewer = await init()
-  const ret: PreviewResult = {
+  const ret: PreviewPageResult = {
     durationSeconds: 0,
     screenshots: {}
   }
@@ -78,6 +78,7 @@ const takeScreenshot: TakeScreenshot = async () => {
     viewer.requestRender(UpdateFlags.RENDER_RESET)
     await waitForAnimation(10)
     ret.screenshots[i + ''] = await viewer.screenshot()
+    console.log(`Screenshot taken at ${i}`)
   }
   ret.durationSeconds = (Date.now() - t0) / 1000
   return ret

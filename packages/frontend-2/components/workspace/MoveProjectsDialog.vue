@@ -5,6 +5,30 @@
     title="Move projects to workspace"
     :buttons="buttons"
   >
+    <FormTextInput
+      v-bind="bind"
+      label="Move projects"
+      name="search"
+      color="foundation"
+      placeholder="Search projects..."
+      show-clear
+      full-width
+      class="mb-2"
+      v-on="on"
+    />
+    <div class="text-body-2xs py-2">
+      You can move up to
+      <span class="font-medium">
+        {{ Math.max(0, remainingProjectCount) }}
+        {{ remainingProjectCount === 1 ? 'project' : 'projects' }}
+      </span>
+      and
+      <span class="font-medium">
+        {{ Math.max(0, remainingModelCount) }}
+        {{ remainingModelCount === 1 ? 'model' : 'models' }}
+      </span>
+      in total.
+    </div>
     <div
       v-if="hasMoveableProjects"
       class="flex flex-col mt-2 border rounded-md border-outline-3"
@@ -18,35 +42,29 @@
           <span class="font-medium text-foreground truncate">
             {{ project.name }}
           </span>
-          <span class="text-foreground-3 truncate">
-            {{ project.modelCount.totalCount }} model{{
-              project.modelCount.totalCount !== 1 ? 's' : ''
-            }}, {{ project.versions.totalCount }} version{{
-              project.versions.totalCount !== 1 ? 's' : ''
-            }}
-          </span>
+          <div class="flex items-center gap-x-1">
+            <span class="text-foreground-3 truncate">
+              {{ project.modelCount.totalCount }} model{{
+                project.modelCount.totalCount !== 1 ? 's' : ''
+              }}
+            </span>
+          </div>
         </div>
-        <span
-          v-tippy="
-            project.role !== Roles.Stream.Owner &&
-            'Only the project owner can move this project'
-          "
-        >
-          <FormButton
-            :disabled="project.role !== Roles.Stream.Owner"
-            size="sm"
-            color="outline"
-            @click="onMoveClick(project)"
-          >
-            Move...
-          </FormButton>
-        </span>
+        <FormButton size="sm" color="outline" @click="onMoveClick(project)">
+          Move...
+        </FormButton>
       </div>
     </div>
     <p v-else class="py-4 text-body-xs text-foreground-2">
       You don't have any projects that can be moved into this workspace. Only projects
       you own and that aren't in another workspace can be moved.
     </p>
+    <InfiniteLoading
+      v-if="moveableProjects?.length && !search?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
 
     <ProjectsMoveToWorkspaceDialog
       v-if="selectedProject"
@@ -58,15 +76,20 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { LayoutDialogButton } from '@speckle/ui-components'
+import {
+  FormTextInput,
+  type LayoutDialogButton,
+  useDebouncedTextInput
+} from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   MoveProjectsDialog_WorkspaceFragment,
   ProjectsMoveToWorkspaceDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { useQuery } from '@vue/apollo-composable'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -75,12 +98,6 @@ graphql(`
     projects {
       items {
         id
-        modelCount: models(limit: 0) {
-          totalCount
-        }
-        versions(limit: 0) {
-          totalCount
-        }
       }
     }
   }
@@ -88,10 +105,11 @@ graphql(`
 
 graphql(`
   fragment MoveProjectsDialog_User on User {
-    projects {
+    projects(cursor: $cursor, filter: $filter, limit: 10) {
+      totalCount
+      cursor
       items {
         ...ProjectsMoveToWorkspaceDialog_Project
-        role
         workspace {
           id
         }
@@ -105,29 +123,49 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+const search = defineModel<string>('search')
+const { on, bind } = useDebouncedTextInput({ model: search })
 
-const { result } = useQuery(moveProjectsDialogQuery)
+const {
+  query: { result },
+  identifier,
+  onInfiniteLoad
+} = usePaginatedQuery({
+  query: moveProjectsDialogQuery,
+  baseVariables: computed(() => ({
+    cursor: null as string | null,
+    filter: {
+      search: search.value?.length ? search.value : null,
+      workspaceId: null,
+      onlyWithRoles: [Roles.Stream.Owner]
+    }
+  })),
+  resolveKey: (vars) => [vars.filter?.search || ''],
+  resolveCurrentResult: (res) => res?.activeUser?.projects,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
+
+const { remainingModelCount, remainingProjectCount } = useWorkspaceLimits(
+  props.workspace.slug
+)
 
 const workspaceProjects = computed(() =>
   props.workspace.projects.items.map((project) => project.id)
 )
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
-const projectsWithWorkspace = computed(() =>
-  userProjects.value
-    .filter((project) => !!project.workspace?.id)
-    .map((project) => project.id)
-)
+
 const moveableProjects = computed(() =>
-  userProjects.value.filter(
-    (project) =>
-      !workspaceProjects.value.includes(project.id) &&
-      !projectsWithWorkspace.value.includes(project.id)
-  )
+  userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
 )
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
+
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Done',
