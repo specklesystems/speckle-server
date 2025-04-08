@@ -85,13 +85,13 @@ const pageFunction = async ({
       case 'debug':
         logger.debug(msg.text())
       case 'error':
-        logger.error({ err: msg }, 'Page error')
+        logger.warn({ err: msg }, 'Page error')
         break
       case 'warn':
-        logger.warn({ err: msg }, msg.text())
+        logger.info({ err: msg }, msg.text())
         break
       default:
-        logger.info({ msg }, msg.text())
+        logger.debug({ msg }, msg.text())
         break
     }
   })
@@ -102,12 +102,13 @@ const pageFunction = async ({
     // This code runs in the browser context and has no access to the outer scope
     // ====================
     const start = new Date().getTime()
-    let loadDone = 0
+    let loadDone = start
     let loadDurationSeconds = 0
     try {
       await window.load(job)
       loadDone = new Date().getTime()
       loadDurationSeconds = (loadDone - start) / 1000
+      console.log(`Loading completed in ${loadDurationSeconds} seconds`)
     } catch (e) {
       const loadErrored = new Date().getTime()
       const err =
@@ -126,6 +127,7 @@ const pageFunction = async ({
     try {
       const renderResult = await window.takeScreenshot()
       const renderDurationSeconds = (new Date().getTime() - loadDone) / 1000
+      console.log(`Render completed in ${renderDurationSeconds} seconds`)
       return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
     } catch (e) {
       const loadErrored = new Date().getTime()
