@@ -4143,7 +4143,7 @@ export type Version = {
   model: Model;
   parents?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   previewUrl: Scalars['String']['output'];
-  referencedObject: Scalars['String']['output'];
+  referencedObject?: Maybe<Scalars['String']['output']>;
   sourceApplication?: Maybe<Scalars['String']['output']>;
   totalChildrenCount?: Maybe<Scalars['Int']['output']>;
 };

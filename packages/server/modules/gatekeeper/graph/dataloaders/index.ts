@@ -1,10 +1,12 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import { getWorkspacePlansByWorkspaceIdFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   getProjectsUsersSeatsFactory,
   getWorkspacesUsersSeatsFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
+import { WorkspacePlan } from '@speckle/shared'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -17,6 +19,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
   ({ createLoader, deps: { db } }) => {
     const getWorkspacesUsersSeats = getWorkspacesUsersSeatsFactory({ db })
     const getProjectsUsersSeats = getProjectsUsersSeatsFactory({ db })
+    const getWorkspacePlansByWorkspaceId = getWorkspacePlansByWorkspaceIdFactory({ db })
 
     return {
       gatekeeper: {
@@ -54,6 +57,22 @@ const dataLoadersDefinition = defineRequestDataloaders(
           },
           {
             cacheKeyFn: ({ projectId, userId }) => `${projectId}-${userId}`
+          }
+        ),
+        getWorkspacePlan: createLoader<
+          { workspaceId: string },
+          WorkspacePlan | null,
+          string
+        >(
+          async (requests) => {
+            const results = await getWorkspacePlansByWorkspaceId({
+              workspaceIds: requests.map((request) => request.workspaceId)
+            })
+
+            return requests.map(({ workspaceId }) => results[workspaceId] || null)
+          },
+          {
+            cacheKeyFn: ({ workspaceId }) => workspaceId
           }
         )
       }
