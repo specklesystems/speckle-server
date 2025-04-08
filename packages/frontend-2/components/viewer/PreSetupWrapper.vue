@@ -57,7 +57,7 @@
           <ViewerLimitsDialog
             v-if="project?.workspace"
             v-model:open="showLimitsDialog"
-            :workspace-slug="project?.workspace?.slug"
+            :workspace="project?.workspace"
             :project-id="project?.id"
             :resource-id-string="resourceIdString"
             :limit-type="limitsDialogType"
@@ -124,6 +124,20 @@ import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 
+graphql(`
+  fragment ModelPageProject on Project {
+    id
+    createdAt
+    name
+    visibility
+    workspace {
+      id
+      slug
+      name
+    }
+  }
+`)
+
 const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
@@ -158,6 +172,7 @@ const {
   isTransparent,
   showControls
 } = useEmbed()
+const mp = useMixpanel()
 
 emit('setup', state)
 
@@ -175,32 +190,29 @@ const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
 const hasMissingReferencedObject = computed(() => {
   const resourceIds = resourceIdString.value.split(',')
 
-  // For each model/version in our loaded data, check if it matches a URL resource
-  // and has a null referencedObject
-  return modelsAndVersionIds.value.some((item) => {
+  const result = modelsAndVersionIds.value.some((item) => {
     const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
 
-    // Only count as missing if this version is specifically requested in URL
-    // and its referencedObject is null
     if (version && version.referencedObject === null) {
-      // Check if this model+version is in the URL
+      // Check if this model+version is in the URL (latest version always available)
       const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
       const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+
       return isInUrl
     }
 
     return false
   })
+
+  return result
 })
 
 // Check for missing thread when a specific threadId is present in URL
 const hasMissingThread = computed(() => {
   const threadIdFromUrl = focusedThreadId.value
 
-  // If there's no threadId in URL, there's no missing thread
   if (!threadIdFromUrl) return false
 
-  // Find the thread with this ID
   const thread = state.resources.response.commentThreads.value.find(
     (thread) => thread.id === threadIdFromUrl
   )
@@ -211,46 +223,6 @@ const hasMissingThread = computed(() => {
 const isFederated = computed(
   () => state.resources.response.resourceItems.value.length > 1
 )
-
-// Watch for plan limit conditions and show dialog if needed
-watch(
-  [hasMissingReferencedObject, hasMissingThread, resourceItems],
-  ([missingObject, missingThread]) => {
-    // If no workspace, don't show dialog
-    if (!project.value?.workspace) {
-      showLimitsDialog.value = false
-      return
-    }
-    if (missingObject) {
-      if (isFederated.value) {
-        limitsDialogType.value = 'federated'
-      } else {
-        limitsDialogType.value = 'version'
-      }
-      showLimitsDialog.value = true
-    } else if (missingThread) {
-      limitsDialogType.value = 'comment'
-      showLimitsDialog.value = true
-    } else {
-      showLimitsDialog.value = false
-    }
-  },
-  { immediate: true }
-)
-
-graphql(`
-  fragment ModelPageProject on Project {
-    id
-    createdAt
-    name
-    visibility
-    workspace {
-      id
-      slug
-      name
-    }
-  }
-`)
 
 const title = computed(() => {
   if (project.value?.models?.items) {
@@ -285,7 +257,6 @@ const lastUpdate = computed(() => {
 
 useHead({ title })
 
-const mp = useMixpanel()
 onMounted(() => {
   const referrer = document.referrer
   const shouldTrackEvent = !referrer?.includes('speckle.systems') && !import.meta.dev
@@ -294,4 +265,34 @@ onMounted(() => {
     mp.track('Embedded Model Load')
   }
 })
+
+// Watch for plan limit conditions and show dialog if needed
+watch(
+  [hasMissingReferencedObject, hasMissingThread, resourceItems, project],
+  ([missingObject, missingThread]) => {
+    if (missingObject) {
+      if (isFederated.value) {
+        limitsDialogType.value = 'federated'
+      } else {
+        limitsDialogType.value = 'version'
+      }
+      showLimitsDialog.value = true
+      return
+    }
+
+    // If no workspace and no missing objects, don't show dialog
+    if (!project.value?.workspace) {
+      showLimitsDialog.value = false
+      return
+    }
+
+    if (missingThread) {
+      limitsDialogType.value = 'comment'
+      showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
+    }
+  },
+  { immediate: true }
+)
 </script>

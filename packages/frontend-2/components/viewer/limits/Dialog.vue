@@ -13,7 +13,9 @@
   </WorkspacePlanLimitReachedDialog>
 </template>
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import type { Workspace } from '~/lib/common/generated/gql/graphql'
 import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
@@ -21,7 +23,7 @@ type LimitType = 'version' | 'comment' | 'federated'
 
 const props = defineProps<{
   limitType: LimitType
-  workspaceSlug?: string
+  workspace?: Workspace
   projectId: string
   resourceIdString: string
   open?: boolean
@@ -68,18 +70,37 @@ const message = computed(() => {
   }
 })
 
+const stripVersionIds = (resourceIdString: string) => {
+  const resources = resourceIdString.split(',')
+
+  // For each resource, remove @versionId if present
+  const cleanedResources = resources.map((resource) => {
+    const atIndex = resource.indexOf('@')
+    return atIndex > -1 ? resource.substring(0, atIndex) : resource
+  })
+
+  return cleanedResources.join(',')
+}
+
 const loadLatestButton = (isPrimary = true): LayoutDialogButton => ({
   text: 'Load latest version',
   props: {
     color: isPrimary ? 'primary' : 'outline'
   },
-  onClick: () => navigateTo(modelRoute(props.projectId, props.resourceIdString))
+  onClick: () => {
+    const latestResourceIdString = stripVersionIds(props.resourceIdString)
+
+    // Use the modelRoute but with the cleaned resource string that has no version IDs
+    navigateTo(modelRoute(props.projectId, latestResourceIdString))
+  }
 })
 
 const explorePlansButton: LayoutDialogButton = {
   text: 'Explore plans',
+  disabled: props.workspace?.role === Roles.Workspace.Guest,
+  disabledMessage: 'As a Guest you cannot access plans and billing',
   onClick: () =>
-    navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
+    navigateTo(settingsWorkspaceRoutes.billing.route(props.workspace?.slug || ''))
 }
 
 const buttons = computed((): LayoutDialogButton[] => {
