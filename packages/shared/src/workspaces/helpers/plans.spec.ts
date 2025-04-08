@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   doesPlanIncludeUnlimitedProjectsAddon,
   isNewWorkspacePlan,
-  isSelfServerAvailablePlan,
+  isSelfServeAvailablePlan,
   WorkspacePlans
 } from './plans.js'
 
@@ -62,7 +62,7 @@ describe('plan helpers', () => {
     )
   })
 
-  describe('isSelfServerAvailablePlan', () => {
+  describe('isSelfServeAvailablePlan', () => {
     const planCases: {
       [P in WorkspacePlans]: boolean
     } = <const>{
@@ -85,7 +85,7 @@ describe('plan helpers', () => {
     it.each(Object.entries(planCases))(
       'is plan %s available self served -> %s',
       (plan, isNew) => {
-        const result = isSelfServerAvailablePlan(plan as WorkspacePlans)
+        const result = isSelfServeAvailablePlan(plan as WorkspacePlans)
         expect(result).toStrictEqual(isNew)
       }
     )

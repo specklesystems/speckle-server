@@ -121,7 +121,7 @@ export const doesPlanIncludeUnlimitedProjectsAddon = (
   }
 }
 
-export const isSelfServerAvailablePlan = (plan: WorkspacePlans): boolean => {
+export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
   switch (plan) {
     case 'free':
     case 'team':
