@@ -19,6 +19,7 @@ workflows:
       - test-server: &test-server-job-definition
           context:
             - speckle-server-licensing
+            - stripe-integration
             - speckle-server-codecov
           filters: &filters-allow-all
             tags:
