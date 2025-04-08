@@ -11,9 +11,57 @@ import {
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceLimitsReachedError,
-  WorkspaceNoAccessError,
-  WorkspaceRequiredError
+  WorkspaceNoAccessError
 } from '../../domain/authErrors.js'
+
+const buildCanCreateModelPolicy = (
+  overrides?: Partial<Parameters<typeof canCreateModelPolicy>[0]>
+) =>
+  canCreateModelPolicy({
+    getEnv: async () => parseFeatureFlags({}),
+    getProject: async () => {
+      return {
+        id: cryptoRandomString({ length: 9 }),
+        isPublic: false,
+        isDiscoverable: false,
+        workspaceId: cryptoRandomString({ length: 9 })
+      }
+    },
+    getProjectRole: async () => {
+      return Roles.Stream.Contributor
+    },
+    getServerRole: async () => {
+      return Roles.Server.User
+    },
+    getWorkspace: async () => {
+      return {} as Workspace
+    },
+    getWorkspaceRole: async () => {
+      return Roles.Workspace.Guest
+    },
+    getWorkspaceSsoProvider: async () => {
+      assert.fail()
+    },
+    getWorkspaceSsoSession: async () => {
+      assert.fail()
+    },
+    getWorkspacePlan: async () => {
+      return {
+        status: 'valid'
+      } as WorkspacePlan
+    },
+    getWorkspaceLimits: async () => {
+      return {
+        modelCount: 5,
+        projectCount: 1,
+        versionsHistory: null
+      }
+    },
+    getWorkspaceModelCount: async () => {
+      return 0
+    },
+    ...overrides
+  })
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
@@ -22,76 +70,19 @@ const canCreateArgs = () => ({
 
 describe('canCreateModelPolicy returns a function, that', () => {
   it('forbids unauthenticated users', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        assert.fail()
-      },
-      getProjectRole: async () => {
-        assert.fail()
-      },
-      getServerRole: async () => {
-        assert.fail()
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
-      }
-    })({ userId: undefined, projectId: '' })
+    const result = await buildCanCreateModelPolicy({})({
+      userId: undefined,
+      projectId: ''
+    })
 
     expect(result).toBeAuthErrorResult({
       code: ServerNoSessionError.code
     })
   })
   it('forbids users without server roles', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        assert.fail()
-      },
-      getProjectRole: async () => {
-        assert.fail()
-      },
+    const result = await buildCanCreateModelPolicy({
       getServerRole: async () => {
         return null
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
       }
     })(canCreateArgs())
 
@@ -100,37 +91,9 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })
   })
   it('forbids users that are not at least stream contributors', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
+    const result = await buildCanCreateModelPolicy({
       getProjectRole: async () => {
         return Roles.Stream.Reviewer
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
       }
     })(canCreateArgs())
 
@@ -138,128 +101,20 @@ describe('canCreateModelPolicy returns a function, that', () => {
       code: ProjectNoAccessError.code
     })
   })
-  it('allows stream contributors to create personal projects when workspaces are not enabled', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () =>
-        parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'false'
-        }),
+  it('allows stream contributors to create personal projects when project is not in a workspace', async () => {
+    const result = await buildCanCreateModelPolicy({
       getProject: async () => {
         return {} as Project
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
       }
     })(canCreateArgs())
 
     expect(result).toBeAuthOKResult()
   })
-  it('requires the project to not be in a workspace', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {
-          id: cryptoRandomString({ length: 9 }),
-          isPublic: false,
-          isDiscoverable: false,
-          workspaceId: null
-        }
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
-      }
-    })(canCreateArgs())
-
-    expect(result).toBeAuthErrorResult({
-      code: WorkspaceRequiredError.code
-    })
-  })
   // Hold the workspace to a higher standard than myself
   it('requires the workspace to have a plan', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {
-          id: cryptoRandomString({ length: 9 }),
-          isPublic: false,
-          isDiscoverable: false,
-          workspaceId: cryptoRandomString({ length: 9 })
-        }
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        return {} as Workspace
-      },
-      getWorkspaceRole: async () => {
-        return Roles.Workspace.Guest
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
+    const result = await buildCanCreateModelPolicy({
       getWorkspacePlan: async () => {
         return null
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceModelCount: async () => {
-        assert.fail()
       }
     })(canCreateArgs())
 
@@ -268,43 +123,11 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })
   })
   it('forbids new model creation if workspace has reached limit', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {
-          id: cryptoRandomString({ length: 9 }),
-          isPublic: false,
-          isDiscoverable: false,
-          workspaceId: cryptoRandomString({ length: 9 })
-        }
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        return {} as Workspace
-      },
-      getWorkspaceRole: async () => {
-        return Roles.Workspace.Guest
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        return {
-          status: 'valid'
-        } as WorkspacePlan
-      },
+    const result = await buildCanCreateModelPolicy({
       getWorkspaceLimits: async () => {
         return {
-          modelCount: 5,
           projectCount: 1,
+          modelCount: 5,
           versionsHistory: null
         }
       },
@@ -319,51 +142,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })
   })
   it('allows new model creation if workspace is within limits', async () => {
-    const result = await canCreateModelPolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {
-          id: cryptoRandomString({ length: 9 }),
-          isPublic: false,
-          isDiscoverable: false,
-          workspaceId: cryptoRandomString({ length: 9 })
-        }
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        return {} as Workspace
-      },
-      getWorkspaceRole: async () => {
-        return Roles.Workspace.Guest
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        return {
-          status: 'valid'
-        } as WorkspacePlan
-      },
-      getWorkspaceLimits: async () => {
-        return {
-          modelCount: 5,
-          projectCount: 1,
-          versionsHistory: null
-        }
-      },
-      getWorkspaceModelCount: async () => {
-        return 2
-      }
-    })(canCreateArgs())
-
+    const result = await buildCanCreateModelPolicy({})(canCreateArgs())
     expect(result).toBeAuthOKResult()
   })
 })

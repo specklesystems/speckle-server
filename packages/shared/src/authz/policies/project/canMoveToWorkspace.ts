@@ -19,14 +19,13 @@ import {
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
-import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
-import { ensureWorkspacesEnabledFragment } from '../../fragments/workspaces.js'
-import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import {
-  ensureMinimumProjectRoleFragment,
-  ensureProjectWorkspaceAccessFragment
-} from '../../fragments/projects.js'
+  ensureWorkspaceRoleAndSessionFragment,
+  ensureWorkspacesEnabledFragment
+} from '../../fragments/workspaces.js'
+import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+import { ensureMinimumProjectRoleFragment } from '../../fragments/projects.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -83,17 +82,13 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
     })
     if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
 
-    const isWorkspaceAdmin = await hasMinimumWorkspaceRole(loaders)({
-      userId: userId!,
-      workspaceId,
-      role: Roles.Workspace.Admin
-    })
-    if (!isWorkspaceAdmin) return err(new WorkspaceNoAccessError())
-
-    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
-      userId: userId!,
-      projectId
-    })
+    const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
+      {
+        userId: userId!,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      }
+    )
     if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })

@@ -95,11 +95,6 @@ export const WorkspaceProjectMoveInvalidError = defineAuthError({
   message: 'Projects already in a workspace cannot be moved to another workspace.'
 })
 
-export const WorkspaceRequiredError = defineAuthError({
-  code: 'WorkspaceRequired',
-  message: 'Project must be in a workspace to add a new model.'
-})
-
 export const WorkspaceSsoSessionNoAccessError = defineAuthError<
   'WorkspaceSsoSessionNoAccess',
   {

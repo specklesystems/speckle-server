@@ -7,6 +7,50 @@ import { Roles } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
 
+const buildCanMoveToWorkspace = (
+  overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
+) =>
+  canMoveToWorkspacePolicy({
+    getEnv: async () => parseFeatureFlags({}),
+    getProject: async () => {
+      return {} as Project
+    },
+    getProjectRole: async () => {
+      return Roles.Stream.Owner
+    },
+    getServerRole: async () => {
+      return Roles.Server.User
+    },
+    getWorkspace: async () => {
+      return {} as Workspace
+    },
+    getWorkspaceRole: async () => {
+      return Roles.Workspace.Admin
+    },
+    getWorkspaceSsoProvider: async () => {
+      return null
+    },
+    getWorkspaceSsoSession: async () => {
+      assert.fail()
+    },
+    getWorkspacePlan: async () => {
+      return {
+        status: 'valid'
+      } as WorkspacePlan
+    },
+    getWorkspaceLimits: async () => {
+      return {
+        modelCount: 5,
+        projectCount: 5,
+        versionsHistory: null
+      }
+    },
+    getWorkspaceProjectCount: async () => {
+      return 0
+    },
+    ...overrides
+  })
+
 const canMoveToWorkspaceArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
   projectId: cryptoRandomString({ length: 9 }),
@@ -15,41 +59,11 @@ const canMoveToWorkspaceArgs = () => ({
 
 describe('canMoveToWorkspacePolicy returns a function, that', () => {
   it('requires workspaces to be enabled', async () => {
-    const result = await canMoveToWorkspacePolicy({
+    const result = await buildCanMoveToWorkspace({
       getEnv: async () =>
         parseFeatureFlags({
           FF_WORKSPACES_MODULE_ENABLED: 'false'
-        }),
-      getProject: async () => {
-        assert.fail()
-      },
-      getProjectRole: async () => {
-        assert.fail()
-      },
-      getServerRole: async () => {
-        assert.fail()
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceProjectCount: async () => {
-        assert.fail()
-      }
+        })
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
@@ -57,39 +71,11 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('requires the project to not be in a workspace', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
+    const result = await buildCanMoveToWorkspace({
       getProject: async () => {
         return {
           workspaceId: cryptoRandomString({ length: 9 })
         } as Project
-      },
-      getProjectRole: async () => {
-        assert.fail()
-      },
-      getServerRole: async () => {
-        assert.fail()
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceProjectCount: async () => {
-        assert.fail()
       }
     })(canMoveToWorkspaceArgs())
 
@@ -98,37 +84,9 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('requires user to be a server user', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
-      getProjectRole: async () => {
-        assert.fail()
-      },
+    const result = await buildCanMoveToWorkspace({
       getServerRole: async () => {
         return Roles.Server.Guest
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceProjectCount: async () => {
-        assert.fail()
       }
     })(canMoveToWorkspaceArgs())
 
@@ -137,37 +95,9 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('requires user to be project owner', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
+    const result = await buildCanMoveToWorkspace({
       getProjectRole: async () => {
         return Roles.Stream.Contributor
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
-      getWorkspaceRole: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceProjectCount: async () => {
-        assert.fail()
       }
     })(canMoveToWorkspaceArgs())
 
@@ -176,37 +106,9 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('requires user to be target workspace admin', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Owner
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        assert.fail()
-      },
+    const result = await buildCanMoveToWorkspace({
       getWorkspaceRole: async () => {
         return Roles.Workspace.Member
-      },
-      getWorkspaceSsoProvider: async () => {
-        assert.fail()
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        assert.fail()
-      },
-      getWorkspaceLimits: async () => {
-        assert.fail()
-      },
-      getWorkspaceProjectCount: async () => {
-        assert.fail()
       }
     })(canMoveToWorkspaceArgs())
 
@@ -215,43 +117,16 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('forbids move if target workspace will exceed plan limits', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Owner
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        return {} as Workspace
-      },
-      getWorkspaceRole: async () => {
-        return Roles.Workspace.Admin
-      },
-      getWorkspaceSsoProvider: async () => {
-        return null
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        return {
-          status: 'valid'
-        } as WorkspacePlan
-      },
+    const result = await buildCanMoveToWorkspace({
       getWorkspaceLimits: async () => {
         return {
+          projectCount: 1,
           modelCount: 5,
-          projectCount: 5,
           versionsHistory: null
         }
       },
       getWorkspaceProjectCount: async () => {
-        return 5
+        return 1
       }
     })(canMoveToWorkspaceArgs())
 
@@ -261,46 +136,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })
   })
   it('allows move project if target workspace will be within limits', async () => {
-    const result = await canMoveToWorkspacePolicy({
-      getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => {
-        return {} as Project
-      },
-      getProjectRole: async () => {
-        return Roles.Stream.Owner
-      },
-      getServerRole: async () => {
-        return Roles.Server.User
-      },
-      getWorkspace: async () => {
-        return {} as Workspace
-      },
-      getWorkspaceRole: async () => {
-        return Roles.Workspace.Admin
-      },
-      getWorkspaceSsoProvider: async () => {
-        return null
-      },
-      getWorkspaceSsoSession: async () => {
-        assert.fail()
-      },
-      getWorkspacePlan: async () => {
-        return {
-          status: 'valid'
-        } as WorkspacePlan
-      },
-      getWorkspaceLimits: async () => {
-        return {
-          modelCount: 5,
-          projectCount: 5,
-          versionsHistory: null
-        }
-      },
-      getWorkspaceProjectCount: async () => {
-        return 2
-      }
-    })(canMoveToWorkspaceArgs())
-
+    const result = await buildCanMoveToWorkspace({})(canMoveToWorkspaceArgs())
     expect(result).toBeAuthOKResult()
   })
 })

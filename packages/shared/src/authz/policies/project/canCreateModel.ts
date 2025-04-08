@@ -7,7 +7,6 @@ import {
   WorkspaceLimitsReachedError,
   ServerNoSessionError,
   ServerNoAccessError,
-  WorkspaceRequiredError,
   WorkspaceReadOnlyError
 } from '../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
@@ -43,7 +42,6 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceReadOnlyError>
   | InstanceType<typeof WorkspaceLimitsReachedError>
-  | InstanceType<typeof WorkspaceRequiredError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
 
@@ -54,8 +52,6 @@ export const canCreateModelPolicy: AuthPolicy<
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    const env = await loaders.getEnv()
-
     const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.Guest
@@ -69,13 +65,12 @@ export const canCreateModelPolicy: AuthPolicy<
     })
     if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
 
-    if (!env.FF_WORKSPACES_MODULE_ENABLED) {
-      // Self-hosted servers may create models in "personal" projects
+    const project = await loaders.getProject({ projectId })
+
+    // Projects outside of a workspace do not need to check workspace limits
+    if (!project?.workspaceId) {
       return ok()
     }
-
-    const project = await loaders.getProject({ projectId })
-    if (!project?.workspaceId) return err(new WorkspaceRequiredError())
 
     const { workspaceId } = project
 
