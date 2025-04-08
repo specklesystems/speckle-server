@@ -5,6 +5,7 @@ import {
   Camera,
   DoubleSide,
   DynamicDrawUsage,
+  Material,
   Mesh,
   Plane,
   Quaternion,
@@ -265,6 +266,7 @@ export class AreaMeasurement extends Measurement {
     this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
       gizmo.updateClippingPlanes(planes)
     })
+    ;(this.fillPolygon.material as Material).clippingPlanes = planes
   }
 
   private chooseProjectionAxes(normal: Vector3) {

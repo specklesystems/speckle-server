@@ -123,6 +123,8 @@ export class MeasurementsExtension extends Extension {
     this.measurements.forEach((value: Measurement) => {
       value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
+
+    this.updateClippingPlanes(this.renderer.clippingPlanes)
   }
 
   public onResize() {
