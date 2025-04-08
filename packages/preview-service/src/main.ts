@@ -7,7 +7,8 @@ import {
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
   USER_DATA_DIR,
-  PREVIEW_TIMEOUT
+  PREVIEW_TIMEOUT,
+  GPU_ENABLED
 } from '@/config.js'
 import Bull from 'bull'
 import { logger } from '@/logging.js'
@@ -65,6 +66,14 @@ let jobDoneCallback: Bull.DoneCallback | undefined = undefined
 const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
 
+  const gpuWithVulkanArgs = [
+    '--headless=new',
+    '--use-angle=vulkan',
+    '--enable-features=Vulkan',
+    '--disable-vulkan-surface',
+    '--enable-unsafe-webgpu'
+  ]
+
   const launchBrowser = async (): Promise<Browser> => {
     logger.debug('Starting browser')
     return await puppeteer.launch({
@@ -73,7 +82,12 @@ const server = app.listen(port, host, async () => {
       userDataDir: USER_DATA_DIR,
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        ...(GPU_ENABLED ? gpuWithVulkanArgs : [])
+      ],
       protocolTimeout: PREVIEW_TIMEOUT
     })
   }

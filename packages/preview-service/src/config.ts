@@ -10,7 +10,8 @@ export const {
   CHROMIUM_EXECUTABLE_PATH,
   USER_DATA_DIR,
   LOG_LEVEL,
-  LOG_PRETTY
+  LOG_PRETTY,
+  GPU_ENABLED
 } = parseEnv(process.env, {
   REDIS_URL: z.string().url(),
   HOST: z.string().default('127.0.0.1'), //safely default to localhost in case the env var is not set
@@ -20,5 +21,6 @@ export const {
   CHROMIUM_EXECUTABLE_PATH: z.string(),
   USER_DATA_DIR: z.string(),
   LOG_LEVEL: z.string().default('info'),
-  LOG_PRETTY: z.boolean().default(false)
+  LOG_PRETTY: z.boolean().default(false),
+  GPU_ENABLED: z.boolean().default(false)
 })
