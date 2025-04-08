@@ -150,6 +150,14 @@ export const workspacePlanQuery = graphql(`
   }
 `)
 
+export const activeWorkspaceQuery = graphql(`
+  query activeWorkspace($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...ActiveWorkspace_Workspace
+    }
+  }
+`)
+
 export const workspaceLastAdminCheckQuery = graphql(`
   query WorkspaceLastAdminCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {

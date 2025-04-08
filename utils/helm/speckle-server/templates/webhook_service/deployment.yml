@@ -103,6 +103,9 @@ spec:
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
           {{- end }}
+          {{- with .Values.webhook_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
+          {{- end }}
 
       {{- if .Values.webhook_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.webhook_service.affinity "context" $) | nindent 8 }}

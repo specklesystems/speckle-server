@@ -117,7 +117,7 @@ const props = defineProps<{
 }>()
 
 const slots: SetupContext['slots'] = useSlots()
-const { pricesNew } = useWorkspacePlanPrices()
+const { prices } = useWorkspacePlanPrices()
 const { upgradePlan, redirectToCheckout } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
@@ -126,7 +126,7 @@ const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
     return formatPrice(
-      pricesNew.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
+      prices.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
     )
   }
 

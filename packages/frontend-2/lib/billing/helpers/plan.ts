@@ -23,7 +23,11 @@ export const formatName = (plan?: WorkspacePlans) => {
     [WorkspacePlans.Business]: 'Business',
     [WorkspacePlans.Free]: 'Free',
     [WorkspacePlans.Team]: 'Starter',
-    [WorkspacePlans.Pro]: 'Business'
+    [WorkspacePlans.TeamUnlimited]: 'Starter Unlimited',
+    [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter Unlimited (Invoiced)',
+    [WorkspacePlans.Pro]: 'Business',
+    [WorkspacePlans.ProUnlimited]: 'Business Unlimited',
+    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business Unlimited (Invoiced)'
   }
   return formattedPlanNames[plan]
 }

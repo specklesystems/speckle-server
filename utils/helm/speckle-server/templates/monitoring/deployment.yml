@@ -100,6 +100,9 @@ spec:
           - name: LOG_PRETTY
             value: {{ .Values.monitoring.logPretty | quote }}
 
+          {{- with .Values.monitoring.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
+          {{- end }}
         startupProbe:
           periodSeconds: 10
           failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
