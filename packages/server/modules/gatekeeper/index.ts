@@ -120,7 +120,6 @@ const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) =
     'WorkspaceNewPlanMigration',
     async (_scheduledTime, { logger }) => {
       if (isMigrationComplete) return
-
       await migrateOldWorkspacePlans({ db, stripe: getStripeClient(), logger })()
 
       isMigrationComplete = true
