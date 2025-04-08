@@ -42,7 +42,10 @@
               The project, including models and versions, will be moved to the
               workspace, where all existing members and admins will have access.
             </p>
-            <div v-if="dryRunResultMembers" class="pt-2 gap-y-2 flex flex-col">
+            <div
+              v-if="dryRunResultMembers.length > 0"
+              class="pt-2 gap-y-2 flex flex-col"
+            >
               <p class="text-body-2xs text-foreground-2">
                 The following people will be added to the workspace
               </p>
@@ -193,7 +196,7 @@ const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
 const dryRunResultMembers = computed(
-  () => dryRunResult.value?.project.moveToWorkspaceDryRun.addedToWorkspace
+  () => dryRunResult.value?.project.moveToWorkspaceDryRun.addedToWorkspace || []
 )
 const dryRunResultMembersCount = computed(
   () => dryRunResult.value?.project.moveToWorkspaceDryRun.addedToWorkspaceTotalCount
