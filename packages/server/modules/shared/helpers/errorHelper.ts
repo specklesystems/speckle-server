@@ -1,7 +1,10 @@
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
-import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
+import {
+  SsoSessionMissingOrExpiredError,
+  WorkspaceRequiredError
+} from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
 import { VError } from 'verror'
 
@@ -33,7 +36,6 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspaceReadOnlyError.code:
     case Authz.WorkspaceLimitsReachedError.code:
     case Authz.WorkspaceNoEditorSeatError.code:
-    case Authz.WorkspaceRequiredError.code:
     case Authz.WorkspaceProjectMoveInvalidError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
@@ -42,6 +44,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
           workspaceSlug: e.payload.workspaceSlug
         }
       })
+    case Authz.WorkspaceRequiredError.code:
+      return new WorkspaceRequiredError(e.message)
     case Authz.ServerNoAccessError.code:
     case Authz.ServerNoSessionError.code:
       return new ForbiddenError(e.message)

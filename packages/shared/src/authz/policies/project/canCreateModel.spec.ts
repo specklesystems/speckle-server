@@ -5,8 +5,15 @@ import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
-import { Authz } from '../../../index.js'
 import { Project } from '../../domain/projects/types.js'
+import {
+  ProjectNoAccessError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  WorkspaceLimitsReachedError,
+  WorkspaceNoAccessError,
+  WorkspaceRequiredError
+} from '../../domain/authErrors.js'
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
@@ -50,7 +57,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })({ userId: undefined, projectId: '' })
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.ServerNoSessionError.code
+      code: ServerNoSessionError.code
     })
   })
   it('forbids users without server roles', async () => {
@@ -89,7 +96,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.ServerNoAccessError.code
+      code: ServerNoAccessError.code
     })
   })
   it('forbids users that are not at least stream contributors', async () => {
@@ -128,7 +135,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.ProjectNoAccessError.code
+      code: ProjectNoAccessError.code
     })
   })
   it('allows stream contributors to create personal projects when workspaces are not enabled', async () => {
@@ -212,7 +219,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.WorkspaceRequiredError.code
+      code: WorkspaceRequiredError.code
     })
   })
   // Hold the workspace to a higher standard than myself
@@ -257,7 +264,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.WorkspaceNoAccessError.code
+      code: WorkspaceNoAccessError.code
     })
   })
   it('forbids new model creation if workspace has reached limit', async () => {
@@ -307,7 +314,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: Authz.WorkspaceLimitsReachedError.code,
+      code: WorkspaceLimitsReachedError.code,
       payload: { limit: 'modelCount' }
     })
   })

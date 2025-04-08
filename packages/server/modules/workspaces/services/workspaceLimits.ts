@@ -1,29 +1,27 @@
-import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { GetPaginatedProjectModelsTotalCount } from '@/modules/core/domain/branches/operations'
 import {
   GetWorkspaceModelCount,
   QueryAllWorkspaceProjects
 } from '@/modules/workspaces/domain/operations'
 
-// TODO: What is correct DI for a service that has to dynamically select a regional database?
+// TODO: Optimize with single model count query per regional db
 export const getWorkspaceModelCountFactory =
   (deps: {
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    getPaginatedProjectModelsTotalCount: GetPaginatedProjectModelsTotalCount
   }): GetWorkspaceModelCount =>
   async ({ workspaceId }) => {
     let modelCount = 0
 
     for await (const projects of deps.queryAllWorkspaceProjects({ workspaceId })) {
       for (const project of projects) {
-        const regionDb = await getProjectDbClient({ projectId: project.id })
-        const projectModelCount = await getPaginatedProjectModelsTotalCountFactory({
-          db: regionDb
-        })(project.id, {
-          filter: {
-            onlyWithVersions: true
-          }
-        })
-        modelCount = modelCount + projectModelCount
+        modelCount =
+          modelCount +
+          (await deps.getPaginatedProjectModelsTotalCount(project.id, {
+            filter: {
+              onlyWithVersions: true
+            }
+          }))
       }
     }
 

@@ -1,7 +1,9 @@
 import { db } from '@/db/knex'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { defineModuleLoaders } from '@/modules/loaders'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
@@ -54,7 +56,14 @@ export default defineModuleLoaders(async () => {
       return await getWorkspaceModelCountFactory({
         queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
           getStreams: legacyGetStreamsFactory({ db })
-        })
+        }),
+        getPaginatedProjectModelsTotalCount: async (projectId, params) => {
+          const regionDb = await getProjectDbClient({ projectId })
+          return await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+            projectId,
+            params
+          )
+        }
       })({ workspaceId })
     },
     getWorkspaceProjectCount: async ({ workspaceId }, { dataLoaders }) => {
