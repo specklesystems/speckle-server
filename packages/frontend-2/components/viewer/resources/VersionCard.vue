@@ -79,7 +79,7 @@
             v-if="isLimited"
             class="text-body-3xs text-foreground-2 pr-8 select-none"
           >
-            Upgrade to view versions older than {{ limitDays }} days.
+            Upgrade to view versions older than the {{ versionLimitFormatted }} limit.
           </div>
           <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
@@ -114,6 +114,7 @@ import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 dayjs.extend(localizedFormat)
 
@@ -141,6 +142,10 @@ const emit = defineEmits<{
   (e: 'viewChanges', version: ViewerModelVersionCardItemFragment): void
 }>()
 
+const mp = useMixpanel()
+const { activeWorkspaceSlug } = useNavigation()
+const { versionLimitFormatted } = useWorkspaceLimits(activeWorkspaceSlug.value || '')
+
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
@@ -148,9 +153,6 @@ const isLatest = computed(() => props.isLatestVersion)
 const isLimited = computed(() => {
   return props.version.referencedObject === null
 })
-
-// Todo: Number of days in the version history limit
-const limitDays = computed(() => 30)
 
 const createdAt = computed(() => {
   return {
@@ -160,9 +162,6 @@ const createdAt = computed(() => {
 })
 
 const author = computed(() => props.version.authorUser)
-
-const mp = useMixpanel()
-const { activeWorkspaceSlug } = useNavigation()
 
 const handleClick = () => {
   if (isLimited.value) return

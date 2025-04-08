@@ -17,6 +17,7 @@ import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 type LimitType = 'version' | 'comment' | 'federated'
 
@@ -34,14 +35,11 @@ const emit = defineEmits<{
 }>()
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
+const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug)
 
 const dialogOpen = computed({
   get: () => props.open || false,
   set: (value) => emit('update:open', value)
-})
-
-const limitDays = computed(() => {
-  return 30
 })
 
 const title = computed(() => {
@@ -60,9 +58,9 @@ const title = computed(() => {
 const message = computed(() => {
   switch (props.limitType) {
     case 'version':
-      return `The version you're trying to load is older than the ${limitDays.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
+      return `The version you're trying to load is older than the ${versionLimitFormatted.value} version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'federated':
-      return `One of the models is older than the ${limitDays.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
+      return `One of the models is older than the ${versionLimitFormatted.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'comment':
       return 'Loading a comment in a federated model view, where one of the models is an old version'
     default:
