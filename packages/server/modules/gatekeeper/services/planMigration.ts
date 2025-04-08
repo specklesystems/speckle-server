@@ -46,9 +46,16 @@ export const migrateOldWorkspacePlans =
       ])
 
     for (const oldPlan of oldPlanWorkspaces) {
-      await migrateWorkspacePlan({ db, stripe, logger })({
-        workspaceId: oldPlan.workspaceId
-      })
+      try {
+        await migrateWorkspacePlan({ db, stripe, logger })({
+          workspaceId: oldPlan.workspaceId
+        })
+      } catch (err) {
+        logger.error(
+          { err, workspaceId: oldPlan.workspaceId, oldPlan },
+          'Failed to migrate workspace plan'
+        )
+      }
     }
   }
 
@@ -84,12 +91,12 @@ export const migrateWorkspacePlan =
             break
           case 'paymentFailed':
             throw new Error('Cant migrate workspace, its currently failed in payment')
-          case 'cancelationScheduled':
           case 'canceled':
             // just switch the plan, no need to change stripe
             newTargetPlan = 'teamUnlimited'
             newPlanStatus = workspacePlan.status
             break
+          case 'cancelationScheduled':
           case 'valid':
             newTargetPlan = 'teamUnlimited'
             newPlanStatus = workspacePlan.status
@@ -104,12 +111,12 @@ export const migrateWorkspacePlan =
         switch (workspacePlan.status) {
           case 'paymentFailed':
             throw new Error('Cant migrate workspace, its currently failed in payment')
-          case 'cancelationScheduled':
           case 'canceled':
             newTargetPlan = 'proUnlimited'
             isStripeMigrationNeeded = false
             newPlanStatus = workspacePlan.status
             break
+          case 'cancelationScheduled':
           case 'valid':
             newTargetPlan = 'proUnlimited'
             isStripeMigrationNeeded = true
@@ -185,6 +192,8 @@ export const migrateWorkspacePlan =
         case 'proUnlimitedInvoiced':
         case 'teamUnlimitedInvoiced':
         case 'unlimited':
+          // this is just double checking that everythin is right
+          // the switch above sets things up properly
           throw new Error('Cannot upgrade stripe for a non paid plan')
       }
       // if stripe paid plan, convert the stripe sub to use all editor seats
