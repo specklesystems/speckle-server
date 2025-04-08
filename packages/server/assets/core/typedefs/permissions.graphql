@@ -4,7 +4,6 @@ extend type Project {
 
 type ProjectPermissionChecks {
   canRead: PermissionCheckResult!
-  canUpdate: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
