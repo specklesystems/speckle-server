@@ -90,6 +90,10 @@ export class AreaMeasurement extends Measurement {
       this.planeNormal.copy(this.surfaceNormal)
     }
 
+    this.addPoint()
+  }
+
+  public addPoint() {
     const measuredPoint = new Vector3().copy(this.surfacePoint)
     if (this.pointIndex > 0) {
       measuredPoint.copy(
@@ -125,6 +129,26 @@ export class AreaMeasurement extends Measurement {
       this.updateFillPolygon(this.polygonPoints)
       this.updatePoleOfInnacessibility(this.measuredPoints)
     }
+  }
+
+  public removePoint() {
+    if (this.pointIndex < 1) return
+    this.remove(this.pointGizmos.pop() as MeasurementPointGizmo2)
+    this.points.pop()
+    this.measuredPoints.pop()
+    this.polygonPoints.pop()
+    this.pointIndex--
+
+    void this.update()
+    this.updateFillPolygon(this.polygonPoints)
+    this.updatePoleOfInnacessibility(this.measuredPoints)
+  }
+
+  public autoFinish() {
+    this.locationSelected()
+    this.surfacePoint.copy(this.planeOrigin)
+    this.surfaceNormal.copy(this.planeNormal)
+    this.locationSelected()
   }
 
   public snap(
@@ -168,7 +192,10 @@ export class AreaMeasurement extends Measurement {
     )
     this.pointGizmos[this.pointIndex].updatePoint(this.surfacePoint)
 
-    if (this.pointIndex === 0) return ret
+    if (this.pointIndex === 0) {
+      this.pointGizmos[this.pointIndex].enable(true, true, true, false)
+      return ret
+    }
 
     const currentPoint = this.surfacePoint
     const prevPoint = this.points[this.pointIndex - 1]
@@ -246,7 +273,12 @@ export class AreaMeasurement extends Measurement {
     const position = geometry.getAttribute('position')
     const index = geometry.getIndex()
 
-    if (points.length < 3) return
+    if (points.length < 3) {
+      this.fillPolygon.visible = false
+      return
+    }
+
+    this.fillPolygon.visible = true
 
     const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
 

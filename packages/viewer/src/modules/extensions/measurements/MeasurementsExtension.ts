@@ -223,7 +223,12 @@ export class MeasurementsExtension extends Extension {
     }
 
     if (data.event.button === 2) {
-      this.cancelMeasurement()
+      if (
+        this._activeMeasurement &&
+        this._activeMeasurement instanceof AreaMeasurement
+      ) {
+        this._activeMeasurement.removePoint()
+      } else this.cancelMeasurement()
       return
     }
 
@@ -255,6 +260,10 @@ export class MeasurementsExtension extends Extension {
     if (this._options.type === MeasurementType.PERPENDICULAR) {
       this.autoLazerMeasure(data)
       return
+    }
+    if (this._options.type === MeasurementType.AREA) {
+      ;(this._activeMeasurement as AreaMeasurement).autoFinish()
+      this.finishMeasurement()
     }
   }
 
