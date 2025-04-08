@@ -1,10 +1,13 @@
 import { Page, Browser } from 'puppeteer'
-import { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
-import {
+import type { Logger } from 'pino'
+
+import type { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
+import type {
   JobPayload,
   PreviewResultPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
-import type { Logger } from 'pino'
+
+import { AppState } from '@/const.js'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -20,6 +23,7 @@ type SharedArgs = {
 
 type JobArgs = SharedArgs & {
   browser: Browser
+  getAppState: () => AppState
 }
 
 type PageArgs = SharedArgs & {
@@ -31,9 +35,14 @@ export const jobProcessor = async ({
   browser,
   job,
   port,
-  timeout
+  timeout,
+  getAppState
 }: JobArgs): Promise<PreviewResultPayload> => {
-  const start = new Date()
+  const elapsed = (() => {
+    const start = new Date().getTime()
+    return () => (new Date().getTime() - start) / 1000
+  })()
+
   logger.info('Picked up job {jobId} for {serverUrl}')
 
   const jobMessage =
@@ -43,12 +52,16 @@ export const jobProcessor = async ({
     page = await browser.newPage()
 
     const result = await pageFunction({ page, job, logger, port, timeout })
-    const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.info({ status: result.status, elapsed }, jobMessage)
+    logger.info({ status: result.status, elapsed: elapsed() }, jobMessage)
     return result
   } catch (err: unknown) {
-    const elapsed = (new Date().getTime() - start.getTime()) / 1000
-    logger.error({ err, elapsed, status: 'error' }, jobMessage)
+    if (getAppState() === AppState.SHUTTINGDOWN) {
+      // likely that the job was cancelled due to the service shutting down
+      logger.warn({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
+    } else {
+      logger.error({ err, elapsed: elapsed(), status: 'error' }, jobMessage)
+    }
+
     const reason =
       err instanceof Error
         ? err.stack ?? err.toString()
@@ -60,7 +73,7 @@ export const jobProcessor = async ({
       jobId: job.jobId,
       status: 'error',
       result: {
-        durationSeconds: elapsed
+        durationSeconds: elapsed()
       },
       reason
     }

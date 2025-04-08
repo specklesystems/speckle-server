@@ -13,6 +13,7 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
+import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -54,12 +55,16 @@ export const getObjectPreviewBufferOrFilepathFactory =
       const objPreviewQueued = await deps.createObjectPreview({
         streamId,
         objectId,
-        priority: 0
+        priority: PreviewPriority.LOW
       })
       if (!objPreviewQueued) return { type: 'file', file: noPreviewImage }
     }
 
-    if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {
+    if (
+      !previewInfo ||
+      previewInfo.previewStatus !== PreviewStatus.DONE ||
+      !previewInfo.preview
+    ) {
       return { type: 'file', file: noPreviewImage }
     }
 
