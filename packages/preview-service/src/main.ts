@@ -86,6 +86,7 @@ const server = app.listen(port, host, async () => {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
+        '--disable-session-crashed-bubble',
         ...(GPU_ENABLED ? gpuWithVulkanArgs : [])
       ],
       protocolTimeout: PREVIEW_TIMEOUT
