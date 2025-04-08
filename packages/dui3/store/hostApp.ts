@@ -596,6 +596,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
       const newSelectedFilter = {
         ...existingSelectFilter,
+        items: newSelectFilter.items,
         selectedItems: updatedSelectedItems
       } as SendFilterSelect
 
