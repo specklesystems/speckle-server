@@ -18,13 +18,15 @@ import {
 } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
-import { hasMinimumServerRole } from '../../checks/serverRole.js'
 import { Roles } from '../../../core/constants.js'
-import { hasMinimumProjectRole } from '../../checks/projects.js'
 import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
-import { throwUncoveredError } from '../../../core/index.js'
 import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
+import { ensureWorkspacesEnabledFragment } from '../../fragments/workspaces.js'
+import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+import {
+  ensureMinimumProjectRoleFragment,
+  ensureProjectWorkspaceAccessFragment
+} from '../../fragments/projects.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -60,50 +62,39 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
 > =
   (loaders) =>
   async ({ userId, projectId, workspaceId }) => {
-    const env = await loaders.getEnv()
-    if (!userId) return err(new ServerNoSessionError())
-    if (!env.FF_WORKSPACES_MODULE_ENABLED) return err(new WorkspacesNotEnabledError())
+    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
+    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
 
+    // We do not support moving projects that are already in a workspace
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
     if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
 
-    const isServerUser = await hasMinimumServerRole(loaders)({
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.User
     })
-    if (!isServerUser) return err(new ServerNoAccessError())
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const isProjectOwner = await hasMinimumProjectRole(loaders)({
-      userId,
+    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+      userId: userId!,
       projectId,
       role: Roles.Stream.Owner
     })
-    if (!isProjectOwner) return err(new ProjectNoAccessError())
+    if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
 
     const isWorkspaceAdmin = await hasMinimumWorkspaceRole(loaders)({
-      userId,
+      userId: userId!,
       workspaceId,
       role: Roles.Workspace.Admin
     })
     if (!isWorkspaceAdmin) return err(new WorkspaceNoAccessError())
 
-    const maybeMemberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
-      loaders
-    )({
-      userId,
-      workspaceId
+    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
+      userId: userId!,
+      projectId
     })
-
-    if (!maybeMemberWithSsoSession.isNothing && maybeMemberWithSsoSession.value.isErr) {
-      switch (maybeMemberWithSsoSession.value.error.code) {
-        case 'WorkspaceNoAccess':
-        case 'WorkspaceSsoSessionNoAccess':
-          return err(maybeMemberWithSsoSession.value.error)
-        default:
-          throwUncoveredError(maybeMemberWithSsoSession.value.error)
-      }
-    }
+    if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
     if (!workspacePlan) return err(new WorkspaceNoAccessError())

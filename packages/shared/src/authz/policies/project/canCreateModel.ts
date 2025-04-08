@@ -13,12 +13,13 @@ import {
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
-import { hasMinimumServerRole } from '../../checks/serverRole.js'
 import { Roles } from '../../../core/constants.js'
-import { hasMinimumProjectRole } from '../../checks/projects.js'
-import { maybeMemberRoleWithValidSsoSessionIfNeeded } from '../../fragments/workspaceSso.js'
-import { throwUncoveredError } from '../../../core/index.js'
 import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
+import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+import {
+  ensureMinimumProjectRoleFragment,
+  ensureProjectWorkspaceAccessFragment
+} from '../../fragments/projects.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -54,20 +55,19 @@ export const canCreateModelPolicy: AuthPolicy<
   (loaders) =>
   async ({ userId, projectId }) => {
     const env = await loaders.getEnv()
-    if (!userId) return err(new ServerNoSessionError())
 
-    const hasServerRole = await hasMinimumServerRole(loaders)({
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.Guest
     })
-    if (!hasServerRole) return err(new ServerNoAccessError())
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const isStreamContributor = await hasMinimumProjectRole(loaders)({
-      userId,
+    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+      userId: userId!,
       projectId,
       role: Roles.Stream.Contributor
     })
-    if (!isStreamContributor) return err(new ProjectNoAccessError())
+    if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
 
     if (!env.FF_WORKSPACES_MODULE_ENABLED) {
       // Self-hosted servers may create models in "personal" projects
@@ -79,21 +79,12 @@ export const canCreateModelPolicy: AuthPolicy<
 
     const { workspaceId } = project
 
-    const maybeMemberWithSsoSession = await maybeMemberRoleWithValidSsoSessionIfNeeded(
-      loaders
-    )({
-      userId,
-      workspaceId
+    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
+      userId: userId!,
+      projectId
     })
-
-    if (!maybeMemberWithSsoSession.isNothing && maybeMemberWithSsoSession.value.isErr) {
-      switch (maybeMemberWithSsoSession.value.error.code) {
-        case 'WorkspaceNoAccess':
-        case 'WorkspaceSsoSessionNoAccess':
-          return err(maybeMemberWithSsoSession.value.error)
-        default:
-          throwUncoveredError(maybeMemberWithSsoSession.value.error)
-      }
+    if (ensuredWorkspaceAccess.isErr) {
+      return err(ensuredWorkspaceAccess.error)
     }
 
     const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })

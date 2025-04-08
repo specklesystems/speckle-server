@@ -246,7 +246,8 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
       getWorkspaceLimits: async () => {
         return {
           modelCount: 5,
-          projectCount: 5
+          projectCount: 5,
+          versionsHistory: null
         }
       },
       getWorkspaceProjectCount: async () => {
@@ -291,7 +292,8 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
       getWorkspaceLimits: async () => {
         return {
           modelCount: 5,
-          projectCount: 5
+          projectCount: 5,
+          versionsHistory: null
         }
       },
       getWorkspaceProjectCount: async () => {

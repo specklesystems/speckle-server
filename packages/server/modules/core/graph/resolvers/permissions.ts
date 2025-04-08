@@ -5,6 +5,9 @@ export default {
   Project: {
     permissions: (parent) => ({ projectId: parent.id })
   },
+  User: {
+    permissions: () => ({})
+  },
   ProjectPermissionChecks: {
     canCreateModel: async (parent, _args, ctx) => {
       const canCreateModel = await ctx.authPolicies.project.canCreateModel({
@@ -27,6 +30,16 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canRead)
+    }
+  },
+  RootPermissionChecks: {
+    canCreatePersonalProject: async (_parent, _args, ctx) => {
+      const canCreatePersonalProject = await ctx.authPolicies.project.canCreatePersonal(
+        {
+          userId: ctx.userId
+        }
+      )
+      return Authz.toGraphqlResult(canCreatePersonalProject)
     }
   }
 } as Resolvers

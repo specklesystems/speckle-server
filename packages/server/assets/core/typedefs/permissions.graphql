@@ -7,3 +7,11 @@ type ProjectPermissionChecks {
   canMoveToWorkspace(workspaceId: String!): PermissionCheckResult!
   canRead: PermissionCheckResult!
 }
+
+type RootPermissionChecks {
+  canCreatePersonalProject: PermissionCheckResult!
+}
+
+extend type User {
+  permissions: RootPermissionChecks! @isOwner
+}

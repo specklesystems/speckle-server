@@ -6,6 +6,7 @@ import { Roles } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
 import { Authz } from '../../../index.js'
+import { Project } from '../../domain/projects/types.js'
 
 const canCreateArgs = () => ({
   userId: cryptoRandomString({ length: 9 }),
@@ -95,7 +96,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
     const result = await canCreateModelPolicy({
       getEnv: async () => parseFeatureFlags({}),
       getProject: async () => {
-        assert.fail()
+        return {} as Project
       },
       getProjectRole: async () => {
         return Roles.Stream.Reviewer
@@ -137,7 +138,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
           FF_WORKSPACES_MODULE_ENABLED: 'false'
         }),
       getProject: async () => {
-        assert.fail()
+        return {} as Project
       },
       getProjectRole: async () => {
         return Roles.Stream.Contributor
@@ -296,7 +297,8 @@ describe('canCreateModelPolicy returns a function, that', () => {
       getWorkspaceLimits: async () => {
         return {
           modelCount: 5,
-          projectCount: 1
+          projectCount: 1,
+          versionsHistory: null
         }
       },
       getWorkspaceModelCount: async () => {
@@ -346,7 +348,8 @@ describe('canCreateModelPolicy returns a function, that', () => {
       getWorkspaceLimits: async () => {
         return {
           modelCount: 5,
-          projectCount: 1
+          projectCount: 1,
+          versionsHistory: null
         }
       },
       getWorkspaceModelCount: async () => {

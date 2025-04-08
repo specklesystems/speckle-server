@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canCreateProjectPolicy } from './canCreate.js'
+import { canCreatePersonalProjectPolicy } from './canCreatePersonal.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import {
   ProjectNoAccessError,
@@ -7,8 +7,10 @@ import {
   ServerNoSessionError
 } from '../../domain/authErrors.js'
 
-const buildSUT = (overrides?: Partial<Parameters<typeof canCreateProjectPolicy>[0]>) =>
-  canCreateProjectPolicy({
+const buildSUT = (
+  overrides?: Partial<Parameters<typeof canCreatePersonalProjectPolicy>[0]>
+) =>
+  canCreatePersonalProjectPolicy({
     getEnv: async () =>
       parseFeatureFlags({
         FF_WORKSPACES_MODULE_ENABLED: 'false'
