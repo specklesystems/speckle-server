@@ -5,8 +5,10 @@ extend type Project {
 type ProjectPermissionChecks {
   canRead: PermissionCheckResult!
   canUpdate: PermissionCheckResult!
+  canUpdateAllowPublicComments: PermissionCheckResult!
   canReadSettings: PermissionCheckResult!
   canReadWebhooks: PermissionCheckResult!
+  canLeave: PermissionCheckResult!
 }
 
 type RootPermissionChecks {

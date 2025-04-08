@@ -1,7 +1,11 @@
 import { OverrideProperties } from 'type-fest'
 import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
-import type { GetProject, GetProjectRole } from './projects/operations.js'
+import type {
+  GetProject,
+  GetProjectRole,
+  GetProjectRoleCounts
+} from './projects/operations.js'
 import type {
   GetAdminOverrideEnabled,
   GetEnv,
@@ -46,6 +50,7 @@ type AuthContextLoaderMappingDefinition<
 export const AuthCheckContextLoaderKeys = <const>{
   getEnv: 'getEnv',
   getProject: 'getProject',
+  getProjectRoleCounts: 'getProjectRoleCounts',
   getProjectRole: 'getProjectRole',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
@@ -69,6 +74,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getAdminOverrideEnabled: GetAdminOverrideEnabled
   getProject: GetProject
   getProjectRole: GetProjectRole
+  getProjectRoleCounts: GetProjectRoleCounts
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole

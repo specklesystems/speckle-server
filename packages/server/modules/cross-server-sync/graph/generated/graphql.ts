@@ -2540,10 +2540,12 @@ export const ProjectPendingVersionsUpdatedMessageType = {
 export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVersionsUpdatedMessageType[keyof typeof ProjectPendingVersionsUpdatedMessageType];
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
+  canLeave: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
+  canUpdateAllowPublicComments: PermissionCheckResult;
 };
 
 export type ProjectRole = {

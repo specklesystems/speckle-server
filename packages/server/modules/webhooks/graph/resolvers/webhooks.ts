@@ -5,7 +5,7 @@ import {
   deleteWebhookFactory,
   updateWebhookFactory
 } from '@/modules/webhooks/services/webhooks'
-import { Roles } from '@speckle/shared'
+import { Authz, Roles } from '@speckle/shared'
 import {
   countWebhooksByStreamIdFactory,
   createWebhookConfigFactory,
@@ -17,20 +17,34 @@ import {
   updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const streamWebhooksResolver = async (
   parent: { id: string },
   args: { id?: string },
-  context: { resourceAccessRules?: TokenResourceIdentifier[] | null; userId: string }
+  context: {
+    resourceAccessRules?: TokenResourceIdentifier[] | null
+    userId: string
+    authPolicies: Authz.AuthPolicies
+  }
 ) => {
-  await authorizeResolver(
-    context.userId,
-    parent.id,
-    Roles.Stream.Owner,
-    context.resourceAccessRules
-  )
+  throwIfResourceAccessNotAllowed({
+    resourceId: parent.id,
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules: context.resourceAccessRules
+  })
+
+  const canReadWebhooks = await context.authPolicies.project.canReadWebhooks({
+    projectId: parent.id,
+    userId: context.userId
+  })
+  throwIfAuthNotOk(canReadWebhooks)
 
   const projectDb = await getProjectDbClient({ projectId: parent.id })
 

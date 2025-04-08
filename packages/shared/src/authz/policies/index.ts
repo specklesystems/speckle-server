@@ -5,14 +5,18 @@ import { canCreatePersonalProjectPolicy } from './project/canCreatePersonal.js'
 import { canUpdateProjectPolicy } from './project/canUpdate.js'
 import { canReadProjectSettingsPolicy } from './project/canReadSettings.js'
 import { canReadProjectWebhooksPolicy } from './project/canReadWebhooks.js'
+import { canUpdateProjectAllowPublicCommentsPolicy } from './project/canUpdateAllowPublicComments.js'
+import { canLeaveProjectPolicy } from './project/canLeave.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
     canRead: canReadProjectPolicy(loaders),
     canCreatePersonal: canCreatePersonalProjectPolicy(loaders),
     canUpdate: canUpdateProjectPolicy(loaders),
+    canUpdateAllowPublicComments: canUpdateProjectAllowPublicCommentsPolicy(loaders),
     canReadSettings: canReadProjectSettingsPolicy(loaders),
-    canReadWebhooks: canReadProjectWebhooksPolicy(loaders)
+    canReadWebhooks: canReadProjectWebhooksPolicy(loaders),
+    canLeave: canLeaveProjectPolicy(loaders)
   },
   workspace: {
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders)

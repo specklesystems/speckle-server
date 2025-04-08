@@ -13,6 +13,7 @@ import { AuthPolicy } from '../../domain/policies.js'
 import {} from '../../fragments/server.js'
 import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../fragments/projects.js'
 
+// TODO: Tests
 export const canReadProjectSettingsPolicy: AuthPolicy<
   | typeof Loaders.getProject
   | typeof Loaders.getEnv

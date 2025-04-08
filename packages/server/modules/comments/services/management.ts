@@ -38,6 +38,7 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import { authorizeResolver } from '@/modules/shared'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -71,6 +72,16 @@ export const authorizeProjectCommentsAccessFactory =
       success = false
     if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
       success = true
+
+    // TODO: Until we do canCommentCreate & canCommentRead, fallback:
+    if (authCtx.userId) {
+      try {
+        await authorizeResolver(authCtx.userId, projectId, Roles.Stream.Reviewer, null)
+        success = true
+      } catch {
+        // suppress
+      }
+    }
 
     if (!success) {
       throw new StreamInvalidAccessError('You are not authorized')

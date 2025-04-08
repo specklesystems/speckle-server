@@ -23,6 +23,14 @@ export default {
       })
       return Authz.toGraphqlResult(canUpdate)
     },
+    canUpdateAllowPublicComments: async (parent, _args, ctx) => {
+      const canUpdateAllowPublicComments =
+        await ctx.authPolicies.project.canUpdateAllowPublicComments({
+          projectId: parent.projectId,
+          userId: ctx.userId
+        })
+      return Authz.toGraphqlResult(canUpdateAllowPublicComments)
+    },
     canReadSettings: async (parent, _args, ctx) => {
       const canReadSettings = await ctx.authPolicies.project.canReadSettings({
         projectId: parent.projectId,
@@ -36,6 +44,13 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canReadWebhooks)
+    },
+    canLeave: async (parent, _args, ctx) => {
+      const canLeave = await ctx.authPolicies.project.canLeave({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canLeave)
     }
   },
   RootPermissionChecks: {

@@ -2560,10 +2560,12 @@ export const ProjectPendingVersionsUpdatedMessageType = {
 export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVersionsUpdatedMessageType[keyof typeof ProjectPendingVersionsUpdatedMessageType];
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
+  canLeave: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
+  canUpdateAllowPublicComments: PermissionCheckResult;
 };
 
 export type ProjectRole = {
@@ -6644,10 +6646,12 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
 };
 
 export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPermissionChecks'] = ResolversParentTypes['ProjectPermissionChecks']> = {
+  canLeave?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadSettings?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadWebhooks?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canUpdateAllowPublicComments?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

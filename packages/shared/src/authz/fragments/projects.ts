@@ -40,7 +40,17 @@ export const ensureMinimumProjectRoleFragment: AuthPolicyEnsureFragment<
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
   | typeof Loaders.getProjectRole,
-  ProjectContext & UserContext & { role?: StreamRoles },
+  ProjectContext &
+    UserContext & {
+      /**
+       * Optionally specify role the user should have
+       */
+      role?: StreamRoles
+      /**
+       * Optionally only allow explicit project roles
+       */
+      explicit?: boolean
+    },
   InstanceType<
     | typeof ProjectNoAccessError
     | typeof ProjectNotFoundError
@@ -48,7 +58,7 @@ export const ensureMinimumProjectRoleFragment: AuthPolicyEnsureFragment<
   >
 > =
   (loaders) =>
-  async ({ userId, projectId, role }) => {
+  async ({ userId, projectId, role, explicit }) => {
     const requiredProjectRole = role || Roles.Stream.Reviewer
     const env = await loaders.getEnv()
     const project = await loaders.getProject({ projectId })
@@ -60,7 +70,9 @@ export const ensureMinimumProjectRoleFragment: AuthPolicyEnsureFragment<
       const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
       if (!userWorkspaceRole) return err(new WorkspaceNoAccessError())
 
-      const implicitProjectRole = workspaceRoleImplicitProjectRoleMap[userWorkspaceRole]
+      const implicitProjectRole = explicit
+        ? null
+        : workspaceRoleImplicitProjectRoleMap[userWorkspaceRole]
       if (implicitProjectRole) {
         // Does it fit minimum?
         if (isMinimumProjectRole(implicitProjectRole, requiredProjectRole)) return ok()

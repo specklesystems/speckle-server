@@ -217,13 +217,23 @@ export = {
       )
       return results.every((res) => res === true)
     },
-    async delete(_parent, { id: projectId }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        projectId,
-        Roles.Stream.Owner,
+    async delete(
+      _parent,
+      { id: projectId },
+      { userId, resourceAccessRules, authPolicies }
+    ) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules
-      )
+      })
+
+      const canUpdate = await authPolicies.project.canUpdate({
+        projectId,
+        userId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
@@ -242,7 +252,11 @@ export = {
         logger: log
       })
     },
-    async update(_parent, { update }, { userId, resourceAccessRules, authPolicies }) {
+    async update(
+      _parent,
+      { update },
+      { userId, resourceAccessRules, authPolicies, clearCache }
+    ) {
       throwIfResourceAccessNotAllowed({
         resourceId: update.id,
         resourceType: TokenResourceIdentifierType.Project,
@@ -261,7 +275,12 @@ export = {
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!)
+      const res = await updateStreamAndNotify(update, userId!)
+
+      // Reset loader cache
+      await clearCache()
+
+      return res
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
@@ -303,16 +322,31 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      return await updateStreamRoleAndNotify(
+      const ret = await updateStreamRoleAndNotify(
         args.input,
         ctx.userId!,
         ctx.resourceAccessRules
       )
+
+      // Reset loader cache
+      await ctx.clearCache()
+
+      return ret
     },
     async leave(_parent, args, context) {
+      const canLeave = await context.authPolicies.project.canLeave({
+        projectId: args.id,
+        userId: context.userId
+      })
+      throwIfAuthNotOk(canLeave)
+
       const { id } = args
       const { userId } = context
       await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
+
+      // Reset loader cache
+      await context.clearCache()
+
       return true
     },
     invites: () => ({})
