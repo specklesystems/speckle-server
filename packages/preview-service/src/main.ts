@@ -67,7 +67,6 @@ const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
 
   const gpuWithVulkanArgs = [
-    '--headless=new',
     '--use-angle=vulkan',
     '--enable-features=Vulkan',
     '--disable-vulkan-surface',
@@ -80,6 +79,7 @@ const server = app.listen(port, host, async () => {
       headless: !PREVIEWS_HEADED,
       executablePath: CHROMIUM_EXECUTABLE_PATH,
       userDataDir: USER_DATA_DIR,
+      // slowMo: 3000, // Use for debugging during development
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
       args: [
