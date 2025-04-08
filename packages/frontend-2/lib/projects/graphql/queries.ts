@@ -35,6 +35,7 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsHiddenProjectWarning_User
+      ...ProjectsDashboard_User
     }
   }
 `)

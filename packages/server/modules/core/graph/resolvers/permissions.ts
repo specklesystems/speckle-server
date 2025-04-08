@@ -22,6 +22,20 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canUpdate)
+    },
+    canReadSettings: async (parent, _args, ctx) => {
+      const canReadSettings = await ctx.authPolicies.project.canReadSettings({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadSettings)
+    },
+    canReadWebhooks: async (parent, _args, ctx) => {
+      const canReadWebhooks = await ctx.authPolicies.project.canReadWebhooks({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadWebhooks)
     }
   },
   RootPermissionChecks: {
