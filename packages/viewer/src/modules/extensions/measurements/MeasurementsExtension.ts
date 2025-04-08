@@ -164,7 +164,15 @@ export class MeasurementsExtension extends Extension {
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
 
-    if (this._options.vertexSnap) {
+    let vertexSnap = this._options.vertexSnap
+    if (this._activeMeasurement && this._activeMeasurement.snap)
+      vertexSnap = !this._activeMeasurement.snap(
+        data,
+        result[0],
+        this.pointBuff,
+        this.normalBuff
+      )
+    if (vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
 

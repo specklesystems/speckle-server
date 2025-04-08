@@ -7,6 +7,8 @@ import {
   DynamicDrawUsage,
   Material,
   Mesh,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   Quaternion,
   Raycaster,
@@ -21,6 +23,11 @@ import { Geometry } from '../../converter/Geometry.js'
 import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { MeasurementPointGizmo2 } from './MeasurementPointGizmo2.js'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+
+const _vec30 = new Vector3()
+const _vec31 = new Vector3()
+const _vec32 = new Vector3()
 
 export class AreaMeasurement extends Measurement {
   private pointGizmos: MeasurementPointGizmo2[]
@@ -35,6 +42,7 @@ export class AreaMeasurement extends Measurement {
   private polygonPoints: Vector3[] = []
 
   private fillPolygon: Mesh
+  private snapDistance: number = 10
 
   public set isVisible(value: boolean) {
     this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
@@ -84,11 +92,8 @@ export class AreaMeasurement extends Measurement {
 
     const measuredPoint = new Vector3().copy(this.surfacePoint)
     if (this.pointIndex > 0) {
-      measuredPoint.copy(
-        this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
-      )
-      const distanceToFirst = this.measuredPoints[0].distanceTo(measuredPoint)
-      if (distanceToFirst < 0.1) {
+      const distanceToFirst = this.surfacePoint.distanceTo(this.points[0])
+      if (distanceToFirst < 1e-10) {
         this._state = MeasurementState.COMPLETE
         measuredPoint.copy(this.measuredPoints[0])
         this.surfacePoint.copy(this.points[0])
@@ -119,6 +124,38 @@ export class AreaMeasurement extends Measurement {
     }
   }
 
+  public snap(
+    ndcPoint: Vector2,
+    _intersection: ExtendedMeshIntersection,
+    outPoint: Vector3,
+    outNormal: Vector3
+  ): boolean {
+    if (this.pointIndex < 2) return false
+
+    const firstPointSS = new Vector3()
+      .copy(this.points[0])
+      .project(this.renderingCamera as PerspectiveCamera | OrthographicCamera)
+    firstPointSS.set(
+      (firstPointSS.x * 0.5 + 0.5) * this.renderingSize.x,
+      (firstPointSS.y * -0.5 + 0.5) * this.renderingSize.y,
+      0
+    )
+    const mousePointSS = new Vector3(
+      (ndcPoint.x * 0.5 + 0.5) * this.renderingSize.x,
+      (ndcPoint.y * -0.5 + 0.5) * this.renderingSize.y,
+      0
+    )
+    const SSDistance = firstPointSS.distanceTo(mousePointSS)
+
+    if (SSDistance < this.snapDistance * window.devicePixelRatio) {
+      outPoint.copy(this.points[0])
+      outNormal.copy(this.planeNormal)
+      return true
+    }
+
+    return false
+  }
+
   public update(): Promise<void> {
     let ret: Promise<void> = Promise.resolve()
 
@@ -134,6 +171,7 @@ export class AreaMeasurement extends Measurement {
     const prevPoint = this.points[this.pointIndex - 1]
     this.pointGizmos[this.pointIndex].updateLine([prevPoint, currentPoint])
     this.pointGizmos[this.pointIndex].enable(true, true, true, false)
+    this.pointGizmos[this.pointIndex - 1].enable(false, true, true, false)
 
     if (this.measuredPoints.length > 1) {
       this.value = this.shoelaceArea3D(this.polygonPoints, this.planeNormal)
@@ -144,7 +182,6 @@ export class AreaMeasurement extends Measurement {
         this.labelPoint
       )
       this.pointGizmos[0].enable(false, true, true, true)
-      this.pointGizmos[this.pointIndex - 1].enable(false, true, true, false)
     }
 
     if (this._state === MeasurementState.COMPLETE) {
@@ -312,9 +349,9 @@ export class AreaMeasurement extends Measurement {
     planeNormal: Vector3,
     destination?: Vector3
   ) {
-    const p = new Vector3().copy(point)
-    const o = new Vector3().copy(planeOrigin)
-    const n = new Vector3().copy(planeNormal).normalize()
+    const p = _vec30.copy(point)
+    const o = _vec31.copy(planeOrigin)
+    const n = _vec32.copy(planeNormal).normalize()
 
     const v = p.sub(o)
     const dist = v.dot(n)
