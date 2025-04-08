@@ -594,19 +594,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         }
       )
 
-      const newSelectedFilter = {
-        ...existingSelectFilter,
-        items: newSelectFilter.items,
-        selectedItems: updatedSelectedItems
-      } as SendFilterSelect
-
+      existingSelectFilter.items = newSelectFilter.items
       existingSelectFilter.selectedItems = updatedSelectedItems
       existingSelectFilter.summary = existingSelectFilter.isMultiSelectable
         ? existingSelectFilter.selectedItems.map((v) => v.name).join(', ')
         : existingSelectFilter.selectedItems[0].name
 
+      // update the state in host app
       await patchModel(model.modelCardId, {
-        sendFilters: newSelectedFilter
+        sendFilters: existingSelectFilter
       })
     }
   }
