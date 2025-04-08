@@ -1098,6 +1098,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: RATELIMIT_BURST_GET_AUTH
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
 {{- end }}
+
+# OpenTelemetry
+
 {{- if .Values.openTelemetry.tracing.url }}
 - name: OTEL_TRACE_URL
   value: {{ .Values.openTelemetry.tracing.url | quote }}
@@ -1110,6 +1113,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: OTEL_TRACE_VALUE
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
+
+# Multi-region
+
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"

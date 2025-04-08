@@ -104,6 +104,10 @@ spec:
             value: {{ .Values.preview_service.gpu.enabled | quote }}
           {{- end }}
 
+          {{- with .Values.preview_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
       {{- end }}
