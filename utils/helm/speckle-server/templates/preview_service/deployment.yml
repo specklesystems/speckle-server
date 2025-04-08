@@ -99,6 +99,11 @@ spec:
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
 
+          {{- if .Values.preview_service.gpu.enabled }}
+          - name: GPU_ENABLED
+            value: {{ .Values.preview_service.gpu.enabled | quote }}
+          {{- end }}
+
           {{- with .Values.preview_service.additionalEnvVars }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
