@@ -113,6 +113,7 @@ const server = app.listen(port, host, async () => {
 
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
+    let encounteredError = false
     let jobLogger = logger.child({
       payloadId: payload.id,
       jobPriorAttemptsMade: payload.attemptsMade
@@ -155,9 +156,6 @@ const server = app.listen(port, host, async () => {
       // with removeOnComplete, the job response potentially containing a large images,
       // is cleared from the response queue
       await resultsQueue.add(result, { removeOnComplete: true })
-      await browser.close()
-      browser = undefined
-      done()
     } catch (err) {
       if (appState === AppState.SHUTTINGDOWN) {
         // likely that the job was cancelled due to the service shutting down
@@ -166,6 +164,7 @@ const server = app.listen(port, host, async () => {
         jobLogger.error({ err }, 'Processing {jobId} failed')
       }
       if (err instanceof Error) {
+        encounteredError = true
         done(err)
       } else {
         throw err
@@ -173,6 +172,7 @@ const server = app.listen(port, host, async () => {
     } finally {
       if (browser) await browser.close()
       browser = undefined
+      if (!encounteredError) done()
       currentJob = undefined
     }
   })
