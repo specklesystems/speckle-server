@@ -93,7 +93,7 @@ export class AreaMeasurement extends Measurement {
     this.addPoint()
   }
 
-  public addPoint() {
+  public addPoint(): number {
     const measuredPoint = new Vector3().copy(this.surfacePoint)
     if (this.pointIndex > 0) {
       measuredPoint.copy(
@@ -129,10 +129,12 @@ export class AreaMeasurement extends Measurement {
       this.updateFillPolygon(this.polygonPoints)
       this.updatePoleOfInnacessibility(this.measuredPoints)
     }
+
+    return this.points.length
   }
 
-  public removePoint() {
-    if (this.pointIndex < 1) return
+  public removePoint(): number {
+    if (this.pointIndex < 1) return 0
     this.remove(this.pointGizmos.pop() as MeasurementPointGizmo2)
     this.points.pop()
     this.measuredPoints.pop()
@@ -142,6 +144,8 @@ export class AreaMeasurement extends Measurement {
     void this.update()
     this.updateFillPolygon(this.polygonPoints)
     this.updatePoleOfInnacessibility(this.measuredPoints)
+
+    return this.points.length
   }
 
   public autoFinish() {

@@ -227,7 +227,8 @@ export class MeasurementsExtension extends Extension {
         this._activeMeasurement &&
         this._activeMeasurement instanceof AreaMeasurement
       ) {
-        this._activeMeasurement.removePoint()
+        const count = this._activeMeasurement.removePoint()
+        if (count === 0) this.cancelMeasurement()
       } else this.cancelMeasurement()
       return
     }
