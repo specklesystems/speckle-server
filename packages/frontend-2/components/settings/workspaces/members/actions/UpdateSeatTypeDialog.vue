@@ -2,15 +2,15 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
     <div class="flex flex-col mb-4">
-      <p class="text-body-sm mb-4">Confirm {{ user.name }}'s new seat.</p>
+      <p class="text-body-sm mb-4">Confirm {{ user.user.name }}'s new seat.</p>
 
       <SeatTransitionCards
         :is-upgrading="isUpgrading"
         :is-free-plan="isFreePlan"
         :is-unlimited-plan="isUnlimitedPlan"
         :is-guest="user.role === Roles.Workspace.Guest"
-        :has-available-seat="editorSeats.hasSeatAvailable"
-        :seat-price="editorSeats.seatPrice"
+        :has-available-seat="hasAvailableEditorSeats"
+        :seat-price="editorSeatPriceFormatted"
       />
 
       <p v-if="billingMessage" class="text-foreground-2 text-body-xs mt-4">
@@ -29,7 +29,6 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import {
   SeatTypes,
   type WorkspaceSeatType,
@@ -40,17 +39,14 @@ import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
   SettingsWorkspacesMembersTable_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
 
 const props = defineProps<{
-  user: UserItem
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  user: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
@@ -61,8 +57,8 @@ const open = defineModel<boolean>('open', { required: true })
 
 const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
-  editorSeats,
-  totalCostFormatted,
+  hasAvailableEditorSeats,
+  editorSeatPriceFormatted,
   billingCycleEnd,
   isPurchasablePlan,
   isFreePlan,
@@ -76,9 +72,9 @@ const annualOrMonthly = computed(() => (intervalIsYearly.value ? 'year' : 'month
 const billingMessage = computed(() => {
   if (isFreePlan.value) return null
   if (isUpgrading.value) {
-    return editorSeats.value.hasSeatAvailable
+    return hasAvailableEditorSeats.value
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `This adds an extra Editor seat to your subscription, increasing your total billing to ${totalCostFormatted.value}/${annualOrMonthly.value}.`
+      : `This adds an extra Editor seat to your subscription, increasing your total billing by ${editorSeatPriceFormatted.value}/${annualOrMonthly.value}.`
   } else {
     return isPurchasablePlan.value
       ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd.value}. You can freely reassign it to another person.`
