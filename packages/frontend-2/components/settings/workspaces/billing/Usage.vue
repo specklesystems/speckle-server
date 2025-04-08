@@ -11,7 +11,9 @@
             <p class="text-body-xs text-foreground font-medium leading-none">
               {{ seats?.editors.assigned }}
             </p>
-            <CommonBadge rounded>{{ seats?.editors.available }} Unused</CommonBadge>
+            <CommonBadge v-if="seats?.editors.available" rounded>
+              {{ seats?.editors.available }} Unused
+            </CommonBadge>
           </div>
         </div>
         <div>
