@@ -78,12 +78,7 @@ const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
   appState = AppState.RUNNING
 
-  const gpuWithVulkanArgs = [
-    '--use-angle=vulkan',
-    '--enable-features=Vulkan',
-    '--disable-vulkan-surface',
-    '--enable-unsafe-webgpu'
-  ]
+  const gpuArgs = ['--use-gl=angle', '--use-angle=gl-egl']
 
   const launchBrowser = async (): Promise<Browser> => {
     logger.debug('Starting browser')
@@ -99,7 +94,7 @@ const server = app.listen(port, host, async () => {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-session-crashed-bubble',
-        ...(GPU_ENABLED ? gpuWithVulkanArgs : [])
+        ...(GPU_ENABLED ? gpuArgs : [])
       ],
       protocolTimeout: PREVIEW_TIMEOUT,
       // handle closing of the browser by the preview-service, not puppeteer
