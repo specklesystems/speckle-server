@@ -92,6 +92,9 @@ export class AreaMeasurement extends Measurement {
 
     const measuredPoint = new Vector3().copy(this.surfacePoint)
     if (this.pointIndex > 0) {
+      measuredPoint.copy(
+        this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
+      )
       const distanceToFirst = this.surfacePoint.distanceTo(this.points[0])
       if (distanceToFirst < 1e-10) {
         this._state = MeasurementState.COMPLETE
