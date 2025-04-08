@@ -48,7 +48,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       code: WorkspaceNoAccessError.code
     })
   })
-  it('returns nothing if user does not have a minimum workspace:member role', async () => {
+  it('returns ok w/o checking session if user is a workspace guest', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => ({
         id: 'aaa',
@@ -65,7 +65,7 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       userId: cryptoRandomString({ length: 10 }),
       workspaceId: cryptoRandomString({ length: 10 })
     })
-    expect(result).toBeNothingResult()
+    expect(result).toBeAuthOKResult()
   })
   it('returns just(ok()) if user is a member and workspace has no SSO provider', async () => {
     const result = await ensureWorkspaceRoleAndSessionFragment({
