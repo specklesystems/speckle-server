@@ -94,7 +94,7 @@ export const isNewWorkspacePlan = (
   }
 }
 
-export const doesPlanIncludeThePaidUnlimitedProjectsAddon = (
+export const doesPlanIncludeUnlimitedProjectsAddon = (
   plan: WorkspacePlans
 ): boolean => {
   switch (plan) {

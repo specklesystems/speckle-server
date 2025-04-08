@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  doesPlanIncludeThePaidUnlimitedProjectsAddon,
+  doesPlanIncludeUnlimitedProjectsAddon,
   isNewWorkspacePlan,
   isSelfServerAvailablePlan,
   WorkspacePlans
@@ -33,7 +33,7 @@ describe('plan helpers', () => {
     })
   })
 
-  describe('doesPlanIncludeThePaidUnlimitedProjectsAddon', () => {
+  describe('doesPlanIncludeUnlimitedProjectsAddon', () => {
     const planCases: {
       [P in WorkspacePlans]: boolean
     } = <const>{
@@ -56,9 +56,7 @@ describe('plan helpers', () => {
     it.each(Object.entries(planCases))(
       'plan %s include the paid unlimited projects addon -> %s',
       (plan, isNew) => {
-        const result = doesPlanIncludeThePaidUnlimitedProjectsAddon(
-          plan as WorkspacePlans
-        )
+        const result = doesPlanIncludeUnlimitedProjectsAddon(plan as WorkspacePlans)
         expect(result).toStrictEqual(isNew)
       }
     )
