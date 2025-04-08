@@ -91,6 +91,7 @@ generates:
         Price: '@/modules/gatekeeperCore/helpers/graphTypes#PriceGraphQLReturn'
         WorkspaceSubscription: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionGraphQLReturn'
         ProjectPermissionChecks: '@/modules/core/helpers/graphTypes#ProjectPermissionChecksGraphQLReturn'
+        RootPermissionChecks: '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn'
         WorkspacePermissionChecks: '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:

@@ -476,7 +476,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: null,
-            modelCount: null
+            modelCount: null,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -515,7 +516,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -556,7 +558,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -595,7 +598,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         getWorkspaceLimits: async () => {
           return {
             projectCount: 10,
-            modelCount: 50
+            modelCount: 50,
+            versionsHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {

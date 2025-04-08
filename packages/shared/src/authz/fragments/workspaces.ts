@@ -1,17 +1,20 @@
 import { err, ok } from 'true-myth/result'
-import { AuthPolicyFragment } from '../domain/policies.js'
+import { AuthPolicyEnsureFragment } from '../domain/policies.js'
 import {
   hasAnyWorkspaceRole,
   requireMinimumWorkspaceRole
 } from '../checks/workspaceRole.js'
-import { just, nothing } from 'true-myth/maybe'
 import {
   WorkspaceNoAccessError,
+  WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
+import { Loaders } from '../domain/loaders.js'
 
-//
-export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
+/**
+ * Ensure user has a workspace role, and a valid SSO session (if SSO is configured)
+ */
+export const ensureWorkspaceRoleAndSessionFragment: AuthPolicyEnsureFragment<
   | 'getWorkspaceRole'
   | 'getWorkspaceSsoProvider'
   | 'getWorkspaceSsoSession'
@@ -24,10 +27,10 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
     // Get workspace, so we can resolve its slug for error scenarios
     const workspace = await loaders.getWorkspace({ workspaceId })
     // hides the fact, that the workspace does not exist
-    if (!workspace) return just(err(new WorkspaceNoAccessError()))
+    if (!workspace) return err(new WorkspaceNoAccessError())
 
     const hasAnyRole = await hasAnyWorkspaceRole(loaders)({ userId, workspaceId })
-    if (!hasAnyRole) return just(err(new WorkspaceNoAccessError()))
+    if (!hasAnyRole) return err(new WorkspaceNoAccessError())
 
     const hasMinimumMemberRole = await requireMinimumWorkspaceRole(loaders)({
       userId,
@@ -35,36 +38,47 @@ export const maybeMemberRoleWithValidSsoSessionIfNeeded: AuthPolicyFragment<
       role: 'workspace:member'
     })
     // only members and above need to use sso
-    if (!hasMinimumMemberRole) return nothing()
+    if (!hasMinimumMemberRole) return ok()
 
     const workspaceSsoProvider = await loaders.getWorkspaceSsoProvider({
       workspaceId
     })
-    if (!workspaceSsoProvider) return just(ok())
+    if (!workspaceSsoProvider) return ok()
 
     const workspaceSsoSession = await loaders.getWorkspaceSsoSession({
       userId,
       workspaceId
     })
     if (!workspaceSsoSession)
-      return just(
-        err(
-          new WorkspaceSsoSessionNoAccessError({
-            payload: { workspaceSlug: workspace.slug }
-          })
-        )
+      return err(
+        new WorkspaceSsoSessionNoAccessError({
+          payload: { workspaceSlug: workspace.slug }
+        })
       )
 
     const isExpiredSession =
       new Date().getTime() > workspaceSsoSession.validUntil.getTime()
 
     if (isExpiredSession)
-      return just(
-        err(
-          new WorkspaceSsoSessionNoAccessError({
-            payload: { workspaceSlug: workspace.slug }
-          })
-        )
+      return err(
+        new WorkspaceSsoSessionNoAccessError({
+          payload: { workspaceSlug: workspace.slug }
+        })
       )
-    return just(ok())
+
+    return ok()
   }
+
+/**
+ * Ensure the workspaces module is enabled
+ */
+export const ensureWorkspacesEnabledFragment: AuthPolicyEnsureFragment<
+  typeof Loaders.getEnv,
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  {},
+  InstanceType<typeof WorkspacesNotEnabledError>
+> = (loaders) => async () => {
+  const env = await loaders.getEnv()
+  if (!env.FF_WORKSPACES_MODULE_ENABLED) return err(new WorkspacesNotEnabledError())
+  return ok()
+}

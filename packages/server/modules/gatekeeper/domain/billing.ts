@@ -30,6 +30,10 @@ export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
 
+export type GetWorkspacePlansByWorkspaceId = (args: {
+  workspaceIds: string[]
+}) => Promise<Record<string, WorkspacePlan>>
+
 export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
 }) => Promise<Optional<Workspace & { plan: Nullable<WorkspacePlan> }>>
