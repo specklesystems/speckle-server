@@ -2960,6 +2960,11 @@ export type Role = {
   resourceTarget: Scalars['String']['output'];
 };
 
+export type RootPermissionChecks = {
+  __typename?: 'RootPermissionChecks';
+  canCreatePersonalProject: PermissionCheckResult;
+};
+
 /** Available scopes. */
 export type Scope = {
   __typename?: 'Scope';
@@ -3831,6 +3836,7 @@ export type User = {
   isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
+  permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
   projectAccessRequest?: Maybe<ProjectAccessRequest>;
