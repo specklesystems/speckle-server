@@ -1,14 +1,15 @@
 import { err, ok } from 'true-myth/result'
 import { MaybeUserContext } from '../../domain/context.js'
 import { Loaders } from '../../domain/loaders.js'
-import { AuthPolicy, ErrorsOf, LoadersOf } from '../../domain/policies.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+import { ServerNoAccessError, ServerNoSessionError } from '../../domain/authErrors.js'
 
 export const canCreatePersonalProjectPolicy: AuthPolicy<
-  LoadersOf<typeof ensureMinimumServerRoleFragment> | typeof Loaders.getEnv,
+  typeof Loaders.getServerRole | typeof Loaders.getEnv,
   MaybeUserContext,
-  ErrorsOf<typeof ensureMinimumServerRoleFragment>
+  InstanceType<typeof ServerNoAccessError | typeof ServerNoSessionError>
 > =
   (loaders) =>
   async ({ userId }) => {

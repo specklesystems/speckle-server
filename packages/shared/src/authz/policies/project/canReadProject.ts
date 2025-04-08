@@ -1,6 +1,6 @@
 import { Roles } from '../../../core/constants.js'
 import { err, ok } from 'true-myth/result'
-import { AuthPolicy, ErrorsOf, LoadersOf } from '../../domain/policies.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 import {
   checkIfPubliclyReadableProjectFragment,
@@ -11,19 +11,35 @@ import {
   checkIfAdminOverrideEnabledFragment,
   ensureMinimumServerRoleFragment
 } from '../../fragments/server.js'
+import { Loaders } from '../../domain/loaders.js'
+import {
+  ProjectNoAccessError,
+  ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  WorkspaceNoAccessError,
+  WorkspaceSsoSessionNoAccessError
+} from '../../domain/authErrors.js'
 
 export const canReadProjectPolicy: AuthPolicy<
-  | LoadersOf<typeof checkIfPubliclyReadableProjectFragment>
-  | LoadersOf<typeof ensureMinimumServerRoleFragment>
-  | LoadersOf<typeof ensureMinimumProjectRoleFragment>
-  | LoadersOf<typeof checkIfAdminOverrideEnabledFragment>
-  | LoadersOf<typeof ensureProjectWorkspaceAccessFragment>,
+  | typeof Loaders.getProject
+  | typeof Loaders.getEnv
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getProjectRole
+  | typeof Loaders.getAdminOverrideEnabled,
   MaybeUserContext & ProjectContext,
-  | ErrorsOf<typeof ensureMinimumServerRoleFragment>
-  | ErrorsOf<typeof ensureMinimumProjectRoleFragment>
-  | ErrorsOf<typeof ensureProjectWorkspaceAccessFragment>
-  | ErrorsOf<typeof checkIfPubliclyReadableProjectFragment>
-  | ErrorsOf<typeof checkIfAdminOverrideEnabledFragment>
+  InstanceType<
+    | typeof ProjectNotFoundError
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof ProjectNoAccessError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceSsoSessionNoAccessError
+  >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {

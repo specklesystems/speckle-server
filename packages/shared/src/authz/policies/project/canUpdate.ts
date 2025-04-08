@@ -1,21 +1,40 @@
 import { err, ok } from 'true-myth/result'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
-import { AuthPolicy, ErrorsOf, LoadersOf } from '../../domain/policies.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import {
   ensureMinimumProjectRoleFragment,
   ensureProjectWorkspaceAccessFragment
 } from '../../fragments/projects.js'
+import { Loaders } from '../../domain/loaders.js'
+import {
+  ProjectNoAccessError,
+  ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  WorkspaceNoAccessError,
+  WorkspaceSsoSessionNoAccessError
+} from '../../domain/authErrors.js'
 
 export const canUpdateProjectPolicy: AuthPolicy<
-  | LoadersOf<typeof ensureMinimumProjectRoleFragment>
-  | LoadersOf<typeof ensureMinimumServerRoleFragment>
-  | LoadersOf<typeof ensureProjectWorkspaceAccessFragment>,
+  | typeof Loaders.getProject
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getEnv
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getProjectRole,
   ProjectContext & MaybeUserContext,
-  | ErrorsOf<typeof ensureMinimumServerRoleFragment>
-  | ErrorsOf<typeof ensureProjectWorkspaceAccessFragment>
-  | ErrorsOf<typeof ensureMinimumProjectRoleFragment>
+  InstanceType<
+    | typeof ProjectNoAccessError
+    | typeof ProjectNotFoundError
+    | typeof WorkspaceNoAccessError
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof WorkspaceSsoSessionNoAccessError
+  >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {

@@ -42,24 +42,3 @@ export type AuthPolicyCheck<
   LoaderKeys extends AuthCheckContextLoaderKeys,
   Args extends object
 > = (loaders: AuthCheckContextLoaders<LoaderKeys>) => (args: Args) => Promise<boolean>
-
-export type LoadersOf<
-  P extends
-    | AuthPolicy<any, any, any>
-    | AuthPolicyFragment<any, any, any, any>
-    | AuthPolicyCheck<any, any>
-> = P extends AuthPolicy<infer LoaderKeys, any, any>
-  ? LoaderKeys
-  : P extends AuthPolicyFragment<infer LoaderKeys, any, any, any>
-  ? LoaderKeys
-  : P extends AuthPolicyCheck<infer LoaderKeys, any>
-  ? LoaderKeys
-  : never
-
-export type ErrorsOf<
-  P extends AuthPolicy<any, any, any> | AuthPolicyFragment<any, any, any, any>
-> = P extends AuthPolicy<any, any, infer ExpectedAuthErrors>
-  ? ExpectedAuthErrors
-  : P extends AuthPolicyFragment<any, any, infer ExpectedAuthErrors, any>
-  ? ExpectedAuthErrors
-  : never

@@ -1,4 +1,4 @@
-import { AuthPolicy, ErrorsOf, LoadersOf } from '../../domain/policies.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
@@ -35,10 +35,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getWorkspaceLimits'
   | 'getWorkspaceProjectCount'
   | 'getWorkspaceSsoProvider'
-  | 'getWorkspaceSsoSession'
-  | LoadersOf<typeof ensureWorkspacesEnabledFragment>
-  | LoadersOf<typeof ensureMinimumServerRoleFragment>
-  | LoadersOf<typeof ensureWorkspaceRoleAndSessionFragment>,
+  | 'getWorkspaceSsoSession',
   MaybeUserContext & WorkspaceContext,
   | InstanceType<typeof WorkspacesNotEnabledError>
   | InstanceType<typeof WorkspaceNoAccessError>
@@ -49,9 +46,6 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
-  | ErrorsOf<typeof ensureWorkspacesEnabledFragment>
-  | ErrorsOf<typeof ensureMinimumServerRoleFragment>
-  | ErrorsOf<typeof ensureWorkspaceRoleAndSessionFragment>
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {

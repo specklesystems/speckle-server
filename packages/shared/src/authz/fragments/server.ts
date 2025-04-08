@@ -2,9 +2,7 @@ import { MaybeUserContext } from '../domain/context.js'
 import { Loaders } from '../domain/loaders.js'
 import {
   AuthPolicyCheckFragment,
-  AuthPolicyEnsureFragment,
-  ErrorsOf,
-  LoadersOf
+  AuthPolicyEnsureFragment
 } from '../domain/policies.js'
 import { ServerNoAccessError, ServerNoSessionError } from '../domain/authErrors.js'
 import { hasMinimumServerRole } from '../checks/serverRole.js'
@@ -39,10 +37,9 @@ export const ensureMinimumServerRoleFragment: AuthPolicyEnsureFragment<
  * Check if user has admin override enabled
  */
 export const checkIfAdminOverrideEnabledFragment: AuthPolicyCheckFragment<
-  | typeof Loaders.getAdminOverrideEnabled
-  | LoadersOf<typeof ensureMinimumServerRoleFragment>,
+  typeof Loaders.getAdminOverrideEnabled | typeof Loaders.getServerRole,
   MaybeUserContext,
-  ErrorsOf<typeof ensureMinimumServerRoleFragment>
+  InstanceType<typeof ServerNoAccessError | typeof ServerNoSessionError>
 > =
   (loaders) =>
   async ({ userId }) => {
