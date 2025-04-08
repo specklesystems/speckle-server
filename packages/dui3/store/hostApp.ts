@@ -569,6 +569,42 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (navisworksSavedSetsFromSendFilters) {
       navisworksAvailableSavedSets.value = navisworksSavedSetsFromSendFilters.items
     }
+
+    tryToUpgradeSelectSendFilters() // in rhino we trigger refresh send filters whenever layer name has changed, this should be done for navis too!
+  }
+
+  const tryToUpgradeSelectSendFilters = async () => {
+    for (const model of documentModelStore.value.models) {
+      const isSender = model.typeDiscriminator.toLowerCase().includes('sender')
+      if (!isSender) continue //  we do not care about receivers
+
+      if ((model as ISenderModelCard).sendFilter?.type !== 'Select') continue // we do not care about filters other than Select type
+
+      const existingSelectFilter = (model as ISenderModelCard)
+        .sendFilter as SendFilterSelect
+      const newSelectFilter = availableSelectSendFilters.value[existingSelectFilter.id]
+      if (!newSelectFilter) {
+        continue
+      }
+      // here we do the upgrade by checking available select filter items and existing select filter items against ids
+      const updatedSelectedItems = existingSelectFilter.selectedItems.map(
+        (selected) => {
+          const upgraded = newSelectFilter.items.find((item) => item.id === selected.id)
+          return upgraded ?? selected
+        }
+      )
+
+      existingSelectFilter.items = newSelectFilter.items
+      existingSelectFilter.selectedItems = updatedSelectedItems
+      existingSelectFilter.summary = existingSelectFilter.isMultiSelectable
+        ? existingSelectFilter.selectedItems.map((v) => v.name).join(', ')
+        : existingSelectFilter.selectedItems[0].name
+
+      // update the state in host app
+      await patchModel(model.modelCardId, {
+        sendFilters: existingSelectFilter
+      })
+    }
   }
 
   const getSendSettings = async () => {
