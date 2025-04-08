@@ -55,9 +55,13 @@ export const migrateOldWorkspacePlans =
 export const migrateWorkspacePlan =
   ({ db, stripe, logger }: { db: Knex; stripe: Stripe; logger: Logger }) =>
   async ({ workspaceId }: { workspaceId: string }) => {
+    let log = logger.child({ workspaceId })
+    log.info('Starting workspace plan migration')
     const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
     if (!workspacePlan)
       throw new Error(`Workspace ${workspaceId} has no workspace plan`)
+
+    log = log.child({ workspacePlan })
 
     let newTargetPlan: WorkspacePlans | null = null
     let newPlanStatus: WorkspacePlanStatuses | null = null
@@ -136,7 +140,15 @@ export const migrateWorkspacePlan =
         throwUncoveredError(workspacePlan)
     }
 
-    if (!newTargetPlan) return
+    if (!newTargetPlan) {
+      log.info('No migration needed for this plan')
+      return
+    }
+
+    log.info(
+      { newTargetPlan, newPlanStatus, isStripeMigrationNeeded },
+      'Migrating to new plan'
+    )
 
     const trx = await db.transaction()
     // add editor seats to everyone
@@ -166,6 +178,7 @@ export const migrateWorkspacePlan =
       }
     })
     if (isStripeMigrationNeeded) {
+      log.info('Migrating stripe subscription data')
       switch (newTargetPlan) {
         case 'academia':
         case 'free':
@@ -217,6 +230,7 @@ export const migrateWorkspacePlan =
       })
     }
     await trx.commit()
+    log.info('Workspace plan migration completed')
 
     // add and editor seat to all workspace members
     // convert current plan to the new plan
