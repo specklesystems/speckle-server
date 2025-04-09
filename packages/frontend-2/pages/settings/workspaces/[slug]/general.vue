@@ -149,7 +149,6 @@ import { Roles } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 
 graphql(`
@@ -217,15 +216,13 @@ const canDeleteWorkspace = computed(
     !needsSsoLogin.value &&
     (!isBillingIntegrationEnabled ||
       !(
-        (
-          [
-            WorkspacePlanStatuses.Valid,
-            WorkspacePlanStatuses.PaymentFailed,
-            WorkspacePlanStatuses.CancelationScheduled
-          ] as string[]
-        ).includes(
-          workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
-        ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ] as string[]
+      ).includes(
+        workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
       ))
 )
 const deleteWorkspaceTooltip = computed(() => {
