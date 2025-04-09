@@ -27,8 +27,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
-import type { PaidWorkspacePlansOld } from '@speckle/shared'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { type PaidWorkspacePlansOld, isSelfServeAvailablePlan } from '@speckle/shared'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
 
@@ -43,7 +42,7 @@ const { upgradePlan } = useBillingActions()
 const { prices } = useWorkspacePlanPrices()
 
 const seatPrice = computed(() => {
-  if (isPaidPlan(props.plan)) {
+  if (isSelfServeAvailablePlan(props.plan)) {
     const planPrices = prices.value?.[props.plan]
     const price = planPrices?.[props.billingInterval]
 
