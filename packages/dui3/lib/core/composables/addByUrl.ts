@@ -40,7 +40,7 @@ export function useAddByUrl() {
     try {
       new URL(url)
     } catch {
-      urlParseError.value = 'Invalid url.'
+      urlParseError.value = '' // we do not care random strings
       return
     }
 
