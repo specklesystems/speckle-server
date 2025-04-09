@@ -25,6 +25,7 @@ import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branc
 import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 
 export = {
   Query: {},
@@ -70,12 +71,14 @@ export = {
   },
   Mutation: {
     async branchCreate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.branch.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+      const canCreate = await context.authPolicies.project.canCreateModel({
+        userId: context.userId,
+        projectId: args.branch.streamId
+      })
+
+      if (!canCreate.isOk) {
+        throw mapAuthToServerError(canCreate.error)
+      }
 
       const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
       const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDB })
