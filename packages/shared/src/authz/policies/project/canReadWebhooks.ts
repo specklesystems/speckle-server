@@ -1,12 +1,5 @@
 import { err, ok } from 'true-myth/result'
-import { AuthPolicy } from '../../domain/policies.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
-import {
-  checkIfPubliclyReadableProjectFragment,
-  ensureImplicitProjectMemberWithReadAccessFragment
-} from '../../fragments/projects.js'
-import {} from '../../fragments/server.js'
-import { Loaders } from '../../domain/loaders.js'
+import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -15,8 +8,12 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
+import { Loaders } from '../../domain/loaders.js'
+import { AuthPolicy } from '../../domain/policies.js'
+import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../fragments/projects.js'
 
-export const canReadProjectPolicy: AuthPolicy<
+export const canReadProjectWebhooksPolicy: AuthPolicy<
   | typeof Loaders.getProject
   | typeof Loaders.getEnv
   | typeof Loaders.getServerRole
@@ -38,21 +35,13 @@ export const canReadProjectPolicy: AuthPolicy<
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    // All users may read public projects
-    const isPubliclyReadable = await checkIfPubliclyReadableProjectFragment(loaders)({
-      projectId
-    })
-    if (isPubliclyReadable.isErr) {
-      return err(isPubliclyReadable.error)
-    }
-    if (isPubliclyReadable.value) return ok()
-
-    // Not public. Ensure user has at least implicit membership & read access
+    // Ensure user has at least implicit ownership & read access
     const hasReadAccess = await ensureImplicitProjectMemberWithReadAccessFragment(
       loaders
     )({
       userId,
-      projectId
+      projectId,
+      role: Roles.Stream.Owner
     })
     if (hasReadAccess.isErr) {
       return err(hasReadAccess.error)

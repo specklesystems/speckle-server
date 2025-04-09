@@ -111,6 +111,7 @@ const scheduleWorkspaceSubscriptionDownscale = ({
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
   let isMigrationComplete = false
   let isMigrationRunning = false
@@ -249,8 +250,8 @@ const gatekeeperModule: SpeckleModule = {
         scheduledTasks = [
           scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
           scheduleWorkspaceTrialEmails({ scheduleExecution }),
-          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit }),
-          scheduleWorkspacePlanMigrations(scheduleExecution)
+          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+          // scheduleWorkspacePlanMigrations(scheduleExecution)
         ]
 
         quitListeners = initializeEventListenersFactory({

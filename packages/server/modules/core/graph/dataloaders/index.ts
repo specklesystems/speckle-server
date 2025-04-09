@@ -12,7 +12,8 @@ import {
   getStreamRolesFactory,
   getUserStreamCountsFactory,
   getStreamsSourceAppsFactory,
-  getStreamsCollaboratorsFactory
+  getStreamsCollaboratorsFactory,
+  getStreamsCollaboratorCountsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash'
 import {
@@ -98,6 +99,7 @@ import {
 } from '@/modules/core/domain/commits/types'
 import { logger } from '@/observability/logging'
 import { getLastVersionByProjectIdFactory } from '@/modules/core/repositories/versions'
+import { StreamRoles } from '@speckle/shared'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -147,6 +149,9 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getUsers = getUsersFactory({ db })
     const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
     const getLastVersionByProjectId = getLastVersionByProjectIdFactory({ db })
+    const getStreamsCollaboratorCounts = getStreamsCollaboratorCountsFactory({
+      db
+    })
 
     return {
       streams: {
@@ -217,6 +222,22 @@ const dataLoadersDefinition = defineRequestDataloaders(
             return streamIds.map((i) => results[i] || [])
           }
         ),
+
+        /**
+         * Get stream collaborator counts by role
+         */
+        getCollaboratorCounts: createLoader<
+          string,
+          Nullable<{
+            [role in StreamRoles]?: number
+          }>
+        >(async (streamIds) => {
+          const results = await getStreamsCollaboratorCounts({
+            streamIds: streamIds.slice()
+          })
+
+          return streamIds.map((i) => results[i] || null)
+        }),
 
         /**
          * Get favorite metadata for a specific stream and user
