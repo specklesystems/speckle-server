@@ -760,7 +760,7 @@ describe('Workspace project GQL CRUD', () => {
       expect(workspaceId).to.equal(targetWorkspace.id)
     })
 
-    it('should preserve project roles for project members', async () => {
+    it('should preserve project roles for project members with editor seats', async () => {
       const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
         projectId: testProject.id,
         workspaceId: targetWorkspace.id
@@ -769,11 +769,23 @@ describe('Workspace project GQL CRUD', () => {
       const { team } = res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
 
       const adminProjectRole = team?.find((role) => role.id === serverAdminUser.id)
-      const memberProjectRole = team?.find((role) => role.id === serverMemberUser.id)
 
       expect(res).to.not.haveGraphQLErrors()
       expect(adminProjectRole?.role).to.equal(Roles.Stream.Owner)
-      expect(memberProjectRole?.role).to.equal(Roles.Stream.Contributor)
+    })
+
+    it('should demote users with editor project roles and workspace viewer seats', async () => {
+      const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: testProject.id,
+        workspaceId: targetWorkspace.id
+      })
+
+      const { team } = res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
+
+      const memberProjectRole = team?.find((role) => role.id === serverMemberUser.id)
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(memberProjectRole?.role).to.equal(Roles.Stream.Reviewer)
     })
 
     it('should grant workspace roles to project members that are not already in the target workspace', async () => {

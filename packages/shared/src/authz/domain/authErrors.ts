@@ -97,6 +97,11 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
+export const WorkspaceProjectMoveInvalidError = defineAuthError({
+  code: 'WorkspaceProjectMoveInvalid',
+  message: 'Projects already in a workspace cannot be moved to another workspace.'
+})
+
 export const WorkspaceSsoSessionNoAccessError = defineAuthError<
   'WorkspaceSsoSessionNoAccess',
   {

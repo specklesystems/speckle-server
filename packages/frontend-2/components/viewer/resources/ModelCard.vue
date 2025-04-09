@@ -215,10 +215,12 @@ async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
 }
 
 const highlightObject = () => {
-  highlightObjects([props.model.loadedVersion.items[0].referencedObject])
+  const refObject = props.model.loadedVersion.items[0]?.referencedObject
+  if (refObject) highlightObjects([refObject])
 }
 
 const unhighlightObject = () => {
-  unhighlightObjects([props.model.loadedVersion.items[0].referencedObject])
+  const refObject = props.model.loadedVersion.items[0]?.referencedObject
+  if (refObject) unhighlightObjects([refObject])
 }
 </script>

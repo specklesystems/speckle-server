@@ -11,6 +11,7 @@ import type {
   GetEnv,
   GetWorkspace,
   GetWorkspaceLimits,
+  GetWorkspaceModelCount,
   GetWorkspacePlan,
   GetWorkspaceProjectCount,
   GetWorkspaceRole,
@@ -56,6 +57,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspace: 'getWorkspace',
   getWorkspaceRole: 'getWorkspaceRole',
   getWorkspaceSeat: 'getWorkspaceSeat',
+  getWorkspaceModelCount: 'getWorkspaceModelCount',
   getWorkspaceProjectCount: 'getWorkspaceProjectCount',
   getWorkspacePlan: 'getWorkspacePlan',
   getWorkspaceLimits: 'getWorkspaceLimits',
@@ -82,6 +84,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspacePlan: GetWorkspacePlan
   getWorkspaceSeat: GetWorkspaceSeat
   getWorkspaceProjectCount: GetWorkspaceProjectCount
+  getWorkspaceModelCount: GetWorkspaceModelCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
 }>
