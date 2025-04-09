@@ -9,6 +9,7 @@ import {
   Vector4,
   type Intersection
 } from 'three'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
 
 export enum MeasurementState {
   HIDDEN,
@@ -67,4 +68,10 @@ export abstract class Measurement extends Object3D {
   public abstract raycast(_raycaster: Raycaster, _intersects: Array<Intersection>): void
   public abstract highlight(_value: boolean): void
   public abstract updateClippingPlanes(_planes: Plane[]): void
+  public snap?(
+    ndcPoint: Vector2,
+    intersection: ExtendedMeshIntersection,
+    outPoint: Vector3,
+    outNormal: Vector3
+  ): boolean
 }
