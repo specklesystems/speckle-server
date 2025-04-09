@@ -96,7 +96,11 @@ export const WorkspacePaidPlanConfigs: {
   },
   [PaidWorkspacePlans.Business]: {
     plan: PaidWorkspacePlans.Business,
-    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
     limits: unlimited
   },
   [PaidWorkspacePlans.Team]: {
