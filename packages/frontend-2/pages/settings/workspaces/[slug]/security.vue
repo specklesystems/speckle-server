@@ -92,10 +92,15 @@
                   : 'Business plan required'
               "
             >
+              <!-- Never disable switch when domain protection is enabled to
+               allow expired workspaces ability to downgrade-->
               <FormSwitch
                 v-model="isDomainProtectionEnabled"
                 :show-label="false"
-                :disabled="!hasWorkspaceDomains || !isBusinessPlan"
+                :disabled="
+                  !isDomainProtectionEnabled &&
+                  (!hasWorkspaceDomains || !isBusinessPlan)
+                "
                 name="domain-protection"
               />
             </div>
