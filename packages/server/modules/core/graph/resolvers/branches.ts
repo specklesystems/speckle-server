@@ -20,12 +20,16 @@ import {
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 
 export = {
   Query: {},
@@ -71,6 +75,12 @@ export = {
   },
   Mutation: {
     async branchCreate(_parent, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.branch.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
       const canCreate = await context.authPolicies.project.canCreateModel({
         userId: context.userId,
         projectId: args.branch.streamId
