@@ -29,7 +29,7 @@
             }}
           </p>
           <p class="text-body-2xs text-foreground mb-4">
-            All admins need to be on a paid Editor seat.
+            Admins have to be on an Editor seat.
           </p>
           <SeatTransitionCards
             :is-upgrading="true"
@@ -46,40 +46,15 @@
             You have an unused Editor seat that is already paid for, so the change will
             not incur any charges.
           </p>
-          <p
-            v-if="needsEditorUpgrade && !hasAvailableEditorSeats && !isUnlimitedPlan"
-            class="text-foreground-2 text-body-xs mt-4"
-          >
-            Note that the Editor seat is a paid seat type and this change will incur
-            additional charges to your subscription.
-          </p>
         </CommonCard>
       </template>
-
-      <p class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }} Learn more about
-        <NuxtLink
-          :to="LearnMoreRolesSeatsUrl"
-          target="_blank"
-          class="text-foreground-2 underline"
-        >
-          workspace roles.
-        </NuxtLink>
-      </p>
-
-      <p v-if="isPurchasablePlan" class="text-foreground-2 text-body-xs mt-3">
-        Note that the Editor seat is a paid seat type if your workspace is subscribed to
-        one of the paid plans.
-      </p>
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles, SeatTypes } from '@speckle/shared'
-import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import SeatTransitionCards from './SeatTransitionCards.vue'
@@ -107,7 +82,6 @@ const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  isPurchasablePlan,
   editorSeatPriceFormatted
 } = useWorkspacePlan(props.workspace?.slug || '')
 
@@ -146,12 +120,6 @@ const mainMessage = computed(() => {
     default:
       return ''
   }
-})
-
-const roleInfo = computed(() => {
-  return props.action === 'make'
-    ? undefined
-    : WorkspaceRoleDescriptions[Roles.Workspace.Member]
 })
 
 const handleConfirm = async () => {
