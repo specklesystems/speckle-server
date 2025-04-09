@@ -4781,7 +4781,7 @@ export type WorkspacePermissionChecks = {
 
 
 export type WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs = {
-  projectId: Scalars['String']['input'];
+  projectId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspacePlan = {
@@ -7375,7 +7375,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
 
 export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePermissionChecks'] = ResolversParentTypes['WorkspacePermissionChecks']> = {
   canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
-  canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, RequireFields<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs, 'projectId'>>;
+  canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

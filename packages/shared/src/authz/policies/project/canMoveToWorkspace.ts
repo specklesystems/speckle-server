@@ -12,8 +12,8 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import {
+  MaybeProjectContext,
   MaybeUserContext,
-  ProjectContext,
   WorkspaceContext
 } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
@@ -40,7 +40,7 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspaceLimits
   | typeof AuthCheckContextLoaderKeys.getWorkspaceProjectCount
 
-type PolicyArgs = MaybeUserContext & ProjectContext & WorkspaceContext
+type PolicyArgs = MaybeUserContext & MaybeProjectContext & WorkspaceContext
 
 type PolicyErrors =
   | InstanceType<typeof ProjectNotFoundError>
@@ -64,23 +64,25 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
     const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
     if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
 
-    // We do not support moving projects that are already in a workspace
-    const project = await loaders.getProject({ projectId })
-    if (!project) return err(new ProjectNotFoundError())
-    if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
-
     const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.User
     })
     if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
-      userId: userId!,
-      projectId,
-      role: Roles.Stream.Owner
-    })
-    if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+    if (projectId) {
+      // We do not support moving projects that are already in a workspace
+      const project = await loaders.getProject({ projectId })
+      if (!project) return err(new ProjectNotFoundError())
+      if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
+
+      const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+        userId: userId!,
+        projectId,
+        role: Roles.Stream.Owner
+      })
+      if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+    }
 
     const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
       {
