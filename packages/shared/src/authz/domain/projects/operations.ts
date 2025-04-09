@@ -7,3 +7,8 @@ export type GetProjectRole = (args: {
   userId: string
   projectId: string
 }) => Promise<StreamRoles | null>
+
+export type GetProjectRoleCounts = (args: {
+  projectId: string
+  role: StreamRoles
+}) => Promise<number>

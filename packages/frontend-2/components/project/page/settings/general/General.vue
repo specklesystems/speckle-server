@@ -2,7 +2,6 @@
   <div v-if="project" class="flex flex-col gap-4">
     <ProjectPageSettingsGeneralBlockProjectInfo
       :project="project"
-      :disabled="isDisabled"
       @update-project="
         ({ name, description, onComplete }) =>
           handleUpdate({ name, description }, 'Project info updated', onComplete)
@@ -11,7 +10,6 @@
 
     <ProjectPageSettingsGeneralBlockAccess
       :project="project"
-      :disabled="isDisabled"
       @update-visibility="
         (newVisibility) =>
           handleUpdate({ visibility: newVisibility }, 'Project access updated')
@@ -19,7 +17,6 @@
     />
     <ProjectPageSettingsGeneralBlockDiscussions
       :project="project"
-      :disabled="isDisabled"
       @update-comments-permission="
         (newCommentsPermission) =>
           handleUpdate(
@@ -31,7 +28,6 @@
     <ProjectPageSettingsGeneralBlockLeave :project="project" />
 
     <ProjectPageSettingsGeneralBlockDelete
-      v-if="isOwner && !isGuest"
       :project="project"
       @update-comments-permission="
         (newCommentsPermission) =>
@@ -49,13 +45,11 @@ import { useQuery } from '@vue/apollo-composable'
 import type { ProjectUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useTeamInternals } from '~/lib/projects/composables/team'
 
 const projectPageSettingsGeneralQuery = graphql(`
   query ProjectPageSettingsGeneral($projectId: String!) {
     project(id: $projectId) {
       id
-      role
       ...ProjectPageSettingsGeneralBlockProjectInfo_Project
       ...ProjectPageSettingsGeneralBlockAccess_Project
       ...ProjectPageSettingsGeneralBlockDiscussions_Project
@@ -76,14 +70,7 @@ const { result: pageResult } = useQuery(projectPageSettingsGeneralQuery, () => (
 }))
 
 const project = computed(() => pageResult.value?.project)
-
-const { isGuest } = useActiveUser()
-
 const logger = useLogger()
-
-const { isOwner } = useTeamInternals(project)
-
-const isDisabled = computed(() => !isOwner.value || isGuest.value)
 
 const handleUpdate = async (
   updates: Partial<ProjectUpdateInput>,

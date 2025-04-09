@@ -1,9 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock
-    background
-    title="Discussions"
-    :disabled-message="disabled ? 'You must be a project owner' : undefined"
-  >
+  <ProjectPageSettingsBlock background title="Discussions" :auth-check="canUpdate">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         Control who can leave comments on this project.
@@ -11,7 +7,7 @@
     </template>
     <FormRadioGroup
       v-model="selectedOption"
-      :disabled="isDisabled"
+      :disabled="!canUpdate.authorized"
       :options="radioOptions"
       @update:model-value="emitUpdate"
     />
@@ -30,12 +26,16 @@ graphql(`
     id
     visibility
     allowPublicComments
+    permissions {
+      canUpdateAllowPublicComments {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,9 +53,7 @@ const selectedOption = ref(
     : CommentPermission.TeamMembers
 )
 
-const isDisabled = computed(
-  () => props.project.visibility === SimpleProjectVisibility.Private || props.disabled
-)
+const canUpdate = computed(() => props.project.permissions.canUpdateAllowPublicComments)
 
 const radioOptions = computed(() => [
   {
