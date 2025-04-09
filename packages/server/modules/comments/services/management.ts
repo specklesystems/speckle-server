@@ -74,7 +74,7 @@ export const authorizeProjectCommentsAccessFactory =
       success = true
 
     // TODO: Until we do canCommentCreate & canCommentRead, fallback:
-    if (authCtx.userId) {
+    if (authCtx.userId && (!requireProjectRole || project.allowPublicComments)) {
       try {
         await authorizeResolver(authCtx.userId, projectId, Roles.Stream.Reviewer, null)
         success = true
