@@ -91,7 +91,7 @@ export const WorkspacePaidPlanConfigs: {
   },
   [PaidWorkspacePlans.Plus]: {
     plan: PaidWorkspacePlans.Plus,
-    features: [...baseFeatures],
+    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
     limits: unlimited
   },
   [PaidWorkspacePlans.Business]: {
