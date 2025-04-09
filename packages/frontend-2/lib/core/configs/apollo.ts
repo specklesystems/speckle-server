@@ -306,6 +306,9 @@ function createCache(): InMemoryCache {
           },
           subscription: {
             merge: mergeAsObjectsFunction
+          },
+          creationState: {
+            merge: mergeAsObjectsFunction
           }
         }
       }
