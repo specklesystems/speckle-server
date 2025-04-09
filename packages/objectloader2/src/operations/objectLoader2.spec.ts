@@ -3,6 +3,8 @@ import ObjectLoader2 from './objectLoader2.js'
 import { Base, Item } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
 import Queue from '../helpers/queue.js'
+import { MemoryDatabase } from './memoryDatabase.js'
+import { MemoryDownloader } from './memoryDownloader.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -134,6 +136,42 @@ describe('objectloader2', () => {
     expect(r.length).toBe(2)
     expect(r[0]).toBe(rootBase)
     expect(r[1]).toBe(child1Base)
+  })
+
+  test('can get root/child object from cache using iterator and getObject', async () => {
+    const child1Base = { id: 'child1Id' }
+    const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
+
+    const rootId = 'rootId'
+    const rootBase: Base = { id: 'rootId', __closure: { child1Id: 100 } }
+    const root = {
+      baseId: rootId,
+      base: rootBase
+    } as unknown as Item
+
+    const records: Record<string, Base> = {}
+    records[root.baseId] = rootBase
+    records[child1.baseId] = child1Base
+
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
+      cache: new MemoryDatabase(records),
+      downloader: new MemoryDownloader(rootId, records)
+    })
+    const r = []
+    const obj = loader.getObject({ id: child1.baseId })
+    for await (const x of loader.getObjectIterator()) {
+      r.push(x)
+    }
+
+    expect(obj).toBeDefined()
+    expect(r.length).toBe(2)
+    expect(r[0]).toBe(rootBase)
+    expect(r[1]).toBe(child1Base)
+    const obj2 = await obj
+    expect(obj2).toBe(child1Base)
   })
 
   test('add extra header', async () => {

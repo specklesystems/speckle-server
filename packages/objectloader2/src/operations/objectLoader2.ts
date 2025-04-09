@@ -4,9 +4,9 @@ import IndexedDatabase from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
-import { DeferredBase } from '../helpers/deferredBase.js'
 import { MemoryDownloader } from './memoryDownloader.js'
 import { MemoryDatabase } from './memoryDatabase.js'
+import { DefermentManager } from '../helpers/defermentManager.js'
 
 export default class ObjectLoader2 {
   #objectId: string
@@ -16,15 +16,16 @@ export default class ObjectLoader2 {
   #database: Cache
   #downloader: Downloader
 
-  #gathered: AsyncGeneratorQueue<Item>
+  #deferments: DefermentManager
 
-  #buffer: DeferredBase[] = []
+  #gathered: AsyncGeneratorQueue<Item>
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
 
     this.#logger = options.logger || console.log
     this.#gathered = new AsyncGeneratorQueue()
+    this.#deferments = new DefermentManager()
     this.#database =
       options.cache ||
       new IndexedDatabase({
@@ -71,13 +72,7 @@ export default class ObjectLoader2 {
     if (item) {
       return item.base
     }
-    const deferredBase = this.#buffer.find((x) => x.id === params.id)
-    if (deferredBase) {
-      return await deferredBase.promise
-    }
-    const d = new DeferredBase(params.id)
-    this.#buffer.push(d)
-    return d.promise
+    return await this.#deferments.defer({ id: params.id })
   }
 
   async getTotalObjectCount() {
@@ -105,12 +100,7 @@ export default class ObjectLoader2 {
     })
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      const deferredIndex = this.#buffer.findIndex((x) => x.id === item.baseId)
-      if (deferredIndex !== -1) {
-        const deferredBase = this.#buffer[deferredIndex]
-        deferredBase.resolve(item.base)
-        this.#buffer.splice(deferredIndex, 1)
-      }
+      this.#deferments.undefer(item)
       yield item.base
       count++
       if (count >= total) {
