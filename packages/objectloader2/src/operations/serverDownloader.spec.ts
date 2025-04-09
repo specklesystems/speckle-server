@@ -11,7 +11,7 @@ describe('downloader', () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = { baseId: 'id', base: { id: 'id' } }
     fetchMocker.mockResponseOnce('id\t' + JSON.stringify(i.base) + '\n')
-    const results = new AsyncGeneratorQueue<Item>()
+    const results = new AsyncGeneratorQueue()
     const db = {
       async add(): Promise<void> {
         return Promise.resolve()
@@ -47,7 +47,7 @@ describe('downloader', () => {
     fetchMocker.mockResponseOnce(
       'id1\t' + JSON.stringify(i1.base) + '\nid2\t' + JSON.stringify(i2.base) + '\n'
     )
-    const results = new AsyncGeneratorQueue<Item>()
+    const results = new AsyncGeneratorQueue()
     const db = {
       async add(): Promise<void> {
         return Promise.resolve()
@@ -81,7 +81,7 @@ describe('downloader', () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = { baseId: 'id', base: { id: 'id', __closure: { childIds: 1 } } }
     fetchMocker.mockResponseOnce(JSON.stringify(i.base))
-    const results = new AsyncGeneratorQueue<Item>()
+    const results = new AsyncGeneratorQueue()
     const db = {
       async add(): Promise<void> {
         return Promise.resolve()
@@ -108,7 +108,7 @@ describe('downloader', () => {
       (req) => req.headers.get('x-test') === 'asdf',
       JSON.stringify(i.base)
     )
-    const results = new AsyncGeneratorQueue<Item>()
+    const results = new AsyncGeneratorQueue()
     const db = {
       async add(): Promise<void> {
         return Promise.resolve()

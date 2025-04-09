@@ -5,6 +5,8 @@ import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { ObjectLoader2Options } from './options.js'
 import { DeferredBase } from '../helpers/deferredBase.js'
+import { MemoryDownloader } from './memoryDownloader.js'
+import { MemoryDatabase } from './memoryDatabase.js'
 
 export default class ObjectLoader2 {
   #objectId: string
@@ -116,5 +118,26 @@ export default class ObjectLoader2 {
       }
     }
     await processPromise
+  }
+
+  static createFromObjects(objects: Base[]): ObjectLoader2 {
+    const root = objects[0]
+    const records: Record<string, Base> = {}
+    objects.forEach((element) => {
+      records[element.id] = element
+    })
+    const loader = new ObjectLoader2({
+      serverUrl: 'dummy',
+      streamId: 'dummy',
+      objectId: root.id,
+      cache: new MemoryDatabase(records),
+      downloader: new MemoryDownloader(root.id, records)
+    })
+    return loader
+  }
+
+  static createFromJSON(json: string): ObjectLoader2 {
+    const jsonObj = JSON.parse(json) as Base[]
+    return this.createFromObjects(jsonObj)
   }
 }
