@@ -22,6 +22,10 @@ export default defineModuleLoaders(async () => {
     },
     getServerRole: async ({ userId }, { dataLoaders }) => {
       return (await dataLoaders.users.getUser.load(userId))?.role || null
+    },
+    getProjectRoleCounts: async ({ projectId, role }, { dataLoaders }) => {
+      const counts = await dataLoaders.streams.getCollaboratorCounts.load(projectId)
+      return counts?.[role] || 0
     }
   }
 })

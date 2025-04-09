@@ -13,7 +13,7 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="result?.workspaceBySlug.id"
-        :disable-create="result?.workspaceBySlug.readOnly"
+        :disable-create="!canCreateProject?.authorized"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -37,6 +37,18 @@ graphql(`
     totalCount
     items {
       ...SettingsSharedProjects_Project
+    }
+  }
+`)
+
+graphql(`
+  fragment SettingsWorkspacesProjects_Workspace on Workspace {
+    id
+    slug
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -77,5 +89,9 @@ const {
 })
 
 const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
+const canCreateProject = computed(
+  () => result.value?.workspaceBySlug.permissions.canCreateProject
+)
+
 useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>
