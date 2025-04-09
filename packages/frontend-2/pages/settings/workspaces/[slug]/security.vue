@@ -75,18 +75,30 @@
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
-              <p class="text-body-xs font-medium text-foreground">Domain protection</p>
+              <div class="flex items-center">
+                <p class="text-body-xs font-medium text-foreground">
+                  Domain protection
+                </p>
+              </div>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
                 Only users with email addresses from your verified domains can be added
                 as workspace members or administrators.
               </p>
             </div>
-            <FormSwitch
-              v-model="isDomainProtectionEnabled"
-              :show-label="false"
-              :disabled="!hasWorkspaceDomains"
-              name="domain-protection"
-            />
+            <div
+              v-tippy="
+                isBusinessPlan
+                  ? 'Your workspace must have at least one verified domain'
+                  : 'Business plan required'
+              "
+            >
+              <FormSwitch
+                v-model="isDomainProtectionEnabled"
+                :show-label="false"
+                :disabled="!hasWorkspaceDomains || !isBusinessPlan"
+                name="domain-protection"
+              />
+            </div>
           </div>
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
@@ -126,7 +138,7 @@ import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragme
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { blockedDomains } from '@speckle/shared'
+import { blockedDomains, WorkspacePlans } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 import {
   workspaceUpdateDomainProtectionMutation,
@@ -138,6 +150,10 @@ graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
     id
     slug
+    plan {
+      name
+      status
+    }
     domains {
       id
       domain
@@ -187,6 +203,12 @@ const workspace = computed(() => result.value?.workspaceBySlug)
 const workspaceDomains = computed(() => {
   return workspace.value?.domains || []
 })
+const isBusinessPlan = computed(
+  () =>
+    workspace.value?.plan?.name === WorkspacePlans.Business &&
+    workspace.value?.plan?.status === 'valid'
+)
+
 const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
 const verifiedUserDomains = computed(() => {
   const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
