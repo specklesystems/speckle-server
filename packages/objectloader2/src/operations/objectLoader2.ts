@@ -77,7 +77,7 @@ export default class ObjectLoader2 {
     }
     const d = new DeferredBase(params.id)
     this.#buffer.push(d)
-    return d
+    return d.promise
   }
 
   async getTotalObjectCount() {
