@@ -85,13 +85,7 @@
                 as workspace members or administrators.
               </p>
             </div>
-            <div
-              v-tippy="
-                isBusinessPlan
-                  ? 'Your workspace must have at least one verified domain'
-                  : 'Business plan required'
-              "
-            >
+            <div v-tippy="tooltipText">
               <!-- Never disable switch when domain protection is enabled to
                allow expired workspaces ability to downgrade-->
               <FormSwitch
@@ -99,7 +93,8 @@
                 :show-label="false"
                 :disabled="
                   !isDomainProtectionEnabled &&
-                  (!hasWorkspaceDomains || !isBusinessPlan)
+                  (!hasWorkspaceDomains ||
+                    !workspace?.hasAccessToDomainBasedSecurityPolicies)
                 "
                 name="domain-protection"
               />
@@ -143,7 +138,7 @@ import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragme
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { blockedDomains, WorkspacePlans } from '@speckle/shared'
+import { blockedDomains } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 import {
   workspaceUpdateDomainProtectionMutation,
@@ -167,6 +162,9 @@ graphql(`
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
+      featureName: domainBasedSecurityPolicies
+    )
   }
 `)
 
@@ -208,10 +206,8 @@ const workspace = computed(() => result.value?.workspaceBySlug)
 const workspaceDomains = computed(() => {
   return workspace.value?.domains || []
 })
-const isBusinessPlan = computed(
-  () =>
-    workspace.value?.plan?.name === WorkspacePlans.Business &&
-    workspace.value?.plan?.status === 'valid'
+const hasAccessToDomainBasedSecurityPolicies = computed(
+  () => workspace.value?.hasAccessToDomainBasedSecurityPolicies
 )
 
 const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
@@ -267,6 +263,14 @@ const isDomainDiscoverabilityEnabled = computed({
       })
     }
   }
+})
+
+const tooltipText = computed(() => {
+  if (isDomainProtectionEnabled.value) return undefined
+  if (!hasAccessToDomainBasedSecurityPolicies.value) return 'Business plan required'
+  if (!hasWorkspaceDomains.value)
+    return 'Your workspace must have at least one verified domain'
+  return undefined
 })
 
 const addDomain = async () => {
