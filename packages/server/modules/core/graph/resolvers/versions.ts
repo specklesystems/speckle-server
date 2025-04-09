@@ -52,10 +52,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { getLimitedReferencedObjectFactory } from '@/modules/core/services/versions/limits'
 
-const {
-  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED,
-  FF_WEB_2944_VERSIONS_LIMITS_ENABLED
-} = getFeatureFlags()
+const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
 export = {
   Project: {
@@ -101,9 +98,6 @@ export = {
       return new URL(path, getServerOrigin()).toString()
     },
     referencedObject: async (parent, _args, ctx) => {
-      if (!FF_WEB_2944_VERSIONS_LIMITS_ENABLED) {
-        return parent.referencedObject
-      }
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       const project = await ctx.loaders
         .forRegion({ db: projectDB })
