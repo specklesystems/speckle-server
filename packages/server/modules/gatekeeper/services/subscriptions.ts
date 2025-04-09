@@ -20,9 +20,9 @@ import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import {
+  PaidWorkspacePlansNew,
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
-  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
 import { cloneDeep, sum } from 'lodash'
@@ -316,14 +316,11 @@ export const getTotalSeatsCountByPlanFactory =
     workspacePlan,
     subscriptionData
   }: {
-    workspacePlan: Pick<WorkspacePlan, 'name'>
+    workspacePlan: PaidWorkspacePlansNew
     subscriptionData: Pick<SubscriptionData, 'products'>
   }) => {
-    if (workspacePlan.name === 'free') {
-      return 3 // Max editors seats in the free plan
-    }
     const productId = getWorkspacePlanProductId({
-      workspacePlan: workspacePlan.name as 'pro' | 'team'
+      workspacePlan
     })
     const product = subscriptionData.products.find(
       (product) => product.productId === productId
