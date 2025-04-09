@@ -1,10 +1,6 @@
 <template>
   <div class="flex flex-col gap-4">
-    <ProjectPageSettingsBlock
-      background
-      title="Project info"
-      :disabled-message="disabled ? 'You must be a project owner' : undefined"
-    >
+    <ProjectPageSettingsBlock background title="Project info" :auth-check="canUpdate">
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
@@ -13,7 +9,7 @@
         show-label
         color="foundation"
         class="mb-2"
-        :disabled="disabled"
+        :disabled="!canUpdate.authorized"
       />
       <FormTextArea
         v-model="localProjectDescription"
@@ -23,7 +19,7 @@
         show-label
         show-optional
         color="foundation"
-        :disabled="disabled"
+        :disabled="!canUpdate.authorized"
       />
       <template #bottom-buttons>
         <FormButton color="subtle" :disabled="!hasChanges" @click="resetLocalState">
@@ -64,12 +60,16 @@ graphql(`
     id
     name
     description
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-project'])
@@ -80,6 +80,7 @@ const localProjectName = ref(props.project.name)
 const localProjectDescription = ref(props.project.description ?? '')
 const showConfirmDialog = ref(false)
 
+const canUpdate = computed(() => props.project.permissions.canUpdate)
 const hasChanges = computed(() => {
   return (
     localProjectName.value !== props.project.name ||

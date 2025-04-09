@@ -30,6 +30,7 @@ import type {
   ServerLoadersContext
 } from '@/modules/loaders'
 import {
+  appConstantValueCache,
   inMemoryCacheProviderFactory,
   wrapWithCache
 } from '@/modules/shared/utils/caching'
@@ -138,7 +139,8 @@ export const init = async (params: { app: Express; metricsRegister: Registry }) 
     await module.finalize?.({ app, isInitial, metricsRegister })
   }
 
-  // Reset some caches
+  // Reset the app constant value cache, now that all scopes/roles are initialized
+  appConstantValueCache.clear()
 
   // Validate & cache authz loaders
   await moduleAuthLoaders({
