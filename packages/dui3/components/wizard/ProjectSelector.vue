@@ -50,6 +50,7 @@
           />
           <div class="flex justify-between items-center space-x-2">
             <ProjectCreateDialog
+              v-if="selectedWorkspace"
               :workspace-id="selectedWorkspace?.id"
               @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
             >

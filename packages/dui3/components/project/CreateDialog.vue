@@ -58,7 +58,7 @@ import { ValidationHelpers } from '@speckle/ui-components'
 const showProjectCreateDialog = ref(false)
 const isCreatingProject = ref(false)
 
-const props = defineProps<{ workspaceId?: string }>()
+const props = defineProps<{ workspaceId: string }>()
 
 const emit = defineEmits<{
   (e: 'project:created', result: ProjectListProjectItemFragment): void
@@ -82,20 +82,57 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
-const canCreateProject = computed(
-  () => true // TODO: canCreateProjectInWorkspace bla bla all logic
-)
+const canCreateProject = computed(() => true) // TODO: fix it with below
+
+// const canCreateProject = computed(() =>
+//   props.workspaceId === 'personalProject'
+//     ? canCreatePersonalProject.value
+//     : canCreateProjectInWorkspace.value
+// )
 
 // const { result: canCreatePersonalProjectResult } = useQuery(
 //   canCreatePersonalProjectQuery,
 //   () => ({}),
-//   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+//   () => ({
+//     clientId: accountId.value,
+//     debounce: 500,
+//     fetchPolicy: 'network-only'
+//   })
 // )
-// const canCreatePersonalProject = computed(
-//   () =>
-//     canCreatePersonalProjectResult.value?.activeUser?.permissions
-//       .canCreatePersonalProject.authorized
+// const canCreatePersonalProject = computed(() => {
+//   try {
+//     return (
+//       canCreatePersonalProjectResult.value?.activeUser?.permissions
+//         .canCreatePersonalProject.code === 'OK'
+//     )
+//   } catch {
+//     return true
+//   }
+// })
+
+// const { result: canCreateProjectInWorkspaceResult } = useQuery(
+//   canCreateProjectInWorkspaceQuery,
+//   () => ({ workspaceId: props.workspaceId }),
+//   () => ({
+//     clientId: accountId.value,
+//     debounce: 500,
+//     fetchPolicy: 'network-only'
+//   })
 // )
+
+// const canCreateProjectInWorkspace = computed(() => {
+//   try {
+//     console.log(canCreateProjectInWorkspaceResult.value)
+//     console.log(props.workspaceId)
+
+//     return (
+//       canCreateProjectInWorkspaceResult.value?.workspace.permissions.canCreateProject
+//         .code === 'OK'
+//     )
+//   } catch {
+//     return true
+//   }
+// })
 
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmitCreateNewProject = handleSubmit(() => {
@@ -105,12 +142,9 @@ const onSubmitCreateNewProject = handleSubmit(() => {
 })
 
 const createNewProject = async (name: string) => {
-  console.log(props.workspaceId, name)
-
   isCreatingProject.value = true
 
   if (props.workspaceId !== 'personalProject') {
-    console.log(props.workspaceId, name)
     createNewProjectInWorkspace(name)
     isCreatingProject.value = false
     return
@@ -127,8 +161,6 @@ const createNewProject = async (name: string) => {
   const res = await mutate({ input: { name } })
   if (res?.data?.projectMutations.create) {
     emit('project:created', res?.data?.projectMutations.create)
-    // refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
-    // emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
     let errorMessage = 'Undefined error'
     if (res?.errors && res?.errors.length !== 0) {
@@ -158,10 +190,17 @@ const createNewProjectInWorkspace = async (name: string) => {
   })
   if (res?.data?.workspaceMutations.projects.create) {
     emit('project:created', res?.data?.workspaceMutations.projects.create)
-    // refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
-    // emit('next', accountId.value, res?.data?.workspaceMutations.projects.create)
   } else {
-    // TODO: Error out
+    let errorMessage = 'Undefined error'
+    if (res?.errors && res?.errors.length !== 0) {
+      errorMessage = res?.errors[0].message
+    }
+
+    hostAppStore.setNotification({
+      type: 1,
+      title: 'Failed to create project',
+      description: errorMessage
+    })
   }
 }
 </script>
