@@ -1,6 +1,42 @@
 <template>
   <div class="space-y-2">
     <div class="space-y-2 relative">
+      <div
+        v-if="workspacesEnabled && workspaces && selectedWorkspace"
+        class="flex items-center space-x-2 bg-foundation -mx-3 -mt-2 px-3 py-2 shadow-sm border-b"
+      >
+        <div class="flex-grow min-w-0">
+          <WorkspaceMenu
+            :workspaces="workspaces"
+            :current-selected-workspace-id="selectedWorkspace.id"
+            @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => selectedWorkspace = workspace"
+          >
+            <template #activator="{ toggle }">
+              <button
+                v-tippy="'Click to change the workspace'"
+                class="flex items-center w-full p-1 space-x-2 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+                @click="toggle()"
+              >
+                <WorkspaceAvatar
+                  :size="'xs'"
+                  :name="selectedWorkspace.name || ''"
+                  :logo="selectedWorkspace.logo"
+                />
+                <div class="min-w-0 truncate flex-grow text-left">
+                  <span>{{ selectedWorkspace.name }}</span>
+                </div>
+                <ChevronDownIcon class="h-3 w-3 shrink-0" />
+              </button>
+            </template>
+          </WorkspaceMenu>
+        </div>
+        <div class="mt-1 mr-1 px-0.5 shrink-0">
+          <AccountsMenu
+            :current-selected-account-id="accountId"
+            @select="(e) => selectAccount(e)"
+          />
+        </div>
+      </div>
       <div class="space-y-2">
         <div class="flex items-center space-x-1 justify-between">
           <FormTextInput
@@ -12,16 +48,25 @@
             full-width
             color="foundation"
           />
-          <div class="flex space-x-2">
-            <button
-              v-if="showNewProject"
-              v-tippy="'New project'"
-              class="p-1 hover:bg-primary-muted rounded text-foreground-2"
-              @click="showNewProjectDialog = true"
+          <div class="flex justify-between items-center space-x-2">
+            <ProjectCreateDialog
+              :workspace-id="selectedWorkspace?.id"
+              @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
             >
-              <PlusIcon class="w-4" />
-            </button>
-            <div class="mt-1">
+              <template #activator="{ toggle }">
+                <button
+                  v-tippy="'New project'"
+                  class="p-1.5 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+                  @click="toggle()"
+                >
+                  <PlusIcon class="w-4" />
+                </button>
+              </template>
+            </ProjectCreateDialog>
+            <div
+              v-if="!workspacesEnabled || !workspaces || !selectedWorkspace"
+              class="mt-1"
+            >
               <AccountsMenu
                 :current-selected-account-id="accountId"
                 @select="(e) => selectAccount(e)"
@@ -40,16 +85,6 @@
           @click="handleProjectCardClick(project)"
         />
         <FormButton
-          v-if="searchText && hasReachedEnd && showNewProject"
-          full-width
-          :disabled="isCreatingProject"
-          @click="createNewProject(searchText)"
-        >
-          Create&nbsp;
-          <div class="truncate">"{{ searchText }}"</div>
-        </FormButton>
-        <FormButton
-          v-else
           full-width
           :disabled="hasReachedEnd"
           color="outline"
@@ -59,66 +94,28 @@
         </FormButton>
       </div>
     </div>
-    <CommonDialog
-      v-model:open="showNewProjectDialog"
-      title="Create new project"
-      fullscreen="none"
-    >
-      <form @submit="onSubmitCreateNewProject">
-        <div class="text-body-2xs mb-2 ml-1">Project name</div>
-        <FormTextInput
-          v-model="newProjectName"
-          class="mb-4"
-          placeholder="A Beautiful Home, A Small Bridge..."
-          autocomplete="off"
-          name="name"
-          label="Project name"
-          color="foundation"
-          :show-clear="!!newProjectName"
-          :rules="[
-            ValidationHelpers.isRequired,
-            ValidationHelpers.isStringOfLength({ minLength: 3 })
-          ]"
-          full-width
-        />
-        <WizardWorkspaceSelector
-          v-if="workspacesEnabled"
-          @update:selected-workspace="(args) => setWorkspace(args as WorkspaceListWorkspaceItemFragment )"
-        ></WizardWorkspaceSelector>
-        <div class="mt-4 flex justify-end items-center space-x-2 w-full">
-          <FormButton size="sm" text @click="showNewProjectDialog = false">
-            Cancel
-          </FormButton>
-          <FormButton size="sm" submit :disabled="isCreatingProject">Create</FormButton>
-        </div>
-      </form>
-    </CommonDialog>
   </div>
 </template>
 <script setup lang="ts">
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { storeToRefs } from 'pinia'
 import { PlusIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
-import { useHostAppStore } from '~/store/hostApp'
-
 import {
-  createProjectInWorkspaceMutation,
-  createProjectMutation,
+  activeWorkspaceQuery,
   projectsListQuery,
-  serverInfoQuery
+  serverInfoQuery,
+  workspacesListQuery
 } from '~/lib/graphql/mutationsAndQueries'
-import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import type {
   ProjectListProjectItemFragment,
   WorkspaceListWorkspaceItemFragment
 } from 'lib/common/generated/gql/graphql'
-import { useForm } from 'vee-validate'
-import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
-const hostAppStore = useHostAppStore()
 
 const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
@@ -136,21 +133,12 @@ const props = withDefaults(
   { showNewProject: true, disableNoWriteAccessProjects: false }
 )
 
-const setWorkspace = (args: WorkspaceListWorkspaceItemFragment) => {
-  selectedWorkspace.value = args
-}
-
-const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
-
 const searchText = ref<string>()
 const newProjectName = ref<string>()
-
-const showNewProjectDialog = ref(false)
 const accountStore = useAccountStore()
 const { activeAccount } = storeToRefs(accountStore)
 
 const accountId = computed(() => activeAccount.value.accountInfo.id)
-const selectedAccountId = ref<string>()
 
 watch(searchText, () => {
   newProjectName.value = searchText.value
@@ -159,16 +147,64 @@ watch(searchText, () => {
 
 // TODO: this function is never triggered!! remove or evaluate
 const selectAccount = (account: DUIAccount) => {
-  selectedAccountId.value = account.accountInfo.id
+  refetchServerInfo() // to be able to understand workspaces enabled or not
+  refetchActiveWorkspace()
+  refetchWorkspaces()
   void trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
 }
 
-const { handleSubmit } = useForm<{ name: string }>()
-const onSubmitCreateNewProject = handleSubmit(() => {
-  // TODO: Chat with Fabians
-  // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
-  void createNewProject(newProjectName.value as string)
-})
+const handleProjectCreated = (result: ProjectListProjectItemFragment) => {
+  refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
+  emit('next', accountId.value, result)
+}
+
+const { result: serverInfoResult, refetch: refetchServerInfo } = useQuery(
+  serverInfoQuery,
+  () => ({}),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const workspacesEnabled = computed(
+  () => serverInfoResult.value?.serverInfo.workspaces.workspacesEnabled
+)
+
+const { result: workspacesResult, refetch: refetchWorkspaces } = useQuery(
+  workspacesListQuery,
+  () => ({
+    limit: 100
+  }),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
+
+const { result: activeWorkspaceResult, refetch: refetchActiveWorkspace } = useQuery(
+  activeWorkspaceQuery,
+  () => ({}),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const activeWorkspace = computed(
+  () =>
+    activeWorkspaceResult.value?.activeUser
+      ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
+)
+
+const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
+  activeWorkspace.value
+)
+
+watch(
+  workspaces,
+  (newItems) => {
+    if (newItems && newItems.length > 0) {
+      selectedWorkspace.value = activeWorkspace.value ?? newItems[0]
+    } else {
+      selectedWorkspace.value = undefined
+    }
+  },
+  { immediate: true }
+)
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   // TODO: error
@@ -181,77 +217,6 @@ const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   emit('next', accountId.value, project)
 }
 
-const account = computed(() => {
-  return accountStore.accounts.find(
-    (acc) => acc.accountInfo.id === accountId.value
-  ) as DUIAccount
-})
-
-const isCreatingProject = ref(false)
-
-const createNewProject = async (name: string) => {
-  isCreatingProject.value = true
-  if (selectedWorkspace.value) {
-    return createNewProjectInWorkspace(name)
-  }
-
-  void trackEvent(
-    'DUI3 Action',
-    { name: 'Project Create', workspace: false },
-    account.value.accountInfo.id
-  )
-  const { mutate } = provideApolloClient(account.value.client)(() =>
-    useMutation(createProjectMutation)
-  )
-  const res = await mutate({ input: { name } })
-  if (res?.data?.projectMutations.create) {
-    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
-    emit('next', accountId.value, res?.data?.projectMutations.create)
-  } else {
-    let errorMessage = 'Undefined error'
-    if (res?.errors && res?.errors.length !== 0) {
-      errorMessage = res?.errors[0].message
-    }
-
-    hostAppStore.setNotification({
-      type: 1,
-      title: 'Failed to create project',
-      description: errorMessage
-    })
-  }
-  isCreatingProject.value = false
-}
-
-const createNewProjectInWorkspace = async (name: string) => {
-  void trackEvent(
-    'DUI3 Action',
-    { name: 'Project Create', workspace: true },
-    account.value.accountInfo.id
-  )
-  const { mutate } = provideApolloClient(account.value.client)(() =>
-    useMutation(createProjectInWorkspaceMutation)
-  )
-  const res = await mutate({
-    input: { name, workspaceId: selectedWorkspace.value?.id as string }
-  })
-  if (res?.data?.workspaceMutations.projects.create) {
-    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
-    emit('next', accountId.value, res?.data?.workspaceMutations.projects.create)
-  } else {
-    // TODO: Error out
-  }
-}
-
-const { result: serverInfoResult } = useQuery(
-  serverInfoQuery,
-  () => ({}),
-  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
-)
-
-const workspacesEnabled = computed(
-  () => serverInfoResult.value?.serverInfo.workspaces.workspacesEnabled
-)
-
 const {
   result: projectsResult,
   loading,
@@ -260,15 +225,29 @@ const {
 } = useQuery(
   projectsListQuery,
   () => ({
-    limit: 10,
+    limit: 20, // stupid hack, increased it since we do manual filter to be able to see more project, see below TODO note, once we have `personalOnly` filter, decrease back to 10
     filter: {
-      search: (searchText.value || '').trim() || null
+      search: (searchText.value || '').trim() || null,
+      workspaceId:
+        selectedWorkspace.value?.id === 'personalProject'
+          ? null
+          : selectedWorkspace.value?.id
     }
   }),
-  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+  () => ({
+    clientId: accountId.value,
+    debounce: 500,
+    fetchPolicy: 'network-only'
+  })
 )
 
-const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
+const projects = computed(() =>
+  selectedWorkspace.value?.id === 'personalProject' // TODO: we need to replace this logic with `personalOnly` filter when it is implemented into app.speckle.systems
+    ? projectsResult.value?.activeUser?.projects.items.filter(
+        (i) => i.workspaceId === null
+      )
+    : projectsResult.value?.activeUser?.projects.items
+)
 const hasReachedEnd = ref(false)
 
 watch(searchText, () => {

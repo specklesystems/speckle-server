@@ -14,9 +14,8 @@
           color="foundation"
         />
         <button
-          v-if="showNewModel"
           v-tippy="'New model'"
-          class="p-1 hover:bg-primary-muted rounded text-foreground-2"
+          class="p-1.5 bg-foundation hover:bg-primary-muted rounded text-foreground-2 border"
           @click="showNewModelDialog = true"
         >
           <PlusIcon class="w-4" />
