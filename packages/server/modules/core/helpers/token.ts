@@ -5,6 +5,7 @@ import {
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import { ForbiddenError } from '@/modules/shared/errors'
 import {
   AllScopes,
   MaybeNullOrUndefined,
@@ -18,7 +19,8 @@ import { differenceBy } from 'lodash'
 export enum RoleResourceTargets {
   Streams = 'streams',
   Server = 'server',
-  Workspaces = 'workspaces'
+  Workspaces = 'workspaces',
+  Projects = 'projects'
 }
 
 export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
@@ -37,6 +39,7 @@ export const roleResourceTypeToTokenResourceType = (
 ): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
     case RoleResourceTargets.Streams:
+    case RoleResourceTargets.Projects:
       return 'project'
     case RoleResourceTargets.Workspaces:
       return 'workspace'
@@ -53,6 +56,16 @@ export const isResourceAllowed = (params: {
   const { resourceId, resourceType, resourceAccessRules } = params
   const relevantRules = resourceAccessRules?.filter((r) => r.type === resourceType)
   return !relevantRules?.length || relevantRules.some((r) => r.id === resourceId)
+}
+
+export const throwIfResourceAccessNotAllowed = (params: {
+  resourceId: string
+  resourceType: TokenResourceIdentifierType
+  resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+}) => {
+  if (!isResourceAllowed(params)) {
+    throw new ForbiddenError('You are not authorized to access this resource.')
+  }
 }
 
 export const isNewResourceAllowed = (params: {
