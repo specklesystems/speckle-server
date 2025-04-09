@@ -631,6 +631,7 @@ export type Comment = {
   id: Scalars['String']['output'];
   /** Parent thread, if there's any */
   parent?: Maybe<Comment>;
+  permissions: CommentPermissionChecks;
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String']['output'];
   /** @deprecated Not actually implemented */
@@ -762,6 +763,11 @@ export type CommentMutationsMarkViewedArgs = {
 
 export type CommentMutationsReplyArgs = {
   input: CreateCommentReplyInput;
+};
+
+export type CommentPermissionChecks = {
+  __typename?: 'CommentPermissionChecks';
+  canArchive: PermissionCheckResult;
 };
 
 export type CommentReplyAuthorCollection = {
@@ -2560,6 +2566,8 @@ export const ProjectPendingVersionsUpdatedMessageType = {
 export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVersionsUpdatedMessageType[keyof typeof ProjectPendingVersionsUpdatedMessageType];
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
+  canBroadcastActivity: PermissionCheckResult;
+  canCreateComment: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canLeave: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
@@ -5189,6 +5197,7 @@ export type ResolversTypes = {
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentEditInput: CommentEditInput;
   CommentMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  CommentPermissionChecks: ResolverTypeWrapper<CommentPermissionChecks>;
   CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
   CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
   Commit: ResolverTypeWrapper<CommitGraphQLReturn>;
@@ -5516,6 +5525,7 @@ export type ResolversParentTypes = {
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentEditInput: CommentEditInput;
   CommentMutations: MutationsObjectGraphQLReturn;
+  CommentPermissionChecks: CommentPermissionChecks;
   CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
   CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
   Commit: CommitGraphQLReturn;
@@ -6094,6 +6104,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   hasParent?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parent?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
+  permissions?: Resolver<ResolversTypes['CommentPermissionChecks'], ParentType, ContextType>;
   rawText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   replies?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
@@ -6137,6 +6148,11 @@ export type CommentMutationsResolvers<ContextType = GraphQLContext, ParentType e
   edit?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsEditArgs, 'input'>>;
   markViewed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsMarkViewedArgs, 'input'>>;
   reply?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsReplyArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentPermissionChecks'] = ResolversParentTypes['CommentPermissionChecks']> = {
+  canArchive?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6659,6 +6675,8 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
 };
 
 export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPermissionChecks'] = ResolversParentTypes['ProjectPermissionChecks']> = {
+  canBroadcastActivity?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canCreateComment?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canCreateModel?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canLeave?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, RequireFields<ProjectPermissionChecksCanMoveToWorkspaceArgs, 'workspaceId'>>;
@@ -7529,6 +7547,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CommentCollection?: CommentCollectionResolvers<ContextType>;
   CommentDataFilters?: CommentDataFiltersResolvers<ContextType>;
   CommentMutations?: CommentMutationsResolvers<ContextType>;
+  CommentPermissionChecks?: CommentPermissionChecksResolvers<ContextType>;
   CommentReplyAuthorCollection?: CommentReplyAuthorCollectionResolvers<ContextType>;
   CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;

@@ -11,3 +11,34 @@ The File Import service can parse either STL, OBJ, or IFC files using external p
 The parsers are responsible for extracting the necessary data from the files and storing it in the database. They are also responsible for creating a new Speckle model if necessary.
 
 The service is then responsible for updating the status of the `file_uploads` table, and for posting a Postgres notification.
+
+## Dev setup
+
+### Building/Running the .NET importer
+
+Requirements:
+
+- Ubuntu 24+
+
+Do this on Ubuntu/OSX to install dotnet:
+
+```bash
+# Add microsoft package repo
+sudo apt update && sudo apt install -y wget apt-transport-https
+wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+
+# Install dotnet sdk 8
+sudo apt update
+sudo apt install -y dotnet-sdk-8.0
+
+# Verify version
+dotnet --version
+```
+
+Do this to build:
+
+```bash
+cd ./packages/fileimport-service/src/ifc-dotnet
+
+```
