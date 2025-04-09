@@ -86,17 +86,17 @@ export const WorkspacePaidPlanConfigs: {
   // Old
   [PaidWorkspacePlans.Starter]: {
     plan: PaidWorkspacePlans.Starter,
-    features: [],
+    features: [...baseFeatures],
     limits: unlimited
   },
   [PaidWorkspacePlans.Plus]: {
     plan: PaidWorkspacePlans.Plus,
-    features: [],
+    features: [...baseFeatures],
     limits: unlimited
   },
   [PaidWorkspacePlans.Business]: {
     plan: PaidWorkspacePlans.Business,
-    features: [],
+    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
     limits: unlimited
   },
   [PaidWorkspacePlans.Team]: {
