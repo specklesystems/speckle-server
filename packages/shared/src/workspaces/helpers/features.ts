@@ -158,7 +158,12 @@ export const WorkspaceUnpaidPlanConfigs: {
   // Old
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
-    features: [],
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.DomainSecurity,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
     limits: unlimited
   },
   [UnpaidWorkspacePlans.Academia]: {
