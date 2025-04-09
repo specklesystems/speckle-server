@@ -19,6 +19,7 @@ export class PerpendicularMeasurement extends Measurement {
   private endGizmo: MeasurementPointGizmo | null = null
   private midPoint: Vector3 = new Vector3()
   private normalIndicatorPixelSize = 15 * window.devicePixelRatio
+  private flipStartNormal: boolean = false
 
   public set isVisible(value: boolean) {
     this.startGizmo?.enable(value, value, value, value)
@@ -54,6 +55,25 @@ export class PerpendicularMeasurement extends Measurement {
     if (this._state === MeasurementState.DANGLING_START) {
       void this.update()
     }
+  }
+
+  public locationUpdated(point: Vector3, normal: Vector3): void {
+    if (this.state === MeasurementState.DANGLING_START) {
+      this.startPoint.copy(point)
+      this.startNormal.copy(normal)
+    } else if (this.state === MeasurementState.DANGLING_END) {
+      const dir = new Vector3().subVectors(point, this.startPoint).normalize()
+      const dot = dir.dot(this.startNormal)
+      if (dot < 0) this.flipStartNormal = true
+      else this.flipStartNormal = false
+
+      this.endPoint.copy(point)
+      this.endNormal.copy(normal)
+    }
+  }
+  public locationSelected(): void {
+    if (this.state === MeasurementState.DANGLING_START)
+      this.state = MeasurementState.DANGLING_END
   }
 
   public update(): Promise<void> {

@@ -181,27 +181,7 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.isVisible = true
     }
 
-    if (this._activeMeasurement instanceof AreaMeasurement) {
-      ;(this.activeMeasurement as AreaMeasurement).locationUpdated(
-        this.pointBuff,
-        this.normalBuff
-      )
-    } else {
-      if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
-        this._activeMeasurement.startPoint.copy(this.pointBuff)
-        this._activeMeasurement.startNormal.copy(this.normalBuff)
-      } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
-        const normal = this._activeMeasurement.startNormal
-        const point = this._activeMeasurement.startPoint
-        const dir = new Vector3().subVectors(this.pointBuff, point).normalize()
-        const dot = dir.dot(normal)
-        if (dot < 0) this._activeMeasurement.flipStartNormal = true
-        else this._activeMeasurement.flipStartNormal = false
-
-        this._activeMeasurement.endPoint.copy(this.pointBuff)
-        this._activeMeasurement.endNormal.copy(this.normalBuff)
-      }
-    }
+    this.activeMeasurement?.locationUpdated(this.pointBuff, this.normalBuff)
     void this._activeMeasurement.update().then(() => {
       this.viewer.requestRender()
     })
@@ -237,16 +217,10 @@ export class MeasurementsExtension extends Extension {
 
     if (!this._sceneHit) return
 
-    if (this._activeMeasurement instanceof AreaMeasurement) {
-      this._activeMeasurement.locationSelected()
-      if (this._activeMeasurement.state === MeasurementState.COMPLETE)
-        this.finishMeasurement()
-    } else {
-      if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
-        this._activeMeasurement.state = MeasurementState.DANGLING_END
-      else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
-        this.finishMeasurement()
-      }
+    this._activeMeasurement.locationSelected()
+
+    if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+      this.finishMeasurement()
     }
   }
 

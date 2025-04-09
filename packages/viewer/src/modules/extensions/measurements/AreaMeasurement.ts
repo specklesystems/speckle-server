@@ -101,7 +101,7 @@ export class AreaMeasurement extends Measurement {
       )
       const distanceToFirst = this.surfacePoint.distanceTo(this.points[0])
       if (distanceToFirst < 1e-10) {
-        this._state = MeasurementState.COMPLETE
+        this._state = MeasurementState.DANGLING_END
         measuredPoint.copy(this.measuredPoints[0])
         this.surfacePoint.copy(this.points[0])
       }
@@ -149,7 +149,6 @@ export class AreaMeasurement extends Measurement {
   }
 
   public autoFinish() {
-    this.locationSelected()
     this.surfacePoint.copy(this.planeOrigin)
     this.surfaceNormal.copy(this.planeNormal)
     this.locationSelected()
@@ -218,12 +217,15 @@ export class AreaMeasurement extends Measurement {
       this.pointGizmos[0].enable(false, true, true, true)
     }
 
-    if (this._state === MeasurementState.COMPLETE) {
+    if (this._state === MeasurementState.DANGLING_END) {
       this.pointGizmos[this.pointIndex - 1].updateLine([
         this.points[this.pointIndex - 2],
         this.points[0]
       ])
       this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
+      this.pointGizmos[this.pointIndex].enable(false, false, false, false)
+    }
+    if (this._state === MeasurementState.COMPLETE) {
       this.pointGizmos[this.pointIndex].enable(false, false, false, false)
     }
 

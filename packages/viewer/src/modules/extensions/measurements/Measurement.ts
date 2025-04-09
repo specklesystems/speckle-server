@@ -22,9 +22,7 @@ export abstract class Measurement extends Object3D {
   public startPoint: Vector3 = new Vector3()
   public endPoint: Vector3 = new Vector3()
   public startNormal: Vector3 = new Vector3()
-  public flipStartNormal: boolean = false
   public endNormal: Vector3 = new Vector3()
-  public flipEndNormal: boolean = false
   public startLineLength: number
   public endLineLength: number
   public value = 0
@@ -68,6 +66,16 @@ export abstract class Measurement extends Object3D {
   public abstract raycast(_raycaster: Raycaster, _intersects: Array<Intersection>): void
   public abstract highlight(_value: boolean): void
   public abstract updateClippingPlanes(_planes: Plane[]): void
+  public abstract locationUpdated(
+    point?: Vector3,
+    normal?: Vector3,
+    ndcScreen?: Vector2
+  ): void
+  public abstract locationSelected(
+    point?: Vector3,
+    normal?: Vector3,
+    ndcScreen?: Vector2
+  ): void
   public snap?(
     ndcPoint: Vector2,
     intersection: ExtendedMeshIntersection,

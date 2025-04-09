@@ -1,4 +1,12 @@
-import { Box3, Camera, Plane, Raycaster, Vector2, type Intersection } from 'three'
+import {
+  Box3,
+  Camera,
+  Plane,
+  Raycaster,
+  Vector2,
+  Vector3,
+  type Intersection
+} from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
@@ -28,6 +36,20 @@ export class PointToPointMeasurement extends Measurement {
     super.frameUpdate(camera, size, bounds)
     this.startGizmo?.frameUpdate(camera, bounds)
     this.endGizmo?.frameUpdate(camera, bounds)
+  }
+
+  public locationUpdated(point: Vector3, normal: Vector3): void {
+    if (this.state === MeasurementState.DANGLING_START) {
+      this.startPoint.copy(point)
+      this.startNormal.copy(normal)
+    } else if (this.state === MeasurementState.DANGLING_END) {
+      this.endPoint.copy(point)
+      this.endNormal.copy(normal)
+    }
+  }
+  public locationSelected(): void {
+    if (this.state === MeasurementState.DANGLING_START)
+      this.state = MeasurementState.DANGLING_END
   }
 
   public update(): Promise<void> {
