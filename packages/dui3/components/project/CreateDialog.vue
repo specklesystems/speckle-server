@@ -58,7 +58,7 @@ import { ValidationHelpers } from '@speckle/ui-components'
 const showProjectCreateDialog = ref(false)
 const isCreatingProject = ref(false)
 
-const props = defineProps<{ workspaceId: string }>()
+const props = defineProps<{ workspaceId?: string }>()
 
 const emit = defineEmits<{
   (e: 'project:created', result: ProjectListProjectItemFragment): void
@@ -144,7 +144,7 @@ const onSubmitCreateNewProject = handleSubmit(() => {
 const createNewProject = async (name: string) => {
   isCreatingProject.value = true
 
-  if (props.workspaceId !== 'personalProject') {
+  if (props.workspaceId !== 'personalProject' && props.workspaceId !== undefined) {
     createNewProjectInWorkspace(name)
     isCreatingProject.value = false
     return

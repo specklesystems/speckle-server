@@ -2,11 +2,23 @@
   <div class="space-y-2">
     <div class="space-y-2 relative">
       <div
-        v-if="workspacesEnabled && workspaces && selectedWorkspace"
+        v-if="workspacesEnabled && workspaces"
         class="flex items-center space-x-2 bg-foundation -mx-3 -mt-2 px-3 py-2 shadow-sm border-b"
       >
         <div class="flex-grow min-w-0">
+          <div v-if="workspaces.length === 0">
+            <button
+              class="flex items-center w-full p-1 space-x-2 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+              @click="$openUrl('https://app.speckle.systems/workspaces/actions/create')"
+            >
+              <div class="min-w-0 ml-2 truncate flex-grow text-left">
+                <span>{{ 'Create a workspace' }}</span>
+              </div>
+              <ArrowTopRightOnSquareIcon class="w-4" />
+            </button>
+          </div>
           <WorkspaceMenu
+            v-else-if="selectedWorkspace"
             :workspaces="workspaces"
             :current-selected-workspace-id="selectedWorkspace.id"
             @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => selectedWorkspace = workspace"
@@ -37,6 +49,16 @@
           />
         </div>
       </div>
+      <!-- we can message to user about the non-workspace scenario -->
+      <!-- <div v-if="workspaces && workspaces.length === 0">
+        <CommonAlert size="xs" :color="'warning'">
+          <template #description>
+            You are listing legacy personal projects which will be deprecated end of
+            2025. We suggest you to move your personal projects into a workspace before
+            then.
+          </template>
+        </CommonAlert>
+      </div> -->
       <div class="space-y-2">
         <div class="flex items-center space-x-1 justify-between">
           <FormTextInput
@@ -50,7 +72,6 @@
           />
           <div class="flex justify-between items-center space-x-2">
             <ProjectCreateDialog
-              v-if="selectedWorkspace"
               :workspace-id="selectedWorkspace?.id"
               @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
             >
@@ -64,10 +85,7 @@
                 </button>
               </template>
             </ProjectCreateDialog>
-            <div
-              v-if="!workspacesEnabled || !workspaces || !selectedWorkspace"
-              class="mt-1"
-            >
+            <div v-if="!workspacesEnabled || !workspaces" class="mt-1">
               <AccountsMenu
                 :current-selected-account-id="accountId"
                 @select="(e) => selectAccount(e)"
@@ -98,7 +116,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import { storeToRefs } from 'pinia'
 import { PlusIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
@@ -117,6 +135,7 @@ import type {
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const { $openUrl } = useNuxtApp()
 
 const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
