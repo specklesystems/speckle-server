@@ -56,7 +56,8 @@ const SpeckleDesktopApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    Scopes.Workspaces.Read
   ]
 }
 
@@ -74,7 +75,8 @@ const SpeckleConnectorApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    Scopes.Workspaces.Read
   ]
 }
 
@@ -94,7 +96,8 @@ const SpeckleDesktopAuthService = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    Scopes.Workspaces.Read
   ]
 }
 
