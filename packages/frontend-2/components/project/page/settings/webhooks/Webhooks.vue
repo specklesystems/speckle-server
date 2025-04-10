@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Webhooks">
+  <ProjectPageSettingsBlock :auth-check="canUpdate" title="Webhooks">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         Subscribe to events and get notified in real time. Use to trigger CI apps,
@@ -16,7 +16,9 @@
       >
         Docs
       </FormButton>
-      <FormButton @click="openCreateWebhookDialog">New</FormButton>
+      <FormButton :disabled="!canUpdate?.authorized" @click="openCreateWebhookDialog">
+        New
+      </FormButton>
     </template>
     <template v-if="webhooks.length !== 0">
       <LayoutTable
@@ -35,12 +37,14 @@
           {
             icon: PencilIcon,
             label: 'Edit',
+            disabled: !canUpdate?.authorized,
             action: openEditWebhookDialog,
             class: '!text-primary'
           },
           {
             icon: TrashIcon,
             label: 'Delete',
+            disabled: !canUpdate?.authorized,
             action: openDeleteWebhookDialog,
             class: '!text-danger'
           }
@@ -48,6 +52,7 @@
       >
         <template #enabled="{ item }">
           <FormSwitch
+            :disabled="!canUpdate?.authorized"
             :model-value="!!item.enabled"
             :name="'switch-' + item.id"
             :show-label="false"
@@ -137,6 +142,18 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import type { Optional } from '@speckle/shared'
 import { webhookTriggerDisplayNames } from '~~/lib/projects/composables/webhooks'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment ProjectPageSettingsWebhooks_Project on Project {
+    id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()
@@ -151,6 +168,7 @@ const { result: pageResult, refetch: refetchWebhooks } = useQuery(
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 
+const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
 const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)

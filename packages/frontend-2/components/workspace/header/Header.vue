@@ -43,10 +43,9 @@
 
       <div class="flex gap-1.5 md:gap-2">
         <WorkspaceHeaderAddProjectMenu
-          v-if="!isWorkspaceGuest"
-          :is-workspace-admin="isWorkspaceAdmin"
           hide-text-on-mobile
-          :disabled="workspaceInfo.readOnly"
+          :can-create-project="canCreateProject"
+          :can-move-project="canMoveProject"
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"
         />
@@ -81,6 +80,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   WorkspacePlanStatuses,
+  type FullPermissionCheckResultFragment,
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
@@ -95,6 +95,11 @@ graphql(`
     ...BillingAlert_Workspace
     slug
     readOnly
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -117,6 +122,19 @@ const isWorkspaceAdmin = computed(
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
+
+const canCreateProject = computed(
+  () => props.workspaceInfo.permissions.canCreateProject
+)
+const canMoveProject = computed((): FullPermissionCheckResultFragment => {
+  // TODO: Until we have a real resolver
+  return {
+    authorized: isWorkspaceAdmin.value,
+    message: isWorkspaceAdmin.value ? 'OK' : 'You must be a workspace admin',
+    code: isWorkspaceAdmin.value ? 'OK' : 'FORBIDDEN'
+  }
+})
+
 const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (
     isWorkspaceAdmin.value ||

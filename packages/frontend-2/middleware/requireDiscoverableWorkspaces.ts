@@ -8,7 +8,6 @@ import { homeRoute, workspaceCreateRoute } from '~~/lib/common/helpers/route'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const isNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
   if (!isWorkspacesEnabled.value) return
 
@@ -31,7 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(workspaceCreateRoute())
   }
 
-  if (isNewPlansEnabled && isMemberOfWorkspace) {
+  if (isMemberOfWorkspace) {
     return navigateTo(homeRoute)
   }
 })

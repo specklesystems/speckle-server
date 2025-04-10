@@ -111,16 +111,19 @@ const scheduleWorkspaceSubscriptionDownscale = ({
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
   let isMigrationComplete = false
+  let isMigrationRunning = false
   const cronExpression = '*/5 * * * * *' // every 5 seconds
   return scheduleExecution(
     cronExpression,
     'WorkspaceNewPlanMigration',
     async (_scheduledTime, { logger }) => {
-      if (isMigrationComplete) return
+      if (isMigrationComplete || isMigrationRunning) return
+      isMigrationRunning = true
       await migrateOldWorkspacePlans({ db, stripe: getStripeClient(), logger })()
-
+      isMigrationRunning = false
       isMigrationComplete = true
     }
   )
@@ -247,8 +250,8 @@ const gatekeeperModule: SpeckleModule = {
         scheduledTasks = [
           scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
           scheduleWorkspaceTrialEmails({ scheduleExecution }),
-          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit }),
-          scheduleWorkspacePlanMigrations(scheduleExecution)
+          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+          // scheduleWorkspacePlanMigrations(scheduleExecution)
         ]
 
         quitListeners = initializeEventListenersFactory({

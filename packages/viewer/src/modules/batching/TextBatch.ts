@@ -19,7 +19,7 @@ export default class TextBatch implements Batch {
   public subtreeId: string
   public renderViews: NodeRenderView[]
   public batchMaterial!: Material
-  public mesh!: SpeckleText
+  public mesh: SpeckleText
 
   public get bounds(): Box3 {
     return new Box3().setFromObject(this.mesh)

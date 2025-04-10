@@ -3,6 +3,10 @@ import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Knex } from 'knex'
 import { DatabaseError } from '@/modules/shared/errors'
 import { UserRoles } from '@/modules/core/dbSchema'
+import {
+  appConstantValueCacheProviderFactory,
+  wrapFactoryWithCache
+} from '@/modules/shared/utils/caching'
 
 let roles: UserRole[]
 
@@ -37,3 +41,10 @@ export const registerOrUpdateRole =
       .onConflict('name')
       .merge(['weight', 'description', 'resourceTarget'])
   }
+
+export const getCachedRolesFactory = wrapFactoryWithCache({
+  factory: getRolesFactory,
+  name: 'modules/shared/repositories/roles::getCachedRolesFactory',
+  cacheProvider: appConstantValueCacheProviderFactory(),
+  ttlMs: 60 * 60 * 1000 // 1 hour
+})

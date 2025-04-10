@@ -56,29 +56,45 @@
       </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
-      <li
+      <PricingTablePlanFeature
+        is-included
+        display-name="Unlimited editor and viewer seats"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
+        is-included
+        display-name="Unlimited guests"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
+        is-included
+        :display-name="`${planLimits.projectCount} project${
+          planLimits.projectCount === 1 ? '' : 's'
+        }`"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
+        is-included
+        :display-name="`${planLimits.modelCount} models per workspace`"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
+        is-included
+        :display-name="`${planLimits.versionsHistory?.value} day version history`"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
+        is-included
+        :display-name="`${planLimits.versionsHistory?.value} day comment history`"
+        description="Some tooltip text"
+      />
+      <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
         :key="feature"
-        class="flex items-center text-body-xs"
-        :class="{
-          'lg:hidden': !planFeatures.includes(feature)
-        }"
-      >
-        <IconCheck
-          v-if="planFeatures.includes(feature)"
-          class="w-4 h-4 text-foreground mx-2"
-        />
-        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
-        <span
-          v-tippy="featureMetadata.description"
-          class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
-          :class="{
-            'text-foreground-2': !planFeatures.includes(feature)
-          }"
-        >
-          {{ featureMetadata.displayName }}
-        </span>
-      </li>
+        :is-included="planFeatures.includes(feature)"
+        :display-name="featureMetadata.displayName"
+        :description="featureMetadata.description"
+      />
     </ul>
   </div>
 </template>
@@ -96,7 +112,6 @@ import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
@@ -122,6 +137,7 @@ const { upgradePlan, redirectToCheckout } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
+const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {

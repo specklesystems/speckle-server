@@ -118,6 +118,26 @@ export const projectUpdatableMetadataFragment = graphql(`
     description
     visibility
     allowPublicComments
+    permissions {
+      canRead {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canUpdateAllowPublicComments {
+        ...FullPermissionCheckResult
+      }
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canReadWebhooks {
+        ...FullPermissionCheckResult
+      }
+      canLeave {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 

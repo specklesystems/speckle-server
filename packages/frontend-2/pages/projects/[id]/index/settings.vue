@@ -14,7 +14,6 @@ import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-componen
 import { projectSettingsRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { Roles } from '@speckle/shared'
 
 definePageMeta({
   middleware: ['can-view-settings']
@@ -23,7 +22,11 @@ definePageMeta({
 graphql(`
   fragment ProjectPageSettingsTab_Project on Project {
     id
-    role
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -33,7 +36,7 @@ const attrs = useAttrs() as {
 const route = useRoute()
 const router = useRouter()
 
-const isOwner = computed(() => attrs.project.role === Roles.Stream.Owner)
+const canUpdate = computed(() => attrs.project.permissions.canUpdate)
 const projectName = computed(() =>
   attrs.project.name.length ? attrs.project.name : ''
 )
@@ -50,8 +53,8 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Webhooks',
     id: 'webhooks',
-    disabled: !isOwner.value,
-    disabledMessage: !isOwner.value ? 'You must be the project owner' : undefined
+    disabled: !canUpdate.value.authorized,
+    disabledMessage: canUpdate.value.message
   }
 ])
 

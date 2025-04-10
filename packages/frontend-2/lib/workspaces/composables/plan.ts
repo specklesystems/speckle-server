@@ -2,7 +2,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  isNewWorkspacePlan,
   PaidWorkspacePlansNew,
   UnpaidWorkspacePlans,
   WorkspacePlans,
@@ -62,10 +61,6 @@ export const useWorkspacePlan = (slug: string) => {
   const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
 
-  // Plan type information
-  const isNewPlan = computed(() =>
-    isNewWorkspacePlan(result.value?.workspaceBySlug?.plan?.name)
-  )
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
@@ -117,7 +112,6 @@ export const useWorkspacePlan = (slug: string) => {
 
   return {
     plan,
-    isNewPlan,
     statusIsExpired,
     statusIsCanceled,
     isPurchasablePlan,

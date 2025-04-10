@@ -29,7 +29,10 @@
             clearable
           />
         </div>
-        <FormButton v-if="!isGuest" @click="openNewProject = true">
+        <FormButton
+          v-if="canCreatePersonalProject?.authorized"
+          @click="openNewProject = true"
+        >
           New project
         </FormButton>
       </div>
@@ -44,7 +47,7 @@
 
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
-      :is-guest="isGuest"
+      :can-create-project="canCreatePersonalProject?.authorized"
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
@@ -74,6 +77,16 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment ProjectsDashboard_User on User {
+    permissions {
+      canCreatePersonalProject {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
 const logger = useLogger()
 
 const infiniteLoaderId = ref('')
@@ -82,7 +95,6 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
-const { isGuest } = useActiveUser()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
@@ -113,6 +125,9 @@ onProjectsResult((res) => {
   infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
 })
 
+const canCreatePersonalProject = computed(
+  () => projectsPanelResult.value?.activeUser?.permissions?.canCreatePersonalProject
+)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
   const isFiltering =

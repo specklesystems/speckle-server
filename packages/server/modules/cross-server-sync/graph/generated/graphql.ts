@@ -2541,8 +2541,13 @@ export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVers
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
   canCreateModel: PermissionCheckResult;
+  canLeave: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
   canRead: PermissionCheckResult;
+  canReadSettings: PermissionCheckResult;
+  canReadWebhooks: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
+  canUpdateAllowPublicComments: PermissionCheckResult;
 };
 
 

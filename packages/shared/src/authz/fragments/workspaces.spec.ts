@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { ensureWorkspaceRoleAndSessionFragment } from './workspaces.js'
+import {
+  ensureWorkspaceRoleAndSessionFragment,
+  ensureWorkspacesEnabledFragment
+} from './workspaces.js'
 import cryptoRandomString from 'crypto-random-string'
 import {
   WorkspaceNoAccessError,
+  WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
+import { OverridesOf } from '../../tests/helpers/types.js'
+import { parseFeatureFlags } from '../../environment/index.js'
 
-describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', () => {
+describe('ensureWorkspaceRoleAndSessionFragment', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
     const result = ensureWorkspaceRoleAndSessionFragment({
       getWorkspace: async () => null,
@@ -156,5 +162,35 @@ describe('maybeMemberRoleWithValidSsoSessionIfNeeded returns a function, that', 
       workspaceId
     })
     expect(result).toBeAuthOKResult()
+  })
+})
+
+describe('ensureWorkspacesEnabledFragment', () => {
+  const buildSUT = (overrides?: OverridesOf<typeof ensureWorkspacesEnabledFragment>) =>
+    ensureWorkspacesEnabledFragment({
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true'
+        }),
+      ...overrides
+    })
+
+  it('returns ok when workspaces are enabled', async () => {
+    const sut = buildSUT()
+    const result = await sut({})
+    expect(result).toBeOKResult()
+  })
+
+  it('returns err when workspaces are disabled', async () => {
+    const sut = buildSUT({
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'false'
+        })
+    })
+    const result = await sut({})
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacesNotEnabledError.code
+    })
   })
 })

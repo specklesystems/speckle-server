@@ -10,7 +10,6 @@
     <FormButton
       color="outline"
       :class="hideTextOnMobile ? 'hidden md:block' : ''"
-      :disabled="disabled"
       @click="showMenu = !showMenu"
     >
       <div class="flex items-center gap-1">
@@ -32,6 +31,7 @@
 
 <script setup lang="ts">
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
@@ -47,9 +47,9 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   hideTextOnMobile?: boolean
-  isWorkspaceAdmin: boolean
   buttonCopy?: string
-  disabled?: boolean
+  canCreateProject: FullPermissionCheckResultFragment | undefined
+  canMoveProject: FullPermissionCheckResultFragment | undefined
 }>()
 
 const menuId = useId()
@@ -57,12 +57,15 @@ const showMenu = ref(false)
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
-    { title: 'Create new project...', id: AddNewProjectActionTypes.NewProject },
+    {
+      title: 'Create new project...',
+      id: AddNewProjectActionTypes.NewProject,
+      disabled: !props.canCreateProject?.authorized,
+      disabledTooltip: props.canCreateProject?.message
+    },
     {
       title: 'Move existing project...',
-      id: AddNewProjectActionTypes.MoveProject,
-      disabled: !props.isWorkspaceAdmin,
-      disabledTooltip: 'You must be a workspace admin.'
+      id: AddNewProjectActionTypes.MoveProject
     }
   ]
 ])

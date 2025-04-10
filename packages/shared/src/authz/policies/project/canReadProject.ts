@@ -1,16 +1,11 @@
-import { Roles } from '../../../core/constants.js'
 import { err, ok } from 'true-myth/result'
 import { AuthPolicy } from '../../domain/policies.js'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 import {
   checkIfPubliclyReadableProjectFragment,
-  ensureMinimumProjectRoleFragment,
-  ensureProjectWorkspaceAccessFragment
+  ensureImplicitProjectMemberWithReadAccessFragment
 } from '../../fragments/projects.js'
-import {
-  checkIfAdminOverrideEnabledFragment,
-  ensureMinimumServerRoleFragment
-} from '../../fragments/server.js'
+import {} from '../../fragments/server.js'
 import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
@@ -52,40 +47,15 @@ export const canReadProjectPolicy: AuthPolicy<
     }
     if (isPubliclyReadable.value) return ok()
 
-    // Not public. Ensure user is authed
-    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
+    // Not public. Ensure user has at least implicit membership & read access
+    const hasReadAccess = await ensureImplicitProjectMemberWithReadAccessFragment(
+      loaders
+    )({
       userId,
-      role: Roles.Server.Guest
-    })
-    if (ensuredServerRole.isErr) {
-      return err(ensuredServerRole.error)
-    }
-
-    // Check if user has admin override enabled
-    const isAdminOverrideEnabled = await checkIfAdminOverrideEnabledFragment(loaders)({
-      userId
-    })
-    if (isAdminOverrideEnabled.isErr) {
-      return err(isAdminOverrideEnabled.error)
-    }
-    if (isAdminOverrideEnabled.value) return ok()
-
-    // No god mode, ensure workspace access
-    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
-      userId: userId!,
       projectId
     })
-    if (ensuredWorkspaceAccess.isErr) {
-      return err(ensuredWorkspaceAccess.error)
-    }
-
-    // And ensure (implicit/explicit) project role
-    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
-      userId: userId!,
-      projectId
-    })
-    if (ensuredProjectRole.isErr) {
-      return err(ensuredProjectRole.error)
+    if (hasReadAccess.isErr) {
+      return err(hasReadAccess.error)
     }
 
     return ok()

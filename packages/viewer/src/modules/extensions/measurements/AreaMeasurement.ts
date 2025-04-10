@@ -22,7 +22,7 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Geometry } from '../../converter/Geometry.js'
 import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
-import { MeasurementPointGizmo2 } from './MeasurementPointGizmo2.js'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
 
 const _vec30 = new Vector3()
@@ -30,50 +30,73 @@ const _vec31 = new Vector3()
 const _vec32 = new Vector3()
 
 export class AreaMeasurement extends Measurement {
-  private pointGizmos: MeasurementPointGizmo2[]
-  private pointIndex: number = 0
+  /** We store all gizmos here */
+  private pointGizmos: MeasurementPointGizmo[] = []
+
+  /** This stores the last touched point position and normal */
   private surfacePoint: Vector3 = new Vector3()
   private surfaceNormal: Vector3 = new Vector3()
+
+  /** The plane params defined by the first placed point */
   private planeOrigin: Vector3 = new Vector3()
   private planeNormal: Vector3 = new Vector3()
+
+  /** The location of the area text label */
   private labelPoint: Vector3 = new Vector3()
+
+  /** Various point list. A bit exhaustive, but safer */
+  private pointIndex: number = 0
+  /** The selected points in 3D space */
   private points: Vector3[] = []
+  /** The selected points projected on the measurement plane */
   private measuredPoints: Vector3[] = []
+  /** The points defining the fill polygon. Also projected on the measurement plane */
   private polygonPoints: Vector3[] = []
 
   private fillPolygon: Mesh
   private snapDistance: number = 10
 
   public set isVisible(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.enable(value, value, value, value)
     })
   }
 
+  public get bounds(): Box3 {
+    const box = new Box3()
+    this.polygonPoints.forEach((point: Vector3) => box.expandByPoint(point))
+    return box
+  }
+
   public constructor() {
     super()
+
     this.type = 'AreaMeasurement'
-    this.pointGizmos = []
-    const gizmo = new MeasurementPointGizmo2()
+    /** We create the initial gizmo */
+    const gizmo = new MeasurementPointGizmo()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(this.pointGizmos[0])
     this.layers.set(ObjectLayers.MEASUREMENTS)
 
+    /** The polygon will always contain the last touched point to allow real time updates */
     this.polygonPoints.push(new Vector3())
   }
 
+  /** Frame */
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.frameUpdate(camera, size)
     })
   }
 
+  /** Called whenver the last touched location updates */
   public locationUpdated(point: Vector3, normal: Vector3) {
     this.surfacePoint.copy(point)
     this.surfaceNormal.copy(normal)
 
+    /** Update the polygon first point */
     this.projectOnPlane(
       this.surfacePoint,
       this.planeOrigin,
@@ -84,7 +107,9 @@ export class AreaMeasurement extends Measurement {
     this.updateFillPolygon(this.polygonPoints)
   }
 
+  /** Called whenver a location is selected for measuring*/
   public locationSelected() {
+    /** If first point, determine the measurement plane */
     if (this.pointIndex === 0) {
       this.planeOrigin.copy(this.surfacePoint)
       this.planeNormal.copy(this.surfaceNormal)
@@ -93,12 +118,14 @@ export class AreaMeasurement extends Measurement {
     this.addPoint()
   }
 
+  /** Adds a point to the area measurement */
   public addPoint(): number {
     const measuredPoint = new Vector3().copy(this.surfacePoint)
     if (this.pointIndex > 0) {
       measuredPoint.copy(
         this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
       )
+      /** Check to see if added location coincides with the first one. If yes, close the measurement */
       const distanceToFirst = this.surfacePoint.distanceTo(this.points[0])
       if (distanceToFirst < 1e-10) {
         this._state = MeasurementState.COMPLETE
@@ -107,11 +134,13 @@ export class AreaMeasurement extends Measurement {
       }
     }
 
-    const gizmo = new MeasurementPointGizmo2()
+    /** Add a new gizmo */
+    const gizmo = new MeasurementPointGizmo()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(gizmo)
 
+    /** Push the points */
     this.points.push(this.surfacePoint.clone())
     this.measuredPoints.push(measuredPoint)
     this.polygonPoints.push(measuredPoint)
@@ -119,6 +148,7 @@ export class AreaMeasurement extends Measurement {
 
     void this.update()
 
+    /** Update polygon and label if required */
     if (this.points.length >= 2) {
       this.projectOnPlane(
         this.surfacePoint,
@@ -127,15 +157,16 @@ export class AreaMeasurement extends Measurement {
         this.polygonPoints[0]
       )
       this.updateFillPolygon(this.polygonPoints)
-      this.updatePoleOfInnacessibility(this.measuredPoints)
+      this.updateLabelLocation(this.measuredPoints)
     }
 
     return this.points.length
   }
 
+  /** Removes point from the measurement */
   public removePoint(): number {
     if (this.pointIndex < 1) return 0
-    this.remove(this.pointGizmos.pop() as MeasurementPointGizmo2)
+    this.remove(this.pointGizmos.pop() as MeasurementPointGizmo)
     this.points.pop()
     this.measuredPoints.pop()
     this.polygonPoints.pop()
@@ -143,18 +174,19 @@ export class AreaMeasurement extends Measurement {
 
     void this.update()
     this.updateFillPolygon(this.polygonPoints)
-    this.updatePoleOfInnacessibility(this.measuredPoints)
+    this.updateLabelLocation(this.measuredPoints)
 
     return this.points.length
   }
 
+  /** Auto completes the measurement by joining with the first point */
   public autoFinish() {
-    this.locationSelected()
     this.surfacePoint.copy(this.planeOrigin)
     this.surfaceNormal.copy(this.planeNormal)
     this.locationSelected()
   }
 
+  /** Area measurement's custom snap function. We snap to the first point by design */
   public snap(
     ndcPoint: Vector2,
     _intersection: ExtendedMeshIntersection,
@@ -163,6 +195,7 @@ export class AreaMeasurement extends Measurement {
   ): boolean {
     if (this.pointIndex < 2) return false
 
+    /** First point NDC */
     const firstPointSS = new Vector3()
       .copy(this.points[0])
       .project(this.renderingCamera as PerspectiveCamera | OrthographicCamera)
@@ -171,6 +204,7 @@ export class AreaMeasurement extends Measurement {
       (firstPointSS.y * -0.5 + 0.5) * this.renderingSize.y,
       0
     )
+    /** Mouse point NDC */
     const mousePointSS = new Vector3(
       (ndcPoint.x * 0.5 + 0.5) * this.renderingSize.x,
       (ndcPoint.y * -0.5 + 0.5) * this.renderingSize.y,
@@ -178,6 +212,7 @@ export class AreaMeasurement extends Measurement {
     )
     const SSDistance = firstPointSS.distanceTo(mousePointSS)
 
+    /** If distance smaller than threshold, snap */
     if (SSDistance < this.snapDistance * window.devicePixelRatio) {
       outPoint.copy(this.points[0])
       outNormal.copy(this.planeNormal)
@@ -187,6 +222,7 @@ export class AreaMeasurement extends Measurement {
     return false
   }
 
+  /** Updates the gizmo components based on it's state and values */
   public update(): Promise<void> {
     let ret: Promise<void> = Promise.resolve()
 
@@ -230,7 +266,12 @@ export class AreaMeasurement extends Measurement {
     return ret
   }
 
-  private updatePoleOfInnacessibility(points: Vector3[]) {
+  /** Updates the area label location using the polyong's pole of innaccessibility
+   *  We do this to avoid having the label outside of the polygin in case of concave polygons
+   *  It works great for concave polygons, but not so great for convex regular ones
+   */
+  private updateLabelLocation(points: Vector3[]) {
+    /** We place points on the XY plane since the library requires us to */
     const q = new Quaternion().setFromUnitVectors(
       this.planeNormal,
       new Vector3(0, 0, 1)
@@ -248,6 +289,7 @@ export class AreaMeasurement extends Measurement {
     const p = polylabel([flatPoints], 0.1)
 
     this.labelPoint.set(p[0], p[1], this.planeOrigin.z)
+    /** We rotate back */
     this.labelPoint.applyQuaternion(invQ)
     this.projectOnPlane(
       this.labelPoint,
@@ -257,6 +299,7 @@ export class AreaMeasurement extends Measurement {
     )
   }
 
+  /** Updates the measured polygon's geometry */
   private updateFillPolygon(points: Vector3[]) {
     if (!this.fillPolygon) {
       const material = new SpeckleBasicMaterial({
@@ -285,7 +328,6 @@ export class AreaMeasurement extends Measurement {
     this.fillPolygon.visible = true
 
     const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
-
     const projectedPoints = points.map(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
@@ -315,9 +357,10 @@ export class AreaMeasurement extends Measurement {
     geometry.computeBoundingBox()
   }
 
+  /** Measurement's custom picking. We don't test the polygon when casting */
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     const results: Array<Intersection> = []
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.raycast(raycaster, results)
     })
     if (results.length) {
@@ -333,18 +376,39 @@ export class AreaMeasurement extends Measurement {
   }
 
   public highlight(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.highlight = value
     })
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.updateClippingPlanes(planes)
     })
     ;(this.fillPolygon.material as Material).clippingPlanes = planes
   }
 
+  /** Had to make my own. Three's Hesse normal form trips me up */
+  private projectOnPlane(
+    point: Vector3,
+    planeOrigin: Vector3,
+    planeNormal: Vector3,
+    destination?: Vector3
+  ) {
+    const p = _vec30.copy(point)
+    const o = _vec31.copy(planeOrigin)
+    const n = _vec32.copy(planeNormal).normalize()
+
+    const v = p.sub(o)
+    const dist = v.dot(n)
+    return (destination ? destination : new Vector3())
+      .copy(point)
+      .sub(n.multiplyScalar(dist))
+  }
+
+  /** Selects the vector components to use based on the measurement plane.
+   *  Don't really like it, but it works
+   */
   private chooseProjectionAxes(normal: Vector3) {
     const absNormal = normal
       .clone()
@@ -359,6 +423,7 @@ export class AreaMeasurement extends Measurement {
     }
   }
 
+  /** Area calculation */
   private shoelaceArea(points: Vector2[]) {
     const n = points.length
     if (n < 3) return 0 // At least 3 points needed for a polygon
@@ -380,22 +445,5 @@ export class AreaMeasurement extends Measurement {
     const projectedPoints = points.map((p) => new Vector2(p[axis1], p[axis2]))
 
     return this.shoelaceArea(projectedPoints)
-  }
-
-  private projectOnPlane(
-    point: Vector3,
-    planeOrigin: Vector3,
-    planeNormal: Vector3,
-    destination?: Vector3
-  ) {
-    const p = _vec30.copy(point)
-    const o = _vec31.copy(planeOrigin)
-    const n = _vec32.copy(planeNormal).normalize()
-
-    const v = p.sub(o)
-    const dist = v.dot(n)
-    return (destination ? destination : new Vector3())
-      .copy(point)
-      .sub(n.multiplyScalar(dist))
   }
 }
