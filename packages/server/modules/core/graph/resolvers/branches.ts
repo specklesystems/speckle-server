@@ -81,7 +81,7 @@ export = {
         resourceAccessRules: context.resourceAccessRules
       })
 
-      const canCreate = await context.authPolicies.project.canCreateModel({
+      const canCreate = await context.authPolicies.project.model.canCreate({
         userId: context.userId,
         projectId: args.branch.streamId
       })
