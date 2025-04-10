@@ -51,11 +51,13 @@ import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { getLimitedReferencedObjectFactory } from '@/modules/core/services/versions/limits'
+import { Version } from '@/modules/core/domain/commits/types'
+import { GraphQLResolveInfo } from 'graphql'
 
-const {
-  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED,
-  FF_WEB_2944_VERSIONS_LIMITS_ENABLED
-} = getFeatureFlags()
+const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+
+const isVersionForModel = (info: GraphQLResolveInfo) =>
+  info.path.prev?.prev?.prev?.typename === 'Model'
 
 export = {
   Project: {
@@ -100,10 +102,7 @@ export = {
       const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     },
-    referencedObject: async (parent, _args, ctx) => {
-      if (!FF_WEB_2944_VERSIONS_LIMITS_ENABLED) {
-        return parent.referencedObject
-      }
+    referencedObject: async (parent, _args, ctx, info) => {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       const project = await ctx.loaders
         .forRegion({ db: projectDB })
@@ -115,15 +114,27 @@ export = {
         })
       }
 
-      const lastVersion = await ctx.loaders.streams.getLastVersion.load(project.id)
-      if (lastVersion?.id === parent.id) return parent.referencedObject
-
-      return await getLimitedReferencedObjectFactory({
+      const getLimitedReferencedObject = getLimitedReferencedObjectFactory({
         environment: {
           personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
         },
         getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })({ version: parent, project })
+      })
+      let lastVersion: Version | null
+      if (isVersionForModel(info)) {
+        lastVersion = await ctx.loaders
+          .forRegion({ db: projectDB })
+          .branches.getLatestCommit.load(parent.branchId)
+      } else {
+        lastVersion = await ctx.loaders
+          .forRegion({ db: projectDB })
+          .streams.getLastVersion.load(parent.streamId)
+      }
+      if (lastVersion?.id === parent.id) return parent.referencedObject
+      return await getLimitedReferencedObject({
+        version: parent,
+        workspaceId: project.workspaceId
+      })
     }
   },
   Mutation: {
