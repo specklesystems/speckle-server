@@ -110,9 +110,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
     $filter: WorkspaceProjectsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      id
-      slug
-      readOnly
+      ...SettingsWorkspacesProjects_Workspace
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection

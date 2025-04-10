@@ -8,6 +8,7 @@ import { ServerNoAccessError, ServerNoSessionError } from '../domain/authErrors.
 import { hasMinimumServerRole } from '../checks/serverRole.js'
 import { Roles, ServerRoles } from '../../core/constants.js'
 import { err, ok } from 'true-myth/result'
+import { throwUncoveredError } from '../../core/index.js'
 
 /**
  * Ensure user has a minimum server role
@@ -39,7 +40,7 @@ export const ensureMinimumServerRoleFragment: AuthPolicyEnsureFragment<
 export const checkIfAdminOverrideEnabledFragment: AuthPolicyCheckFragment<
   typeof Loaders.getAdminOverrideEnabled | typeof Loaders.getServerRole,
   MaybeUserContext,
-  InstanceType<typeof ServerNoAccessError | typeof ServerNoSessionError>
+  never
 > =
   (loaders) =>
   async ({ userId }) => {
@@ -50,7 +51,15 @@ export const checkIfAdminOverrideEnabledFragment: AuthPolicyCheckFragment<
       userId,
       role: Roles.Server.Admin
     })
-    if (hasAdminRole.isErr) return err(hasAdminRole.error)
+    if (hasAdminRole.isErr) {
+      switch (hasAdminRole.error.code) {
+        case ServerNoAccessError.code:
+        case ServerNoSessionError.code:
+          return ok(false)
+        default:
+          throwUncoveredError(hasAdminRole.error)
+      }
+    }
 
     return ok(true)
   }
