@@ -93,8 +93,7 @@
                 :show-label="false"
                 :disabled="
                   !isDomainProtectionEnabled &&
-                  (!hasWorkspaceDomains ||
-                    !workspace?.hasAccessToDomainBasedSecurityPolicies)
+                  (!hasWorkspaceDomains || !hasAccessToDomainBasedSecurityPolicies)
                 "
                 name="domain-protection"
               />
@@ -283,7 +282,8 @@ const addDomain = async () => {
     workspace.value.domains ?? [],
     workspace.value.discoverabilityEnabled,
     workspace.value.domainBasedMembershipProtectionEnabled,
-    workspace.value.hasAccessToSSO
+    workspace.value.hasAccessToSSO,
+    workspace.value.hasAccessToDomainBasedSecurityPolicies
   )
 
   mixpanel.track('Workspace Domain Added', {
