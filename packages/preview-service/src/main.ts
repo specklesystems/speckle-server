@@ -82,6 +82,14 @@ const server = app.listen(port, host, async () => {
 
   const launchBrowser = async (): Promise<Browser> => {
     logger.debug('Starting browser')
+    const actualArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-session-crashed-bubble',
+      ...(GPU_ENABLED ? gpuArgs : [])
+    ]
+    logger.info({ actualArgs }, 'ARGS -> {actualArgs}')
     return await puppeteer.launch({
       headless: !PREVIEWS_HEADED,
       executablePath: CHROMIUM_EXECUTABLE_PATH,
@@ -89,13 +97,7 @@ const server = app.listen(port, host, async () => {
       // slowMo: 3000, // Use for debugging during development
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-session-crashed-bubble',
-        ...(GPU_ENABLED ? gpuArgs : [])
-      ],
+      args: actualArgs,
       protocolTimeout: PREVIEW_TIMEOUT,
       // handle closing of the browser by the preview-service, not puppeteer
       // this is important for the preview-service to be able to shut down gracefully,
