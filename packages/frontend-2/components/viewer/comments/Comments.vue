@@ -31,7 +31,6 @@
           size="sm"
           :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
           text
-          :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
           class="!text-foreground"
           @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
         >

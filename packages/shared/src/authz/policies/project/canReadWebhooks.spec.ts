@@ -10,12 +10,13 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { canReadProjectWebhooksPolicy } from './canReadWebhooks.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canReadProjectWebhooksPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>) =>
     canReadProjectWebhooksPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
@@ -35,7 +36,7 @@ describe('canReadProjectWebhooksPolicy', () => {
     overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>
   ) =>
     buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
         isDiscoverable: false,

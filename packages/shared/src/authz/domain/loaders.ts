@@ -19,6 +19,7 @@ import type {
   GetWorkspaceSsoProvider,
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
+import { GetComment } from './comments/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -63,7 +64,8 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceLimits: 'getWorkspaceLimits',
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession',
-  getAdminOverrideEnabled: 'getAdminOverrideEnabled'
+  getAdminOverrideEnabled: 'getAdminOverrideEnabled',
+  getComment: 'getComment'
 }
 export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
@@ -87,6 +89,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspaceModelCount: GetWorkspaceModelCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
+  getComment: GetComment
 }>
 
 export type AuthCheckContextLoaders<
