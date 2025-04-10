@@ -114,6 +114,7 @@ describe('checkout @gatekeeper', () => {
             url: '',
             workspaceId,
             workspacePlan: 'business',
+            currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
           }),
@@ -160,6 +161,7 @@ describe('checkout @gatekeeper', () => {
             url: '',
             workspaceId,
             workspacePlan: 'business',
+            currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
           }),
@@ -199,6 +201,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -235,6 +238,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -272,6 +276,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -314,6 +319,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -324,6 +330,7 @@ describe('checkout @gatekeeper', () => {
         updatedAt: new Date(1990, 1, 12),
         paymentStatus: 'unpaid',
         url: 'https://example.com',
+        currency: 'usd',
         workspaceId,
         workspacePlan
       }
@@ -367,6 +374,7 @@ describe('checkout @gatekeeper', () => {
         updatedAt: new Date(1990, 1, 12),
         paymentStatus: 'paid',
         url: 'https://example.com',
+        currency: 'usd',
         workspaceId,
         workspacePlan
       }
@@ -409,6 +417,7 @@ describe('checkout @gatekeeper', () => {
         updatedAt: new Date(),
         paymentStatus: 'unpaid',
         url: 'https://example.com',
+        currency: 'usd',
         workspaceId,
         workspacePlan
       }
@@ -453,6 +462,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -463,6 +473,7 @@ describe('checkout @gatekeeper', () => {
         url: '',
         workspaceId,
         workspacePlan: 'business',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -536,6 +547,7 @@ describe('checkout @gatekeeper', () => {
             url: 'https://example.com',
             workspaceId: cryptoRandomString({ length: 10 }),
             workspacePlan: 'business',
+            currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
           }),
@@ -571,6 +583,7 @@ describe('checkout @gatekeeper', () => {
             url: 'https://example.com',
             workspaceId,
             workspacePlan: 'business',
+            currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
           }
@@ -814,6 +827,7 @@ describe('checkout @gatekeeper', () => {
             url: '',
             workspaceId,
             workspacePlan: 'business',
+            currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
           }),
@@ -854,6 +868,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -896,6 +911,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -905,6 +921,7 @@ describe('checkout @gatekeeper', () => {
         createdAt: new Date(1990, 1, 12),
         updatedAt: new Date(1990, 1, 12),
         paymentStatus: 'unpaid',
+        currency: 'usd',
         url: 'https://example.com',
         workspaceId,
         workspacePlan
@@ -949,6 +966,7 @@ describe('checkout @gatekeeper', () => {
         updatedAt: new Date(1990, 1, 12),
         paymentStatus: 'paid',
         url: 'https://example.com',
+        currency: 'usd',
         workspaceId,
         workspacePlan
       }
@@ -991,6 +1009,7 @@ describe('checkout @gatekeeper', () => {
         url: 'https://example.com',
         billingInterval,
         paymentStatus: 'unpaid',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -1001,6 +1020,7 @@ describe('checkout @gatekeeper', () => {
         url: '',
         workspaceId,
         workspacePlan: 'team',
+        currency: 'usd',
         createdAt: new Date(),
         updatedAt: new Date()
       }

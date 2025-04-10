@@ -1,4 +1,5 @@
 import {
+  Currency,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
@@ -12,6 +13,8 @@ import {
   Optional,
   PaidWorkspacePlan,
   PaidWorkspacePlans,
+  PaidWorkspacePlansNew,
+  PaidWorkspacePlansOld,
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
@@ -20,6 +23,7 @@ import {
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
+export { Currency } from '@/modules/gatekeeperCore/domain/billing'
 export { WorkspaceSeat, WorkspaceSeatType }
 export {
   GetWorkspaceRoleAndSeat,
@@ -66,6 +70,7 @@ export type CheckoutSession = SessionInput & {
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   createdAt: Date
   updatedAt: Date
 }
@@ -116,6 +121,7 @@ export type WorkspaceSubscription = {
   updatedAt: Date
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   subscriptionData: SubscriptionData
 }
 const subscriptionProduct = z.object({
@@ -185,19 +191,47 @@ export type GetSubscriptionData = (args: {
 export type GetWorkspacePlanPriceId = (args: {
   workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | PaidWorkspacePlans
-
-export type GetWorkspacePlanProductAndPriceIds = () => Record<
-  Products,
-  { productId: string; monthly: string; yearly: string }
+export type GbpOnlyPrice = { gbp: string }
+type GbpOnlyProductPrice = {
+  monthly: GbpOnlyPrice
+  yearly: GbpOnlyPrice
+}
+type OldProductPriceIds = Record<
+  PaidWorkspacePlansOld | 'guest',
+  { productId: string } & GbpOnlyProductPrice
 >
 
+export type MultiCurrencyPrice = {
+  usd: string
+  gbp: string
+}
+type MultiCurrencyProductPrice = {
+  monthly: MultiCurrencyPrice
+  yearly: MultiCurrencyPrice
+}
+
+export const isMultiCurrencyPrice = (
+  priceIds: GbpOnlyPrice | MultiCurrencyPrice
+): priceIds is MultiCurrencyPrice =>
+  Object.values(Currency)
+    .map((c) => c in priceIds)
+    .every((p) => p === true)
+
+type NewProductPriceIds = Record<
+  PaidWorkspacePlansNew,
+  { productId: string } & MultiCurrencyProductPrice
+>
+
+export type WorkspacePlanProductAndPriceIds = OldProductPriceIds & NewProductPriceIds
+
+export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
   {

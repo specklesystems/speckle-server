@@ -157,6 +157,19 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspaceId: parent.id
           })
         },
+        planPrices: async (parent) => {
+          const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
+            getRecurringPrices: getRecurringPricesFactory({
+              stripe: getStripeClient()
+            }),
+            getWorkspacePlanProductAndPriceIds
+          })
+          const prices = await getWorkspacePlanPrices()
+          const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
+            workspaceId: parent.id
+          })
+          return prices[workspaceSubscription?.currency ?? 'usd']
+        },
         seatType: async (parent, _args, context) => {
           if (!context.userId) return null
 
@@ -288,12 +301,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }),
             getWorkspacePlanProductAndPriceIds
           })
-          const prices = await getWorkspacePlanPrices.fresh()
-          return Object.entries(prices).map(([plan, price]) => ({
-            id: plan,
-            monthly: price.monthly,
-            yearly: 'yearly' in price ? price.yearly : null
-          }))
+          const prices = await getWorkspacePlanPrices()
+          return prices
         }
       },
       ProjectCollaborator: {

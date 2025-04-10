@@ -208,6 +208,7 @@ export const createTestWorkspace = async (
         updatedAt: new Date(),
         currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
         billingInterval: 'monthly',
+        currency: 'usd',
         subscriptionData: {
           subscriptionId: cryptoRandomString({ length: 10 }),
           customerId: cryptoRandomString({ length: 10 }),

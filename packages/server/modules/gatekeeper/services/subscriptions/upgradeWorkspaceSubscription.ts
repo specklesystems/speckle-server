@@ -195,7 +195,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
           productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
           priceId: getWorkspacePlanPriceId({
             workspacePlan: 'guest',
-            billingInterval
+            billingInterval,
+            currency: workspaceSubscription.currency
           }),
           subscriptionItemId: undefined
         })
@@ -216,7 +217,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })
@@ -383,7 +385,8 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })

@@ -34,7 +34,11 @@ export const createCheckoutSessionFactoryOld =
     }
 
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
-    const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
+    const price = getWorkspacePlanPrice({
+      billingInterval,
+      workspacePlan,
+      currency: 'gbp'
+    })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price, quantity: seatCount }
     ]
@@ -42,7 +46,8 @@ export const createCheckoutSessionFactoryOld =
       costLineItems.push({
         price: getWorkspacePlanPrice({
           workspacePlan: 'guest',
-          billingInterval
+          billingInterval,
+          currency: 'gbp'
         }),
         quantity: guestCount
       })
@@ -68,6 +73,7 @@ export const createCheckoutSessionFactoryOld =
       billingInterval,
       workspacePlan,
       workspaceId,
+      currency: 'gbp',
       createdAt: new Date(),
       updatedAt: new Date(),
       paymentStatus: 'unpaid'
@@ -92,8 +98,9 @@ export const createCheckoutSessionFactoryNew =
     workspaceId,
     isCreateFlow
   }) => {
+    const currency = 'usd'
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
-    const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
+    const price = getWorkspacePlanPrice({ billingInterval, workspacePlan, currency })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price, quantity: editorsCount }
     ]
@@ -119,6 +126,7 @@ export const createCheckoutSessionFactoryNew =
       billingInterval,
       workspacePlan,
       workspaceId,
+      currency,
       createdAt: new Date(),
       updatedAt: new Date(),
       paymentStatus: 'unpaid'
