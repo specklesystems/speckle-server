@@ -53,8 +53,10 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspacesNotEnabledError.code:
       return new WorkspacesModuleDisabledError()
     case Authz.ProjectLastOwnerError.code:
+    case Authz.ReservedModelNotDeletableError.code:
       return new BadRequestError(e.message)
     case Authz.CommentNotFoundError.code:
+    case Authz.ModelNotFoundError.code:
       return new NotFoundError(e.message)
     default:
       throwUncoveredError(e)

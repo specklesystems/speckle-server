@@ -356,11 +356,12 @@ export = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+      const canDelete = await ctx.authPolicies.project.model.canDelete({
         userId: ctx.userId,
-        projectId: args.input.projectId
+        projectId: args.input.projectId,
+        modelId: args.input.id
       })
-      throwIfAuthNotOk(canUpdate)
+      throwIfAuthNotOk(canDelete)
 
       const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
       const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })

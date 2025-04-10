@@ -23,6 +23,7 @@ extend type User {
 
 type ModelPermissionChecks {
   canUpdate: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
 }
 
 extend type Model {

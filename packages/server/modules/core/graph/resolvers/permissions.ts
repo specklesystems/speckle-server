@@ -81,6 +81,14 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canUpdate)
+    },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.model.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId,
+        modelId: parent.modelId
+      })
+      return Authz.toGraphqlResult(canDelete)
     }
   },
   RootPermissionChecks: {

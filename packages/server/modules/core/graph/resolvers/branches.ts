@@ -135,11 +135,12 @@ export = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const canUpdate = await context.authPolicies.project.model.canUpdate({
+      const canDelete = await context.authPolicies.project.model.canDelete({
         userId: context.userId,
-        projectId: args.branch.streamId
+        projectId: args.branch.streamId,
+        modelId: args.branch.id
       })
-      throwIfAuthNotOk(canUpdate)
+      throwIfAuthNotOk(canDelete)
 
       const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
       const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })

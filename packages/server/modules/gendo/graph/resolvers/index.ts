@@ -79,13 +79,6 @@ export = FF_GENDOAI_MODULE_ENABLED
       },
       VersionMutations: {
         async requestGendoAIRender(__parent, args, ctx) {
-          await authorizeResolver(
-            ctx.userId,
-            args.input.projectId,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
-
           const rateLimitResult = await getRateLimitResult(
             'GENDO_AI_RENDER_REQUEST',
             ctx.userId as string
@@ -93,6 +86,13 @@ export = FF_GENDOAI_MODULE_ENABLED
           if (isRateLimitBreached(rateLimitResult)) {
             throw new RateLimitError(rateLimitResult)
           }
+
+          await authorizeResolver(
+            ctx.userId,
+            args.input.projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
 
           const userId = ctx.userId!
 

@@ -1316,6 +1316,7 @@ export type ModelMutationsUpdateArgs = {
 
 export type ModelPermissionChecks = {
   __typename?: 'ModelPermissionChecks';
+  canDelete: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 

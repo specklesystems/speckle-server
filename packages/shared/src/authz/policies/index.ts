@@ -14,12 +14,14 @@ import { canCreateProjectCommentPolicy } from './project/comment/canCreate.js'
 import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
 import { canEditProjectCommentPolicy } from './project/comment/canEdit.js'
 import { canUpdateModelPolicy } from './project/model/canUpdate.js'
+import { canDeleteModelPolicy } from './project/model/canDelete.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
     model: {
       canCreate: canCreateModelPolicy(loaders),
-      canUpdate: canUpdateModelPolicy(loaders)
+      canUpdate: canUpdateModelPolicy(loaders),
+      canDelete: canDeleteModelPolicy(loaders)
     },
     comment: {
       canCreate: canCreateProjectCommentPolicy(loaders),
