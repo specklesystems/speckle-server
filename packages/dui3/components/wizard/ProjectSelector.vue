@@ -7,15 +7,16 @@
       >
         <div class="flex-grow min-w-0">
           <div v-if="workspaces.length === 0">
-            <button
-              class="flex items-center w-full p-1 space-x-2 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+            <FormButton
+              full-width
+              class="flex items-center"
               @click="$openUrl('https://app.speckle.systems/workspaces/actions/create')"
             >
-              <div class="min-w-0 ml-2 truncate flex-grow text-left">
+              <div class="min-w-0 truncate flex-grow">
                 <span>{{ 'Create a workspace' }}</span>
               </div>
               <ArrowTopRightOnSquareIcon class="w-4" />
-            </button>
+            </FormButton>
           </div>
           <WorkspaceMenu
             v-else-if="selectedWorkspace"
