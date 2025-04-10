@@ -1,4 +1,4 @@
-import { Base, DataChunk, isBase } from '../types/types.js'
+import { Base, DataChunk, isBase, isReference, isScalar } from '../types/types.js'
 import ObjectLoader2 from './objectLoader2.js'
 
 export type ProgressStage = 'download' | 'construction'
@@ -24,38 +24,43 @@ export default class Traverser {
     this.#loader = loader
   }
 
-  async getAndConstructObject(onProgress: OnProgress) {
-    let firstObjectPromise: Promise<void> | undefined = undefined
-    let first = true
+  async traverse(onProgress?: OnProgress): Promise<Base> {
+    let firstObjectPromise: Promise<Base> | undefined = undefined
     for await (const obj of this.#loader.getObjectIterator()) {
-      if (first) {
+      if (!firstObjectPromise) {
         firstObjectPromise = this.traverseBase(obj, onProgress)
-        first = false
       }
     }
 
     if (firstObjectPromise) {
-      await firstObjectPromise
+      return await firstObjectPromise
+    } else {
+      throw new Error('No objects found')
     }
   }
 
-  async traverseArray(obj: Array<unknown>, onProgress: OnProgress): Promise<void> {
-    const promises: Promise<void>[] = []
-    for (const arrayItem of obj) {
-      if (isBase(arrayItem)) {
-        promises.push(this.traverseBase(arrayItem, onProgress))
+  async traverseArray(array: Array<unknown>, onProgress?: OnProgress): Promise<void> {
+    for (let i = 0; i < 10; i++) {
+      const prop = array[i]
+      if (isScalar(prop)) continue
+      if (isBase(prop)) {
+        array[i] = await this.traverseBase(prop, onProgress)
+      } else if (isReference(prop)) {
+        array[i] = await this.traverseBase(
+          await this.#loader.getObject({ id: prop.referencedId }),
+          onProgress
+        )
       }
     }
-    await Promise.all(promises)
   }
 
-  async traverseBase(obj: Base, onProgress: OnProgress): Promise<void> {
+  async traverseBase(base: Base, onProgress?: OnProgress): Promise<Base> {
     for (const ignoredProp of this.#options.excludeProps || []) {
-      delete (obj as never)[ignoredProp]
+      delete (base as never)[ignoredProp]
     }
-    if (obj.__closure) {
-      const ids = Object.keys(obj.__closure)
-      const promises: Promise<void>[] = []
+    if (base.__closure) {
+      const ids = Object.keys(base.__closure)
+      const promises: Promise<Base>[] = []
       for (const id of ids) {
         promises.push(
           this.traverseBase(await this.#loader.getObject({ id }), onProgress)
@@ -63,40 +68,45 @@ export default class Traverser {
       }
       await Promise.all(promises)
     }
-    if (obj.referenceId) {
-      await this.traverseBase(
-        await this.#loader.getObject({ id: obj.referenceId }),
-        onProgress
-      )
-    }
+    delete (base as never)['__closure']
+
     // De-chunk
-    if (obj.speckle_type?.includes('DataChunk')) {
-      const chunk = obj as DataChunk
+    if (base.speckle_type?.includes('DataChunk')) {
+      const chunk = base as DataChunk
       if (chunk.data) {
         await this.traverseArray(chunk.data, onProgress)
       }
     }
 
     //other props
-    for (const prop in obj) {
+    for (const prop in base) {
       if (prop === '__closure') continue
       if (prop === 'referenceId') continue
       if (prop === 'speckle_type') continue
-      const objProp = (obj as unknown as Record<string, unknown>)[prop]
-      if (isBase(objProp)) {
-        await this.traverseBase(objProp, onProgress)
-      }
-      if (Array.isArray(objProp)) {
-        await this.traverseArray(objProp, onProgress)
+      if (prop === 'data') continue
+      const baseProp = (base as unknown as Record<string, unknown>)[prop]
+      if (isScalar(baseProp)) continue
+      if (isBase(baseProp)) {
+        await this.traverseBase(baseProp, onProgress)
+      } else if (isReference(baseProp)) {
+        await this.traverseBase(
+          await this.#loader.getObject({ id: baseProp.referencedId }),
+          onProgress
+        )
+      } else if (Array.isArray(baseProp)) {
+        await this.traverseArray(baseProp, onProgress)
       }
     }
-    onProgress({
-      stage: 'construction',
-      current:
-        ++this.#traversedReferencesCount > this.#totalChildrenCount
-          ? this.#totalChildrenCount
-          : this.#traversedReferencesCount,
-      total: this.#totalChildrenCount
-    })
+    if (onProgress) {
+      onProgress({
+        stage: 'construction',
+        current:
+          ++this.#traversedReferencesCount > this.#totalChildrenCount
+            ? this.#totalChildrenCount
+            : this.#traversedReferencesCount,
+        total: this.#totalChildrenCount
+      })
+    }
+    return base
   }
 }
