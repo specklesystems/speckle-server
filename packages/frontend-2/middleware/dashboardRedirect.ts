@@ -9,7 +9,11 @@ import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 
-export default defineNuxtRouteMiddleware(async () => {
+export default defineNuxtRouteMiddleware(async (to) => {
+  const isAuthPage = to.path.startsWith('/authn/')
+  const isSSOPath = to.path.includes('/sso/')
+  if (isAuthPage || isSSOPath) return
+
   const client = useApolloClientFromNuxt()
   const {
     activeWorkspaceSlug,
