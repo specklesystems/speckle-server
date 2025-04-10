@@ -12,6 +12,7 @@ import { canLeaveProjectPolicy } from './project/canLeave.js'
 import { canBroadcastProjectActivityPolicy } from './project/canBroadcastActivity.js'
 import { canCreateProjectCommentPolicy } from './project/comment/canCreate.js'
 import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
+import { canEditProjectCommentPolicy } from './project/comment/canEdit.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -21,8 +22,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     comment: {
       canCreate: canCreateProjectCommentPolicy(loaders),
       canArchive: canArchiveProjectCommentPolicy(loaders),
-      // edit/archive - same check
-      canEdit: canArchiveProjectCommentPolicy(loaders)
+      canEdit: canEditProjectCommentPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),

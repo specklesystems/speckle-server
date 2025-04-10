@@ -132,6 +132,11 @@ export const CommentNotFoundError = defineAuthError({
   message: 'Comment not found'
 })
 
+export const CommentNoAccessError = defineAuthError({
+  code: 'CommentNoAccess',
+  message: 'You do not have access to this comment'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

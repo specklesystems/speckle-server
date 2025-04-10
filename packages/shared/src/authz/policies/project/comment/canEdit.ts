@@ -7,6 +7,7 @@ import {
 } from '../../../domain/context.js'
 import { Loaders } from '../../../domain/loaders.js'
 import {
+  CommentNoAccessError,
   CommentNotFoundError,
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -15,11 +16,9 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
-import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
-import { Roles } from '../../../../core/constants.js'
 import { canCreateProjectCommentPolicy } from './canCreate.js'
 
-export const canArchiveProjectCommentPolicy: AuthPolicy<
+export const canEditProjectCommentPolicy: AuthPolicy<
   | typeof Loaders.getServerRole
   | typeof Loaders.getComment
   | typeof Loaders.getProject
@@ -38,12 +37,12 @@ export const canArchiveProjectCommentPolicy: AuthPolicy<
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof CommentNotFoundError
+    | typeof CommentNoAccessError
   >
 > =
   (loaders) =>
   async ({ userId, commentId, projectId }) => {
-    // Includes canCreate check (checks general comment write access,
-    // cause just owning a comment is not enough, if you've been banned from it)
+    // Includes canCreate check
     const canCreate = await canCreateProjectCommentPolicy(loaders)({
       userId,
       projectId
@@ -56,19 +55,11 @@ export const canArchiveProjectCommentPolicy: AuthPolicy<
     const comment = await loaders.getComment({ commentId, projectId })
     if (!comment) return err(new CommentNotFoundError())
 
-    // If user is owner, no extra checks necessary
-    if (comment.authorId === userId) return ok()
-
-    // Otherwise Ensure proper project owner level write access
-    const ensuredWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
-      loaders
-    )({
-      userId,
-      projectId,
-      role: Roles.Stream.Owner
-    })
-    if (ensuredWriteAccess.isErr) {
-      return err(ensuredWriteAccess.error)
+    // Disallow if user is not the author
+    if (comment.authorId !== userId) {
+      return err(
+        new CommentNoAccessError('You do not have access to edit this comment')
+      )
     }
 
     return ok()

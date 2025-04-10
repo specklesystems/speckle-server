@@ -76,7 +76,7 @@ describe('canArchiveProjectCommentPolicy', () => {
     expect(result).toBeOKResult()
   })
 
-  it('can archive own comment, even w/o project roles', async () => {
+  it("can't archive own comment w/o project roles", async () => {
     const sut = buildSUT({
       getProjectRole: async () => null
     })
@@ -87,7 +87,9 @@ describe('canArchiveProjectCommentPolicy', () => {
       projectId: 'project-id'
     })
 
-    expect(result).toBeOKResult()
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
   })
 
   it("can archive others' comments if owner", async () => {
