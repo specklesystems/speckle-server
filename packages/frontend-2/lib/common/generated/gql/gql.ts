@@ -101,7 +101,8 @@ type Documents = {
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": typeof types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": typeof types.ProjectsHiddenProjectWarning_UserFragmentDoc,
-    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
+    "\n  fragment MoveToWorkspaceAlert_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n": typeof types.MoveToWorkspaceAlert_ProjectFragmentDoc,
+    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n    }\n    projects {\n      totalCount\n    }\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
     "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": typeof types.ProjectsMoveToWorkspaceDialogDocument,
@@ -399,6 +400,7 @@ type Documents = {
     "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": typeof types.WorkspaceLastAdminCheckDocument,
     "\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": typeof types.WorkspaceLimitsDocument,
     "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n": typeof types.WorkspaceUsageDocument,
+    "\n  query MoveToWorkspaceAlert($id: String!) {\n    project(id: $id) {\n      ...MoveToWorkspaceAlert_Project\n    }\n  }\n": typeof types.MoveToWorkspaceAlertDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -513,7 +515,8 @@ const documents: Documents = {
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
-    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
+    "\n  fragment MoveToWorkspaceAlert_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n": types.MoveToWorkspaceAlert_ProjectFragmentDoc,
+    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n    }\n    projects {\n      totalCount\n    }\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
     "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialogDocument,
@@ -811,6 +814,7 @@ const documents: Documents = {
     "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceLastAdminCheck_Workspace\n    }\n  }\n": types.WorkspaceLastAdminCheckDocument,
     "\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": types.WorkspaceLimitsDocument,
     "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n": types.WorkspaceUsageDocument,
+    "\n  query MoveToWorkspaceAlert($id: String!) {\n    project(id: $id) {\n      ...MoveToWorkspaceAlert_Project\n    }\n  }\n": types.MoveToWorkspaceAlertDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -1203,7 +1207,11 @@ export function graphql(source: "\n  fragment ProjectsHiddenProjectWarning_User 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment MoveToWorkspaceAlert_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n"): (typeof documents)["\n  fragment MoveToWorkspaceAlert_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n    }\n    projects {\n      totalCount\n    }\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n    }\n    projects {\n      totalCount\n    }\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2392,6 +2400,10 @@ export function graphql(source: "\n  query WorkspaceLimits($slug: String!) {\n  
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query MoveToWorkspaceAlert($id: String!) {\n    project(id: $id) {\n      ...MoveToWorkspaceAlert_Project\n    }\n  }\n"): (typeof documents)["\n  query MoveToWorkspaceAlert($id: String!) {\n    project(id: $id) {\n      ...MoveToWorkspaceAlert_Project\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
