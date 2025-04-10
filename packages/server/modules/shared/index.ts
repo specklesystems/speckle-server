@@ -5,7 +5,7 @@ import {
   getUserAclRoleFactory,
   getUserServerRoleFactory
 } from '@/modules/shared/repositories/acl'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getCachedRolesFactory } from '@/modules/shared/repositories/roles'
 import {
   authorizeResolverFactory,
   validateScopesFactory
@@ -17,6 +17,7 @@ import {
   CommitSubscriptions,
   BranchSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 
 export {
   pubsub,
@@ -27,10 +28,11 @@ export {
 
 export const validateScopes = validateScopesFactory()
 export const authorizeResolver = authorizeResolverFactory({
-  getRoles: getRolesFactory({ db }),
+  getRoles: getCachedRolesFactory({ db }),
   adminOverrideEnabled,
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),
   getUserAclRole: getUserAclRoleFactory({ db }),
-  emitWorkspaceEvent: getEventBus().emit
+  emitWorkspaceEvent: getEventBus().emit,
+  getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db })
 })

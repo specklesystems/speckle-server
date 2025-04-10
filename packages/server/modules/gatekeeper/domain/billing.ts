@@ -1,24 +1,38 @@
 import {
-  PaidWorkspacePlan,
-  TrialWorkspacePlan,
-  UnpaidWorkspacePlan,
-  WorkspacePlan,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
 import {
   Nullable,
   Optional,
+  PaidWorkspacePlan,
   PaidWorkspacePlans,
+  TrialWorkspacePlan,
+  UnpaidWorkspacePlan,
+  WorkspacePlan,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
+export { WorkspaceSeat, WorkspaceSeatType }
+export {
+  GetWorkspaceRoleAndSeat,
+  GetWorkspaceRolesAndSeats
+} from '@/modules/workspacesCore/domain/operations'
+
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type GetWorkspacePlansByWorkspaceId = (args: {
+  workspaceIds: string[]
+}) => Promise<Record<string, WorkspacePlan>>
 
 export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
@@ -113,7 +127,7 @@ const subscriptionProduct = z.object({
 
 export type SubscriptionProduct = z.infer<typeof subscriptionProduct>
 
-export const subscriptionData = z.object({
+export const SubscriptionData = z.object({
   subscriptionId: z.string().min(1),
   customerId: z.string().min(1),
   cancelAt: z.date().nullable(),
@@ -127,8 +141,11 @@ export const subscriptionData = z.object({
     z.literal('unpaid'),
     z.literal('paused')
   ]),
-  products: subscriptionProduct.array()
+  products: subscriptionProduct.array(),
+  currentPeriodEnd: z.coerce.date()
 })
+// this abstracts the stripe sub data
+export type SubscriptionData = z.infer<typeof SubscriptionData>
 
 export const calculateSubscriptionSeats = ({
   subscriptionData,
@@ -146,9 +163,6 @@ export const calculateSubscriptionSeats = ({
   )
   return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
 }
-
-// this abstracts the stripe sub data
-export type SubscriptionData = z.infer<typeof subscriptionData>
 
 export type UpsertWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -177,15 +191,12 @@ export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
+type Products = 'guest' | PaidWorkspacePlans
 
-export type GetWorkspacePlanProductAndPriceIds = () => Omit<
-  Record<Products, { productId: string; monthly: string; yearly: string }>,
-  'team' | 'pro'
-> & {
-  team?: { productId: string; monthly: string }
-  pro?: { productId: string; monthly: string; yearly: string }
-}
+export type GetWorkspacePlanProductAndPriceIds = () => Record<
+  Products,
+  { productId: string; monthly: string; yearly: string }
+>
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
@@ -199,20 +210,6 @@ export type ReconcileSubscriptionData = (args: {
   prorationBehavior: 'always_invoice' | 'create_prorations' | 'none'
 }) => Promise<void>
 
-export const WorkspaceSeatType = <const>{
-  Viewer: 'viewer',
-  Editor: 'editor'
-}
-export type WorkspaceSeatType =
-  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
-
-export type WorkspaceSeat = {
-  workspaceId: string
-  userId: string
-  type: WorkspaceSeatType
-  createdAt: Date
-  updatedAt: Date
-}
 // Prices
 export type GetRecurringPrices = () => Promise<
   {
@@ -224,11 +221,3 @@ export type GetRecurringPrices = () => Promise<
 >
 
 export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>
-
-export type GetWorkspaceRolesAndSeats = (params: { workspaceId: string }) => Promise<{
-  [userId: string]: {
-    role: WorkspaceAcl
-    seat: Nullable<WorkspaceSeat>
-    userId: string
-  }
-}>

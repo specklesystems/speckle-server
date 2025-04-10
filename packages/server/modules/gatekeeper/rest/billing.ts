@@ -22,6 +22,7 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
 import { extendLoggerComponent } from '@/observability/logging'
 import {
   OperationName,
@@ -76,7 +77,9 @@ export const getBillingRouter = (): Router => {
           })
           logger.info(OperationStatus.success, '[{operationName} ({operationStatus})]')
         } catch (err) {
-          logWithErr(logger, err)(
+          logWithErr(
+            logger,
+            err,
             OperationStatus.failure,
             '[{operationName} ({operationStatus})]'
           )
@@ -158,7 +161,9 @@ export const getBillingRouter = (): Router => {
                 // ignore the request, this is prob a replay from stripe
                 logger.info('Workspace is already paid, ignoring')
               } else {
-                logWithErr(logger, err)(
+                logWithErr(
+                  logger,
+                  err,
                   OperationStatus.failure,
                   '[{operationName} ({operationStatus})]'
                 )
@@ -184,7 +189,9 @@ export const getBillingRouter = (): Router => {
               )
             } catch (err) {
               const e = ensureError(err, 'Unknown error deleting checkout session')
-              logWithErr(logger, e)(
+              logWithErr(
+                logger,
+                e,
                 OperationStatus.failure,
                 '[{operationName} ({operationStatus})]'
               )
@@ -224,6 +231,19 @@ export const getBillingRouter = (): Router => {
           logger.error({ err: e }, 'Failed to handle subscription update')
         }
         break
+      case 'invoice.created':
+        const subscriptionData = await getSubscriptionFromEventFactory({ stripe })(
+          event
+        )
+        if (!subscriptionData) break
+        await handleSubscriptionUpdateFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db }),
+          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+          getWorkspaceSubscriptionBySubscriptionId:
+            getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+          upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+        })({ subscriptionData })
+        break
 
       default:
         break
@@ -234,3 +254,18 @@ export const getBillingRouter = (): Router => {
 
   return router
 }
+
+const getSubscriptionFromEventFactory =
+  ({ stripe }: { stripe: Stripe }) =>
+  async (event: Stripe.InvoiceCreatedEvent): Promise<SubscriptionData | null> => {
+    const subscription = event.data.object.subscription
+    if (!subscription) {
+      return null
+    }
+    if (typeof subscription === 'string') {
+      return await getSubscriptionDataFactory({ stripe })({
+        subscriptionId: subscription
+      })
+    }
+    return parseSubscriptionData(subscription)
+  }

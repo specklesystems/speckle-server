@@ -2,14 +2,17 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  isNewWorkspacePlan,
   PaidWorkspacePlansNew,
-  UnpaidWorkspacePlans
+  UnpaidWorkspacePlans,
+  WorkspacePlans,
+  WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
+import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment WorkspacesPlan_Workspace on Workspace {
@@ -18,15 +21,32 @@ graphql(`
       status
       createdAt
       name
+      paymentMethod
+      usage {
+        projectCount
+        modelCount
+      }
     }
     subscription {
       billingInterval
+      currentBillingCycleEnd
+      seats {
+        editors {
+          assigned
+          available
+        }
+        viewers {
+          assigned
+          available
+        }
+      }
     }
   }
 `)
 
 export const useWorkspacePlan = (slug: string) => {
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+  const { prices } = useWorkspacePlanPrices()
 
   const { result } = useQuery(
     workspacePlanQuery,
@@ -41,73 +61,71 @@ export const useWorkspacePlan = (slug: string) => {
   const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
 
-  const isNewPlan = computed(() =>
-    isNewWorkspacePlan(result.value?.workspaceBySlug?.plan?.name)
+  const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
+  const isUnlimitedPlan = computed(
+    () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
   )
-
-  const statusIsExpired = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.Expired
-  )
-
-  const statusIsCanceled = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.Canceled
-  )
-
-  const statusIsCancelationScheduled = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
-  )
-
   const isPurchasablePlan = computed(() =>
     Object.values(PaidWorkspacePlansNew).includes(
       plan.value?.name as PaidWorkspacePlansNew
     )
   )
 
-  const isActivePlan = computed(
-    () =>
-      plan.value?.status === WorkspacePlanStatuses.Valid ||
-      plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
-      plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
+  // Plan status information
+  const statusIsExpired = computed(
+    () => plan.value?.status === WorkspacePlanStatuses.Expired
+  )
+  const statusIsCanceled = computed(
+    () => plan.value?.status === WorkspacePlanStatuses.Canceled
+  )
+  const statusIsCancelationScheduled = computed(
+    () => plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
   )
 
-  const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
-
+  // Billing cycle information
   const billingInterval = computed(() => subscription.value?.billingInterval)
-
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
+  const currentBillingCycleEnd = computed(
+    () => subscription.value?.currentBillingCycleEnd
+  )
 
-  // TODO: Replace with value from API call, this a placeholder value
-  const seatPrice = 15
+  // Seat information
+  const seats = computed(() => subscription.value?.seats)
+  const hasAvailableEditorSeats = computed(() =>
+    seats.value?.editors.available && seats.value?.editors.available > 0 ? true : false
+  )
+  const editorSeatPriceFormatted = computed(() => {
+    if (
+      plan.value?.name === WorkspacePlans.Team ||
+      plan.value?.name === WorkspacePlans.Business
+    ) {
+      return formatPrice(
+        prices.value?.[plan.value?.name]?.[WorkspacePlanBillingIntervals.Monthly]
+      )
+    }
 
-  const totalCost = computed(() => {
-    return isPurchasablePlan.value
-      ? intervalIsYearly.value
-        ? seatPrice * 12
-        : seatPrice
-      : 0
-  })
-
-  // TODO: Replace with value from BE once ready
-  const totalCostFormatted = computed(() => {
-    return isPurchasablePlan.value
-      ? `£${totalCost.value}`
-      : isFreePlan.value
-      ? 'Free'
-      : 'Not applicable'
+    return formatPrice({
+      amount: 0,
+      currencySymbol: '£'
+    })
   })
 
   return {
     plan,
-    isNewPlan,
     statusIsExpired,
     statusIsCanceled,
     isPurchasablePlan,
-    isActivePlan,
+    isFreePlan,
     billingInterval,
     intervalIsYearly,
-    totalCostFormatted,
-    statusIsCancelationScheduled
+    currentBillingCycleEnd,
+    statusIsCancelationScheduled,
+    subscription,
+    seats,
+    hasAvailableEditorSeats,
+    editorSeatPriceFormatted,
+    isUnlimitedPlan
   }
 }

@@ -202,6 +202,9 @@ function createCache(): InMemoryCache {
           },
           pendingImportedModels: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -302,6 +305,9 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
           },
           subscription: {
+            merge: mergeAsObjectsFunction
+          },
+          creationState: {
             merge: mergeAsObjectsFunction
           }
         }

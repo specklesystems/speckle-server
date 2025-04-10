@@ -178,7 +178,15 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string | null
+  /**
+   * Only allow streams in the specified workspace to be returned
+   */
+  workspaceId?: MaybeNullOrUndefined<string>
+
+  /**
+   * Only allow personal (non-workspace) streams to be returned
+   */
+  personalOnly?: MaybeNullOrUndefined<boolean>
 
   /**
    * Only with active sso session
@@ -288,19 +296,11 @@ export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
 
-export type DeleteStream = (
-  streamId: string,
-  deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules,
-  options?: {
-    skipAccessChecks?: boolean
-  }
-) => Promise<boolean>
+export type DeleteStream = (streamId: string, deleterId: string) => Promise<boolean>
 
 export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: ContextResourceAccessRules
+  updaterId: string
 ) => Promise<Stream>
 
 export type LegacyUpdateStream = (

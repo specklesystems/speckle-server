@@ -48,7 +48,12 @@ export const joinWorkspaceFactory =
     const role = Roles.Workspace.Member
 
     await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
-    const { type } = await ensureValidWorkspaceRoleSeat({ userId, workspaceId, role })
+    await ensureValidWorkspaceRoleSeat({
+      userId,
+      workspaceId,
+      role,
+      updatedByUserId: userId
+    })
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.JoinedFromDiscovery,
@@ -58,7 +63,6 @@ export const joinWorkspaceFactory =
       eventName: WorkspaceEvents.RoleUpdated,
       payload: {
         acl: { userId, workspaceId, role },
-        seatType: type,
         updatedByUserId: userId
       }
     })

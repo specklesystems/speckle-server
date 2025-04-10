@@ -17,7 +17,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 
@@ -28,7 +28,8 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: null
+  region: null,
+  enableDomainDiscoverabilityForDomain: undefined
 }
 
 const steps: readonly WizardSteps[] = [
@@ -120,7 +121,7 @@ export const useWorkspacesWizard = () => {
     mixpanel.stop_session_recording()
 
     const needsCheckout =
-      wizardState.value.state.plan !== PaidWorkspacePlans.Starter ||
+      wizardState.value.state.plan !== WorkspacePlans.Free ||
       wizardState.value.state.billingInterval === BillingInterval.Yearly
     const workspaceId = ref(wizardState.value.state.id)
     const isNewWorkspace = !workspaceId.value
@@ -129,7 +130,9 @@ export const useWorkspacesWizard = () => {
       const newWorkspaceResult = await createWorkspace(
         {
           name: wizardState.value.state.name,
-          slug: wizardState.value.state.slug
+          slug: wizardState.value.state.slug,
+          enableDomainDiscoverabilityForDomain:
+            wizardState.value.state.enableDomainDiscoverabilityForDomain || null
         },
         { navigateOnSuccess: false, hideNotifications: true }
       )
@@ -192,7 +195,6 @@ export const useWorkspacesWizard = () => {
 
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
-    mutateActiveWorkspaceSlug(workspaceId)
 
     if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
       await updateWorkspaceDefaultRegion({
@@ -264,7 +266,7 @@ export const useWorkspacesWizard = () => {
     }
 
     if (
-      state.plan === PaidWorkspacePlans.Starter &&
+      state.plan === WorkspacePlans.Free &&
       state.billingInterval === BillingInterval.Monthly
     ) {
       triggerNotification({

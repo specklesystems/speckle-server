@@ -4,21 +4,13 @@
       <template v-if="project.workspace && isWorkspacesEnabled">
         <HeaderNavLink
           :to="workspaceRoute(project.workspace.slug)"
-          :name="project.workspace.name"
+          :name="isWorkspaceNewPlansEnabled ? 'Home' : project.workspace.name"
           :separator="false"
-        ></HeaderNavLink>
+        />
       </template>
-      <HeaderNavLink
-        v-else
-        :to="projectsRoute"
-        name="Projects"
-        :separator="false"
-      ></HeaderNavLink>
+      <HeaderNavLink v-else :to="projectsRoute" name="Projects" :separator="false" />
 
-      <HeaderNavLink
-        :to="projectRoute(project.id)"
-        :name="project.name"
-      ></HeaderNavLink>
+      <HeaderNavLink :to="projectRoute(project.id)" :name="project.name" />
     </Portal>
 
     <div class="flex gap-x-3">
@@ -50,11 +42,8 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 graphql(`
   fragment ProjectPageProjectHeader on Project {
     id
-    role
     name
     description
-    visibility
-    allowPublicComments
     workspace {
       id
       slug
@@ -69,4 +58,5 @@ defineProps<{
 }>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 </script>

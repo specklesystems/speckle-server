@@ -1,7 +1,10 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
-  GetWorkspaceRolesAllowedProjectRolesFactory,
+  GetWorkspaceDomains,
+  GetWorkspaceRoleToDefaultProjectRoleMapping,
+  GetWorkspaceSeatTypeToProjectRoleMapping,
+  IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
   UpdateWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -10,25 +13,13 @@ import {
   WorkspaceNotFoundError,
   WorkspaceQueryError
 } from '@/modules/workspaces/errors/workspace'
+import { GetProject, UpdateProject } from '@/modules/core/domain/projects/operations'
+import { chunk } from 'lodash'
+import { Roles } from '@speckle/shared'
 import {
-  GetProject,
-  GetProjectCollaborators,
-  UpdateProject,
-  UpsertProjectRole
-} from '@/modules/core/domain/projects/operations'
-import { chunk, intersection } from 'lodash'
-import {
-  MaybeNullOrUndefined,
-  Roles,
-  StreamRoles,
-  throwUncoveredError,
-  WorkspaceRoles
-} from '@speckle/shared'
-import { orderByWeight } from '@/modules/shared/domain/rolesAndScopes/logic'
-import coreUserRoles from '@/modules/core/roles'
-import {
-  GetUserStreamsPage,
-  LegacyGetStreams
+  GetStreamCollaborators,
+  LegacyGetStreams,
+  UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
@@ -56,7 +47,11 @@ import {
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { LogicError } from '@/modules/shared/errors'
+import { NotImplementedError } from '@/modules/shared/errors'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -91,44 +86,6 @@ export const queryAllWorkspaceProjectsFactory = ({
     } while (!!cursor)
   }
 
-type GetWorkspaceProjectsArgs = {
-  workspaceId: string
-}
-
-type GetWorkspaceProjectsOptions = {
-  limit: number | null
-  cursor: string | null
-  filter: {
-    search?: string | null
-    userId: string
-  }
-}
-
-type GetWorkspaceProjectsReturnValue = {
-  items: StreamRecord[]
-  cursor: string | null
-}
-
-export const getWorkspaceProjectsFactory =
-  ({ getStreams }: { getStreams: GetUserStreamsPage }) =>
-  async (
-    args: GetWorkspaceProjectsArgs,
-    opts: GetWorkspaceProjectsOptions
-  ): Promise<GetWorkspaceProjectsReturnValue> => {
-    const { streams, cursor } = await getStreams({
-      cursor: opts.cursor,
-      limit: opts.limit || 25,
-      searchQuery: opts.filter?.search || undefined,
-      workspaceId: args.workspaceId,
-      userId: opts.filter.userId
-    })
-
-    return {
-      items: streams,
-      cursor
-    }
-  }
-
 type MoveProjectToWorkspaceArgs = {
   projectId: string
   workspaceId: string
@@ -139,19 +96,25 @@ export const moveProjectToWorkspaceFactory =
   ({
     getProject,
     updateProject,
-    upsertProjectRole,
+    updateProjectRole,
     getProjectCollaborators,
+    getWorkspaceDomains,
     getWorkspaceRolesAndSeats,
-    getWorkspaceRolesAllowedProjectRoles,
-    updateWorkspaceRole
+    updateWorkspaceRole,
+    createWorkspaceSeat,
+    getWorkspaceWithPlan,
+    getUserEmails
   }: {
     getProject: GetProject
     updateProject: UpdateProject
-    upsertProjectRole: UpsertProjectRole
-    getProjectCollaborators: GetProjectCollaborators
+    updateProjectRole: UpdateStreamRole
+    getProjectCollaborators: GetStreamCollaborators
+    getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
-    getWorkspaceRolesAllowedProjectRoles: GetWorkspaceRolesAllowedProjectRolesFactory
     updateWorkspaceRole: UpdateWorkspaceRole
+    createWorkspaceSeat: CreateWorkspaceSeat
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
+    getUserEmails: FindEmailsByUserId
   }) =>
   async ({
     projectId,
@@ -168,65 +131,81 @@ export const moveProjectToWorkspaceFactory =
       )
     }
 
-    // Update roles for current project members
-    const projectTeam = await getProjectCollaborators({ projectId })
-    const workspaceTeam = await getWorkspaceRolesAndSeats({ workspaceId })
-    const {
-      defaultProjectRole: getDefaultProjectRole,
-      allowedProjectRoles: getAllowedProjectRoles
-    } = await getWorkspaceRolesAllowedProjectRoles({
-      workspaceId
-    })
+    const [workspace, projectTeam, workspaceTeam] = await Promise.all([
+      getWorkspaceWithPlan({ workspaceId }),
+      getProjectCollaborators(projectId),
+      getWorkspaceRolesAndSeats({ workspaceId })
+    ])
+    if (!workspace) throw new WorkspaceNotFoundError()
 
     for (const projectMembers of chunk(projectTeam, 5)) {
       await Promise.all(
-        projectMembers.map(
-          async ({ id: userId, role: serverRole, streamRole: currentProjectRole }) => {
-            // Update workspace role. Prefer existing workspace role if there is one.
-            const currentWorkspaceRole = workspaceTeam[userId]?.role
-            const currentWorkspaceSeat = workspaceTeam[userId]?.seat
+        projectMembers.map(async ({ id: userId, streamRole: currentProjectRole }) => {
+          // Grant new workspace roles and seats for users without them
+          if (!workspaceTeam[userId]) {
+            let isUserDomainCompliant = true
 
-            const nextWorkspaceRole = currentWorkspaceRole
-              ? currentWorkspaceRole
-              : {
-                  userId,
-                  workspaceId,
-                  role:
-                    serverRole === Roles.Server.Guest
-                      ? Roles.Workspace.Guest
-                      : Roles.Workspace.Member,
-                  createdAt: new Date()
-                }
+            // Check user against domain protection if enabled on the workspace
+            if (workspace.domainBasedMembershipProtectionEnabled) {
+              const workspaceDomains = await getWorkspaceDomains({
+                workspaceIds: [workspace.id]
+              })
+              const userEmails = await getUserEmails({ userId })
+
+              isUserDomainCompliant = userEmailsCompliantWithWorkspaceDomains({
+                userEmails,
+                workspaceDomains
+              })
+            }
+
+            // Grant workspace role
+            const workspaceRole: WorkspaceAcl = {
+              userId,
+              workspaceId,
+              role: isUserDomainCompliant
+                ? Roles.Workspace.Member
+                : Roles.Workspace.Guest,
+              createdAt: new Date()
+            }
 
             await updateWorkspaceRole({
-              ...nextWorkspaceRole,
+              ...workspaceRole,
               updatedByUserId: movedByUserId
             })
 
-            // Update project role. Prefer default workspace project role if more permissive.
-            const defaultProjectRole =
-              getDefaultProjectRole({
-                workspaceRole: nextWorkspaceRole.role,
-                seatType: currentWorkspaceSeat?.type
-              }) ?? Roles.Stream.Reviewer
-            const allowedProjectRoles = getAllowedProjectRoles({
-              workspaceRole: nextWorkspaceRole.role,
-              seatType: currentWorkspaceSeat?.type
-            })
-            const rolePicks = intersection(
-              [currentProjectRole, defaultProjectRole],
-              allowedProjectRoles
-            )
-            const nextProjectRole = orderByWeight(rolePicks, coreUserRoles)[0]
-
-            // TODO: Shouldn't this be the service call that also fires events?
-            await upsertProjectRole({
+            // Grant viewer seat
+            const workspaceSeat = await createWorkspaceSeat({
               userId,
-              projectId,
-              role: nextProjectRole.name as StreamRoles
+              workspaceId,
+              type: 'viewer'
             })
+
+            // Update workspace team in-memory
+            workspaceTeam[userId] = {
+              role: workspaceRole,
+              seat: workspaceSeat,
+              userId
+            }
           }
-        )
+
+          // Demote user if seat type does not allow current project role
+          const requiresEditorSeat =
+            currentProjectRole === Roles.Stream.Owner ||
+            currentProjectRole === Roles.Stream.Contributor
+          const hasEditorSeat = workspaceTeam[userId]?.seat?.type === 'editor'
+
+          if (requiresEditorSeat && !hasEditorSeat) {
+            await updateProjectRole(
+              {
+                userId,
+                projectId,
+                role: Roles.Stream.Reviewer
+              },
+              movedByUserId,
+              null
+            )
+          }
+        })
       )
     }
 
@@ -234,11 +213,54 @@ export const moveProjectToWorkspaceFactory =
     return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
   }
 
-export const getWorkspaceRolesAllowedProjectRolesFactory =
+export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
+  ({
+    getWorkspaceWithPlan
+  }: {
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
+  }): GetWorkspaceRoleToDefaultProjectRoleMapping =>
+  async ({ workspaceId }) => {
+    const workspace = await getWorkspaceWithPlan({ workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    if (isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
+    }
+
+    return {
+      default: {
+        [Roles.Workspace.Guest]: null,
+        [Roles.Workspace.Member]: Roles.Stream.Reviewer,
+        [Roles.Workspace.Admin]: Roles.Stream.Owner
+      },
+      allowed: {
+        [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
+        [Roles.Workspace.Member]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ],
+        [Roles.Workspace.Admin]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      }
+    }
+  }
+
+export const getWorkspaceSeatTypeToProjectRoleMappingFactory =
   (deps: {
     getWorkspaceWithPlan: GetWorkspaceWithPlan
-  }): GetWorkspaceRolesAllowedProjectRolesFactory =>
-  async ({ workspaceId }) => {
+  }): GetWorkspaceSeatTypeToProjectRoleMapping =>
+  async (params: { workspaceId: string }) => {
+    const { workspaceId } = params
     const workspace = await deps.getWorkspaceWithPlan({ workspaceId })
 
     if (!workspace) {
@@ -246,64 +268,25 @@ export const getWorkspaceRolesAllowedProjectRolesFactory =
     }
 
     const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
-
-    const allowedProjectRoles = (args: {
-      workspaceRole: WorkspaceRoles
-      seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-    }) => {
-      const { workspaceRole, seatType = WorkspaceSeatType.Viewer } = args
-
-      switch (workspaceRole) {
-        case Roles.Workspace.Guest:
-          if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
-            return [Roles.Stream.Reviewer]
-          } else {
-            return [Roles.Stream.Reviewer, Roles.Stream.Contributor]
-          }
-        case Roles.Workspace.Member:
-          if (isNewPlan && seatType === WorkspaceSeatType.Viewer) {
-            return [Roles.Stream.Reviewer]
-          } else {
-            return [Roles.Stream.Reviewer, Roles.Stream.Contributor, Roles.Stream.Owner]
-          }
-        case Roles.Workspace.Admin:
-          return [Roles.Stream.Owner]
-        default:
-          throwUncoveredError(workspaceRole)
-      }
-    }
-
-    const defaultProjectRole = (args: {
-      workspaceRole: WorkspaceRoles
-      seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-    }) => {
-      const { workspaceRole, seatType = WorkspaceSeatType.Viewer } = args
-      const allowedRoles = allowedProjectRoles({ workspaceRole, seatType })
-
-      const role = (() => {
-        switch (workspaceRole) {
-          case Roles.Workspace.Guest:
-            return null // No default role
-          case Roles.Workspace.Member:
-            if (isNewPlan && seatType === WorkspaceSeatType.Viewer)
-              return Roles.Stream.Reviewer
-            return workspace.defaultProjectRole
-          case Roles.Workspace.Admin:
-            return Roles.Stream.Owner
-          default:
-            throwUncoveredError(workspaceRole)
-        }
-      })()
-      if (role && !allowedRoles.includes(role)) {
-        throw new LogicError('Invalid default project role')
-      }
-
-      return role
+    if (!isNewPlan) {
+      throw new NotImplementedError(
+        'This function is not supported for this workspace plan'
+      )
     }
 
     return {
-      defaultProjectRole,
-      allowedProjectRoles
+      allowed: {
+        [WorkspaceSeatType.Viewer]: [Roles.Stream.Reviewer],
+        [WorkspaceSeatType.Editor]: [
+          Roles.Stream.Reviewer,
+          Roles.Stream.Contributor,
+          Roles.Stream.Owner
+        ]
+      },
+      default: {
+        [WorkspaceSeatType.Viewer]: Roles.Stream.Reviewer,
+        [WorkspaceSeatType.Editor]: Roles.Stream.Reviewer
+      }
     }
   }
 
@@ -353,4 +336,18 @@ export const createWorkspaceProjectFactory =
     })
 
     return project
+  }
+
+export const getMoveProjectToWorkspaceDryRunFactory =
+  (deps: {
+    intersectProjectCollaboratorsAndWorkspaceCollaborators: IntersectProjectCollaboratorsAndWorkspaceCollaborators
+  }) =>
+  async (args: { projectId: string; workspaceId: string }) => {
+    const addedToWorkspace =
+      await deps.intersectProjectCollaboratorsAndWorkspaceCollaborators({
+        projectId: args.projectId,
+        workspaceId: args.workspaceId
+      })
+
+    return { addedToWorkspace }
   }

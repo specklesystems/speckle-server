@@ -52,6 +52,7 @@
                   size="sm"
                   color="outline"
                   hide-text
+                  :disabled="button.disabled"
                   :class="button.class"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
@@ -97,6 +98,7 @@ export type RowButton<T = unknown> = {
   action: (item: T) => unknown
   class?: string
   tooltip?: string
+  disabled?: boolean
 }
 
 const props = withDefaults(
@@ -126,7 +128,7 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center space-x-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
+    'relative grid grid-cols-12 items-center space-x-6 px-4 py-0.5 min-w-[750px] text-body-xs'
   ]
 
   if (props.onRowClick && props.items?.length) {
@@ -194,7 +196,7 @@ const headerRowClasses = computed(() => [
   'z-10 grid grid-cols-12 items-center',
   'w-full min-w-[750px] space-x-6',
   'px-4 py-3',
-  'bg-foundation-page rounded-t-lg',
+  'bg-foundation-2 rounded-t-lg',
   'font-medium text-body-2xs text-foreground-2',
   'border-b border-outline-3'
 ])

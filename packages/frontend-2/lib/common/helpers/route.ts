@@ -7,7 +7,6 @@ export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
 export const homeRoute = '/'
 export const projectsRoute = '/projects'
-export const workspacesRoute = '/workspaces'
 export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const ssoLoginRoute = '/authn/sso'
@@ -80,7 +79,7 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'settings'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -112,9 +111,6 @@ export const projectDiscussionsRoute = (projectId: string) => `/projects/${proje
 
 export const projectSettingsRoute = (projectId: string) =>
   `/projects/${projectId}/settings`
-
-export const projectCollaboratorsRoute = (projectId: string) =>
-  `/projects/${projectId}/settings/collaborators`
 
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`
@@ -213,3 +209,7 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
 
   return true
 }
+
+// Link to Workspace roles and seats documentation
+// TODO: Add link when ready
+export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'

@@ -1,4 +1,13 @@
-import { ensureError } from '@speckle/shared'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
+import {
+  BadRequestError,
+  BaseError,
+  ForbiddenError,
+  NotFoundError
+} from '@/modules/shared/errors'
+import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
+import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
 import { VError } from 'verror'
 
 /**
@@ -15,3 +24,44 @@ export function getCause(e: Error) {
 }
 
 export { ensureError }
+
+/**
+ * Global mapping for mapping any kind of auth error to a server thrown error
+ */
+export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
+  switch (e.code) {
+    case Authz.ProjectNotFoundError.code:
+      return new StreamNotFoundError(e.message)
+    case Authz.ProjectNoAccessError.code:
+    case Authz.WorkspaceNoAccessError.code:
+    case Authz.WorkspaceNotEnoughPermissionsError.code:
+    case Authz.WorkspaceReadOnlyError.code:
+    case Authz.WorkspaceLimitsReachedError.code:
+    case Authz.WorkspaceNoEditorSeatError.code:
+    case Authz.WorkspaceProjectMoveInvalidError.code:
+    case Authz.CommentNoAccessError.code:
+      return new ForbiddenError(e.message)
+    case Authz.WorkspaceSsoSessionNoAccessError.code:
+      throw new SsoSessionMissingOrExpiredError(e.message, {
+        info: {
+          workspaceSlug: e.payload.workspaceSlug
+        }
+      })
+    case Authz.ServerNoAccessError.code:
+    case Authz.ServerNoSessionError.code:
+      return new ForbiddenError(e.message)
+    case Authz.WorkspacesNotEnabledError.code:
+      return new WorkspacesModuleDisabledError()
+    case Authz.ProjectLastOwnerError.code:
+      return new BadRequestError(e.message)
+    case Authz.CommentNotFoundError.code:
+      return new NotFoundError(e.message)
+    default:
+      throwUncoveredError(e)
+  }
+}
+
+export const throwIfAuthNotOk = (result: Authz.AuthPolicyResult) => {
+  if (result.isOk) return
+  throw mapAuthToServerError(result.error)
+}

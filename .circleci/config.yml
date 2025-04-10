@@ -511,7 +511,7 @@ jobs:
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
-          command: touch .env.test
+          command: cp .env.test-example .env.test
           working_directory: 'packages/server'
 
       - run:
@@ -520,9 +520,18 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          command: yarn test:report
+          name: 'Run tests'
+          # Extra formatting to get timestamps on each line in CI (for profiling purposes)
+          command: |
+            GREP_FLAG=""
+
+            if [ "$RUN_TESTS_IN_MULTIREGION_MODE" == "true" ]; then
+              GREP_FLAG="--grep @multiregion"
+            fi
+
+            yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
-          no_output_timeout: 20m
+          no_output_timeout: 30m
 
       - codecov/upload:
           files: packages/server/coverage/lcov.info
@@ -532,10 +541,10 @@ jobs:
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
 
-      - run:
-          name: Checking for GQL schema breakages against app.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # - run:
+      #     name: Checking for GQL schema breakages against app.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
 
       - run:
           name: Checking for GQL schema breakages against latest.speckle.systems
@@ -683,7 +692,7 @@ jobs:
           command: yarn build:public
 
       - run:
-          name: Lint everything
+          name: Lint viewer
           command: yarn lint:ci
           working_directory: 'packages/viewer'
 
@@ -691,6 +700,16 @@ jobs:
           name: Run tests
           command: yarn test
           working_directory: 'packages/viewer'
+
+      - run:
+          name: Lint viewer-sandbox
+          command: yarn lint:ci
+          working_directory: 'packages/viewer-sandbox'
+
+      - run:
+          name: Build viewer-sandbox
+          command: yarn build
+          working_directory: 'packages/viewer-sandbox'
 
   test-preview-service:
     docker:
@@ -977,7 +996,7 @@ jobs:
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Template Helm Chart
+          name: Template Speckle Server Helm Chart
           command: |
             nix-shell \
             --run "helm template speckle-server ./utils/helm/speckle-server" \

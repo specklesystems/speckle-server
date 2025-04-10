@@ -8,20 +8,17 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="project?.workspace.name"
+                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
                 :separator="false"
-              ></HeaderNavLink>
+              />
             </template>
             <HeaderNavLink
               v-else
               :to="projectsRoute"
               name="Projects"
               :separator="false"
-            ></HeaderNavLink>
-            <HeaderNavLink
-              :to="`/projects/${project?.id}`"
-              :name="project?.name"
-            ></HeaderNavLink>
+            />
+            <HeaderNavLink :to="`/projects/${project?.id}`" :name="project?.name" />
             <ViewerExplorerNavbarLink />
           </ViewerScope>
         </Portal>
@@ -56,6 +53,16 @@
 
           <!-- Sidebar controls -->
           <ViewerControls v-if="showControls" class="relative z-20" />
+
+          <ViewerLimitsDialog
+            v-if="project?.workspace"
+            v-model:open="showLimitsDialog"
+            :workspace-slug="project?.workspace.slug"
+            :workspace-role="project?.workspace.role"
+            :project-id="project?.id"
+            :resource-id-string="resourceIdString"
+            :limit-type="limitsDialogType"
+          />
 
           <!-- Viewer Object Selection Info Display -->
           <Transition
@@ -114,10 +121,24 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
-import { projectsRoute } from '~~/lib/common/helpers/route'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
+
+graphql(`
+  fragment ModelPageProject on Project {
+    id
+    createdAt
+    name
+    visibility
+    workspace {
+      id
+      slug
+      name
+      role
+    }
+  }
+`)
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -140,6 +161,7 @@ const projectId = writableAsyncComputed({
   asyncRead: false
 })
 
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })
@@ -152,28 +174,57 @@ const {
   isTransparent,
   showControls
 } = useEmbed()
+const mp = useMixpanel()
 
 emit('setup', state)
 
 const {
   resources: {
-    response: { project }
-  }
+    response: { project, resourceItems, modelsAndVersionIds }
+  },
+  urlHashState: { focusedThreadId }
 } = state
 
-graphql(`
-  fragment ModelPageProject on Project {
-    id
-    createdAt
-    name
-    visibility
-    workspace {
-      id
-      slug
-      name
+const showLimitsDialog = ref(false)
+const limitsDialogType = ref<'version' | 'comment' | 'federated'>('version')
+
+// Check for missing referencedObject in url referenced versions (out of plan limits)
+const hasMissingReferencedObject = computed(() => {
+  const resourceIds = resourceIdString.value.split(',')
+
+  const result = modelsAndVersionIds.value.some((item) => {
+    const version = item.model?.versions?.items?.find((v) => v.id === item.versionId)
+
+    if (version && version.referencedObject === null) {
+      // Check if this model+version is in the URL (latest version always available)
+      const modelVersionString = `${item.model.id}@${item.versionId}`.toLowerCase()
+      const isInUrl = resourceIds.some((r) => r.toLowerCase() === modelVersionString)
+
+      return isInUrl
     }
-  }
-`)
+
+    return false
+  })
+
+  return result
+})
+
+// Check for missing thread when a specific threadId is present in URL
+const hasMissingThread = computed(() => {
+  const threadIdFromUrl = focusedThreadId.value
+
+  if (!threadIdFromUrl) return false
+
+  const thread = state.resources.response.commentThreads.value.find(
+    (thread) => thread.id === threadIdFromUrl
+  )
+
+  return !thread || !thread.rawText
+})
+
+const isFederated = computed(
+  () => state.resources.response.resourceItems.value.length > 1
+)
 
 const title = computed(() => {
   if (project.value?.models?.items) {
@@ -208,7 +259,6 @@ const lastUpdate = computed(() => {
 
 useHead({ title })
 
-const mp = useMixpanel()
 onMounted(() => {
   const referrer = document.referrer
   const shouldTrackEvent = !referrer?.includes('speckle.systems') && !import.meta.dev
@@ -217,4 +267,34 @@ onMounted(() => {
     mp.track('Embedded Model Load')
   }
 })
+
+// Watch for plan limit conditions and show dialog if needed
+watch(
+  [hasMissingReferencedObject, hasMissingThread, resourceItems, project],
+  ([missingObject, missingThread]) => {
+    if (missingObject) {
+      if (isFederated.value) {
+        limitsDialogType.value = 'federated'
+      } else {
+        limitsDialogType.value = 'version'
+      }
+      showLimitsDialog.value = true
+      return
+    }
+
+    // If no workspace and no missing objects, don't show dialog
+    if (!project.value?.workspace) {
+      showLimitsDialog.value = false
+      return
+    }
+
+    if (missingThread) {
+      limitsDialogType.value = 'comment'
+      showLimitsDialog.value = true
+    } else {
+      showLimitsDialog.value = false
+    }
+  },
+  { immediate: true }
+)
 </script>

@@ -1,4 +1,5 @@
 import { WorkspaceRoles } from '../../core/constants.js'
+import { WorkspaceLimits } from './limits.js'
 import {
   PaidWorkspacePlans,
   UnpaidWorkspacePlans,
@@ -6,21 +7,16 @@ import {
   WorkspacePlans
 } from './plans.js'
 
-type StringTemplate<Data extends object> = (data: Data) => string
-
 /**
  * WORKSPACE FEATURES
  */
 
 export const WorkspacePlanFeatures = <const>{
   // Core features pretty much available to everyone
-  Workspace: 'workspace',
-  RoleManagement: 'roleManagement',
-  GuestUsers: 'guestUsers',
-  PrivateAutomateFunctions: 'privateAutomateFunctions',
+  AutomateBeta: 'automateBeta',
+  DomainDiscoverability: 'domainDiscoverability',
   // Optional/plan specific
   DomainSecurity: 'domainBasedSecurityPolicies',
-  PrioritySupport: 'prioritySupport',
   SSO: 'oidcSso',
   CustomDataRegion: 'workspaceDataRegionSpecificity'
 }
@@ -29,24 +25,13 @@ export type WorkspacePlanFeatures =
   (typeof WorkspacePlanFeatures)[keyof typeof WorkspacePlanFeatures]
 
 export const WorkspacePlanFeaturesMetadata = (<const>{
-  // Old
-  [WorkspacePlanFeatures.Workspace]: {
-    displayName: 'Workspace',
-    description: 'A shared space for your team and projects'
+  [WorkspacePlanFeatures.AutomateBeta]: {
+    displayName: 'Automate beta access',
+    description: 'Some automate text'
   },
-  [WorkspacePlanFeatures.RoleManagement]: {
-    displayName: 'Role management',
-    description: "Control individual members' access and edit rights"
-  },
-  [WorkspacePlanFeatures.GuestUsers]: {
-    displayName: 'Guest users',
-    description: (params: { price: number | string }) =>
-      `Give guests access to specific projects in the workspace at ${params.price}/month/guest`
-  },
-  [WorkspacePlanFeatures.PrivateAutomateFunctions]: {
-    displayName: 'Private automate functions',
-    description:
-      'Create and manage private automation functions securely within your workspace'
+  [WorkspacePlanFeatures.DomainDiscoverability]: {
+    displayName: 'Domain discoverability',
+    description: 'Some domain discoverability text'
   },
   [WorkspacePlanFeatures.DomainSecurity]: {
     displayName: 'Domain security',
@@ -59,17 +44,12 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
     description: 'Store the workspace data in a custom region'
-  },
-  [WorkspacePlanFeatures.PrioritySupport]: {
-    displayName: 'Priority support',
-    description: 'Personal and fast support'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
   {
     displayName: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    description: string | StringTemplate<any>
+    description: string
   }
 >
 
@@ -83,16 +63,21 @@ export type WorkspacePlanPriceStructure = {
   }
 }
 
+const unlimited: WorkspaceLimits = {
+  projectCount: null,
+  modelCount: null,
+  versionsHistory: null
+}
+
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
   plan: Plan
   features: readonly WorkspacePlanFeatures[]
+  limits: WorkspaceLimits
 }
 
 const baseFeatures = [
-  WorkspacePlanFeatures.Workspace,
-  WorkspacePlanFeatures.RoleManagement,
-  WorkspacePlanFeatures.GuestUsers,
-  WorkspacePlanFeatures.PrivateAutomateFunctions
+  WorkspacePlanFeatures.AutomateBeta,
+  WorkspacePlanFeatures.DomainDiscoverability
 ] as const
 
 export const WorkspacePaidPlanConfigs: {
@@ -101,29 +86,41 @@ export const WorkspacePaidPlanConfigs: {
   // Old
   [PaidWorkspacePlans.Starter]: {
     plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures, WorkspacePlanFeatures.DomainSecurity]
+    features: [...baseFeatures],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Plus]: {
     plan: PaidWorkspacePlans.Plus,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO
-    ]
+    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Business]: {
     plan: PaidWorkspacePlans.Business,
     features: [
       ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
+    limits: unlimited
   },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
-    features: baseFeatures
+    features: [...baseFeatures],
+    limits: {
+      projectCount: 5,
+      modelCount: 25,
+      versionsHistory: { value: 30, unit: 'day' }
+    }
+  },
+  // New
+  [PaidWorkspacePlans.TeamUnlimited]: {
+    plan: PaidWorkspacePlans.TeamUnlimited,
+    features: [...baseFeatures],
+    limits: {
+      projectCount: null,
+      modelCount: null,
+      versionsHistory: { value: 30, unit: 'day' }
+    }
   },
   [PaidWorkspacePlans.Pro]: {
     plan: PaidWorkspacePlans.Pro,
@@ -131,9 +128,27 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
+    limits: {
+      projectCount: 10,
+      modelCount: 50,
+      versionsHistory: null
+    }
+  },
+  [PaidWorkspacePlans.ProUnlimited]: {
+    plan: PaidWorkspacePlans.ProUnlimited,
+    features: [
+      ...baseFeatures,
+      WorkspacePlanFeatures.DomainSecurity,
+      WorkspacePlanFeatures.SSO,
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
+    limits: {
+      projectCount: null,
+      modelCount: null,
+      versionsHistory: null
+    }
   }
 }
 
@@ -147,9 +162,9 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
+    limits: unlimited
   },
   [UnpaidWorkspacePlans.Academia]: {
     plan: UnpaidWorkspacePlans.Academia,
@@ -157,9 +172,9 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.PrioritySupport
-    ]
+      WorkspacePlanFeatures.CustomDataRegion
+    ],
+    limits: unlimited
   },
   [UnpaidWorkspacePlans.StarterInvoiced]: {
     ...WorkspacePaidPlanConfigs.starter,
@@ -174,9 +189,22 @@ export const WorkspaceUnpaidPlanConfigs: {
     plan: UnpaidWorkspacePlans.BusinessInvoiced
   },
   // New
+  [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
+    ...WorkspacePaidPlanConfigs.teamUnlimited,
+    plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
+  },
+  [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
+    ...WorkspacePaidPlanConfigs.proUnlimited,
+    plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
+  },
   [UnpaidWorkspacePlans.Free]: {
     plan: UnpaidWorkspacePlans.Free,
-    features: baseFeatures
+    features: baseFeatures,
+    limits: {
+      projectCount: 1,
+      modelCount: 5,
+      versionsHistory: { value: 7, unit: 'day' }
+    }
   }
 }
 

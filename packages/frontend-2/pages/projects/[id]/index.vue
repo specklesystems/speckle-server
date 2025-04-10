@@ -13,11 +13,7 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge
-              v-if="project.role"
-              rounded
-              :color-classes="'text-foreground-2 bg-primary-muted'"
-            >
+            <CommonBadge v-if="project.role" rounded color="secondary">
               <span class="capitalize">
                 {{ project.role?.split(':').reverse()[0] }}
               </span>
@@ -25,7 +21,13 @@
           </div>
           <div class="flex flex-row gap-x-3">
             <div v-tippy="collaboratorsTooltip">
-              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : ''">
+              <NuxtLink
+                :to="
+                  canReadSettings?.authorized
+                    ? projectRoute(project.id, 'collaborators')
+                    : ''
+                "
+              >
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
@@ -73,8 +75,6 @@ import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
-import { canEditProject } from '~~/lib/projects/helpers/permissions'
-import { projectCollaboratorsRoute } from '~~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -93,10 +93,19 @@ graphql(`
     workspace {
       id
     }
+    permissions {
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
     ...ProjectsMoveToWorkspaceDialog_Project
+    ...ProjectPageSettingsTab_Project
   }
 `)
 
@@ -155,8 +164,10 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+
+const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
-const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
 const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
   const items: LayoutMenuItem[][] = [
@@ -226,7 +237,12 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (hasRole.value) {
+  if (canReadSettings.value?.authorized) {
+    items.push({
+      title: 'Collaborators',
+      id: 'collaborators'
+    })
+
     items.push({
       title: 'Settings',
       id: 'settings'
@@ -240,7 +256,11 @@ const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
 
 const collaboratorsTooltip = computed(() =>
-  hasRole.value ? (canEdit.value ? 'Manage collaborators' : 'View collaborators') : null
+  canReadSettings.value?.authorized
+    ? canUpdate.value?.authorized
+      ? 'Manage collaborators'
+      : 'View collaborators'
+    : null
 )
 
 const activePageTab = computed({
@@ -248,7 +268,10 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
-    if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
+    if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
+      return findTabById('collaborators')
+    if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
+      return findTabById('settings')
     return findTabById('models')
   },
   set: (val: LayoutPageTabItem) => {
@@ -263,8 +286,13 @@ const activePageTab = computed({
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
+      case 'collaborators':
+        if (canReadSettings.value?.authorized) {
+          router.push({ path: projectRoute(projectId.value, 'collaborators') })
+        }
+        break
       case 'settings':
-        if (hasRole.value) {
+        if (canReadSettings.value?.authorized) {
           router.push({ path: projectRoute(projectId.value, 'settings') })
         }
         break

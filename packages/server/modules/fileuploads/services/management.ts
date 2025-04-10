@@ -4,7 +4,10 @@ import {
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { SaveUploadFile } from '@/modules/fileuploads/domain/operations'
+import {
+  SaveUploadFile,
+  NotifyChangeInFileStatus
+} from '@/modules/fileuploads/domain/operations'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
@@ -49,5 +52,46 @@ export const insertNewUploadAndNotifyFactory =
         upload: file
       },
       projectId: file.streamId
+    })
+  }
+
+export const notifyChangeInFileStatus =
+  (deps: {
+    getStreamBranchByName: GetStreamBranchByName
+    publish: PublishSubscription
+  }): NotifyChangeInFileStatus =>
+  async (params) => {
+    const { file } = params
+    const { id: fileId, streamId, branchName } = file
+    const branch = await deps.getStreamBranchByName(streamId, branchName)
+
+    if (!branch) {
+      await deps.publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+        projectPendingModelsUpdated: {
+          id: fileId,
+          type: ProjectPendingModelsUpdatedMessageType.Updated,
+          model: file
+        },
+        projectId: streamId
+      })
+    } else {
+      await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+        projectPendingVersionsUpdated: {
+          id: fileId,
+          type: ProjectPendingVersionsUpdatedMessageType.Updated,
+          version: file
+        },
+        projectId: streamId,
+        branchName
+      })
+    }
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: fileId,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: file
+      },
+      projectId: streamId
     })
   }

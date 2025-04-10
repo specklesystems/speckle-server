@@ -52,10 +52,9 @@
           Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
-          v-if="!isWorkspaceGuest"
           button-copy="Add your first project"
-          :is-workspace-admin="isWorkspaceAdmin"
-          :disabled="workspace?.readOnly"
+          :can-create-project="canCreateProject"
+          :can-move-project="canMoveProject"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -92,7 +91,10 @@ import {
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
+import type {
+  FullPermissionCheckResultFragment,
+  WorkspaceProjectsQueryQueryVariables
+} from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
@@ -104,8 +106,8 @@ graphql(`
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
+    ...WorkspaceHeader_Workspace
     ...BillingAlert_Workspace
-    ...MoveProjectsDialog_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
@@ -114,7 +116,11 @@ graphql(`
       completed
       state
     }
-    readOnly
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -187,6 +193,18 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
 })
 const { finalizeWizard } = useWorkspacesWizard()
 
+const canCreateProject = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canCreateProject
+)
+const canMoveProject = computed((): FullPermissionCheckResultFragment => {
+  // TODO: Until we have a real resolver
+  return {
+    authorized: isWorkspaceAdmin.value,
+    message: isWorkspaceAdmin.value ? 'OK' : 'You must be a workspace admin',
+    code: isWorkspaceAdmin.value ? 'OK' : 'FORBIDDEN'
+  }
+})
+
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
@@ -196,7 +214,6 @@ const showEmptyState = computed(() => {
   return projects.value && !projects.value?.items?.length
 })
 
-const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {

@@ -51,8 +51,6 @@ featureFlags:
   billingIntegrationEnabled: false
   ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
-  ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
-  fileImportIFCDotNetEnabled: false
   ## @param featureFlags.forceEmailVerification Forces email verification for all users
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
@@ -90,6 +88,9 @@ networkPlugin:
 ## @descriptionEnd
 ##
 ingress:
+  ## @param ingress.enabled If enabled, the ingress resources will be deployed
+  ##
+  enabled: true
   ## @param ingress.namespace The namespace in which the ingress controller is deployed.
   namespace: ingress-nginx
   ## @param ingress.controllerName The name of the Kubernetes pod in which the ingress controller is deployed.
@@ -97,7 +98,7 @@ ingress:
 
 ## @section Common parameters
 ##
-## @param docker_image_tag Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
+## @param docker_image_tag DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
 ##
 docker_image_tag: '2'
 
@@ -117,6 +118,12 @@ secretName: server-vars
 ## @param file_size_limit_mb This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle
 ##
 file_size_limit_mb: 100
+
+## @param file_import_time_limit_min The maximum time (unit is minutes) that a file import can take before it is considered to have failed
+## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
+##  please reach out to Speckle at https://speckle.community/
+##
+file_import_time_limit_min: 10
 
 ## @section Monitoring
 ## @descriptionStart
@@ -447,12 +454,87 @@ multiRegion:
     ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
     secretKey: 'multi-region-config.json'
 
+## @param imagePullSecrets The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+## This is used to pull the Docker image from a private registry.  If this is not provided, no imagePullSecrets will be used.
+imagePullSecrets: []
+
+## @extra billing Values to enable billing integration
+billing:
+  ## @param billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+  secretName: ''
+
+  stripeApiKey:
+    ## @param billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
+    secretKey: 'stripeApiKey'
+  stripeEndpointSigningKey:
+    ## @param billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
+    secretKey: 'stripeEndpointSigningKey'
+
+  ## @param billing.workspaceGuestSeatStripeProductId The workspace Guest Seat Product Id as configured in Stripe.
+  workspaceGuestSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyGuestSeatStripePriceId The workspace Monthly Guest Seat Price Id as configured in Stripe.
+  workspaceMonthlyGuestSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyGuestSeatStripePriceId The workspace Yearly Guest Seat Price Id as configured in Stripe.
+  workspaceYearlyGuestSeatStripePriceId: ''
+
+  ## @param billing.workspaceStarterSeatStripeProductId The workspace Starter Seat Product Id as configured in Stripe.
+  workspaceStarterSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyStarterSeatStripePriceId The workspace Monthly Starter Seat Price Id as configured in Stripe.
+  workspaceMonthlyStarterSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyStarterSeatStripePriceId The workspace Yearly Starter Seat Price Id as configured in Stripe.
+  workspaceYearlyStarterSeatStripePriceId: ''
+
+  ## @param billing.workspacePlusSeatStripeProductId The workspace Plus Seat Product Id as configured in Stripe.
+  workspacePlusSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyPlusSeatStripePriceId The workspace Monthly Plus Seat Price Id as configured in Stripe.
+  workspaceMonthlyPlusSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyPlusSeatStripePriceId The workspace Yearly Plus Seat Price Id as configured in Stripe.
+  workspaceYearlyPlusSeatStripePriceId: ''
+
+  ## @param billing.workspaceBusinessSeatStripeProductId The workspace Business Seat Product Id as configured in Stripe.
+  workspaceBusinessSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyBusinessSeatStripePriceId The workspace Monthly Business Seat Price Id as configured in Stripe.
+  workspaceMonthlyBusinessSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyBusinessSeatStripePriceId The workspace Yearly Business Seat Price Id as configured in Stripe.
+  workspaceYearlyBusinessSeatStripePriceId: ''
+
+  ## @param billing.workspaceTeamSeatStripeProductId The workspace Team Seat Product Id as configured in Stripe.
+  workspaceTeamSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyTeamSeatStripePriceId The workspace Monthly Team Seat Price Id as configured in Stripe.
+  workspaceMonthlyTeamSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyTeamSeatStripePriceId The workspace Yearly Team Seat Price Id as configured in Stripe.
+  workspaceYearlyTeamSeatStripePriceId: ''
+
+  ## @param billing.workspaceTeamUnlimitedSeatStripeProductId The workspace Team Unlimited Seat Product Id as configured in Stripe.
+  workspaceTeamUnlimitedSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyTeamUnlimitedSeatStripePriceId The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.
+  workspaceMonthlyTeamUnlimitedSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyTeamUnlimitedSeatStripePriceId The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.
+  workspaceYearlyTeamUnlimitedSeatStripePriceId: ''
+
+  ## @param billing.workspaceProSeatStripeProductId The workspace Pro Seat Product Id as configured in Stripe.
+  workspaceProSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyProSeatStripePriceId The workspace Monthly Pro Seat Price Id as configured in Stripe.
+  workspaceMonthlyProSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyProSeatStripePriceId The workspace Yearly Pro Seat Price Id as configured in Stripe.
+  workspaceYearlyProSeatStripePriceId: ''
+
+  ## @param billing.workspaceProUnlimitedSeatStripeProductId The workspace Pro Unlimited Seat Product Id as configured in Stripe.
+  workspaceProUnlimitedSeatStripeProductId: ''
+  ## @param billing.workspaceMonthlyProUnlimitedSeatStripePriceId The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.
+  workspaceMonthlyProUnlimitedSeatStripePriceId: ''
+  ## @param billing.workspaceYearlyProUnlimitedSeatStripePriceId The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.
+  workspaceYearlyProUnlimitedSeatStripePriceId: ''
+
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
 ## @descriptionEnd
 ##
 server:
+  ## @param server.enabled If enabled, the Speckle server will be deployed
+  ##
+  enabled: true
   ## @param server.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -533,77 +615,6 @@ server:
     ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
     ##
     secretKey: ''
-
-  ## @extra server.billing Values to enable billing integration on the server
-  billing:
-    ## @param server.billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
-    secretName: ''
-
-    stripeApiKey:
-      ## @param server.billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
-      secretKey: 'stripeApiKey'
-    stripeEndpointSigningKey:
-      ## @param server.billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
-      secretKey: 'stripeEndpointSigningKey'
-    workspaceGuestSeatStripeProductId:
-      ## @param server.billing.workspaceGuestSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.
-      secretKey: 'workspaceGuestSeatStripeProductId'
-    workspaceMonthlyGuestSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyGuestSeatStripePriceId'
-    workspaceYearlyGuestSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyGuestSeatStripePriceId'
-
-    workspaceStarterSeatStripeProductId:
-      ## @param server.billing.workspaceStarterSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.
-      secretKey: 'workspaceStarterSeatStripeProductId'
-    workspaceMonthlyStarterSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyStarterSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyStarterSeatStripePriceId'
-    workspaceYearlyStarterSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyStarterSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyStarterSeatStripePriceId'
-
-    workspacePlusSeatStripeProductId:
-      ## @param server.billing.workspacePlusSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.
-      secretKey: 'workspacePlusSeatStripeProductId'
-    workspaceMonthlyPlusSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyPlusSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyPlusSeatStripePriceId'
-    workspaceYearlyPlusSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyPlusSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyPlusSeatStripePriceId'
-
-    workspaceBusinessSeatStripeProductId:
-      ## @param server.billing.workspaceBusinessSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.
-      secretKey: 'workspaceBusinessSeatStripeProductId'
-    workspaceMonthlyBusinessSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyBusinessSeatStripePriceId'
-    workspaceYearlyBusinessSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyBusinessSeatStripePriceId'
-
-    workspaceTeamSeatStripeProductId:
-      ## @param server.billing.workspaceTeamSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.
-      secretKey: 'workspaceTeamSeatStripeProductId'
-    workspaceMonthlyTeamSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyTeamSeatStripePriceId'
-    workspaceYearlyTeamSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyTeamSeatStripePriceId'
-
-    workspaceProSeatStripeProductId:
-      ## @param server.billing.workspaceProSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.
-      secretKey: 'workspaceProSeatStripeProductId'
-    workspaceMonthlyProSeatStripePriceId:
-      ## @param server.billing.workspaceMonthlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.
-      secretKey: 'workspaceMonthlyProSeatStripePriceId'
-    workspaceYearlyProSeatStripePriceId:
-      ## @param server.billing.workspaceYearlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.
-      secretKey: 'workspaceYearlyProSeatStripePriceId'
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -921,6 +932,8 @@ server:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  ## @param server.additionalEnvVars Additional environment variables to be passed to the server pod
+  additionalEnvVars: []
 
 ## @section Server
 ## @descriptionStart
@@ -928,6 +941,9 @@ server:
 ## @descriptionEnd
 ##
 objects:
+  ## @param objects.enabled If enabled, the Speckle server will be deployed with the Objects component enabled.
+  ##
+  enabled: true
   ## @param objects.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1011,6 +1027,8 @@ objects:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  ## @param objects.additionalEnvVars Additional environment variables to be passed to the objects pod
+  additionalEnvVars: []
 
 ## @section frontend_2
 ## @descriptionStart
@@ -1094,6 +1112,8 @@ frontend_2:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param frontend_2.additionalEnvVars Additional environment variables to be passed to the frontend_2 pod
+  additionalEnvVars: []
 
 ## @section Preview Service
 ## @descriptionStart
@@ -1101,12 +1121,24 @@ frontend_2:
 ## @descriptionEnd
 ##
 preview_service:
+  ## @param preview_service.enabled If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.
+  enabled: true
   ## @param preview_service.dedicatedPreviewsQueue Allows using a dedicated redis url for the preview service job queue
   ##
   dedicatedPreviewsQueue: false
+
+  gpu:
+    ## @param preview_service.gpu.enabled If enabled, the Preview Service will be deployed with GPU support. Assumes Vulkan driver is available on the host node.
+    ##
+    enabled: false
+
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param preview_service.deploymentStrategy.type The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as preview service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param preview_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -1152,6 +1184,28 @@ preview_service:
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
     memory: 4Gi
+  autoscaling:
+    ## @param preview_service.autoscaling.enabled
+    ## @descriptionStart
+    ## Enables the Horizontal Pod Autoscaler
+    ## @descriptionEnd
+    enabled: false
+    ## @param preview_service.autoscaling.minReplicas
+    ## @descriptionStart
+    ## Minimum number of replicas to scale down to
+    ## @descriptionEnd
+    minReplicas: 1
+    ## @param preview_service.autoscaling.maxReplicas
+    ## @descriptionStart
+    ## Maximum number of replicas to scale up to
+    ## @descriptionEnd
+    maxReplicas: 10
+    ## @param preview_service.autoscaling.targetCPUUtilizationPercentage
+    ## @descriptionStart
+    ## Target CPU utilization percentage
+    ## @descriptionEnd
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
   networkPolicy:
     ## @param preview_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
     ## If enabled, the `db.networkPolicy` parameters need be configured.
@@ -1181,6 +1235,8 @@ preview_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param preview_service.additionalEnvVars Additional environment variables to be passed to the Preview service pod
+  additionalEnvVars: []
 
 ## @section Webhook Service
 ## @descriptionStart
@@ -1188,9 +1244,15 @@ preview_service:
 ## @descriptionEnd
 ##
 webhook_service:
+  ## @param webhook_service.enabled If enabled, the Webhook Service will be deployed within the cluster.
+  enabled: true
   ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param webhook_service.deploymentStrategy.type The deployment strategy type to be used for the Webhook Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as webhook service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param webhook_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -1254,6 +1316,8 @@ webhook_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param webhook_service.additionalEnvVars Additional environment variables to be passed to the Webhook service pod
+  additionalEnvVars: []
 
 ## @section File Import Service
 ## @descriptionStart
@@ -1261,9 +1325,15 @@ webhook_service:
 ## @descriptionEnd
 ##
 fileimport_service:
+  ## @param fileimport_service.enabled If enabled, the File Import Service will be deployed within the cluster.
+  enabled: true
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  deploymentStrategy:
+    ## @param fileimport_service.deploymentStrategy.type The deployment strategy type to be used for the FileImport Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as file import service does not require 100% availability.
+    ##
+    type: 'Recreate'
   ## @param fileimport_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -1278,6 +1348,12 @@ fileimport_service:
   ## @param fileimport_service.postgresMaxConnections The maximum number of connections that the File Import Service postgres client will make to the Postgres database.
   ##
   postgresMaxConnections: 1
+
+  inspect:
+    ## @param fileimport_service.inspect.enabled If enabled, indicates that the File Import service should be deployed with the nodejs inspect feature enabled
+    enabled: false
+    ## @param fileimport_service.inspect.port The port on which the nodejs inspect feature should be exposed
+    port: '7000'
 
   requests:
     ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
@@ -1329,7 +1405,10 @@ fileimport_service:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
-  ## @param fileimport_service.time_limit_min The maximum time that a file can take to be processed by the FileImport Service.
+  ## @param fileimport_service.additionalEnvVars Additional environment variables to be passed to the FileImport service pod
+  additionalEnvVars: []
+
+  ## @param fileimport_service.time_limit_min DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.
   ## Files which take longer than this value to process will be cancelled.
   ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
   ##  please reach out to Speckle at https://speckle.community/
@@ -1342,6 +1421,8 @@ fileimport_service:
 ## @descriptionEnd
 ##
 monitoring:
+  ## @param monitoring.enabled If enabled, database monitoring will be deployed within the cluster.
+  enabled: true
   ## @param monitoring.replicas The number of instances of the Monitoring pod to be deployed within the cluster.
   ##
   replicas: 1
@@ -1417,6 +1498,8 @@ monitoring:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param monitoring.additionalEnvVars Additional environment variables to be passed to the Monitoring pod
+  additionalEnvVars: []
 
 ## @section Testing
 ## @descriptionStart
@@ -1473,3 +1556,5 @@ test:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  ## @param test.additionalEnvVars Additional environment variables to be passed to the Test pod
+  additionalEnvVars: []

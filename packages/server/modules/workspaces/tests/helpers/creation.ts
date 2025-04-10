@@ -9,7 +9,6 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
@@ -42,7 +41,7 @@ import cryptoRandomString from 'crypto-random-string'
 import {
   MaybeNullOrUndefined,
   Roles,
-  StreamRoles,
+  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -76,7 +75,6 @@ import {
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
@@ -107,13 +105,12 @@ export type BasicTestWorkspace = {
   name: string
   description?: string
   logo?: string
-  defaultProjectRole?: StreamRoles
   discoverabilityEnabled?: boolean
   domainBasedMembershipProtectionEnabled?: boolean
 }
 
 export const createTestWorkspace = async (
-  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
+  workspace: SetOptional<BasicTestWorkspace, 'id' | 'slug'>,
   owner: BasicTestUser,
   options?: {
     domain?: string
@@ -147,7 +144,8 @@ export const createTestWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+      eventEmit: getEventBus().emit
     })
   })
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
@@ -201,6 +199,8 @@ export const createTestWorkspace = async (
   }
 
   if (addSubscription) {
+    const aMonthFromNow = new Date()
+    aMonthFromNow.setMonth(new Date().getMonth() + 1)
     await upsertSubscription({
       workspaceSubscription: {
         workspaceId: newWorkspace.id,
@@ -213,7 +213,8 @@ export const createTestWorkspace = async (
           customerId: cryptoRandomString({ length: 10 }),
           cancelAt: null,
           status: 'active',
-          products: []
+          products: [],
+          currentPeriodEnd: aMonthFromNow
         }
       }
     })
@@ -267,15 +268,6 @@ export const createTestWorkspace = async (
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
   }
-
-  if (workspace.defaultProjectRole) {
-    await updateWorkspace({
-      workspaceId: newWorkspace.id,
-      workspaceInput: {
-        defaultProjectRole: parseDefaultProjectRole(workspace.defaultProjectRole)
-      }
-    })
-  }
 }
 
 export const assignToWorkspace = async (
@@ -294,13 +286,14 @@ export const assignToWorkspace = async (
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
       createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat
+      getWorkspaceUserSeat,
+      eventEmit: getEventBus().emit
     })
   })
   const assignWorkspaceSeat = assignWorkspaceSeatFactory({
     createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-    emit: getEventBus().emit
+    eventEmit: getEventBus().emit
   })
 
   role = role || Roles.Workspace.Member
@@ -349,12 +342,17 @@ export const unassignFromWorkspaces = async (
 }
 
 export const assignToWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser, MaybeNullOrUndefined<WorkspaceRoles>][]
+  pairs: [
+    BasicTestWorkspace,
+    BasicTestUser,
+    MaybeNullOrUndefined<WorkspaceRoles>,
+    seatType?: MaybeNullOrUndefined<WorkspaceSeatType>
+  ][]
 ) => {
   // Serial execution is somehow faster with bigger batch sizes, assignToWorkspace
   // may be quite heavy on the DB
-  for (const [workspace, user, role] of pairs) {
-    await assignToWorkspace(workspace, user, role || undefined)
+  for (const [workspace, user, role, seatType] of pairs) {
+    await assignToWorkspace(workspace, user, role || undefined, seatType || undefined)
   }
 }
 

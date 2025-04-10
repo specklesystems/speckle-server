@@ -3,7 +3,8 @@ import type {
   Optional,
   MaybeNullOrUndefined,
   MaybeAsync,
-  MaybeFalsy
+  MaybeFalsy,
+  Authz
 } from '@speckle/shared'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import type { AuthContext } from '@/modules/shared/authz'
@@ -12,6 +13,7 @@ import type { ConditionalKeys, SetRequired } from 'type-fest'
 import type { Logger } from 'pino'
 import type { BaseContext } from '@apollo/server'
 import type { Registry } from 'prom-client'
+import { AuthCheckContextLoaders } from '@speckle/shared/dist/commonjs/authz'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -52,13 +54,19 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
 
 export type GraphQLContext = BaseContext &
   AuthContext & {
+    authPolicies: Authz.AuthPolicies & { clearCache: () => void }
     /**
      * Request-scoped GraphQL dataloaders
      * @see https://github.com/graphql/dataloader
      */
     loaders: RequestDataLoaders
-
     log: Logger
+    authLoaders: AuthCheckContextLoaders
+    /**
+     * Clear dataloader, auth policy loader etc. caches. Usually necessary after mutations
+     * are done in resolvers
+     */
+    clearCache: () => Promise<void>
   }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

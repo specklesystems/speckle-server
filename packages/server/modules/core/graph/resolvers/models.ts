@@ -58,6 +58,7 @@ import {
   getRegisteredRegionClients
 } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 
 export = {
   User: {
@@ -296,12 +297,15 @@ export = {
   },
   ModelMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Contributor,
-        ctx.resourceAccessRules
-      )
+      const canCreate = await ctx.authPolicies.project.model.canCreate({
+        userId: ctx.userId,
+        projectId: args.input.projectId
+      })
+
+      if (!canCreate.isOk) {
+        throw mapAuthToServerError(canCreate.error)
+      }
+
       const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
 
       // Sanitize model name by trimming spaces around slashes

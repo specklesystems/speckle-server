@@ -7,35 +7,28 @@
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
         <p class="text-heading-lg text-foreground capitalize">
-          {{ plan?.name }}
+          {{ formatName(plan?.name) }}
         </p>
-      </div>
-
-      <div class="p-5 pt-4 flex flex-col">
-        <h3 class="text-body-xs text-foreground-2 pb-4">
-          <template v-if="isPurchasablePlan">
-            <span class="capitalize">{{ billingInterval }}</span>
-            bill
-          </template>
-          <template v-else>Bill</template>
-        </h3>
-        <p class="text-heading-lg text-foreground inline-block">
-          {{ totalCostFormatted }}
-          <span v-if="isPurchasablePlan">per {{ billingInterval }}</span>
-        </p>
-        <NuxtLink
-          v-if="showBillingPortalLink"
-          class="text-body-xs text-foreground-2 underline hover:text-foreground cursor-pointer mt-1"
-          @click="billingPortalRedirect(workspaceId)"
-        >
-          View cost breakdown
-        </NuxtLink>
       </div>
 
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Billing period</h3>
+        <p class="text-heading-lg text-foreground inline-block">
+          <span v-if="isPurchasablePlan">
+            {{ intervalIsYearly ? 'Yearly' : 'Monthly' }}
+          </span>
+          <span v-else>Not applicable</span>
+        </p>
+      </div>
+
+      <div class="p-5 pt-4 flex flex-col">
+        <h3 class="text-body-xs text-foreground-2 pb-4">Next payment due</h3>
         <p class="text-heading-lg text-foreground capitalize">
-          {{ isPurchasablePlan ? billingInterval : 'Not applicable' }}
+          {{
+            currentBillingCycleEnd
+              ? dayjs(currentBillingCycleEnd).format('dd-mmmm-yyyy')
+              : 'Not applicable'
+          }}
         </p>
       </div>
     </div>
@@ -61,7 +54,9 @@
 <script setup lang="ts">
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { type MaybeNullOrUndefined, WorkspacePlanStatuses } from '@speckle/shared'
+import { formatName } from '~/lib/billing/helpers/plan'
+import dayjs from 'dayjs'
 
 defineProps<{
   workspaceId?: MaybeNullOrUndefined<string>
@@ -71,10 +66,13 @@ const { billingPortalRedirect } = useBillingActions()
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { plan, isPurchasablePlan, isActivePlan, totalCostFormatted, billingInterval } =
+const { plan, isPurchasablePlan, intervalIsYearly, currentBillingCycleEnd } =
   useWorkspacePlan(slug.value)
 
 const showBillingPortalLink = computed(
-  () => isActivePlan.value && isPurchasablePlan.value
+  () =>
+    plan.value?.status === WorkspacePlanStatuses.Valid ||
+    plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
+    plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
 )
 </script>
