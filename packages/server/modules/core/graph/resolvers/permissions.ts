@@ -5,6 +5,12 @@ export default {
   Project: {
     permissions: (parent) => ({ projectId: parent.id })
   },
+  Model: {
+    permissions: (parent) => ({
+      projectId: parent.streamId,
+      modelId: parent.id
+    })
+  },
   User: {
     permissions: () => ({})
   },
@@ -66,6 +72,15 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canLeave)
+    }
+  },
+  ModelPermissionChecks: {
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdate)
     }
   },
   RootPermissionChecks: {

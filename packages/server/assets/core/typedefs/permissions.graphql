@@ -20,3 +20,11 @@ type RootPermissionChecks {
 extend type User {
   permissions: RootPermissionChecks! @isOwner
 }
+
+type ModelPermissionChecks {
+  canUpdate: PermissionCheckResult!
+}
+
+extend type Model {
+  permissions: ModelPermissionChecks!
+}
