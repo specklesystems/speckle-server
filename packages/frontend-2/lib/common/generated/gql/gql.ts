@@ -152,6 +152,7 @@ type Documents = {
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": typeof types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserMainMetadataDocument,
+    "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserProjectsToMoveDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.CreateOnboardingProjectDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": typeof types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": typeof types.FinishOnboardingDocument,
@@ -566,6 +567,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
+    "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserProjectsToMoveDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n  }\n": types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": types.FinishOnboardingDocument,
@@ -1408,6 +1410,10 @@ export function graphql(source: "\n  fragment WorkspaceWizardStepRegion_ServerIn
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
