@@ -1,5 +1,4 @@
 import {
-  Box3,
   Camera,
   CircleGeometry,
   Color,
@@ -30,10 +29,10 @@ import { ObjectLayers } from '../../../IViewer.js'
 import Logger from '../../utils/Logger.js'
 
 export interface MeasurementPointGizmoStyle {
-  fixedSize?: number | boolean
   dashedLine?: boolean
-  discColor?: number
-  discOpacity?: number
+  normalIndicatorPixelSize?: number
+  normalIndicatorColor?: number
+  normalIndicatorOpacity?: number
   lineColor?: number
   lineOpacity?: number
   pointColor?: number
@@ -43,12 +42,13 @@ export interface MeasurementPointGizmoStyle {
   textPixelHeight?: number
   pointPixelHeight?: number
 }
+const _vec30: Vector3 = new Vector3()
 
 const DefaultMeasurementPointGizmoStyle = {
-  fixedSize: true,
   dashedLine: false,
-  discColor: 0x047efb,
-  discOpacity: 1,
+  normalIndicatorPixelSize: 40,
+  normalIndicatorColor: 0x047efb,
+  normalIndicatorOpacity: 1,
   lineColor: 0x047efb,
   lineOpacity: 1,
   pointColor: 0x047efb,
@@ -60,7 +60,11 @@ const DefaultMeasurementPointGizmoStyle = {
 }
 
 export class MeasurementPointGizmo extends Group {
-  private disc: Mesh
+  private normalIndicator: LineSegments2
+  private normalIndicatorBuffer: Float64Array = new Float64Array(24)
+  private normalIndicatorNormal: Vector3 = new Vector3()
+  private normalIndicatorTangent: Vector3 = new Vector3()
+  private normalIndicatorBitangent: Vector3 = new Vector3()
   public line: LineSegments2
   private point: Mesh
   private text: SpeckleText
@@ -68,7 +72,6 @@ export class MeasurementPointGizmo extends Group {
     {},
     DefaultMeasurementPointGizmoStyle
   )
-  private static vecBuff0: Vector3 = new Vector3()
 
   public set style(value: MeasurementPointGizmoStyle) {
     Object.assign(this._style, value)
@@ -77,7 +80,9 @@ export class MeasurementPointGizmo extends Group {
 
   public set highlight(value: boolean) {
     if (value) {
-      ;(this.disc.material as SpeckleBasicMaterial).color = new Color(0xff0000)
+      ;(this.normalIndicator.material as SpeckleLineMaterial).color = new Color(
+        0xff0000
+      )
       ;(this.line.material as SpeckleLineMaterial).color = new Color(0xff0000)
       ;(this.point.material as SpeckleBasicMaterial).color = new Color(0xff0000)
       ;(this.text.textMesh.material as SpeckleTextMaterial).color.copy(
@@ -86,18 +91,27 @@ export class MeasurementPointGizmo extends Group {
     } else this.updateStyle()
   }
 
-  private getDiscMaterial() {
-    const material = new SpeckleBasicMaterial({ color: this._style.discColor })
+  private getNormalIndicatorMaterial() {
+    const material = new SpeckleLineMaterial({
+      color: 0x047efb,
+      linewidth: 1,
+      worldUnits: false,
+      vertexColors: false,
+      alphaToCoverage: false,
+      resolution: new Vector2(1, 1)
+    })
+    material.color = new Color(this._style.normalIndicatorColor)
     material.color.convertSRGBToLinear()
     material.toneMapped = false
-    material.polygonOffset = true
-    material.polygonOffsetFactor = -5
-    material.polygonOffsetUnits = 5
+    material.linewidth = 2
+    material.worldUnits = false
+    material.resolution = new Vector2(256, 256)
     material.opacity =
-      this._style.discOpacity !== undefined
-        ? this._style.discOpacity
-        : DefaultMeasurementPointGizmoStyle.discOpacity
+      this._style.normalIndicatorOpacity !== undefined
+        ? this._style.normalIndicatorOpacity
+        : DefaultMeasurementPointGizmoStyle.normalIndicatorOpacity
     material.transparent = material.opacity < 1
+    material.depthTest = false
     return material
   }
 
@@ -184,12 +198,21 @@ export class MeasurementPointGizmo extends Group {
     super()
     this.layers.set(ObjectLayers.MEASUREMENTS)
 
-    const geometry = new CircleGeometry(1, 16)
-    const doublePositions = new Float64Array(geometry.attributes.position.array)
-    Geometry.updateRTEGeometry(geometry, doublePositions)
+    const normalIndicatorGeometry = new LineSegmentsGeometry()
+    normalIndicatorGeometry.setPositions(
+      new Float32Array(this.normalIndicatorBuffer.length)
+    )
+    ;(
+      normalIndicatorGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data.setUsage(DynamicDrawUsage)
 
-    this.disc = new Mesh(geometry, undefined)
-    this.disc.layers.set(ObjectLayers.MEASUREMENTS)
+    Geometry.updateRTEGeometry(normalIndicatorGeometry, this.normalIndicatorBuffer)
+
+    this.normalIndicator = new LineSegments2(normalIndicatorGeometry, undefined)
+    this.normalIndicator.computeLineDistances()
+    this.normalIndicator.name = `test-mesurements-normal-indicator`
+    this.normalIndicator.frustumCulled = false
+    this.normalIndicator.layers.set(ObjectLayers.MEASUREMENTS)
 
     const buffer = new Float64Array(18)
     const lineGeometry = new LineSegmentsGeometry()
@@ -229,15 +252,20 @@ export class MeasurementPointGizmo extends Group {
     this.text.textMesh.material = null
 
     this.add(this.point)
-    this.add(this.disc)
+    this.add(this.normalIndicator)
     this.add(this.line)
     this.add(this.text)
 
     this.style = style ? style : DefaultMeasurementPointGizmoStyle
   }
 
-  public enable(disc: boolean, line: boolean, point: boolean, text: boolean) {
-    this.disc.visible = disc
+  public enable(
+    normalIndicator: boolean,
+    line: boolean,
+    point: boolean,
+    text: boolean
+  ) {
+    this.normalIndicator.visible = normalIndicator
     this.line.visible = line
     this.point.visible = point
     this.text.visible = text
@@ -245,39 +273,106 @@ export class MeasurementPointGizmo extends Group {
     this.line.material.visible = line
   }
 
-  public frameUpdate(camera: Camera, bounds: Box3) {
-    if (
-      camera.type === 'PerspectiveCamera' &&
-      +(this._style.fixedSize !== undefined
-        ? this._style.fixedSize
-        : DefaultMeasurementPointGizmoStyle.fixedSize) > 0
-    ) {
-      const cam = camera as PerspectiveCamera
-      const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
-      const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
-      const maxWorldSize = bounds.min.distanceTo(bounds.max) * 2
-      const size = 0.0035 * Math.min(worldSize, maxWorldSize)
-      this.disc.scale.set(size, size, size)
-      this.disc.matrixWorldNeedsUpdate = true
+  public frameUpdate(camera: Camera, size: Vector2) {
+    let halfSize: number = 0
+    const pixelSize =
+      this._style.normalIndicatorPixelSize !== undefined
+        ? this._style.normalIndicatorPixelSize
+        : DefaultMeasurementPointGizmoStyle.normalIndicatorPixelSize
+    if (camera instanceof PerspectiveCamera) {
+      const distance = camera.position.distanceTo(this.normalIndicator.position)
+      const fov = MathUtils.degToRad(camera.fov)
+      const screenHeightWorld = 2 * distance * Math.tan(fov / 2)
+      const worldUnitsPerPixel = screenHeightWorld / size.y
+      halfSize = (pixelSize * worldUnitsPerPixel) / 2
+    } else if (camera instanceof OrthographicCamera) {
+      const worldHeight = camera.top - camera.bottom
+      const worldUnitsPerPixel = worldHeight / size.y
+      halfSize = (pixelSize * worldUnitsPerPixel) / 2
     }
-    if (
-      camera.type === 'OrthographicCamera' &&
-      +(this._style.fixedSize !== undefined
-        ? this._style.fixedSize
-        : DefaultMeasurementPointGizmoStyle.fixedSize) > 0
-    ) {
-      const cam = camera as OrthographicCamera
-      const orthoSize = cam.top - cam.bottom
-      const size = (orthoSize / cam.zoom) * 0.0075
-      this.disc.scale.set(size, size, size)
-      this.disc.matrixWorldNeedsUpdate = true
-    }
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, -halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 0)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, -halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, -halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 3)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, -halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, -halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 6)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, -halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 9)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, -halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 12)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 15)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 18)
+
+    _vec30
+      .copy(this.normalIndicator.position)
+      .addScaledVector(this.normalIndicatorTangent, halfSize)
+      .addScaledVector(this.normalIndicatorBitangent, -halfSize)
+    _vec30.toArray(this.normalIndicatorBuffer, 21)
+
+    const posAttr = (
+      this.normalIndicator.geometry.attributes[
+        'instanceStart'
+      ] as InterleavedBufferAttribute
+    ).data
+    const posAttrLow = (
+      this.normalIndicator.geometry.attributes[
+        'instanceStartLow'
+      ] as InterleavedBufferAttribute
+    ).data
+    Geometry.DoubleToHighLowBuffer(
+      this.normalIndicatorBuffer,
+      posAttrLow.array as Float32Array,
+      posAttr.array as Float32Array
+    )
+    posAttr.needsUpdate = true
+    posAttrLow.needsUpdate = true
+    this.normalIndicator.geometry.computeBoundingBox()
+    this.normalIndicator.geometry.computeBoundingSphere()
+    this.normalIndicator.computeLineDistances()
   }
 
-  public updateDisc(position: Vector3, normal: Vector3) {
-    this.disc.position.copy(position)
-    MeasurementPointGizmo.vecBuff0.set(0, 0, 1)
-    this.disc.quaternion.setFromUnitVectors(MeasurementPointGizmo.vecBuff0, normal)
+  public updateNormalIndicator(position: Vector3, normal: Vector3) {
+    this.normalIndicator.position.copy(position)
+    this.normalIndicatorNormal.copy(normal)
+    if (Math.abs(normal.x) > Math.abs(normal.z)) {
+      this.normalIndicatorTangent.set(-normal.y, normal.x, 0)
+    } else {
+      this.normalIndicatorTangent.set(0, -normal.z, normal.y)
+    }
+    this.normalIndicatorTangent.normalize()
+    this.normalIndicatorBitangent
+      .crossVectors(this.normalIndicatorNormal, this.normalIndicatorTangent)
+      .normalize()
   }
 
   public updatePoint(position: Vector3) {
@@ -350,7 +445,7 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public updateStyle() {
-    this.disc.material = this.getDiscMaterial()
+    this.normalIndicator.material = this.getNormalIndicatorMaterial()
     this.line.material = this.getLineMaterial()
     this.point.material = this.getPointMaterial()
     this.text.textMesh.material = this.getTextMaterial()
@@ -370,7 +465,7 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    ;(this.disc.material as Material).clippingPlanes = planes
+    ;(this.normalIndicator.material as Material).clippingPlanes = planes
     ;(this.point.material as Material).clippingPlanes = planes
     ;((this.point.children[0] as Mesh).material as Material).clippingPlanes = planes
     ;(this.line.material as Material).clippingPlanes = planes

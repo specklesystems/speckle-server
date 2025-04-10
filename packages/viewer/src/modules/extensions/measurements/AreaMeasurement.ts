@@ -22,7 +22,7 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Geometry } from '../../converter/Geometry.js'
 import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
-import { MeasurementPointGizmo2 } from './MeasurementPointGizmo2.js'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
 
 const _vec30 = new Vector3()
@@ -30,7 +30,7 @@ const _vec31 = new Vector3()
 const _vec32 = new Vector3()
 
 export class AreaMeasurement extends Measurement {
-  private pointGizmos: MeasurementPointGizmo2[]
+  private pointGizmos: MeasurementPointGizmo[]
   private pointIndex: number = 0
   private surfacePoint: Vector3 = new Vector3()
   private surfaceNormal: Vector3 = new Vector3()
@@ -45,7 +45,7 @@ export class AreaMeasurement extends Measurement {
   private snapDistance: number = 10
 
   public set isVisible(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.enable(value, value, value, value)
     })
   }
@@ -54,7 +54,7 @@ export class AreaMeasurement extends Measurement {
     super()
     this.type = 'AreaMeasurement'
     this.pointGizmos = []
-    const gizmo = new MeasurementPointGizmo2()
+    const gizmo = new MeasurementPointGizmo()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(this.pointGizmos[0])
@@ -65,7 +65,7 @@ export class AreaMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.frameUpdate(camera, size)
     })
   }
@@ -107,7 +107,7 @@ export class AreaMeasurement extends Measurement {
       }
     }
 
-    const gizmo = new MeasurementPointGizmo2()
+    const gizmo = new MeasurementPointGizmo()
     gizmo.enable(false, true, true, false)
     this.pointGizmos.push(gizmo)
     this.add(gizmo)
@@ -135,7 +135,7 @@ export class AreaMeasurement extends Measurement {
 
   public removePoint(): number {
     if (this.pointIndex < 1) return 0
-    this.remove(this.pointGizmos.pop() as MeasurementPointGizmo2)
+    this.remove(this.pointGizmos.pop() as MeasurementPointGizmo)
     this.points.pop()
     this.measuredPoints.pop()
     this.polygonPoints.pop()
@@ -316,7 +316,7 @@ export class AreaMeasurement extends Measurement {
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     const results: Array<Intersection> = []
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.raycast(raycaster, results)
     })
     if (results.length) {
@@ -332,13 +332,13 @@ export class AreaMeasurement extends Measurement {
   }
 
   public highlight(value: boolean) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.highlight = value
     })
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo2) => {
+    this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
       gizmo.updateClippingPlanes(planes)
     })
     ;(this.fillPolygon.material as Material).clippingPlanes = planes

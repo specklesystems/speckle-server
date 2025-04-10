@@ -7,10 +7,10 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
 const _vecBuff: Vector3 = new Vector3()
 
@@ -46,8 +46,8 @@ export class PerpendicularMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.startGizmo?.frameUpdate(camera, bounds)
-    this.endGizmo?.frameUpdate(camera, bounds)
+    this.startGizmo?.frameUpdate(camera, size)
+    this.endGizmo?.frameUpdate(camera, size)
     /** Not a fan of this but the camera library fails to tell us when zooming happens
      *  so we need to update the screen space normal indicator each frame, otherwise it
      *  won't look correct while zooming
@@ -84,9 +84,9 @@ export class PerpendicularMeasurement extends Measurement {
     if (isNaN(this.startPoint.length())) return ret
     if (!this.renderingCamera) return ret
 
-    this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
+    this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
-    this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
+    this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
       const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)

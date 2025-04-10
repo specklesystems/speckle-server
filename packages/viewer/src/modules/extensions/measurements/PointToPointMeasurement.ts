@@ -7,10 +7,10 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
@@ -34,8 +34,8 @@ export class PointToPointMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.startGizmo?.frameUpdate(camera, bounds)
-    this.endGizmo?.frameUpdate(camera, bounds)
+    this.startGizmo?.frameUpdate(camera, size)
+    this.endGizmo?.frameUpdate(camera, size)
   }
 
   public locationUpdated(point: Vector3, normal: Vector3): void {
@@ -56,9 +56,9 @@ export class PointToPointMeasurement extends Measurement {
 
   public update(): Promise<void> {
     let ret: Promise<void> = Promise.resolve()
-    this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
+    this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
-    this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
+    this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
       const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
