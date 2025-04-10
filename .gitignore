@@ -68,6 +68,8 @@ minio-data/
 postgres-data/
 redis-data/
 
+packages/fileimport-service/src/ifc-dotnet/output
+
 .tshy-build
 obj/
 bin/

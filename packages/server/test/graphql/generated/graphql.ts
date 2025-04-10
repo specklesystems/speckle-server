@@ -612,6 +612,7 @@ export type Comment = {
   id: Scalars['String']['output'];
   /** Parent thread, if there's any */
   parent?: Maybe<Comment>;
+  permissions: CommentPermissionChecks;
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String']['output'];
   /** @deprecated Not actually implemented */
@@ -743,6 +744,11 @@ export type CommentMutationsMarkViewedArgs = {
 
 export type CommentMutationsReplyArgs = {
   input: CreateCommentReplyInput;
+};
+
+export type CommentPermissionChecks = {
+  __typename?: 'CommentPermissionChecks';
+  canArchive: PermissionCheckResult;
 };
 
 export type CommentReplyAuthorCollection = {
@@ -2541,6 +2547,8 @@ export const ProjectPendingVersionsUpdatedMessageType = {
 export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVersionsUpdatedMessageType[keyof typeof ProjectPendingVersionsUpdatedMessageType];
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
+  canBroadcastActivity: PermissionCheckResult;
+  canCreateComment: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canLeave: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;

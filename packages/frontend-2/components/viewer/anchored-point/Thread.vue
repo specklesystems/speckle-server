@@ -195,7 +195,7 @@ import {
   ArrowLeftIcon,
   ArrowUpRightIcon
 } from '@heroicons/vue/24/outline'
-import { ensureError, Roles } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
@@ -216,6 +216,18 @@ import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment ViewerCommentThreadData on Comment {
+    id
+    permissions {
+      canArchive {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -235,14 +247,9 @@ const { isEmbedEnabled } = useEmbed()
 
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
-const { activeUser, isLoggedIn } = useActiveUser()
+const { isLoggedIn } = useActiveUser()
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
-const {
-  resources: {
-    response: { project }
-  }
-} = useInjectedViewerState()
 
 const { projectId } = useInjectedViewerState()
 const canReply = useCheckViewerCommentingAccess()
@@ -401,10 +408,7 @@ const changeExpanded = async (newVal: boolean) => {
 }
 
 const canArchiveOrUnarchive = computed(
-  () =>
-    activeUser.value &&
-    (props.modelValue.author.id === activeUser.value.id ||
-      project.value?.role === Roles.Stream.Owner)
+  () => props.modelValue.permissions.canArchive.authorized
 )
 
 const toggleCommentResolvedStatus = async () => {

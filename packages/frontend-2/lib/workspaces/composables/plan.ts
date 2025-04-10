@@ -87,7 +87,9 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
-  const billingCycleEnd = computed(() => subscription.value?.currentBillingCycleEnd)
+  const currentBillingCycleEnd = computed(
+    () => subscription.value?.currentBillingCycleEnd
+  )
 
   // Seat information
   const seats = computed(() => subscription.value?.seats)
@@ -118,7 +120,7 @@ export const useWorkspacePlan = (slug: string) => {
     isFreePlan,
     billingInterval,
     intervalIsYearly,
-    billingCycleEnd,
+    currentBillingCycleEnd,
     statusIsCancelationScheduled,
     subscription,
     seats,
