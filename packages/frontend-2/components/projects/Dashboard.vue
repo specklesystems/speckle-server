@@ -2,6 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
+      <ProjectsMoveToWorkspaceAlert :days-left="30" />
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
         <h1 class="text-heading-lg">Projects</h1>
