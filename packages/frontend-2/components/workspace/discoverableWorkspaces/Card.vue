@@ -1,9 +1,13 @@
 <template>
-  <WorkspaceCard
-    :logo="workspace.logo ?? ''"
-    :name="workspace.name"
-    :team-count="workspace.team?.totalCount ?? 0"
-  >
+  <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
+    <template #text>
+      <div class="flex flex-col gap-y-1">
+        <div class="text-body-2xs">
+          {{ workspace.description }}
+        </div>
+        <div class="text-body-2xs">{{ workspace.team?.totalCount }} members</div>
+      </div>
+    </template>
     <template #actions>
       <FormButton
         v-if="workspace.requestStatus"
@@ -17,7 +21,7 @@
       <FormButton v-else color="outline" size="sm" @click="onRequest">
         Request to join
       </FormButton>
-      <FormButton color="subtle" size="sm" @click="onDismiss">Dismiss</FormButton>
+      <FormButton color="subtle" size="sm">Dismiss</FormButton>
     </template>
   </WorkspaceCard>
 </template>
@@ -34,14 +38,9 @@ const props = defineProps<{
   workspace: WorkspaceWithStatus
 }>()
 
-const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
-  useDiscoverableWorkspaces()
+const { requestToJoinWorkspace } = useDiscoverableWorkspaces()
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace.id)
-}
-
-const onDismiss = () => {
-  dismissDiscoverableWorkspace(props.workspace.id)
 }
 </script>
