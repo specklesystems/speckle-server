@@ -8,7 +8,7 @@
         @processed="onInviteAccepted"
       />
       <ProjectsMoveToWorkspaceAlert
-        v-if="isWorkspacesEnabled"
+        v-if="isWorkspacesEnabled && !project.workspace"
         :project-id="project.id"
       />
 
