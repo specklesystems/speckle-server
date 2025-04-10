@@ -813,15 +813,13 @@ export = {
       subscribe: filteredSubscribe(
         CommentSubscriptions.ViewerActivity,
         async (payload, variables, context) => {
-          const stream = await getStream({
-            streamId: payload.streamId,
-            userId: context.userId
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
           })
+          throwIfAuthNotOk(canReadProject)
 
-          if (!stream?.allowPublicComments && !stream?.role)
-            throw new ForbiddenError('You are not authorized.')
-
-          // dont report users activity to himself
+          // dont report user's activity to themselves
           if (context.userId && context.userId === payload.authorId) {
             return false
           }
@@ -837,13 +835,11 @@ export = {
       subscribe: filteredSubscribe(
         CommentSubscriptions.CommentActivity,
         async (payload, variables, context) => {
-          const stream = await getStream({
-            streamId: payload.streamId,
-            userId: context.userId
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
           })
-
-          if (!stream?.allowPublicComments && !stream?.role)
-            throw new ForbiddenError('You are not authorized.')
+          throwIfAuthNotOk(canReadProject)
 
           // if we're listening for a stream's root comments events
           if (!variables.resourceIds) {
@@ -893,13 +889,11 @@ export = {
       subscribe: filteredSubscribe(
         CommentSubscriptions.CommentThreadActivity,
         async (payload, variables, context) => {
-          const stream = await getStream({
-            streamId: payload.streamId,
-            userId: context.userId
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
           })
-
-          if (!stream?.allowPublicComments && !stream?.role)
-            throw new ForbiddenError('You are not authorized.')
+          throwIfAuthNotOk(canReadProject)
 
           return (
             payload.streamId === variables.streamId &&
@@ -919,21 +913,17 @@ export = {
           if (!target.resourceIdString.trim().length) return false
           if (payload.projectId !== target.projectId) return false
 
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.projectId
+          })
+          throwIfAuthNotOk(canReadProject)
+
           const projectDb = await getProjectDbClient({ projectId: payload.projectId })
           const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
             db: projectDb
           })
-
-          const [stream, requestedResourceItems] = await Promise.all([
-            getStream({
-              streamId: payload.projectId,
-              userId: context.userId
-            }),
-            getViewerResourceItemsUngrouped(target)
-          ])
-
-          if (!stream?.isPublic && !stream?.role)
-            throw new ForbiddenError('You are not authorized.')
+          const requestedResourceItems = await getViewerResourceItemsUngrouped(target)
 
           // dont report users activity to himself
           if (
@@ -959,21 +949,18 @@ export = {
           const target = variables.target
           if (payload.projectId !== target.projectId) return false
 
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.projectId
+          })
+          throwIfAuthNotOk(canReadProject)
+
           const projectDb = await getProjectDbClient({ projectId: payload.projectId })
           const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
             db: projectDb
           })
 
-          const [stream, requestedResourceItems] = await Promise.all([
-            getStream({
-              streamId: payload.projectId,
-              userId: context.userId
-            }),
-            getViewerResourceItemsUngrouped(target)
-          ])
-
-          if (!(stream?.isDiscoverable || stream?.isPublic) && !stream?.role)
-            throw new ForbiddenError('You are not authorized.')
+          const requestedResourceItems = await getViewerResourceItemsUngrouped(target)
 
           if (!target.resourceIdString) {
             return true
