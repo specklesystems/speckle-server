@@ -186,9 +186,7 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors(
-          'Attempting to invite into a non-existant workspace'
-        )
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -226,7 +224,7 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -269,7 +267,7 @@ describe('Workspaces Invites GQL', () => {
           }))
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })
 
@@ -739,7 +737,7 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.cancel).to.not.be.ok
 
         const invite = await findInviteFactory({ db })({

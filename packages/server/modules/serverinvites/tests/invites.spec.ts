@@ -392,7 +392,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'Invalid project ID'
+            'Project not found'
           )
         })
 
@@ -418,7 +418,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'You are not authorized to access this resource'
+            'You do not have access to the project'
           )
         })
 
@@ -873,7 +873,7 @@ describe('[Stream & Server Invites]', () => {
         expect(data!.stream!.pendingCollaborators).to.be.not.ok
         expect(errors).to.be.ok
         expect(errors!.map((e) => e.message).join('|')).to.contain(
-          'You are not authorized to access this resource'
+          'You do not have access to the project'
         )
       })
     })

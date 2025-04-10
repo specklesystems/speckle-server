@@ -2,9 +2,7 @@ import { err, ok } from 'true-myth/result'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
-import { ensureWorkspacesEnabledFragment } from '../../fragments/workspaces.js'
 import {
-  WorkspacesNotEnabledError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError,
@@ -29,7 +27,6 @@ type PolicyLoaderKeys =
 type PolicyArgs = MaybeUserContext & ProjectContext
 
 type PolicyErrors =
-  | InstanceType<typeof WorkspacesNotEnabledError>
   | InstanceType<typeof ServerNoAccessError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ProjectNoAccessError>
@@ -40,9 +37,6 @@ type PolicyErrors =
 export const canInvitePolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
   (loaders) =>
   async ({ userId, projectId }) => {
-    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
-    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
-
     const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.User
