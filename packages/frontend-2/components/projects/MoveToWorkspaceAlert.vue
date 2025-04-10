@@ -1,5 +1,5 @@
 <template>
-  <CommonCard class="!p-3 !bg-foundation">
+  <CommonCard class="!p-3 !bg-foundation mb-4">
     <div class="flex gap-2 text-foreground">
       <ExclamationCircleIcon class="h-8 w-8 m-1 text-warning" />
       <div class="flex flex-col gap-4">
