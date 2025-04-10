@@ -85,16 +85,13 @@
                 as workspace members or administrators.
               </p>
             </div>
-            <div v-tippy="tooltipText">
+            <div key="tooltipText" v-tippy="switchDisabled ? tooltipText : undefined">
               <!-- Never disable switch when domain protection is enabled to
                allow expired workspaces ability to downgrade-->
               <FormSwitch
                 v-model="isDomainProtectionEnabled"
                 :show-label="false"
-                :disabled="
-                  !isDomainProtectionEnabled &&
-                  (!hasWorkspaceDomains || !hasAccessToDomainBasedSecurityPolicies)
-                "
+                :disabled="switchDisabled"
                 name="domain-protection"
               />
             </div>
@@ -262,6 +259,13 @@ const isDomainDiscoverabilityEnabled = computed({
       })
     }
   }
+})
+
+const switchDisabled = computed(() => {
+  if (isDomainProtectionEnabled.value) return false
+  if (!hasAccessToDomainBasedSecurityPolicies.value) return true
+  if (!hasWorkspaceDomains.value) return true
+  return false
 })
 
 const tooltipText = computed(() => {
