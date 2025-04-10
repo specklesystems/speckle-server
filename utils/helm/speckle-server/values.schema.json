@@ -624,6 +624,156 @@
       "default": [],
       "items": {}
     },
+    "billing": {
+      "type": "object",
+      "properties": {
+        "secretName": {
+          "type": "string",
+          "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+          "default": ""
+        },
+        "stripeApiKey": {
+          "type": "object",
+          "properties": {
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the stripeApiKey secret as its value.",
+              "default": "stripeApiKey"
+            }
+          }
+        },
+        "stripeEndpointSigningKey": {
+          "type": "object",
+          "properties": {
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.",
+              "default": "stripeEndpointSigningKey"
+            }
+          }
+        },
+        "workspaceGuestSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Guest Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyGuestSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Guest Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyGuestSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Guest Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceStarterSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Starter Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyStarterSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Starter Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyStarterSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Starter Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspacePlusSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Plus Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyPlusSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Plus Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyPlusSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Plus Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceBusinessSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Business Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyBusinessSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Business Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyBusinessSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Business Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceTeamSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Team Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceTeamUnlimitedSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Team Unlimited Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamUnlimitedSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamUnlimitedSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceProSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Pro Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceProUnlimitedSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Pro Unlimited Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProUnlimitedSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProUnlimitedSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {
@@ -798,156 +948,6 @@
             "secretKey": {
               "type": "string",
               "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
-              "default": ""
-            }
-          }
-        },
-        "billing": {
-          "type": "object",
-          "properties": {
-            "secretName": {
-              "type": "string",
-              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": ""
-            },
-            "stripeApiKey": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the stripeApiKey secret as its value.",
-                  "default": "stripeApiKey"
-                }
-              }
-            },
-            "stripeEndpointSigningKey": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.",
-                  "default": "stripeEndpointSigningKey"
-                }
-              }
-            },
-            "workspaceGuestSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Guest Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyGuestSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Guest Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyGuestSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Guest Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceStarterSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Starter Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyStarterSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Starter Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyStarterSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Starter Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspacePlusSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Plus Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyPlusSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Plus Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyPlusSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Plus Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceBusinessSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Business Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyBusinessSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Business Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyBusinessSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Business Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceTeamSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Team Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyTeamSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyTeamSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceTeamUnlimitedSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Team Unlimited Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyTeamUnlimitedSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyTeamUnlimitedSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceProSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Pro Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyProSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyProSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceProUnlimitedSeatStripeProductId": {
-              "type": "string",
-              "description": "The workspace Pro Unlimited Seat Product Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceMonthlyProUnlimitedSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
-              "default": ""
-            },
-            "workspaceYearlyProUnlimitedSeatStripePriceId": {
-              "type": "string",
-              "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
               "default": ""
             }
           }
@@ -1560,6 +1560,12 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the server pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1712,6 +1718,12 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the objects pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1839,6 +1851,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the frontend_2 pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1854,6 +1872,16 @@
           "type": "boolean",
           "description": "Allows using a dedicated redis url for the preview service job queue",
           "default": false
+        },
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, the Preview Service will be deployed with GPU support. Assumes Vulkan driver is available on the host node.",
+              "default": false
+            }
+          }
         },
         "replicas": {
           "type": "number",
@@ -2006,6 +2034,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Preview service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2123,6 +2157,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Webhook service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2256,6 +2296,12 @@
             }
           }
         },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the FileImport service pod",
+          "default": [],
+          "items": {}
+        },
         "time_limit_min": {
           "type": "number",
           "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
@@ -2377,6 +2423,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Monitoring pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2452,6 +2504,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Test pod",
+          "default": [],
+          "items": {}
         }
       }
     }

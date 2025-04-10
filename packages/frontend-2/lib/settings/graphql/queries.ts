@@ -61,14 +61,6 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
   }
 `)
 
-export const settingsWorkspacesMembersGuestsQuery = graphql(`
-  query SettingsWorkspacesMembersGuests($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersGuestsTable_Workspace
-    }
-  }
-`)
-
 export const settingsWorkspacesMembersInvitesQuery = graphql(`
   query SettingsWorkspacesMembersInvites($slug: String!) {
     workspaceBySlug(slug: $slug) {
@@ -118,9 +110,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
     $filter: WorkspaceProjectsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      id
-      slug
-      readOnly
+      ...SettingsWorkspacesProjects_Workspace
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection

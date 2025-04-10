@@ -78,6 +78,7 @@ const takeScreenshot: TakeScreenshot = async () => {
     viewer.requestRender(UpdateFlags.RENDER_RESET)
     await waitForAnimation(10)
     ret.screenshots[i + ''] = await viewer.screenshot()
+    console.log(`Screenshot taken at ${i}`)
   }
   ret.durationSeconds = (Date.now() - t0) / 1000
   return ret

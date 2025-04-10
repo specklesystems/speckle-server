@@ -1,4 +1,4 @@
-import { get, isObjectLike } from '#lodash'
+import { get, isObjectLike, isString } from '#lodash'
 import { ValueOf } from 'type-fest'
 import { WorkspaceLimits } from '../../workspaces/helpers/limits.js'
 
@@ -17,8 +17,8 @@ export const defineAuthError = <
 }): {
   new (
     ...args: Payload extends undefined
-      ? [params?: { message?: string }]
-      : [params: { payload: Payload; message?: string }]
+      ? [params?: { message?: string } | string]
+      : [params: { payload: Payload; message?: string } | string]
   ): AuthError<ErrorCode, Payload>
   code: ErrorCode
 } => {
@@ -32,17 +32,19 @@ export const defineAuthError = <
 
     constructor(
       ...args: Payload extends undefined
-        ? [params?: { message?: string }]
-        : [params: { payload: Payload; message?: string }]
+        ? [params?: { message?: string } | string]
+        : [params: { payload: Payload; message?: string } | string]
     ) {
       const [params] = args
-      const message = params?.message || definition.message
+      const message = isString(params) ? params : params?.message || definition.message
       super(message)
 
       this.code = definition.code
       this.payload =
-        params && 'payload' in params ? params.payload : (undefined as Payload)
-      this.message = params?.message || definition.message
+        params && !isString(params) && 'payload' in params
+          ? params.payload
+          : (undefined as Payload)
+      this.message = message
       this.name = definition.code + 'Error'
     }
   }
@@ -60,6 +62,11 @@ export const ProjectNotFoundError = defineAuthError({
 export const ProjectNoAccessError = defineAuthError({
   code: 'ProjectNoAccess',
   message: 'You do not have access to the project'
+})
+
+export const ProjectLastOwnerError = defineAuthError({
+  code: 'ProjectLastOwner',
+  message: 'You are the last owner of this project'
 })
 
 export const WorkspacesNotEnabledError = defineAuthError({
@@ -88,6 +95,11 @@ export const WorkspaceLimitsReachedError = defineAuthError<
 >({
   code: 'WorkspaceLimitsReached',
   message: 'Workspace limits have been reached'
+})
+
+export const WorkspaceProjectMoveInvalidError = defineAuthError({
+  code: 'WorkspaceProjectMoveInvalid',
+  message: 'Projects already in a workspace cannot be moved to another workspace.'
 })
 
 export const WorkspaceSsoSessionNoAccessError = defineAuthError<

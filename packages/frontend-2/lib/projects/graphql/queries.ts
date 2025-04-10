@@ -13,15 +13,6 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
-export const projectRoleCheckQuery = graphql(`
-  query ProjectRoleCheck($id: String!) {
-    project(id: $id) {
-      id
-      role
-    }
-  }
-`)
-
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {
@@ -35,6 +26,7 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsHiddenProjectWarning_User
+      ...ProjectsDashboard_User
     }
   }
 `)
@@ -326,6 +318,7 @@ export const projectWebhooksQuery = graphql(`
     project(id: $projectId) {
       id
       name
+      ...ProjectPageSettingsWebhooks_Project
       webhooks {
         items {
           streamId
@@ -357,6 +350,21 @@ export const projectBlobInfoQuery = graphql(`
         fileType
         fileSize
         createdAt
+      }
+    }
+  }
+`)
+
+export const moveToWorkspaceDryRunQuery = graphql(`
+  query MoveToWorkspaceDryRun($workspaceId: String!, $projectId: String!, $limit: Int) {
+    project(id: $projectId) {
+      moveToWorkspaceDryRun(workspaceId: $workspaceId) {
+        addedToWorkspaceTotalCount
+        addedToWorkspace(limit: $limit) {
+          avatar
+          id
+          name
+        }
       }
     }
   }

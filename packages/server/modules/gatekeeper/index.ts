@@ -53,6 +53,7 @@ import {
   manageSubscriptionDownscaleFactoryOld
 } from '@/modules/gatekeeper/services/subscriptions/manageSubscriptionDownscale'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { migrateOldWorkspacePlans } from '@/modules/gatekeeper/services/planMigration'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -106,6 +107,24 @@ const scheduleWorkspaceSubscriptionDownscale = ({
         manageSubscriptionDownscaleOld({ logger }), // Only takes old plans subscriptions
         manageSubscriptionDownscaleNew({ logger }) // Only takes new plans subscriptions
       ])
+    }
+  )
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
+  let isMigrationComplete = false
+  let isMigrationRunning = false
+  const cronExpression = '*/5 * * * * *' // every 5 seconds
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceNewPlanMigration',
+    async (_scheduledTime, { logger }) => {
+      if (isMigrationComplete || isMigrationRunning) return
+      isMigrationRunning = true
+      await migrateOldWorkspacePlans({ db, stripe: getStripeClient(), logger })()
+      isMigrationRunning = false
+      isMigrationComplete = true
     }
   )
 }
@@ -232,6 +251,7 @@ const gatekeeperModule: SpeckleModule = {
           scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
           scheduleWorkspaceTrialEmails({ scheduleExecution }),
           scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+          // scheduleWorkspacePlanMigrations(scheduleExecution)
         ]
 
         quitListeners = initializeEventListenersFactory({

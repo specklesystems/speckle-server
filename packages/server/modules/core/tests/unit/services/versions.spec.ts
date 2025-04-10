@@ -58,7 +58,7 @@ describe('Module @core', () => {
       })
       it('should return null if version is outside of workspace limit', async () => {
         const getWorkspaceLimits = (() => ({
-          versionsHistory: { value: 1, unit: 'week' }
+          versionsHistory: { value: 7, unit: 'day' }
         })) as unknown as GetWorkspaceLimits
         const workspaceId = createRandomString()
         const tenDaysAgo = new Date()
@@ -76,7 +76,7 @@ describe('Module @core', () => {
       })
       it('should return version referencedObject if version is inside of workspace limit', async () => {
         const getWorkspaceLimits = (() => ({
-          versionsHistory: { value: 1, unit: 'week' }
+          versionsHistory: { value: 7, unit: 'day' }
         })) as unknown as GetWorkspaceLimits
         const workspaceId = createRandomString()
         const twoDaysAgo = new Date()
