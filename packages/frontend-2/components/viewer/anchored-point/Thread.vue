@@ -408,18 +408,18 @@ const canArchiveOrUnarchive = computed(
 )
 
 const toggleCommentResolvedStatus = async () => {
-  await archiveComment({
-    commentId: props.modelValue.id,
-    projectId: projectId.value,
-    archived: !props.modelValue.archived
-  })
-
   // Remove thread ID from URL when resolving
   if (!props.modelValue.archived) {
     const query = { ...router.currentRoute.value.query }
     delete query.thread
     await router.replace({ query })
   }
+
+  await archiveComment({
+    commentId: props.modelValue.id,
+    projectId: projectId.value,
+    archived: !props.modelValue.archived
+  })
 
   mp.track('Comment Action', {
     type: 'action',
