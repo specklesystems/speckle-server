@@ -64,7 +64,6 @@
           v-tippy="filter.key"
           class="text-body-2xs"
         >
-          PILS
           <button
             class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
             @click="
