@@ -7,6 +7,10 @@ import {
 import { ServerScope } from '@speckle/shared'
 import { Merge } from 'type-fest'
 
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
+const workspaceScopes = FF_WORKSPACES_MODULE_ENABLED ? [Scopes.Workspaces.Read] : []
+
 export enum DefaultAppIds {
   Web = 'spklwebapp',
   Explorer = 'explorer',
@@ -57,7 +61,7 @@ const SpeckleDesktopApp = {
     Scopes.Profile.Email,
     Scopes.Users.Read,
     Scopes.Users.Invite,
-    Scopes.Workspaces.Read
+    ...workspaceScopes
   ]
 }
 
@@ -76,7 +80,7 @@ const SpeckleConnectorApp = {
     Scopes.Profile.Email,
     Scopes.Users.Read,
     Scopes.Users.Invite,
-    Scopes.Workspaces.Read
+    ...workspaceScopes
   ]
 }
 
@@ -97,7 +101,7 @@ const SpeckleDesktopAuthService = {
     Scopes.Profile.Email,
     Scopes.Users.Read,
     Scopes.Users.Invite,
-    Scopes.Workspaces.Read
+    ...workspaceScopes
   ]
 }
 
