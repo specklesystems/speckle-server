@@ -1,11 +1,6 @@
 <template>
   <div>
-    <LayoutDialog
-      v-model:open="open"
-      max-width="sm"
-      :buttons="dialogButtons"
-      prevent-close-on-click-outside
-    >
+    <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
       <template #header>Confirm move</template>
       <BillingTransitionCards
         :current-state="transitionItems.project"

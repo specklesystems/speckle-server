@@ -11,12 +11,7 @@
                 v-for="ws in workspaces"
                 :key="ws.id"
                 class="w-full"
-                @click="
-                  () => {
-                    selectedWorkspace = ws
-                    showConfirmDialog = true
-                  }
-                "
+                @click="handleWorkspaceClick(ws)"
               >
                 <WorkspaceCard
                   :logo="ws.logo ?? ''"
@@ -85,7 +80,6 @@
     />
 
     <WorkspacePlanLimitReachedDialog
-      v-if="activeLimit"
       v-model:open="showLimitReachedDialog"
       :title="dialogTitle"
     >
@@ -106,6 +100,7 @@ import { UserAvatarGroup } from '@speckle/ui-components'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { Roles } from '@speckle/shared'
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -181,7 +176,7 @@ const { result } = useQuery(query, null, () => ({
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
 
-const activeWorkspaceSlug = computed(() => props.workspace?.slug || '')
+const activeWorkspaceSlug = computed(() => selectedWorkspace.value?.slug || '')
 
 const dialogTitle = computed(() => {
   if (limitType.value === 'project') return 'Project limit reached'
@@ -194,6 +189,8 @@ const { canAddProject, canAddModels, limits } = useWorkspaceLimits(
   activeWorkspaceSlug.value
 )
 
+const { plan } = useWorkspacePlan(activeWorkspaceSlug.value)
+
 const showLimitReachedDialog = ref(false)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
@@ -201,22 +198,46 @@ const hasWorkspaces = computed(() => workspaces.value.length > 0)
 
 // Determine which limit type is hit
 const limitType = computed((): 'project' | 'model' | null => {
+  if (!selectedWorkspace.value) return null
   if (!canAddProject.value) return 'project'
 
   const projectModelCount = props.project?.modelCount.totalCount
   if (!canAddModels(projectModelCount)) return 'model'
+
+  // Check free plan project limit
+  const currentProjectCount = plan.value?.usage?.projectCount || 0
+  if (plan.value?.name === 'free' && currentProjectCount >= 3) return 'project'
 
   return null
 })
 
 // Get the value of the limit that's hit
 const activeLimit = computed(() => {
-  if (limitType.value === 'project') return limits.value.projectCount ?? 0
+  if (!selectedWorkspace.value) return 0
+  if (limitType.value === 'project') {
+    // For free plan, show the actual limit
+    if (plan.value?.name === 'free') return 3
+    return limits.value.projectCount ?? 0
+  }
   if (limitType.value === 'model') return limits.value.modelCount ?? 0
   return 0
 })
 
 const showConfirmDialog = ref(false)
+
+const handleWorkspaceClick = (ws: ProjectsMoveToWorkspaceDialog_WorkspaceFragment) => {
+  selectedWorkspace.value = ws
+
+  const hasReachedProjectLimit = computed(() => {
+    return false
+  })
+
+  if (hasReachedProjectLimit.value) {
+    showLimitReachedDialog.value = true
+  } else {
+    showConfirmDialog.value = true
+  }
+}
 
 watch(
   () => open.value,

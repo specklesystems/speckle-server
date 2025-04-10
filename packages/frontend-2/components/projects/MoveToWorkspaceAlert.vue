@@ -49,6 +49,7 @@
       :project="selectedProject"
       event-source="move-to-workspace-alert"
     />
+    <WorkspaceMoveProjectsDialog v-model:open="showMoveProjectsDialog" />
   </div>
 </template>
 
@@ -71,6 +72,7 @@ const props = defineProps<{
 }>()
 
 const showMoveToWorkspaceDialog = ref(false)
+const showMoveProjectsDialog = ref(false)
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | undefined>(
   undefined
 )
@@ -93,6 +95,6 @@ const onMoveProject = () => {
 
 const onShowProjectsToMove = () => {
   selectedProject.value = undefined
-  showMoveToWorkspaceDialog.value = true
+  showMoveProjectsDialog.value = true
 }
 </script>
