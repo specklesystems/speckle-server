@@ -127,6 +127,16 @@ export const ServerNoSessionError = defineAuthError({
   message: 'You are not logged in to this server'
 })
 
+export const CommentNotFoundError = defineAuthError({
+  code: 'CommentNotFound',
+  message: 'Comment not found'
+})
+
+export const CommentNoAccessError = defineAuthError({
+  code: 'CommentNoAccess',
+  message: 'You do not have access to this comment'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

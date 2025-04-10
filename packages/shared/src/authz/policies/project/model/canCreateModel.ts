@@ -8,17 +8,17 @@ import {
   ServerNoSessionError,
   ServerNoAccessError,
   WorkspaceReadOnlyError
-} from '../../domain/authErrors.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
-import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
-import { AuthPolicy } from '../../domain/policies.js'
-import { Roles } from '../../../core/constants.js'
-import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
-import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
+} from '../../../domain/authErrors.js'
+import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
+import { AuthCheckContextLoaderKeys } from '../../../domain/loaders.js'
+import { AuthPolicy } from '../../../domain/policies.js'
+import { Roles } from '../../../../core/constants.js'
+import { isWorkspacePlanStatusReadOnly } from '../../../../workspaces/index.js'
+import { ensureMinimumServerRoleFragment } from '../../../fragments/server.js'
 import {
   ensureMinimumProjectRoleFragment,
   ensureProjectWorkspaceAccessFragment
-} from '../../fragments/projects.js'
+} from '../../../fragments/projects.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv

@@ -297,7 +297,7 @@ export = {
   },
   ModelMutations: {
     async create(_parent, args, ctx) {
-      const canCreate = await ctx.authPolicies.project.canCreateModel({
+      const canCreate = await ctx.authPolicies.project.model.canCreate({
         userId: ctx.userId,
         projectId: args.input.projectId
       })
