@@ -1,19 +1,22 @@
 <template>
-  <CommonCard class="w-full bg-foundation">
+  <CommonCard
+    class="w-full bg-foundation border-outline-2 !p-4"
+    :class="{
+      'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400': clickable
+    }"
+    @click="clickable && onClick"
+  >
     <div class="flex justify-between gap-4">
       <div class="flex gap-4">
         <WorkspaceAvatar :name="name" :logo="logo" size="xl" />
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
-          <div class="flex flex-col flex-1">
-            <h6 class="text-heading-sm">{{ name }}</h6>
-            <p class="text-body-2xs text-foreground-2">
-              {{ teamCount }}
-              {{ teamCount === 1 ? 'member' : 'members' }}
-            </p>
+          <div class="flex flex-col items-start text-body-2xs text-foreground-2">
+            <h6 class="text-heading-sm text-foreground">{{ name }}</h6>
+            <slot name="text"></slot>
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-y-2">
+      <div class="flex flex-col gap-y-2" @click.stop>
         <slot name="actions"></slot>
       </div>
     </div>
@@ -21,9 +24,19 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   logo: string
   name: string
-  teamCount: number
+  clickable?: boolean
 }>()
+
+const emit = defineEmits<{
+  (e: 'click'): void
+}>()
+
+const onClick = () => {
+  if (props.clickable) {
+    emit('click')
+  }
+}
 </script>
