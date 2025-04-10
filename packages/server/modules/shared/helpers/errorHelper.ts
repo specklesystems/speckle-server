@@ -1,6 +1,11 @@
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import { BadRequestError, BaseError, ForbiddenError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  BaseError,
+  ForbiddenError,
+  NotFoundError
+} from '@/modules/shared/errors'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
 import { VError } from 'verror'
@@ -48,6 +53,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new WorkspacesModuleDisabledError()
     case Authz.ProjectLastOwnerError.code:
       return new BadRequestError(e.message)
+    case Authz.CommentNotFoundError.code:
+      return new NotFoundError(e.message)
     default:
       throwUncoveredError(e)
   }

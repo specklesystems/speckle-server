@@ -38,6 +38,7 @@ generates:
         ServerStats: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
+        CommentPermissionChecks: '@/modules/comments/helpers/graphTypes#CommentPermissionChecksGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         StreamCollaborator: '@/modules/core/helpers/graphTypes#StreamCollaboratorGraphQLReturn'
         ProjectCollaborator: '@/modules/core/helpers/graphTypes#ProjectCollaboratorGraphQLReturn'

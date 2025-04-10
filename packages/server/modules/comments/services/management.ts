@@ -90,33 +90,6 @@ export const authorizeProjectCommentsAccessFactory =
     return project
   }
 
-export const authorizeCommentAccessFactory =
-  (
-    deps: {
-      getComment: GetComment
-    } & AuthorizeProjectCommentsAccessDeps
-  ) =>
-  async (params: {
-    authCtx: AuthContext
-    commentId: string
-    requireProjectRole?: boolean
-  }) => {
-    const { authCtx, commentId, requireProjectRole } = params
-    const comment = await deps.getComment({
-      id: commentId,
-      userId: authCtx.userId
-    })
-    if (!comment) {
-      throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
-    }
-
-    return authorizeProjectCommentsAccessFactory(deps)({
-      projectId: comment.streamId,
-      authCtx,
-      requireProjectRole
-    })
-  }
-
 export const createCommentThreadAndNotifyFactory =
   (deps: {
     getViewerResourceItemsUngrouped: GetViewerResourceItemsUngrouped
@@ -311,10 +284,7 @@ export const archiveCommentAndNotifyFactory =
     }
 
     const stream = await deps.getStream({ streamId: comment.streamId, userId })
-    if (
-      !stream ||
-      (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
-    ) {
+    if (!stream) {
       throw new CommentUpdateError(
         'You do not have permissions to archive this comment'
       )

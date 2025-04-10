@@ -20,7 +20,9 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     },
     comment: {
       canCreate: canCreateProjectCommentPolicy(loaders),
-      canArchive: canArchiveProjectCommentPolicy(loaders)
+      canArchive: canArchiveProjectCommentPolicy(loaders),
+      // edit/archive - same check
+      canEdit: canArchiveProjectCommentPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
