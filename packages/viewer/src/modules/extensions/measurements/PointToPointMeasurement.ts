@@ -12,6 +12,12 @@ import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
+const vec3Buff0: Vector3 = new Vector3()
+const vec3Buff1: Vector3 = new Vector3()
+const vec3Buff2: Vector3 = new Vector3()
+const vec3Buff3: Vector3 = new Vector3()
+const vec3Buff4: Vector3 = new Vector3()
+
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
@@ -61,14 +67,10 @@ export class PointToPointMeasurement extends Measurement {
     this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
-      const startLine1 = Measurement.vec3Buff1
+      const startLine0 = vec3Buff0.copy(this.startPoint)
+      const startLine1 = vec3Buff1
         .copy(this.startPoint)
-        .add(
-          Measurement.vec3Buff2
-            .copy(this.startNormal)
-            .multiplyScalar(this.startLineLength)
-        )
+        .add(vec3Buff2.copy(this.startNormal).multiplyScalar(this.startLineLength))
       this.startGizmo?.updateLine([startLine0, startLine1])
       this.endGizmo?.enable(false, false, false, false)
     }
@@ -76,23 +78,14 @@ export class PointToPointMeasurement extends Measurement {
       this.startLineLength = this.startPoint.distanceTo(this.endPoint)
       this.value = this.startLineLength
 
-      const endStartDir = Measurement.vec3Buff0
-        .copy(this.endPoint)
-        .sub(this.startPoint)
-        .normalize()
-      const lineEndPoint = Measurement.vec3Buff1
+      const endStartDir = vec3Buff0.copy(this.endPoint).sub(this.startPoint).normalize()
+      const lineEndPoint = vec3Buff1
         .copy(this.startPoint)
-        .add(
-          Measurement.vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength)
-        )
+        .add(vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength))
 
-      const textPos = Measurement.vec3Buff3
+      const textPos = vec3Buff3
         .copy(this.startPoint)
-        .add(
-          Measurement.vec3Buff4
-            .copy(endStartDir)
-            .multiplyScalar(this.startLineLength * 0.5)
-        )
+        .add(vec3Buff4.copy(endStartDir).multiplyScalar(this.startLineLength * 0.5))
 
       this.startGizmo?.updateLine([this.startPoint, lineEndPoint])
       this.endGizmo?.updatePoint(lineEndPoint)

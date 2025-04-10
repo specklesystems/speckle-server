@@ -31,7 +31,7 @@ const _vec32 = new Vector3()
 
 export class AreaMeasurement extends Measurement {
   /** We store all gizmos here */
-  private pointGizmos: MeasurementPointGizmo[]
+  private pointGizmos: MeasurementPointGizmo[] = []
 
   /** This stores the last touched point position and normal */
   private surfacePoint: Vector3 = new Vector3()
@@ -62,10 +62,16 @@ export class AreaMeasurement extends Measurement {
     })
   }
 
+  public get bounds(): Box3 {
+    const box = new Box3()
+    this.polygonPoints.forEach((point: Vector3) => box.expandByPoint(point))
+    return box
+  }
+
   public constructor() {
     super()
+
     this.type = 'AreaMeasurement'
-    this.pointGizmos = []
     /** We create the initial gizmo */
     const gizmo = new MeasurementPointGizmo()
     gizmo.enable(false, true, true, false)
@@ -77,6 +83,7 @@ export class AreaMeasurement extends Measurement {
     this.polygonPoints.push(new Vector3())
   }
 
+  /** Frame */
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
     this.pointGizmos.forEach((gizmo: MeasurementPointGizmo) => {
@@ -321,7 +328,6 @@ export class AreaMeasurement extends Measurement {
     this.fillPolygon.visible = true
 
     const [axis1, axis2] = this.chooseProjectionAxes(this.planeNormal)
-
     const projectedPoints = points.map(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
