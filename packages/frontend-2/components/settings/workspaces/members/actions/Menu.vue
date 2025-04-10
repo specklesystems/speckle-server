@@ -60,7 +60,6 @@
       v-model:open="showDialog"
       :workspace="workspace"
       :is-only-admin="hasSingleAdmin"
-      @success="onDialogSuccess"
     />
 
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
