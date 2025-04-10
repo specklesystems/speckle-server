@@ -73,7 +73,7 @@ const takeScreenshot: TakeScreenshot = async () => {
   cameraController.setCameraView([], false, 0.95)
   await waitForAnimation(100)
 
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 1; i++) {
     cameraController.setCameraView({ azimuth: Math.PI / 12, polar: 0 }, false)
     viewer.requestRender(UpdateFlags.RENDER_RESET)
     await waitForAnimation(10)
