@@ -12,9 +12,9 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import {
+  MaybeProjectContext,
   MaybeUserContext,
-  ProjectContext,
-  WorkspaceContext
+  MaybeWorkspaceContext
 } from '../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
@@ -40,7 +40,7 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspaceLimits
   | typeof AuthCheckContextLoaderKeys.getWorkspaceProjectCount
 
-type PolicyArgs = MaybeUserContext & ProjectContext & WorkspaceContext
+type PolicyArgs = MaybeUserContext & MaybeProjectContext & MaybeWorkspaceContext
 
 type PolicyErrors =
   | InstanceType<typeof ProjectNotFoundError>
@@ -64,48 +64,57 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
     const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
     if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
 
-    // We do not support moving projects that are already in a workspace
-    const project = await loaders.getProject({ projectId })
-    if (!project) return err(new ProjectNotFoundError())
-    if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
-
     const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
       userId,
       role: Roles.Server.User
     })
     if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
-      userId: userId!,
-      projectId,
-      role: Roles.Stream.Owner
-    })
-    if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+    if (projectId) {
+      // We do not support moving projects that are already in a workspace
+      const project = await loaders.getProject({ projectId })
+      if (!project) return err(new ProjectNotFoundError())
+      if (!!project.workspaceId) return err(new WorkspaceProjectMoveInvalidError())
 
-    const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
-      {
+      const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+        userId: userId!,
+        projectId,
+        role: Roles.Stream.Owner
+      })
+      if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+    }
+
+    if (workspaceId) {
+      const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(
+        loaders
+      )({
         userId: userId!,
         workspaceId,
         role: Roles.Workspace.Admin
-      }
-    )
-    if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
+      })
+      if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
 
-    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) return err(new WorkspaceNoAccessError())
-    if (isWorkspacePlanStatusReadOnly(workspacePlan.status))
-      return err(new WorkspaceReadOnlyError())
+      const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+      if (!workspacePlan) return err(new WorkspaceNoAccessError())
+      if (isWorkspacePlanStatusReadOnly(workspacePlan.status))
+        return err(new WorkspaceReadOnlyError())
 
-    const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
-    if (!workspaceLimits) return err(new WorkspaceNoAccessError())
+      const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
+      if (!workspaceLimits) return err(new WorkspaceNoAccessError())
 
-    if (workspaceLimits.projectCount === null) return ok()
+      if (workspaceLimits.projectCount === null) return ok()
 
-    const currentProjectCount = await loaders.getWorkspaceProjectCount({ workspaceId })
+      const currentProjectCount = await loaders.getWorkspaceProjectCount({
+        workspaceId
+      })
 
-    if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
+      if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
 
-    return currentProjectCount < workspaceLimits.projectCount
-      ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+      if (currentProjectCount >= workspaceLimits.projectCount)
+        return err(
+          new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } })
+        )
+    }
+
+    return ok()
   }

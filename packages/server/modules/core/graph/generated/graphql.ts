@@ -2580,7 +2580,7 @@ export type ProjectPermissionChecks = {
 
 
 export type ProjectPermissionChecksCanMoveToWorkspaceArgs = {
-  workspaceId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectRole = {
@@ -4789,7 +4789,7 @@ export type WorkspacePermissionChecks = {
 
 
 export type WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs = {
-  projectId: Scalars['String']['input'];
+  projectId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspacePlan = {
@@ -6679,7 +6679,7 @@ export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, Paren
   canCreateComment?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canCreateModel?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canLeave?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
-  canMoveToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, RequireFields<ProjectPermissionChecksCanMoveToWorkspaceArgs, 'workspaceId'>>;
+  canMoveToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<ProjectPermissionChecksCanMoveToWorkspaceArgs>>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadSettings?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadWebhooks?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
@@ -7393,7 +7393,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
 
 export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePermissionChecks'] = ResolversParentTypes['WorkspacePermissionChecks']> = {
   canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
-  canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, RequireFields<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs, 'projectId'>>;
+  canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

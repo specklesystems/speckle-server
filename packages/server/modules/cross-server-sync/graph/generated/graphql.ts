@@ -2560,7 +2560,7 @@ export type ProjectPermissionChecks = {
 
 
 export type ProjectPermissionChecksCanMoveToWorkspaceArgs = {
-  workspaceId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectRole = {
@@ -4769,7 +4769,7 @@ export type WorkspacePermissionChecks = {
 
 
 export type WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs = {
-  projectId: Scalars['String']['input'];
+  projectId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspacePlan = {

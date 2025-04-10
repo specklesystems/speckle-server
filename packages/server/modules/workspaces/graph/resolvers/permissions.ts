@@ -19,7 +19,7 @@ export default {
       const canMoveProjectToWorkspace =
         await ctx.authPolicies.project.canMoveToWorkspace({
           userId: ctx.userId,
-          projectId: args.projectId,
+          projectId: args.projectId ?? undefined,
           workspaceId: parent.workspaceId
         })
       return Authz.toGraphqlResult(canMoveProjectToWorkspace)

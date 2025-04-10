@@ -4,12 +4,6 @@
       title="Billing and plans"
       text="Update your payment information or switch plans according to your needs"
     />
-    <CommonAlert v-if="!isNewPlan" color="danger">
-      <template #title>You are on an old plan</template>
-      <template #description>
-        <p>If you are a server admin use the buttons below to upgrade</p>
-      </template>
-    </CommonAlert>
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isServerAdmin" class="flex flex-col gap-y-4 md:gap-y-6">
         <div class="flex gap-x-4">
@@ -36,31 +30,29 @@
           </FormButton>
         </div>
       </section>
-      <template v-if="isNewPlan">
-        <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Summary" subheading />
-          <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
-        </section>
+      <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Summary" subheading />
+        <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
+      </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Usage" subheading />
-          <SettingsWorkspacesBillingUsage :slug="slug" />
-        </section>
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Usage" subheading />
+        <SettingsWorkspacesBillingUsage :slug="slug" />
+      </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Upgrade your plan" subheading />
-          <PricingTable
-            :slug="slug"
-            :workspace-id="workspace?.id"
-            :role="workspace?.role as WorkspaceRoles"
-          />
-        </section>
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Upgrade your plan" subheading />
+        <PricingTable
+          :slug="slug"
+          :workspace-id="workspace?.id"
+          :role="workspace?.role as WorkspaceRoles"
+        />
+      </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Add-ons" subheading />
-          <SettingsWorkspacesBillingAddOns :slug="slug" />
-        </section>
-      </template>
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Add-ons" subheading />
+        <SettingsWorkspacesBillingAddOns :slug="slug" />
+      </section>
     </div>
   </div>
 </template>
@@ -88,7 +80,7 @@ const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const { isAdmin: isServerAdmin } = useActiveUser()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isPurchasablePlan, isNewPlan } = useWorkspacePlan(slug.value)
+const { isPurchasablePlan } = useWorkspacePlan(slug.value)
 const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
