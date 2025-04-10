@@ -41,4 +41,5 @@ Do this to build:
 ```bash
 cd ./packages/fileimport-service/src/ifc-dotnet
 
+dotnet publish ifc-converter.csproj -c Release -o output/
 ```
