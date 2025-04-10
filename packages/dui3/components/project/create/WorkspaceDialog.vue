@@ -3,10 +3,10 @@
     <slot name="activator" :toggle="toggleDialog"></slot>
     <CommonDialog
       v-model:open="showProjectCreateDialog"
-      :title="`Create new project`"
+      :title="canCreateProjectInWorkspace ? `Create new project` : errorMessage?.title"
       fullscreen="none"
     >
-      <form @submit="onSubmitCreateNewProject">
+      <form v-if="canCreateProjectInWorkspace" @submit="onSubmitCreateNewProject">
         <div class="text-body-2xs mb-2 ml-1">Project name</div>
         <FormTextInput
           v-model="newProjectName"
@@ -24,18 +24,36 @@
           full-width
         />
         <div class="mt-4 flex justify-end items-center space-x-2 w-full">
-          <FormButton size="sm" text @click="showProjectCreateDialog = false">
-            Cancel
-          </FormButton>
           <FormButton
             size="sm"
-            submit
-            :disabled="isCreatingProject || !canCreateProjectInWorkspace"
+            color="outline"
+            @click="showProjectCreateDialog = false"
           >
-            Create
+            Cancel
           </FormButton>
+          <FormButton size="sm" submit :disabled="isCreatingProject">Create</FormButton>
         </div>
       </form>
+      <div v-else class="m-2">
+        {{ errorMessage?.description }}
+        <div class="flex mt-2 space-x-2 justify-end">
+          <FormButton
+            size="sm"
+            color="outline"
+            @click="showProjectCreateDialog = false"
+          >
+            Close
+          </FormButton>
+          <FormButton
+            v-if="errorMessage?.cta"
+            size="sm"
+            submit
+            @click="errorMessage?.cta?.action(), (showProjectCreateDialog = false)"
+          >
+            {{ errorMessage?.cta?.name }}
+          </FormButton>
+        </div>
+      </div>
     </CommonDialog>
   </div>
 </template>
@@ -43,7 +61,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useMutation, provideApolloClient, useQuery } from '@vue/apollo-composable'
-import type { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  ProjectListProjectItemFragment,
+  WorkspaceListWorkspaceItemFragment
+} from '~/lib/common/generated/gql/graphql'
 import {
   canCreateProjectInWorkspaceQuery,
   createProjectInWorkspaceMutation
@@ -55,10 +76,21 @@ import { useHostAppStore } from '~/store/hostApp'
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 
+type WorkspacePermissionMessage = {
+  title: string
+  description: string
+  cta?: {
+    name: string
+    action: () => void
+  }
+}
+
+const { $openUrl } = useNuxtApp()
+
 const showProjectCreateDialog = ref(false)
 const isCreatingProject = ref(false)
 
-const props = defineProps<{ workspaceId?: string }>()
+const props = defineProps<{ workspace?: WorkspaceListWorkspaceItemFragment }>()
 
 const emit = defineEmits<{
   (e: 'project:created', result: ProjectListProjectItemFragment): void
@@ -72,7 +104,7 @@ const { activeAccount } = storeToRefs(accountStore)
 const accountId = computed(() => activeAccount.value.accountInfo.id)
 const newProjectName = ref<string>()
 
-const errorMessageForWorkspace = ref<string>()
+const errorMessage = ref<WorkspacePermissionMessage>()
 
 const toggleDialog = () => {
   showProjectCreateDialog.value = !showProjectCreateDialog.value
@@ -91,18 +123,40 @@ const canCreateProjectInWorkspace = ref<boolean>(!isLatest) // TODO: will be rem
 
 const { result: canCreateProjectInWorkspaceResult } = useQuery(
   canCreateProjectInWorkspaceQuery,
-  () => ({ workspaceId: props.workspaceId ?? 'null' }), // TODO: i do not know the potential cause here
+  () => ({ workspaceId: props.workspace?.id ?? 'null' }), // TODO: i do not know the potential cause here
   () => ({
     clientId: accountId.value,
     debounce: 500,
     fetchPolicy: 'network-only',
-    enabled: isLatest && !!props.workspaceId // TODO: will be removed once we have limits in app.speckle.systems
+    enabled: isLatest && !!props.workspace?.id // TODO: will be removed once we have limits in app.speckle.systems
   })
 )
 
 watch(canCreateProjectInWorkspaceResult, (val) => {
   if (val?.workspace.permissions.canCreateProject.code !== 'OK') {
-    errorMessageForWorkspace.value = val?.workspace.permissions.canCreateProject.message
+    switch (val?.workspace.permissions.canCreateProject.code) {
+      case 'WorkspaceLimitsReached':
+        errorMessage.value = {
+          title: 'Plan limit reached',
+          description:
+            'The project limit for this workspace has been reached. Upgrade the workspace plan to create or move more projects.',
+          cta: {
+            name: 'Explore Plans',
+            action: () =>
+              $openUrl(
+                `${account.value.accountInfo.serverInfo.url}/settings/workspaces/${props.workspace?.slug}/billing`
+              )
+          }
+        }
+        break
+      // TODO: we should add more cases later according to `code`
+      default:
+        errorMessage.value = {
+          title: 'Workspace warning',
+          description: val?.workspace.permissions.canCreateProject.message ?? 'error'
+        }
+        break
+    }
     canCreateProjectInWorkspace.value = false
   } else {
     canCreateProjectInWorkspace.value = true
@@ -127,7 +181,7 @@ const createNewProjectInWorkspace = async (name: string) => {
     useMutation(createProjectInWorkspaceMutation)
   )
   const res = await mutate({
-    input: { name, workspaceId: props.workspaceId as string }
+    input: { name, workspaceId: props.workspace?.id as string }
   })
   if (res?.data?.workspaceMutations.projects.create) {
     emit('project:created', res?.data?.workspaceMutations.projects.create)

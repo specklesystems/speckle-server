@@ -1,6 +1,18 @@
 <template>
   <div>
     <div class="space-y-2">
+      <div
+        v-if="isLimited && workspaceSlug"
+        class="flex items-center justify-between bg-foundation rounded-md border border-outline-3 p-1 space-x-2 text-xs"
+      >
+        <div class="ml-1">Upgrade to load older versions.</div>
+        <FormButton
+          size="sm"
+          @click="$openUrl(`${serverUrl}/settings/workspaces/${workspaceSlug}/billing`)"
+        >
+          Upgrade
+        </FormButton>
+      </div>
       <div v-if="latestVersion" class="grid grid-cols-2 gap-3 max-[275px]:grid-cols-1">
         <WizardListVersionCard
           v-for="(version, index) in versions"
@@ -10,7 +22,6 @@
           :latest-version-id="latestVersion.id"
           :selected-version-id="selectedVersionId"
           :project-id="projectId"
-          :referenced-object-id="version.referencedObject"
           :from-wizard="fromWizard"
           :account-id="accountId"
           @click="$emit('next', version, latestVersion)"
@@ -32,6 +43,7 @@
 import { useQuery } from '@vue/apollo-composable'
 import { modelVersionsQuery } from '~/lib/graphql/mutationsAndQueries'
 import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useAccountStore } from '~/store/accounts'
 
 defineEmits<{
   (
@@ -46,8 +58,12 @@ const props = defineProps<{
   projectId: string
   modelId: string
   selectedVersionId?: string
+  workspaceSlug?: string
   fromWizard?: boolean
 }>()
+
+const accountStore = useAccountStore()
+const serverUrl = computed(() => accountStore.activeAccount.accountInfo.serverInfo.url)
 
 const {
   result: modelVersionResults,
@@ -72,6 +88,10 @@ const {
 )
 
 const versions = computed(() => modelVersionResults.value?.project.model.versions.items)
+
+const isLimited = computed(
+  () => versions.value?.filter((v) => v.referencedObject === null).length !== 0
+)
 
 const hasReachedEnd = ref(false)
 

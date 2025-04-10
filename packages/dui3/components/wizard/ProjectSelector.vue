@@ -74,7 +74,7 @@
           <div class="flex justify-between items-center space-x-2">
             <ProjectCreateWorkspaceDialog
               v-if="selectedWorkspace && selectedWorkspace.id !== 'personalProject'"
-              :workspace-id="selectedWorkspace?.id"
+              :workspace="selectedWorkspace"
               @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
             >
               <template #activator="{ toggle }">
@@ -155,7 +155,12 @@ const { trackEvent } = useMixpanel()
 const { $openUrl } = useNuxtApp()
 
 const emit = defineEmits<{
-  (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
+  (
+    e: 'next',
+    accountId: string,
+    project: ProjectListProjectItemFragment,
+    workspace?: WorkspaceListWorkspaceItemFragment // NOTE: this nullabilities will disappear whenever we are workspace only
+  ): void
   (e: 'search-text-update', text: string | undefined): void
 }>()
 
@@ -251,7 +256,7 @@ const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   ) {
     return
   }
-  emit('next', accountId.value, project)
+  emit('next', accountId.value, project, selectedWorkspace.value)
 }
 
 const {

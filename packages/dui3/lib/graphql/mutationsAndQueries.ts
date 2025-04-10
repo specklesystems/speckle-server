@@ -61,6 +61,7 @@ export const requestProjectAccess = graphql(`
 export const workspaceListFragment = graphql(`
   fragment WorkspaceListWorkspaceItem on Workspace {
     id
+    slug
     name
     description
     createdAt
