@@ -24,7 +24,7 @@ describe('objectloader2', () => {
       downloader
     })
     const x = await loader.getRootObject()
-    expect(x).toBe(root)
+    expect(x).toMatchSnapshot()
   })
 
   test('can get a root object from downloader', async () => {
@@ -52,12 +52,12 @@ describe('objectloader2', () => {
       downloader
     })
     const x = await loader.getRootObject()
-    expect(x).toBe(root)
+    expect(x).toMatchSnapshot()
   })
 
   test('can get single object from cache using iterator', async () => {
     const rootId = 'baseId'
-    const rootBase: Base = { id: 'baseId' }
+    const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
     const root = { baseId: rootId, base: rootBase } as unknown as Item
     const cache = {
       getItem(params: { id: string }): Promise<Item | undefined> {
@@ -78,8 +78,7 @@ describe('objectloader2', () => {
       r.push(x)
     }
 
-    expect(r.length).toBe(1)
-    expect(r[0]).toBe(rootBase)
+    expect(r).toMatchSnapshot()
   })
 
   test('can get root/child object from cache using iterator', async () => {
@@ -87,7 +86,11 @@ describe('objectloader2', () => {
     const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
 
     const rootId = 'rootId'
-    const rootBase: Base = { id: 'rootId', __closure: { child1Id: 100 } }
+    const rootBase: Base = {
+      id: 'rootId',
+      speckle_type: 'type',
+      __closure: { child1Id: 100 }
+    }
     const root = {
       baseId: rootId,
       base: rootBase
@@ -132,18 +135,19 @@ describe('objectloader2', () => {
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
-
-    expect(r.length).toBe(2)
-    expect(r[0]).toBe(rootBase)
-    expect(r[1]).toBe(child1Base)
+    expect(r).toMatchSnapshot()
   })
 
   test('can get root/child object from cache using iterator and getObject', async () => {
-    const child1Base = { id: 'child1Id' }
+    const child1Base = { id: 'child1Id', speckle_type: 'type' } as Base
     const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
 
     const rootId = 'rootId'
-    const rootBase: Base = { id: 'rootId', __closure: { child1Id: 100 } }
+    const rootBase: Base = {
+      id: 'rootId',
+      speckle_type: 'type',
+      __closure: { child1Id: 100 }
+    }
     const root = {
       baseId: rootId,
       base: rootBase
@@ -167,11 +171,10 @@ describe('objectloader2', () => {
     }
 
     expect(obj).toBeDefined()
-    expect(r.length).toBe(2)
-    expect(r[0]).toBe(rootBase)
-    expect(r[1]).toBe(child1Base)
+    expect(r).toMatchSnapshot()
     const obj2 = await obj
     expect(obj2).toBe(child1Base)
+    expect(obj2).toMatchSnapshot()
   })
 
   test('add extra header', async () => {
@@ -195,6 +198,7 @@ describe('objectloader2', () => {
     })
     const x = await loader.getRootObject()
     expect(x).toBe(root)
+    expect(x).toMatchSnapshot()
   })
 
   test('createFromJSON test', async () => {
@@ -246,9 +250,6 @@ describe('objectloader2', () => {
     for await (const x of loader.getObjectIterator()) {
       r.push(x)
     }
-    expect(r.length).toBe(3)
-    expect(r[0]).toBe(rootObj)
-    expect(r[1]).toBe(list1Obj)
-    expect(r[2]).toBe(list2Obj)
+    expect(r).toMatchSnapshot()
   })
 })

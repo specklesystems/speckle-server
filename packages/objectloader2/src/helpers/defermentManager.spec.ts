@@ -6,9 +6,8 @@ describe('deferments', () => {
     const deferments = new DefermentManager()
     const x = deferments.defer({ id: 'id' })
     expect(x).toBeInstanceOf(Promise)
-    deferments.undefer({ baseId: 'id', base: { id: 'id' } })
+    deferments.undefer({ baseId: 'id', base: { id: 'id', speckle_type: 'type' } })
     const b = await x
-    expect(b).toBeDefined()
-    expect(b.id).toBe('id')
+    expect(b).toMatchSnapshot()
   })
 })
