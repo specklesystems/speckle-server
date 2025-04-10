@@ -139,4 +139,18 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     const result = await buildCanMoveToWorkspace({})(canMoveToWorkspaceArgs())
     expect(result).toBeAuthOKResult()
   })
+  it('allows validation without providing a project id', async () => {
+    const result = await buildCanMoveToWorkspace({
+      getProject: async () => {
+        assert.fail()
+      },
+      getProjectRole: async () => {
+        return null
+      }
+    })({
+      userId: cryptoRandomString({ length: 9 }),
+      workspaceId: cryptoRandomString({ length: 9 })
+    })
+    expect(result).toBeAuthOKResult()
+  })
 })
