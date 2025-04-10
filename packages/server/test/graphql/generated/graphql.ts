@@ -2542,8 +2542,13 @@ export type ProjectPendingVersionsUpdatedMessageType = typeof ProjectPendingVers
 export type ProjectPermissionChecks = {
   __typename?: 'ProjectPermissionChecks';
   canCreateModel: PermissionCheckResult;
+  canLeave: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
   canRead: PermissionCheckResult;
+  canReadSettings: PermissionCheckResult;
+  canReadWebhooks: PermissionCheckResult;
+  canUpdate: PermissionCheckResult;
+  canUpdateAllowPublicComments: PermissionCheckResult;
 };
 
 
@@ -4757,7 +4762,7 @@ export type WorkspacePermissionChecks = {
 
 
 export type WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs = {
-  projectId: Scalars['String']['input'];
+  projectId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspacePlan = {

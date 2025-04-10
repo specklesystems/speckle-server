@@ -21,7 +21,13 @@
           </div>
           <div class="flex flex-row gap-x-3">
             <div v-tippy="collaboratorsTooltip">
-              <NuxtLink :to="hasRole ? projectRoute(project.id, 'collaborators') : ''">
+              <NuxtLink
+                :to="
+                  canReadSettings?.authorized
+                    ? projectRoute(project.id, 'collaborators')
+                    : ''
+                "
+              >
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
@@ -69,7 +75,6 @@ import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
-import { canEditProject } from '~~/lib/projects/helpers/permissions'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -87,6 +92,14 @@ graphql(`
     }
     workspace {
       id
+    }
+    permissions {
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
     }
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
@@ -150,8 +163,10 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+
+const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
-const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
 const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
   const items: LayoutMenuItem[][] = [
@@ -221,7 +236,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (hasRole.value) {
+  if (canReadSettings.value?.authorized) {
     items.push({
       title: 'Collaborators',
       id: 'collaborators'
@@ -240,7 +255,11 @@ const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
 
 const collaboratorsTooltip = computed(() =>
-  hasRole.value ? (canEdit.value ? 'Manage collaborators' : 'View collaborators') : null
+  canReadSettings.value?.authorized
+    ? canUpdate.value?.authorized
+      ? 'Manage collaborators'
+      : 'View collaborators'
+    : null
 )
 
 const activePageTab = computed({
@@ -248,9 +267,10 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
-    if (/\/collaborators\/?/i.test(path) && hasRole.value)
+    if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
-    if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
+    if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
+      return findTabById('settings')
     return findTabById('models')
   },
   set: (val: LayoutPageTabItem) => {
@@ -266,12 +286,12 @@ const activePageTab = computed({
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
       case 'collaborators':
-        if (hasRole.value) {
+        if (canReadSettings.value?.authorized) {
           router.push({ path: projectRoute(projectId.value, 'collaborators') })
         }
         break
       case 'settings':
-        if (hasRole.value) {
+        if (canReadSettings.value?.authorized) {
           router.push({ path: projectRoute(projectId.value, 'settings') })
         }
         break

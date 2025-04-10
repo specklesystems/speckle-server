@@ -219,17 +219,46 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }
           }
 
+          let purchased = 0
+          switch (workspacePlan.name) {
+            case 'unlimited':
+            case 'academia':
+            case 'business':
+            case 'businessInvoiced':
+            case 'free':
+            case 'plus':
+            case 'plusInvoiced':
+            case 'starter':
+            case 'starterInvoiced':
+            case 'proUnlimitedInvoiced':
+            case 'teamUnlimitedInvoiced':
+              // not stripe paid plans and old plans do not have seats available
+              break
+            case 'team':
+            case 'teamUnlimited':
+            case 'pro':
+            case 'proUnlimited':
+              purchased = getTotalSeatsCountByPlanFactory({
+                getWorkspacePlanProductId
+              })({
+                workspacePlan: workspacePlan.name,
+                subscriptionData
+              })
+              break
+            default:
+              throwUncoveredError(workspacePlan)
+          }
+          const assigned = await countSeatsByTypeInWorkspaceFactory({ db })({
+            workspaceId,
+            type: 'editor'
+          })
+
           return {
-            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
-              workspaceId,
-              type: 'editor'
-            }),
-            available: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-              workspacePlan,
-              subscriptionData
-            })
+            assigned,
+            available: purchased - assigned
           }
         },
+
         viewers: async ({ workspaceId }) => {
           return {
             assigned: await countSeatsByTypeInWorkspaceFactory({ db })({

@@ -60,9 +60,13 @@ export type GraphQLContext = BaseContext &
      * @see https://github.com/graphql/dataloader
      */
     loaders: RequestDataLoaders
-
     log: Logger
     authLoaders: AuthCheckContextLoaders
+    /**
+     * Clear dataloader, auth policy loader etc. caches. Usually necessary after mutations
+     * are done in resolvers
+     */
+    clearCache: () => Promise<void>
   }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
