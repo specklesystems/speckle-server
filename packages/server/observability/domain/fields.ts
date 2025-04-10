@@ -32,3 +32,5 @@ export const OperationName = (name: string) => ({
 export const stripeEventId = (id: string) => ({
   stripeEventId: id
 })
+
+export const OperationLogLinePrefix = '[{operationName} ({operationStatus})]'
