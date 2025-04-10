@@ -40,14 +40,24 @@
             :seat-price="editorSeatPriceFormatted"
           />
           <p
-            v-if="needsEditorUpgrade && !hasAvailableEditorSeats"
+            v-if="
+              needsEditorUpgrade &&
+              !hasAvailableEditorSeats &&
+              !isFreePlan &&
+              !isUnlimitedPlan
+            "
             class="text-foreground-2 text-body-xs mt-4"
           >
             You have an unused Editor seat that is already paid for, so the change will
             not incur any charges.
           </p>
           <p
-            v-if="needsEditorUpgrade && !hasAvailableEditorSeats && !isUnlimitedPlan"
+            v-if="
+              needsEditorUpgrade &&
+              !hasAvailableEditorSeats &&
+              !isUnlimitedPlan &&
+              !isFreePlan
+            "
             class="text-foreground-2 text-body-xs mt-4"
           >
             Note that the Editor seat is a paid seat type and this change will incur
