@@ -50,6 +50,8 @@ export class PointToPointMeasurement extends Measurement {
   public locationSelected(): void {
     if (this.state === MeasurementState.DANGLING_START)
       this.state = MeasurementState.DANGLING_END
+    else if (this.state === MeasurementState.DANGLING_END)
+      this.state = MeasurementState.COMPLETE
   }
 
   public update(): Promise<void> {

@@ -219,7 +219,7 @@ export class MeasurementsExtension extends Extension {
 
     this._activeMeasurement.locationSelected()
 
-    if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+    if (this._activeMeasurement.state === MeasurementState.COMPLETE) {
       this.finishMeasurement()
     }
   }
@@ -338,7 +338,6 @@ export class MeasurementsExtension extends Extension {
   protected finishMeasurement() {
     if (!this._activeMeasurement) return
 
-    this._activeMeasurement.state = MeasurementState.COMPLETE
     void this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
       this.measurements.push(this._activeMeasurement)
