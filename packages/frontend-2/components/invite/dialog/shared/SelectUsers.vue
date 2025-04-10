@@ -21,7 +21,7 @@
                   isEmailOrEmpty,
                   canHaveRole({
                     allowedDomains: props.allowedDomains,
-                    workspaceRole: item.value.workspaceRole
+                    workspaceRole: props.targetRole
                   })
                 ]"
                 :help="
@@ -78,6 +78,7 @@ const props = defineProps<{
   invites: InviteWorkspaceItem[]
   allowedDomains: MaybeNullOrUndefined<string[]>
   showWorkspaceRoles?: boolean
+  targetRole?: WorkspaceRoles
 }>()
 
 const { handleSubmit } = useForm<InviteWorkspaceForm>({
