@@ -30,7 +30,7 @@
           <FormButton
             size="sm"
             submit
-            :disabled="isCreatingProject || !canCreateProject"
+            :disabled="isCreatingProject || !canCreatePersonalProject"
           >
             Create
           </FormButton>
@@ -46,8 +46,6 @@ import { useMutation, provideApolloClient, useQuery } from '@vue/apollo-composab
 import type { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
 import {
   canCreatePersonalProjectQuery,
-  canCreateProjectInWorkspaceQuery,
-  createProjectInWorkspaceMutation,
   createProjectMutation
 } from '~/lib/graphql/mutationsAndQueries'
 import type { DUIAccount } from '~/store/accounts'
@@ -59,8 +57,6 @@ import { ValidationHelpers } from '@speckle/ui-components'
 
 const showProjectCreateDialog = ref(false)
 const isCreatingProject = ref(false)
-
-const props = defineProps<{ workspaceId?: string }>()
 
 const emit = defineEmits<{
   (e: 'project:created', result: ProjectListProjectItemFragment): void
@@ -74,8 +70,7 @@ const { activeAccount } = storeToRefs(accountStore)
 const accountId = computed(() => activeAccount.value.accountInfo.id)
 const newProjectName = ref<string>()
 
-const errorMessageForWorkspace = ref<string>()
-const errorMessageForPersonalProject = ref<string>()
+const errorMessage = ref<string>()
 
 const toggleDialog = () => {
   showProjectCreateDialog.value = !showProjectCreateDialog.value
@@ -87,11 +82,10 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
-const canCreateProject = computed(() =>
-  props.workspaceId === 'personalProject'
-    ? canCreatePersonalProject.value
-    : canCreateProjectInWorkspace.value
-)
+const isLatest = activeAccount.value.accountInfo.serverInfo.url.includes(
+  'latest.speckle.systems'
+) // TODO: will be removed once we have limits in app.speckle.systems
+const canCreatePersonalProject = ref<boolean>(!isLatest) // TODO: will be removed once we have limits in app.speckle.systems
 
 const { result: canCreatePersonalProjectResult } = useQuery(
   canCreatePersonalProjectQuery,
@@ -99,52 +93,17 @@ const { result: canCreatePersonalProjectResult } = useQuery(
   () => ({
     clientId: accountId.value,
     debounce: 500,
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    enabled: isLatest // TODO: will be removed once we have limits in app.speckle.systems
   })
 )
 
 watch(canCreatePersonalProjectResult, (val) => {
   if (val?.activeUser?.permissions.canCreatePersonalProject.code !== 'OK') {
-    errorMessageForPersonalProject.value =
-      val?.activeUser?.permissions.canCreatePersonalProject.message
-  }
-})
-
-const canCreatePersonalProject = computed(() => {
-  try {
-    return (
-      canCreatePersonalProjectResult.value?.activeUser?.permissions
-        .canCreatePersonalProject.code === 'OK'
-    )
-  } catch {
-    return true
-  }
-})
-
-const { result: canCreateProjectInWorkspaceResult } = useQuery(
-  canCreateProjectInWorkspaceQuery,
-  () => ({ workspaceId: props.workspaceId ?? 'null' }), // TODO: i do not know the potential cause here
-  () => ({
-    clientId: accountId.value,
-    debounce: 500,
-    fetchPolicy: 'network-only'
-  })
-)
-
-watch(canCreateProjectInWorkspaceResult, (val) => {
-  if (val?.workspace.permissions.canCreateProject.code !== 'OK') {
-    errorMessageForWorkspace.value = val?.workspace.permissions.canCreateProject.message
-  }
-})
-
-const canCreateProjectInWorkspace = computed(() => {
-  try {
-    return (
-      canCreateProjectInWorkspaceResult.value?.workspace.permissions.canCreateProject
-        .code === 'OK'
-    )
-  } catch {
-    return true
+    errorMessage.value = val?.activeUser?.permissions.canCreatePersonalProject.message
+    canCreatePersonalProject.value = false
+  } else {
+    canCreatePersonalProject.value = true
   }
 })
 
@@ -157,12 +116,6 @@ const onSubmitCreateNewProject = handleSubmit(() => {
 
 const createNewProject = async (name: string) => {
   isCreatingProject.value = true
-
-  if (props.workspaceId !== 'personalProject' && props.workspaceId !== undefined) {
-    createNewProjectInWorkspace(name)
-    isCreatingProject.value = false
-    return
-  }
 
   void trackEvent(
     'DUI3 Action',
@@ -188,33 +141,5 @@ const createNewProject = async (name: string) => {
     })
   }
   isCreatingProject.value = false
-}
-
-const createNewProjectInWorkspace = async (name: string) => {
-  void trackEvent(
-    'DUI3 Action',
-    { name: 'Project Create', workspace: true },
-    account.value.accountInfo.id
-  )
-  const { mutate } = provideApolloClient(account.value.client)(() =>
-    useMutation(createProjectInWorkspaceMutation)
-  )
-  const res = await mutate({
-    input: { name, workspaceId: props.workspaceId as string }
-  })
-  if (res?.data?.workspaceMutations.projects.create) {
-    emit('project:created', res?.data?.workspaceMutations.projects.create)
-  } else {
-    let errorMessage = 'Undefined error'
-    if (res?.errors && res?.errors.length !== 0) {
-      errorMessage = res?.errors[0].message
-    }
-
-    hostAppStore.setNotification({
-      type: 1,
-      title: 'Failed to create project',
-      description: errorMessage
-    })
-  }
 }
 </script>

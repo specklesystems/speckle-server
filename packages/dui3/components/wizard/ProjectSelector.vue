@@ -72,20 +72,36 @@
             color="foundation"
           />
           <div class="flex justify-between items-center space-x-2">
-            <ProjectCreateDialog
+            <ProjectCreateWorkspaceDialog
+              v-if="selectedWorkspace && selectedWorkspace.id !== 'personalProject'"
               :workspace-id="selectedWorkspace?.id"
               @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
             >
               <template #activator="{ toggle }">
                 <button
-                  v-tippy="'New project'"
+                  v-tippy="'New project in workspace'"
                   class="p-1.5 bg-foundation hover:bg-primary-muted rounded text-foreground border"
                   @click="toggle()"
                 >
                   <PlusIcon class="w-4" />
                 </button>
               </template>
-            </ProjectCreateDialog>
+            </ProjectCreateWorkspaceDialog>
+            <!-- TODO: once we deprecate personal projects, else block is bye bye -->
+            <ProjectCreatePersonalDialog
+              v-else
+              @project:created="(result : ProjectListProjectItemFragment) => handleProjectCreated(result)"
+            >
+              <template #activator="{ toggle }">
+                <button
+                  v-tippy="'New personal project'"
+                  class="p-1.5 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+                  @click="toggle()"
+                >
+                  <PlusIcon class="w-4" />
+                </button>
+              </template>
+            </ProjectCreatePersonalDialog>
             <div v-if="!workspacesEnabled || !workspaces" class="mt-1">
               <AccountsMenu
                 :current-selected-account-id="accountId"
