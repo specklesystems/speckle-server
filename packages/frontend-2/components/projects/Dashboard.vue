@@ -2,7 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
-      <ProjectsMoveToWorkspaceAlert :days-left="30" />
+      <ProjectsMoveToWorkspaceAlert v-if="isWorkspacesEnabled" />
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
         <h1 class="text-heading-lg">Projects</h1>
@@ -29,13 +29,12 @@
             fixed-height
             clearable
           />
-          <div class="md:mt-1">
+          <div v-if="!showEmptyState && isWorkspacesEnabled" class="md:mt-1">
             <FormCheckbox
               id="projects-to-move"
               v-model="filterProjectsToMove"
-              label-classes="!font-normal"
+              label-classes="!font-normal select-none"
               name="Projects to move"
-              class=""
             />
           </div>
         </div>
@@ -107,6 +106,7 @@ const filterProjectsToMove = ref(false)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 

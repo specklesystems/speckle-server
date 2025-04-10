@@ -1,13 +1,13 @@
 <template>
   <CommonCard class="!p-3 !bg-foundation mb-4">
-    <div class="flex gap-2 text-foreground">
-      <ExclamationCircleIcon class="h-8 w-8 m-1 text-warning" />
+    <div class="flex flex-col sm:flex-row sm:gap-2 text-foreground">
+      <ExclamationCircleIcon class="h-8 w-8 m-1 text-warning shrink-0" />
       <div class="flex flex-col gap-4">
         <h3 class="text-heading mt-2">
           {{
             projectId
-              ? `Move the project to a workspace or it will be deleted in ${daysLeft} days.`
-              : `Move projects to a workspace or they will be deleted in ${daysLeft} days.`
+              ? `Move this project to a workspace or it will be deleted in (count) days.`
+              : `Move projects to a workspace or they will be deleted in (count) days.`
           }}
         </h3>
 
@@ -17,7 +17,7 @@
             announce the rollout of several new features designed to simplify your
             workflow and enhance navigation. Important facts:
           </p>
-          <ul class="list-disc list-inside pl-1">
+          <ul class="list-disc list-inside pl-2">
             <li>These updates will include customizable dashboards,</li>
             <li>Improved search functionality,</li>
             <li>And a more user-friendly interface</li>
@@ -47,6 +47,5 @@ import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
 
 defineProps<{
   projectId?: string
-  daysLeft: number
 }>()
 </script>
