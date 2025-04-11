@@ -5,32 +5,7 @@
       text="Update your payment information or switch plans according to your needs"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
-      <section v-if="isServerAdmin" class="flex flex-col gap-y-4 md:gap-y-6">
-        <div class="flex gap-x-4">
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Free)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 free 𝖕𝖑𝖆𝖓
-          </FormButton>
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Team)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 Starter 𝖕𝖑𝖆𝖓
-          </FormButton>
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Pro)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 Business 𝖕𝖑𝖆𝖓
-          </FormButton>
-        </div>
-      </section>
-      <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
+      <section v-if="isPaidPlan" class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Summary" subheading />
         <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
       </section>
@@ -59,14 +34,9 @@
 </template>
 
 <script lang="ts" setup>
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
+import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import {
-  WorkspacePlans,
-  PaidWorkspacePlanStatuses,
-  type WorkspaceRoles
-} from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 
@@ -82,10 +52,8 @@ graphql(`
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
-const { isAdmin: isServerAdmin } = useActiveUser()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isPurchasablePlan } = useWorkspacePlan(slug.value)
-const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
+const { isPaidPlan } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -97,19 +65,4 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-
-// Temporary hack to change workspace plans to the new free plan
-const handleUpgradeClick = (plan: WorkspacePlans) => {
-  if (!workspaceResult.value?.workspaceBySlug.id) return
-  mutateWorkspacePlan({
-    input: {
-      workspaceId: workspaceResult.value.workspaceBySlug.id,
-      plan,
-      status: PaidWorkspacePlanStatuses.Valid
-    }
-  })
-
-  // Reload to show the new plan, will be gone soon
-  window.location.reload()
-}
 </script>
