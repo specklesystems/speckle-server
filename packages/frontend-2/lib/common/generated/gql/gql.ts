@@ -177,7 +177,11 @@ type Documents = {
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": typeof types.AutomateFunctionsPagePaginationDocument,
     "\n  query ActiveUserFunctions {\n    activeUser {\n      automateFunctions(limit: 2) {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n        }\n      }\n    }\n  }\n": typeof types.ActiveUserFunctionsDocument,
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": typeof types.BillingActions_WorkspaceFragmentDoc,
-    "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          id\n          monthly {\n            amount\n            currencySymbol\n          }\n          yearly {\n            amount\n            currencySymbol\n          }\n        }\n      }\n    }\n  }\n": typeof types.UseWorkspacePlanPricesDocument,
+    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n": typeof types.PricesPriceFragmentDoc,
+    "\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n": typeof types.PricesWorkspacePlanPriceFragmentDoc,
+    "\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n": typeof types.PricesWorkspacePaidPlanPricesFragmentDoc,
+    "\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n": typeof types.PricesCurrencyBasedPricesFragmentDoc,
+    "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n": typeof types.UseWorkspacePlanPricesDocument,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": typeof types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": typeof types.BillingUpgradePlanDocument,
     "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": typeof types.AdminUpdateWorkspacePlanDocument,
@@ -592,7 +596,11 @@ const documents: Documents = {
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPagePaginationDocument,
     "\n  query ActiveUserFunctions {\n    activeUser {\n      automateFunctions(limit: 2) {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n        }\n      }\n    }\n  }\n": types.ActiveUserFunctionsDocument,
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": types.BillingActions_WorkspaceFragmentDoc,
-    "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          id\n          monthly {\n            amount\n            currencySymbol\n          }\n          yearly {\n            amount\n            currencySymbol\n          }\n        }\n      }\n    }\n  }\n": types.UseWorkspacePlanPricesDocument,
+    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n": types.PricesPriceFragmentDoc,
+    "\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n": types.PricesWorkspacePlanPriceFragmentDoc,
+    "\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n": types.PricesWorkspacePaidPlanPricesFragmentDoc,
+    "\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n": types.PricesCurrencyBasedPricesFragmentDoc,
+    "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n": types.UseWorkspacePlanPricesDocument,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": types.BillingUpgradePlanDocument,
     "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": types.AdminUpdateWorkspacePlanDocument,
@@ -1513,7 +1521,23 @@ export function graphql(source: "\n  fragment BillingActions_Workspace on Worksp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          id\n          monthly {\n            amount\n            currencySymbol\n          }\n          yearly {\n            amount\n            currencySymbol\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          id\n          monthly {\n            amount\n            currencySymbol\n          }\n          yearly {\n            amount\n            currencySymbol\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n"): (typeof documents)["\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n"): (typeof documents)["\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n"): (typeof documents)["\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n"): (typeof documents)["\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
