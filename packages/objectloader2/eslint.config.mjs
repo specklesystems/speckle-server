@@ -49,6 +49,7 @@ const configs = [
   {
     files: ['**/*.spec.ts'],
     rules: {
+      camelcase: 'off',
       '@typescript-eslint/no-unused-expressions': 'off'
     }
   }
