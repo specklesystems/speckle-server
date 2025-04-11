@@ -5,7 +5,8 @@ import {
   PaidWorkspacePlansNew,
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
-  isPaidPlan as isPaidPlanShared
+  isPaidPlan as isPaidPlanShared,
+  isNewWorkspacePlan
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
@@ -73,6 +74,9 @@ export const useWorkspacePlan = (slug: string) => {
   const isPaidPlan = computed(
     () => plan.value?.name && isPaidPlanShared(plan.value?.name)
   )
+  const isNewPlan = computed(
+    () => plan.value?.name && isNewWorkspacePlan(plan.value?.name)
+  )
 
   // Plan status information
   const statusIsExpired = computed(
@@ -132,6 +136,7 @@ export const useWorkspacePlan = (slug: string) => {
     editorSeatPriceFormatted,
     isUnlimitedPlan,
     isBusinessPlan,
-    isPaidPlan
+    isPaidPlan,
+    isNewPlan
   }
 }
