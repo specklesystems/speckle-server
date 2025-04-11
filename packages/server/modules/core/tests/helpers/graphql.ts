@@ -169,3 +169,23 @@ export const getProjectWithVersionsQuery = gql`
     }
   }
 `
+
+export const getProjectWithModelVersionsQuery = gql`
+  query GetProjectWithModelVersions($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+      models {
+        items {
+          versions {
+            items {
+              id
+              referencedObject
+            }
+          }
+        }
+      }
+    }
+  }
+`
