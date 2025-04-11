@@ -14,3 +14,8 @@ export type CommentReplyAuthorCollectionGraphQLReturn = {
 }
 
 export type CommentGraphQLReturn = CommentRecord
+
+export type CommentPermissionChecksGraphQLReturn = {
+  commentId: string
+  projectId: string
+}

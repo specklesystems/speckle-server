@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
+import { homeRoute } from '~~/lib/common/helpers/route'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -81,7 +81,7 @@ const requiresWorkspaceCreation = computed(() => {
 
 const onCancelClick = () => {
   if (isFirstStep.value) {
-    navigateTo(workspaceCreateRoute())
+    navigateTo(homeRoute)
     resetWizardState()
     mixpanel.stop_session_recording()
   } else {

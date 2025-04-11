@@ -1,32 +1,31 @@
 import cryptoRandomString from 'crypto-random-string'
 import { assert, describe, expect, it } from 'vitest'
-import { canCreateModelPolicy } from './canCreateModel.js'
-import { parseFeatureFlags } from '../../../environment/index.js'
-import { Roles } from '../../../core/constants.js'
-import { Workspace } from '../../domain/workspaces/types.js'
-import { WorkspacePlan } from '../../../workspaces/index.js'
-import { Project } from '../../domain/projects/types.js'
+import { canCreateModelPolicy } from './canCreate.js'
+import { parseFeatureFlags } from '../../../../environment/index.js'
+import { Roles } from '../../../../core/constants.js'
+import { Workspace } from '../../../domain/workspaces/types.js'
+import { WorkspacePlan } from '../../../../workspaces/index.js'
+import { Project } from '../../../domain/projects/types.js'
 import {
   ProjectNoAccessError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError
-} from '../../domain/authErrors.js'
+} from '../../../domain/authErrors.js'
+import { getProjectFake } from '../../../../tests/fakes.js'
 
 const buildCanCreateModelPolicy = (
   overrides?: Partial<Parameters<typeof canCreateModelPolicy>[0]>
 ) =>
   canCreateModelPolicy({
     getEnv: async () => parseFeatureFlags({}),
-    getProject: async () => {
-      return {
-        id: cryptoRandomString({ length: 9 }),
-        isPublic: false,
-        isDiscoverable: false,
-        workspaceId: cryptoRandomString({ length: 9 })
-      }
-    },
+    getProject: getProjectFake({
+      id: cryptoRandomString({ length: 9 }),
+      isPublic: false,
+      isDiscoverable: false,
+      workspaceId: cryptoRandomString({ length: 9 })
+    }),
     getProjectRole: async () => {
       return Roles.Stream.Contributor
     },

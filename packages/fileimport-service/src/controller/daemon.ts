@@ -16,6 +16,7 @@ import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Logger } from 'pino'
+import { getIfcDllPath, useLegacyIfcImporter } from '@/controller/helpers/env.js'
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -153,7 +154,10 @@ async function doTask(
     taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      if (info.fileName.toLowerCase().endsWith('.legacyimporter.ifc')) {
+      if (
+        info.fileName.toLowerCase().endsWith('.legacyimporter.ifc') ||
+        useLegacyIfcImporter()
+      ) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['NODE_BINARY_PATH'] || 'node',
@@ -181,8 +185,7 @@ async function doTask(
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',
           [
-            process.env['IFC_DOTNET_DLL_PATH'] ||
-              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
+            getIfcDllPath(),
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.streamId,

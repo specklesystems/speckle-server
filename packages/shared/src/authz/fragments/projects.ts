@@ -187,6 +187,16 @@ export const ensureImplicitProjectMemberWithReadAccessFragment: AuthPolicyEnsure
     }
     if (isAdminOverrideEnabled.value) return ok()
 
+    // And ensure (implicit/explicit) project role
+    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+      userId: userId!,
+      projectId,
+      role
+    })
+    if (ensuredProjectRole.isErr) {
+      return err(ensuredProjectRole.error)
+    }
+
     // No god mode, ensure workspace access
     const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
       userId: userId!,
@@ -196,14 +206,72 @@ export const ensureImplicitProjectMemberWithReadAccessFragment: AuthPolicyEnsure
       return err(ensuredWorkspaceAccess.error)
     }
 
+    return ok()
+  }
+
+/**
+ * Ensure user has implicit/explicit project membership and write access
+ */
+export const ensureImplicitProjectMemberWithWriteAccessFragment: AuthPolicyEnsureFragment<
+  | typeof Loaders.getProject
+  | typeof Loaders.getEnv
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getProjectRole,
+  MaybeUserContext &
+    ProjectContext & {
+      /**
+       * By default assumes Contributor+ for any writes, but some operations
+       * may allow for lower roles (e.g. comments)
+       */
+      role?: StreamRoles
+    },
+  InstanceType<
+    | typeof ProjectNotFoundError
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof ProjectNoAccessError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceSsoSessionNoAccessError
+  >
+> =
+  (loaders) =>
+  async ({ userId, projectId, role }) => {
+    const requiredProjectRole = role || Roles.Stream.Contributor
+    const requiredServerRole =
+      requiredProjectRole === Roles.Stream.Owner
+        ? Roles.Server.User
+        : Roles.Server.Guest
+
+    // Ensure user is authed
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
+      userId,
+      role: requiredServerRole
+    })
+    if (ensuredServerRole.isErr) {
+      return err(ensuredServerRole.error)
+    }
+
     // And ensure (implicit/explicit) project role
     const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
       userId: userId!,
       projectId,
-      role
+      role: requiredProjectRole
     })
     if (ensuredProjectRole.isErr) {
       return err(ensuredProjectRole.error)
+    }
+
+    // Ensure workspace access
+    const ensuredWorkspaceAccess = await ensureProjectWorkspaceAccessFragment(loaders)({
+      userId: userId!,
+      projectId
+    })
+    if (ensuredWorkspaceAccess.isErr) {
+      return err(ensuredWorkspaceAccess.error)
     }
 
     return ok()
