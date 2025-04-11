@@ -83,7 +83,10 @@ import {
   getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
@@ -93,6 +96,10 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { hidePropertyIfOutOfLimitFactory } from '@speckle/shared'
+
+const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -215,15 +222,56 @@ export = {
     /**
      * Format comment.text for output, since it can have multiple formats
      */
-    text(parent) {
-      const commentText = parent?.text || ''
+    async text(parent, _args, ctx) {
+      const project = await ctx.loaders.streams.getStream.load(parent.streamId)
+
+      if (!project) {
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      }
+      const hidePropertyIfOutOfLimit = hidePropertyIfOutOfLimitFactory({
+        environment: {
+          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+        },
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
+      })
+      const commentText = await hidePropertyIfOutOfLimit({
+        property: 'text',
+        entity: parent,
+        workspaceId: project.workspaceId
+      })
+      if (!commentText) {
+        return null
+      }
       return {
         ...ensureCommentSchema(commentText),
         projectId: parent.streamId
       }
     },
 
-    rawText(parent) {
+    async rawText(parent, _args, ctx) {
+      const project = await ctx.loaders.streams.getStream.load(parent.streamId)
+
+      if (!project) {
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      }
+      const hidePropertyIfOutOfLimit = hidePropertyIfOutOfLimitFactory({
+        environment: {
+          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+        },
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
+      })
+      const commentText = await hidePropertyIfOutOfLimit({
+        property: 'text',
+        entity: parent,
+        workspaceId: project.workspaceId
+      })
+      if (!commentText) {
+        return null
+      }
       const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
     },

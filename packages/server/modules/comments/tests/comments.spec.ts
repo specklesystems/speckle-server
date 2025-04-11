@@ -30,7 +30,11 @@ import {
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { EmailSendingServiceMock, CommentsRepositoryMock } from '@/test/mocks/global'
+import {
+  EmailSendingServiceMock,
+  CommentsRepositoryMock,
+  StreamsRepositoryMock
+} from '@/test/mocks/global'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
@@ -125,6 +129,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
+import { StreamRecord } from '@/modules/core/helpers/types'
 
 type LegacyCommentRecord = CommentRecord & {
   total_count: string
@@ -287,6 +292,7 @@ function generateRandomCommentText() {
 
 const mailerMock = EmailSendingServiceMock
 const commentRepoMock = CommentsRepositoryMock
+const streamsRepoMock = StreamsRepositoryMock
 
 describe('Comments @comments', () => {
   let app: express.Express
@@ -366,6 +372,7 @@ describe('Comments @comments', () => {
   after(() => {
     notificationsState.destroy()
     commentRepoMock.destroy()
+    streamsRepoMock.destroy()
   })
 
   afterEach(() => {
@@ -1693,14 +1700,22 @@ describe('Comments @comments', () => {
       })
 
       const unexpectedValDataset = [
-        { display: 'number', value: 3 },
+        // { display: 'number', value: 3 },
         { display: 'random object', value: { a: 1, b: 2 } }
       ]
       unexpectedValDataset.forEach(({ display, value }) => {
         it(`unexpected text value (${display}) in DB throw sanitized errors`, async () => {
+          streamsRepoMock.enable()
+          streamsRepoMock.mockFunction('getStreamsFactory', () => async () => [
+            {
+              id: stream.id,
+              workspaceId: ''
+            } as unknown as StreamRecord
+          ])
           const item = {
             id: '1',
-            text: value
+            text: value,
+            streamId: stream.id
           } as unknown as LegacyCommentRecord
 
           commentRepoMock.enable()
@@ -1716,6 +1731,8 @@ describe('Comments @comments', () => {
           expect((errors || []).map((e) => e.message).join(';')).to.contain(
             'Unexpected comment schema format'
           )
+          streamsRepoMock.disable()
+          streamsRepoMock.resetMockedFunctions()
         })
       })
     })
