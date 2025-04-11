@@ -76,7 +76,8 @@ const { result: projectResult } = useQuery(
 const { result: workspaceResult } = useQuery(
   workspaceMoveProjectManagerWorkspaceQuery,
   () => ({
-    workspaceSlug: props.workspaceSlug || ''
+    workspaceSlug: props.workspaceSlug || '',
+    projectId: props.projectId
   }),
   () => ({
     enabled: !!props.workspaceSlug

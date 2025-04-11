@@ -183,7 +183,10 @@ export const workspaceMoveProjectManagerProjectQuery = graphql(`
 `)
 
 export const workspaceMoveProjectManagerWorkspaceQuery = graphql(`
-  query WorkspaceMoveProjectManagerWorkspace($workspaceSlug: String!) {
+  query WorkspaceMoveProjectManagerWorkspace(
+    $workspaceSlug: String!
+    $projectId: String
+  ) {
     workspaceBySlug(slug: $workspaceSlug) {
       ...WorkspaceMoveProjectSelectWorkspace_Workspace
     }
@@ -191,7 +194,11 @@ export const workspaceMoveProjectManagerWorkspaceQuery = graphql(`
 `)
 
 export const workspaceMoveProjectManagerUserQuery = graphql(`
-  query WorkspaceMoveProjectManagerUser($cursor: String, $filter: UserProjectsFilter) {
+  query WorkspaceMoveProjectManagerUser(
+    $cursor: String
+    $filter: UserProjectsFilter
+    $projectId: String!
+  ) {
     activeUser {
       ...WorkspaceMoveProjectSelectWorkspace_User
     }
