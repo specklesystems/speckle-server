@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
+FROM node:18-bookworm-slim@sha256:39095e997ff4399e1b07c147ccb432f47bd9e67c639d5fdf41af4a796c50ecf7 AS build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -40,7 +40,7 @@ RUN apt-get update -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS dependency-stage
+FROM node:18-bookworm-slim@sha256:39095e997ff4399e1b07c147ccb432f47bd9e67c639d5fdf41af4a796c50ecf7 AS dependency-stage
 # yarn install
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -58,7 +58,7 @@ COPY packages/shared/package.json ./packages/shared/
 WORKDIR /speckle-server/packages/webhook-service
 RUN yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:7df895865e4c4b781dbac947aca8298a0ae1db441bd671aeb4c6791081e0a8a7 AS production-stage
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
