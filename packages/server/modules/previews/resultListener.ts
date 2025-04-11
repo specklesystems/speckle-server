@@ -76,7 +76,9 @@ export const consumePreviewResultFactory =
       jobId: previewResult.jobId,
       status: previewResult.status,
       durationSeconds: previewResult.result.durationSeconds,
-      projectId: streamId
+      projectId: streamId,
+      streamId, // for legacy reasons
+      objectId
     })
 
     const previewMessage =
