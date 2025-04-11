@@ -1335,6 +1335,7 @@ export type ModelMutationsUpdateArgs = {
 
 export type ModelPermissionChecks = {
   __typename?: 'ModelPermissionChecks';
+  canCreateVersion: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
@@ -2581,6 +2582,7 @@ export type ProjectPermissionChecks = {
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
+  canRequestRender: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
   canUpdateAllowPublicComments: PermissionCheckResult;
 };
@@ -4275,9 +4277,7 @@ export type VersionMutationsUpdateArgs = {
 
 export type VersionPermissionChecks = {
   __typename?: 'VersionPermissionChecks';
-  canCreate: PermissionCheckResult;
   canReceive: PermissionCheckResult;
-  canRequestRender: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 
@@ -6373,6 +6373,7 @@ export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType ext
 };
 
 export type ModelPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelPermissionChecks'] = ResolversParentTypes['ModelPermissionChecks']> = {
+  canCreateVersion?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6710,6 +6711,7 @@ export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, Paren
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadSettings?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadWebhooks?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canRequestRender?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdateAllowPublicComments?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7234,9 +7236,7 @@ export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType e
 };
 
 export type VersionPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionPermissionChecks'] = ResolversParentTypes['VersionPermissionChecks']> = {
-  canCreate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReceive?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
-  canRequestRender?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -78,6 +78,13 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canLeave)
+    },
+    canRequestRender: async (parent, _args, ctx) => {
+      const canRequestRender = await ctx.authPolicies.project.version.canRequestRender({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canRequestRender)
     }
   },
   ModelPermissionChecks: {
@@ -95,16 +102,16 @@ export default {
         modelId: parent.modelId
       })
       return Authz.toGraphqlResult(canDelete)
-    }
-  },
-  VersionPermissionChecks: {
-    canCreate: async (parent, _args, ctx) => {
+    },
+    canCreateVersion: async (parent, _args, ctx) => {
       const canCreate = await ctx.authPolicies.project.version.canCreate({
         projectId: parent.projectId,
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canCreate)
-    },
+    }
+  },
+  VersionPermissionChecks: {
     canUpdate: async (parent, _args, ctx) => {
       const canUpdate = await ctx.authPolicies.project.version.canUpdate({
         projectId: parent.projectId,
@@ -119,13 +126,6 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canReceive)
-    },
-    canRequestRender: async (parent, _args, ctx) => {
-      const canRequestRender = await ctx.authPolicies.project.version.canRequestRender({
-        projectId: parent.projectId,
-        userId: ctx.userId
-      })
-      return Authz.toGraphqlResult(canRequestRender)
     }
   },
   RootPermissionChecks: {

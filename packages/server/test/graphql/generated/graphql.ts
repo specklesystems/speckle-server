@@ -1316,6 +1316,7 @@ export type ModelMutationsUpdateArgs = {
 
 export type ModelPermissionChecks = {
   __typename?: 'ModelPermissionChecks';
+  canCreateVersion: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
@@ -2562,6 +2563,7 @@ export type ProjectPermissionChecks = {
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
+  canRequestRender: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
   canUpdateAllowPublicComments: PermissionCheckResult;
 };
@@ -4256,9 +4258,7 @@ export type VersionMutationsUpdateArgs = {
 
 export type VersionPermissionChecks = {
   __typename?: 'VersionPermissionChecks';
-  canCreate: PermissionCheckResult;
   canReceive: PermissionCheckResult;
-  canRequestRender: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 
