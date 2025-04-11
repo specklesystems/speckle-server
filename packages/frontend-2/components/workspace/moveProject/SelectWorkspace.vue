@@ -10,27 +10,34 @@
           <div
             v-for="ws in sortedWorkspaces"
             :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
-            v-tippy="disabledTooltipText(ws)"
+            v-tippy="getDisabledTooltip(ws.permissions?.canMoveProjectToWorkspace)"
           >
             <button
               class="w-full"
               :class="
-                !canMoveToWorkspace(ws) && !isLimitReached(ws)
+                !canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) &&
+                !isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
                   ? 'cursor-not-allowed'
                   : ''
               "
-              :disabled="!canMoveToWorkspace(ws) && !isLimitReached(ws)"
+              :disabled="
+                !canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) &&
+                !isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
+              "
               @click="handleWorkspaceClick(ws)"
             >
               <WorkspaceCard
                 :logo="ws.logo ?? ''"
                 :name="ws.name"
-                :clickable="canMoveToWorkspace(ws) || isLimitReached(ws)"
+                :clickable="
+                  canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) ||
+                  isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
+                "
               >
                 <template #text>
                   <div class="flex flex-col gap-2 items-start">
                     <CommonBadge
-                      v-if="isSsoRequired(ws)"
+                      v-if="isSsoRequired(ws.permissions?.canMoveProjectToWorkspace)"
                       color="secondary"
                       class="capitalize"
                       rounded
@@ -76,8 +83,9 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  WorkspaceMoveProjectSelectProject_ProjectFragment,
-  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+  WorkspaceMoveProjectManager_ProjectFragment,
+  WorkspaceMoveProjectManager_WorkspaceFragment,
+  FullPermissionCheckResultFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
@@ -88,12 +96,12 @@ graphql(`
   fragment WorkspaceMoveProjectSelectWorkspace_User on User {
     workspaces {
       items {
-        ...WorkspaceMoveProjectSelectWorkspace_Workspace
+        ...WorkspaceMoveProjectManager_Workspace
       }
     }
     projects(cursor: $cursor, filter: $filter) {
       items {
-        ...WorkspaceMoveProjectSelectProject_Project
+        ...WorkspaceMoveProjectManager_Project
       }
       cursor
       totalCount
@@ -101,46 +109,20 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment WorkspaceMoveProjectSelectWorkspace_Workspace on Workspace {
-    id
-    role
-    name
-    logo
-    slug
-    plan {
-      name
-    }
-    permissions {
-      canMoveProjectToWorkspace(projectId: $projectId) {
-        ...FullPermissionCheckResult
-      }
-    }
-    projects {
-      totalCount
-    }
-    team {
-      items {
-        user {
-          id
-          name
-          avatar
-        }
-      }
-    }
-    ...WorkspaceHasCustomDataResidency_Workspace
-  }
-`)
-
 const props = defineProps<{
-  project: WorkspaceMoveProjectSelectProject_ProjectFragment
-  eventSource?: string
+  project: WorkspaceMoveProjectManager_ProjectFragment
+  canMoveToWorkspace: (permission: FullPermissionCheckResultFragment) => boolean
+  isLimitReached: (permission: FullPermissionCheckResultFragment) => boolean
+  isSsoRequired: (permission: FullPermissionCheckResultFragment) => boolean
+  getDisabledTooltip: (
+    permission: FullPermissionCheckResultFragment
+  ) => string | undefined
 }>()
 
 const emit = defineEmits<{
   (
     e: 'workspace-selected',
-    workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+    workspace: WorkspaceMoveProjectManager_WorkspaceFragment
   ): void
 }>()
 
@@ -160,77 +142,35 @@ const showLoading = computed(
 )
 
 const showLimitDialog = ref(false)
-const limitReachedWorkspace =
-  ref<WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null>(null)
-
-const isSsoRequired = computed(
-  () => (workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment) => {
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return permission?.code === 'WorkspaceSsoSessionNoAccess'
-  }
-)
-
-const isLimitReached = computed(
-  () => (workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment) => {
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return permission?.code === 'WorkspaceLimitsReached'
-  }
-)
-
-const canMoveToWorkspace = computed(
-  () => (workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment) => {
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-    return permission?.authorized && permission?.code === 'OK'
-  }
-)
-
-const disabledTooltipText = computed(
-  () => (workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment) => {
-    const permission = workspace.permissions?.canMoveProjectToWorkspace
-
-    // Don't show tooltip for limit reached cases since they're still clickable
-    if (permission?.code === 'WorkspaceLimitsReached') {
-      return undefined
-    }
-
-    if (permission?.code === 'WorkspaceSsoSessionNoAccess') {
-      return 'SSO login required to access this workspace'
-    }
-
-    // For all other non-authorized cases, show the message
-    if (!permission?.authorized) {
-      return permission?.message
-    }
-
-    return undefined
-  }
+const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
+  null
 )
 
 const sortedWorkspaces = computed(() => {
   return [...workspaces.value].sort((a, b) => {
-    // Get enabled status for both workspaces
-    const aEnabled = canMoveToWorkspace.value(a) || isLimitReached.value(a)
-    const bEnabled = canMoveToWorkspace.value(b) || isLimitReached.value(b)
+    const aEnabled =
+      props.canMoveToWorkspace(a.permissions?.canMoveProjectToWorkspace) ||
+      props.isLimitReached(a.permissions?.canMoveProjectToWorkspace)
+    const bEnabled =
+      props.canMoveToWorkspace(b.permissions?.canMoveProjectToWorkspace) ||
+      props.isLimitReached(b.permissions?.canMoveProjectToWorkspace)
 
-    // If one is enabled and the other isn't, put enabled first
     if (aEnabled && !bEnabled) return -1
     if (!aEnabled && bEnabled) return 1
-
-    // If both have same enabled status, maintain original order
     return 0
   })
 })
 
 const handleWorkspaceClick = (
-  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
 ) => {
-  if (isLimitReached.value(workspace)) {
+  if (props.isLimitReached(workspace.permissions?.canMoveProjectToWorkspace)) {
     limitReachedWorkspace.value = workspace
     showLimitDialog.value = true
     return
   }
 
-  if (canMoveToWorkspace.value(workspace)) {
+  if (props.canMoveToWorkspace(workspace.permissions?.canMoveProjectToWorkspace)) {
     emit('workspace-selected', workspace)
   }
 }

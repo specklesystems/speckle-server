@@ -3,6 +3,11 @@
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
+      :workspace-slug="workspaceSlug"
+      :can-move-to-workspace="canMoveToWorkspace"
+      :is-sso-required="isSsoRequired"
+      :is-limit-reached="isLimitReached"
+      :get-disabled-tooltip="getDisabledTooltip"
       @project-selected="onProjectSelected"
     />
 
@@ -10,6 +15,10 @@
     <WorkspaceMoveProjectSelectWorkspace
       v-if="selectedProject && activeDialog === 'workspace'"
       :project="selectedProject"
+      :can-move-to-workspace="canMoveToWorkspace"
+      :is-sso-required="isSsoRequired"
+      :is-limit-reached="isLimitReached"
+      :get-disabled-tooltip="getDisabledTooltip"
       @workspace-selected="onWorkspaceSelected"
     />
 
@@ -45,15 +54,67 @@
 
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  WorkspaceMoveProjectSelectProject_ProjectFragment,
-  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+  FullPermissionCheckResultFragment,
+  WorkspaceMoveProjectManager_ProjectFragment,
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   workspaceMoveProjectManagerProjectQuery,
   workspaceMoveProjectManagerWorkspaceQuery
 } from '~/lib/workspaces/graphql/queries'
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
+
+graphql(`
+  fragment WorkspaceMoveProjectManager_Project on Project {
+    id
+    name
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    versions(limit: 0) {
+      totalCount
+    }
+    workspace {
+      permissions {
+        canMoveProjectToWorkspace(projectId: $id) {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment WorkspaceMoveProjectManager_Workspace on Workspace {
+    id
+    role
+    name
+    logo
+    slug
+    plan {
+      name
+    }
+    permissions {
+      canMoveProjectToWorkspace(projectId: $projectId) {
+        ...FullPermissionCheckResult
+      }
+    }
+    projects {
+      totalCount
+    }
+    team {
+      items {
+        user {
+          id
+          name
+          avatar
+        }
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
   projectId?: string
@@ -63,11 +124,47 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 
 // Internal state management
-const selectedProject = ref<WorkspaceMoveProjectSelectProject_ProjectFragment | null>(
+const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)
+const selectedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
   null
 )
-const selectedWorkspace =
-  ref<WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null>(null)
+
+// Permission check computeds
+const isSsoRequired = computed(
+  () => (permission: FullPermissionCheckResultFragment) => {
+    return permission?.code === 'WorkspaceSsoSessionNoAccess'
+  }
+)
+
+const isLimitReached = computed(
+  () => (permission: FullPermissionCheckResultFragment) => {
+    return permission?.code === 'WorkspaceLimitsReached'
+  }
+)
+
+const canMoveToWorkspace = computed(
+  () => (permission: FullPermissionCheckResultFragment) => {
+    return permission?.authorized && permission?.code === 'OK'
+  }
+)
+
+const getDisabledTooltip = computed(
+  () => (permission: FullPermissionCheckResultFragment) => {
+    if (permission?.code === 'WorkspaceLimitsReached') {
+      return undefined
+    }
+
+    if (permission?.code === 'WorkspaceSsoSessionNoAccess') {
+      return 'SSO login required to access this workspace'
+    }
+
+    if (!permission?.authorized) {
+      return permission?.message
+    }
+
+    return undefined
+  }
+)
 
 // Dialog states based on what we have
 const activeDialog = computed(() => {
@@ -118,14 +215,16 @@ const dialogTitle = computed(() => {
   }
 })
 
-const onProjectSelected = (
-  project: WorkspaceMoveProjectSelectProject_ProjectFragment
-) => {
+const onProjectSelected = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
   selectedProject.value = project
+  // If we already have a workspace (from props), go straight to confirmation
+  if (props.workspaceSlug && workspaceResult.value?.workspaceBySlug) {
+    selectedWorkspace.value = workspaceResult.value.workspaceBySlug
+  }
 }
 
 const onWorkspaceSelected = (
-  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
 ) => {
   selectedWorkspace.value = workspace
 }

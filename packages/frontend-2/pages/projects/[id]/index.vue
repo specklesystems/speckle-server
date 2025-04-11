@@ -107,7 +107,7 @@ graphql(`
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...WorkspaceMoveProjectSelectProject_Project
+    ...WorkspaceMoveProjectManager_Project
     ...ProjectPageSettingsTab_Project
   }
 `)

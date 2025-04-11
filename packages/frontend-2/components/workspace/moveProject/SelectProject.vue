@@ -36,9 +36,19 @@
               </span>
             </div>
           </div>
-          <FormButton size="sm" color="outline" @click="onMoveClick(project)">
-            Move...
-          </FormButton>
+          <div
+            :key="`${project.id}-${project.workspace?.permissions?.canMoveProjectToWorkspace?.code}`"
+            v-tippy="getProjectTooltip(project)"
+          >
+            <FormButton
+              size="sm"
+              color="outline"
+              :disabled="isProjectDisabled(project)"
+              @click="onMoveClick(project)"
+            >
+              Move...
+            </FormButton>
+          </div>
         </div>
       </div>
       <p v-else class="py-4 text-body-xs text-foreground-2">
@@ -52,41 +62,42 @@
       class="py-4"
       @infinite="onInfiniteLoad"
     />
+    <WorkspacePlanLimitReachedDialog
+      v-model:open="showLimitDialog"
+      title="Workspace Limit Reached"
+      subtitle="This workspace has reached its project limit"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
 import {
   CommonLoadingIcon,
   FormTextInput,
   useDebouncedTextInput
 } from '@speckle/ui-components'
-import type { WorkspaceMoveProjectSelectProject_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  FullPermissionCheckResultFragment,
+  WorkspaceMoveProjectManager_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
-
-graphql(`
-  fragment WorkspaceMoveProjectSelectProject_Project on Project {
-    id
-    name
-    modelCount: models(limit: 0) {
-      totalCount
-    }
-    versions(limit: 0) {
-      totalCount
-    }
-  }
-`)
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 
 const emit = defineEmits<{
-  (
-    e: 'project-selected',
-    project: WorkspaceMoveProjectSelectProject_ProjectFragment
-  ): void
+  (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
+}>()
+
+const props = defineProps<{
+  workspaceSlug?: string
+  canMoveToWorkspace: (permission: FullPermissionCheckResultFragment) => boolean
+  isLimitReached: (permission: FullPermissionCheckResultFragment) => boolean
+  isSsoRequired: (permission: FullPermissionCheckResultFragment) => boolean
+  getDisabledTooltip: (
+    permission: FullPermissionCheckResultFragment
+  ) => string | undefined
 }>()
 
 const {
@@ -111,13 +122,64 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
+const showLimitDialog = ref(false)
+
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 const moveableProjects = computed(() => userProjects.value)
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
-const onMoveClick = (project: WorkspaceMoveProjectSelectProject_ProjectFragment) => {
+const isProjectDisabled = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    if (!props.workspaceSlug) {
+      return false
+    }
+
+    return !canMoveProject.value(project) && !isProjectLimitReached.value(project)
+  }
+)
+
+const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  if (props.workspaceSlug && isProjectLimitReached.value(project)) {
+    showLimitDialog.value = true
+    return
+  }
+
   emit('project-selected', project)
 }
 
 const showLoading = computed(() => loading.value && userProjects.value.length === 0)
+
+const getProjectPermission = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  return (
+    project.workspace?.permissions?.canMoveProjectToWorkspace || {
+      authorized: false,
+      code: '',
+      message: ''
+    }
+  )
+}
+
+const canMoveProject = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    const permission = getProjectPermission(project)
+    return props.canMoveToWorkspace(permission)
+  }
+)
+
+const isProjectLimitReached = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    const permission = getProjectPermission(project)
+    return props.isLimitReached(permission)
+  }
+)
+
+const getProjectTooltip = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    const permission = getProjectPermission(project)
+    if (props.isLimitReached(permission)) {
+      return undefined
+    }
+    return props.getDisabledTooltip(permission)
+  }
+)
 </script>

@@ -71,9 +71,9 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <WorkspaceMoveProjectsDialog
+        <WorkspaceMoveProjectManager
           v-model:open="showMoveProjectsDialog"
-          :workspace="workspace"
+          :workspace-slug="workspaceSlug"
         />
       </template>
     </template>
