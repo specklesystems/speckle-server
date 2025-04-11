@@ -1,8 +1,9 @@
 <template>
   <CommonCard
-    class="w-full bg-foundation border-outline-2 !p-4"
+    class="w-full border-outline-2 !p-4"
     :class="{
-      'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400': clickable
+      'cursor-pointer hover:border-outline-3 shadow-sm hover:border-zinc-400 bg-foundation':
+        clickable
     }"
     @click="clickable && onClick"
   >
