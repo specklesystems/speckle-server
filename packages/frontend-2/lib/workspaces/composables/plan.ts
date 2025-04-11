@@ -62,6 +62,11 @@ export const useWorkspacePlan = (slug: string) => {
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
+  const isBusinessPlan = computed(
+    () =>
+      plan.value?.name === PaidWorkspacePlansNew.Pro ||
+      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+  )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
   )
@@ -129,6 +134,7 @@ export const useWorkspacePlan = (slug: string) => {
     seats,
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
-    isUnlimitedPlan
+    isUnlimitedPlan,
+    isBusinessPlan
   }
 }
