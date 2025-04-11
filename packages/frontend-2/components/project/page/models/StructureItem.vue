@@ -81,7 +81,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="space-x-2 flex flex-row pils">
+          <div class="space-x-2 flex flex-row">
             <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
               <IconDiscussions class="w-4 h-4" />
               <span>{{ model?.commentThreadCount.totalCount }}</span>
