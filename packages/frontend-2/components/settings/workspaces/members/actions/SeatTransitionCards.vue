@@ -1,16 +1,30 @@
 <template>
   <BillingTransitionCards :current-state="currentSeat" :new-state="newSeat">
-    <template #price>
-      <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
-        <template v-if="hasAvailableSeat || isFreePlan">
-          <div class="line-through text-foreground-2">{{ seatPrice }}/month</div>
-          <div class="text-primary">Free</div>
-        </template>
-        <template v-else>
-          <div class="text-primary">{{ seatPrice }}/month</div>
-        </template>
+    <template #current-state>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-heading-sm">{{ currentSeat.title }}</div>
+          <div class="text-body-2xs">{{ currentSeat.description }}</div>
+        </div>
       </div>
-      <div v-else class="ml-auto text-primary font-medium">Free</div>
+    </template>
+    <template #new-state>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-heading-sm">{{ newSeat.title }}</div>
+          <div class="text-body-2xs">{{ newSeat.description }}</div>
+        </div>
+        <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
+          <template v-if="hasAvailableSeat || isFreePlan">
+            <div class="line-through text-foreground-2">{{ seatPrice }}/month</div>
+            <div class="text-primary">Free</div>
+          </template>
+          <template v-else>
+            <div class="text-primary">{{ seatPrice }}/month</div>
+          </template>
+        </div>
+        <div v-else class="ml-auto text-primary font-medium">Free</div>
+      </div>
     </template>
   </BillingTransitionCards>
 </template>
