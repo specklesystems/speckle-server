@@ -6,6 +6,8 @@ import {
   ServerNoSessionError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
+  WorkspaceNoEditorSeatError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceProjectMoveInvalidError,
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
@@ -19,8 +21,8 @@ import {
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
-import { isWorkspacePlanStatusReadOnly } from '../../../workspaces/index.js'
 import {
+  ensureWorkspaceProjectCanBeCreatedFragment,
   ensureWorkspaceRoleAndSessionFragment,
   ensureWorkspacesEnabledFragment
 } from '../../fragments/workspaces.js'
@@ -39,6 +41,7 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
   | typeof AuthCheckContextLoaderKeys.getWorkspaceLimits
   | typeof AuthCheckContextLoaderKeys.getWorkspaceProjectCount
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSeat
 
 type PolicyArgs = MaybeUserContext & MaybeProjectContext & MaybeWorkspaceContext
 
@@ -53,6 +56,8 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceProjectMoveInvalidError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<typeof WorkspaceNoEditorSeatError>
+  | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
 
 export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,
@@ -94,26 +99,16 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
       })
       if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
 
-      const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-      if (!workspacePlan) return err(new WorkspaceNoAccessError())
-      if (isWorkspacePlanStatusReadOnly(workspacePlan.status))
-        return err(new WorkspaceReadOnlyError())
-
-      const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
-      if (!workspaceLimits) return err(new WorkspaceNoAccessError())
-
-      if (workspaceLimits.projectCount === null) return ok()
-
-      const currentProjectCount = await loaders.getWorkspaceProjectCount({
-        workspaceId
+      // Ensure workspace accepts new projects
+      const ensuredProjectsAccepted = await ensureWorkspaceProjectCanBeCreatedFragment(
+        loaders
+      )({
+        workspaceId,
+        userId
       })
-
-      if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
-
-      if (currentProjectCount >= workspaceLimits.projectCount)
-        return err(
-          new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } })
-        )
+      if (ensuredProjectsAccepted.isErr) {
+        return err(ensuredProjectsAccepted.error)
+      }
     }
 
     return ok()

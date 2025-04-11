@@ -3,7 +3,7 @@ import { assert, describe, expect, it } from 'vitest'
 import { canMoveToWorkspacePolicy } from './canMoveToWorkspace.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Project } from '../../domain/projects/types.js'
-import { Roles } from '../../../core/constants.js'
+import { Roles, SeatTypes } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
 
@@ -27,6 +27,7 @@ const buildCanMoveToWorkspace = (
     getWorkspaceRole: async () => {
       return Roles.Workspace.Admin
     },
+    getWorkspaceSeat: async () => SeatTypes.Editor,
     getWorkspaceSsoProvider: async () => {
       return null
     },

@@ -1,6 +1,6 @@
 import cryptoRandomString from 'crypto-random-string'
 import { assert, describe, expect, it } from 'vitest'
-import { canCreateModelPolicy } from './canCreateModel.js'
+import { canCreateModelPolicy } from './canCreate.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
 import { Roles } from '../../../../core/constants.js'
 import { Workspace } from '../../../domain/workspaces/types.js'
