@@ -21,7 +21,7 @@
             {{ updatedAt.relative }}
           </span>
           <span class="text-body-3xs capitalize mb-2 text-foreground-2 select-none">
-            {{ project.role?.split(':').reverse()[0] }}
+            {{ RoleInfo.Stream[project.role as StreamRoles].title }}
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
@@ -95,6 +95,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { RoleInfo, type StreamRoles } from '@speckle/shared'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment

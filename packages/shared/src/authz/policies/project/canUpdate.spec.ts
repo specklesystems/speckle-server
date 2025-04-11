@@ -48,11 +48,15 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoProvider: async () => ({
       providerId: 'provider-id'
     }),
-    getWorkspaceSsoSession: async () => ({
-      userId: 'user-id',
-      providerId: 'provider-id',
-      validUntil: new Date()
-    }),
+    getWorkspaceSsoSession: async () => {
+      const validUntil = new Date()
+      validUntil.setDate(validUntil.getDate() + 7)
+      return {
+        userId: 'user-id',
+        providerId: 'provider-id',
+        validUntil
+      }
+    },
     ...overrides
   })
 

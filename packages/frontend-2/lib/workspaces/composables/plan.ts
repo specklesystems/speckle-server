@@ -62,6 +62,11 @@ export const useWorkspacePlan = (slug: string) => {
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
+  const isBusinessPlan = computed(
+    () =>
+      plan.value?.name === PaidWorkspacePlansNew.Pro ||
+      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+  )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
   )
@@ -93,9 +98,12 @@ export const useWorkspacePlan = (slug: string) => {
 
   // Seat information
   const seats = computed(() => subscription.value?.seats)
-  const hasAvailableEditorSeats = computed(() =>
-    seats.value?.editors.available && seats.value?.editors.available > 0 ? true : false
-  )
+  const hasAvailableEditorSeats = computed(() => {
+    if (seats.value?.editors.available && seats.value?.editors.assigned) {
+      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    }
+    return false
+  })
   const editorSeatPriceFormatted = computed(() => {
     if (plan.value?.name && isPaidPlan(plan.value?.name)) {
       return formatPrice(
@@ -125,6 +133,7 @@ export const useWorkspacePlan = (slug: string) => {
     seats,
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
-    isUnlimitedPlan
+    isUnlimitedPlan,
+    isBusinessPlan
   }
 }

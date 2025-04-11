@@ -1,7 +1,7 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
+import { Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
@@ -41,8 +41,6 @@ import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
-import { OperationName, OperationStatus } from '@/observability/domain/fields'
-import { logWithErr } from '@/observability/utils/logLevels'
 import { createCheckoutSessionFactory } from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import {
@@ -61,6 +59,7 @@ import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -326,12 +325,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
             eventEmit: getEventBus().emit
           })
-          await assignSeat({
-            workspaceId,
-            userId,
-            type: seatType,
-            assignedByUserId: ctx.userId!
-          })
+          await withOperationLogging(
+            async () =>
+              await assignSeat({
+                workspaceId,
+                userId,
+                type: seatType,
+                assignedByUserId: ctx.userId!
+              }),
+            {
+              logger: ctx.log,
+              operationName: 'updateWorkspaceSeatType',
+              operationDescription: 'Updating seat type'
+            }
+          )
 
           return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
         }
@@ -346,16 +353,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          await deleteCheckoutSessionFactory({ db })({ checkoutSessionId: sessionId })
+          await withOperationLogging(
+            async () =>
+              await deleteCheckoutSessionFactory({ db })({
+                checkoutSessionId: sessionId
+              }),
+            {
+              logger: ctx.log,
+              operationName: 'cancelCheckoutSession',
+              operationDescription:
+                'Checkout session cancelled; so checkout session is being deleted'
+            }
+          )
           return true
         },
         createCheckoutSession: async (_parent, args, ctx) => {
-          let logger = extendLoggerComponent(
-            ctx.log,
-            'gatekeeper',
-            'resolvers',
-            'createCheckoutSession'
-          ).child(OperationName('createCheckoutSession'))
+          let logger = extendLoggerComponent(ctx.log, 'gatekeeper', 'resolvers')
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
           logger = logger.child({ workspaceId, workspacePlan })
@@ -386,34 +399,27 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
           })
 
-          try {
-            logger.info(OperationStatus.start, '[{operationName} ({operationStatus})]')
-            const session = await startCheckoutSession({
-              workspacePlan,
-              workspaceId,
-              workspaceSlug: workspace.slug,
-              isCreateFlow: isCreateFlow || false,
-              billingInterval,
-              currency: args.input.currency ?? 'usd'
-            })
-            logger.info(
-              { ...OperationStatus.success, sessionId: session.id },
-              '[{operationName} ({operationStatus})]'
-            )
-            return session
-          } catch (err) {
-            const e = ensureError(err, 'Unknown error creating checkout session')
-            logWithErr(
+          return await withOperationLogging(
+            async () =>
+              await startCheckoutSession({
+                workspacePlan,
+                workspaceId,
+                workspaceSlug: workspace.slug,
+                isCreateFlow: isCreateFlow || false,
+                billingInterval,
+                currency: args.input.currency ?? 'usd'
+              }),
+            {
               logger,
-              e,
-              { ...OperationStatus.failure },
-              '[{operationName} ({operationStatus})]'
-            )
-            throw e
-          }
+              operationName: 'startCheckoutSession',
+              operationDescription: 'Starting checkout session'
+            }
+          )
         },
         upgradePlan: async (_parent, args, ctx) => {
+          let logger = extendLoggerComponent(ctx.log, 'gatekeeper', 'resolvers')
           const { workspaceId, workspacePlan, billingInterval } = args.input
+          logger = logger.child({ workspaceId, workspacePlan })
 
           await authorizeResolver(
             ctx.userId,
@@ -458,11 +464,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                     db
                   })
                 })
-          await upgradeWorkspaceSubscription({
-            workspaceId,
-            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
-            billingInterval
-          })
+          await withOperationLogging(
+            async () =>
+              await upgradeWorkspaceSubscription({
+                workspaceId,
+                targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
+                billingInterval
+              }),
+            {
+              logger,
+              operationName: 'upgradeWorkspaceSubscription',
+              operationDescription: 'Upgrading workspace subscription'
+            }
+          )
+
           return true
         }
       }

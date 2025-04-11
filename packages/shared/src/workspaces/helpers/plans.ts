@@ -146,6 +146,31 @@ export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
   }
 }
 
+export const isPaidPlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
 /**
  * BILLING INTERVALS
  */
