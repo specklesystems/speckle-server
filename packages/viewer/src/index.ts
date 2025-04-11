@@ -52,12 +52,8 @@ import {
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
-import {
-  SectionTool,
-  SectionToolEvent,
-  SectionToolEventPayload
-} from './modules/extensions/SectionTool.js'
-import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
+
+import { SectionOutlines } from './modules/extensions/sections/SectionOutlines.js'
 import {
   FilteringExtension,
   type FilteringState
@@ -154,6 +150,13 @@ import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewMo
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { OrientedSectionTool } from './modules/extensions/sections/OrientedSectionTool.js'
+import { AxisAlignedSectionTool } from './modules/extensions/sections/AxisAlignedSectionTool.js'
+import {
+  SectionTool,
+  SectionToolEvent,
+  SectionToolEventPayload
+} from './modules/extensions/sections/SectionTool.js'
 import { WebXrViewer } from './modules/WebXrViewer.js'
 import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import {
@@ -182,6 +185,8 @@ export {
   SelectionExtension,
   CameraController,
   SectionTool,
+  AxisAlignedSectionTool,
+  OrientedSectionTool,
   SectionOutlines,
   MeasurementsExtension,
   FilteringExtension,
