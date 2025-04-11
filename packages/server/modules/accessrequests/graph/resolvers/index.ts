@@ -31,6 +31,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -103,7 +104,20 @@ const resolvers: Resolvers = {
       if (!userId) throw new LogicError('User ID unexpectedly false')
 
       const { streamId } = args
-      return await requestStreamAccess(userId, streamId)
+      const logger = ctx.log.child({
+        streamId,
+        projectId: streamId
+      })
+      const result = await withOperationLogging(
+        async () => await requestStreamAccess(userId, streamId),
+        {
+          logger,
+          operationName: 'requestStreamAccess',
+          operationDescription: 'Request for stream access'
+        }
+      )
+      if (!result) throw new LogicError('Unable to create stream access request') // should have already thrown by this point
+      return result
     }
   },
   ProjectMutations: {
@@ -113,25 +127,50 @@ const resolvers: Resolvers = {
     async create(_parent, args, ctx) {
       const { userId } = ctx
       const { projectId } = args
-      return await requestProjectAccess(userId!, projectId)
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId // for legacy compatibility
+      })
+      const result = await withOperationLogging(
+        async () => await requestProjectAccess(userId!, projectId),
+        {
+          logger,
+          operationName: 'CreateProjectAccessRequest',
+          operationDescription: 'Create a request for project access'
+        }
+      )
+      if (!result) throw new LogicError('Unable to create project access request') // should have already thrown by this point
+      return result
     },
     async use(_parent, args, ctx) {
       const { userId, resourceAccessRules } = ctx
       const { requestId, accept, role } = args
+      const logger = ctx.log
 
-      const usedReq = await processPendingProjectRequest(
-        userId!,
-        requestId,
-        accept,
-        mapStreamRoleToValue(role),
-        resourceAccessRules
+      const project = await withOperationLogging(
+        async () => {
+          const usedReq = await processPendingProjectRequest(
+            userId!,
+            requestId,
+            accept,
+            mapStreamRoleToValue(role),
+            resourceAccessRules
+          )
+
+          const project = await ctx.loaders.streams.getStream.load(usedReq.resourceId)
+          if (!project) {
+            throw new LogicError('Unexpectedly unable to find request project')
+          }
+
+          return project
+        },
+        {
+          logger,
+          operationName: 'ProcessProjectAccessRequest',
+          operationDescription: 'Use a request for project access'
+        }
       )
-
-      const project = await ctx.loaders.streams.getStream.load(usedReq.resourceId)
-      if (!project) {
-        throw new LogicError('Unexpectedly unable to find request project')
-      }
-
+      if (!project) throw new LogicError('Unable to user project access request') // should have already thrown by this point
       return project
     }
   },
