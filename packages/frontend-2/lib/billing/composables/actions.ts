@@ -94,7 +94,8 @@ export const useBillingActions = () => {
             workspaceId,
             billingInterval: cycle,
             workspacePlan: plan,
-            isCreateFlow: !!isCreateFlow
+            isCreateFlow: !!isCreateFlow,
+            currency: 'gbp'
           }
         },
         fetchPolicy: 'no-cache'
