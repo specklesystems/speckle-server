@@ -68,7 +68,7 @@ const contactButton = computed(() => ({
 const unlimitedAddOnButton = computed(() => ({
   text: 'Buy add-on',
   id: 'buy-add-on',
-  disabled: !isPaidPlan(plan.value?.name),
+  disabled: plan.value?.name ? !isPaidPlan(plan.value.name) : false,
   disabledMessage: 'Only available on Starter and Business plans',
   onClick: () => {
     // TODO: Implement checkout
