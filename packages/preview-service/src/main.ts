@@ -131,6 +131,8 @@ const server = app.listen(port, host, async () => {
     logger.error({ err }, 'Error creating job queue')
 
     // the callback to server.listen has failed, so we need to exit the process and not just return
+    await beforeShutdown() // handle the shutdown gracefully
+    await onShutdown()
     process.exit(1)
   }
 
