@@ -11,7 +11,7 @@
       class="mb-2"
       v-on="on"
     />
-    <div v-if="loading" class="py-4 flex items-center justify-center w-full h-32">
+    <div v-if="showLoading" class="py-4 flex items-center justify-center w-full h-32">
       <CommonLoadingIcon size="sm" />
     </div>
     <template v-else>
@@ -118,4 +118,6 @@ const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 const onMoveClick = (project: WorkspaceMoveProjectSelectProject_ProjectFragment) => {
   emit('project-selected', project)
 }
+
+const showLoading = computed(() => loading.value && userProjects.value.length === 0)
 </script>

@@ -1,81 +1,75 @@
 <template>
   <div>
-    <div class="flex flex-col space-y-4">
-      <div v-if="loading" class="py-4 flex items-center justify-center w-full h-32">
-        <CommonLoadingIcon size="sm" />
-      </div>
-      <template v-else>
-        <div v-if="hasWorkspaces">
-          <p class="mb-4">Select an existing workspaces or create a new one.</p>
-          <div class="flex flex-col gap-2">
-            <div
-              v-for="ws in workspaces"
-              :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
-              v-tippy="disabledTooltipText(ws)"
+    <div v-if="showLoading" class="py-4 flex items-center justify-center w-full h-32">
+      <CommonLoadingIcon size="sm" />
+    </div>
+    <template v-else>
+      <div v-if="hasWorkspaces">
+        <p class="mb-4">Select an existing workspaces or create a new one.</p>
+        <div class="flex flex-col gap-2">
+          <div
+            v-for="ws in workspaces"
+            :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
+            v-tippy="disabledTooltipText(ws)"
+          >
+            <button
+              class="w-full"
+              :class="
+                !canMoveToWorkspace(ws) && !isLimitReached(ws)
+                  ? 'cursor-not-allowed'
+                  : ''
+              "
+              :disabled="!canMoveToWorkspace(ws) && !isLimitReached(ws)"
+              @click="handleWorkspaceClick(ws)"
             >
-              <button
-                class="w-full"
-                :class="
-                  !canMoveToWorkspace(ws) && !isLimitReached(ws)
-                    ? 'cursor-not-allowed'
-                    : ''
-                "
-                :disabled="!canMoveToWorkspace(ws) && !isLimitReached(ws)"
-                @click="handleWorkspaceClick(ws)"
+              <WorkspaceCard
+                :logo="ws.logo ?? ''"
+                :name="ws.name"
+                :clickable="canMoveToWorkspace(ws) || isLimitReached(ws)"
               >
-                <WorkspaceCard
-                  :logo="ws.logo ?? ''"
-                  :name="ws.name"
-                  :clickable="canMoveToWorkspace(ws) || isLimitReached(ws)"
-                >
-                  <template #text>
-                    <div class="flex flex-col gap-2 items-start">
-                      <CommonBadge
-                        v-if="isSsoRequired(ws)"
-                        color="secondary"
-                        class="capitalize"
-                        rounded
-                      >
-                        SSO login required
-                      </CommonBadge>
-                      <p>
-                        {{ ws.projects.totalCount }} projects,
-                        {{ ws.projects.totalCount }} models
-                      </p>
-                      <UserAvatarGroup
-                        :users="ws.team.items.map((t) => t.user)"
-                        :max-count="6"
-                        size="sm"
-                      />
-                    </div>
-                  </template>
-                  <template #actions>
-                    <CommonBadge color="secondary" rounded>
-                      {{ formatName(ws.plan?.name) }}
+                <template #text>
+                  <div class="flex flex-col gap-2 items-start">
+                    <CommonBadge
+                      v-if="isSsoRequired(ws)"
+                      color="secondary"
+                      class="capitalize"
+                      rounded
+                    >
+                      SSO login required
                     </CommonBadge>
-                  </template>
-                </WorkspaceCard>
-              </button>
-            </div>
+                    <p>
+                      {{ ws.projects.totalCount }} projects,
+                      {{ ws.projects.totalCount }} models
+                    </p>
+                    <UserAvatarGroup
+                      :users="ws.team.items.map((t) => t.user)"
+                      :max-count="6"
+                      size="sm"
+                    />
+                  </div>
+                </template>
+                <template #actions>
+                  <CommonBadge color="secondary" rounded>
+                    {{ formatName(ws.plan?.name) }}
+                  </CommonBadge>
+                </template>
+              </WorkspaceCard>
+            </button>
           </div>
         </div>
-        <p v-else class="text-body-xs text-foreground">
-          Looks like you haven't created any workspaces yet. Workspaces help you easily
-          organise and control your digital projects. Create one to move your project
-          into.
-        </p>
-      </template>
-    </div>
+      </div>
+      <p v-else class="text-body-xs text-foreground">
+        Looks like you haven't created any workspaces yet. Workspaces help you easily
+        organise and control your digital projects. Create one to move your project
+        into.
+      </p>
+    </template>
 
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitDialog"
       title="Workspace Limit Reached"
       subtitle="This workspace has reached its project limit"
-    >
-      <p class="text-body-xs text-foreground-2">
-        Please upgrade your workspace plan or contact your workspace administrator.
-      </p>
-    </WorkspacePlanLimitReachedDialog>
+    />
   </div>
 </template>
 
@@ -150,14 +144,20 @@ const emit = defineEmits<{
   ): void
 }>()
 
-const { result, loading } = useQuery(workspaceMoveProjectManagerUserQuery, () => ({
-  cursor: null,
-  filter: {},
-  projectId: props.project.id
-}))
+const { result, loading: initialLoading } = useQuery(
+  workspaceMoveProjectManagerUserQuery,
+  () => ({
+    cursor: null,
+    filter: {},
+    projectId: props.project.id
+  })
+)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
+const showLoading = computed(
+  () => initialLoading.value && workspaces.value.length === 0
+)
 
 const showLimitDialog = ref(false)
 const limitReachedWorkspace =
