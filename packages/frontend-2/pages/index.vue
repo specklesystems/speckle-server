@@ -6,6 +6,6 @@
 useHead({ title: 'Dashboard' })
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'dashboard-redirect']
 })
 </script>

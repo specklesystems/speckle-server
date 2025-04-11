@@ -2,7 +2,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  isNewWorkspacePlan,
   PaidWorkspacePlansNew,
   UnpaidWorkspacePlans,
   WorkspacePlans,
@@ -62,11 +61,12 @@ export const useWorkspacePlan = (slug: string) => {
   const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
 
-  // Plan type information
-  const isNewPlan = computed(() =>
-    isNewWorkspacePlan(result.value?.workspaceBySlug?.plan?.name)
-  )
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
+  const isBusinessPlan = computed(
+    () =>
+      plan.value?.name === PaidWorkspacePlansNew.Pro ||
+      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+  )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
   )
@@ -92,13 +92,18 @@ export const useWorkspacePlan = (slug: string) => {
   const intervalIsYearly = computed(
     () => billingInterval.value === BillingInterval.Yearly
   )
-  const billingCycleEnd = computed(() => subscription.value?.currentBillingCycleEnd)
+  const currentBillingCycleEnd = computed(
+    () => subscription.value?.currentBillingCycleEnd
+  )
 
   // Seat information
   const seats = computed(() => subscription.value?.seats)
-  const hasAvailableEditorSeats = computed(() =>
-    seats.value?.editors.available && seats.value?.editors.available > 0 ? true : false
-  )
+  const hasAvailableEditorSeats = computed(() => {
+    if (seats.value?.editors.available && seats.value?.editors.assigned) {
+      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    }
+    return false
+  })
   const editorSeatPriceFormatted = computed(() => {
     if (
       plan.value?.name === WorkspacePlans.Team ||
@@ -117,19 +122,19 @@ export const useWorkspacePlan = (slug: string) => {
 
   return {
     plan,
-    isNewPlan,
     statusIsExpired,
     statusIsCanceled,
     isPurchasablePlan,
     isFreePlan,
     billingInterval,
     intervalIsYearly,
-    billingCycleEnd,
+    currentBillingCycleEnd,
     statusIsCancelationScheduled,
     subscription,
     seats,
     hasAvailableEditorSeats,
     editorSeatPriceFormatted,
-    isUnlimitedPlan
+    isUnlimitedPlan,
+    isBusinessPlan
   }
 }
