@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    title="Move projects to workspace"
-    :buttons="buttons"
-  >
+  <div>
     <FormTextInput
       v-bind="bind"
       label="Move projects"
@@ -52,79 +47,29 @@
       class="py-4"
       @infinite="onInfiniteLoad"
     />
-
-    <ProjectsConfirmMoveDialog
-      v-if="selectedProject && workspace"
-      v-model:open="showConfirmDialog"
-      :project="selectedProject"
-      :workspace="workspace"
-      event-source="move-projects-dialog"
-    />
-
-    <ProjectsMoveToWorkspaceDialog
-      v-if="selectedProject && !workspace"
-      v-model:open="showMoveToWorkspaceDialog"
-      :project="selectedProject"
-      event-source="move-projects-dialog"
-    />
-  </LayoutDialog>
+  </div>
 </template>
+
 <script setup lang="ts">
-import {
-  FormTextInput,
-  type LayoutDialogButton,
-  useDebouncedTextInput
-} from '@speckle/ui-components'
-import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  MoveProjectsDialog_WorkspaceFragment,
-  ProjectsMoveToWorkspaceDialog_ProjectFragment
-} from '~~/lib/common/generated/gql/graphql'
+import { FormTextInput, useDebouncedTextInput } from '@speckle/ui-components'
+import type { WorkspaceMoveProjectManager_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
-import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
+import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
 
-graphql(`
-  fragment MoveProjectsDialog_Workspace on Workspace {
-    id
-    ...ProjectsMoveToWorkspaceDialog_Workspace
-    projects {
-      items {
-        id
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment MoveProjectsDialog_User on User {
-    projects(cursor: $cursor, filter: $filter, limit: 10) {
-      totalCount
-      cursor
-      items {
-        ...ProjectsMoveToWorkspaceDialog_Project
-        workspace {
-          id
-        }
-      }
-    }
-  }
-`)
-
-const props = defineProps<{
-  workspace?: MoveProjectsDialog_WorkspaceFragment
-}>()
-
-const open = defineModel<boolean>('open', { required: true })
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
+
+const emit = defineEmits<{
+  (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
+}>()
 
 const {
   query: { result },
   identifier,
   onInfiniteLoad
 } = usePaginatedQuery({
-  query: moveProjectsDialogQuery,
+  query: workspaceMoveProjectManagerUserQuery,
   baseVariables: computed(() => ({
     cursor: null as string | null,
     filter: {
@@ -142,36 +87,11 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
-const showConfirmDialog = ref(false)
-const showMoveToWorkspaceDialog = ref(false)
-
-const workspaceProjects = computed(
-  () => props.workspace?.projects.items.map((project) => project.id) || []
-)
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
-
-const moveableProjects = computed(() =>
-  userProjects.value.filter((project) => !workspaceProjects.value.includes(project.id))
-)
+const moveableProjects = computed(() => userProjects.value)
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
-const buttons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Done',
-    props: { color: 'primary' },
-    onClick: () => {
-      open.value = false
-    }
-  }
-])
-
-const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
-  selectedProject.value = project
-  if (props.workspace) {
-    showConfirmDialog.value = true
-  } else {
-    showMoveToWorkspaceDialog.value = true
-  }
+const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  emit('project-selected', project)
 }
 </script>
