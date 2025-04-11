@@ -28,6 +28,7 @@ input CheckoutSessionInput {
   workspacePlan: PaidWorkspacePlans!
   billingInterval: BillingInterval!
   isCreateFlow: Boolean
+  currency: Currency
 }
 
 type CheckoutSession {
