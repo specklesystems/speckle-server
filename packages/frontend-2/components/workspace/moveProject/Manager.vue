@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    :title="dialogTitle"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="open" max-width="sm" :title="dialogTitle">
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
@@ -25,6 +20,25 @@
       :workspace="selectedWorkspace"
       @move-complete="onMoveComplete"
     />
+    <template #buttons>
+      <div class="-my-1 w-full flex justify-end">
+        <FormButton
+          v-if="!selectedProject"
+          color="outline"
+          @click="navigateTo(workspaceCreateRoute())"
+        >
+          Cancel
+        </FormButton>
+        <FormButton
+          v-else-if="!selectedWorkspace"
+          color="outline"
+          full-width
+          @click="navigateTo(workspaceCreateRoute())"
+        >
+          Create a new workspace
+        </FormButton>
+      </div>
+    </template>
   </LayoutDialog>
 </template>
 
@@ -38,7 +52,7 @@ import {
   workspaceMoveProjectManagerProjectQuery,
   workspaceMoveProjectManagerWorkspaceQuery
 } from '~/lib/workspaces/graphql/queries'
-import type { LayoutDialogButton } from '@speckle/ui-components'
+import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   projectId?: string
@@ -94,41 +108,12 @@ if (workspaceResult.value?.workspaceBySlug) {
 
 const dialogTitle = computed(() => {
   switch (activeDialog.value) {
-    case 'project':
-      return 'Move projects to workspace'
-    case 'workspace':
-      return 'Select destination workspace'
     case 'confirmation':
-      return 'Confirm project move'
-    default:
-      return 'Move Project'
-  }
-})
-
-const dialogButtons = computed((): LayoutDialogButton[] => {
-  switch (activeDialog.value) {
+      return 'Confirm move'
     case 'project':
-      return [
-        {
-          text: 'Done',
-          props: { color: 'primary' },
-          onClick: () => {
-            open.value = false
-          }
-        }
-      ]
     case 'workspace':
-      return [
-        {
-          text: 'Back',
-          props: { color: 'subtle' },
-          onClick: () => {
-            selectedProject.value = null
-          }
-        }
-      ]
     default:
-      return []
+      return 'Ready to move your project? '
   }
 })
 
