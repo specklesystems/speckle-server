@@ -150,6 +150,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
       }
@@ -227,6 +228,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
       }
