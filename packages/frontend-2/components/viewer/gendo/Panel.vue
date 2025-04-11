@@ -117,7 +117,6 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
-import { canModifyModels } from '~/lib/projects/helpers/permissions'
 
 const {
   projectId,
@@ -149,9 +148,8 @@ const suggestedPrompts = ref<string[]>([
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
-const canContribute = computed(() =>
-  project.value ? canModifyModels(project.value) : false
-)
+// TODO: Auth policy
+const canContribute = computed(() => project.value?.role)
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 

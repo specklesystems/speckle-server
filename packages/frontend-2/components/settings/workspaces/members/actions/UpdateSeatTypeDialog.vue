@@ -59,7 +59,7 @@ const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
   hasAvailableEditorSeats,
   editorSeatPriceFormatted,
-  billingCycleEnd,
+  currentBillingCycleEnd,
   isPurchasablePlan,
   isFreePlan,
   intervalIsYearly,
@@ -77,7 +77,7 @@ const billingMessage = computed(() => {
       : `This adds an extra Editor seat to your subscription, increasing your total billing by ${editorSeatPriceFormatted.value}/${annualOrMonthly.value}.`
   } else {
     return isPurchasablePlan.value
-      ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd.value}. You can freely reassign it to another person.`
+      ? `The Editor seat will still be paid for until your plan renews on ${currentBillingCycleEnd.value}. You can freely reassign it to another person.`
       : null
   }
 })

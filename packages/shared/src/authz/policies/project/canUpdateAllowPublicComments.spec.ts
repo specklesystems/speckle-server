@@ -4,6 +4,7 @@ import { canUpdateProjectAllowPublicCommentsPolicy } from './canUpdateAllowPubli
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import { ProjectNoAccessError } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
   const buildSUT = (
@@ -11,7 +12,7 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
   ) =>
     canUpdateProjectAllowPublicCommentsPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
@@ -39,7 +40,7 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
 
   it('succeeds if discoverable project', async () => {
     const sut = buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: true,
@@ -72,7 +73,7 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
 
   it('fails if project is neither public nor discoverable', async () => {
     const sut = buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,

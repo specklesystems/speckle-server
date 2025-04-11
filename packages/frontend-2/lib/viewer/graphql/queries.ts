@@ -61,6 +61,8 @@ export const viewerLoadedResourcesQuery = graphql(`
       ...ProjectPageLatestItemsModels
       ...ModelPageProject
       ...HeaderNavShare_Project
+      ...UseCheckViewerCommentingAccess_Project
+      ...UseViewerUserActivityBroadcasting_Project
     }
   }
 `)

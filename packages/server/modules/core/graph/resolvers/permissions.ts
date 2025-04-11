@@ -5,12 +5,18 @@ export default {
   Project: {
     permissions: (parent) => ({ projectId: parent.id })
   },
+  Model: {
+    permissions: (parent) => ({
+      projectId: parent.streamId,
+      modelId: parent.id
+    })
+  },
   User: {
     permissions: () => ({})
   },
   ProjectPermissionChecks: {
     canCreateModel: async (parent, _args, ctx) => {
-      const canCreateModel = await ctx.authPolicies.project.canCreateModel({
+      const canCreateModel = await ctx.authPolicies.project.model.canCreate({
         userId: ctx.userId,
         projectId: parent.projectId
       })
@@ -20,7 +26,7 @@ export default {
       const canMoveToWorkspace = await ctx.authPolicies.project.canMoveToWorkspace({
         userId: ctx.userId,
         projectId: parent.projectId,
-        workspaceId: args.workspaceId
+        workspaceId: args.workspaceId ?? undefined
       })
       return Authz.toGraphqlResult(canMoveToWorkspace)
     },
@@ -66,6 +72,23 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canLeave)
+    }
+  },
+  ModelPermissionChecks: {
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdate)
+    },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.model.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId,
+        modelId: parent.modelId
+      })
+      return Authz.toGraphqlResult(canDelete)
     }
   },
   RootPermissionChecks: {
