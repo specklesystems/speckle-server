@@ -15,10 +15,14 @@
             View all in 3D
           </FormButton>
           <FormButton
-            v-if="canContribute"
-            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
+            v-tippy="
+              canCreateModel?.authorized
+                ? undefined
+                : canCreateModel?.message ||
+                  'You do not have permission to create models'
+            "
+            :disabled="!canCreateModel?.authorized"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :disabled="project?.workspace?.readOnly"
             @click="showNewDialog = true"
           >
             New model
@@ -76,10 +80,14 @@
             View all in 3D
           </FormButton>
           <FormButton
-            v-if="canContribute"
-            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
+            v-tippy="
+              canCreateModel?.authorized
+                ? undefined
+                : canCreateModel?.message ||
+                  'You do not have permission to create models'
+            "
+            :disabled="!canCreateModel?.authorized"
             class="hidden lg:inline-flex shrink-0"
-            :disabled="project?.workspace?.readOnly"
             @click="showNewDialog = true"
           >
             New model
@@ -101,7 +109,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{
@@ -129,6 +136,11 @@ graphql(`
     workspace {
       id
       readOnly
+    }
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -160,9 +172,7 @@ const onViewAllClick = () => {
   })
 }
 
-const canContribute = computed(() =>
-  props.project ? canModifyModels(props.project) : false
-)
+const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const showNewDialog = ref(false)
 
 const debouncedSearch = computed({

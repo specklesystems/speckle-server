@@ -469,12 +469,13 @@ export = {
         ProjectSubscriptions.ProjectUpdated,
         async (payload, args, ctx) => {
           if (args.id !== payload.projectUpdated.id) return false
-          await authorizeResolver(
-            ctx.userId,
-            payload.projectUpdated.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+
+          const canRead = await ctx.authPolicies.project.canRead({
+            projectId: payload.projectUpdated.id,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )

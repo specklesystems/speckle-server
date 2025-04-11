@@ -75,18 +75,26 @@
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
-              <p class="text-body-xs font-medium text-foreground">Domain protection</p>
+              <div class="flex items-center">
+                <p class="text-body-xs font-medium text-foreground">
+                  Domain protection
+                </p>
+              </div>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
                 Only users with email addresses from your verified domains can be added
                 as workspace members or administrators.
               </p>
             </div>
-            <FormSwitch
-              v-model="isDomainProtectionEnabled"
-              :show-label="false"
-              :disabled="!hasWorkspaceDomains"
-              name="domain-protection"
-            />
+            <div key="tooltipText" v-tippy="switchDisabled ? tooltipText : undefined">
+              <!-- Never disable switch when domain protection is enabled to
+               allow expired workspaces ability to downgrade-->
+              <FormSwitch
+                v-model="isDomainProtectionEnabled"
+                :show-label="false"
+                :disabled="switchDisabled"
+                name="domain-protection"
+              />
+            </div>
           </div>
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
@@ -138,6 +146,10 @@ graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
     id
     slug
+    plan {
+      name
+      status
+    }
     domains {
       id
       domain
@@ -146,6 +158,9 @@ graphql(`
     ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    hasAccessToDomainBasedSecurityPolicies: hasAccessToFeature(
+      featureName: domainBasedSecurityPolicies
+    )
   }
 `)
 
@@ -187,6 +202,10 @@ const workspace = computed(() => result.value?.workspaceBySlug)
 const workspaceDomains = computed(() => {
   return workspace.value?.domains || []
 })
+const hasAccessToDomainBasedSecurityPolicies = computed(
+  () => workspace.value?.hasAccessToDomainBasedSecurityPolicies
+)
+
 const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
 const verifiedUserDomains = computed(() => {
   const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
@@ -242,6 +261,21 @@ const isDomainDiscoverabilityEnabled = computed({
   }
 })
 
+const switchDisabled = computed(() => {
+  if (isDomainProtectionEnabled.value) return false
+  if (!hasAccessToDomainBasedSecurityPolicies.value) return true
+  if (!hasWorkspaceDomains.value) return true
+  return false
+})
+
+const tooltipText = computed(() => {
+  if (isDomainProtectionEnabled.value) return undefined
+  if (!hasAccessToDomainBasedSecurityPolicies.value) return 'Business plan required'
+  if (!hasWorkspaceDomains.value)
+    return 'Your workspace must have at least one verified domain'
+  return undefined
+})
+
 const addDomain = async () => {
   if (!selectedDomain.value || !workspace.value) return
   await addWorkspaceDomain.mutate(
@@ -252,7 +286,8 @@ const addDomain = async () => {
     workspace.value.domains ?? [],
     workspace.value.discoverabilityEnabled,
     workspace.value.domainBasedMembershipProtectionEnabled,
-    workspace.value.hasAccessToSSO
+    workspace.value.hasAccessToSSO,
+    workspace.value.hasAccessToDomainBasedSecurityPolicies
   )
 
   mixpanel.track('Workspace Domain Added', {

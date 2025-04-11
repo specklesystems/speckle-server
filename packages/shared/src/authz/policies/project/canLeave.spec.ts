@@ -10,12 +10,13 @@ import {
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canLeaveProjectPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
     canLeaveProjectPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
@@ -33,7 +34,7 @@ describe('canLeaveProjectPolicy', () => {
 
   const buildWorkspaceSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
     buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
         isDiscoverable: false,

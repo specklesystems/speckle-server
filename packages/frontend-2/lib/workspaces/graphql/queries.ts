@@ -181,3 +181,11 @@ export const workspaceUsageQuery = graphql(`
     }
   }
 `)
+
+export const moveToWorkspaceAlertQuery = graphql(`
+  query MoveToWorkspaceAlert($id: String!) {
+    project(id: $id) {
+      ...MoveToWorkspaceAlert_Project
+    }
+  }
+`)

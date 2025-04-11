@@ -40,6 +40,7 @@
           :model="model"
           :project="project"
           :can-edit="canEdit"
+          :can-delete="canDelete"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -131,7 +132,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 
@@ -166,9 +166,6 @@ const props = withDefaults(
     showActions: true
   }
 )
-
-// TODO: Get rid of this, its not reactive. Is it even necessary?
-provide('projectId', props.projectId)
 
 const router = useRouter()
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
@@ -215,7 +212,13 @@ const updatedAtFullDate = computed(() => {
     : props.model.updatedAt
 })
 
-const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
+const canEdit = computed(() =>
+  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canUpdate
+)
+const canDelete = computed(() =>
+  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canDelete
+)
+
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 })
