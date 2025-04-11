@@ -31,71 +31,14 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import type {
-  WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
+  WorkspaceMoveProjectSelectProject_ProjectFragment,
+  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   workspaceMoveProjectManagerProjectQuery,
   workspaceMoveProjectManagerWorkspaceQuery
 } from '~/lib/workspaces/graphql/queries'
-import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-
-graphql(`
-  fragment WorkspaceMoveProjectManager_Project on Project {
-    id
-    name
-    modelCount: models(limit: 0) {
-      totalCount
-    }
-    versions(limit: 0) {
-      totalCount
-    }
-  }
-`)
-
-graphql(`
-  fragment WorkspaceMoveProjectManager_Workspace on Workspace {
-    id
-    role
-    name
-    logo
-    slug
-    plan {
-      name
-    }
-    projects {
-      totalCount
-    }
-    team {
-      items {
-        user {
-          id
-          name
-          avatar
-        }
-      }
-    }
-    ...WorkspaceHasCustomDataResidency_Workspace
-  }
-`)
-
-graphql(`
-  fragment WorkspaceMoveProjectManager_User on User {
-    workspaces {
-      items {
-        ...WorkspaceMoveProjectManager_Workspace
-      }
-    }
-    projects(cursor: $cursor, filter: $filter) {
-      items {
-        ...WorkspaceMoveProjectManager_Project
-      }
-      cursor
-      totalCount
-    }
-  }
-`)
 
 const props = defineProps<{
   projectId?: string
@@ -105,10 +48,11 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 
 // Internal state management
-const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)
-const selectedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
+const selectedProject = ref<WorkspaceMoveProjectSelectProject_ProjectFragment | null>(
   null
 )
+const selectedWorkspace =
+  ref<WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment | null>(null)
 
 // Dialog states based on what we have
 const activeDialog = computed(() => {
@@ -187,12 +131,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
   }
 })
 
-const onProjectSelected = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+const onProjectSelected = (
+  project: WorkspaceMoveProjectSelectProject_ProjectFragment
+) => {
   selectedProject.value = project
 }
 
 const onWorkspaceSelected = (
-  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 ) => {
   selectedWorkspace.value = workspace
 }

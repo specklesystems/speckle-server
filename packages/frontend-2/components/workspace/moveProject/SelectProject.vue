@@ -51,17 +51,33 @@
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import { FormTextInput, useDebouncedTextInput } from '@speckle/ui-components'
-import type { WorkspaceMoveProjectManager_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { WorkspaceMoveProjectSelectProject_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
-import { Roles } from '@speckle/shared'
+
+graphql(`
+  fragment WorkspaceMoveProjectSelectProject_Project on Project {
+    id
+    name
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    versions(limit: 0) {
+      totalCount
+    }
+  }
+`)
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 
 const emit = defineEmits<{
-  (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
+  (
+    e: 'project-selected',
+    project: WorkspaceMoveProjectSelectProject_ProjectFragment
+  ): void
 }>()
 
 const {
@@ -74,8 +90,7 @@ const {
     cursor: null as string | null,
     filter: {
       search: search.value?.length ? search.value : null,
-      workspaceId: null,
-      onlyWithRoles: [Roles.Stream.Owner]
+      workspaceId: null
     }
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
@@ -91,7 +106,7 @@ const userProjects = computed(() => result.value?.activeUser?.projects.items || 
 const moveableProjects = computed(() => userProjects.value)
 const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
-const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+const onMoveClick = (project: WorkspaceMoveProjectSelectProject_ProjectFragment) => {
   emit('project-selected', project)
 }
 </script>

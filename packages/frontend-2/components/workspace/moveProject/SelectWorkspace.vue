@@ -16,7 +16,7 @@
               :clickable="ws.role === Roles.Workspace.Admin"
             >
               <template #text>
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 items-start">
                   <p>
                     {{ ws.projects.totalCount }} projects,
                     {{ ws.projects.totalCount }} models
@@ -46,24 +46,68 @@
 </template>
 
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
+  WorkspaceMoveProjectSelectProject_ProjectFragment,
+  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
 
+graphql(`
+  fragment WorkspaceMoveProjectSelectWorkspace_User on User {
+    workspaces {
+      items {
+        ...WorkspaceMoveProjectSelectWorkspace_Workspace
+      }
+    }
+    projects(cursor: $cursor, filter: $filter) {
+      items {
+        ...WorkspaceMoveProjectSelectProject_Project
+      }
+      cursor
+      totalCount
+    }
+  }
+`)
+
+graphql(`
+  fragment WorkspaceMoveProjectSelectWorkspace_Workspace on Workspace {
+    id
+    role
+    name
+    logo
+    slug
+    plan {
+      name
+    }
+    projects {
+      totalCount
+    }
+    team {
+      items {
+        user {
+          id
+          name
+          avatar
+        }
+      }
+    }
+    ...WorkspaceHasCustomDataResidency_Workspace
+  }
+`)
+
 defineProps<{
-  project?: WorkspaceMoveProjectManager_ProjectFragment
+  project?: WorkspaceMoveProjectSelectProject_ProjectFragment
   eventSource?: string
 }>()
 
 const emit = defineEmits<{
   (
     e: 'workspace-selected',
-    workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+    workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
   ): void
 }>()
 
@@ -72,7 +116,9 @@ const { result } = useQuery(workspaceMoveProjectManagerUserQuery)
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
 
-const handleWorkspaceClick = (ws: WorkspaceMoveProjectManager_WorkspaceFragment) => {
+const handleWorkspaceClick = (
+  ws: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
+) => {
   emit('workspace-selected', ws)
 }
 </script>

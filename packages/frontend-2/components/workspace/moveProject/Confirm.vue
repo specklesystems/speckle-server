@@ -68,8 +68,8 @@
 
 <script setup lang="ts">
 import type {
-  WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
+  WorkspaceMoveProjectSelectProject_ProjectFragment,
+  WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { moveToWorkspaceDryRunQuery } from '~/lib/projects/graphql/queries'
@@ -80,8 +80,8 @@ import {
 } from '~/lib/workspaces/composables/region'
 
 const props = defineProps<{
-  project: WorkspaceMoveProjectManager_ProjectFragment
-  workspace: WorkspaceMoveProjectManager_WorkspaceFragment
+  project: WorkspaceMoveProjectSelectProject_ProjectFragment
+  workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
   eventSource?: string
 }>()
 
