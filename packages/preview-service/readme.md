@@ -30,7 +30,17 @@ Then build the service:
 yarn build
 ```
 
-This builds both typescript and webpack (for the page that is deployed to chromium to create the views). It should be rerun whenever you make changes to the viewer (if you make local viewer changes, don't forget to build the viewer module before running this)
+We also need to build the preview-service frontend:
+
+```bash
+yarn build:frontend
+```
+
+Then, we need to copy the built artefacts from the preview-service frontend in to the preview-service (backend) directory:
+
+```bash
+yarn link:frontend
+```
 
 Finally, you can run the preview service with:
 
