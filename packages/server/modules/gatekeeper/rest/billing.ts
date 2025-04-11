@@ -70,10 +70,11 @@ export const getBillingRouter = (): Router => {
       case 'checkout.session.async_payment_failed':
         // if payment fails, we delete the failed session
 
-        withOperationLogging(
-          await deleteCheckoutSessionFactory({ db })({
-            checkoutSessionId: event.data.object.id
-          }),
+        await withOperationLogging(
+          async () =>
+            await deleteCheckoutSessionFactory({ db })({
+              checkoutSessionId: event.data.object.id
+            }),
           {
             logger,
             operationName: 'deleteCheckoutSession',
@@ -138,14 +139,15 @@ export const getBillingRouter = (): Router => {
               emitEvent: getEventBus().emit
             })
 
-            withOperationLogging(
-              await withTransaction(
-                completeCheckout({
-                  sessionId: session.id,
-                  subscriptionId
-                }),
-                trx
-              ),
+            await withOperationLogging(
+              async () =>
+                await withTransaction(
+                  completeCheckout({
+                    sessionId: session.id,
+                    subscriptionId
+                  }),
+                  trx
+                ),
               {
                 logger,
                 operationName: 'completeCheckoutSession',
@@ -165,10 +167,11 @@ export const getBillingRouter = (): Router => {
             break
           case 'unpaid':
             // if payment fails, we delete the failed session
-            withOperationLogging(
-              await deleteCheckoutSessionFactory({ db })({
-                checkoutSessionId: event.data.object.id
-              }),
+            await withOperationLogging(
+              async () =>
+                await deleteCheckoutSessionFactory({ db })({
+                  checkoutSessionId: event.data.object.id
+                }),
               {
                 logger,
                 operationName: 'deleteCheckoutSession',
@@ -181,10 +184,11 @@ export const getBillingRouter = (): Router => {
         break
 
       case 'checkout.session.expired':
-        withOperationLogging(
-          await deleteCheckoutSessionFactory({ db })({
-            checkoutSessionId: event.data.object.id
-          }),
+        await withOperationLogging(
+          async () =>
+            await deleteCheckoutSessionFactory({ db })({
+              checkoutSessionId: event.data.object.id
+            }),
           {
             logger,
             operationName: 'deleteCheckoutSession',
@@ -196,18 +200,20 @@ export const getBillingRouter = (): Router => {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        withOperationLogging(
-          await handleSubscriptionUpdateFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-            getWorkspaceSubscriptionBySubscriptionId:
-              getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-            upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-          })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+        await withOperationLogging(
+          async () =>
+            await handleSubscriptionUpdateFactory({
+              getWorkspacePlan: getWorkspacePlanFactory({ db }),
+              upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+              getWorkspaceSubscriptionBySubscriptionId:
+                getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
-            operationDescription: 'Handling subscription update'
+            operationDescription:
+              'Subscription was deleted; now handling the subscription update'
           }
         )
         break
@@ -216,18 +222,20 @@ export const getBillingRouter = (): Router => {
           event
         )
         if (!subscriptionData) break
-        withOperationLogging(
-          await handleSubscriptionUpdateFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-            getWorkspaceSubscriptionBySubscriptionId:
-              getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-            upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-          })({ subscriptionData }),
+        await withOperationLogging(
+          async () =>
+            await handleSubscriptionUpdateFactory({
+              getWorkspacePlan: getWorkspacePlanFactory({ db }),
+              upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+              getWorkspaceSubscriptionBySubscriptionId:
+                getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+              upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+            })({ subscriptionData }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
-            operationDescription: 'Handling subscription update'
+            operationDescription:
+              'Invoice was created; now handling the subscription update'
           }
         )
         break

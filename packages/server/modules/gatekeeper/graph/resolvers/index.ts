@@ -323,13 +323,14 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
             eventEmit: getEventBus().emit
           })
-          withOperationLogging(
-            await assignSeat({
-              workspaceId,
-              userId,
-              type: seatType,
-              assignedByUserId: ctx.userId!
-            }),
+          await withOperationLogging(
+            async () =>
+              await assignSeat({
+                workspaceId,
+                userId,
+                type: seatType,
+                assignedByUserId: ctx.userId!
+              }),
             {
               logger: ctx.log,
               operationName: 'updateWorkspaceSeatType',
@@ -350,14 +351,16 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          withOperationLogging(
-            await deleteCheckoutSessionFactory({ db })({
-              checkoutSessionId: sessionId
-            }),
+          await withOperationLogging(
+            async () =>
+              await deleteCheckoutSessionFactory({ db })({
+                checkoutSessionId: sessionId
+              }),
             {
               logger: ctx.log,
               operationName: 'cancelCheckoutSession',
-              operationDescription: 'Deleting checkout session'
+              operationDescription:
+                'Checkout session cancelled; so checkout session is being deleted'
             }
           )
           return true
@@ -408,14 +411,15 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                 deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
               })
 
-          return withOperationLogging(
-            await startCheckoutSession({
-              workspacePlan,
-              workspaceId,
-              workspaceSlug: workspace.slug,
-              isCreateFlow: isCreateFlow || false,
-              billingInterval
-            }),
+          return await withOperationLogging(
+            async () =>
+              await startCheckoutSession({
+                workspacePlan,
+                workspaceId,
+                workspaceSlug: workspace.slug,
+                isCreateFlow: isCreateFlow || false,
+                billingInterval
+              }),
             {
               logger,
               operationName: 'startCheckoutSession',
@@ -471,12 +475,13 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                     db
                   })
                 })
-          withOperationLogging(
-            await upgradeWorkspaceSubscription({
-              workspaceId,
-              targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
-              billingInterval
-            }),
+          await withOperationLogging(
+            async () =>
+              await upgradeWorkspaceSubscription({
+                workspaceId,
+                targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
+                billingInterval
+              }),
             {
               logger,
               operationName: 'upgradeWorkspaceSubscription',
