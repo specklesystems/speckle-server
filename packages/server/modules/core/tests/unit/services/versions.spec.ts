@@ -37,8 +37,8 @@ describe('Module @core', () => {
             })({ workspaceId })
           )
             ?.toISOString()
-            .slice(-5)
-        ).to.eq(dayjs().subtract(1, 'month').toDate().toISOString().slice(-5))
+            .slice(0, -5)
+        ).to.eq(dayjs().subtract(1, 'month').toDate().toISOString().slice(0, -5))
       })
     })
     describe('getLimitedReferencedObjectFactory returns a function that, ', () => {
