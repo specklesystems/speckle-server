@@ -4172,6 +4172,7 @@ export type Version = {
   message?: Maybe<Scalars['String']['output']>;
   model: Model;
   parents?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  permissions: VersionPermissionChecks;
   previewUrl: Scalars['String']['output'];
   referencedObject?: Maybe<Scalars['String']['output']>;
   sourceApplication?: Maybe<Scalars['String']['output']>;
@@ -4247,6 +4248,11 @@ export type VersionMutationsRequestGendoAiRenderArgs = {
 
 export type VersionMutationsUpdateArgs = {
   input: UpdateVersionInput;
+};
+
+export type VersionPermissionChecks = {
+  __typename?: 'VersionPermissionChecks';
+  canUpdate: PermissionCheckResult;
 };
 
 export type ViewerResourceGroup = {
@@ -7552,6 +7558,7 @@ export type AllObjectTypes = {
   VersionCreatedTrigger: VersionCreatedTrigger,
   VersionCreatedTriggerDefinition: VersionCreatedTriggerDefinition,
   VersionMutations: VersionMutations,
+  VersionPermissionChecks: VersionPermissionChecks,
   ViewerResourceGroup: ViewerResourceGroup,
   ViewerResourceItem: ViewerResourceItem,
   ViewerUserActivityMessage: ViewerUserActivityMessage,
@@ -8696,6 +8703,7 @@ export type VersionFieldArgs = {
   message: {},
   model: {},
   parents: {},
+  permissions: {},
   previewUrl: {},
   referencedObject: {},
   sourceApplication: {},
@@ -8722,6 +8730,9 @@ export type VersionMutationsFieldArgs = {
   moveToModel: VersionMutationsMoveToModelArgs,
   requestGendoAIRender: VersionMutationsRequestGendoAiRenderArgs,
   update: VersionMutationsUpdateArgs,
+}
+export type VersionPermissionChecksFieldArgs = {
+  canUpdate: {},
 }
 export type ViewerResourceGroupFieldArgs = {
   identifier: {},
@@ -9088,6 +9099,7 @@ export type AllObjectFieldArgTypes = {
   VersionCreatedTrigger: VersionCreatedTriggerFieldArgs,
   VersionCreatedTriggerDefinition: VersionCreatedTriggerDefinitionFieldArgs,
   VersionMutations: VersionMutationsFieldArgs,
+  VersionPermissionChecks: VersionPermissionChecksFieldArgs,
   ViewerResourceGroup: ViewerResourceGroupFieldArgs,
   ViewerResourceItem: ViewerResourceItemFieldArgs,
   ViewerUserActivityMessage: ViewerUserActivityMessageFieldArgs,

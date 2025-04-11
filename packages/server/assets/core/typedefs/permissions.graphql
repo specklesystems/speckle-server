@@ -29,3 +29,14 @@ type ModelPermissionChecks {
 extend type Model {
   permissions: ModelPermissionChecks!
 }
+
+type VersionPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canCreate: PermissionCheckResult!
+  canReceive: PermissionCheckResult!
+  canRequestRender: PermissionCheckResult!
+}
+
+extend type Version {
+  permissions: VersionPermissionChecks!
+}
