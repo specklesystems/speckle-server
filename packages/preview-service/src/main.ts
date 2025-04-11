@@ -3,7 +3,7 @@ import puppeteer, { Browser } from 'puppeteer'
 import { createTerminus } from '@godaddy/terminus'
 import type { Logger } from 'pino'
 import { Redis, type RedisOptions } from 'ioredis'
-import Bull from 'bull'
+import Bull, { type QueueOptions } from 'bull'
 
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 
@@ -22,6 +22,7 @@ import { jobProcessor } from '@/jobProcessor.js'
 import { AppState } from '@/const.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 import { ensureError } from '@speckle/shared'
+import { isRedisReady } from '@/utils.js'
 
 const app = express()
 const host = HOST
@@ -38,7 +39,7 @@ await initMetrics({ app, registry: initPrometheusRegistry() })
 let client: Redis
 let subscriber: Redis
 
-const opts = {
+const opts: QueueOptions = {
   // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
   createClient(type: string, redisOpts: RedisOptions) {
     switch (type) {
@@ -116,11 +117,21 @@ const server = app.listen(port, host, async () => {
 
   try {
     const newQueue = new Bull(JobQueueName, opts)
+
+    logger.info('Checking Redis connection is ready...')
+
+    // Bull's Queue.isReady() does not actually check the Redis connection
+    // see https://github.com/OptimalBits/bull/issues/1873#issuecomment-953581143
+    await isRedisReady(newQueue.client)
+    logger.info('Redis is ready')
+
     jobQueue = await newQueue.isReady()
   } catch (e) {
     const err = ensureError(e, 'Unknown error creating job queue')
     logger.error({ err }, 'Error creating job queue')
-    throw err
+
+    // the callback to server.listen has failed, so we need to exit the process and not just return
+    process.exit(1)
   }
 
   logger.debug(`Starting processing of "${JobQueueName}" message queue`)
@@ -215,6 +226,7 @@ const beforeShutdown = async () => {
     await browser.close()
     browser = undefined
   }
+  // no need to close the job queue and redis client, when the process exits they will be closed automatically
 }
 
 const onShutdown = async () => {
