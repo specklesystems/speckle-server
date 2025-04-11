@@ -2,13 +2,14 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
+      <ProjectsMoveToWorkspaceAlert v-if="isWorkspacesEnabled" />
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
         <h1 class="text-heading-lg">Projects</h1>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <div class="flex flex-col sm:flex-row gap-2">
+      <div class="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
+        <div class="flex flex-col md:flex-row gap-2">
           <FormTextInput
             name="modelsearch"
             :show-label="false"
@@ -28,9 +29,18 @@
             fixed-height
             clearable
           />
+          <div v-if="!showEmptyState && isWorkspacesEnabled" class="md:mt-1">
+            <FormCheckbox
+              id="projects-to-move"
+              v-model="filterProjectsToMove"
+              label-classes="!font-normal select-none"
+              name="Projects to move"
+            />
+          </div>
         </div>
         <FormButton
           v-if="canCreatePersonalProject?.authorized"
+          class="!text-body-xs !font-normal"
           @click="openNewProject = true"
         >
           New project
@@ -92,9 +102,11 @@ const logger = useLogger()
 const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
+const filterProjectsToMove = ref(false)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
@@ -114,7 +126,11 @@ const {
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
     search: (search.value || '').trim() || null,
-    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null,
+    onlyWithRoles: filterProjectsToMove.value
+      ? ['stream:owner']
+      : selectedRoles.value?.length
+      ? selectedRoles.value
+      : null,
     personalOnly: isWorkspaceNewPlansEnabled.value
   },
   cursor: null as Nullable<string>

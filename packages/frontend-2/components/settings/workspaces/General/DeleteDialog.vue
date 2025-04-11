@@ -59,6 +59,7 @@ import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useForm } from 'vee-validate'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -81,6 +82,7 @@ const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const { sendWebhook } = useZapier()
 const { resetForm } = useForm<{ feedback: string }>()
+const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const workspaceNameInput = ref('')
 const feedback = ref('')
@@ -144,6 +146,7 @@ const onDelete = async () => {
       title: `${workspaceName} workspace deleted`
     })
 
+    mutateActiveWorkspaceSlug(null)
     router.push(homeRoute)
     isOpen.value = false
   } else {

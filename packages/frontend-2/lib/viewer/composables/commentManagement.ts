@@ -38,6 +38,7 @@ import {
   StateApplyMode
 } from '~~/lib/viewer/composables/serialization'
 import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
+import { graphql } from '~/lib/common/generated/gql'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -229,21 +230,26 @@ export function useArchiveComment() {
   }
 }
 
+graphql(`
+  fragment UseCheckViewerCommentingAccess_Project on Project {
+    id
+    permissions {
+      canCreateComment {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
 export function useCheckViewerCommentingAccess() {
   const {
     resources: {
       response: { project }
     }
   } = useInjectedViewerState()
-  const { activeUser } = useActiveUser()
 
   return computed(() => {
-    if (!activeUser.value) return false
-
-    const hasRole = !!project.value?.role
-    const allowPublicComments = !!project.value?.allowPublicComments
-
-    return hasRole || allowPublicComments
+    return project.value?.permissions.canCreateComment.authorized
   })
 }
 

@@ -55,8 +55,19 @@ import { GraphQLResolveInfo } from 'graphql'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
-const isVersionForModel = (info: GraphQLResolveInfo) =>
-  info.path.prev?.prev?.prev?.typename === 'Model'
+/**
+ * Simple utility to check if version is inside a Model or a Project
+ */
+const getTypeFromPath = (info: GraphQLResolveInfo): 'Model' | 'Project' | null => {
+  let currentPath = info.path
+  while (currentPath) {
+    if (currentPath.typename === 'Model' || currentPath.typename === 'Project') {
+      return currentPath.typename
+    }
+    currentPath = currentPath.prev!
+  }
+  return null
+}
 
 export = {
   Project: {
@@ -120,7 +131,7 @@ export = {
         getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
       })
       let lastVersion: Version | null
-      if (isVersionForModel(info)) {
+      if (getTypeFromPath(info) === 'Model') {
         lastVersion = await ctx.loaders
           .forRegion({ db: projectDB })
           .branches.getLatestCommit.load(parent.branchId)

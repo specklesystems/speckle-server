@@ -5,6 +5,7 @@ import {
   getFeatureFlags
 } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 // TODO: Move everything to use dataLoaders
 export default defineModuleLoaders(async () => {
@@ -26,6 +27,16 @@ export default defineModuleLoaders(async () => {
     getProjectRoleCounts: async ({ projectId, role }, { dataLoaders }) => {
       const counts = await dataLoaders.streams.getCollaboratorCounts.load(projectId)
       return counts?.[role] || 0
+    },
+    getModel: async ({ projectId, modelId }, { dataLoaders }) => {
+      const db = await getProjectDbClient({ projectId })
+      const model = await dataLoaders.forRegion({ db }).branches.getById.load(modelId)
+      if (!model) return null
+
+      return {
+        ...model,
+        projectId: model.streamId
+      }
     }
   }
 })

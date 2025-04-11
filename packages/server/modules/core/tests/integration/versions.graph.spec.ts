@@ -253,33 +253,20 @@ describe('Versions graphql @core', () => {
         await createTestCommit(version1 as BasicTestCommit, {
           owner: user
         })
-        const version2 = {
-          id: createRandomString(),
-          streamId: project1.id
-        }
         await db(Commits.name)
           .where({ id: version1.id })
           .update({ createdAt: tenDaysAgo })
+        const version2 = {
+          streamId: project1.id
+        }
         await createTestCommit(version2 as BasicTestCommit, {
           owner: user
         })
 
-        const project2 = {
-          id: '',
-          name: createRandomString()
-        }
-        await createTestStream(project2, user)
-
         const version3 = {
-          streamId: project2.id
+          streamId: project1.id
         }
         await createTestCommit(version3 as BasicTestCommit, {
-          owner: user
-        })
-        const version4 = {
-          streamId: project2.id
-        }
-        await createTestCommit(version4 as BasicTestCommit, {
           owner: user
         })
 
@@ -291,14 +278,16 @@ describe('Versions graphql @core', () => {
         expect(res).to.not.haveGraphQLErrors()
         const versions = res.data?.project.versions.items
         expect(versions).to.have.length(2)
-        const project1Versions = await db(Commits.name)
+        const projectVersions = await db(Commits.name)
           .select([Commits.col.id, Commits.col.referencedObject])
           .join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
           .where({ streamId: project1.id })
           .orderBy(Commits.col.createdAt, 'desc')
-        expect(versions?.[0]).to.deep.eq(project1Versions[0])
-        expect(versions?.[1]).to.deep.eq({
-          ...project1Versions[1],
+        expect(versions).to.have.length(3)
+        expect(versions?.[0]).to.deep.eq(projectVersions[0])
+        expect(versions?.[1]).to.deep.eq(projectVersions[1])
+        expect(versions?.[2]).to.deep.eq({
+          ...projectVersions[2],
           referencedObject: null
         })
       })

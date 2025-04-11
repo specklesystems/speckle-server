@@ -10,12 +10,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
@@ -35,7 +36,7 @@ describe('canReadProjectSettingsPolicy', () => {
     overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>
   ) =>
     buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
         isDiscoverable: false,

@@ -145,7 +145,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
@@ -223,7 +223,8 @@ const canDeleteWorkspace = computed(
         ] as string[]
       ).includes(
         workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
-      ))
+      ) ||
+      workspaceResult.value?.workspaceBySlug?.plan?.name === WorkspacePlans.Free)
 )
 const deleteWorkspaceTooltip = computed(() => {
   if (needsSsoLogin.value)

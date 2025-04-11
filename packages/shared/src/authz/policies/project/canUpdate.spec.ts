@@ -9,12 +9,13 @@ import {
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 // Default deps allow test to succeed, this makes it so that we need to override less of them
 const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>) =>
   canUpdateProjectPolicy({
     getEnv: async () => parseFeatureFlags({}),
-    getProject: async () => ({
+    getProject: getProjectFake({
       id: 'project-id',
       workspaceId: null,
       isDiscoverable: false,
@@ -33,7 +34,7 @@ const buildWorkspaceSUT = (
   overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>
 ) =>
   buildSUT({
-    getProject: async () => ({
+    getProject: getProjectFake({
       id: 'project-id',
       workspaceId: 'workspace-id',
       isDiscoverable: false,
@@ -47,11 +48,15 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoProvider: async () => ({
       providerId: 'provider-id'
     }),
-    getWorkspaceSsoSession: async () => ({
-      userId: 'user-id',
-      providerId: 'provider-id',
-      validUntil: new Date()
-    }),
+    getWorkspaceSsoSession: async () => {
+      const validUntil = new Date()
+      validUntil.setDate(validUntil.getDate() + 7)
+      return {
+        userId: 'user-id',
+        providerId: 'provider-id',
+        validUntil
+      }
+    },
     ...overrides
   })
 
