@@ -26,6 +26,8 @@ const app = express()
 const host = HOST
 const port = PORT
 
+const JobQueueName = 'preview-service-jobs'
+
 let appState: AppState = AppState.STARTING
 
 // serve the preview-frontend
@@ -64,7 +66,7 @@ const opts = {
     }
   }
 }
-const jobQueue = new Bull('preview-service-jobs', opts)
+const jobQueue = new Bull(JobQueueName, opts)
 
 // store this callback, so on shutdown we can error the job
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
@@ -81,7 +83,18 @@ const server = app.listen(port, host, async () => {
   const gpuArgs = ['--use-gl=angle', '--use-angle=gl-egl']
 
   const launchBrowser = async (): Promise<Browser> => {
-    logger.debug('Starting browser')
+    const launchArguments = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-session-crashed-bubble',
+      ...(GPU_ENABLED ? gpuArgs : [])
+    ]
+    logger.debug(
+      `Starting browser, located at "${CHROMIUM_EXECUTABLE_PATH}", with the following arguments: ${JSON.stringify(
+        launchArguments
+      )}`
+    )
     return await puppeteer.launch({
       headless: !PREVIEWS_HEADED,
       executablePath: CHROMIUM_EXECUTABLE_PATH,
@@ -89,13 +102,7 @@ const server = app.listen(port, host, async () => {
       // slowMo: 3000, // Use for debugging during development
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-session-crashed-bubble',
-        ...(GPU_ENABLED ? gpuArgs : [])
-      ],
+      args: launchArguments,
       protocolTimeout: PREVIEW_TIMEOUT,
       // handle closing of the browser by the preview-service, not puppeteer
       // this is important for the preview-service to be able to shut down gracefully,
@@ -105,7 +112,7 @@ const server = app.listen(port, host, async () => {
       handleSIGTERM: false
     })
   }
-  logger.debug('Starting message queues')
+  logger.debug(`Starting processing of "${JobQueueName}" message queue`)
 
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
@@ -116,7 +123,7 @@ const server = app.listen(port, host, async () => {
     })
 
     if (browser) {
-      const message = 'Starting job but Browser is already open.'
+      const message = 'Tried to start job but Browser is already open.'
       done(new Error(message))
       throw new Error(message)
     }

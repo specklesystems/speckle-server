@@ -137,6 +137,16 @@ export const CommentNoAccessError = defineAuthError({
   message: 'You do not have access to this comment'
 })
 
+export const ModelNotFoundError = defineAuthError({
+  code: 'ModelNotFound',
+  message: 'Model not found'
+})
+
+export const ReservedModelNotDeletableError = defineAuthError({
+  code: 'ReservedModelNotDeletable',
+  message: 'This model is reserved and cannot be deleted'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

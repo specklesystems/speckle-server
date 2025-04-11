@@ -19,7 +19,8 @@
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
-              :can-edit="canContribute"
+              :can-edit="canEdit"
+              :can-delete="canDelete"
               :menu-position="
                 itemType === StructureItemType.EmptyModel
                   ? HorizontalDirection.Right
@@ -82,7 +83,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="space-x-2 flex flex-row pils">
+          <div class="space-x-2 flex flex-row">
             <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
               <IconDiscussions class="w-4 h-4" />
               <span>{{ model?.commentThreadCount.totalCount }}</span>
@@ -204,14 +205,13 @@
             <ProjectPageModelsStructureItem
               :item="child"
               :project="project"
-              :can-contribute="canContribute"
               class="flex-grow"
               @model-updated="onModelUpdated"
               @create-submodel="emit('create-submodel', $event)"
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8"></div>
+        <div v-if="canEdit" class="mr-8"></div>
       </div>
     </div>
   </div>
@@ -282,11 +282,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
-  canContribute?: boolean
   isSearchResult?: boolean
 }>()
-
-provide('projectId', props.project.id)
 
 const router = useRouter()
 
@@ -306,6 +303,13 @@ const trackFederateModels = () =>
   })
 
 const showActionsMenu = ref(false)
+
+const canEdit = computed(() =>
+  isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
+)
+const canDelete = computed(() =>
+  isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canDelete
+)
 
 const itemType = computed<StructureItemType>(() => {
   if (isPendingFileUpload(props.item)) return StructureItemType.PendingModel

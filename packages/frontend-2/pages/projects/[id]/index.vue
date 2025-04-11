@@ -7,6 +7,11 @@
         :show-project-name="false"
         @processed="onInviteAccepted"
       />
+      <ProjectsMoveToWorkspaceAlert
+        v-if="isWorkspacesEnabled && !project.workspace"
+        :project-id="project.id"
+      />
+
       <div
         class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mt-2 mb-6"
       >
