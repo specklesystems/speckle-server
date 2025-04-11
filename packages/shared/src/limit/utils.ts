@@ -1,17 +1,8 @@
-import { Version } from '@/modules/core/domain/commits/types'
-import { GetWorkspaceLimits } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations'
 import dayjs from 'dayjs'
+import { GetWorkspaceLimits } from '../authz/domain/workspaces/operations.js'
+import { PersonalProjectsLimits } from '../authz/index.js'
 
-export const PersonalProjectsLimits: {
-  versionHistory: { value: number; unit: 'week' }
-} = {
-  versionHistory: {
-    value: 1,
-    unit: 'week'
-  }
-}
-
-export const getLimitedReferencedObjectFactory =
+export const hidePropertyIfOutOfLimitFactory =
   ({
     environment: { personalProjectsLimitEnabled },
     getWorkspaceLimits
@@ -19,20 +10,23 @@ export const getLimitedReferencedObjectFactory =
     environment: { personalProjectsLimitEnabled: boolean }
     getWorkspaceLimits: GetWorkspaceLimits
   }) =>
-  async ({
-    version,
+  async <E extends { createdAt: Date }, P extends keyof E>({
+    property,
+    entity,
     workspaceId
   }: {
-    version: Pick<Version, 'referencedObject' | 'createdAt'>
+    property: P
+    entity: E
     workspaceId?: string | null
-  }) => {
+  }): Promise<E[P] | null> => {
     const limitDate = await getDateFromLimitsFactory({
       environment: { personalProjectsLimitEnabled },
       getWorkspaceLimits
     })({ workspaceId })
 
-    if (dayjs(limitDate).isAfter(version.createdAt)) return null
-    return version.referencedObject
+    if (dayjs(limitDate).isAfter(entity.createdAt)) return null
+
+    return entity[property]
   }
 
 export const getDateFromLimitsFactory =
@@ -61,8 +55,8 @@ export const getDateFromLimitsFactory =
 
     return dayjs()
       .subtract(
-        PersonalProjectsLimits.versionHistory.value,
-        PersonalProjectsLimits.versionHistory.unit
+        PersonalProjectsLimits.versionsHistory.value,
+        PersonalProjectsLimits.versionsHistory.unit
       )
       .toDate()
   }

@@ -28,7 +28,12 @@ import {
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import {
+  getDateFromLimitsFactory,
+  isNonNullable,
+  MaybeNullOrUndefined,
+  Roles
+} from '@speckle/shared'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
@@ -76,7 +81,6 @@ import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getDateFromLimitsFactory } from '@/modules/core/services/versions/limits'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
