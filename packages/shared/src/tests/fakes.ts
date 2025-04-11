@@ -3,6 +3,7 @@ import { Project } from '../authz/domain/projects/types.js'
 import { Comment } from '../authz/domain/comments/types.js'
 import { nanoid } from 'nanoid'
 import { Model } from '../authz/domain/models/types.js'
+import { Version } from '../authz/domain/versions/types.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -33,5 +34,11 @@ export const getModelFake = fakeGetFactory<Model>(() => ({
   id: nanoid(10),
   projectId: nanoid(10),
   name: nanoid(20),
+  authorId: nanoid(10)
+}))
+
+export const getVersionFake = fakeGetFactory<Version>(() => ({
+  id: nanoid(10),
+  projectId: nanoid(10),
   authorId: nanoid(10)
 }))

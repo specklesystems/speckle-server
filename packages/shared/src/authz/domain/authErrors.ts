@@ -147,6 +147,11 @@ export const ReservedModelNotDeletableError = defineAuthError({
   message: 'This model is reserved and cannot be deleted'
 })
 
+export const VersionNotFoundError = defineAuthError({
+  code: 'VersionNotFound',
+  message: 'Version not found'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (
