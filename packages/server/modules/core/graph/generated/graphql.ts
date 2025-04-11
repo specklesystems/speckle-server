@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn, ProjectCollaboratorGraphQLReturn, ServerInfoGraphQLReturn, BranchGraphQLReturn, ProjectPermissionChecksGraphQLReturn, ModelPermissionChecksGraphQLReturn, RootPermissionChecksGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, UserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn, ProjectCollaboratorGraphQLReturn, ServerInfoGraphQLReturn, BranchGraphQLReturn, ProjectPermissionChecksGraphQLReturn, ModelPermissionChecksGraphQLReturn, VersionPermissionChecksGraphQLReturn, RootPermissionChecksGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn, ProjectAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn, CommentPermissionChecksGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -5403,7 +5403,7 @@ export type ResolversTypes = {
   VersionCreatedTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
   VersionCreatedTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  VersionPermissionChecks: ResolverTypeWrapper<VersionPermissionChecks>;
+  VersionPermissionChecks: ResolverTypeWrapper<VersionPermissionChecksGraphQLReturn>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -5713,7 +5713,7 @@ export type ResolversParentTypes = {
   VersionCreatedTrigger: AutomationRunTriggerGraphQLReturn;
   VersionCreatedTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   VersionMutations: MutationsObjectGraphQLReturn;
-  VersionPermissionChecks: VersionPermissionChecks;
+  VersionPermissionChecks: VersionPermissionChecksGraphQLReturn;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;

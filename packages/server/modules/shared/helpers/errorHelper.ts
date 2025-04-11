@@ -57,6 +57,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new BadRequestError(e.message)
     case Authz.CommentNotFoundError.code:
     case Authz.ModelNotFoundError.code:
+    case Authz.VersionNotFoundError.code:
       return new NotFoundError(e.message)
     default:
       throwUncoveredError(e)
