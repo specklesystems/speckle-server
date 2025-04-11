@@ -346,6 +346,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
         code: WorkspaceNoAccessError.code
       })
     })
+
     it('allows project access via workspace role if user does not have project role', async () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,

@@ -37,6 +37,19 @@ export default defineModuleLoaders(async () => {
         ...model,
         projectId: model.streamId
       }
+    },
+    getVersion: async ({ projectId, versionId }, { dataLoaders }) => {
+      const db = await getProjectDbClient({ projectId })
+      const version = await dataLoaders
+        .forRegion({ db })
+        .commits.getById.load(versionId)
+      if (!version) return null
+
+      return {
+        ...version,
+        projectId,
+        authorId: version.author
+      }
     }
   }
 })

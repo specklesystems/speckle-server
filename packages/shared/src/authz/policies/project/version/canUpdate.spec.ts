@@ -1,22 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { Roles } from '../../../core/constants.js'
-import { parseFeatureFlags } from '../../../environment/index.js'
-import { canUpdateProjectPolicy } from './canUpdate.js'
+import { Roles } from '../../../../core/constants.js'
+import { parseFeatureFlags } from '../../../../environment/index.js'
+import { getProjectFake, getVersionFake } from '../../../../tests/fakes.js'
+import { OverridesOf } from '../../../../tests/helpers/types.js'
+import { canUpdateProjectVersionPolicy } from './canUpdate.js'
 import {
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
-  ServerNotEnoughPermissionsError,
+  VersionNotFoundError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
-} from '../../domain/authErrors.js'
-import { getProjectFake } from '../../../tests/fakes.js'
+} from '../../../domain/authErrors.js'
 
 // Default deps allow test to succeed, this makes it so that we need to override less of them
-const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>) =>
-  canUpdateProjectPolicy({
+const buildSUT = (overrides?: OverridesOf<typeof canUpdateProjectVersionPolicy>) =>
+  canUpdateProjectVersionPolicy({
     getEnv: async () => parseFeatureFlags({}),
     getProject: getProjectFake({
       id: 'project-id',
@@ -24,7 +25,12 @@ const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[
       isDiscoverable: false,
       isPublic: false
     }),
-    getProjectRole: async () => Roles.Stream.Owner,
+    getVersion: getVersionFake({
+      id: 'version-id',
+      projectId: 'project-id',
+      authorId: 'user-id'
+    }),
+    getProjectRole: async () => Roles.Stream.Contributor,
     getServerRole: async () => Roles.Server.User,
     getWorkspace: async () => null,
     getWorkspaceRole: async () => null,
@@ -34,7 +40,7 @@ const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[
   })
 
 const buildWorkspaceSUT = (
-  overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>
+  overrides?: OverridesOf<typeof canUpdateProjectVersionPolicy>
 ) =>
   buildSUT({
     getProject: getProjectFake({
@@ -51,56 +57,42 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoProvider: async () => ({
       providerId: 'provider-id'
     }),
-    getWorkspaceSsoSession: async () => {
-      const validUntil = new Date()
-      validUntil.setDate(validUntil.getDate() + 7)
-      return {
-        userId: 'user-id',
-        providerId: 'provider-id',
-        validUntil
-      }
-    },
+    getWorkspaceSsoSession: async () => ({
+      userId: 'user-id',
+      providerId: 'provider-id',
+      validUntil: new Date()
+    }),
     ...overrides
   })
 
-describe('canUpdateProject', () => {
+describe('canUpdateProjectVersionPolicy', () => {
   it('returns error if user is not logged in', async () => {
     const canUpdateProject = buildSUT()
 
     const result = await canUpdateProject({
       userId: undefined,
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
+
     expect(result).toBeAuthErrorResult({
       code: ServerNoSessionError.code
     })
   })
 
-  it('returns error if user is not found', async () => {
+  it('returns error if user not found', async () => {
     const canUpdateProject = buildSUT({
       getServerRole: async () => null
     })
 
     const result = await canUpdateProject({
       userId: 'user-id',
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
+
     expect(result).toBeAuthErrorResult({
       code: ServerNoAccessError.code
-    })
-  })
-
-  it('returns error if user is a server guest', async () => {
-    const canUpdateProject = buildSUT({
-      getServerRole: async () => Roles.Server.Guest
-    })
-
-    const result = await canUpdateProject({
-      userId: 'user-id',
-      projectId: 'project-id'
-    })
-    expect(result).toBeAuthErrorResult({
-      code: ServerNotEnoughPermissionsError.code
     })
   })
 
@@ -111,7 +103,8 @@ describe('canUpdateProject', () => {
 
     const result = await canUpdateProject({
       userId: 'user-id',
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
 
     expect(result).toBeAuthErrorResult({
@@ -119,38 +112,98 @@ describe('canUpdateProject', () => {
     })
   })
 
-  it('returns error if no role at all', async () => {
+  it('returns error if no project role', async () => {
     const canUpdateProject = buildSUT({
       getProjectRole: async () => null
     })
     const result = await canUpdateProject({
       userId: 'user-id',
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
+
     expect(result).toBeAuthErrorResult({
       code: ProjectNoAccessError.code
     })
   })
 
-  it('returns error if not owner', async () => {
+  it('returns error if not at least contributor', async () => {
     const canUpdateProject = buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
     })
     const result = await canUpdateProject({
       userId: 'user-id',
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
+
     expect(result).toBeAuthErrorResult({
       code: ProjectNotEnoughPermissionsError.code
     })
   })
 
-  it('returns ok if permissible', async () => {
+  it('returns error if not owner or author', async () => {
+    const canUpdateProject = buildSUT({
+      getVersion: getVersionFake({
+        id: 'version-id',
+        projectId: 'project-id',
+        authorId: 'not-user-id'
+      }),
+      getProjectRole: async () => Roles.Stream.Contributor
+    })
+    const result = await canUpdateProject({
+      userId: 'user-id',
+      projectId: 'project-id',
+      versionId: 'version-id'
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns error if version not found', async () => {
+    const canUpdateProject = buildSUT({
+      getVersion: async () => null
+    })
+
+    const result = await canUpdateProject({
+      userId: 'user-id',
+      projectId: 'project-id',
+      versionId: 'version-id'
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: VersionNotFoundError.code
+    })
+  })
+
+  it('returns ok if author', async () => {
     const canUpdateProject = buildSUT()
     const result = await canUpdateProject({
       userId: 'user-id',
-      projectId: 'project-id'
+      projectId: 'project-id',
+      versionId: 'version-id'
     })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('returns ok if owner and not author', async () => {
+    const canUpdateProject = buildSUT({
+      getVersion: getVersionFake({
+        id: 'version-id',
+        projectId: 'project-id',
+        authorId: 'not-user-id'
+      }),
+      getProjectRole: async () => Roles.Stream.Owner
+    })
+    const result = await canUpdateProject({
+      userId: 'user-id',
+      projectId: 'project-id',
+      versionId: 'version-id'
+    })
+
     expect(result).toBeAuthOKResult()
   })
 
@@ -159,32 +212,36 @@ describe('canUpdateProject', () => {
       const canUpdateProject = buildWorkspaceSUT()
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
+
       expect(result).toBeAuthOKResult()
     })
 
-    it('returns ok with implicit owner role', async () => {
+    it('returns ok with implicit owner role and not author', async () => {
       const canUpdateProject = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Admin,
         getProjectRole: async () => null
       })
       const result = await canUpdateProject({
-        userId: 'user-id',
-        projectId: 'project-id'
+        userId: 'other-user-id',
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
+
       expect(result).toBeAuthOKResult()
     })
 
-    it('returns error if no workspace role, even w/ valid project role', async () => {
+    it('returns error if no workspace role, even if has project role', async () => {
       const canUpdateProject = buildWorkspaceSUT({
         getWorkspaceRole: async () => null,
         getProjectRole: async () => Roles.Stream.Owner
       })
-
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -192,15 +249,17 @@ describe('canUpdateProject', () => {
       })
     })
 
-    it('returns error if invalid workspace and project role', async () => {
+    it('returns error if no implicit contributor role', async () => {
       const canUpdateProject = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Member,
-        getProjectRole: async () => Roles.Stream.Contributor
+        getProjectRole: async () => Roles.Stream.Reviewer
       })
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
+
       expect(result).toBeAuthErrorResult({
         code: ProjectNotEnoughPermissionsError.code
       })
@@ -213,7 +272,8 @@ describe('canUpdateProject', () => {
       })
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
       expect(result).toBeAuthOKResult()
     })
@@ -224,7 +284,8 @@ describe('canUpdateProject', () => {
       })
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
       expect(result).toBeAuthErrorResult({
         code: WorkspaceSsoSessionNoAccessError.code
@@ -241,8 +302,10 @@ describe('canUpdateProject', () => {
       })
       const result = await canUpdateProject({
         userId: 'user-id',
-        projectId: 'project-id'
+        projectId: 'project-id',
+        versionId: 'version-id'
       })
+
       expect(result).toBeAuthErrorResult({
         code: WorkspaceSsoSessionNoAccessError.code
       })

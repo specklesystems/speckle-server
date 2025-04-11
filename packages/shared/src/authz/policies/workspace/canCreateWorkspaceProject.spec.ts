@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest'
 import {
-  ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -135,7 +135,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
       })(canCreateArgs())
 
       expect(result).toBeAuthErrorResult({
-        code: ServerNoAccessError.code
+        code: ServerNotEnoughPermissionsError.code
       })
     })
   })

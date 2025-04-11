@@ -39,8 +39,6 @@
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
-          :can-edit="canEdit"
-          :can-delete="canDelete"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -89,7 +87,7 @@
             :project-id="projectId"
             :model-name="model.name"
             class="w-full h-full"
-            :disabled="project?.workspace?.readOnly"
+            :disabled="!canCreateModel?.authorized"
           />
         </div>
       </div>
@@ -141,9 +139,10 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
-    workspace {
-      id
-      readOnly
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -178,6 +177,7 @@ const importArea = ref(
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
+const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const containerClasses = computed(() => {
   const classParts = [
     'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
@@ -211,13 +211,6 @@ const updatedAtFullDate = computed(() => {
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
 })
-
-const canEdit = computed(() =>
-  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canUpdate
-)
-const canDelete = computed(() =>
-  isPendingModelFragment(props.model) ? undefined : props.model.permissions.canDelete
-)
 
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount

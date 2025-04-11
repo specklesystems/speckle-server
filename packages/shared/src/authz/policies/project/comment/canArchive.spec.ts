@@ -7,6 +7,7 @@ import { Roles } from '../../../../core/constants.js'
 import {
   CommentNotFoundError,
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
@@ -128,7 +129,7 @@ describe('canArchiveProjectCommentPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -266,7 +267,7 @@ describe('canArchiveProjectCommentPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 

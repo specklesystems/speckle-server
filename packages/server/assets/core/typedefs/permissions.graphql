@@ -11,6 +11,7 @@ type ProjectPermissionChecks {
   canReadSettings: PermissionCheckResult!
   canReadWebhooks: PermissionCheckResult!
   canLeave: PermissionCheckResult!
+  canRequestRender: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
@@ -24,8 +25,18 @@ extend type User {
 type ModelPermissionChecks {
   canUpdate: PermissionCheckResult!
   canDelete: PermissionCheckResult!
+  canCreateVersion: PermissionCheckResult!
 }
 
 extend type Model {
   permissions: ModelPermissionChecks!
+}
+
+type VersionPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canReceive: PermissionCheckResult!
+}
+
+extend type Version {
+  permissions: VersionPermissionChecks!
 }

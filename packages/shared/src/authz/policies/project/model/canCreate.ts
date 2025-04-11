@@ -7,7 +7,10 @@ import {
   WorkspaceLimitsReachedError,
   ServerNoSessionError,
   ServerNoAccessError,
-  WorkspaceReadOnlyError
+  WorkspaceReadOnlyError,
+  WorkspaceNotEnoughPermissionsError,
+  ProjectNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError
 } from '../../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
 import { AuthCheckContextLoaderKeys } from '../../../domain/loaders.js'
@@ -39,6 +42,11 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<
+      | typeof WorkspaceNotEnoughPermissionsError
+      | typeof ProjectNotEnoughPermissionsError
+      | typeof ServerNotEnoughPermissionsError
+    >
 
 export const canCreateModelPolicy: AuthPolicy<
   PolicyLoaderKeys,

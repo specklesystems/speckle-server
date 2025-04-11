@@ -4,7 +4,8 @@ import { parseFeatureFlags } from '../../../environment/index.js'
 import {
   ProjectNoAccessError,
   ServerNoAccessError,
-  ServerNoSessionError
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError
 } from '../../domain/authErrors.js'
 
 const buildSUT = (
@@ -41,6 +42,17 @@ describe('canCreateProject', () => {
     })
   })
 
+  it('returns error if user not found at all', async () => {
+    const canCreateProject = buildSUT({
+      getServerRole: async () => null
+    })
+
+    const result = await canCreateProject({ userId: 'user-id' })
+    expect(result).toBeAuthErrorResult({
+      code: ServerNoAccessError.code
+    })
+  })
+
   it('returns error if user is a server guest', async () => {
     const canCreateProject = buildSUT({
       getServerRole: async () => 'server:guest'
@@ -48,7 +60,7 @@ describe('canCreateProject', () => {
 
     const result = await canCreateProject({ userId: 'user-id' })
     expect(result).toBeAuthErrorResult({
-      code: ServerNoAccessError.code
+      code: ServerNotEnoughPermissionsError.code
     })
   })
 

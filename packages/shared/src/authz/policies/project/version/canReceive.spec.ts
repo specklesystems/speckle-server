@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { OverridesOf } from '../../../tests/helpers/types.js'
-import { canBroadcastProjectActivityPolicy } from './canBroadcastActivity.js'
-import { parseFeatureFlags } from '../../../environment/index.js'
-import { getProjectFake } from '../../../tests/fakes.js'
-import { Roles } from '../../../core/constants.js'
+import { OverridesOf } from '../../../../tests/helpers/types.js'
+import { parseFeatureFlags } from '../../../../environment/index.js'
+import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
+import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotFoundError,
@@ -11,58 +10,55 @@ import {
   ServerNoSessionError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
-} from '../../domain/authErrors.js'
+} from '../../../domain/authErrors.js'
+import { canReceiveProjectVersionPolicy } from './canReceive.js'
 
-describe('canBroadcastProjectActivityPolicy', () => {
-  const buildSUT = (
-    overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
-  ) =>
-    canBroadcastProjectActivityPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+describe('canReceiveProjectVersionPolicy', () => {
+  const buildSUT = (overrides?: OverridesOf<typeof canReceiveProjectVersionPolicy>) =>
+    canReceiveProjectVersionPolicy({
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        isPublic: false,
+        isDiscoverable: false
       }),
-      getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
-      getServerRole: async () => Roles.Server.User,
-      getWorkspace: async () => null,
+      getEnv: async () => parseFeatureFlags({}),
+      getServerRole: async () => Roles.Server.Guest,
       getWorkspaceRole: async () => null,
+      getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
       ...overrides
     })
 
   const buildWorkspaceSUT = (
-    overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
+    overrides?: OverridesOf<typeof canReceiveProjectVersionPolicy>
   ) =>
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        isPublic: false,
+        isDiscoverable: false
+      }),
+      getWorkspace: getWorkspaceFake({
+        id: 'workspace-id'
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
-        id: 'workspace-id',
-        slug: 'workspace-slug'
-      }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
-      getWorkspaceSsoProvider: async () => ({
-        providerId: 'provider-id'
-      }),
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + 1000 * 60 * 60)
+      }),
+      getWorkspaceSsoProvider: async () => ({
+        providerId: 'provider-id'
       }),
       ...overrides
     })
 
-  it('succeeds w/ project role', async () => {
+  it('should allow for reviewers+', async () => {
     const sut = buildSUT()
 
     const result = await sut({
@@ -73,14 +69,9 @@ describe('canBroadcastProjectActivityPolicy', () => {
     expect(result).toBeOKResult()
   })
 
-  it('succeeds w/o project role if public', async () => {
+  it('shouldnt allow for server admin w/o project role', async () => {
     const sut = buildSUT({
-      getProject: getProjectFake({
-        id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
-      }),
+      getServerRole: async () => Roles.Server.Admin,
       getProjectRole: async () => null
     })
 
@@ -89,10 +80,12 @@ describe('canBroadcastProjectActivityPolicy', () => {
       projectId: 'project-id'
     })
 
-    expect(result).toBeOKResult()
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
   })
 
-  it('fails if user undefined', async () => {
+  it('fails without user', async () => {
     const sut = buildSUT()
 
     const result = await sut({
@@ -120,21 +113,6 @@ describe('canBroadcastProjectActivityPolicy', () => {
     })
   })
 
-  it('fails if project not found', async () => {
-    const sut = buildSUT({
-      getProject: async () => null
-    })
-
-    const result = await sut({
-      userId: 'user-id',
-      projectId: 'project-id'
-    })
-
-    expect(result).toBeAuthErrorResult({
-      code: ProjectNotFoundError.code
-    })
-  })
-
   it('fails if user has no project role', async () => {
     const sut = buildSUT({
       getProjectRole: async () => null
@@ -150,11 +128,9 @@ describe('canBroadcastProjectActivityPolicy', () => {
     })
   })
 
-  it('succeeds w/ admin override, even w/o project role', async () => {
+  it('fails if project not found', async () => {
     const sut = buildSUT({
-      getAdminOverrideEnabled: async () => true,
-      getServerRole: async () => Roles.Server.Admin,
-      getProjectRole: async () => null
+      getProject: async () => null
     })
 
     const result = await sut({
@@ -162,14 +138,14 @@ describe('canBroadcastProjectActivityPolicy', () => {
       projectId: 'project-id'
     })
 
-    expect(result).toBeOKResult()
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNotFoundError.code
+    })
   })
 
-  describe('with workspace project', async () => {
-    it('succeeds w/ workspace role', async () => {
-      const sut = buildWorkspaceSUT({
-        getProjectRole: async () => null
-      })
+  describe('with workspace project', () => {
+    it('succeeds w/ implicit project role', async () => {
+      const sut = buildWorkspaceSUT()
 
       const result = await sut({
         userId: 'user-id',
@@ -179,27 +155,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('succeeds w/o project & workspace role if public', async () => {
-      const sut = buildWorkspaceSUT({
-        getWorkspaceRole: async () => null,
-        getProjectRole: async () => null,
-        getProject: getProjectFake({
-          id: 'project-id',
-          workspaceId: 'workspace-id',
-          isDiscoverable: false,
-          isPublic: true
-        })
-      })
-
-      const result = await sut({
-        userId: 'user-id',
-        projectId: 'project-id'
-      })
-
-      expect(result).toBeOKResult()
-    })
-
-    it('fails w/o workspace role, even if has project role', async () => {
+    it('fails w/o workspace role, even w/ valid project role', async () => {
       const sut = buildWorkspaceSUT({
         getProjectRole: async () => Roles.Stream.Reviewer,
         getWorkspaceRole: async () => null
@@ -211,12 +167,11 @@ describe('canBroadcastProjectActivityPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code,
-        message: /You do not have access to this project's workspace/i
+        code: WorkspaceNoAccessError.code
       })
     })
 
-    it('fails if user has no implicit project role', async () => {
+    it('fails w/o implicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => null
       })
@@ -233,8 +188,8 @@ describe('canBroadcastProjectActivityPolicy', () => {
 
     it('succeeds w/o sso, if not needed', async () => {
       const sut = buildWorkspaceSUT({
-        getWorkspaceSsoProvider: async () => null,
-        getWorkspaceSsoSession: async () => null
+        getWorkspaceSsoSession: async () => null,
+        getWorkspaceSsoProvider: async () => null
       })
 
       const result = await sut({
@@ -245,7 +200,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails w/o sso, if needed', async () => {
+    it('fails w/o sso', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceSsoSession: async () => null
       })
@@ -260,12 +215,12 @@ describe('canBroadcastProjectActivityPolicy', () => {
       })
     })
 
-    it('fails if sso expired', async () => {
+    it('fails if sso session expired', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - 1000 * 60 * 60)
         })
       })
 

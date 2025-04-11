@@ -36,10 +36,17 @@ export const ensureWorkspaceRoleAndSessionFragment: AuthPolicyEnsureFragment<
   | 'getWorkspaceSsoSession'
   | 'getWorkspace',
   { userId: string; workspaceId: string; role?: WorkspaceRoles },
-  InstanceType<typeof WorkspaceSsoSessionNoAccessError | typeof WorkspaceNoAccessError>
+  InstanceType<
+    | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+  >
 > =
   (loaders) =>
   async ({ userId, workspaceId, role }) => {
+    const testedRole = role ?? Roles.Workspace.Guest
+    const testingForMinimumRole = testedRole === Roles.Workspace.Guest
+
     // Get workspace, so we can resolve its slug for error scenarios
     const workspace = await loaders.getWorkspace({ workspaceId })
     // hides the fact, that the workspace does not exist
@@ -48,9 +55,14 @@ export const ensureWorkspaceRoleAndSessionFragment: AuthPolicyEnsureFragment<
     const hasMinimumRole = await hasMinimumWorkspaceRole(loaders)({
       userId,
       workspaceId,
-      role: role ?? Roles.Workspace.Guest
+      role: testedRole
     })
-    if (!hasMinimumRole) return err(new WorkspaceNoAccessError())
+    if (!hasMinimumRole)
+      return err(
+        testingForMinimumRole
+          ? new WorkspaceNoAccessError()
+          : new WorkspaceNotEnoughPermissionsError()
+      )
 
     const hasMinimumMemberRole = await hasMinimumWorkspaceRole(loaders)({
       userId,

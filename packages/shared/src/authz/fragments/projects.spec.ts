@@ -10,9 +10,11 @@ import { Roles } from '../../core/constants.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
@@ -89,6 +91,20 @@ describe('ensureMinimumProjectRoleFragment', () => {
     })
   })
 
+  it('fails if user does not have a project role', async () => {
+    const result = await buildSUT({
+      getProjectRole: async () => null
+    })({
+      userId: 'userId',
+      projectId: 'projectId',
+      role: Roles.Stream.Reviewer
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('fails if user does not have minimum project role', async () => {
     const result = await buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
@@ -99,7 +115,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -137,21 +153,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
-      })
-    })
-
-    it('fails if user does not have a workspace role at all', async () => {
-      const result = await buildWorkspaceSUT({
-        getWorkspaceRole: async () => null
-      })({
-        userId: 'userId',
-        projectId: 'projectId',
-        role: Roles.Stream.Reviewer
-      })
-
-      expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
   })
@@ -515,7 +517,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -700,7 +702,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ServerNoAccessError.code
+      code: ServerNotEnoughPermissionsError.code
     })
   })
 
@@ -761,7 +763,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -791,7 +793,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 

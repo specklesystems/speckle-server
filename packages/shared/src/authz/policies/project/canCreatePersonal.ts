@@ -4,12 +4,20 @@ import { Loaders } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
-import { ServerNoAccessError, ServerNoSessionError } from '../../domain/authErrors.js'
+import {
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError
+} from '../../domain/authErrors.js'
 
 export const canCreatePersonalProjectPolicy: AuthPolicy<
   typeof Loaders.getServerRole | typeof Loaders.getEnv,
   MaybeUserContext,
-  InstanceType<typeof ServerNoAccessError | typeof ServerNoSessionError>
+  InstanceType<
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
+  >
 > =
   (loaders) =>
   async ({ userId }) => {

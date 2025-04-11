@@ -4,11 +4,15 @@ import {
   AuthPolicyCheckFragment,
   AuthPolicyEnsureFragment
 } from '../domain/policies.js'
-import { ServerNoAccessError, ServerNoSessionError } from '../domain/authErrors.js'
-import { hasMinimumServerRole } from '../checks/serverRole.js'
+import {
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError
+} from '../domain/authErrors.js'
 import { Roles, ServerRoles } from '../../core/constants.js'
 import { err, ok } from 'true-myth/result'
 import { throwUncoveredError } from '../../core/index.js'
+import { isMinimumServerRole } from '../domain/logic/roles.js'
 
 /**
  * Ensure user has a minimum server role
@@ -21,17 +25,32 @@ export const ensureMinimumServerRoleFragment: AuthPolicyEnsureFragment<
      */
     role?: ServerRoles
   },
-  InstanceType<typeof ServerNoAccessError | typeof ServerNoSessionError>
+  InstanceType<
+    | typeof ServerNoAccessError
+    | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
+  >
 > =
   (loaders) =>
-  async ({ userId, role: requiredServerRole }) => {
+  async ({ userId, role }) => {
     if (!userId?.length) return err(new ServerNoSessionError())
-    const isActiveServerUser = await hasMinimumServerRole(loaders)({
-      userId,
-      role: requiredServerRole || Roles.Server.Guest
-    })
+    const requiredServerRole = role || Roles.Server.Guest
+    const isLowestRequestedRole = (
+      [Roles.Server.Guest, Roles.Server.ArchivedUser] as string[]
+    ).includes(requiredServerRole)
 
-    return isActiveServerUser ? ok() : err(new ServerNoAccessError())
+    const userServerRole = await loaders.getServerRole({ userId })
+    if (!userServerRole) return err(new ServerNoAccessError())
+
+    const hasRequiredRole = isMinimumServerRole(userServerRole, requiredServerRole)
+
+    return hasRequiredRole
+      ? ok()
+      : err(
+          isLowestRequestedRole
+            ? new ServerNoAccessError()
+            : new ServerNotEnoughPermissionsError()
+        )
   }
 
 /**
@@ -55,6 +74,7 @@ export const checkIfAdminOverrideEnabledFragment: AuthPolicyCheckFragment<
       switch (hasAdminRole.error.code) {
         case ServerNoAccessError.code:
         case ServerNoSessionError.code:
+        case ServerNotEnoughPermissionsError.code:
           return ok(false)
         default:
           throwUncoveredError(hasAdminRole.error)

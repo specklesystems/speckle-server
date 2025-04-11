@@ -14,6 +14,7 @@ import {
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   isResourceAllowed,
+  throwIfNewResourceNotAllowed,
   throwIfResourceAccessNotAllowed,
   toProjectIdWhitelist
 } from '@/modules/core/helpers/token'
@@ -201,6 +202,14 @@ export = {
   },
   ProjectMutations: {
     async batchDelete(_parent, args, ctx) {
+      args.ids.forEach((id) => {
+        throwIfResourceAccessNotAllowed({
+          resourceId: id,
+          resourceType: TokenResourceIdentifierType.Project,
+          resourceAccessRules: ctx.resourceAccessRules
+        })
+      })
+
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const projectDb = await getProjectDbClient({ projectId: id })
@@ -289,6 +298,10 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      throwIfNewResourceNotAllowed({
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
       const canCreate = await context.authPolicies.project.canCreatePersonal({
         userId: context.userId
       })
@@ -334,6 +347,12 @@ export = {
       return ret
     },
     async leave(_parent, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
       const canLeave = await context.authPolicies.project.canLeave({
         projectId: args.id,
         userId: context.userId
@@ -469,6 +488,12 @@ export = {
         ProjectSubscriptions.ProjectUpdated,
         async (payload, args, ctx) => {
           if (args.id !== payload.projectUpdated.id) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectUpdated.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
 
           const canRead = await ctx.authPolicies.project.canRead({
             projectId: payload.projectUpdated.id,
