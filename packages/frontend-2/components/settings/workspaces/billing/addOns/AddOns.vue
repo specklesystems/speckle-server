@@ -46,13 +46,14 @@
 <script lang="ts" setup>
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
+import { isPaidPlan } from '@speckle/shared'
 
 const props = defineProps<{
   slug: string
 }>()
 
 const isYearlyIntervalSelected = ref(false)
-const { billingInterval, isBusinessPlan } = useWorkspacePlan(props.slug)
+const { billingInterval, isBusinessPlan, plan } = useWorkspacePlan(props.slug)
 
 const contactButton = computed(() => ({
   text: 'Contact us',
@@ -67,6 +68,8 @@ const contactButton = computed(() => ({
 const unlimitedAddOnButton = computed(() => ({
   text: 'Buy add-on',
   id: 'buy-add-on',
+  disabled: !isPaidPlan(plan.value?.name),
+  disabledMessage: 'Only available on Starter and Business plans',
   onClick: () => {
     // TODO: Implement checkout
   }
