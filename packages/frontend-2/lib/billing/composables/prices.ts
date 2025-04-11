@@ -5,6 +5,7 @@ graphql(`
   fragment PricesPrice on Price {
     amount
     currencySymbol
+    currency
   }
 `)
 
@@ -64,7 +65,7 @@ const activeWorkspacePlanPricesQuery = graphql(`
     activeUser {
       activeWorkspace {
         planPrices {
-          ...PricesCurrencyBasedPrices
+          ...PricesWorkspacePaidPlanPrices
         }
       }
     }

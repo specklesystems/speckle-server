@@ -120,7 +120,7 @@ type Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": typeof types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": typeof types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": typeof types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n": typeof types.WorkspaceBillingPage_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n    subscription {\n      currency\n    }\n  }\n": typeof types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    inviteId\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": typeof types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    invitedTeam {\n      ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n    }\n  }\n": typeof types.SettingsWorkspacesMembersInvitesTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersRequestsTable_Workspace on Workspace {\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    id\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        ...WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest\n        id\n        createdAt\n        status\n        user {\n          id\n          avatar\n          name\n        }\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesMembersRequestsTable_WorkspaceFragmentDoc,
@@ -177,11 +177,12 @@ type Documents = {
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": typeof types.AutomateFunctionsPagePaginationDocument,
     "\n  query ActiveUserFunctions {\n    activeUser {\n      automateFunctions(limit: 2) {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n        }\n      }\n    }\n  }\n": typeof types.ActiveUserFunctionsDocument,
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": typeof types.BillingActions_WorkspaceFragmentDoc,
-    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n": typeof types.PricesPriceFragmentDoc,
+    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n    currency\n  }\n": typeof types.PricesPriceFragmentDoc,
     "\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n": typeof types.PricesWorkspacePlanPriceFragmentDoc,
     "\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n": typeof types.PricesWorkspacePaidPlanPricesFragmentDoc,
     "\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n": typeof types.PricesCurrencyBasedPricesFragmentDoc,
     "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n": typeof types.UseWorkspacePlanPricesDocument,
+    "\n  query UseActiveWorkspacePlanPrices {\n    activeUser {\n      activeWorkspace {\n        planPrices {\n          ...PricesWorkspacePaidPlanPrices\n        }\n      }\n    }\n  }\n": typeof types.UseActiveWorkspacePlanPricesDocument,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": typeof types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": typeof types.BillingUpgradePlanDocument,
     "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": typeof types.AdminUpdateWorkspacePlanDocument,
@@ -539,7 +540,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {\n    id\n    name\n    slug\n  }\n": types.SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n": types.WorkspaceBillingPage_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n    subscription {\n      currency\n    }\n  }\n": types.WorkspaceBillingPage_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    inviteId\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    invitedTeam {\n      ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersRequestsTable_Workspace on Workspace {\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    id\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        ...WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest\n        id\n        createdAt\n        status\n        user {\n          id\n          avatar\n          name\n        }\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersRequestsTable_WorkspaceFragmentDoc,
@@ -596,11 +597,12 @@ const documents: Documents = {
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPagePaginationDocument,
     "\n  query ActiveUserFunctions {\n    activeUser {\n      automateFunctions(limit: 2) {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n        }\n      }\n    }\n  }\n": types.ActiveUserFunctionsDocument,
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": types.BillingActions_WorkspaceFragmentDoc,
-    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n": types.PricesPriceFragmentDoc,
+    "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n    currency\n  }\n": types.PricesPriceFragmentDoc,
     "\n  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {\n    monthly {\n      ...PricesPrice\n    }\n    yearly {\n      ...PricesPrice\n    }\n  }\n": types.PricesWorkspacePlanPriceFragmentDoc,
     "\n  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {\n    team {\n      ...PricesWorkspacePlanPrice\n    }\n    teamUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n    pro {\n      ...PricesWorkspacePlanPrice\n    }\n    proUnlimited {\n      ...PricesWorkspacePlanPrice\n    }\n  }\n": types.PricesWorkspacePaidPlanPricesFragmentDoc,
     "\n  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {\n    gbp {\n      ...PricesWorkspacePaidPlanPrices\n    }\n    usd {\n      ...PricesWorkspacePaidPlanPrices\n    }\n  }\n": types.PricesCurrencyBasedPricesFragmentDoc,
     "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n": types.UseWorkspacePlanPricesDocument,
+    "\n  query UseActiveWorkspacePlanPrices {\n    activeUser {\n      activeWorkspace {\n        planPrices {\n          ...PricesWorkspacePaidPlanPrices\n        }\n      }\n    }\n  }\n": types.UseActiveWorkspacePlanPricesDocument,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": types.BillingUpgradePlanDocument,
     "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": types.AdminUpdateWorkspacePlanDocument,
@@ -1293,7 +1295,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesGeneralEditSlugD
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n    subscription {\n      currency\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceBillingPage_Workspace on Workspace {\n    id\n    role\n    subscription {\n      currency\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1521,7 +1523,7 @@ export function graphql(source: "\n  fragment BillingActions_Workspace on Worksp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n"): (typeof documents)["\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n  }\n"];
+export function graphql(source: "\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n    currency\n  }\n"): (typeof documents)["\n  fragment PricesPrice on Price {\n    amount\n    currencySymbol\n    currency\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1538,6 +1540,10 @@ export function graphql(source: "\n  fragment PricesCurrencyBasedPrices on Curre
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UseWorkspacePlanPrices {\n    serverInfo {\n      workspaces {\n        planPrices {\n          ...PricesCurrencyBasedPrices\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query UseActiveWorkspacePlanPrices {\n    activeUser {\n      activeWorkspace {\n        planPrices {\n          ...PricesWorkspacePaidPlanPrices\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UseActiveWorkspacePlanPrices {\n    activeUser {\n      activeWorkspace {\n        planPrices {\n          ...PricesWorkspacePaidPlanPrices\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

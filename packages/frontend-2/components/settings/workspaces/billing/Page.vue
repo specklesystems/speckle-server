@@ -46,7 +46,7 @@
           :slug="slug"
           :workspace-id="workspace?.id"
           :role="workspace?.role as WorkspaceRoles"
-          :currency="workspace?.currency"
+          :currency="workspace?.subscription?.currency"
         />
       </section>
 
@@ -74,7 +74,9 @@ graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
     id
     role
-    currency
+    subscription {
+      currency
+    }
   }
 `)
 

@@ -152,7 +152,7 @@ const planPrice = computed(() => {
 
   return formatPrice({
     amount: 0,
-    currencySymbol: props.currency || '$'
+    currency: props.currency || 'usd'
   })
 })
 

@@ -10,13 +10,14 @@
       :can-upgrade="isAdmin"
       :workspace-id="props.workspaceId"
       :has-subscription="!!subscription"
+      :currency="props.currency"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { BillingInterval } from '~/lib/common/generated/gql/graphql'
+import { BillingInterval, type Currency } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlans } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { type MaybeNullOrUndefined, type WorkspaceRoles, Roles } from '@speckle/shared'
@@ -25,6 +26,7 @@ const props = defineProps<{
   slug: string
   role: MaybeNullOrUndefined<WorkspaceRoles>
   workspaceId: MaybeNullOrUndefined<string>
+  currency?: Currency
 }>()
 
 const {
