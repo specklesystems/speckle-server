@@ -34,6 +34,12 @@ const prepInsertionObject = (
     obj.id =
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
+  if (!/^[a-f0-9]{32}$/.test(obj.id)) {
+    throw new ObjectHandlingError(
+      `Invalid object ID. Object ID: ${obj.id}. Object ID's must be MD5 hashes, which are represented by 32 hexadecimal characters.`
+    )
+  }
+
   const stringifiedObj = JSON.stringify(obj)
   const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
   if (objectByteSize > MAX_OBJECT_SIZE_MB) {
