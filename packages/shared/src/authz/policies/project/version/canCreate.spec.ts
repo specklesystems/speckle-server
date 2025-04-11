@@ -5,6 +5,7 @@ import { getProjectFake, getWorkspaceFake } from '../../../../tests/fakes.js'
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
@@ -96,7 +97,7 @@ describe('canReceiveProjectVersionPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -181,12 +182,13 @@ describe('canReceiveProjectVersionPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
-    it('fails w/o workspace role', async () => {
+    it('fails w/o workspace role, even if valid project role', async () => {
       const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Contributor,
         getWorkspaceRole: async () => null
       })
 
@@ -197,6 +199,22 @@ describe('canReceiveProjectVersionPolicy', () => {
 
       expect(result).toBeAuthErrorResult({
         code: WorkspaceNoAccessError.code
+      })
+    })
+
+    it('fails w/o implicit project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getWorkspaceRole: async () => null,
+        getProjectRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
       })
     })
 

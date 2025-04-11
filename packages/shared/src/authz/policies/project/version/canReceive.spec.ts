@@ -155,8 +155,9 @@ describe('canReceiveProjectVersionPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails w/o workspace role', async () => {
+    it('fails w/o workspace role, even w/ valid project role', async () => {
       const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Reviewer,
         getWorkspaceRole: async () => null
       })
 
@@ -167,6 +168,21 @@ describe('canReceiveProjectVersionPolicy', () => {
 
       expect(result).toBeAuthErrorResult({
         code: WorkspaceNoAccessError.code
+      })
+    })
+
+    it('fails w/o implicit project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
       })
     })
 

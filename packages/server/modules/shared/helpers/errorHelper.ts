@@ -40,6 +40,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspaceNoEditorSeatError.code:
     case Authz.WorkspaceProjectMoveInvalidError.code:
     case Authz.CommentNoAccessError.code:
+    case Authz.ProjectNotEnoughPermissionsError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {
@@ -49,6 +50,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       })
     case Authz.ServerNoAccessError.code:
     case Authz.ServerNoSessionError.code:
+    case Authz.ServerNotEnoughPermissionsError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspacesNotEnabledError.code:
       return new WorkspacesModuleDisabledError()

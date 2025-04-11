@@ -64,6 +64,11 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const ProjectNotEnoughPermissionsError = defineAuthError({
+  code: 'ProjectNotEnoughPermissions',
+  message: 'You do not have enough permissions in the project to perform this action'
+})
+
 export const ProjectLastOwnerError = defineAuthError({
   code: 'ProjectLastOwner',
   message: 'You are the last owner of this project'
@@ -120,6 +125,11 @@ export const WorkspaceNoEditorSeatError = defineAuthError({
 export const ServerNoAccessError = defineAuthError({
   code: 'ServerNoAccess',
   message: 'You do not have access to this server'
+})
+
+export const ServerNotEnoughPermissionsError = defineAuthError({
+  code: 'ServerNotEnoughPermissions',
+  message: 'You do not have enough permissions in the server to perform this action'
 })
 
 export const ServerNoSessionError = defineAuthError({

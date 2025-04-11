@@ -6,10 +6,12 @@ import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { canUpdateProjectVersionPolicy } from './canUpdate.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
   VersionNotFoundError,
+  WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 
@@ -110,6 +112,21 @@ describe('canUpdateProjectVersionPolicy', () => {
     })
   })
 
+  it('returns error if no project role', async () => {
+    const canUpdateProject = buildSUT({
+      getProjectRole: async () => null
+    })
+    const result = await canUpdateProject({
+      userId: 'user-id',
+      projectId: 'project-id',
+      versionId: 'version-id'
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('returns error if not at least contributor', async () => {
     const canUpdateProject = buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
@@ -121,7 +138,7 @@ describe('canUpdateProjectVersionPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -141,7 +158,7 @@ describe('canUpdateProjectVersionPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -216,7 +233,23 @@ describe('canUpdateProjectVersionPolicy', () => {
       expect(result).toBeAuthOKResult()
     })
 
-    it('returns error if invalid workspace and project role', async () => {
+    it('returns error if no workspace role, even if has project role', async () => {
+      const canUpdateProject = buildWorkspaceSUT({
+        getWorkspaceRole: async () => null,
+        getProjectRole: async () => Roles.Stream.Owner
+      })
+      const result = await canUpdateProject({
+        userId: 'user-id',
+        projectId: 'project-id',
+        versionId: 'version-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
+    })
+
+    it('returns error if no implicit contributor role', async () => {
       const canUpdateProject = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Member,
         getProjectRole: async () => Roles.Stream.Reviewer
@@ -228,7 +261,7 @@ describe('canUpdateProjectVersionPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 

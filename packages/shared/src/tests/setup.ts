@@ -4,6 +4,7 @@ import { expect } from 'vitest'
 import { AllAuthErrors, isAuthPolicyError } from '../authz/index.js'
 import { isInstance as isResult } from 'true-myth/result'
 import { isInstance as isMaybe } from 'true-myth/maybe'
+import { isString } from '#lodash'
 
 // Augment vitest types w/ new matchers
 interface CustomMatchers<R = unknown> {
@@ -15,9 +16,9 @@ interface CustomMatchers<R = unknown> {
     code?: AllAuthErrors['code']
 
     /**
-     * Check for specific error message (includes not equals)
+     * Check for specific error message
      */
-    message?: string
+    message?: string | RegExp
 
     /**
      * Check for a specific payload
@@ -109,7 +110,7 @@ expect.extend({
     expected: Parameters<CustomMatchers['toBeAuthErrorResult']>[0]
   ) {
     const { code, message, payload } = expected
-    if (!code?.length && !message?.length && !payload) {
+    if (!code?.length && !message && !payload) {
       throw new Error(
         'No expected value provided. Either code or message or payload must be set.'
       )
@@ -151,13 +152,18 @@ expect.extend({
       }
     }
 
-    if (expected.message && !received.error.message.includes(expected.message)) {
-      return {
-        pass: false,
-        message: () =>
-          `Expected ${received} to be an Auth Error Result with message substring '${expected.message}'`,
-        expected: expected.message,
-        actual: received.error.message
+    if (expected.message) {
+      const messageDoesntFit = isString(expected.message)
+        ? !expected.message.includes(expected.message)
+        : !expected.message.test(received.error.message)
+      if (messageDoesntFit) {
+        return {
+          pass: false,
+          message: () =>
+            `Expected ${received} to be an Auth Error Result with message substring '${expected.message}'`,
+          expected: expected.message,
+          actual: received.error.message
+        }
       }
     }
 

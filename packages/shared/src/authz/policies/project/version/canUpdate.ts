@@ -1,11 +1,14 @@
 import { err, ok } from 'true-myth/result'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   VersionNotFoundError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import {
@@ -40,6 +43,9 @@ export const canUpdateProjectVersionPolicy: AuthPolicy<
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof VersionNotFoundError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>
@@ -69,7 +75,16 @@ export const canUpdateProjectVersionPolicy: AuthPolicy<
         role: Roles.Stream.Owner
       })
       if (ensuredOwner.isErr) {
-        return err(ensuredOwner.error)
+        switch (ensuredOwner.error.code) {
+          case ProjectNoAccessError.code:
+            return err(
+              new ProjectNoAccessError(
+                "You do not have access to update other contributors' versions in this project"
+              )
+            )
+          default:
+            return err(ensuredOwner.error)
+        }
       }
     }
 
