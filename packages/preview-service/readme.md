@@ -61,7 +61,7 @@ docker build -f packages/preview-service/Dockerfile -t speckle-preview-service:l
 Once you have built the preview service Dockerfile, you can run it like so:
 
 ```bash
-docker run --rm -p 3001:3001 -e PORT=3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle speckle-preview-service:local
+docker run --rm -p 3001:3001 -e PORT=3001 -e REDIS_URL=redis://redis:6379 speckle-preview-service:local
 ```
 
 ## Deployment notes
