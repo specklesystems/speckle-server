@@ -93,9 +93,12 @@ export const useWorkspacePlan = (slug: string) => {
 
   // Seat information
   const seats = computed(() => subscription.value?.seats)
-  const hasAvailableEditorSeats = computed(() =>
-    seats.value?.editors.available && seats.value?.editors.available > 0 ? true : false
-  )
+  const hasAvailableEditorSeats = computed(() => {
+    if (seats.value?.editors.available && seats.value?.editors.assigned) {
+      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    }
+    return false
+  })
   const editorSeatPriceFormatted = computed(() => {
     if (
       plan.value?.name === WorkspacePlans.Team ||
