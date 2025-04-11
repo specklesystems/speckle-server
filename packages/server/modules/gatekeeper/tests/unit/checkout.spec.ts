@@ -19,494 +19,10 @@ import {
   PaidWorkspacePlans,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
-import {
-  startCheckoutSessionFactoryNew as startCheckoutSessionFactory,
-  startCheckoutSessionFactoryOld
-} from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
+import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import { NotFoundError } from '@/modules/shared/errors'
 
 describe('checkout @gatekeeper', () => {
-  describe('startCheckoutSessionFactoryOld creates a function, that', () => {
-    it('does not allow checkout for workspace plans, that is in a valid state', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const err = await expectToThrow(() =>
-        startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            name: 'plus',
-            status: 'valid',
-            createdAt: new Date(),
-            workspaceId
-          }),
-          getWorkspaceCheckoutSession: () => {
-            expect.fail()
-          },
-          countRole: () => {
-            expect.fail()
-          },
-          createCheckoutSession: () => {
-            expect.fail()
-          },
-          saveCheckoutSession: () => {
-            expect.fail()
-          },
-          deleteCheckoutSession: () => {
-            expect.fail()
-          }
-        })({
-          workspaceId,
-          billingInterval: 'monthly',
-          workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      )
-      expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
-    })
-    it('does not allow checkout for workspace plans, that is in a paymentFailed state', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const err = await expectToThrow(() =>
-        startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            name: 'plus',
-            status: 'paymentFailed',
-            createdAt: new Date(),
-            workspaceId
-          }),
-          getWorkspaceCheckoutSession: () => {
-            expect.fail()
-          },
-          countRole: () => {
-            expect.fail()
-          },
-          createCheckoutSession: () => {
-            expect.fail()
-          },
-          deleteCheckoutSession: () => {
-            expect.fail()
-          },
-          saveCheckoutSession: () => {
-            expect.fail()
-          }
-        })({
-          workspaceId,
-          billingInterval: 'monthly',
-          workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      )
-      expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
-    })
-    it('does not allow checkout for a workspace, that already has a recent checkout session', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const err = await expectToThrow(() =>
-        startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            name: 'starter',
-            status: 'trial',
-            createdAt: new Date(),
-            workspaceId
-          }),
-          getWorkspaceCheckoutSession: async () => ({
-            billingInterval: 'monthly',
-            id: cryptoRandomString({ length: 10 }),
-            paymentStatus: 'unpaid',
-            url: '',
-            workspaceId,
-            workspacePlan: 'business',
-            currency: 'usd',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }),
-          countRole: () => {
-            expect.fail()
-          },
-          createCheckoutSession: () => {
-            expect.fail()
-          },
-
-          deleteCheckoutSession: () => {
-            expect.fail()
-          },
-          saveCheckoutSession: () => {
-            expect.fail()
-          }
-        })({
-          workspaceId,
-          billingInterval: 'monthly',
-          workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      )
-      expect(err.message).to.be.equal(
-        new WorkspaceCheckoutSessionInProgressError().message
-      )
-    })
-    it('does not allow checkout for a workspace, that already has a checkout session', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const err = await expectToThrow(() =>
-        startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            name: 'starter',
-            status: 'trial',
-            createdAt: new Date(),
-
-            workspaceId
-          }),
-          getWorkspaceCheckoutSession: async () => ({
-            billingInterval: 'monthly',
-            id: cryptoRandomString({ length: 10 }),
-            paymentStatus: 'unpaid',
-            url: '',
-            workspaceId,
-            workspacePlan: 'business',
-            currency: 'usd',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }),
-          countRole: () => {
-            expect.fail()
-          },
-          createCheckoutSession: () => {
-            expect.fail()
-          },
-
-          deleteCheckoutSession: () => {
-            expect.fail()
-          },
-          saveCheckoutSession: () => {
-            expect.fail()
-          }
-        })({
-          workspaceId,
-          billingInterval: 'monthly',
-          workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      )
-      expect(err.message).to.be.equal(
-        new WorkspaceCheckoutSessionInProgressError().message
-      )
-    })
-    it('creates and stores a checkout for workspaces that are not on a plan', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      const checkoutSession: CheckoutSession = {
-        id: cryptoRandomString({ length: 10 }),
-        workspaceId,
-        workspacePlan,
-        url: 'https://example.com',
-        billingInterval,
-        paymentStatus: 'unpaid',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let storedCheckoutSession: CheckoutSession | undefined = undefined
-      const createdCheckoutSession = await startCheckoutSessionFactoryOld({
-        getWorkspacePlan: async () => null,
-        getWorkspaceCheckoutSession: async () => null,
-        countRole: async () => 1,
-        deleteCheckoutSession: () => {
-          expect.fail()
-        },
-        createCheckoutSession: async () => checkoutSession,
-        saveCheckoutSession: async ({ checkoutSession }) => {
-          storedCheckoutSession = checkoutSession
-        }
-      })({
-        workspaceId,
-        billingInterval,
-        workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
-      })
-      expect(checkoutSession).deep.equal(storedCheckoutSession)
-      expect(checkoutSession).deep.equal(createdCheckoutSession)
-    })
-    it('creates and stores a checkout for workspaces without a plan', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      const checkoutSession: CheckoutSession = {
-        id: cryptoRandomString({ length: 10 }),
-        workspaceId,
-        workspacePlan,
-        url: 'https://example.com',
-        billingInterval,
-        paymentStatus: 'unpaid',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let storedCheckoutSession: CheckoutSession | undefined = undefined
-      const createdCheckoutSession = await startCheckoutSessionFactoryOld({
-        getWorkspacePlan: async () => null,
-        getWorkspaceCheckoutSession: async () => null,
-        countRole: async () => 1,
-        deleteCheckoutSession: () => {
-          expect.fail()
-        },
-        createCheckoutSession: async () => checkoutSession,
-        saveCheckoutSession: async ({ checkoutSession }) => {
-          storedCheckoutSession = checkoutSession
-        }
-      })({
-        workspaceId,
-        billingInterval,
-        workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
-      })
-      expect(checkoutSession).deep.equal(storedCheckoutSession)
-      expect(checkoutSession).deep.equal(createdCheckoutSession)
-    })
-
-    it('creates and stores a checkout for TRIAL workspaces', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      const checkoutSession: CheckoutSession = {
-        id: cryptoRandomString({ length: 10 }),
-        workspaceId,
-        workspacePlan,
-        url: 'https://example.com',
-        billingInterval,
-        paymentStatus: 'unpaid',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let storedCheckoutSession: CheckoutSession | undefined = undefined
-      const createdCheckoutSession = await startCheckoutSessionFactoryOld({
-        getWorkspacePlan: async () => ({
-          workspaceId,
-          name: 'starter',
-          createdAt: new Date(),
-          status: 'trial'
-        }),
-        getWorkspaceCheckoutSession: async () => null,
-        countRole: async () => 1,
-        deleteCheckoutSession: () => {
-          expect.fail()
-        },
-        createCheckoutSession: async () => checkoutSession,
-        saveCheckoutSession: async ({ checkoutSession }) => {
-          storedCheckoutSession = checkoutSession
-        }
-      })({
-        workspaceId,
-        billingInterval,
-        workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
-      })
-      expect(checkoutSession).deep.equal(storedCheckoutSession)
-      expect(checkoutSession).deep.equal(createdCheckoutSession)
-    })
-
-    it('creates and stores a checkout for TRIAL workspaces even if it has an old unpaid checkout session', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      const checkoutSession: CheckoutSession = {
-        id: cryptoRandomString({ length: 10 }),
-        workspaceId,
-        workspacePlan,
-        url: 'https://example.com',
-        billingInterval,
-        paymentStatus: 'unpaid',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let existingCheckoutSession: CheckoutSession | undefined = {
-        billingInterval,
-        id: cryptoRandomString({ length: 10 }),
-        createdAt: new Date(1990, 1, 12),
-        updatedAt: new Date(1990, 1, 12),
-        paymentStatus: 'unpaid',
-        url: 'https://example.com',
-        currency: 'usd',
-        workspaceId,
-        workspacePlan
-      }
-      let storedCheckoutSession: CheckoutSession | undefined = undefined
-      const createdCheckoutSession = await startCheckoutSessionFactoryOld({
-        getWorkspacePlan: async () => ({
-          workspaceId,
-          name: 'starter',
-          createdAt: new Date(),
-          status: 'trial'
-        }),
-        getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
-        countRole: async () => 1,
-        deleteCheckoutSession: async () => {
-          existingCheckoutSession = undefined
-        },
-        createCheckoutSession: async () => checkoutSession,
-        saveCheckoutSession: async ({ checkoutSession }) => {
-          storedCheckoutSession = checkoutSession
-        }
-      })({
-        workspaceId,
-        billingInterval,
-        workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
-      })
-      expect(existingCheckoutSession).to.be.undefined
-      expect(checkoutSession).deep.equal(storedCheckoutSession)
-      expect(checkoutSession).deep.equal(createdCheckoutSession)
-    })
-
-    it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      let existingCheckoutSession: CheckoutSession | undefined = {
-        billingInterval,
-        id: cryptoRandomString({ length: 10 }),
-        createdAt: new Date(1990, 1, 12),
-        updatedAt: new Date(1990, 1, 12),
-        paymentStatus: 'paid',
-        url: 'https://example.com',
-        currency: 'usd',
-        workspaceId,
-        workspacePlan
-      }
-      const err = await expectToThrow(async () => {
-        await startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            workspaceId,
-            name: 'starter',
-            createdAt: new Date(),
-            status: 'trial'
-          }),
-          getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
-          countRole: async () => 1,
-          deleteCheckoutSession: async () => {
-            existingCheckoutSession = undefined
-          },
-          createCheckoutSession: async () => {
-            expect.fail()
-          },
-          saveCheckoutSession: async () => {}
-        })({
-          workspaceId,
-          billingInterval,
-          workspacePlan,
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      })
-      expect(err.message).to.equal(new WorkspaceAlreadyPaidError().message)
-    })
-
-    it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      let existingCheckoutSession: CheckoutSession | undefined = {
-        billingInterval,
-        id: cryptoRandomString({ length: 10 }),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        paymentStatus: 'unpaid',
-        url: 'https://example.com',
-        currency: 'usd',
-        workspaceId,
-        workspacePlan
-      }
-      const err = await expectToThrow(async () => {
-        await startCheckoutSessionFactoryOld({
-          getWorkspacePlan: async () => ({
-            workspaceId,
-            name: 'starter',
-            createdAt: new Date(),
-            status: 'trial'
-          }),
-          getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
-          countRole: async () => 1,
-          deleteCheckoutSession: async () => {
-            existingCheckoutSession = undefined
-          },
-          createCheckoutSession: async () => {
-            expect.fail()
-          },
-          saveCheckoutSession: async () => {}
-        })({
-          workspaceId,
-          billingInterval,
-          workspacePlan,
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
-        })
-      })
-      expect(err.message).to.equal(
-        new WorkspaceCheckoutSessionInProgressError().message
-      )
-    })
-
-    it('creates and stores a checkout for CANCELED workspaces', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'plus'
-      const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
-      const checkoutSession: CheckoutSession = {
-        id: cryptoRandomString({ length: 10 }),
-        workspaceId,
-        workspacePlan,
-        url: 'https://example.com',
-        billingInterval,
-        paymentStatus: 'unpaid',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let existingCheckoutSession: CheckoutSession | undefined = {
-        billingInterval: 'monthly',
-        id: cryptoRandomString({ length: 10 }),
-        paymentStatus: 'paid',
-        url: '',
-        workspaceId,
-        workspacePlan: 'business',
-        currency: 'usd',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      let storedCheckoutSession: CheckoutSession | undefined = undefined
-      const createdCheckoutSession = await startCheckoutSessionFactoryOld({
-        getWorkspacePlan: async () => ({
-          name: 'plus',
-          workspaceId,
-          createdAt: new Date(),
-          status: 'canceled'
-        }),
-        getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
-        countRole: async () => 1,
-        deleteCheckoutSession: async () => {
-          existingCheckoutSession = undefined
-        },
-        createCheckoutSession: async () => checkoutSession,
-        saveCheckoutSession: async ({ checkoutSession }) => {
-          storedCheckoutSession = checkoutSession
-        }
-      })({
-        workspaceId,
-        billingInterval,
-        workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
-      })
-      expect(existingCheckoutSession).to.be.undefined
-      expect(checkoutSession).deep.equal(storedCheckoutSession)
-      expect(checkoutSession).deep.equal(createdCheckoutSession)
-    })
-  })
-
   describe('completeCheckoutSessionFactory creates a function, that', () => {
     it('throws a CheckoutSessionNotFound if the checkoutSession is null', async () => {
       const sessionId = cryptoRandomString({ length: 10 })
@@ -699,7 +215,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       )
       expect(err.name).to.be.equal(new NotFoundError().name)
@@ -734,7 +251,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       )
       expect(err.name).to.be.equal(new InvalidWorkspacePlanUpgradeError().name)
@@ -769,7 +287,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       )
       expect(err.name).to.be.equal(new WorkspaceAlreadyPaidError().name)
@@ -804,7 +323,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval: 'monthly',
           workspacePlan: 'pro',
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       )
       expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
@@ -849,7 +369,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval: 'monthly',
           workspacePlan: 'team',
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       )
       expect(err.message).to.be.equal(
@@ -894,7 +415,8 @@ describe('checkout @gatekeeper', () => {
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
+        isCreateFlow: false,
+        currency: 'usd'
       })
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
@@ -948,7 +470,8 @@ describe('checkout @gatekeeper', () => {
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
+        isCreateFlow: false,
+        currency: 'usd'
       })
       expect(existingCheckoutSession).to.be.undefined
       expect(checkoutSession).deep.equal(storedCheckoutSession)
@@ -992,7 +515,8 @@ describe('checkout @gatekeeper', () => {
           billingInterval,
           workspacePlan,
           workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false
+          isCreateFlow: false,
+          currency: 'usd'
         })
       })
       expect(err.message).to.equal(new WorkspaceAlreadyPaidError().message)
@@ -1046,7 +570,8 @@ describe('checkout @gatekeeper', () => {
         billingInterval,
         workspacePlan,
         workspaceSlug: cryptoRandomString({ length: 10 }),
-        isCreateFlow: false
+        isCreateFlow: false,
+        currency: 'usd'
       })
       expect(existingCheckoutSession).to.be.undefined
       expect(checkoutSession).deep.equal(storedCheckoutSession)
