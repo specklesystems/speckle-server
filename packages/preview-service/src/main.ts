@@ -246,6 +246,13 @@ createTerminus(server, {
         return Promise.reject(new Error('Job queue is not initialized'))
       }
 
+      try {
+        await isRedisReady(jobQueue.client)
+      } catch (e) {
+        return Promise.reject(
+          ensureError(e, 'Unknown error when checking Redis client')
+        )
+      }
       const isReady = await jobQueue.isReady()
       if (!isReady)
         return Promise.reject(
