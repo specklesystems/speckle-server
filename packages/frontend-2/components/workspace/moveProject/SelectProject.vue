@@ -11,36 +11,41 @@
       class="mb-2"
       v-on="on"
     />
-    <div
-      v-if="hasMoveableProjects"
-      class="flex flex-col mt-2 border rounded-md border-outline-3"
-    >
-      <div
-        v-for="project in moveableProjects"
-        :key="project.id"
-        class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
-      >
-        <div class="flex flex-col flex-1 truncate text-body-xs">
-          <span class="font-medium text-foreground truncate">
-            {{ project.name }}
-          </span>
-          <div class="flex items-center gap-x-1">
-            <span class="text-foreground-3 truncate">
-              {{ project.modelCount.totalCount }} model{{
-                project.modelCount.totalCount !== 1 ? 's' : ''
-              }}
-            </span>
-          </div>
-        </div>
-        <FormButton size="sm" color="outline" @click="onMoveClick(project)">
-          Move...
-        </FormButton>
-      </div>
+    <div v-if="loading" class="py-4 flex items-center justify-center w-full h-32">
+      <CommonLoadingIcon size="sm" />
     </div>
-    <p v-else class="py-4 text-body-xs text-foreground-2">
-      You don't have any projects that can be moved into this workspace. Only projects
-      you own and that aren't in another workspace can be moved.
-    </p>
+    <template v-else>
+      <div
+        v-if="hasMoveableProjects"
+        class="flex flex-col mt-2 border rounded-md border-outline-3"
+      >
+        <div
+          v-for="project in moveableProjects"
+          :key="project.id"
+          class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
+        >
+          <div class="flex flex-col flex-1 truncate text-body-xs">
+            <span class="font-medium text-foreground truncate">
+              {{ project.name }}
+            </span>
+            <div class="flex items-center gap-x-1">
+              <span class="text-foreground-3 truncate">
+                {{ project.modelCount.totalCount }} model{{
+                  project.modelCount.totalCount !== 1 ? 's' : ''
+                }}
+              </span>
+            </div>
+          </div>
+          <FormButton size="sm" color="outline" @click="onMoveClick(project)">
+            Move...
+          </FormButton>
+        </div>
+      </div>
+      <p v-else class="py-4 text-body-xs text-foreground-2">
+        You don't have any projects that can be moved into this workspace. Only projects
+        you own and that aren't in another workspace can be moved.
+      </p>
+    </template>
     <InfiniteLoading
       v-if="moveableProjects?.length && !search?.length"
       :settings="{ identifier }"
@@ -52,7 +57,11 @@
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { FormTextInput, useDebouncedTextInput } from '@speckle/ui-components'
+import {
+  CommonLoadingIcon,
+  FormTextInput,
+  useDebouncedTextInput
+} from '@speckle/ui-components'
 import type { WorkspaceMoveProjectSelectProject_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
@@ -81,7 +90,7 @@ const emit = defineEmits<{
 }>()
 
 const {
-  query: { result },
+  query: { result, loading },
   identifier,
   onInfiniteLoad
 } = usePaginatedQuery({

@@ -1,65 +1,70 @@
 <template>
   <div>
     <div class="flex flex-col space-y-4">
-      <div v-if="hasWorkspaces">
-        <p class="mb-4">Select an existing workspaces or create a new one.</p>
-        <div class="flex flex-col gap-2">
-          <div
-            v-for="ws in workspaces"
-            :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
-            v-tippy="disabledTooltipText(ws)"
-          >
-            <button
-              class="w-full"
-              :class="
-                !canMoveToWorkspace(ws) && !isLimitReached(ws)
-                  ? 'cursor-not-allowed'
-                  : ''
-              "
-              :disabled="!canMoveToWorkspace(ws) && !isLimitReached(ws)"
-              @click="handleWorkspaceClick(ws)"
+      <div v-if="loading" class="py-4 flex items-center justify-center w-full h-32">
+        <CommonLoadingIcon size="sm" />
+      </div>
+      <template v-else>
+        <div v-if="hasWorkspaces">
+          <p class="mb-4">Select an existing workspaces or create a new one.</p>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="ws in workspaces"
+              :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
+              v-tippy="disabledTooltipText(ws)"
             >
-              <WorkspaceCard
-                :logo="ws.logo ?? ''"
-                :name="ws.name"
-                :clickable="canMoveToWorkspace(ws) || isLimitReached(ws)"
+              <button
+                class="w-full"
+                :class="
+                  !canMoveToWorkspace(ws) && !isLimitReached(ws)
+                    ? 'cursor-not-allowed'
+                    : ''
+                "
+                :disabled="!canMoveToWorkspace(ws) && !isLimitReached(ws)"
+                @click="handleWorkspaceClick(ws)"
               >
-                <template #text>
-                  <div class="flex flex-col gap-2 items-start">
-                    <CommonBadge
-                      v-if="isSsoRequired(ws)"
-                      color="secondary"
-                      class="capitalize"
-                      rounded
-                    >
-                      SSO login required
+                <WorkspaceCard
+                  :logo="ws.logo ?? ''"
+                  :name="ws.name"
+                  :clickable="canMoveToWorkspace(ws) || isLimitReached(ws)"
+                >
+                  <template #text>
+                    <div class="flex flex-col gap-2 items-start">
+                      <CommonBadge
+                        v-if="isSsoRequired(ws)"
+                        color="secondary"
+                        class="capitalize"
+                        rounded
+                      >
+                        SSO login required
+                      </CommonBadge>
+                      <p>
+                        {{ ws.projects.totalCount }} projects,
+                        {{ ws.projects.totalCount }} models
+                      </p>
+                      <UserAvatarGroup
+                        :users="ws.team.items.map((t) => t.user)"
+                        :max-count="6"
+                        size="sm"
+                      />
+                    </div>
+                  </template>
+                  <template #actions>
+                    <CommonBadge color="secondary" rounded>
+                      {{ formatName(ws.plan?.name) }}
                     </CommonBadge>
-                    <p>
-                      {{ ws.projects.totalCount }} projects,
-                      {{ ws.projects.totalCount }} models
-                    </p>
-                    <UserAvatarGroup
-                      :users="ws.team.items.map((t) => t.user)"
-                      :max-count="6"
-                      size="sm"
-                    />
-                  </div>
-                </template>
-                <template #actions>
-                  <CommonBadge color="secondary" class="capitalize" rounded>
-                    {{ ws.plan?.name }}
-                  </CommonBadge>
-                </template>
-              </WorkspaceCard>
-            </button>
+                  </template>
+                </WorkspaceCard>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <p v-else class="text-body-xs text-foreground">
-        Looks like you haven't created any workspaces yet. Workspaces help you easily
-        organise and control your digital projects. Create one to move your project
-        into.
-      </p>
+        <p v-else class="text-body-xs text-foreground">
+          Looks like you haven't created any workspaces yet. Workspaces help you easily
+          organise and control your digital projects. Create one to move your project
+          into.
+        </p>
+      </template>
     </div>
 
     <WorkspacePlanLimitReachedDialog
@@ -83,6 +88,7 @@ import type {
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment WorkspaceMoveProjectSelectWorkspace_User on User {
@@ -144,7 +150,7 @@ const emit = defineEmits<{
   ): void
 }>()
 
-const { result } = useQuery(workspaceMoveProjectManagerUserQuery, () => ({
+const { result, loading } = useQuery(workspaceMoveProjectManagerUserQuery, () => ({
   cursor: null,
   filter: {},
   projectId: props.project.id
