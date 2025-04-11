@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { workspacesRoute } from '~/lib/common/helpers/route'
+import { homeRoute } from '~/lib/common/helpers/route'
 import {
   convertThrowIntoFetchResult,
   modifyObjectFields
@@ -93,7 +93,7 @@ const onConfirm = async () => {
     }
   }
 
-  router.push(workspacesRoute)
+  router.push(homeRoute)
   isOpen.value = false
   resetWizardState()
   mixpanel.track('Workspace Creation Canceled')

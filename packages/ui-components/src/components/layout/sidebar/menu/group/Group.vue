@@ -46,6 +46,7 @@
         @click="iconClick"
       >
         <Edit v-if="icon === 'edit'" class="h-4 w-4" />
+        <ChevronRightIcon v-else-if="icon === 'view'" class="h-4 w-4" />
         <Plus v-else class="h-4 w-4" />
       </button>
     </div>
@@ -61,13 +62,14 @@ import Plus from '~~/src/components/global/icon/Plus.vue'
 import Edit from '~~/src/components/global/icon/Edit.vue'
 import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import CommonBadge from '~~/src/components/common/Badge.vue'
+import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
   tag?: string
   title?: string
   collapsible?: boolean
   collapsed?: boolean
-  icon?: 'add' | 'edit'
+  icon?: 'add' | 'edit' | 'view'
   iconText?: string
   iconClick?: () => void
   noHover?: boolean

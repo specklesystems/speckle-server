@@ -12,23 +12,21 @@
             {{ workspace.team?.totalCount === 1 ? 'member' : 'members' }}
           </p>
         </div>
-        <FormButton
-          v-if="workspace.requestStatus"
-          color="outline"
-          size="sm"
-          disabled
-          class="capitalize"
-        >
-          {{ workspace.requestStatus }}
-        </FormButton>
-        <FormButton
-          v-else
-          color="outline"
-          size="sm"
-          @click="() => onRequest(workspace.id)"
-        >
-          Request to join
-        </FormButton>
+        <div class="flex flex-col gap-y-2">
+          <FormButton
+            v-if="workspace.requestStatus"
+            color="outline"
+            size="sm"
+            disabled
+            class="capitalize"
+          >
+            {{ workspace.requestStatus }}
+          </FormButton>
+          <FormButton v-else color="outline" size="sm" @click="onRequest">
+            Request to join
+          </FormButton>
+          <FormButton color="subtle" size="sm" @click="onDismiss">Dismiss</FormButton>
+        </div>
       </div>
     </div>
   </CommonCard>
@@ -42,13 +40,18 @@ type WorkspaceWithStatus = LimitedWorkspace & {
   requestStatus: string | null
 }
 
-defineProps<{
+const props = defineProps<{
   workspace: WorkspaceWithStatus
 }>()
 
-const { processRequest } = useDiscoverableWorkspaces()
+const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
+  useDiscoverableWorkspaces()
 
-const onRequest = (workspaceId: string) => {
-  processRequest(true, workspaceId)
+const onRequest = () => {
+  requestToJoinWorkspace(props.workspace.id)
+}
+
+const onDismiss = () => {
+  dismissDiscoverableWorkspace(props.workspace.id)
 }
 </script>

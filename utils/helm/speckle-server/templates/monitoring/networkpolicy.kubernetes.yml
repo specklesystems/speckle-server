@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled }}
 {{- if (and (.Values.monitoring.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -39,3 +40,4 @@ spec:
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
 {{- end -}}
+{{- end }}

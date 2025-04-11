@@ -6,18 +6,11 @@ import {
   WorkspacePlanProductAndPriceIds,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
-  WorkspaceGuestSeatType
-} from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspaceGuestSeatType } from '@speckle/shared'
 import { expect } from 'chai'
 import { flatten, get } from 'lodash'
-
-const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   [WorkspaceGuestSeatType]: {
@@ -42,12 +35,23 @@ const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   },
   [PaidWorkspacePlans.Team]: {
     productId: 'prod_team',
-    monthly: 'price_team_monthly'
+    monthly: 'price_team_monthly',
+    yearly: 'price_team_yearly'
+  },
+  [PaidWorkspacePlans.TeamUnlimited]: {
+    productId: 'prod_team_unlimited',
+    monthly: 'price_team_unlimited_monthly',
+    yearly: 'price_team_unlimited_yearly'
   },
   [PaidWorkspacePlans.Pro]: {
     productId: 'prod_pro',
     monthly: 'price_pro_monthly',
     yearly: 'price_pro_yearly'
+  },
+  [PaidWorkspacePlans.ProUnlimited]: {
+    productId: 'prod_pro_unlimited',
+    monthly: 'price_pro_unlimited_monthly',
+    yearly: 'price_pro_unlimited_yearly'
   }
 }
 
@@ -94,27 +98,14 @@ describe('getFreshWorkspacePlanProductPricesFactory', () => {
     for (const plan of plans) {
       const planResult = get(result, plan) as (typeof result)[keyof typeof result]
 
-      if (
-        !FF_WORKSPACES_NEW_PLANS_ENABLED &&
-        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
-      ) {
-        if (planResult) {
-          throw new Error('New plans should not appear w/ FF on')
-        } else {
-          continue
-        }
-      }
-
       expect(planResult).to.be.ok
-      expect(planResult!.productId).to.be.ok
-      expect(planResult!.monthly.amount).to.be.ok
-      expect(planResult!.monthly.currency).to.eq('USD')
-      expect(planResult!.monthly.currency).to.be.ok
-      if ('yearly' in planResult!) {
-        const yearly = planResult.yearly as { amount: number; currency: string }
-        expect(yearly.amount).to.be.ok
-        expect(yearly.currency).to.be.ok
-      }
+      expect(planResult.productId).to.be.ok
+      expect(planResult.monthly.amount).to.be.ok
+      expect(planResult.monthly.currency).to.eq('USD')
+      expect(planResult.monthly.currency).to.be.ok
+      expect(planResult.yearly.amount).to.be.ok
+      expect(planResult.yearly.currency).to.be.ok
+      expect(planResult.yearly.currency).to.eq('USD')
     }
   })
 

@@ -1,20 +1,17 @@
 <template>
   <div class="flex flex-col gap-y-2">
-    <div class="flex justify-end">
-      <FormTextInput
-        v-model="search"
-        name="modelsearch"
-        :show-label="false"
-        :size="isSmallerOrEqualSm ? 'sm' : 'base'"
-        placeholder="Search models..."
-        color="foundation"
-        class="w-full"
-        :show-clear="search !== ''"
-        auto-focus
-        @change="updateSearchImmediately"
-        @update:model-value="updateDebouncedSearch"
-      />
-    </div>
+    <FormTextInput
+      v-model="search"
+      name="modelsearch"
+      :show-label="false"
+      placeholder="Search models..."
+      color="foundation"
+      full-width
+      :show-clear="search !== ''"
+      auto-focus
+      @change="updateSearchImmediately"
+      @update:model-value="updateDebouncedSearch"
+    />
     <CommonLoadingBar :loading="showLoadingBar" />
     <ProjectPageModelsCardView
       v-if="project"
@@ -27,6 +24,7 @@
       :show-versions="false"
       disable-default-links
       exclude-empty-models
+      hide-file-upload
       @update:loading="($event) => (queryLoading = $event)"
       @model-clicked="onModelClicked"
       @clear-search="clear"
@@ -36,14 +34,12 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const emit = defineEmits<{
   (e: 'chosen', val: { modelId: string }): void
 }>()
 
 const { project, resourceItems } = useInjectedViewerLoadedResources()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const search = ref('')
 const debouncedSearch = ref('')

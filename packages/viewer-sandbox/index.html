@@ -15,6 +15,23 @@
         class="relative overflow-y-scroll h-full pointer-events-none w-auto"
       ></div>
     </div>
+    <div class="center-wrapper" id="loadingWrapper">
+      <div class="loading-container">
+        <!-- Grayscale Image -->
+        <img
+          class="grayscale-overlay"
+          src="https://avatars.githubusercontent.com/u/65039012?s=280&v=4"
+          alt="Grayscale Image"
+        />
+        <!-- Colored Image -->
+        <img
+          class="color-image"
+          id="colorImage"
+          src="https://avatars.githubusercontent.com/u/65039012?s=280&v=4"
+          alt="Color Image"
+        />
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
     <!-- <div class="w-screen h-screen flex flex-col" id="multi-root">
       <div class="h-1/2">

@@ -4,7 +4,9 @@ import { authorizeResolver } from '@/modules/shared'
 import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
@@ -29,15 +31,14 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
-  calculateSubscriptionSeats,
   CreateCheckoutSession,
-  CreateCheckoutSessionOld
+  CreateCheckoutSessionOld,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
@@ -51,7 +52,22 @@ import {
   startCheckoutSessionFactoryNew,
   startCheckoutSessionFactoryOld
 } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
-import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import {
+  upgradeWorkspaceSubscriptionFactoryNew,
+  upgradeWorkspaceSubscriptionFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions/upgradeWorkspaceSubscription'
+import {
+  countSeatsByTypeInWorkspaceFactory,
+  createWorkspaceSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getTotalSeatsCountByPlanFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -77,7 +93,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'plus':
             case 'business':
             case 'team':
+            case 'teamUnlimited':
             case 'pro':
+            case 'proUnlimited':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
@@ -88,6 +106,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starterInvoiced':
             case 'plusInvoiced':
             case 'businessInvoiced':
+            case 'proUnlimitedInvoiced':
+            case 'teamUnlimitedInvoiced':
               paymentMethod = WorkspacePaymentMethod.Invoice
               break
             default:
@@ -100,12 +120,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const subscription = await getWorkspaceSubscriptionFactory({ db })({
             workspaceId
           })
-          if (!subscription) return subscription
-          const seats = calculateSubscriptionSeats({
-            subscriptionData: subscription.subscriptionData,
-            guestSeatProductId: getWorkspacePlanProductId({ workspacePlan: 'guest' })
-          })
-          return { ...subscription, seats }
+          return subscription
         },
         customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
@@ -141,6 +156,99 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
+        },
+        seatType: async (parent, _args, context) => {
+          if (!context.userId) return null
+
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.id,
+            userId: context.userId
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
+      WorkspacePlan: {
+        usage: async (parent) => {
+          return { workspaceId: parent.workspaceId }
+        }
+      },
+      WorkspacePlanUsage: {
+        projectCount: async (parent) => {
+          const { workspaceId } = parent
+          const countsByWorkspaceId = await getWorkspacesProjectsCountsFactory({ db })({
+            workspaceIds: [workspaceId]
+          })
+          return countsByWorkspaceId[workspaceId] ?? 0
+        },
+        modelCount: async (parent) => {
+          const { workspaceId } = parent
+
+          return await getWorkspaceModelCountFactory({
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams: legacyGetStreamsFactory({ db })
+            }),
+            getPaginatedProjectModelsTotalCount: async (projectId, params) => {
+              const regionDb = await getProjectDbClient({ projectId })
+              return await getPaginatedProjectModelsTotalCountFactory({ db: regionDb })(
+                projectId,
+                params
+              )
+            }
+          })({ workspaceId })
+        }
+      },
+      WorkspaceSubscription: {
+        seats: async (parent) => {
+          return parent
+        }
+      },
+      WorkspaceSubscriptionSeats: {
+        editors: async (parent) => {
+          const { workspaceId, subscriptionData } = parent
+
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId
+          })
+
+          if (!workspacePlan) {
+            return {
+              assigned: 0,
+              available: 0
+            }
+          }
+
+          return {
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
+              type: 'editor'
+            }),
+            available: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
+              workspacePlan,
+              subscriptionData
+            })
+          }
+        },
+        viewers: async ({ workspaceId }) => {
+          return {
+            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
+              workspaceId,
+              type: 'viewer'
+            }),
+            available: 0
+          }
+        }
+      },
+      WorkspaceCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders.gatekeeper!.getUserWorkspaceSeat.load({
+            workspaceId: parent.workspaceId,
+            userId: parent.id
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
         }
       },
       ServerWorkspacesInfo: {
@@ -159,8 +267,43 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           }))
         }
       },
+      ProjectCollaborator: {
+        seatType: async (parent, _args, context) => {
+          const seat = await context.loaders.gatekeeper!.getUserProjectSeat.load({
+            projectId: parent.projectId,
+            userId: parent.id
+          })
+
+          // Defaults to Editor for old plans that don't have seat types
+          return seat?.type || WorkspaceSeatType.Editor
+        }
+      },
       WorkspaceMutations: {
-        billing: () => ({})
+        billing: () => ({}),
+        updateSeatType: async (_parent, args, ctx) => {
+          const { workspaceId, userId, seatType } = args.input
+
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const assignSeat = assignWorkspaceSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+            eventEmit: getEventBus().emit
+          })
+          await assignSeat({
+            workspaceId,
+            userId,
+            type: seatType,
+            assignedByUserId: ctx.userId!
+          })
+
+          return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
+        }
       },
       WorkspaceBillingMutations: {
         cancelCheckoutSession: async (_parent, args, ctx) => {
@@ -253,9 +396,6 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         },
         upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
-          if (isNewPlanType(workspacePlan)) {
-            throw new NotImplementedError()
-          }
 
           await authorizeResolver(
             ctx.userId,
@@ -265,21 +405,46 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           )
           const stripe = getStripeClient()
 
-          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
-            db
+          const currentPlan = await getWorkspacePlan({ workspaceId })
+          const upgradeWorkspaceSubscription =
+            currentPlan && isNewPlanType(currentPlan.name)
+              ? upgradeWorkspaceSubscriptionFactoryNew({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+              : upgradeWorkspaceSubscriptionFactoryOld({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db }),
+                  reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+                    stripe
+                  }),
+                  countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
+                    db
+                  }),
+                  getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                  getWorkspacePlanPriceId,
+                  getWorkspacePlanProductId,
+                  upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                  updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
+                    db
+                  })
+                })
+          await upgradeWorkspaceSubscription({
+            workspaceId,
+            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
+            billingInterval
           })
-          await upgradeWorkspaceSubscriptionFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
-              stripe
-            }),
-            countWorkspaceRole,
-            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            getWorkspacePlanPriceId,
-            getWorkspacePlanProductId,
-            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-            updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-          })({ workspaceId, targetPlan: workspacePlan, billingInterval })
           return true
         }
       }

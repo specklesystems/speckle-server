@@ -191,7 +191,7 @@ export const initKnexPrometheusMetrics = async (params: {
   // configure hooks on knex
   for (const dbClient of await params.getAllDbClients()) {
     if (initializedRegions.includes(dbClient.regionKey)) continue
-    initKnexPrometheusMetricsForRegionEvents({
+    await initKnexPrometheusMetricsForRegionEvents({
       logger: params.logger,
       region: dbClient.regionKey,
       db: dbClient.client
@@ -260,7 +260,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     }
 
     const trace = stackTrace || collectLongTrace()
-    params.logger.info(
+    params.logger.debug(
       {
         region,
         sql: data.sql,

@@ -1,3 +1,4 @@
+{{- if .Values.server.enabled }}
 {{- if (and (.Values.server.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -83,3 +84,4 @@ spec:
 {{ include "test.selectorLabels" $ | indent 14}}
 {{- end }}
 {{- end -}}
+{{- end }}

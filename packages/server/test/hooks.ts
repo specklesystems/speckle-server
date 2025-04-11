@@ -23,6 +23,7 @@ import {
   MaybeNullOrUndefined,
   Nullable,
   Optional,
+  retry,
   wait
 } from '@speckle/shared'
 import * as mocha from 'mocha'
@@ -195,15 +196,17 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     rows: Array<{ pubname: string }>
   }
 
+  // If we do not wait, the following call occasionally fails because a replication slot is still in use.
   const dropSubs = async (info: SubInfo) => {
+    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
-    // If we do not wait, the following call occasionally fails because a replication slot is still in use.
     await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
+    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
@@ -233,8 +236,11 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
     if (!tableNames.length) return // Nothing to truncate
 
     // We're deleting everything, so lets turn off triggers to avoid deadlocks/slowdowns
-    await deps.db.transaction(async (trx) => {
-      await trx.raw(`
+    // This still seems to randomly cause deadlocks, so adding a retry
+    await retry(
+      async () =>
+        await deps.db.transaction(async (trx) => {
+          await trx.raw(`
         -- Disable triggers and foreign key constraints for this session
         SET session_replication_role = replica;
 
@@ -243,7 +249,10 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
         -- Re-enable triggers and foreign key constraints
         SET session_replication_role = DEFAULT;
       `)
-    })
+        }),
+      3,
+      200
+    )
   } else {
     await deps.db.raw(`truncate table ${tableNames.join(',')} cascade`)
   }

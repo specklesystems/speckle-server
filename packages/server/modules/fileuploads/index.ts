@@ -1,7 +1,5 @@
-/* istanbul ignore file */
-import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
-import request from 'request'
-import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import cron from 'node-cron'
+import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
@@ -9,20 +7,71 @@ import {
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
 import {
-  getFileInfoFactory,
-  saveUploadFileFactory
+  expireOldPendingUploadsFactory,
+  getFileInfoFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getPort } from '@/modules/shared/helpers/envHelper'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
+import {
+  getProjectDbClient,
+  getRegisteredDbClients
+} from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
+import { TIME } from '@speckle/shared'
+import { getRouter } from '@/modules/fileuploads/rest/routes'
+import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
+
+let scheduledTasks: cron.ScheduledTask[] = []
+
+const scheduleFileImportExpiry = async ({
+  scheduleExecution
+}: {
+  scheduleExecution: ScheduleExecution
+}) => {
+  const fileImportExpiryHandlers: ReturnType<typeof manageFileImportExpiryFactory>[] =
+    []
+  const regionClients = await getRegisteredDbClients()
+  for (const projectDb of [db, ...regionClients]) {
+    fileImportExpiryHandlers.push(
+      manageFileImportExpiryFactory({
+        garbageCollectExpiredPendingUploads: expireOldPendingUploadsFactory({
+          db: projectDb
+        }),
+        notifyUploadStatus: notifyChangeInFileStatus({
+          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+          publish
+        })
+      })
+    )
+  }
+
+  const cronExpression = '*/5 * * * *' // every 5 minutes
+  return scheduleExecution(
+    cronExpression,
+    'FileImportExpiry',
+    async (_scheduledTime, { logger }) => {
+      await Promise.all(
+        fileImportExpiryHandlers.map((handler) =>
+          handler({
+            logger,
+            timeoutThresholdSeconds: (getFileImportTimeLimitMinutes() + 1) * TIME.minute // additional buffer of 1 minute
+          })
+        )
+      )
+    }
+  )
+}
 
 export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -32,102 +81,22 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
     moduleLogger.info('📄 Init FileUploads module')
   }
 
-  app.post(
-    '/api/file/:fileType/:streamId/:branchName?',
-    async (req, res, next) => {
-      await authMiddlewareCreator(
-        streamWritePermissionsPipelineFactory({
-          getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db })
-        })
-      )(req, res, next)
-    },
-    async (req, res) => {
-      const branchName = req.params.branchName || 'main'
-      req.log = req.log.child({
-        streamId: req.params.streamId,
-        userId: req.context.userId,
-        branchName
-      })
-
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-        publish
-      })
-      const saveFileUploads = async ({
-        userId,
-        streamId,
-        branchName,
-        uploadResults
-      }: {
-        userId: string
-        streamId: string
-        branchName: string
-        uploadResults: Array<{
-          blobId: string
-          fileName: string
-          fileSize: number
-        }>
-      }) => {
-        await Promise.all(
-          uploadResults.map(async (upload) => {
-            await insertNewUploadAndNotify({
-              fileId: upload.blobId,
-              streamId,
-              branchName,
-              userId,
-              fileName: upload.fileName,
-              fileType: upload.fileName.split('.').pop()!,
-              fileSize: upload.fileSize
-            })
-          })
-        )
-      }
-      //TODO refactor packages/server/modules/blobstorage/index.js to use the service pattern, and then refactor this to call the service directly from here without the http overhead
-      const pipedReq = request(
-        // we call this same server on localhost (IPv4) to upload the blob and do not make an external call
-        `http://127.0.0.1:${getPort()}/api/stream/${req.params.streamId}/blob`,
-        async (err, response, body) => {
-          if (err) {
-            res.log.error(err, 'Error while uploading blob.')
-            res.status(500).send(err.message)
-            return
-          }
-          if (response.statusCode === 201) {
-            const { uploadResults } = JSON.parse(body)
-            await saveFileUploads({
-              userId: req.context.userId!,
-              streamId: req.params.streamId,
-              branchName,
-              uploadResults
-            })
-          } else {
-            res.log.error(
-              {
-                statusCode: response.statusCode,
-                path: `http://127.0.0.1:${getPort()}/api/stream/${
-                  req.params.streamId
-                }/blob`
-              },
-              'Error while uploading file.'
-            )
-          }
-          res.contentType('application/json')
-          res.status(response.statusCode).send(body)
-        }
-      )
-
-      req.pipe(pipedReq as unknown as NodeJS.WritableStream)
-    }
-  )
+  app.use(getRouter())
 
   if (isInitial) {
-    listenFor('file_import_update', async (msg) => {
+    const scheduleExecution = scheduleExecutionFactory({
+      acquireTaskLock: acquireTaskLockFactory({ db }),
+      releaseTaskLock: releaseTaskLockFactory({ db })
+    })
+
+    scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
+
+    listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({ projectId: parsedMessage.streamId })
+      const projectDb = await getProjectDbClient({
+        projectId: parsedMessage.streamId
+      })
       await onFileImportProcessedFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         publish,
@@ -135,14 +104,22 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
         eventEmit: getEventBus().emit
       })(parsedMessage)
     })
-    listenFor('file_import_started', async (msg) => {
+    listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
       if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({ projectId: parsedMessage.streamId })
+      const projectDb = await getProjectDbClient({
+        projectId: parsedMessage.streamId
+      })
       await onFileProcessingFactory({
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         publish
       })(parsedMessage)
     })
   }
+}
+
+export const shutdown: SpeckleModule['shutdown'] = async () => {
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
 }

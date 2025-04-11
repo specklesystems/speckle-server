@@ -3,7 +3,8 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
+    class="group rounded-xl bg-foundation border border-outline-3"
+    :class="isLimited ? '' : 'hover:border-outline-5'"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
@@ -35,9 +36,18 @@
             class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
           />
           <template v-else>
-            <NuxtLink :href="viewerRoute" class="h-full w-full">
+            <NuxtLink v-if="!isLimited" :href="viewerRoute" class="h-full w-full">
               <PreviewImage :preview-url="version.previewUrl" />
             </NuxtLink>
+            <div
+              v-else
+              class="h-full w-full diagonal-stripes flex items-center justify-center p-2"
+            >
+              <ViewerResourcesUpgradeLimitAlert
+                class="!bg-foundation !text-foreground-2"
+                text="Upgrade to view versions older than (count) days."
+              />
+            </div>
             <div
               v-if="
                 isAutomateModuleEnabled &&
@@ -114,6 +124,7 @@ graphql(`
     }
     createdAt
     previewUrl
+    referencedObject
     sourceApplication
     commentThreadCount: commentThreads(limit: 0) {
       totalCount
@@ -146,6 +157,14 @@ const props = defineProps<{
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const showActionsMenu = ref(false)
+
+// Check if the version is limited due to plan restrictions
+const isLimited = computed(() => {
+  if (isPendingVersionFragment(props.version)) return false
+
+  // If it's a regular version, check if referencedObject is null (indicating plan limits)
+  return props.version.referencedObject === null
+})
 
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)

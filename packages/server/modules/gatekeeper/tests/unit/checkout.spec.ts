@@ -14,8 +14,11 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import { omit } from 'lodash'
-import { PaidWorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
-import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import {
+  PaidWorkspacePlan,
+  PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 import {
   startCheckoutSessionFactoryNew as startCheckoutSessionFactory,
   startCheckoutSessionFactoryOld
@@ -586,7 +589,8 @@ describe('checkout @gatekeeper', () => {
               }
             ],
             status: 'active',
-            cancelAt: null
+            cancelAt: null,
+            currentPeriodEnd: new Date()
           }
 
           let storedWorkspaceSubscriptionData: WorkspaceSubscription | undefined =

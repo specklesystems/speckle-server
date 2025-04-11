@@ -97,16 +97,24 @@
                 }"
               >
                 <template v-if="buttons">
-                  <FormButton
+                  <div
                     v-for="(button, index) in buttons"
                     :key="button.id || index"
-                    v-bind="button.props || {}"
-                    :disabled="button.props?.disabled || button.disabled"
-                    :submit="button.props?.submit || button.submit"
-                    @click="($event) => button.onClick?.($event)"
+                    v-tippy="
+                      button.props?.disabled || button.disabled
+                        ? button.disabledMessage
+                        : undefined
+                    "
                   >
-                    {{ button.text }}
-                  </FormButton>
+                    <FormButton
+                      v-bind="button.props || {}"
+                      :disabled="button.props?.disabled || button.disabled"
+                      :submit="button.props?.submit || button.submit"
+                      @click="($event) => button.onClick?.($event)"
+                    >
+                      {{ button.text }}
+                    </FormButton>
+                  </div>
                 </template>
                 <template v-else>
                   <slot name="buttons" />

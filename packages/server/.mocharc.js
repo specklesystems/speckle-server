@@ -14,7 +14,7 @@ const ignore = [
 /** @type {import("mocha").MochaOptions} */
 const config = {
   spec: ['modules/**/*.spec.js', 'modules/**/*.spec.ts', 'observability/**/*.spec.ts'],
-  require: ['ts-node/register', 'test/hooks.ts'],
+  require: ['test/hooks.ts'],
   ...(ignore.length ? { ignore } : {}),
   slow: 0,
   timeout: '150000',

@@ -14,7 +14,7 @@ import type { UserProfileEditDialogAvatar_UserFragment } from '~~/lib/common/gen
 import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
+import type { UserAvatarSize } from '@speckle/ui-components'
 
 graphql(`
   fragment UserProfileEditDialogAvatar_User on User {

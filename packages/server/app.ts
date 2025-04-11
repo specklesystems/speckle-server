@@ -196,12 +196,8 @@ export function buildApolloSubscriptionServer(params: {
         // for subscriptions)
         try {
           const headers = getHeaders({ connContext, connectionParams })
-          const buildCtx = await buildContext({
-            req: null,
-            token,
-            cleanLoadersEarly: false
-          })
-          buildCtx.log.info(
+          const buildCtx = await buildContext({ token })
+          buildCtx.log.debug(
             {
               userId: buildCtx.userId,
               ws_protocol: webSocket.protocol,

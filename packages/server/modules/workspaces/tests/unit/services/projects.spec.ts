@@ -1,22 +1,22 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
 import {
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory
 } from '@/modules/workspaces/services/projects'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceDomain
+} from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { Roles } from '@speckle/shared'
+import { ProjectUpdateRoleInput } from '@/test/graphql/generated/graphql'
+import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-
-const getWorkspaceRoleToDefaultProjectRoleMapping = async () => ({
-  'workspace:admin': Roles.Stream.Owner,
-  'workspace:guest': null,
-  'workspace:member': Roles.Stream.Contributor
-})
 
 describe('Project retrieval services', () => {
   describe('queryAllWorkspaceProjectFactory returns a generator, that', () => {
@@ -93,25 +93,164 @@ describe('Project retrieval services', () => {
 
 describe('Project management services', () => {
   describe('moveProjectToWorkspaceFactory returns a function, that', () => {
+    const roleMapping: [
+      StreamRoles, // Current project role
+      WorkspaceRoles | null, // Current workspace role
+      WorkspaceSeatType | null, // Current workspace seat type
+      StreamRoles, // Final project role
+      WorkspaceRoles, // Final workspace role
+      WorkspaceSeatType // Final workspace seat type
+    ][] = [
+      [
+        Roles.Stream.Owner,
+        Roles.Workspace.Admin,
+        'editor',
+        Roles.Stream.Owner,
+        Roles.Workspace.Admin,
+        'editor'
+      ],
+      [
+        Roles.Stream.Owner,
+        Roles.Workspace.Member,
+        'editor',
+        Roles.Stream.Owner,
+        Roles.Workspace.Member,
+        'editor'
+      ],
+      [
+        Roles.Stream.Owner,
+        Roles.Workspace.Member,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Owner,
+        Roles.Workspace.Guest,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Guest,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Owner,
+        null,
+        null,
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Contributor,
+        Roles.Workspace.Admin,
+        'editor',
+        Roles.Stream.Contributor,
+        Roles.Workspace.Admin,
+        'editor'
+      ],
+      [
+        Roles.Stream.Contributor,
+        Roles.Workspace.Member,
+        'editor',
+        Roles.Stream.Contributor,
+        Roles.Workspace.Member,
+        'editor'
+      ],
+      [
+        Roles.Stream.Contributor,
+        Roles.Workspace.Member,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Contributor,
+        Roles.Workspace.Guest,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Guest,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Contributor,
+        null,
+        null,
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Admin,
+        'editor',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Admin,
+        'editor'
+      ],
+      [
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'editor',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'editor'
+      ],
+      [
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Guest,
+        'viewer',
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Guest,
+        'viewer'
+      ],
+      [
+        Roles.Stream.Reviewer,
+        null,
+        null,
+        Roles.Stream.Reviewer,
+        Roles.Workspace.Member,
+        'viewer'
+      ]
+    ]
+
     it('should throw if attempting to move a project, that does not exist', async () => {
       const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
         getProject: async () => null,
         updateProject: async () => {
           expect.fail()
         },
-        upsertProjectRole: async () => {
+        updateProjectRole: async () => {
           expect.fail()
         },
         getProjectCollaborators: async () => {
           expect.fail()
         },
-        getWorkspaceRoles: async () => {
+        getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+        getWorkspaceWithPlan: async () => {
           expect.fail()
         },
         updateWorkspaceRole: async () => {
+          expect.fail()
+        },
+        createWorkspaceSeat: async () => {
+          expect.fail()
+        },
+        getUserEmails: async () => {
+          expect.fail()
+        },
+        getWorkspaceDomains: async () => {
           expect.fail()
         }
       })
@@ -119,7 +258,8 @@ describe('Project management services', () => {
       const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
-          workspaceId: cryptoRandomString({ length: 6 })
+          workspaceId: cryptoRandomString({ length: 6 }),
+          movedByUserId: cryptoRandomString({ length: 10 })
         })
       )
       expect(err.message).to.equal(new ProjectNotFoundError().message)
@@ -134,19 +274,28 @@ describe('Project management services', () => {
         updateProject: async () => {
           expect.fail()
         },
-        upsertProjectRole: async () => {
+        updateProjectRole: async () => {
           expect.fail()
         },
         getProjectCollaborators: async () => {
           expect.fail()
         },
-        getWorkspaceRoles: async () => {
+        getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+        getWorkspaceWithPlan: async () => {
           expect.fail()
         },
         updateWorkspaceRole: async () => {
+          expect.fail()
+        },
+        createWorkspaceSeat: async () => {
+          expect.fail()
+        },
+        getUserEmails: async () => {
+          expect.fail()
+        },
+        getWorkspaceDomains: async () => {
           expect.fail()
         }
       })
@@ -154,12 +303,12 @@ describe('Project management services', () => {
       const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
-          workspaceId: cryptoRandomString({ length: 6 })
+          workspaceId: cryptoRandomString({ length: 6 }),
+          movedByUserId: cryptoRandomString({ length: 10 })
         })
       )
       expect(err instanceof WorkspaceInvalidProjectError).to.be.true
     })
-
     it('should preserve existing workspace roles in target workspace', async () => {
       const userId = cryptoRandomString({ length: 6 })
       const projectId = cryptoRandomString({ length: 6 })
@@ -174,7 +323,7 @@ describe('Project management services', () => {
         updateProject: async () => {
           return {} as StreamRecord
         },
-        upsertProjectRole: async () => {
+        updateProjectRole: async () => {
           return {} as StreamRecord
         },
         getProjectCollaborators: async () => {
@@ -185,33 +334,45 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
-        getWorkspaceRoles: async () => {
-          return [
-            {
-              userId,
-              role: Roles.Workspace.Admin,
-              workspaceId,
-              createdAt: new Date()
+        getWorkspaceRolesAndSeats: async () => {
+          return {
+            [userId]: {
+              role: {
+                userId,
+                role: Roles.Workspace.Admin,
+                workspaceId,
+                createdAt: new Date()
+              },
+              seat: null,
+              userId
             }
-          ]
+          }
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          'workspace:admin': Roles.Stream.Owner,
-          'workspace:guest': null,
-          'workspace:member': Roles.Stream.Contributor
-        }),
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId,
+            domainBasedMembershipProtectionEnabled: false
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
+        },
+        createWorkspaceSeat: async () => {
+          return {} as WorkspaceSeat
+        },
+        getUserEmails: async () => {
+          expect.fail()
+        },
+        getWorkspaceDomains: async () => {
+          expect.fail()
         }
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
-      expect(updatedRoles.length).to.equal(1)
-      expect(updatedRoles[0].role).to.equal(Roles.Workspace.Admin)
+      expect(updatedRoles.length).to.equal(0)
     })
-
-    it('should set project members as workspace members in target workspace', async () => {
+    it('should grant workspace guest seats to users that violate domain protection policies', async () => {
       const userId = cryptoRandomString({ length: 6 })
       const projectId = cryptoRandomString({ length: 6 })
       const workspaceId = cryptoRandomString({ length: 6 })
@@ -225,7 +386,7 @@ describe('Project management services', () => {
         updateProject: async () => {
           return {} as StreamRecord
         },
-        upsertProjectRole: async () => {
+        updateProjectRole: async () => {
           return {} as StreamRecord
         },
         getProjectCollaborators: async () => {
@@ -236,195 +397,130 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
-        getWorkspaceRoles: async () => {
-          return []
+        getWorkspaceRolesAndSeats: async () => {
+          return {}
         },
-        getWorkspaceRoleToDefaultProjectRoleMapping,
+        getWorkspaceWithPlan: async () => {
+          return {
+            id: workspaceId,
+            domainBasedMembershipProtectionEnabled: true
+          } as Workspace & { plan: null }
+        },
         updateWorkspaceRole: async (role) => {
           updatedRoles.push(role)
-        }
-      })
-
-      await moveProjectToWorkspace({ projectId, workspaceId })
-
-      expect(updatedRoles.length).to.equal(1)
-      expect(updatedRoles[0].role).to.equal(Roles.Workspace.Member)
-    })
-
-    it('should set project members that are server guests as workspace guests in target workspace', async () => {
-      const userId = cryptoRandomString({ length: 6 })
-      const projectId = cryptoRandomString({ length: 6 })
-      const workspaceId = cryptoRandomString({ length: 6 })
-
-      const updatedRoles: Partial<WorkspaceAcl>[] = []
-
-      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-        getProject: async () => {
-          return {} as StreamRecord
         },
-        updateProject: async () => {
-          return {} as StreamRecord
+        createWorkspaceSeat: async () => {
+          return {} as WorkspaceSeat
         },
-        upsertProjectRole: async () => {
-          return {} as StreamRecord
+        getUserEmails: async () => {
+          return []
         },
-        getProjectCollaborators: async () => {
+        getWorkspaceDomains: async () => {
           return [
             {
-              id: userId,
-              role: Roles.Server.Guest,
-              streamRole: Roles.Stream.Contributor
-            } as unknown as ProjectTeamMember
+              id: cryptoRandomString({ length: 9 }),
+              domain: 'example.org',
+              verified: true
+            } as WorkspaceDomain
           ]
-        },
-        getWorkspaceRoles: async () => {
-          return []
-        },
-        getWorkspaceRoleToDefaultProjectRoleMapping,
-        updateWorkspaceRole: async (role) => {
-          updatedRoles.push(role)
         }
       })
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
+      await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Workspace.Guest)
     })
 
-    it('should preserve project roles for project members', async () => {
-      const userId = cryptoRandomString({ length: 6 })
-      const projectId = cryptoRandomString({ length: 6 })
-      const workspaceId = cryptoRandomString({ length: 6 })
+    for (const mapping of roleMapping) {
+      const [
+        currentProjectRole,
+        currentWorkspaceRole,
+        currentWorkspaceSeatType,
+        finalProjectRole,
+        finalWorkspaceRole,
+        finalWorkspaceSeatType
+      ] = mapping
 
-      const updatedRoles: Partial<StreamAclRecord>[] = []
+      it(`should assign ${currentProjectRole} with ${currentWorkspaceRole} (${currentWorkspaceSeatType}) workspace role as project ${finalProjectRole} with ${finalWorkspaceRole} (${finalWorkspaceSeatType}) workspace role`, async () => {
+        const userId = cryptoRandomString({ length: 6 })
+        const projectId = cryptoRandomString({ length: 6 })
+        const workspaceId = cryptoRandomString({ length: 6 })
 
-      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-        getProject: async () => {
-          return {} as StreamRecord
-        },
-        updateProject: async () => {
-          return {} as StreamRecord
-        },
-        upsertProjectRole: async (role) => {
-          updatedRoles.push(role)
-          return {} as StreamRecord
-        },
-        getProjectCollaborators: async () => {
-          return [
-            {
-              id: userId,
-              role: Roles.Server.User,
-              streamRole: Roles.Stream.Owner
-            } as unknown as ProjectTeamMember
-          ]
-        },
-        getWorkspaceRoles: async () => {
-          return []
-        },
-        getWorkspaceRoleToDefaultProjectRoleMapping,
-        updateWorkspaceRole: async () => {}
-      })
+        let projectRole = currentProjectRole
+        let workspaceRole = currentWorkspaceRole
+        let workspaceSeatType = currentWorkspaceSeatType
 
-      await moveProjectToWorkspace({ projectId, workspaceId })
-
-      expect(updatedRoles.length).to.equal(1)
-      expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
-    })
-
-    it('should guarantee that target workspace members get at least the default workspace project role', async () => {
-      const userId = cryptoRandomString({ length: 6 })
-      const projectId = cryptoRandomString({ length: 6 })
-      const workspaceId = cryptoRandomString({ length: 6 })
-
-      const updatedRoles: Partial<StreamAclRecord>[] = []
-
-      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-        getProject: async () => {
-          return {} as StreamRecord
-        },
-        updateProject: async () => {
-          return {} as StreamRecord
-        },
-        upsertProjectRole: async (role) => {
-          updatedRoles.push(role)
-          return {} as StreamRecord
-        },
-        getProjectCollaborators: async () => {
-          return [
-            {
-              id: userId,
-              role: Roles.Server.User,
-              streamRole: Roles.Stream.Reviewer
-            } as unknown as ProjectTeamMember
-          ]
-        },
-        getWorkspaceRoles: async () => {
-          return []
-        },
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          [Roles.Workspace.Guest]: null,
-          [Roles.Workspace.Member]: Roles.Stream.Contributor,
-          [Roles.Workspace.Admin]: Roles.Stream.Owner
-        }),
-        updateWorkspaceRole: async () => {}
-      })
-
-      await moveProjectToWorkspace({ projectId, workspaceId })
-
-      expect(updatedRoles.length).to.equal(1)
-      expect(updatedRoles[0].role).to.equal(Roles.Stream.Contributor)
-    })
-
-    it('should guarantee that target workspace admins become project owners', async () => {
-      const userId = cryptoRandomString({ length: 6 })
-      const projectId = cryptoRandomString({ length: 6 })
-      const workspaceId = cryptoRandomString({ length: 6 })
-
-      const updatedRoles: Partial<StreamAclRecord>[] = []
-
-      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
-        getProject: async () => {
-          return {} as StreamRecord
-        },
-        updateProject: async () => {
-          return {} as StreamRecord
-        },
-        upsertProjectRole: async (role) => {
-          updatedRoles.push(role)
-          return {} as StreamRecord
-        },
-        getProjectCollaborators: async () => {
-          return [
-            {
-              id: userId,
-              role: Roles.Server.User,
-              streamRole: Roles.Stream.Reviewer
-            } as unknown as ProjectTeamMember
-          ]
-        },
-        getWorkspaceRoles: async () => {
-          return [
-            {
-              userId,
-              workspaceId,
-              role: Roles.Workspace.Admin,
-              createdAt: new Date()
+        const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+          getProject: async () => {
+            return {} as StreamRecord
+          },
+          updateProject: async () => {
+            return {} as StreamRecord
+          },
+          updateProjectRole: async (update) => {
+            projectRole = (update as ProjectUpdateRoleInput).role as StreamRoles
+            return {} as StreamRecord
+          },
+          getProjectCollaborators: async () => {
+            return [
+              {
+                id: userId,
+                streamRole: projectRole
+              } as unknown as ProjectTeamMember
+            ]
+          },
+          getWorkspaceRolesAndSeats: async () => {
+            return workspaceRole
+              ? {
+                  [userId]: {
+                    role: {
+                      userId,
+                      role: workspaceRole,
+                      workspaceId,
+                      createdAt: new Date()
+                    },
+                    seat: workspaceSeatType
+                      ? {
+                          workspaceId,
+                          userId,
+                          createdAt: new Date(),
+                          updatedAt: new Date(),
+                          type: workspaceSeatType
+                        }
+                      : null,
+                    userId
+                  }
+                }
+              : {}
+          },
+          getWorkspaceWithPlan: async () => {
+            return {
+              id: workspaceId,
+              domainBasedMembershipProtectionEnabled: false
+            } as Workspace & { plan: null }
+          },
+          getWorkspaceDomains: async () => [],
+          getUserEmails: async () => [],
+          updateWorkspaceRole: async ({ role }) => {
+            workspaceRole = role
+          },
+          createWorkspaceSeat: async (seat) => {
+            workspaceSeatType = seat.type
+            return {
+              ...seat,
+              createdAt: new Date(),
+              updatedAt: new Date()
             }
-          ]
-        },
-        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
-          [Roles.Workspace.Guest]: null,
-          [Roles.Workspace.Member]: Roles.Stream.Contributor,
-          [Roles.Workspace.Admin]: Roles.Stream.Owner
-        }),
-        updateWorkspaceRole: async () => {}
+          }
+        })
+
+        await moveProjectToWorkspace({ projectId, workspaceId, movedByUserId: userId })
+
+        expect(projectRole).to.equal(finalProjectRole)
+        expect(workspaceRole).to.equal(finalWorkspaceRole)
+        expect(workspaceSeatType).to.equal(finalWorkspaceSeatType)
       })
-
-      await moveProjectToWorkspace({ projectId, workspaceId })
-
-      expect(updatedRoles.length).to.equal(1)
-      expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
-    })
+    }
   })
 })

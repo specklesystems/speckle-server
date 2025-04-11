@@ -12,6 +12,7 @@ import {
 } from '@/modules/previews/domain/types'
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
+import { PreviewStatus } from '@/modules/previews/domain/consts'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -38,6 +39,9 @@ export const getObjectPreviewInfoFactory =
       .first()
   }
 
+/**
+ * @throws {Error} if the preview already exists
+ */
 export const storeObjectPreviewFactory =
   ({ db }: { db: Knex }): StoreObjectPreview =>
   async ({
@@ -50,13 +54,9 @@ export const storeObjectPreviewFactory =
         streamId,
         objectId,
         priority,
-        previewStatus: 0
+        previewStatus: PreviewStatus.PENDING
       }
-    const sqlQuery = tables
-      .objectPreview(db)
-      .insert(insertionObject)
-      .onConflict()
-      .ignore()
+    const sqlQuery = tables.objectPreview(db).insert(insertionObject)
 
     await sqlQuery
   }

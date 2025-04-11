@@ -1,16 +1,22 @@
-import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import {
+  createRandomEmail,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
+import {
+  assignToWorkspace,
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, login } from '@/test/authHelper'
 import {
+  GetProjectInvitableCollaboratorsDocument,
   SetUserActiveWorkspaceDocument,
   UserActiveResourcesDocument
 } from '@/test/graphql/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -95,5 +101,74 @@ describe('ActiveUserMutations.setActiveWorkspace', () => {
     expect(resB).to.not.haveGraphQLErrors()
 
     expect(resB?.data?.activeUser?.activeWorkspace).to.be.null
+  })
+})
+
+describe('Project.invitableCollaborators', () => {
+  it('should return invitable collaborators', async () => {
+    const admin = await createTestUser({
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.User,
+      verified: true
+    })
+    const workspace = {
+      id: createRandomString(),
+      name: createRandomString(),
+      slug: createRandomString(),
+      ownerId: admin.id
+    }
+    await createTestWorkspace(workspace, admin)
+
+    const member = await createTestUser({
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.User,
+      verified: true
+    })
+    await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+
+    // Non workspace member
+    await createTestUser({
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.User,
+      verified: true
+    })
+
+    const projectMember = await createTestUser({
+      name: createRandomString(),
+      email: createRandomEmail(),
+      role: Roles.Server.User,
+      verified: true
+    })
+
+    const project = {
+      id: createRandomString(),
+      workspaceId: workspace.id
+    }
+    await createTestStream(project, projectMember)
+
+    // User in another project should still be invitable
+    const otherProject = {
+      id: createRandomString(),
+      workspaceId: workspace.id
+    }
+    await createTestStream(otherProject, admin)
+
+    const session = await login(admin)
+
+    const res = await session.execute(GetProjectInvitableCollaboratorsDocument, {
+      projectId: project.id
+    })
+    expect(res).not.haveGraphQLErrors()
+
+    const invitable = res.data?.project.invitableCollaborators
+    expect(invitable?.totalCount).to.eq(2)
+    expect(invitable?.items).to.have.length(2)
+    expect(invitable?.items).to.deep.equalInAnyOrder([
+      { id: admin.id, user: { name: admin.name } },
+      { id: member.id, user: { name: member.name } }
+    ])
   })
 })

@@ -62,7 +62,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 graphql(`
   fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {
     id
-    role
     name
     description
   }

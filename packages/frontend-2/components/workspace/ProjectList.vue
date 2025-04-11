@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          :name="workspace?.name"
+          :name="isWorkspaceNewPlansEnabled ? 'Home' : workspace?.name"
           :separator="false"
         />
       </Portal>
@@ -105,7 +105,6 @@ graphql(`
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
     ...BillingAlert_Workspace
-    ...MoveProjectsDialog_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
@@ -128,6 +127,10 @@ graphql(`
   }
 `)
 
+const props = defineProps<{
+  workspaceSlug: string
+}>()
+
 const { validateCheckoutSession } = useBillingActions()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
@@ -138,10 +141,7 @@ const {
 } = useDebouncedTextInput({
   debouncedBy: 800
 })
-
-const props = defineProps<{
-  workspaceSlug: string
-}>()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)

@@ -48,9 +48,13 @@ export const useBillingActions = () => {
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
     settingsBillingCancelCheckoutSessionMutation
   )
+  const logger = useLogger()
 
   const billingPortalRedirect = async (workspaceId: MaybeNullOrUndefined<string>) => {
-    if (!workspaceId) return
+    if (!workspaceId) {
+      logger.error('[Billing Portal] No workspaceId provided, returning early')
+      return
+    }
 
     mixpanel.track('Workspace Billing Portal Button Clicked', {
       // eslint-disable-next-line camelcase
@@ -65,7 +69,12 @@ export const useBillingActions = () => {
     })
 
     if (result.data?.workspace.customerPortalUrl) {
-      window.location.href = result.data.workspace.customerPortalUrl
+      window.open(result.data.workspace.customerPortalUrl, '_blank')
+    } else {
+      logger.warn(
+        '[Billing Portal] No portal URL returned, full response:',
+        result.data
+      )
     }
   }
 

@@ -237,7 +237,7 @@ type ModelsTreeItem {
 
 type Version {
   id: ID!
-  referencedObject: String!
+  referencedObject: String
   message: String
   sourceApplication: String
   authorUser: LimitedUser

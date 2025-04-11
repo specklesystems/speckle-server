@@ -34,7 +34,8 @@ import { base64Encode } from '~/lib/common/helpers/encodeDecode'
 import type { ErrorResponse } from '@apollo/client/link/error'
 import type {
   AllObjectFieldArgTypes,
-  AllObjectTypes
+  AllObjectTypes,
+  PermissionCheckResult
 } from '~/lib/common/generated/gql/graphql'
 
 /**
@@ -750,4 +751,64 @@ export const modifyObjectField = <
     },
     options
   )
+}
+
+export const hasErrorWith = (params: {
+  errors: readonly GraphQLFormattedError[] | undefined
+  codes?: Array<string | RegExp>
+  message?: string
+}) => {
+  const { errors, message, codes } = params
+  if (!errors?.length) return undefined
+  if (!message?.length && !codes?.length) return undefined
+
+  return errors.find((e) => {
+    const hasMessage = message && e.message.toLowerCase().includes(message)
+    const hasCodes =
+      codes &&
+      codes.some((testCode) => {
+        const code = e.extensions?.code
+        if (!code || !isString(code)) return false
+        return isString(testCode) ? code === testCode : code.match(testCode)
+      })
+    return hasMessage || hasCodes
+  })
+}
+
+export const errorsToAuthResult = (params: {
+  errors: readonly GraphQLFormattedError[] | undefined
+}): PermissionCheckResult => {
+  const { errors } = params
+  if (!errors?.length) return { authorized: true, message: 'OK', code: 'OK' }
+
+  // Prioritize common error codes
+  const commonAuthError = hasErrorWith({
+    errors,
+    codes: [
+      /forbidden/i,
+      /unauthorized/i,
+      /not[_\s]found/i,
+      /not[_\s]authorized/i,
+      'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+    ]
+  })
+  if (commonAuthError) {
+    return {
+      authorized: false,
+      code: commonAuthError.extensions!.code as string,
+      message: commonAuthError.message,
+      payload: commonAuthError.extensions || null
+    }
+  }
+
+  const firstError = errors[0]
+  return {
+    authorized: false,
+    code:
+      firstError.extensions?.code && isString(firstError.extensions?.code)
+        ? firstError.extensions?.code
+        : 'UNKNOWN_ERROR',
+    message: firstError.message,
+    payload: firstError.extensions || null
+  }
 }

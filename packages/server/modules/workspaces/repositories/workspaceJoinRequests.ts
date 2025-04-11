@@ -69,6 +69,7 @@ const adminWorkspaceJoinRequestsBaseQueryFactory =
       .where(WorkspaceAcl.col.role, Roles.Workspace.Admin)
       .where(WorkspaceAcl.col.userId, filter.userId)
       .where(WorkspaceJoinRequests.col.workspaceId, filter.workspaceId)
+      .whereNot(WorkspaceJoinRequests.col.status, 'dismissed')
     if (filter.status) query.andWhere(WorkspaceJoinRequests.col.status, filter.status)
     return query
   }
@@ -113,6 +114,7 @@ const workspaceJoinRequestsBaseQueryFactory =
     const query = tables
       .workspaceJoinRequests(db)
       .where(WorkspaceJoinRequests.col.userId, filter.userId)
+      .whereNot(WorkspaceJoinRequests.col.status, 'dismissed')
     if (filter.status) query.andWhere(WorkspaceJoinRequests.col.status, filter.status)
     if (filter.userId) query.andWhere(WorkspaceJoinRequests.col.userId, filter.userId)
     if (filter.workspaceId)

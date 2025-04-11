@@ -153,3 +153,19 @@ export const verifyUserEmailMutation = gql`
     }
   }
 `
+
+export const getProjectWithVersionsQuery = gql`
+  query GetProjectWithVersions($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+      versions {
+        items {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`

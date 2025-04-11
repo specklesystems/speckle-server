@@ -5,7 +5,6 @@
     :icon="iconName"
     :icon-click="iconClick"
     :icon-text="iconText"
-    :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover
   >
     <div class="flex lg:flex-col items-center lg:items-start gap-y-3 pb-0 lg:pb-4 mt-1">
@@ -15,6 +14,11 @@
           :users="team.map((teamMember) => teamMember.user)"
           :max-avatars="isDesktop ? 5 : 3"
           class="shrink-0"
+          :on-hidden-count-click="
+            () => {
+              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
+            }
+          "
         />
         <div class="w-full flex items-center gap-x-2">
           <button
@@ -66,6 +70,7 @@ const props = defineProps<{
   workspaceInfo: WorkspaceTeam_WorkspaceFragment
   collapsible?: boolean
   isWorkspaceAdmin?: boolean
+  isWorkspaceGuest?: boolean
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -74,19 +79,19 @@ const isDesktop = breakpoints.greaterOrEqual('lg')
 const team = computed(() => props.workspaceInfo.team.items || [])
 
 const iconName = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
-  return 'edit'
+  if (props.isWorkspaceAdmin) return 'edit'
+  return 'view'
 })
 
 const iconClick = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
+  if (props.isWorkspaceGuest) return undefined
   return () =>
     navigateTo(settingsWorkspaceRoutes.members.route(props.workspaceInfo.slug))
 })
 
 const iconText = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
-  return 'Manage members'
+  if (props.isWorkspaceAdmin) return 'Manage members'
+  return 'View members'
 })
 
 const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)

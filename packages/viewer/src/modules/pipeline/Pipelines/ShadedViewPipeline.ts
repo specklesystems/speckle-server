@@ -1,7 +1,7 @@
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BlendPass } from '../Passes/BlendPass.js'
 import { DepthPass } from '../Passes/DepthPass.js'
-import { EdgePass } from '../Passes/EdgesPass.js'
+import { EdgesPass } from '../Passes/EdgesPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
 import { TAAPass } from '../Passes/TAAPass.js'
 import { AssetType, ObjectLayers } from '../../../IViewer.js'
@@ -60,11 +60,11 @@ export class ShadedViewPipeline extends ProgressivePipeline {
     const shadowcatcherPass = new GeometryPass()
     shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
 
-    const edgesPass = new EdgePass()
+    const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
 
-    const edgesPassDynamic = new EdgePass()
+    const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
     edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
 

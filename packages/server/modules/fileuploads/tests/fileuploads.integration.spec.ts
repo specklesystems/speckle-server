@@ -124,7 +124,7 @@ const createToken = createTokenFactory({
   })
 })
 
-describe('FileUploads @fileuploads', () => {
+describe('FileUploads @fileuploads integration', () => {
   let server: Server
   let app: Express
 

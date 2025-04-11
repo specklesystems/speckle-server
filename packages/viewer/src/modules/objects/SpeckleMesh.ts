@@ -25,6 +25,7 @@ import Materials from '../materials/Materials.js'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import Logger from '../utils/Logger.js'
+import { getNextBatchIndex } from '../batching/Batch.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -67,9 +68,10 @@ export default class SpeckleMesh extends Mesh {
   private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects!: BatchObject[]
+  private _batchObjects: BatchObject[]
+  private _batchIndex: number
   private transformsBuffer: Float32Array | undefined = undefined
-  private transformStorage!: TransformStorage
+  private transformStorage: TransformStorage
 
   public transformsTextureUniform: DataTexture
   public transformsArrayUniforms: Matrix4[] | null = null
@@ -82,8 +84,13 @@ export default class SpeckleMesh extends Mesh {
     return this._batchObjects
   }
 
+  public get batchIndex(): number {
+    return this._batchIndex
+  }
+
   constructor(geometry: BufferGeometry) {
     super(geometry)
+    this._batchIndex = getNextBatchIndex()
   }
 
   public setBatchMaterial(material: Material) {

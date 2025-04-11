@@ -1,3 +1,4 @@
+{{- if .Values.fileimport_service.enabled }}
 {{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -48,4 +49,5 @@ spec:
           - port: {{ printf "%s" ( include "server.port" $ | quote ) }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
+{{- end }}
 {{- end }}

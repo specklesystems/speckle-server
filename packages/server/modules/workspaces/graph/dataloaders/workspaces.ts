@@ -2,7 +2,8 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
 import {
   getWorkspaceDomainsFactory,
-  getWorkspacesFactory
+  getWorkspacesFactory,
+  getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   WorkspaceDomain,
@@ -21,6 +22,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
   ({ ctx, createLoader, deps: { db } }) => {
     const getWorkspaces = getWorkspacesFactory({ db })
     const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
+    const getWorkspacesProjectsCounts = getWorkspacesProjectsCountsFactory({ db })
 
     return {
       workspaces: {
@@ -35,7 +37,16 @@ const dataLoadersDefinition = defineRequestDataloaders(
             )
             return ids.map((id) => results[id] || null)
           }
-        )
+        ),
+        /**
+         * Get workspace project count
+         */
+        getProjectCount: createLoader<string, number | null>(async (ids) => {
+          const results = await getWorkspacesProjectsCounts({
+            workspaceIds: ids.slice()
+          })
+          return ids.map((id) => results[id])
+        })
       },
       workspaceDomains: {
         /**

@@ -1,11 +1,6 @@
 <template>
   <div>
     <Portal to="primary-actions"></Portal>
-    <ProjectsDashboardHeader
-      :projects-invites="projectsPanelResult?.activeUser"
-      :workspaces-invites="workspacesResult?.activeUser"
-    />
-
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
@@ -66,10 +61,7 @@
 
 <script setup lang="ts">
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import {
-  projectsDashboardQuery,
-  projectsDashboardWorkspaceQuery
-} from '~~/lib/projects/graphql/queries'
+import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
@@ -90,8 +82,8 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isGuest } = useActiveUser()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
 const {
@@ -110,18 +102,11 @@ const {
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
     search: (search.value || '').trim() || null,
-    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
+    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null,
+    personalOnly: isWorkspaceNewPlansEnabled.value
   },
   cursor: null as Nullable<string>
 }))
-
-const { result: workspacesResult } = useQuery(
-  projectsDashboardWorkspaceQuery,
-  undefined,
-  () => ({
-    enabled: isWorkspacesEnabled.value
-  })
-)
 
 onProjectsResult((res) => {
   cursor.value = res.data?.activeUser?.projects.cursor || null

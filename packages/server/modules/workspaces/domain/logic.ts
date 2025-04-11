@@ -1,12 +1,8 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import {
-  WorkspaceDomainsInvalidState,
-  WorkspaceInvalidUpdateError
-} from '@/modules/workspaces/errors/workspace'
+import { WorkspaceDomainsInvalidState } from '@/modules/workspaces/errors/workspace'
 import {
   LimitedWorkspace,
   Workspace,
-  WorkspaceDefaultProjectRole,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
@@ -41,26 +37,6 @@ export const anyEmailCompliantWithWorkspaceDomains = ({
       return true
   }
   return false
-}
-
-/**
- * Given an optional string value, assert it is a valid default project role and return it.
- */
-export const parseDefaultProjectRole = (
-  role?: string | null
-): WorkspaceDefaultProjectRole | null => {
-  if (!role) return null
-
-  const isValidRole = (role: string): role is WorkspaceDefaultProjectRole => {
-    const validRoles: string[] = [Roles.Stream.Reviewer, Roles.Stream.Contributor]
-    return validRoles.includes(role)
-  }
-
-  if (!isValidRole(role)) {
-    throw new WorkspaceInvalidUpdateError('Provided default project role is invalid')
-  }
-
-  return role
 }
 
 export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {

@@ -13,6 +13,9 @@ const configs = [
       }
     }
   },
+  {
+    ignores: ['**/html/**']
+  },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
     files: [...(c.files || []), '**/*.ts', '**/*.d.ts']
@@ -35,6 +38,12 @@ const configs = [
     files: ['**/*.d.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off' // so we can easily make sync mocked loaders -> async
     }
   }
 ]

@@ -29,7 +29,7 @@ export const createCheckoutSessionFactoryOld =
     isCreateFlow
   }) => {
     if (isNewPlanType(workspacePlan)) {
-      // TODO: Supported in follow up task
+      // Use createCheckoutSessionFactoryNew instead
       throw new NotImplementedError()
     }
 

@@ -1,3 +1,4 @@
+{{- if .Values.fileimport_service.enabled }}
 {{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -46,3 +47,4 @@ spec:
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
 {{- end -}}
+{{- end }}

@@ -30,7 +30,9 @@
     <CommonBadge
       v-if="tag"
       rounded
-      :color-classes="disabled ? 'text-foreground-2 bg-primary-muted' : undefined"
+      :color-classes="
+        colorClasses ?? (disabled ? 'text-foreground-2 bg-primary-muted' : undefined)
+      "
     >
       {{ tag }}
     </CommonBadge>
@@ -72,6 +74,7 @@ const props = defineProps<{
   active?: boolean
   tooltipText?: string
   extraPadding?: boolean
+  colorClasses?: string
 }>()
 
 const isOpen = ref(true)

@@ -1,5 +1,6 @@
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { isUserWorkspaceDomainPolicyCompliantFactory } from '@/modules/workspaces/services/domains'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -9,10 +10,11 @@ describe('workspace domain services', () => {
     it('throws WorkspaceNotFoundError', async () => {
       const error = await expectToThrow(async () => {
         await isUserWorkspaceDomainPolicyCompliantFactory({
-          getWorkspaceWithDomains: async () => null,
+          getWorkspaceBySlug: async () => null,
+          getWorkspaceDomains: async () => [],
           findEmailsByUserId: async () => []
         })({
-          workspaceId: cryptoRandomString({ length: 10 }),
+          workspaceSlug: cryptoRandomString({ length: 10 }),
           userId: cryptoRandomString({ length: 10 })
         })
       })
@@ -20,22 +22,15 @@ describe('workspace domain services', () => {
     })
     it('returns null if the workspace is not domain protected', async () => {
       const isCompliant = await isUserWorkspaceDomainPolicyCompliantFactory({
-        getWorkspaceWithDomains: async () => ({
-          name: cryptoRandomString({ length: 10 }),
-          logo: null,
-          slug: cryptoRandomString({ length: 10 }),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: '',
-          discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor',
-          domains: [],
-          id: cryptoRandomString({ length: 10 })
-        }),
+        getWorkspaceBySlug: async () =>
+          ({
+            id: cryptoRandomString({ length: 10 }),
+            domainBasedMembershipProtectionEnabled: false
+          } as Workspace),
+        getWorkspaceDomains: async () => [],
         findEmailsByUserId: async () => []
       })({
-        workspaceId: cryptoRandomString({ length: 10 }),
+        workspaceSlug: cryptoRandomString({ length: 10 }),
         userId: cryptoRandomString({ length: 10 })
       })
       expect(isCompliant).to.be.null
@@ -43,29 +38,22 @@ describe('workspace domain services', () => {
     it('returns validation result from compliance check', async () => {
       const domain = 'example.com'
       const isCompliant = await isUserWorkspaceDomainPolicyCompliantFactory({
-        getWorkspaceWithDomains: async () => ({
-          name: cryptoRandomString({ length: 10 }),
-          logo: null,
-          slug: cryptoRandomString({ length: 10 }),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: '',
-          discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: true,
-          defaultProjectRole: 'stream:contributor',
-          domains: [
-            {
-              createdAt: new Date(),
-              createdByUserId: cryptoRandomString({ length: 10 }),
-              domain,
-              id: cryptoRandomString({ length: 10 }),
-              updatedAt: new Date(),
-              verified: true,
-              workspaceId: cryptoRandomString({ length: 10 })
-            }
-          ],
-          id: cryptoRandomString({ length: 10 })
-        }),
+        getWorkspaceBySlug: async () =>
+          ({
+            id: cryptoRandomString({ length: 10 }),
+            domainBasedMembershipProtectionEnabled: true
+          } as Workspace),
+        getWorkspaceDomains: async () => [
+          {
+            createdAt: new Date(),
+            createdByUserId: cryptoRandomString({ length: 10 }),
+            domain,
+            id: cryptoRandomString({ length: 10 }),
+            updatedAt: new Date(),
+            verified: true,
+            workspaceId: cryptoRandomString({ length: 10 })
+          }
+        ],
         findEmailsByUserId: async () => [
           {
             createdAt: new Date(),
@@ -79,7 +67,7 @@ describe('workspace domain services', () => {
         ]
       })({
         userId: cryptoRandomString({ length: 10 }),
-        workspaceId: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 })
       })
       expect(isCompliant).to.be.true
     })

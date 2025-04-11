@@ -1,6 +1,16 @@
 import type { RouteLocationNormalized } from 'vue-router'
-import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
+import {
+  waitForever,
+  type MaybeAsync,
+  type Optional,
+  type WorkspaceSeatType
+} from '@speckle/shared'
+import {
+  useApolloClient,
+  useMutation,
+  useSubscription,
+  useQuery
+} from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   OnWorkspaceUpdatedSubscription,
@@ -28,7 +38,8 @@ import {
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
   setDefaultRegionMutation,
-  workspaceUpdateRoleMutation
+  workspaceUpdateRoleMutation,
+  workspacesUpdateSeatTypeMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError, GraphQLFormattedError } from 'graphql'
@@ -36,6 +47,7 @@ import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscri
 import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
 import type { ApolloCache } from '@apollo/client/core'
+import { workspaceLastAdminCheckQuery } from '../graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -198,7 +210,7 @@ export const useProcessWorkspaceInvite = () => {
     if (data?.workspaceMutations.invites.use) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+        title: input.accept ? 'Workspace invite accepted' : 'Workspace invite dismissed'
       })
 
       mp.track('Workspace Joined', {
@@ -487,6 +499,54 @@ export const useWorkspaceUpdateRole = () => {
   }
 }
 
+export const useWorkspaceUpdateSeatType = () => {
+  const { mutate } = useMutation(workspacesUpdateSeatTypeMutation)
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (input: {
+    userId: string
+    workspaceId: string
+    seatType: WorkspaceSeatType
+  }) => {
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          // Update the team member's seat type in the cache
+          modifyObjectField(
+            cache,
+            getCacheId('WorkspaceCollaborator', input.userId),
+            'seatType',
+            () => input.seatType
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'User seat type updated',
+        description: `The user's seat type has been updated to ${input.seatType}`
+      })
+
+      mixpanel.track('Workspace User Seat Type Updated', {
+        newSeatType: input.seatType,
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update seat type',
+        description: errorMessage
+      })
+    }
+  }
+}
+
 export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
 
@@ -564,5 +624,22 @@ export const useOnWorkspaceUpdated = (params: {
       if (!result.data?.workspaceUpdated) return
       handler(result.data.workspaceUpdated, apollo.cache)
     })
+  }
+}
+
+export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) => {
+  const { workspaceSlug } = params
+
+  const { result } = useQuery(workspaceLastAdminCheckQuery, {
+    slug: workspaceSlug
+  })
+
+  const hasSingleAdmin = computed(() => {
+    const admins = result.value?.workspaceBySlug?.team.items || []
+    return admins.length === 1
+  })
+
+  return {
+    hasSingleAdmin
   }
 }

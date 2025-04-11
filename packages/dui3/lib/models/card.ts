@@ -10,6 +10,7 @@ export interface IModelCard extends IDiscriminatedObject {
   modelId: string
   projectId: string
   workspaceId?: string
+  workspaceSlug?: string
   accountId: string
   serverUrl: string
   expired: boolean
@@ -25,6 +26,7 @@ export class ModelCard extends DiscriminatedObject implements IModelCard {
   modelId!: string
   projectId!: string
   workspaceId?: string
+  workspaceSlug?: string
   accountId!: string
   serverUrl!: string
   expired: boolean

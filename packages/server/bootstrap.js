@@ -50,7 +50,8 @@ const startDebugger = process.env.START_DEBUGGER
 if ((isTestEnv() || isDevEnv()) && startDebugger) {
   const inspector = require('node:inspector')
   if (!inspector.url()) {
-    inspector.open(undefined, undefined, true)
+    console.log('Debugger starting on process ' + process.pid)
+    inspector.open(0, undefined, true)
   }
 }
 

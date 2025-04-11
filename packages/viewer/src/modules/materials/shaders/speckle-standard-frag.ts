@@ -136,6 +136,7 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
+
 void main() {
 
     #include <clipping_planes_fragment>
@@ -209,6 +210,7 @@ void main() {
 		#ifdef CUSTOM_TONEMAPPING
 			gl_FragColor.rgb = postProcess(gl_FragColor.rgb, toneMappingExposure, contrast, saturation);
 		#else
+            
 			gl_FragColor.rgb = toneMapping( gl_FragColor.rgb );
 		#endif
 	#endif

@@ -140,5 +140,22 @@ export class DatabaseError<I extends Info = Info> extends EnvironmentResourceErr
   }
 }
 
+export class LoaderConfigurationError extends BaseError {
+  static code = 'LOADER_CONFIGURATION_ERROR'
+  static defaultMessage = 'Error while initializing authz loaders'
+  static statusCode = 500
+
+  constructor(message?: string) {
+    super(message)
+  }
+}
+
+export class LoaderUnsupportedError extends BaseError {
+  static code = 'LOADER_UNSUPPORTED_ERROR'
+  static defaultMessage =
+    'Cannot invoke loader given current server configuration. Check environment variables.'
+  static statusCode = 500
+}
+
 export { BaseError }
 export type { Info }

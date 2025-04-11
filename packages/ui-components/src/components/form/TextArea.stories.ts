@@ -67,7 +67,8 @@ export const Default: StoryObj = {
     disabled: false,
     validateOnMount: false,
     color: 'page',
-    textareaClasses: ''
+    textareaClasses: '',
+    labelPosition: 'left'
   },
   parameters: {
     docs: {

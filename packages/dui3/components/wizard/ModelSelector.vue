@@ -13,14 +13,22 @@
           full-width
           color="foundation"
         />
-        <button
-          v-if="showNewModel"
-          v-tippy="'New model'"
-          class="p-1 hover:bg-primary-muted rounded text-foreground-2"
-          @click="showNewModelDialog = true"
+        <ModelCreateDialog
+          :project-id="project.id"
+          :workspace-id="workspaceId"
+          :workspace-slug="workspaceSlug"
+          @model:created="(result: ModelListModelItemFragment) => handleModelCreated(result)"
         >
-          <PlusIcon class="w-4" />
-        </button>
+          <template #activator="{ toggle }">
+            <button
+              v-tippy="'New model'"
+              class="p-1.5 bg-foundation hover:bg-primary-muted rounded text-foreground border"
+              @click="toggle()"
+            >
+              <PlusIcon class="w-4" />
+            </button>
+          </template>
+        </ModelCreateDialog>
       </div>
       <div class="relative grid grid-cols-1 gap-2">
         <CommonLoadingBar v-if="loading" loading />
@@ -68,18 +76,7 @@
             </FormButton>
           </template>
         </CommonDialog>
-
         <FormButton
-          v-if="searchText && hasReachedEnd && showNewModel"
-          full-width
-          :disabled="isCreatingModel"
-          @click="createNewModel(searchText)"
-        >
-          Create&nbsp;
-          <div class="truncate">"{{ searchText }}"</div>
-        </FormButton>
-        <FormButton
-          v-else
           color="outline"
           full-width
           :disabled="hasReachedEnd"
@@ -144,6 +141,8 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     project: ProjectListProjectItemFragment
+    workspaceId?: string
+    workspaceSlug?: string
     accountId: string
     showNewModel?: boolean
     isSender?: boolean
@@ -194,6 +193,11 @@ const onSubmit = handleSubmit(() => {
   // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
   void createNewModel(newModelName.value as string)
 })
+
+const handleModelCreated = (result: ModelListModelItemFragment) => {
+  refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
+  emit('next', result)
+}
 
 const isCreatingModel = ref(false)
 const createNewModel = async (name: string) => {

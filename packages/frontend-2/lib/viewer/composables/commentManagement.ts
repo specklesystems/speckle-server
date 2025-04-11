@@ -9,7 +9,8 @@ import type {
   ArchiveCommentInput,
   CommentContentInput,
   CreateCommentReplyInput,
-  OnViewerCommentsUpdatedSubscription
+  OnViewerCommentsUpdatedSubscription,
+  ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -23,12 +24,20 @@ import {
   markCommentViewedMutation
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  useInjectedViewerState,
+  type LoadedCommentThread
+} from '~~/lib/viewer/composables/setup'
+import type { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
-import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
+import {
+  useStateSerialization,
+  useApplySerializedState,
+  StateApplyMode
+} from '~~/lib/viewer/composables/serialization'
+import type { CommentBubbleModel } from '~/lib/viewer/composables/commentBubbles'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -236,4 +245,148 @@ export function useCheckViewerCommentingAccess() {
 
     return hasRole || allowPublicComments
   })
+}
+
+const useActiveThreadContext = () => {
+  type ThreadContext = {
+    threadId: string | null
+    previousState: SpeckleViewer.ViewerState.SerializedViewerState | null
+  }
+  return useState<ThreadContext>('thread-context', () => ({
+    threadId: null,
+    previousState: null
+  }))
+}
+
+export const useCommentContext = () => {
+  const applyState = useApplySerializedState()
+  const { serialize } = useStateSerialization()
+  const state = useInjectedViewerState()
+  const threadContext = useActiveThreadContext()
+
+  const thread = computed(() => state.ui.threads.openThread.thread.value)
+
+  const calculateThreadResourceStatus = (
+    threadData: LoadedCommentThread | CommentBubbleModel | null | undefined
+  ) => {
+    if (!threadData) return { isLoaded: false }
+    const loadedResources = state.resources.response.resourceItems.value
+    const resourceLinks = threadData?.resources
+
+    if (!resourceLinks) {
+      return { isLoaded: false }
+    }
+
+    // Check if any of the thread's objects are loaded
+    const objectLinks = resourceLinks
+      .filter((l) => l.resourceType === 'object')
+      .map((l) => l.resourceId)
+    const commitLinks = resourceLinks
+      .filter((l) => l.resourceType === 'commit')
+      .map((l) => l.resourceId)
+
+    // Check if ALL of the thread's objects are loaded
+    const hasLoadedObjects =
+      objectLinks.length > 0 &&
+      objectLinks.every((objId) => loadedResources.some((lr) => lr.objectId === objId))
+
+    // Check if ALL of the thread's commits are loaded
+    const hasLoadedVersions =
+      commitLinks.length > 0 &&
+      commitLinks.every((commitId) =>
+        loadedResources.some((lr) => lr.versionId && lr.versionId === commitId)
+      )
+
+    // Resource is loaded, check versions and federation
+    const currentModels = state.resources.response.modelsAndVersionIds.value
+    const threadModels = threadData.viewerResources.filter(
+      (r): r is ViewerResourceItem & { modelId: string; versionId: string } =>
+        r.modelId !== null && r.versionId !== null
+    )
+
+    // Check if any thread models are not in current view (federated)
+    const hasFederatedModels = threadModels.some(
+      (threadModel) => !currentModels.some((m) => m.model.id === threadModel.modelId)
+    )
+
+    // For models that exist in both states, check version differences
+    const hasDifferentVersions = threadModels.some((threadModel) => {
+      const currentModel = currentModels.find((m) => m.model.id === threadModel.modelId)
+      return currentModel && currentModel.versionId !== threadModel.versionId
+    })
+
+    return {
+      isLoaded: hasLoadedObjects || hasLoadedVersions,
+      isDifferentVersion: hasDifferentVersions,
+      isFederatedModel: hasFederatedModels
+    }
+  }
+
+  const threadResourceStatus = computed(() =>
+    calculateThreadResourceStatus(thread.value)
+  )
+
+  const hasClickedFullContext = computed(() => {
+    const threadId = thread.value?.id
+    return threadContext.value.threadId === threadId
+  })
+
+  const loadContext = async (
+    mode: StateApplyMode.ThreadFullContextOpen | StateApplyMode.FederatedContext
+  ) => {
+    const state = thread.value?.viewerState
+    const threadId = thread.value?.id ?? null
+    if (!state) return
+
+    // Store both current state and thread ID
+    threadContext.value = {
+      threadId,
+      previousState: serialize()
+    }
+
+    await applyState(state, mode)
+  }
+
+  const loadThreadVersionContext = () =>
+    loadContext(StateApplyMode.ThreadFullContextOpen)
+  const loadFederatedContext = () => loadContext(StateApplyMode.FederatedContext)
+
+  const handleContextClick = () => {
+    if (threadResourceStatus.value.isDifferentVersion) {
+      loadThreadVersionContext()
+    } else {
+      loadFederatedContext()
+    }
+  }
+
+  const goBack = async () => {
+    if (!threadContext.value.previousState) {
+      return
+    }
+
+    await applyState(
+      threadContext.value.previousState,
+      StateApplyMode.ThreadFullContextOpen
+    )
+    threadContext.value = {
+      threadId: null,
+      previousState: null
+    }
+  }
+
+  const cleanupThreadContext = () => {
+    threadContext.value = {
+      threadId: null,
+      previousState: null
+    }
+  }
+
+  return {
+    threadResourceStatus,
+    calculateThreadResourceStatus,
+    handleContextClick,
+    goBack,
+    hasClickedFullContext,
+    cleanupThreadContext
+  }
 }

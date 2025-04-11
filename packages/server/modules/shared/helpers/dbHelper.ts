@@ -3,6 +3,7 @@ import { Knex } from 'knex'
 import { isString } from 'lodash'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { isNonNullable } from '@speckle/shared'
 
 export type BatchedSelectOptions = {
   /**
@@ -57,22 +58,27 @@ const iso8601TimestampRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}
 export const formatJsonArrayRecords = <V extends Record<string, unknown>>(
   records: V[]
 ) =>
-  records.map((r) => {
-    const res: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(r)) {
-      // Check if value is an ISO date string or matches common date keys
-      if (
-        isString(value) &&
-        (key.endsWith('At') || iso8601TimestampRegex.test(value))
-      ) {
-        res[key] = new Date(value)
-      } else {
-        res[key] = value
-      }
-    }
+  records
+    .map((r): typeof r | undefined => {
+      // PG can sometimes retuern `[null]` for an empty array_agg
+      if (!r) return r
 
-    return res as V
-  })
+      const res: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(r)) {
+        // Check if value is an ISO date string or matches common date keys
+        if (
+          isString(value) &&
+          (key.endsWith('At') || iso8601TimestampRegex.test(value))
+        ) {
+          res[key] = new Date(value)
+        } else {
+          res[key] = value
+        }
+      }
+
+      return res as V
+    })
+    .filter(isNonNullable)
 
 export const numberOfUsedOrPendingConnections = (db: Knex) => {
   if (!(db && 'client' in db && db.client))

@@ -45,7 +45,7 @@ const main = async () => {
   return execution
 }
 
-main().then(() => {
+void main().then(() => {
   // weird TS typing issue
   yargs.exit(0, undefined as unknown as Error)
 })

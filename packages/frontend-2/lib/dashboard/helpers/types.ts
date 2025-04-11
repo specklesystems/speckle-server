@@ -1,16 +1,7 @@
-import type { LayoutDialogButton } from '@speckle/ui-components'
-
 export type TutorialItem = {
   title: string
   image: string
   url: string
-}
-
-export type QuickStartItem = {
-  title: string
-  description: string
-  isExternalRoute?: boolean
-  buttons: LayoutDialogButton[]
 }
 
 export const enum ConnectorCategory {
@@ -44,7 +35,6 @@ export type Version = {
   Prerelease: boolean
 }
 
-// yolo
 export type Versions = {
   Versions: Version[]
 }

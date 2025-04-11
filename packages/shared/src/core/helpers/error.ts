@@ -9,7 +9,17 @@ export function ensureError(
   fallbackMessage?: string
 ): Error | UnexpectedErrorStructureError {
   if (e instanceof Error) return e
-  return new UnexpectedErrorStructureError(fallbackMessage)
+  let stringifiedError = ''
+  if (e !== null && e !== undefined) {
+    try {
+      stringifiedError = JSON.stringify(e)
+    } catch {
+      //ignore
+    }
+  }
+  return new UnexpectedErrorStructureError(
+    `${fallbackMessage}${stringifiedError !== '' ? `. Cause: ${stringifiedError}` : ''}`
+  )
 }
 
 // this makes sure that a case is breaking in typing and in runtime too
@@ -17,8 +27,10 @@ export function throwUncoveredError(e: never): never {
   throw createUncoveredError(e)
 }
 
+export class UncoveredError extends Error {}
+
 export function createUncoveredError(e: never) {
-  return new Error(`Uncovered error case ${e}.`)
+  return new UncoveredError(`Uncovered error case ${e}.`)
 }
 
 /**

@@ -1,7 +1,7 @@
 import { BackSide, NoBlending, WebGLRenderTarget } from 'three'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { DepthPass } from '../Passes/DepthPass.js'
-import { EdgePass } from '../Passes/EdgesPass.js'
+import { EdgesPass } from '../Passes/EdgesPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
 import { ObjectVisibility } from '../Passes/GPass.js'
 import { TAAPass } from '../Passes/TAAPass.js'
@@ -56,17 +56,17 @@ export class TechnicalViewPipeline extends ProgressivePipeline {
     normalPassBackDynamic.overrideMaterial.side = BackSide
     // normalPassBackDynamic.overrideMaterial.depthTest = false
 
-    const edgesPassFront = new EdgePass()
+    const edgesPassFront = new EdgesPass()
     edgesPassFront.setTexture('tDepth', depthPassFront.outputTarget?.texture)
     edgesPassFront.setTexture('tNormal', normalPassFront.outputTarget?.texture)
 
-    const edgesPassBack = new EdgePass()
+    const edgesPassBack = new EdgesPass()
     edgesPassBack.setTexture('tDepth', depthPassBack.outputTarget?.texture)
     edgesPassBack.setTexture('tNormal', normalPassBack.outputTarget?.texture)
     edgesPassBack.edgesMaterial.uniforms.uOutlineDensity.value = 0.25
     edgesPassBack.edgesMaterial.needsUpdate = true
 
-    const edgesPassFrontDynamic = new EdgePass()
+    const edgesPassFrontDynamic = new EdgesPass()
     edgesPassFrontDynamic.setTexture(
       'tDepth',
       depthPassFrontDynamic.outputTarget?.texture
@@ -76,7 +76,7 @@ export class TechnicalViewPipeline extends ProgressivePipeline {
       normalPassFrontDynamic.outputTarget?.texture
     )
 
-    const edgesPassBackDynamic = new EdgePass()
+    const edgesPassBackDynamic = new EdgesPass()
     edgesPassBackDynamic.setTexture(
       'tDepth',
       depthPassBackDynamic.outputTarget?.texture

@@ -1,5 +1,5 @@
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import * as Observability from '@speckle/shared/dist/esm/observability/index'
+import * as Observability from '@speckle/shared/observability'
 import {
   prettify,
   type AbstractLoggerHandler,

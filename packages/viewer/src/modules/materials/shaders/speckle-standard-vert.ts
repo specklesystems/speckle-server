@@ -12,7 +12,6 @@ export const speckleStandardVert = /* glsl */ `
 
 #ifdef TRANSFORM_STORAGE
     attribute float objIndex;
-
     #if TRANSFORM_STORAGE == 0
         #if __VERSION__ == 300
             #define TRANSFORM_STRIDE 4
@@ -138,6 +137,7 @@ varying vec3 vViewPosition;
         return vec4(position, 1.);
     }
 #endif
+
 
 void main() {
 

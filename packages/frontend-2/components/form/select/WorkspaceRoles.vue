@@ -17,7 +17,7 @@
     :clearable="clearable"
   >
     <template #nothing-selected>
-      {{ multiple ? 'Select roles' : 'Select role' }}
+      {{ multiple ? 'Filter by roles' : 'Filter by role' }}
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">

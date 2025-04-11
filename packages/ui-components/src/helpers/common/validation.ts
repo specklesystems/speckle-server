@@ -64,7 +64,7 @@ export const isStringOfLength =
     if (!isUndefined(minLength) && val.length < minLength)
       return `Value needs to be at least ${minLength} characters long`
     if (!isUndefined(maxLength) && val.length > maxLength)
-      return `Value needs to be no more than ${maxLength} characters long`
+      return `Value can't be longer than ${maxLength} characters`
     return true
   }
 

@@ -1,13 +1,8 @@
 import {
   decodeIsoDateCursor,
-  encodeIsoDateCursor
+  encodeIsoDateCursor,
+  Collection
 } from '@/modules/shared/helpers/graphqlHelper'
-
-type Collection<T> = {
-  cursor: string | null
-  totalCount: number
-  items: T[]
-}
 
 type GetPaginatedItemsArgs = {
   limit: number

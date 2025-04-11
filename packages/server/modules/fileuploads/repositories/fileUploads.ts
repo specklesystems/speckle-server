@@ -1,5 +1,9 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
-import { GetFileInfo, SaveUploadFile } from '@/modules/fileuploads/domain/operations'
+import {
+  GarbageCollectPendingUploadedFiles,
+  GetFileInfo,
+  SaveUploadFile
+} from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
   FileUploadRecord
@@ -73,6 +77,29 @@ export const saveUploadFileFactory =
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
+  }
+
+export const expireOldPendingUploadsFactory =
+  (deps: { db: Knex }): GarbageCollectPendingUploadedFiles =>
+  async (params: { timeoutThresholdSeconds: number }) => {
+    const updatedRows = await deps
+      .db(FileUploads.name)
+      .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
+        FileUploadConvertedStatus.Converting,
+        FileUploadConvertedStatus.Queued
+      ])
+      .andWhere(
+        FileUploads.withoutTablePrefix.col.uploadDate,
+        '<',
+        deps.db.raw(`now() - interval '${params.timeoutThresholdSeconds} seconds'`)
+      )
+      .update({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]:
+          FileUploadConvertedStatus.Error
+      })
+      .returning<FileUploadRecord[]>('*')
+
+    return updatedRows
   }
 
 const getPendingUploadsBaseQueryFactory =

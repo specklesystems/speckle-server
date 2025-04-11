@@ -60,3 +60,41 @@ canvas {
   border-radius: 0.1rem;
   border: 4px solid rgb(129, 129, 129);
 }
+
+.center-wrapper {
+  position: absolute;
+  top: 95%;
+  left: 92%;
+  transform: translate(-50%, -50%) scale(0.5);
+  transition: opacity 0.5s ease; /* Smooth fade-out for the whole widget */
+}
+
+.loading-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  overflow: hidden;
+}
+
+/* Grayscale version */
+.grayscale-overlay,
+.color-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.8s ease-in-out; /* Smooth fade-out */
+}
+
+.grayscale-overlay {
+  filter: grayscale(100%);
+  z-index: 1;
+  opacity: 1; /* Fully visible by default */
+}
+
+/* Color version */
+.color-image {
+  z-index: 2;
+  clip-path: inset(100% 0 0 0);
+}

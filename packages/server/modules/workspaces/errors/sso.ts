@@ -1,13 +1,7 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { User } from '@/modules/core/domain/users/types'
 import { BaseError } from '@/modules/shared/errors/base'
-
-export class SsoSessionMissingOrExpiredError extends BaseError {
-  static defaultMessage =
-    'No valid SSO session found for the given workspace. Please sign in.'
-  static code = 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
-  static statusCode = 401
-}
+export { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 
 export class SsoVerificationCodeMissingError extends BaseError {
   static defaultMessage = 'Cannot find verification token. Restart authentication flow.'
@@ -95,6 +89,12 @@ export class SsoUserInviteRequiredError extends BaseError {
   static defaultMessage = 'Cannot sign up with SSO without a valid workspace invite.'
   static code = 'SSO_USER_INVITE_REQUIRED_ERROR'
   static statusCode = 400
+
+  constructor(userEmail: string) {
+    super(
+      `Cannot sign up with SSO without a valid workspace invite. No invite found for ${userEmail}.`
+    )
+  }
 }
 
 export class OidcProviderMissingGrantTypeError extends BaseError {

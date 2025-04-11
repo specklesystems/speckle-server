@@ -1,3 +1,0 @@
-<template>
-  <ProjectPageSettingsCollaborators />
-</template>

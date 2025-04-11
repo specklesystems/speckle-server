@@ -1,3 +1,4 @@
+{{- if .Values.frontend_2.enabled }}
 {{- if (and (.Values.frontend_2.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -44,3 +45,4 @@ spec:
 # redis
 {{ include "speckle.networkpolicy.egress.redis.cilium" $ | indent 4 }}
 {{- end -}}
+{{- end }}

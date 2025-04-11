@@ -575,7 +575,8 @@ export const processFinalizedWorkspaceInviteFactory =
         userId: finalizerUserId,
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member,
-        preventRoleDowngrade: true
+        preventRoleDowngrade: true,
+        updatedByUserId: invite.inviterId
       })
     }
   }

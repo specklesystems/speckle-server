@@ -61,6 +61,7 @@ export const requestProjectAccess = graphql(`
 export const workspaceListFragment = graphql(`
   fragment WorkspaceListWorkspaceItem on Workspace {
     id
+    slug
     name
     description
     createdAt
@@ -164,6 +165,61 @@ export const workspacesListQuery = graphql(`
   }
 `)
 
+export const canCreatePersonalProjectQuery = graphql(`
+  query CanCreatePersonalProject {
+    activeUser {
+      permissions {
+        canCreatePersonalProject {
+          authorized
+          code
+          message
+          payload
+        }
+      }
+    }
+  }
+`)
+
+export const canCreateProjectInWorkspaceQuery = graphql(`
+  query CanCreateProjectInWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      permissions {
+        canCreateProject {
+          authorized
+          code
+          message
+          payload
+        }
+      }
+    }
+  }
+`)
+
+export const canCreateModelInProjectQuery = graphql(`
+  query CanCreateModelInProject($projectId: String!) {
+    project(id: $projectId) {
+      permissions {
+        canCreateModel {
+          authorized
+          code
+          message
+          payload
+        }
+      }
+    }
+  }
+`)
+
+export const activeWorkspaceQuery = graphql(`
+  query ActiveWorkspace {
+    activeUser {
+      activeWorkspace {
+        ...WorkspaceListWorkspaceItem
+      }
+    }
+  }
+`)
+
 export const projectListFragment = graphql(`
   fragment ProjectListProjectItem on Project {
     id
@@ -171,6 +227,11 @@ export const projectListFragment = graphql(`
     role
     updatedAt
     workspaceId
+    workspace {
+      id
+      name
+      slug
+    }
     models {
       totalCount
     }

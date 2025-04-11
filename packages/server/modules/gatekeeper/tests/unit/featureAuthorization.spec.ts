@@ -1,5 +1,5 @@
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlan } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 

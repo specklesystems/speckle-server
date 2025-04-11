@@ -12,28 +12,12 @@ import {
 import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { db } from '@/db/knex'
-import { authorizeResolverFactory } from '@/modules/shared/services/auth'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import {
-  getUserAclRoleFactory,
-  getUserServerRoleFactory
-} from '@/modules/shared/repositories/acl'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { authorizeResolver } from '@/modules/shared'
 
-const getStream = getStreamFactory({ db })
 const throwForNotHavingServerRole = throwForNotHavingServerRoleFactory({
   validateServerRole: validateServerRoleBuilderFactory({
     getRoles: getRolesFactory({ db })
   })
-})
-const authorizeResolver = authorizeResolverFactory({
-  getRoles: getRolesFactory({ db }),
-  adminOverrideEnabled,
-  getUserServerRole: getUserServerRoleFactory({ db }),
-  getStream,
-  getUserAclRole: getUserAclRoleFactory({ db }),
-  emitWorkspaceEvent: getEventBus().emit
 })
 
 /**

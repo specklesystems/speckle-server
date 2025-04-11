@@ -12,6 +12,8 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 
+const _vecBuff: Vector3 = new Vector3()
+
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
@@ -118,12 +120,15 @@ export class PerpendicularMeasurement extends Measurement {
     }
 
     if (this._state === MeasurementState.DANGLING_END) {
+      _vecBuff.copy(this.startNormal)
+      if (this.flipStartNormal) _vecBuff.negate()
+
       const startEndDist = this.startPoint.distanceTo(this.endPoint)
       const endStartDir = Measurement.vec3Buff0
         .copy(this.startPoint)
         .sub(this.endPoint)
         .normalize()
-      let dot = this.startNormal.dot(endStartDir)
+      let dot = _vecBuff.dot(endStartDir)
       const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
       this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
 
@@ -131,9 +136,7 @@ export class PerpendicularMeasurement extends Measurement {
         Measurement.vec3Buff0
           .copy(this.startPoint)
           .add(
-            Measurement.vec3Buff1
-              .copy(this.startNormal)
-              .multiplyScalar(this.startLineLength)
+            Measurement.vec3Buff1.copy(_vecBuff).multiplyScalar(this.startLineLength)
           )
       )
       const endLineNormal = Measurement.vec3Buff1
@@ -154,11 +157,7 @@ export class PerpendicularMeasurement extends Measurement {
       const startLine0 = Measurement.vec3Buff2.copy(this.startPoint)
       const startLine1 = Measurement.vec3Buff3
         .copy(this.startPoint)
-        .add(
-          Measurement.vec3Buff4
-            .copy(this.startNormal)
-            .multiplyScalar(this.startLineLength)
-        )
+        .add(Measurement.vec3Buff4.copy(_vecBuff).multiplyScalar(this.startLineLength))
       this.startGizmo?.updateLine([startLine0, startLine1])
 
       const endLine0 = Measurement.vec3Buff3.copy(this.endPoint)
@@ -177,7 +176,7 @@ export class PerpendicularMeasurement extends Measurement {
         .copy(this.startPoint)
         .add(
           Measurement.vec3Buff1
-            .copy(this.startNormal)
+            .copy(_vecBuff)
             .multiplyScalar(this.startLineLength * 0.5)
         )
 

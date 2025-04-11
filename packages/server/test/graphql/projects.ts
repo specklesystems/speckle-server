@@ -93,3 +93,15 @@ export const updateProjectRoleMutation = gql`
 
   ${basicProjectFieldsFragment}
 `
+
+export const getProjectCollaboratorsQuery = gql`
+  query GetProjectCollaborators($projectId: String!) {
+    project(id: $projectId) {
+      id
+      team {
+        id
+        role
+      }
+    }
+  }
+`

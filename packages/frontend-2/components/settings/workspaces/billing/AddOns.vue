@@ -1,23 +1,47 @@
 <!-- TODO: Implement final values, links and copy -->
 <template>
-  <div
-    class="border border-outline-3 rounded-lg divide-outline-3 divide-x flex flex-col md:flex-row"
-  >
-    <div class="p-6 w-1/2">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+    <CommonCard class="flex flex-col gap-y-3 p-6">
       <h3 class="text-body font-medium">Unlimited projects and models</h3>
-      <p class="text-body-2xs text-foreground-2 mt-1">plus X per seat / month</p>
-      <p class="max-w-60 text-foreground-2 text-body-2xs mt-6">
+      <p class="text-foreground-2 text-body-xs flex-1 mb-3">
         Add more projects and models to your workspace.
       </p>
-      <FormButton class="mt-6" color="outline" size="sm">Contact us</FormButton>
-    </div>
-    <div class="p-6 w-1/2">
+      <FormButton color="outline" size="sm">Contact us</FormButton>
+    </CommonCard>
+
+    <CommonCard class="flex flex-col gap-y-3 p-6">
       <h3 class="text-body font-medium">Extra data regions</h3>
-      <p class="text-body-2xs text-foreground-2 mt-1">Talk to us!</p>
-      <p class="max-w-60 text-foreground-2 text-body-2xs mt-6">
-        Add more available data regions. Learn more about Speckle Data Regions.
+      <p class="text-foreground-2 text-body-xs flex-1 mb-3">
+        Access to almost all data residency regions.
       </p>
-      <FormButton class="mt-6" color="outline" size="sm">Contact us</FormButton>
-    </div>
+      <FormButton v-if="planIsBusiness" color="outline" size="sm">
+        Contact us
+      </FormButton>
+      <p v-else class="font-medium text-body-xs">Available only on Business plan</p>
+    </CommonCard>
+
+    <CommonCard class="flex flex-col gap-y-3 p-6">
+      <h3 class="text-body font-medium">Priority support</h3>
+      <p class="text-foreground-2 text-body-xs flex-1 mb-3">
+        Private support channel for your workspace.
+      </p>
+      <FormButton v-if="planIsBusiness" color="outline" size="sm">
+        Contact us
+      </FormButton>
+      <p v-else class="font-medium text-body-xs">Available only on Business plan</p>
+    </CommonCard>
   </div>
 </template>
+
+<script lang="ts" setup>
+import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
+import { PaidWorkspacePlansNew } from '@speckle/shared'
+
+const props = defineProps<{
+  slug: string
+}>()
+
+const { plan } = useWorkspacePlan(props.slug)
+
+const planIsBusiness = computed(() => plan.value?.name === PaidWorkspacePlansNew.Pro)
+</script>

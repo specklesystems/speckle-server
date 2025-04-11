@@ -14,7 +14,13 @@
         :hide-tooltip="hideTooltips"
       />
     </div>
-    <UserAvatar v-if="totalHiddenCount" :size="size" class="select-none">
+    <UserAvatar
+      v-if="totalHiddenCount"
+      :size="size"
+      class="select-none"
+      :class="{ 'cursor-pointer': !!onHiddenCountClick }"
+      @click="onHiddenCountClick && onHiddenCountClick()"
+    >
       +{{ totalHiddenCount }}
     </UserAvatar>
   </div>
@@ -35,6 +41,7 @@ const props = withDefaults(
     maxCount?: number
     hideTooltips?: boolean
     maxAvatars?: number
+    onHiddenCountClick?: () => void
   }>(),
   {
     users: () => [],
@@ -42,7 +49,8 @@ const props = withDefaults(
     size: 'base',
     maxCount: undefined,
     hideTooltips: false,
-    maxAvatars: undefined
+    maxAvatars: undefined,
+    onHiddenCountClick: undefined
   }
 )
 

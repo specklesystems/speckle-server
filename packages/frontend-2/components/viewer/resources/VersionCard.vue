@@ -1,10 +1,12 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation-2 group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
+    :class="`group relative block w-full space-y-2 rounded-md pb-2 text-left ${
+      clickable && !isLimited
+        ? 'hover:bg-primary-muted cursor-pointer'
+        : 'cursor-default'
     }
-    ${isLoaded ? '' : ''}
+    ${isLoaded ? 'bg-highlight-3' : 'bg-highlight-1'}
     `"
     @click="handleClick"
     @keypress="keyboardClick(handleClick)"
@@ -46,26 +48,57 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="sm"
         text
+        :disabled="isLimited"
+        :class="isLimited ? '!text-foreground-3 font-medium' : 'font-medium'"
         @click.stop="handleViewChanges"
       >
-        View Changes
+        View changes
       </FormButton>
       <FormButton v-else size="sm" text class="cursor-not-allowed">
-        Currently Viewing
+        Currently viewing
       </FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
-      <div class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md shadow">
-        <PreviewImage :preview-url="version.previewUrl" />
+      <div
+        class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md border border-outline-3"
+        :class="isLimited ? 'diagonal-stripes' : ''"
+      >
+        <div v-if="isLimited" class="flex items-center justify-center w-full h-full">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
+          >
+            <LockClosedIcon class="h-4 w-4 text-foreground-3" />
+          </div>
+        </div>
+        <PreviewImage v-else :preview-url="version.previewUrl" />
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex min-w-0 items-center space-x-1">
-          <div class="truncate text-xs">
+          <div
+            v-if="isLimited"
+            class="text-body-3xs text-foreground-2 pr-8 select-none"
+          >
+            Upgrade to view versions older than the {{ versionLimitFormatted }} limit.
+          </div>
+          <div v-else class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="text-primary inline-block rounded-full pl-1 text-xs font-medium">
+        <FormButton
+          v-if="isLimited"
+          color="outline"
+          size="sm"
+          @click="
+            navigateTo(settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug || ''))
+          "
+        >
+          Upgrade
+        </FormButton>
+        <div
+          v-else
+          class="text-primary inline-block rounded-full pl-1 text-xs font-medium"
+        >
           {{ version.sourceApplication }}
         </div>
       </div>
@@ -73,12 +106,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { ChevronDownIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import { keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 dayjs.extend(localizedFormat)
 
@@ -106,8 +142,17 @@ const emit = defineEmits<{
   (e: 'viewChanges', version: ViewerModelVersionCardItemFragment): void
 }>()
 
+const mp = useMixpanel()
+const { activeWorkspaceSlug } = useNavigation()
+const { versionLimitFormatted } = useWorkspaceLimits(activeWorkspaceSlug.value || '')
+
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
+
+// Check if version is limited by plan restrictions
+const isLimited = computed(() => {
+  return props.version.referencedObject === null
+})
 
 const createdAt = computed(() => {
   return {
@@ -118,9 +163,8 @@ const createdAt = computed(() => {
 
 const author = computed(() => props.version.authorUser)
 
-const mp = useMixpanel()
-
 const handleClick = () => {
+  if (isLimited.value) return
   if (props.clickable) emit('changeVersion', props.version.id)
   mp.track('Viewer Action', {
     type: 'action',

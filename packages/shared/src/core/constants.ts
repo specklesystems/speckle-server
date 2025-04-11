@@ -28,47 +28,58 @@ export const RoleInfo = Object.freeze(<const>{
   Stream: {
     [Roles.Stream.Owner]: {
       title: 'Owner',
-      description: 'Can edit project, including settings, collaborators and all models'
+      description: 'Can edit project, including settings, collaborators and all models',
+      weight: 1000
     },
     [Roles.Stream.Contributor]: {
-      title: 'Contributor',
-      description: 'Can create models, publish model versions, and comment'
+      title: 'Can edit',
+      description:
+        'Can publish and load models from connectors and view and comment in the web viewer',
+      weight: 500
     },
     [Roles.Stream.Reviewer]: {
-      title: 'Reviewer',
-      description: 'Can view models, load model data, and comment'
+      title: 'Can view',
+      description: 'Can view and comment on models in the web viewer',
+      weight: 100
     }
   },
   Server: {
     [Roles.Server.Admin]: {
       title: 'Admin',
-      description: 'Can edit server, including settings, users and all projects'
+      description: 'Can edit server, including settings, users and all projects',
+      weight: 1000
     },
     [Roles.Server.User]: {
       title: 'User',
-      description: 'Can create and own projects'
+      description: 'Can create and own projects',
+      weight: 100
     },
     [Roles.Server.Guest]: {
       title: 'Guest',
-      description: "Can contribute to projects they're invited to"
+      description: "Can contribute to projects they're invited to",
+      weight: 50
     },
     [Roles.Server.ArchivedUser]: {
       title: 'Archived',
-      description: 'Can no longer access server'
+      description: 'Can no longer access server',
+      weight: 10
     }
   },
   Workspace: {
     [Roles.Workspace.Admin]: {
       title: 'Admin',
-      description: 'Can edit workspace, including settings, members and all projects'
+      description: 'Can edit workspace, including settings, members and all projects',
+      weight: 1000
     },
     [Roles.Workspace.Member]: {
       title: 'Member',
-      description: 'Can create and own projects'
+      description: 'Can create and own projects',
+      weight: 100
     },
     [Roles.Workspace.Guest]: {
       title: 'Guest',
-      description: "Can contribute to projects they're invited to"
+      description: "Can contribute to projects they're invited to",
+      weight: 50
     }
   }
 })
@@ -79,6 +90,16 @@ export type WorkspaceRoles =
 export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream']]
 
 export type AvailableRoles = ServerRoles | StreamRoles | WorkspaceRoles
+
+/**
+ * Workspace seat type constants
+ */
+export const SeatTypes = Object.freeze(<const>{
+  Editor: 'editor',
+  Viewer: 'viewer'
+})
+
+export type WorkspaceSeatType = (typeof SeatTypes)[keyof typeof SeatTypes]
 
 /**
  * Speckle scope constants

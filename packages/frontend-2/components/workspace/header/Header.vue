@@ -1,44 +1,44 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="!isWorkspaceGuest && !isInTrial && !hasValidPlan">
+    <div v-if="!isWorkspaceGuest">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
-    </div>
-    <div v-if="!isWorkspaceGuest && isInTrial" class="lg:hidden">
-      <BillingAlert
-        :workspace="workspaceInfo"
-        :actions="billingAlertAction"
-        condensed
-      />
     </div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 lg:gap-4">
-        <WorkspaceAvatar
-          v-tippy="workspaceInfo.logo ? undefined : 'Add a workspace icon'"
-          :name="workspaceInfo.name"
-          :logo="workspaceInfo.logo"
-          size="lg"
-          class="hidden md:block"
-          :class="{ 'cursor-pointer': !workspaceInfo.logo }"
-          is-button
-          @click="
-            workspaceInfo.logo
-              ? undefined
-              : navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))
-          "
-        />
-        <WorkspaceAvatar
-          class="md:hidden"
-          :name="workspaceInfo.name"
-          :logo="workspaceInfo.logo"
-        />
-        <h1 class="text-heading-sm md:text-heading line-clamp-2">
-          {{ workspaceInfo.name }}
-        </h1>
-        <CommonBadge rounded color-classes="bg-highlight-3 text-foreground-2">
-          <span class="capitalize">
-            {{ workspaceInfo.role?.split(':').reverse()[0] }}
-          </span>
-        </CommonBadge>
+        <template v-if="isWorkspaceNewPlansEnabled">
+          <h1 class="text-heading-sm md:text-heading line-clamp-2">
+            Hello, {{ activeUser?.name }}
+          </h1>
+        </template>
+        <template v-else>
+          <WorkspaceAvatar
+            v-tippy="workspaceInfo.logo ? undefined : 'Add a workspace icon'"
+            :name="workspaceInfo.name"
+            :logo="workspaceInfo.logo"
+            size="lg"
+            class="hidden md:block"
+            :class="{ 'cursor-pointer': !workspaceInfo.logo }"
+            is-button
+            @click="
+              workspaceInfo.logo
+                ? undefined
+                : navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))
+            "
+          />
+          <WorkspaceAvatar
+            class="md:hidden"
+            :name="workspaceInfo.name"
+            :logo="workspaceInfo.logo"
+          />
+          <h1 class="text-heading-sm md:text-heading line-clamp-2">
+            {{ workspaceInfo.name }}
+          </h1>
+          <CommonBadge rounded color-classes="bg-highlight-3 text-foreground-2">
+            <span class="capitalize">
+              {{ workspaceInfo.role?.split(':').reverse()[0] }}
+            </span>
+          </CommonBadge>
+        </template>
       </div>
 
       <div class="flex gap-1.5 md:gap-2">
@@ -70,6 +70,7 @@
         v-if="!isWorkspaceGuest"
         :workspace-info="workspaceInfo"
         :is-workspace-admin="isWorkspaceAdmin"
+        :is-workspace-guest="isWorkspaceGuest"
         @show-invite-dialog="$emit('show-invite-dialog')"
       />
     </div>
@@ -107,23 +108,18 @@ const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const { activeUser } = useActiveUser()
+
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
-)
-const isInTrial = computed(
-  () =>
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
-    !props.workspaceInfo.plan
-)
-const hasValidPlan = computed(
-  () => props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Valid
 )
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
 const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (
-    (isInTrial.value && isWorkspaceAdmin.value) ||
+    isWorkspaceAdmin.value ||
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
   ) {
     return [

@@ -31,8 +31,11 @@ export default class LineBatch implements Batch {
   public renderViews: NodeRenderView[]
   protected geometry: LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
+  protected batchTransparent: boolean
+  protected batchOpacity: number
   protected mesh: LineSegments2
-  public colorBuffer!: InstancedInterleavedBuffer
+  public colorBuffer: InstancedInterleavedBuffer
+
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
   public get bounds(): Box3 {
@@ -94,6 +97,9 @@ export default class LineBatch implements Batch {
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
+    /** Not a fan of this :( */
+    this.batchTransparent = material.transparent
+    this.batchOpacity = material.opacity
   }
 
   public onUpdate(deltaTime: number) {
@@ -169,6 +175,9 @@ export default class LineBatch implements Batch {
 
   public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     const data = this.colorBuffer.array as number[]
+    /** Reset transparency */
+    this.batchMaterial.transparent = this.batchTransparent
+    this.batchMaterial.opacity = this.batchOpacity
 
     for (let i = 0; i < ranges.length; i++) {
       const material = ranges[i].material as SpeckleLineMaterial
@@ -179,6 +188,10 @@ export default class LineBatch implements Batch {
           : material.color
       const alpha: number = material.visible ? material.opacity : 0
       this.batchMaterial.transparent ||= material.opacity < 1
+      this.batchMaterial.opacity = Math.min(
+        this.batchMaterial.opacity,
+        material.opacity
+      )
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
@@ -211,7 +224,8 @@ export default class LineBatch implements Batch {
     ])
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
-    this.batchMaterial.transparent = false
+    this.batchMaterial.transparent = this.batchTransparent
+    this.batchMaterial.opacity = this.batchOpacity
   }
 
   public buildBatch() {
