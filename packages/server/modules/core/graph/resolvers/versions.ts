@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { hidePropertyIfOutOfLimitFactory, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
@@ -50,7 +50,6 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { getLimitedReferencedObjectFactory } from '@/modules/core/services/versions/limits'
 import { Version } from '@/modules/core/domain/commits/types'
 import { GraphQLResolveInfo } from 'graphql'
 
@@ -114,7 +113,7 @@ export = {
         })
       }
 
-      const getLimitedReferencedObject = getLimitedReferencedObjectFactory({
+      const hidePropertyIfOutOfLimit = hidePropertyIfOutOfLimitFactory({
         environment: {
           personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
         },
@@ -131,8 +130,9 @@ export = {
           .streams.getLastVersion.load(parent.streamId)
       }
       if (lastVersion?.id === parent.id) return parent.referencedObject
-      return await getLimitedReferencedObject({
-        version: parent,
+      return await hidePropertyIfOutOfLimit({
+        property: 'referencedObject',
+        entity: parent,
         workspaceId: project.workspaceId
       })
     }
