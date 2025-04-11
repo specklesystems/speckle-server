@@ -111,7 +111,7 @@ const getStream = () => {
   return (
     // prettier-ignore
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -137,7 +137,7 @@ const getStream = () => {
     //Car
     // 'https://latest.speckle.systems/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
-    'https://latest.speckle.systems/streams/501258ee5f/commits/f885570011'
+    // 'https://latest.speckle.systems/streams/501258ee5f/commits/f885570011'
     // Alex's cube
     // 'https://latest.speckle.systems/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
     // Groups of groups

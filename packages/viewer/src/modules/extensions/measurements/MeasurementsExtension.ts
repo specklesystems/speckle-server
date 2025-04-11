@@ -25,6 +25,7 @@ export interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
 }
 
 const DefaultMeasurementsOptions = {
@@ -32,7 +33,8 @@ const DefaultMeasurementsOptions = {
   type: MeasurementType.AREA,
   vertexSnap: true,
   units: 'm',
-  precision: 2
+  precision: 2,
+  chain: false
 }
 
 export class MeasurementsExtension extends Extension {
@@ -346,6 +348,12 @@ export class MeasurementsExtension extends Extension {
       Logger.error('Ignoring zero value measurement!')
     }
     this._activeMeasurement = null
+
+    if (this._options.chain) {
+      this._activeMeasurement = this.startMeasurement()
+      this._activeMeasurement.locationUpdated(this.pointBuff, this.normalBuff)
+      this._activeMeasurement.locationSelected()
+    }
     this.viewer.requestRender()
   }
 
