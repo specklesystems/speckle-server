@@ -16,9 +16,9 @@
       >
         <div class="flex flex-col items-center justify-center space-y-2 w-full h-full">
           <div
-            class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
+            class="flex h-10 w-10 items-center justify-center rounded-md bg-foundation border border-outline-3"
           >
-            <LockClosedIcon class="h-4 w-4 text-foreground-3 z-20" />
+            <LockClosedIcon class="h-5 w-5 text-foreground-3 z-20" />
           </div>
         </div>
       </div>
