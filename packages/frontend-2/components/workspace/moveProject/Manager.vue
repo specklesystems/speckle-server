@@ -19,6 +19,7 @@
       :project="selectedProject"
       :workspace="selectedWorkspace"
       @move-complete="onMoveComplete"
+      @back="onBack"
     />
     <template #buttons>
       <div class="-my-1 w-full flex justify-end">
@@ -133,5 +134,18 @@ const onMoveComplete = () => {
   selectedProject.value = null
   selectedWorkspace.value = null
   open.value = false
+}
+
+const onBack = () => {
+  if (activeDialog.value === 'confirmation') {
+    // If we started with a workspace (props.workspaceSlug exists),
+    // go back to project selection
+    if (props.workspaceSlug) {
+      selectedProject.value = null
+    } else {
+      // Otherwise go back to workspace selection
+      selectedWorkspace.value = null
+    }
+  }
 }
 </script>

@@ -54,9 +54,10 @@
         </p>
       </div>
 
-      <FormButton color="primary" class="mt-4" @click="triggerAction">
-        Move Project
-      </FormButton>
+      <div class="flex justify-end gap-2 mt-4">
+        <FormButton color="outline" @click="$emit('back')">Back</FormButton>
+        <FormButton color="primary" @click="triggerAction">Move</FormButton>
+      </div>
     </div>
     <WorkspaceRegionStaticDataDisclaimer
       v-if="showRegionStaticDataDisclaimer"
@@ -87,6 +88,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'move-complete'): void
+  (e: 'back'): void
 }>()
 
 const moveProject = useMoveProjectToWorkspace()

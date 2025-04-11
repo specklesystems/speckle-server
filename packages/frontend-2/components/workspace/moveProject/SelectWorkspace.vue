@@ -8,7 +8,7 @@
         <p class="mb-4">Select an existing workspaces or create a new one.</p>
         <div class="flex flex-col gap-2">
           <div
-            v-for="ws in workspaces"
+            v-for="ws in sortedWorkspaces"
             :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
             v-tippy="disabledTooltipText(ws)"
           >
@@ -205,6 +205,21 @@ const disabledTooltipText = computed(
     return undefined
   }
 )
+
+const sortedWorkspaces = computed(() => {
+  return [...workspaces.value].sort((a, b) => {
+    // Get enabled status for both workspaces
+    const aEnabled = canMoveToWorkspace.value(a) || isLimitReached.value(a)
+    const bEnabled = canMoveToWorkspace.value(b) || isLimitReached.value(b)
+
+    // If one is enabled and the other isn't, put enabled first
+    if (aEnabled && !bEnabled) return -1
+    if (!aEnabled && bEnabled) return 1
+
+    // If both have same enabled status, maintain original order
+    return 0
+  })
+})
 
 const handleWorkspaceClick = (
   workspace: WorkspaceMoveProjectSelectWorkspace_WorkspaceFragment
