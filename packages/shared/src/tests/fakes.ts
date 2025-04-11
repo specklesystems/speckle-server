@@ -4,6 +4,7 @@ import { Comment } from '../authz/domain/comments/types.js'
 import { nanoid } from 'nanoid'
 import { Model } from '../authz/domain/models/types.js'
 import { Version } from '../authz/domain/versions/types.js'
+import { Workspace } from '../authz/domain/workspaces/types.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -22,6 +23,11 @@ export const getProjectFake = fakeGetFactory<Project>(() => ({
   isDiscoverable: false,
   workspaceId: null,
   allowPublicComments: false
+}))
+
+export const getWorkspaceFake = fakeGetFactory<Workspace>(() => ({
+  id: nanoid(10),
+  slug: nanoid(10)
 }))
 
 export const getCommentFake = fakeGetFactory<Comment>(() => ({
