@@ -64,9 +64,8 @@
     />
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitDialog"
-      title="Workspace Limit Reached"
-      subtitle="This workspace has reached its project limit"
-    />
+      subtitle="Upgrade your plan to move project"
+    ></WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 

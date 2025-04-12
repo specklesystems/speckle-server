@@ -10,29 +10,18 @@
           <div
             v-for="ws in sortedWorkspaces"
             :key="`${ws.id}-${ws.permissions?.canMoveProjectToWorkspace?.code}`"
-            v-tippy="getDisabledTooltip(ws.permissions?.canMoveProjectToWorkspace)"
+            v-tippy="getWorkspaceTooltip(ws)"
           >
             <button
               class="w-full"
-              :class="
-                !canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) &&
-                !isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
-                  ? 'cursor-not-allowed'
-                  : ''
-              "
-              :disabled="
-                !canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) &&
-                !isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
-              "
+              :class="!isWorkspaceDisabled(ws) ? 'cursor-not-allowed' : ''"
+              :disabled="isWorkspaceDisabled(ws)"
               @click="handleWorkspaceClick(ws)"
             >
               <WorkspaceCard
                 :logo="ws.logo ?? ''"
                 :name="ws.name"
-                :clickable="
-                  canMoveToWorkspace(ws.permissions?.canMoveProjectToWorkspace) ||
-                  isLimitReached(ws.permissions?.canMoveProjectToWorkspace)
-                "
+                :clickable="!isWorkspaceDisabled(ws)"
               >
                 <template #text>
                   <div class="flex flex-col gap-2 items-start">
@@ -74,9 +63,17 @@
 
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitDialog"
-      title="Workspace Limit Reached"
-      subtitle="This workspace has reached its project limit"
-    />
+      subtitle="Upgrade your plan to move project"
+    >
+      <template v-if="limitReachedWorkspace">
+        <p class="text-body-xs text-foreground-2">
+          The workspace
+          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
+          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
+          of 1 project and 5 models. Upgrade the workspace to add more projects.
+        </p>
+      </template>
+    </WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 
@@ -91,6 +88,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
 import { formatName } from '~/lib/billing/helpers/plan'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceMoveProjectSelectWorkspace_User on User {
@@ -144,6 +142,36 @@ const showLoading = computed(
 const showLimitDialog = ref(false)
 const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
   null
+)
+
+const isWorkspaceAdmin = computed(
+  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment | null) => {
+    if (!workspace) return false
+    return workspace.role === Roles.Workspace.Admin
+  }
+)
+
+const isWorkspaceDisabled = computed(
+  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
+    if (!isWorkspaceAdmin.value(workspace)) {
+      return true
+    }
+
+    return (
+      !props.canMoveToWorkspace(workspace.permissions?.canMoveProjectToWorkspace) &&
+      !props.isLimitReached(workspace.permissions?.canMoveProjectToWorkspace)
+    )
+  }
+)
+
+const getWorkspaceTooltip = computed(
+  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
+    if (!isWorkspaceAdmin.value(workspace)) {
+      return 'Only workspace administrators can move projects to this workspace'
+    }
+
+    return props.getDisabledTooltip(workspace.permissions?.canMoveProjectToWorkspace)
+  }
 )
 
 const sortedWorkspaces = computed(() => {
