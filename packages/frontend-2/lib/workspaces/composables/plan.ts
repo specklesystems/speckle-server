@@ -4,15 +4,15 @@ import { useQuery } from '@vue/apollo-composable'
 import {
   PaidWorkspacePlansNew,
   UnpaidWorkspacePlans,
-  WorkspacePlans,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanBillingIntervals,
+  isPaidPlan
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
+import { useActiveWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 
 graphql(`
   fragment WorkspacesPlan_Workspace on Workspace {
@@ -46,7 +46,7 @@ graphql(`
 
 export const useWorkspacePlan = (slug: string) => {
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-  const { prices } = useWorkspacePlanPrices()
+  const { prices } = useActiveWorkspacePlanPrices()
 
   const { result } = useQuery(
     workspacePlanQuery,
@@ -105,18 +105,17 @@ export const useWorkspacePlan = (slug: string) => {
     return false
   })
   const editorSeatPriceFormatted = computed(() => {
-    if (
-      plan.value?.name === WorkspacePlans.Team ||
-      plan.value?.name === WorkspacePlans.Business
-    ) {
+    if (plan.value?.name && isPaidPlan(plan.value?.name)) {
       return formatPrice(
-        prices.value?.[plan.value?.name]?.[WorkspacePlanBillingIntervals.Monthly]
+        prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
+          WorkspacePlanBillingIntervals.Monthly
+        ]
       )
     }
 
     return formatPrice({
       amount: 0,
-      currencySymbol: '£'
+      currency: 'gbp'
     })
   })
 

@@ -75,6 +75,10 @@ import {
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getDateFromLimitsFactory } from '@/modules/core/services/versions/limits'
+
+const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
 const getStreams = getStreamsFactory({ db })
 
@@ -197,10 +201,19 @@ export = {
     }
   },
   Stream: {
-    async commits(parent, args) {
+    async commits(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
+
+      const limitsDate = await getDateFromLimitsFactory({
+        environment: {
+          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+        },
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
+      })({ workspaceId: parent.workspaceId })
+
       const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
-        db: projectDB
+        db: projectDB,
+        limitsDate
       })
       const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
         legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
@@ -312,13 +325,23 @@ export = {
         }
       }
 
+      const stream = await ctx.loaders.streams.getStream.load(parent.streamId)
+      const limitsDate = await getDateFromLimitsFactory({
+        environment: {
+          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+        },
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
+      })({ workspaceId: stream?.workspaceId })
+
       const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
         getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({
-          db: projectDB
+          db: projectDB,
+          limitsDate
         }),
         getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db: projectDB })
       })
+
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
