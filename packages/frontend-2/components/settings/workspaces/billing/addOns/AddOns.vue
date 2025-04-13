@@ -86,7 +86,7 @@ const contactButton = computed(() => ({
   disabled: !isBusinessPlan.value,
   disabledMessage: 'Only available on the Business plan',
   onClick: () => {
-    // TODO: Implement contact us
+    window.location.href = 'mailto:billing@speckle.systems'
   }
 }))
 
