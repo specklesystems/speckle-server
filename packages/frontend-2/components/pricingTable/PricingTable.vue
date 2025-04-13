@@ -12,6 +12,18 @@
       :has-subscription="!!subscription"
       :currency="props.currency"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
+      @on-upgrade-click="toggleUpgradeDialog(plan)"
+    />
+
+    <SettingsWorkspacesBillingUpgradeDialog
+      v-model:open="isUpgradeDialogOpen"
+      :slug="props.slug"
+      :plan="planToUpgrade"
+      :billing-interval="
+        isYearlySelected ? BillingInterval.Yearly : BillingInterval.Monthly
+      "
+      :workspace-id="workspaceId"
+      is-changing-plan
     />
   </div>
 </template>
@@ -36,6 +48,8 @@ const {
 } = useWorkspacePlan(props.slug)
 
 const isYearlySelected = ref(false)
+const isUpgradeDialogOpen = ref(false)
+const planToUpgrade = ref<WorkspacePlans | null>(null)
 
 const plans = computed(() => [
   WorkspacePlans.Free,
@@ -44,6 +58,11 @@ const plans = computed(() => [
 ])
 
 const isAdmin = computed(() => props.role === Roles.Workspace.Admin)
+
+const toggleUpgradeDialog = (plan: WorkspacePlans) => {
+  planToUpgrade.value = plan
+  isUpgradeDialogOpen.value = !isUpgradeDialogOpen.value
+}
 
 const onYearlyIntervalSelected = (newValue: boolean) => {
   isYearlySelected.value = newValue

@@ -118,8 +118,9 @@ import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
+  (e: 'onUpgradeClick'): void
 }>()
 
 const props = defineProps<{
@@ -135,7 +136,7 @@ const props = defineProps<{
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { upgradePlan, redirectToCheckout } = useBillingActions()
+const { redirectToCheckout } = useBillingActions()
 
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
@@ -311,13 +312,9 @@ const handleUpgradeClick = () => {
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
 
   if (props.hasSubscription) {
-    upgradePlan({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
+    if (props.canUpgrade) {
+      emit('onUpgradeClick')
+    }
   } else {
     redirectToCheckout({
       plan: props.plan,
