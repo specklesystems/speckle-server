@@ -238,7 +238,7 @@ const isSelectable = computed(() => {
 
 const buttonColor = computed(() => {
   if (props.currentPlan?.name === WorkspacePlans.Free) {
-    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Team ? 'primary' : 'outline'
   }
   return 'outline'
 })
