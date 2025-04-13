@@ -66,7 +66,7 @@
         </NuxtLink>
       </p>
 
-      <p v-if="isPurchasablePlan" class="text-foreground-2 text-body-xs mt-3">
+      <p v-if="isPaidPlan" class="text-foreground-2 text-body-xs mt-3">
         Note that the Editor seat is a paid seat type if your workspace is subscribed to
         one of the paid plans.
       </p>
@@ -106,7 +106,7 @@ const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  isPurchasablePlan,
+  isPaidPlan,
   editorSeatPriceFormatted
 } = useWorkspacePlan(props.workspace?.slug || '')
 

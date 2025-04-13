@@ -22,11 +22,11 @@ export = {
   Price: {
     currencySymbol(parent) {
       switch (parent.currency) {
-        case 'USD':
+        case 'usd':
           return '$'
-        case 'EUR':
+        case 'eur':
           return '€'
-        case 'GBP':
+        case 'gbp':
           return '£'
         default:
           throw new NotImplementedError(

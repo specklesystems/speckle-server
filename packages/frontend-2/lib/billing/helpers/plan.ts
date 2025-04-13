@@ -1,11 +1,15 @@
-import { isInteger } from 'lodash-es'
 import { WorkspacePlans } from '@speckle/shared'
 
-export const formatPrice = (price?: { amount: number; currencySymbol: string }) => {
+export const formatPrice = (price?: { amount: number; currency: string }) => {
   if (!price) return ''
-  return `${price.currencySymbol}${
-    isInteger(price.amount) ? price.amount : price.amount.toFixed(2)
-  }`
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: price.currency,
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0
+  })
+  return formatter.format(price.amount)
 }
 
 // Internal plan names dont match the names we use in the product

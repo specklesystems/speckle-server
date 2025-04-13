@@ -6,7 +6,8 @@
       :to="workspaceRoute(activeWorkspaceSlug || '')"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
-        {{ workspace?.plan?.name }} · {{ workspace?.team?.totalCount ?? 0 }} member{{
+        {{ formatName(workspace?.plan?.name) }} ·
+        {{ workspace?.team?.totalCount ?? 0 }} member{{
           (workspace?.team?.totalCount ?? 0) > 1 ? 's' : ''
         }}
       </p>
@@ -48,6 +49,7 @@ import type { HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment } from '~
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {

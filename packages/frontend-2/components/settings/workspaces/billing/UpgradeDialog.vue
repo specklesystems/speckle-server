@@ -27,19 +27,19 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
-import { type PaidWorkspacePlansOld, isSelfServeAvailablePlan } from '@speckle/shared'
-import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
+import { type PaidWorkspacePlansNew, isSelfServeAvailablePlan } from '@speckle/shared'
+import { useActiveWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
 
 const props = defineProps<{
-  plan: PaidWorkspacePlansOld
+  plan: PaidWorkspacePlansNew
   billingInterval: BillingInterval
   workspaceId: string
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { upgradePlan } = useBillingActions()
-const { prices } = useWorkspacePlanPrices()
+const { prices } = useActiveWorkspacePlanPrices()
 
 const seatPrice = computed(() => {
   if (isSelfServeAvailablePlan(props.plan)) {

@@ -110,7 +110,8 @@ import {
 import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
-  BillingInterval
+  BillingInterval,
+  Currency
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
@@ -129,6 +130,7 @@ const props = defineProps<{
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
+  currency?: Currency
 }>()
 
 const slots: SetupContext['slots'] = useSlots()
@@ -142,14 +144,15 @@ const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
     return formatPrice(
-      prices.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
+      prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
+        WorkspacePlanBillingIntervals.Monthly
+      ]
     )
   }
 
-  // This price is not returned from the server settings but is needed to display a price for the free plan
   return formatPrice({
     amount: 0,
-    currencySymbol: '£'
+    currency: props.currency || 'usd'
   })
 })
 
@@ -235,7 +238,7 @@ const isSelectable = computed(() => {
 
 const buttonColor = computed(() => {
   if (props.currentPlan?.name === WorkspacePlans.Free) {
-    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Team ? 'primary' : 'outline'
   }
   return 'outline'
 })
