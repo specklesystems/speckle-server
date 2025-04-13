@@ -13,7 +13,7 @@
               />
               <div
                 v-if="hasDiscoverableWorkspaces"
-                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-primary rounded-full"
+                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
               />
             </div>
             <p class="text-body-xs text-foreground truncate max-w-40">
@@ -79,9 +79,14 @@
                 @click="showDiscoverableWorkspacesModal = true"
               >
                 <p class="text-body-xs text-foreground">Join existing workspaces</p>
-                <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
-                  {{ discoverableWorkspacesCount }}
-                </CommonBadge>
+                <div class="relative">
+                  <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
+                    {{ discoverableWorkspacesCount }}
+                  </CommonBadge>
+                  <div
+                    class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
+                  />
+                </div>
               </NuxtLink>
             </div>
           </MenuItem>
