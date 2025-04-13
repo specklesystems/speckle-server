@@ -26,7 +26,7 @@
         <p class="text-heading-lg text-foreground capitalize">
           {{
             currentBillingCycleEnd
-              ? dayjs(currentBillingCycleEnd).format('dd-mmmm-yyyy')
+              ? dayjs(currentBillingCycleEnd).format('DD-MMMM-YYYY')
               : 'Not applicable'
           }}
         </p>
