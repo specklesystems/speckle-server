@@ -20,7 +20,7 @@ const props = defineProps<{
   billingInterval: BillingInterval
   enableNoOption: boolean
 }>()
-const includeUnlimitedAddon = defineModel<AddonIncludedSelect>(
+const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
   'includeUnlimitedAddon',
   {
     default: null

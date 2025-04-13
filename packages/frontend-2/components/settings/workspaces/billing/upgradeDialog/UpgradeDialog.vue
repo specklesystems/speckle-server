@@ -5,6 +5,8 @@
     :buttons="dialogButtons"
     max-width="md"
   >
+    {{ isChangingPlan }}
+    {{ isSamePlanWithAddon }}
     <SettingsWorkspacesBillingUpgradeDialogSelectAddOn
       v-if="showAddonSelect"
       v-model:include-unlimited-addon="includeUnlimitedAddon"
@@ -25,7 +27,11 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import { PaidWorkspacePlansNew, WorkspacePlanConfigs } from '@speckle/shared'
+import {
+  PaidWorkspacePlansNew,
+  WorkspacePlanConfigs,
+  type MaybeNullOrUndefined
+} from '@speckle/shared'
 import type { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
@@ -35,12 +41,12 @@ type AddonIncludedSelect = 'yes' | 'no'
 const props = defineProps<{
   plan: PaidWorkspacePlansNew
   billingInterval: BillingInterval
-  workspaceId: string
+  workspaceId: MaybeNullOrUndefined<string>
   slug: string
-  isChangingPlan: boolean
+  isChangingPlan?: boolean
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
-const includeUnlimitedAddon = defineModel<AddonIncludedSelect | null>(
+const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
   'includeUnlimitedAddon',
   {
     default: null
@@ -124,6 +130,8 @@ const nextButtonText = computed(() =>
 )
 
 const onSubmit = () => {
+  if (!props.workspaceId) return
+
   upgradePlan({
     plan: finalNewPlan.value,
     cycle: props.billingInterval,
@@ -135,15 +143,15 @@ const onSubmit = () => {
 
 watch(
   () => isOpen.value,
-  (newVal, oldVal) => {
-    if (!(newVal && !oldVal)) return
-    showAddonSelect.value = props.isChangingPlan || !isSamePlanWithAddon.value
-
-    // If the add-on is required or already included, set it to yes
-    if (usageExceedsNewPlanLimit.value) {
-      includeUnlimitedAddon.value = 'yes'
-    } else {
-      includeUnlimitedAddon.value = null
+  (newVal) => {
+    if (newVal) {
+      showAddonSelect.value = props.isChangingPlan && !isSamePlanWithAddon.value
+      // If the add-on is required or already included, set it to yes
+      if (usageExceedsNewPlanLimit.value) {
+        includeUnlimitedAddon.value = 'yes'
+      } else {
+        includeUnlimitedAddon.value = undefined
+      }
     }
   }
 )

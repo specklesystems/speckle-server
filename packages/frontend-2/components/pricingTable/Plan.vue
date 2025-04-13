@@ -41,7 +41,7 @@
         </div>
         <div
           v-else
-          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
+          :key="`tooltip-${isYearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
           v-tippy="buttonTooltip"
         >
           <FormButton
@@ -125,7 +125,6 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   plan: WorkspacePlans
-  yearlyIntervalSelected: boolean
   canUpgrade: boolean
   workspaceId?: MaybeNullOrUndefined<string>
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
@@ -133,12 +132,13 @@ const props = defineProps<{
   hasSubscription?: MaybeNullOrUndefined<boolean>
   currency?: Currency
 }>()
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
 const { redirectToCheckout } = useBillingActions()
-
-const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
@@ -173,7 +173,7 @@ const canUpgradeToPlan = computed(() => {
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
-    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
+    (isYearlyIntervalSelected.value ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 
 const isDowngrade = computed(() => {
@@ -191,7 +191,7 @@ const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    !props.yearlyIntervalSelected
+    !isYearlyIntervalSelected.value
   )
 })
 
@@ -199,7 +199,7 @@ const isMonthlyToAnnual = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    props.yearlyIntervalSelected
+    isYearlyIntervalSelected.value
   )
 })
 
@@ -294,7 +294,7 @@ const buttonTooltip = computed(() => {
 
   if (
     props.activeBillingInterval === BillingInterval.Yearly &&
-    !props.yearlyIntervalSelected &&
+    !isYearlyIntervalSelected.value &&
     canUpgradeToPlan.value
   ) {
     return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
@@ -325,11 +325,4 @@ const handleUpgradeClick = () => {
     })
   }
 }
-
-watch(
-  () => props.yearlyIntervalSelected,
-  (newValue) => {
-    isYearlyIntervalSelected.value = newValue
-  }
-)
 </script>

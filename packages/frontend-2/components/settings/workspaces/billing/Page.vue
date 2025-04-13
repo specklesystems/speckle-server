@@ -18,6 +18,7 @@
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Upgrade your plan" subheading />
         <PricingTable
+          v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
           :slug="slug"
           :workspace-id="workspace?.id"
           :role="workspace?.role as WorkspaceRoles"
@@ -27,7 +28,11 @@
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns :slug="slug" />
+        <SettingsWorkspacesBillingAddOns
+          v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
+          :slug="slug"
+          :workspace-id="workspace?.id"
+        />
       </section>
     </div>
   </div>
@@ -50,10 +55,14 @@ graphql(`
   }
 `)
 
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
+
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isFreePlan, isNewPlan } = useWorkspacePlan(slug.value)
+const { isFreePlan, isNewPlan, intervalIsYearly } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -65,4 +74,11 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
+watch(
+  () => intervalIsYearly.value,
+  (newVal) => {
+    isYearlyIntervalSelected.value = newVal
+  },
+  { immediate: true }
+)
 </script>
