@@ -80,12 +80,20 @@
       />
       <PricingTablePlanFeature
         is-included
-        :display-name="`${planLimits.versionsHistory?.value} day version history`"
+        :display-name="
+          planLimits.versionsHistory
+            ? `${planLimits.versionsHistory} day version history`
+            : 'Full version history'
+        "
         description="Some tooltip text"
       />
       <PricingTablePlanFeature
         is-included
-        :display-name="`${planLimits.versionsHistory?.value} day comment history`"
+        :display-name="
+          planLimits.versionsHistory
+            ? `${planLimits.versionsHistory} day comment history`
+            : 'Full comment history'
+        "
         description="Some tooltip text"
       />
       <PricingTablePlanFeature
