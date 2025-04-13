@@ -8,10 +8,7 @@
         </FormButton>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
-        <div
-          v-if="isWorkspaceNewPlansEnabled && project.workspace"
-          class="flex flex-col gap-y-3"
-        >
+        <div v-if="project.workspace" class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
           <ProjectPageCollaboratorsGeneralAccessRow
             :name="project.workspace?.name"
@@ -91,7 +88,6 @@ const projectPageCollaboratorsQuery = graphql(`
 const projectId = computed(() => route.params.id as string)
 
 const route = useRoute()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
