@@ -18,7 +18,7 @@ useHead({
 })
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth', 'projects-page-access-check']
 })
 
 const { isLoggedIn } = useActiveUser()
