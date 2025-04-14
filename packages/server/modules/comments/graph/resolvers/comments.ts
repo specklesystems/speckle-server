@@ -892,7 +892,7 @@ export = {
       const reply = await withOperationLogging(
         async () =>
           await createCommentReply({
-            authorId: context.userId,
+            authorId: context.userId!,
             parentCommentId: args.input.parentComment,
             streamId: args.input.streamId,
             text: args.input.text as SmartTextEditorValueSchema,
