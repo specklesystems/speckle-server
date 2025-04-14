@@ -59,6 +59,7 @@ import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
 import { PaidWorkspacePlansNew, type MaybeNullOrUndefined } from '@speckle/shared'
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
+import { useActiveWorkspace } from '~/lib/workspaces/composables/activeWorkspace'
 
 const props = defineProps<{
   slug: string
@@ -77,6 +78,7 @@ const {
   hasUnlimitedAddon
 } = useWorkspacePlan(props.slug)
 const { addonPrices } = useWorkspaceAddonPrices()
+const { isAdmin } = useActiveWorkspace(props.slug)
 
 const isUpgradeDialogOpen = ref(false)
 
@@ -95,7 +97,8 @@ const unlimitedAddOnButton = computed(() => ({
   disabled:
     !isPaidPlan.value ||
     (!isYearlyIntervalSelected.value && intervalIsYearly.value) ||
-    hasUnlimitedAddon.value,
+    hasUnlimitedAddon.value ||
+    !isAdmin.value,
   onClick: () => {
     isUpgradeDialogOpen.value = true
   }
