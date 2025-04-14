@@ -118,6 +118,7 @@
           :key="project.id"
           :project="project"
           :disable-no-write-access-projects="disableNoWriteAccessProjects"
+          :is-sender="isSender"
           @click="handleProjectCardClick(project)"
         />
         <FormButton
@@ -166,13 +167,17 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
+    isSender: boolean
     showNewProject?: boolean
     /**
      * For the send wizard - not allowing selecting projects we can't write to.
      */
     disableNoWriteAccessProjects?: boolean
   }>(),
-  { showNewProject: true, disableNoWriteAccessProjects: false }
+  {
+    showNewProject: true,
+    disableNoWriteAccessProjects: false
+  }
 )
 
 const searchText = ref<string>()

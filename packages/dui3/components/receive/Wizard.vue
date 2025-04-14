@@ -10,6 +10,7 @@
     <div>
       <div v-if="step === 1">
         <WizardProjectSelector
+          :is-sender="false"
           :show-new-project="false"
           @next="selectProject"
           @search-text-update="updateSearchText"

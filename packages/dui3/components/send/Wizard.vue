@@ -9,6 +9,7 @@
   >
     <div v-if="step === 1">
       <WizardProjectSelector
+        is-sender
         disable-no-write-access-projects
         @next="selectProject"
         @search-text-update="updateSearchText"
