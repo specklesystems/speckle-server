@@ -5,10 +5,13 @@ import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fra
 import { Loaders } from '../../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 
@@ -29,6 +32,9 @@ export const canUpdateModelPolicy: AuthPolicy<
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>
