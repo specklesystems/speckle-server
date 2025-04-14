@@ -1,18 +1,32 @@
 <template>
   <button
     :class="`relative block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted overflow-hidden transition `"
-    :disabled="selectedVersionId === version.id && !fromWizard"
+    :disabled="(selectedVersionId === version.id && !fromWizard) || isLimited"
   >
-    <div class="mb-2">
-      <img :src="version.previewUrl" alt="version preview" />
-    </div>
     <UserAvatar
       v-tippy="`Authored by ${version.authorUser?.name}`"
       :user="version.authorUser"
       size="sm"
       class="absolute inset-1"
     />
-    <div class="mt-1 p-2 border-t dark:border-gray-700">
+    <div v-if="isLimited">
+      <div
+        class="bg-foundation h-24 w-full flex-shrink-0 rounded-md border border-outline-3"
+        :class="isLimited ? 'diagonal-stripes' : ''"
+      >
+        <div class="flex flex-col items-center justify-center space-y-2 w-full h-full">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-md bg-foundation border border-outline-3"
+          >
+            <LockClosedIcon class="h-5 w-5 text-foreground-3 z-20" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="flex items-center justify-center w-full h-24">
+      <img :src="version.previewUrl" alt="version preview" />
+    </div>
+    <div class="p-1.5 border-t dark:border-gray-700">
       <div class="flex space-x-2 items-center min-w-0">
         <SourceAppBadge
           :source-app="
@@ -81,6 +95,7 @@
   </button>
 </template>
 <script setup lang="ts">
+import { LockClosedIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import type { SourceAppName } from '@speckle/shared'
 import { SourceApps } from '@speckle/shared'
@@ -94,7 +109,7 @@ const props = defineProps<{
   latestVersionId: string
   accountId: string
   projectId: string
-  referencedObjectId: string
+  workspaceSlug?: string
   selectedVersionId?: string
   fromWizard?: boolean
 }>()
@@ -102,6 +117,8 @@ const props = defineProps<{
 const createdAgo = computed(() => {
   return dayjs(props.version.createdAt).from(dayjs())
 })
+
+const isLimited = computed(() => props.version.referencedObject === null)
 
 // NOTE!!!: This logic somehow caused regression on versionList fetchMore, but we do not know exactly why yet.
 // const { result: objectQueryResult } = useQuery(

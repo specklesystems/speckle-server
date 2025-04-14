@@ -10,6 +10,7 @@
     <div>
       <div v-if="step === 1">
         <WizardProjectSelector
+          :is-sender="false"
           :show-new-project="false"
           @next="selectProject"
           @search-text-update="updateSearchText"
@@ -32,6 +33,7 @@
           :project-id="selectedProject.id"
           :model-id="selectedModel.id"
           :selected-version-id="urlParsedVersionId"
+          :workspace-slug="selectedWorkspace?.slug"
           :from-wizard="true"
           @next="selectVersionAndAddModel"
         />
@@ -45,7 +47,8 @@ import { storeToRefs } from 'pinia'
 import type {
   ModelListModelItemFragment,
   ProjectListProjectItemFragment,
-  VersionListItemFragment
+  VersionListItemFragment,
+  WorkspaceListWorkspaceItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
@@ -76,6 +79,7 @@ const accountStore = useAccountStore()
 const { activeAccount } = storeToRefs(accountStore)
 
 const selectedAccountId = ref<string>(activeAccount.value?.accountInfo.id as string)
+const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 
@@ -94,10 +98,15 @@ watch(urlParsedData, (newVal) => {
   if (newVal.version) urlParsedVersionId.value = newVal.version.id
 })
 
-const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
+const selectProject = (
+  accountId: string,
+  project: ProjectListProjectItemFragment,
+  workspace?: WorkspaceListWorkspaceItemFragment
+) => {
   step.value++
   selectedAccountId.value = accountId
   selectedProject.value = project
+  selectedWorkspace.value = workspace
 
   void trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'project selected' })
 }
@@ -162,7 +171,8 @@ const selectVersionAndAddModel = async (
 
   modelCard.projectId = selectedProject.value?.id as string
   modelCard.modelId = selectedModel.value?.id as string
-  modelCard.workspaceId = selectedProject.value?.workspaceId as string
+  modelCard.workspaceId = selectedProject.value?.workspace?.id as string
+  modelCard.workspaceSlug = selectedProject?.value?.workspace?.slug as string
 
   modelCard.projectName = selectedProject.value?.name as string
   modelCard.modelName = selectedModel.value?.name as string

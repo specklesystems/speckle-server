@@ -20,14 +20,18 @@ const documents = {
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {\n    workspaceMutations {\n      projects {\n        create(input: $input) {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.CreateProjectInWorkspaceDocument,
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
-    "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
+    "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    slug\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
     "\n  fragment AutomateFunctionItem on AutomateFunction {\n    name\n    isFeatured\n    id\n    creator {\n      name\n    }\n    releases {\n      items {\n        inputSchema\n      }\n    }\n  }\n": types.AutomateFunctionItemFragmentDoc,
     "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.CreateAutomationDocument,
     "\n  fragment AutomateFunctionRunItem on AutomateFunctionRun {\n    id\n    status\n    statusMessage\n    results\n    contextView\n    function {\n      id\n      name\n      logo\n    }\n  }\n": types.AutomateFunctionRunItemFragmentDoc,
     "\n  fragment AutomationRunItem on AutomateRun {\n    id\n    status\n    automation {\n      id\n      name\n    }\n    functionRuns {\n      ...AutomateFunctionRunItem\n    }\n  }\n": types.AutomationRunItemFragmentDoc,
     "\n  query AutomationStatus($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      model(id: $modelId) {\n        automationsStatus {\n          id\n          status\n          automationRuns {\n            ...AutomationRunItem\n          }\n        }\n      }\n    }\n  }\n": types.AutomationStatusDocument,
     "\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n": types.WorkspaceListQueryDocument,
-    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
+    "\n  query CanCreatePersonalProject {\n    activeUser {\n      permissions {\n        canCreatePersonalProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n": types.CanCreatePersonalProjectDocument,
+    "\n  query CanCreateProjectInWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      permissions {\n        canCreateProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n": types.CanCreateProjectInWorkspaceDocument,
+    "\n  query CanCreateModelInProject($projectId: String!) {\n    project(id: $projectId) {\n      permissions {\n        canCreateModel {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n": types.CanCreateModelInProjectDocument,
+    "\n  query ActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        ...WorkspaceListWorkspaceItem\n      }\n    }\n  }\n": types.ActiveWorkspaceDocument,
+    "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    workspace {\n      id\n      name\n      slug\n    }\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
     "\n  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.ProjectListQueryDocument,
     "\n  fragment ModelListModelItem on Model {\n    displayName\n    name\n    id\n    previewUrl\n    updatedAt\n    versions(limit: 1) {\n      totalCount\n      items {\n        ...VersionListItem\n      }\n    }\n  }\n": types.ModelListModelItemFragmentDoc,
     "\n  query ProjectModels(\n    $projectId: String!\n    $cursor: String\n    $limit: Int!\n    $filter: ProjectModelsFilter\n  ) {\n    project(id: $projectId) {\n      id\n      models(cursor: $cursor, limit: $limit, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ModelListModelItem\n        }\n      }\n    }\n  }\n": types.ProjectModelsDocument,
@@ -94,7 +98,7 @@ export function graphql(source: "\n  mutation StreamAccessRequestCreate($input: 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"): (typeof documents)["\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    slug\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"): (typeof documents)["\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    slug\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -122,7 +126,23 @@ export function graphql(source: "\n  query WorkspaceListQuery(\n    $limit: Int!
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    models {\n      totalCount\n    }\n  }\n"];
+export function graphql(source: "\n  query CanCreatePersonalProject {\n    activeUser {\n      permissions {\n        canCreatePersonalProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query CanCreatePersonalProject {\n    activeUser {\n      permissions {\n        canCreatePersonalProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query CanCreateProjectInWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      permissions {\n        canCreateProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query CanCreateProjectInWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      permissions {\n        canCreateProject {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query CanCreateModelInProject($projectId: String!) {\n    project(id: $projectId) {\n      permissions {\n        canCreateModel {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query CanCreateModelInProject($projectId: String!) {\n    project(id: $projectId) {\n      permissions {\n        canCreateModel {\n          authorized\n          code\n          message\n          payload\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        ...WorkspaceListWorkspaceItem\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveWorkspace {\n    activeUser {\n      activeWorkspace {\n        ...WorkspaceListWorkspaceItem\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    workspace {\n      id\n      name\n      slug\n    }\n    models {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    workspaceId\n    workspace {\n      id\n      name\n      slug\n    }\n    models {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -1,6 +1,6 @@
 <template>
   <div
-    v-tippy="disabled ? 'You do not have write access to this project.' : ''"
+    v-tippy="cardTippy"
     :class="`group relative bg-foundation-2 rounded px-2 py-1  transition ${
       disabled
         ? 'cursor-not-allowed italic bg-neutral-500/5'
@@ -25,6 +25,7 @@ import type { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/
 const props = withDefaults(
   defineProps<{
     project: ProjectListProjectItemFragment
+    isSender: boolean
     disableNoWriteAccessProjects?: boolean
   }>(),
   { disableNoWriteAccessProjects: false }
@@ -34,10 +35,15 @@ const updatedAgo = computed(() => {
   return dayjs(props.project.updatedAt).from(dayjs())
 })
 
+const cardTippy = computed(() => (disabled.value ? disabledMessage.value : ''))
+
+const disabledMessage = computed(() =>
+  props.isSender
+    ? 'You do not have write access to this project.'
+    : 'You do not have read access to this project.'
+)
+
 const disabled = computed(() => {
-  return (
-    props.disableNoWriteAccessProjects &&
-    (!props.project.role || props.project.role === 'stream:reviewer')
-  )
+  return !props.project.role || props.project.role === 'stream:reviewer'
 })
 </script>

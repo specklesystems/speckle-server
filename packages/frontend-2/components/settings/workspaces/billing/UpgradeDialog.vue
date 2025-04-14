@@ -28,10 +28,9 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
 import type { PaidWorkspacePlansOld } from '@speckle/shared'
-import { Roles } from '@speckle/shared'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
-import { formatPrice } from '~/lib/billing/helpers/prices'
+import { formatPrice } from '~/lib/billing/helpers/plan'
 
 const props = defineProps<{
   plan: PaidWorkspacePlansOld
@@ -46,7 +45,7 @@ const { prices } = useWorkspacePlanPrices()
 const seatPrice = computed(() => {
   if (isPaidPlan(props.plan)) {
     const planPrices = prices.value?.[props.plan]
-    const price = planPrices?.[props.billingInterval]?.[Roles.Workspace.Member]
+    const price = planPrices?.[props.billingInterval]
 
     return formatPrice(price)
   }

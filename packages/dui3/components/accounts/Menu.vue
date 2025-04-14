@@ -6,7 +6,7 @@
       @click="showAccountsDialog = true"
     >
       <UserAvatar v-if="!showAccountsDialog" :user="user" hover-effect size="sm" />
-      <UserAvatar v-else hover-effect>
+      <UserAvatar v-else hover-effect size="sm">
         <XMarkIcon class="w-6 h-6" />
       </UserAvatar>
     </button>

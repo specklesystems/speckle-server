@@ -134,7 +134,7 @@ const clientId = projectAccount.value.accountInfo.id
 const { result: projectDetailsResult, refetch: refetchProjectDetails } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
-  () => ({ clientId })
+  () => ({ clientId, debounce: 500, fetchPolicy: 'network-only' })
 )
 
 const removeProjectModels = async () => {

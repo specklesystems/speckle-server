@@ -49,6 +49,7 @@
         :account-id="modelCard.accountId"
         :project-id="modelCard.projectId"
         :model-id="modelCard.modelId"
+        :workspace-slug="modelCard.workspaceSlug"
         :selected-version-id="modelCard.selectedVersionId"
         @next="handleVersionSelection"
       />

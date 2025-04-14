@@ -37,10 +37,14 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getPrivateObjectsServerOrigin,
+  getServerOrigin,
+  previewServiceShouldUsePrivateObjectsServerUrl
+} from '@/modules/shared/helpers/envHelper'
 import { requestObjectPreviewFactory } from '@/modules/previews/queues/previews'
-import { Queue } from 'bull'
-import { Knex } from 'knex'
+import type { Queue } from 'bull'
+import type { Knex } from 'knex'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -61,7 +65,10 @@ const buildCreateObjectPreviewFunction = ({
       queue: previewRequestQueue,
       responseQueue: responseQueueName
     }),
-    serverOrigin: getServerOrigin(),
+    // use the private server origin if defined, otherwise use the public server origin
+    serverOrigin: previewServiceShouldUsePrivateObjectsServerUrl()
+      ? getPrivateObjectsServerOrigin()
+      : getServerOrigin(),
     storeObjectPreview: storeObjectPreviewFactory({ db: projectDb }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
     createAppToken: createAppTokenFactory({

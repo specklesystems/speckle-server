@@ -9,6 +9,7 @@
   >
     <div v-if="step === 1">
       <WizardProjectSelector
+        is-sender
         disable-no-write-access-projects
         @next="selectProject"
         @search-text-update="updateSearchText"
@@ -18,6 +19,8 @@
     <div v-if="step === 2 && selectedProject && selectedAccountId">
       <WizardModelSelector
         :project="selectedProject"
+        :workspace-id="selectedProject.workspace?.id"
+        :workspace-slug="selectedProject.workspace?.slug"
         :account-id="selectedAccountId"
         is-sender
         @next="selectModel"
@@ -145,7 +148,8 @@ const addModel = async () => {
   model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
   model.projectId = selectedProject.value?.id as string
   model.modelId = selectedModel.value?.id as string
-  model.workspaceId = selectedProject.value?.workspaceId as string
+  model.workspaceId = selectedProject.value?.workspace?.id as string
+  model.workspaceSlug = selectedProject?.value?.workspace?.slug as string
   model.sendFilter = filter.value as ISendFilter
   model.sendFilter.idMap = {} // do not let it null from the beginning otherwise we will end up with null state on Revit...
   model.settings = settings.value

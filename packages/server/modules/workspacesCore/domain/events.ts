@@ -1,3 +1,4 @@
+import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
@@ -6,13 +7,14 @@ export const workspaceEventNamespace = 'workspace' as const
 const eventPrefix = `${workspaceEventNamespace}.` as const
 
 export const WorkspaceEvents = {
-  Authorized: `${eventPrefix}authorized`,
+  Authorizing: `${eventPrefix}authorizing`,
   Created: `${eventPrefix}created`,
   Updated: `${eventPrefix}updated`,
   Deleted: `${eventPrefix}deleted`,
   RoleDeleted: `${eventPrefix}role-deleted`,
   RoleUpdated: `${eventPrefix}role-updated`,
-  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`
+  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`,
+  SeatUpdated: `${eventPrefix}seat-updated`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
@@ -26,11 +28,18 @@ type WorkspaceCreatedPayload = {
   createdByUserId: string
 }
 type WorkspaceUpdatedPayload = { workspace: Workspace }
-type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-type WorkspaceRoleUpdatedPayload = Pick<
-  WorkspaceAcl,
-  'userId' | 'workspaceId' | 'role'
-> & { flags?: { skipProjectRoleUpdatesFor: string[] } }
+type WorkspaceRoleDeletedPayload = {
+  acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+}
+type WorkspaceRoleUpdatedPayload = {
+  acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+  flags?: { skipProjectRoleUpdatesFor: string[] }
+  updatedByUserId: string
+}
+type WorkspaceSeatUpdatedPayload = {
+  seat: WorkspaceSeat
+  updatedByUserId: string
+}
 type WorkspaceJoinedFromDiscoveryPayload = {
   userId: string
   workspaceId: string
@@ -38,11 +47,12 @@ type WorkspaceJoinedFromDiscoveryPayload = {
 }
 
 export type WorkspaceEventsPayloads = {
-  [WorkspaceEvents.Authorized]: WorkspaceAuthorizedPayload
+  [WorkspaceEvents.Authorizing]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
   [WorkspaceEvents.Deleted]: { workspaceId: string }
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
+  [WorkspaceEvents.SeatUpdated]: WorkspaceSeatUpdatedPayload
   [WorkspaceEvents.JoinedFromDiscovery]: WorkspaceJoinedFromDiscoveryPayload
 }

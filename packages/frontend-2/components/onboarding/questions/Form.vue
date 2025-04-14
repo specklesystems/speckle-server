@@ -29,10 +29,11 @@ import { useForm } from 'vee-validate'
 import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { homeRoute, workspaceJoinRoute } from '~/lib/common/helpers/route'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 const isOnboardingForced = useIsOnboardingForced()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+const { hasDiscoverableWorkspaces } = useDiscoverableWorkspaces()
 
 const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
 
@@ -53,7 +54,7 @@ const onSubmit = handleSubmit(async () => {
     plans: values.plan,
     source: values.source
   })
-  if (!isWorkspaceNewPlansEnabled.value && isWorkspacesEnabled.value) {
+  if (isWorkspacesEnabled.value && hasDiscoverableWorkspaces.value) {
     navigateTo(workspaceJoinRoute)
   } else {
     navigateTo(homeRoute)

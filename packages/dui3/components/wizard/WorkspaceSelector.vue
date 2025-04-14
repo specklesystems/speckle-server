@@ -76,6 +76,8 @@ const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
 
 watch(selectedWorkspace, (newVal) => {
+  console.log(newVal)
+
   emit('update:selectedWorkspace', newVal)
 })
 
