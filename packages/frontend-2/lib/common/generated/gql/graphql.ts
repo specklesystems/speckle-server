@@ -5145,12 +5145,6 @@ export type FormSelectProjects_ProjectFragment = { __typename?: 'Project', id: s
 
 export type FormUsersSelectItemFragment = { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null };
 
-export type HeaderNavShare_ProjectFragment = { __typename?: 'Project', id: string, visibility: SimpleProjectVisibility, role?: string | null };
-
-export type HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment = { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
-
-export type HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, workspaceId: string, workspaceName: string, token?: string | null, workspaceSlug: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
-
 export type HeaderWorkspaceSwitcherActiveWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number }, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
 export type HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, slug: string, creationState?: { __typename?: 'WorkspaceCreationState', completed: boolean } | null, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null };
@@ -5160,6 +5154,12 @@ export type HeaderWorkspaceSwitcherWorkspaceList_UserFragment = { __typename?: '
 export type HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragment = { __typename?: 'LimitedWorkspace', id: string, slug: string, name: string, logo?: string | null };
 
 export type HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, domainBasedMembershipProtectionEnabled: boolean, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number }, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
+
+export type HeaderNavShare_ProjectFragment = { __typename?: 'Project', id: string, visibility: SimpleProjectVisibility, role?: string | null };
+
+export type HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment = { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
+
+export type HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, workspaceId: string, workspaceName: string, token?: string | null, workspaceSlug: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
 
 export type InviteDialogWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, domainBasedMembershipProtectionEnabled: boolean, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null };
 
