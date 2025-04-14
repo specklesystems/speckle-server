@@ -418,7 +418,9 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'You do not have access to the project'
+            projectInvite
+              ? 'You do not have access to the project'
+              : "Inviter doesn't have owner access to"
           )
         })
 
