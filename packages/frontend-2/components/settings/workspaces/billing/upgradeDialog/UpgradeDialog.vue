@@ -24,10 +24,7 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import {
-  useBillingActions,
-  redirectToCheckout
-} from '~/lib/billing/composables/actions'
+import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
   PaidWorkspacePlansNew,
   WorkspacePlanConfigs,
@@ -54,10 +51,9 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
   }
 )
 
-const { upgradePlan } = useBillingActions()
+const { upgradePlan, redirectToCheckout } = useBillingActions()
 const { hasUnlimitedAddon, plan, subscription } = useWorkspacePlan(props.slug)
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
-const { redirectToCheckout } = useBillingActions()
 
 const showAddonSelect = ref<boolean>(true)
 
@@ -157,7 +153,7 @@ watch(
     if (newVal) {
       showAddonSelect.value = props.isChangingPlan && !isSamePlanWithAddon.value
       // If the add-on is required or already included, set it to yes
-      if (usageExceedsNewPlanLimit.value) {
+      if (usageExceedsNewPlanLimit.value && props.isChangingPlan) {
         includeUnlimitedAddon.value = 'yes'
       } else {
         includeUnlimitedAddon.value = undefined
