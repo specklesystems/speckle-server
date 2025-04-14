@@ -353,6 +353,8 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       default:
         throwUncoveredError(billingInterval)
     }
+    // must update the billing interval to the new one
+    workspaceSubscription.billingInterval = billingInterval
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
       workspaceSubscription.subscriptionData

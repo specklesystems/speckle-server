@@ -107,7 +107,6 @@ const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
 const {
@@ -131,7 +130,7 @@ const {
       : selectedRoles.value?.length
       ? selectedRoles.value
       : null,
-    personalOnly: isWorkspaceNewPlansEnabled.value
+    personalOnly: isWorkspacesEnabled.value
   },
   cursor: null as Nullable<string>
 }))
