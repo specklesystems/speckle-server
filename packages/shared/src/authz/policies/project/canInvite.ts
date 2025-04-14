@@ -8,7 +8,9 @@ import {
   WorkspaceSsoSessionNoAccessError,
   WorkspaceNoAccessError,
   ProjectNoAccessError,
-  ProjectNotFoundError
+  ProjectNotFoundError,
+  ServerNotEnoughPermissionsError,
+  ProjectNotEnoughPermissionsError
 } from '../../domain/authErrors.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
@@ -29,8 +31,10 @@ type PolicyArgs = MaybeUserContext & ProjectContext
 type PolicyErrors =
   | InstanceType<typeof ServerNoAccessError>
   | InstanceType<typeof ServerNoSessionError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof ProjectNoAccessError>
   | InstanceType<typeof ProjectNotFoundError>
+  | InstanceType<typeof ProjectNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceNoAccessError>
 

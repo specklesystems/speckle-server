@@ -4,10 +4,13 @@ import { AuthPolicy } from '../../domain/policies.js'
 import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { canUpdateProjectPolicy } from './canUpdate.js'
@@ -28,7 +31,10 @@ export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
     | typeof WorkspaceNoAccessError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>

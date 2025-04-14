@@ -5,6 +5,7 @@ import { getProjectFake } from '../../../../tests/fakes.js'
 import { canUpdateModelPolicy } from './canUpdate.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
@@ -96,6 +97,19 @@ describe('canUpdateProject', () => {
     })
   })
 
+  it('returns error if no project role', async () => {
+    const sut = buildSUT({
+      getProjectRole: async () => null
+    })
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id'
+    })
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('returns error if not at least contributor', async () => {
     const sut = buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
@@ -105,7 +119,7 @@ describe('canUpdateProject', () => {
       projectId: 'project-id'
     })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -150,7 +164,7 @@ describe('canUpdateProject', () => {
         projectId: 'project-id'
       })
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 

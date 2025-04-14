@@ -17,6 +17,10 @@ import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
 import { canEditProjectCommentPolicy } from './project/comment/canEdit.js'
 import { canUpdateModelPolicy } from './project/model/canUpdate.js'
 import { canDeleteModelPolicy } from './project/model/canDelete.js'
+import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
+import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
+import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
+import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -29,6 +33,12 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canCreate: canCreateProjectCommentPolicy(loaders),
       canArchive: canArchiveProjectCommentPolicy(loaders),
       canEdit: canEditProjectCommentPolicy(loaders)
+    },
+    version: {
+      canCreate: canCreateProjectVersionPolicy(loaders),
+      canUpdate: canUpdateProjectVersionPolicy(loaders),
+      canReceive: canReceiveProjectVersionPolicy(loaders),
+      canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),

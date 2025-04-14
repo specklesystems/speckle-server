@@ -13,7 +13,9 @@ import {
   ServerNoAccessError,
   WorkspaceSsoSessionNoAccessError,
   WorkspaceNoAccessError,
-  ServerNoSessionError
+  ServerNoSessionError,
+  WorkspaceNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError
 } from '../../domain/authErrors.js'
 
 type PolicyLoaderKeys =
@@ -30,8 +32,10 @@ type PolicyErrors =
   | InstanceType<typeof WorkspacesNotEnabledError>
   | InstanceType<typeof ServerNoAccessError>
   | InstanceType<typeof ServerNoSessionError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
 
 export const canInvitePolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
   (loaders) =>

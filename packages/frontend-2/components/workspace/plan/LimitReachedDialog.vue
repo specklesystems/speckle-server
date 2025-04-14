@@ -7,7 +7,7 @@
     :buttons="buttons"
     :hide-closer="preventClose"
     :prevent-close-on-click-outside="preventClose"
-    :title="condensed ? title : undefined"
+    :title="condensed ? 'Plan limit reached' : undefined"
   >
     <div class="flex flex-col">
       <div v-if="!condensed" class="relative bg-primary h-32 md:h-48 select-none">
@@ -23,7 +23,7 @@
           <div class="flex flex-col justify-between h-full px-5 py-4">
             <NuxtImg src="/images/logo.png" alt="Speckle logo" class="h-8 w-8" />
             <h3 class="text-white limit-reached-text-shadow text-base">
-              {{ title }}
+              Plan limit reached
             </h3>
           </div>
         </div>
@@ -50,7 +50,6 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 const isOpen = defineModel<boolean>('open', { required: true })
 
 defineProps<{
-  title: string
   subtitle?: string
   buttons?: LayoutDialogButton[]
   preventClose?: boolean
