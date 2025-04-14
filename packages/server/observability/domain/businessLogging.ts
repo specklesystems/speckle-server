@@ -18,9 +18,9 @@ export const withOperationLogging = async <T>(
     logger: Logger
     operationName: string
     operationDescription?: string
-    errorHandler?: (err: unknown, logger: Logger) => MaybeAsync<unknown>
+    errorHandler?: (err: unknown, logger: Logger) => MaybeAsync<T>
   }
-): Promise<T | void> => {
+): Promise<T> => {
   const { operationName, operationDescription } = params
   const errorHandler = params.errorHandler || logErrorThenThrow
   const logger = params.logger.child(OperationName(operationName))
@@ -36,6 +36,6 @@ export const withOperationLogging = async <T>(
     logger.info(OperationStatus.success, OperationLogLinePrefix)
     return results
   } catch (err) {
-    await errorHandler(err, logger)
+    return await errorHandler(err, logger)
   }
 }

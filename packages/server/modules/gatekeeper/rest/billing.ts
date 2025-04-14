@@ -153,7 +153,7 @@ export const getBillingRouter = (): Router => {
                 operationName: 'completeCheckoutSession',
                 operationDescription:
                   'Payment succeeded or Stripe session completed, and payment was paid',
-                errorHandler: (err, logger) => {
+                errorHandler: async (err, logger) => {
                   if (err instanceof WorkspaceAlreadyPaidError) {
                     // ignore the request, this is prob a replay from stripe
                     logger.info('Workspace is already paid, ignoring')
