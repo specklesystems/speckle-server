@@ -6,7 +6,7 @@
           <div
             class="bg-foundation rounded-full border border-outline-3 h-10 w-10 flex items-center justify-center"
           >
-            <EyeIcon class="w-5 h-5 text-foreground-2" />
+            <component :is="currentSeat.icon" class="w-5 h-5 text-foreground-2" />
           </div>
           <div>
             <div class="text-body-2xs text-foreground">{{ currentSeat.title }}</div>
@@ -24,7 +24,7 @@
           <div
             class="bg-foundation rounded-full border border-blue-200 h-10 w-10 flex items-center justify-center"
           >
-            <PencilIcon class="w-4 h-4 text-foreground-2" />
+            <component :is="newSeat.icon" class="w-5 h-5 text-foreground-2" />
           </div>
           <div>
             <div class="text-body-2xs text-foreground">{{ newSeat.title }}</div>
