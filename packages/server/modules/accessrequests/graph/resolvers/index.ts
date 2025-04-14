@@ -108,7 +108,7 @@ const resolvers: Resolvers = {
         streamId,
         projectId: streamId
       })
-      const result = await withOperationLogging(
+      return await withOperationLogging(
         async () => await requestStreamAccess(userId, streamId),
         {
           logger,
@@ -116,8 +116,6 @@ const resolvers: Resolvers = {
           operationDescription: 'Request for stream access'
         }
       )
-      if (!result) throw new LogicError('Unable to create stream access request') // should have already thrown by this point
-      return result
     }
   },
   ProjectMutations: {
@@ -131,7 +129,7 @@ const resolvers: Resolvers = {
         projectId,
         streamId: projectId // for legacy compatibility
       })
-      const result = await withOperationLogging(
+      return await withOperationLogging(
         async () => await requestProjectAccess(userId!, projectId),
         {
           logger,
@@ -139,38 +137,34 @@ const resolvers: Resolvers = {
           operationDescription: 'Create a request for project access'
         }
       )
-      if (!result) throw new LogicError('Unable to create project access request') // should have already thrown by this point
-      return result
     },
     async use(_parent, args, ctx) {
       const { userId, resourceAccessRules } = ctx
       const { requestId, accept, role } = args
       const logger = ctx.log
 
-      const project = await withOperationLogging(
-        async () => {
-          const usedReq = await processPendingProjectRequest(
+      const usedReq = await withOperationLogging(
+        async () =>
+          await processPendingProjectRequest(
             userId!,
             requestId,
             accept,
             mapStreamRoleToValue(role),
             resourceAccessRules
-          )
+          ),
 
-          const project = await ctx.loaders.streams.getStream.load(usedReq.resourceId)
-          if (!project) {
-            throw new LogicError('Unexpectedly unable to find request project')
-          }
-
-          return project
-        },
         {
           logger,
           operationName: 'ProcessProjectAccessRequest',
           operationDescription: 'Use a request for project access'
         }
       )
-      if (!project) throw new LogicError('Unable to user project access request') // should have already thrown by this point
+
+      const project = await ctx.loaders.streams.getStream.load(usedReq.resourceId)
+      if (!project) {
+        throw new LogicError('Unexpectedly unable to find request project')
+      }
+
       return project
     }
   },
