@@ -1,62 +1,53 @@
 import dayjs from 'dayjs'
 import { GetWorkspaceLimits } from '../authz/domain/workspaces/operations.js'
-import { PersonalProjectsLimits } from '../authz/index.js'
+import { GetHistoryLimits, HistoryLimitTypes, HistoryLimits } from './domain.js'
+import { Project } from '../authz/domain/projects/types.js'
 
-export const hidePropertyIfOutOfLimitFactory =
-  ({
-    environment: { personalProjectsLimitEnabled },
-    getWorkspaceLimits
-  }: {
-    environment: { personalProjectsLimitEnabled: boolean }
-    getWorkspaceLimits: GetWorkspaceLimits
-  }) =>
-  async <E extends { createdAt: Date }, P extends keyof E>({
-    property,
+export const isCreatedBeyondHistoryLimitCutoff =
+  ({ getProjectLimitDate }: { getProjectLimitDate: GetProjectLimitDate }) =>
+  async ({
     entity,
-    workspaceId
+    project,
+    limitType
   }: {
-    property: P
-    entity: E
-    workspaceId?: string | null
-  }): Promise<E[P] | null> => {
-    const limitDate = await getDateFromLimitsFactory({
-      environment: { personalProjectsLimitEnabled },
-      getWorkspaceLimits
-    })({ workspaceId })
-
-    if (dayjs(limitDate).isAfter(entity.createdAt)) return null
-
-    return entity[property]
+    entity: { createdAt: Date }
+    project: Pick<Project, 'workspaceId'>
+    limitType: HistoryLimitTypes
+  }): Promise<boolean> => {
+    const limitDate = await getProjectLimitDate({
+      project,
+      limitType
+    })
+    return limitDate ? dayjs(limitDate).isAfter(entity.createdAt) : false
   }
 
-export const getDateFromLimitsFactory =
+export const calculateLimitCutoffDate = (
+  historyLimits: HistoryLimits | null,
+  limitType: HistoryLimitTypes
+): Date | null => {
+  if (!historyLimits) return null
+  if (!historyLimits[limitType]) return null
+  return dayjs()
+    .subtract(historyLimits[limitType].value, historyLimits[limitType].unit)
+    .toDate()
+}
+
+type GetProjectLimitDate = (args: {
+  project: Pick<Project, 'workspaceId'>
+  limitType: HistoryLimitTypes
+}) => Promise<Date | null>
+
+export const getProjectLimitDate =
   ({
     getWorkspaceLimits,
-    environment: { personalProjectsLimitEnabled }
+    getPersonalProjectLimits
   }: {
     getWorkspaceLimits: GetWorkspaceLimits
-    environment: { personalProjectsLimitEnabled: boolean }
-  }) =>
-  async ({ workspaceId }: { workspaceId?: string | null }) => {
-    if (workspaceId) {
-      const limits = await getWorkspaceLimits({ workspaceId })
-      if (!limits?.versionsHistory) {
-        return null
-      }
-
-      return dayjs()
-        .subtract(limits.versionsHistory.value, limits.versionsHistory.unit)
-        .toDate()
-    }
-
-    if (!personalProjectsLimitEnabled) {
-      return null
-    }
-
-    return dayjs()
-      .subtract(
-        PersonalProjectsLimits.versionsHistory.value,
-        PersonalProjectsLimits.versionsHistory.unit
-      )
-      .toDate()
+    getPersonalProjectLimits: GetHistoryLimits
+  }): GetProjectLimitDate =>
+  async ({ project, limitType }) => {
+    const limits = project.workspaceId
+      ? await getWorkspaceLimits({ workspaceId: project.workspaceId })
+      : await getPersonalProjectLimits()
+    return calculateLimitCutoffDate(limits, limitType)
   }

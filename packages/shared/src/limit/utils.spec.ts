@@ -1,144 +1,95 @@
 import { describe, expect, it } from 'vitest'
-import { getDateFromLimitsFactory, hidePropertyIfOutOfLimitFactory } from './utils.js'
-import { GetWorkspaceLimits } from '../authz/domain/workspaces/operations.js'
-import { createRandomString } from '../tests/helpers/utils.js'
+import {
+  calculateLimitCutoffDate,
+  getProjectLimitDate,
+  isCreatedBeyondHistoryLimitCutoff
+} from './utils.js'
 import dayjs from 'dayjs'
 
 describe('Limits utils', () => {
-  describe('getDateFromLimits', () => {
-    it('should return null if workspace has no versionHistory limits', async () => {
-      const getWorkspaceLimits = async () => null
-      const workspaceId = createRandomString()
-
-      expect(
-        await getDateFromLimitsFactory({
-          getWorkspaceLimits,
-          environment: { personalProjectsLimitEnabled: false }
-        })({ workspaceId })
-      ).to.eq(null)
+  describe('calculateLimitCutoffDate', () => {
+    it('returns null if historyLimits is null', () => {
+      const cutoffDate = calculateLimitCutoffDate(null, 'commentHistory')
+      expect(cutoffDate).toBeNull()
     })
-    it('should return date in workspace versionHistory limits', async () => {
-      const getWorkspaceLimits = async () => ({
-        projectCount: null,
-        modelCount: null,
-        versionsHistory: { value: 1, unit: 'month' as const }
-      })
-      const workspaceId = createRandomString()
-
-      expect(
-        (
-          await getDateFromLimitsFactory({
-            getWorkspaceLimits,
-            environment: { personalProjectsLimitEnabled: false }
-          })({ workspaceId })
-        )
-          ?.toISOString()
-          .slice(-5)
-      ).to.eq(dayjs().subtract(1, 'month').toDate().toISOString().slice(-5))
+    it('returns null if limitType is null on the historyLimit', () => {
+      const cutoffDate = calculateLimitCutoffDate(
+        { commentHistory: { value: 1, unit: 'day' }, versionsHistory: null },
+        'versionsHistory'
+      )
+      expect(cutoffDate).toBeNull()
+    })
+    it('returns cutoff date from limits', () => {
+      const cutoffDate = calculateLimitCutoffDate(
+        { commentHistory: { value: 1, unit: 'day' }, versionsHistory: null },
+        'commentHistory'
+      )
+      const now = dayjs()
+      expect(now.diff(cutoffDate, 'days')).to.equal(1)
     })
   })
-  describe('hidePropertyIfOutOfLimitFactory returns a function that, ', () => {
-    it('should return the entity property if project workspace has no limits', async () => {
-      const getWorkspaceLimits = (() => null) as unknown as GetWorkspaceLimits
-      const workspaceId = createRandomString()
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: new Date()
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: false },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(entity.property)
+  describe('getProjectLimitDate', () => {
+    it('returns workspaceLimits for workspace projects', async () => {
+      const cutoffDate = await getProjectLimitDate({
+        getPersonalProjectLimits: () => {
+          expect.fail()
+        },
+        getWorkspaceLimits: async () => null
+      })({ limitType: 'commentHistory', project: { workspaceId: 'asdfg12345' } })
+      expect(cutoffDate).toBeNull()
     })
-    it('should return null if entity is outside of workspace limit', async () => {
-      const getWorkspaceLimits = (() => ({
-        versionsHistory: { value: 7, unit: 'day' }
-      })) as unknown as GetWorkspaceLimits
-      const workspaceId = createRandomString()
-      const tenDaysAgo = new Date()
-      tenDaysAgo.setDate(new Date().getDate() - 10)
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: tenDaysAgo
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: false },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(null)
+    it('returns projectLimits for non workspaceProjects', async () => {
+      const cutoffDate = await getProjectLimitDate({
+        getPersonalProjectLimits: async () => null,
+        getWorkspaceLimits: async () => {
+          expect.fail()
+        }
+      })({ limitType: 'commentHistory', project: { workspaceId: null } })
+      expect(cutoffDate).toBeNull()
     })
-    it('should return entity property if version is inside of workspace limit', async () => {
-      const getWorkspaceLimits = (() => ({
-        versionsHistory: { value: 7, unit: 'day' }
-      })) as unknown as GetWorkspaceLimits
-      const workspaceId = createRandomString()
-      const twoDaysAgo = new Date()
-      twoDaysAgo.setDate(new Date().getDate() - 2)
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: twoDaysAgo
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: false },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(entity.property)
+  })
+  describe('isCreatedBeyondHistoryLimitCutoff', () => {
+    it('returns false if there are no limits', async () => {
+      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: async () => null
+      })({
+        entity: { createdAt: new Date() },
+        limitType: 'commentHistory',
+        project: { workspaceId: null }
+      })
+      expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
-    it('should return entity property if project is not in a workspace and personalProjectsLimits is not enabled', async () => {
-      const getWorkspaceLimits = (() => expect.fail()) as unknown as GetWorkspaceLimits
-      const workspaceId = null
-      const tenDaysAgo = new Date()
-      tenDaysAgo.setDate(new Date().getDate() - 10)
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: tenDaysAgo
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: false },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(entity.property)
+    it('returns false if entity is newer than the limit cutoff date', async () => {
+      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: async () => new Date(1999)
+      })({
+        entity: { createdAt: new Date() },
+        limitType: 'commentHistory',
+        project: { workspaceId: null }
+      })
+      expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
-    it('should return null if project is not in a workspace and personalProjectsLimits is enabled and entity is outside of limits', async () => {
-      const getWorkspaceLimits = (() => expect.fail()) as unknown as GetWorkspaceLimits
-      const workspaceId = null
-      const tenDaysAgo = new Date()
-      tenDaysAgo.setDate(new Date().getDate() - 10)
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: tenDaysAgo
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: true },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(null)
+    it('returns false if entity is right on the limit cutoff date', async () => {
+      const date = new Date()
+      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: async () => date
+      })({
+        entity: { createdAt: date },
+        limitType: 'commentHistory',
+        project: { workspaceId: null }
+      })
+      expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
-    it('should return entity property if project is not in a workspace and personalProjectsLimits is enabled and version is inside limits', async () => {
-      const getWorkspaceLimits = (() => expect.fail()) as unknown as GetWorkspaceLimits
-      const workspaceId = null
-      const property = 'property'
-      const entity = {
-        property: createRandomString(),
-        createdAt: new Date()
-      }
-      expect(
-        await hidePropertyIfOutOfLimitFactory({
-          environment: { personalProjectsLimitEnabled: true },
-          getWorkspaceLimits
-        })({ property, entity, workspaceId })
-      ).to.eq(entity.property)
+  })
+  it('returns true of entity is older than the limit cutoff date', async () => {
+    const date = new Date()
+    const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
+      getProjectLimitDate: async () => date
+    })({
+      entity: { createdAt: new Date(1999) },
+      limitType: 'commentHistory',
+      project: { workspaceId: null }
     })
+    expect(isCreatedBeyondHistoryLimit).to.be.toBeTruthy()
   })
 })

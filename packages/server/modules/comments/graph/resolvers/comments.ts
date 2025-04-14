@@ -92,10 +92,14 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { hidePropertyIfOutOfLimitFactory } from '@speckle/shared'
+import { isCreatedBeyondHistoryLimitCutoff, getProjectLimitDate } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { Authz } from '@speckle/shared'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
+  : () => Promise.resolve(null)
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -216,22 +220,19 @@ export = {
           info: { streamId: parent.streamId }
         })
       }
-      const hidePropertyIfOutOfLimit = hidePropertyIfOutOfLimitFactory({
-        environment: {
-          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        },
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })
-      const commentText = await hidePropertyIfOutOfLimit({
-        property: 'text',
-        entity: parent,
-        workspaceId: project.workspaceId
-      })
-      if (!commentText) {
-        return null
-      }
+
+      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: getProjectLimitDate({
+          getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
+          getPersonalProjectLimits
+        })
+      })({ entity: parent, limitType: 'commentHistory', project })
+      // null is for out of limits
+      if (isBeyondLimit) return null
+      // why is the text nullable in the DB record?
+      if (!parent.text) return ''
       return {
-        ...ensureCommentSchema(commentText),
+        ...ensureCommentSchema(parent.text),
         projectId: parent.streamId
       }
     },
@@ -244,20 +245,16 @@ export = {
           info: { streamId: parent.streamId }
         })
       }
-      const hidePropertyIfOutOfLimit = hidePropertyIfOutOfLimitFactory({
-        environment: {
-          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        },
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })
-      const commentText = await hidePropertyIfOutOfLimit({
-        property: 'text',
-        entity: parent,
-        workspaceId: project.workspaceId
-      })
-      if (!commentText) {
-        return null
-      }
+
+      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: getProjectLimitDate({
+          getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
+          getPersonalProjectLimits
+        })
+      })({ entity: parent, limitType: 'commentHistory', project })
+      // null is for out of limits
+      if (isBeyondLimit) return null
+      // why us the text nullable in the DB?
       const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
     },

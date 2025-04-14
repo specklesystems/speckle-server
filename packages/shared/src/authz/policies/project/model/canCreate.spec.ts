@@ -53,7 +53,8 @@ const buildCanCreateModelPolicy = (
       return {
         modelCount: 5,
         projectCount: 1,
-        versionsHistory: null
+        versionsHistory: null,
+        commentHistory: null
       }
     },
     getWorkspaceModelCount: async () => {
@@ -127,7 +128,8 @@ describe('canCreateModelPolicy returns a function, that', () => {
         return {
           projectCount: 1,
           modelCount: 5,
-          versionsHistory: null
+          versionsHistory: null,
+          commentHistory: null
         }
       },
       getWorkspaceModelCount: async () => {

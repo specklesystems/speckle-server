@@ -1,12 +1,11 @@
-export const PersonalProjectsLimits: {
-  versionsHistory: { value: number; unit: 'week' }
-  commentsHistory: { value: number; unit: 'week' }
-} = {
+import { HistoryLimits } from '../../../limit/domain.js'
+
+export const PersonalProjectsLimits: HistoryLimits = {
   versionsHistory: {
     value: 1,
     unit: 'week'
   },
-  commentsHistory: {
+  commentHistory: {
     value: 1,
     unit: 'week'
   }
