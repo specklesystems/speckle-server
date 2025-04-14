@@ -6,7 +6,8 @@ import {
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
   isPaidPlan as isPaidPlanShared,
-  isNewWorkspacePlan
+  isNewWorkspacePlan,
+  doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
 import {
   WorkspacePlanStatuses,
@@ -31,6 +32,7 @@ graphql(`
     subscription {
       billingInterval
       currentBillingCycleEnd
+      currency
       seats {
         editors {
           assigned
@@ -61,6 +63,7 @@ export const useWorkspacePlan = (slug: string) => {
 
   const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
   const plan = computed(() => result.value?.workspaceBySlug?.plan)
+  const currency = computed(() => subscription.value?.currency || 'usd')
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
   const isBusinessPlan = computed(
@@ -77,6 +80,10 @@ export const useWorkspacePlan = (slug: string) => {
   const isNewPlan = computed(
     () => plan.value?.name && isNewWorkspacePlan(plan.value?.name)
   )
+  const hasUnlimitedAddon = computed(() => {
+    if (!plan.value?.name) return false
+    return doesPlanIncludeUnlimitedProjectsAddon(plan.value.name)
+  })
 
   // Plan status information
   const statusIsExpired = computed(
@@ -137,6 +144,8 @@ export const useWorkspacePlan = (slug: string) => {
     isUnlimitedPlan,
     isBusinessPlan,
     isPaidPlan,
-    isNewPlan
+    isNewPlan,
+    currency,
+    hasUnlimitedAddon
   }
 }

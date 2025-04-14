@@ -23,16 +23,23 @@
               Settings
             </FormButton>
           </MenuItem>
-          <MenuItem>
-            <FormButton
-              full-width
-              color="outline"
-              size="sm"
-              :disabled="workspace?.role !== Roles.Workspace.Admin"
-              @click="showInviteDialog = true"
+          <MenuItem v-if="workspace?.role !== Roles.Workspace.Guest">
+            <div
+              v-tippy="
+                isAdmin ? undefined : 'Only admins can invite people to the workspace'
+              "
+              class="w-full"
             >
-              Invite members
-            </FormButton>
+              <FormButton
+                full-width
+                color="outline"
+                size="sm"
+                :disabled="!isAdmin"
+                @click="showInviteDialog = true"
+              >
+                Invite members
+              </FormButton>
+            </div>
           </MenuItem>
         </div>
       </template>
@@ -67,11 +74,13 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
 }>()
 
 const { activeWorkspaceSlug } = useNavigation()
 
 const showInviteDialog = ref(false)
+
+const isAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 </script>

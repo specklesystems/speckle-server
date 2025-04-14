@@ -15,6 +15,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment BillingActions_Workspace on Workspace {
@@ -173,7 +174,7 @@ export const useBillingActions = () => {
         title: 'Workspace plan upgraded',
         description: `Your workspace is now on ${
           cycle === BillingInterval.Yearly ? 'an annual' : 'a monthly'
-        } ${plan} plan`
+        } ${formatName(plan)} plan`
       })
     } else {
       const errMsg = getFirstGqlErrorMessage(result?.errors)

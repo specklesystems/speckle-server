@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          :name="isWorkspaceNewPlansEnabled ? 'Home' : workspace?.name"
+          name="Home"
           :separator="false"
         />
       </Portal>
@@ -71,9 +71,9 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <WorkspaceMoveProjectsDialog
+        <WorkspaceMoveProjectManager
           v-model:open="showMoveProjectsDialog"
-          :workspace="workspace"
+          :workspace-slug="workspaceSlug"
         />
       </template>
     </template>
@@ -148,7 +148,6 @@ const {
 } = useDebouncedTextInput({
   debouncedBy: 800
 })
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)

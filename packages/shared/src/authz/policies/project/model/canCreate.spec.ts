@@ -8,6 +8,7 @@ import { WorkspacePlan } from '../../../../workspaces/index.js'
 import { Project } from '../../../domain/projects/types.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceLimitsReachedError,
@@ -79,6 +80,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
       code: ServerNoSessionError.code
     })
   })
+
   it('forbids users without server roles', async () => {
     const result = await buildCanCreateModelPolicy({
       getServerRole: async () => {
@@ -90,6 +92,19 @@ describe('canCreateModelPolicy returns a function, that', () => {
       code: ServerNoAccessError.code
     })
   })
+
+  it('forbids users that have no stream role at all', async () => {
+    const result = await buildCanCreateModelPolicy({
+      getProjectRole: async () => {
+        return null
+      }
+    })(canCreateArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('forbids users that are not at least stream contributors', async () => {
     const result = await buildCanCreateModelPolicy({
       getProjectRole: async () => {
@@ -98,9 +113,10 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
+
   it('allows stream contributors to create personal projects when project is not in a workspace', async () => {
     const result = await buildCanCreateModelPolicy({
       getProject: async () => {

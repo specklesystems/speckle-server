@@ -4,7 +4,7 @@
       <template v-if="project.workspace && isWorkspacesEnabled">
         <HeaderNavLink
           :to="workspaceRoute(project.workspace.slug)"
-          :name="isWorkspaceNewPlansEnabled ? 'Home' : project.workspace.name"
+          name="Home"
           :separator="false"
         />
       </template>
@@ -58,5 +58,4 @@ defineProps<{
 }>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 </script>

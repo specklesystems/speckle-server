@@ -35,6 +35,11 @@ import {
   Roles
 } from '@speckle/shared'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import {
+  throwIfResourceAccessNotAllowed,
+  toProjectIdWhitelist
+} from '@/modules/core/helpers/token'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
   getCommitFactory,
@@ -80,6 +85,8 @@ import {
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
@@ -355,22 +362,27 @@ export = {
   },
   Mutation: {
     async commitCreate(_parent, args, context) {
+      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', context.userId!)
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.commit.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canCreate = await context.authPolicies.project.version.canCreate({
+        userId: context.userId,
+        projectId: args.commit.streamId
+      })
+      throwIfAuthNotOk(canCreate)
+
       await coreModule.executeHooks('onCreateVersionRequest', {
         projectId: args.commit.streamId
       })
 
       const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
-      await authorizeResolver(
-        context.userId,
-        args.commit.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
-
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
 
       const createCommitByBranchId = createCommitByBranchIdFactory({
         createCommit: createCommitFactory({ db: projectDb }),
@@ -399,12 +411,17 @@ export = {
     },
 
     async commitUpdate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.commit.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.commit.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canUpdate = await context.authPolicies.project.version.canUpdate({
+        userId: context.userId,
+        projectId: args.commit.streamId,
+        versionId: args.commit.id
+      })
+      throwIfAuthNotOk(canUpdate)
 
       const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
       const updateCommitAndNotify = updateCommitAndNotifyFactory({
@@ -424,12 +441,16 @@ export = {
     },
 
     async commitReceive(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.input.streamId,
-        Roles.Stream.Reviewer,
-        context.resourceAccessRules
-      )
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.input.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canReceive = await context.authPolicies.project.version.canReceive({
+        userId: context.userId,
+        projectId: args.input.streamId
+      })
+      throwIfAuthNotOk(canReceive)
 
       const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
       await markCommitReceivedAndNotifyFactory({
@@ -444,12 +465,17 @@ export = {
     },
 
     async commitDelete(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.commit.streamId,
-        Roles.Stream.Contributor,
-        context.resourceAccessRules
-      )
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.commit.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+      const canUpdate = await context.authPolicies.project.version.canUpdate({
+        userId: context.userId,
+        projectId: args.commit.streamId,
+        versionId: args.commit.id
+      })
+      throwIfAuthNotOk(canUpdate)
 
       const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
       const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
@@ -469,6 +495,25 @@ export = {
 
     // Not used by connectors
     async commitsMove(_, args, ctx) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.input.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdateAll = await Promise.all(
+        args.input.commitIds.map(async (versionId) =>
+          ctx.authPolicies.project.version.canUpdate({
+            userId: ctx.userId,
+            projectId: args.input.streamId,
+            versionId
+          })
+        )
+      )
+      canUpdateAll.forEach((result) => {
+        throwIfAuthNotOk(result)
+      })
+
       const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
       const batchMoveCommits = batchMoveCommitsFactory({
         getCommits: getCommitsFactory({ db: projectDb }),
@@ -484,6 +529,25 @@ export = {
 
     // Not used by connectors
     async commitsDelete(_, args, ctx) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.input.streamId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdateAll = await Promise.all(
+        args.input.commitIds.map(async (versionId) =>
+          ctx.authPolicies.project.version.canUpdate({
+            userId: ctx.userId,
+            projectId: args.input.streamId,
+            versionId
+          })
+        )
+      )
+      canUpdateAll.forEach((result) => {
+        throwIfAuthNotOk(result)
+      })
+
       const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
       const batchDeleteCommits = batchDeleteCommitsFactory({
         getCommits: getCommitsFactory({ db: projectDb }),
@@ -500,12 +564,17 @@ export = {
       subscribe: filteredSubscribe(
         CommitSubscriptions.CommitCreated,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canReadProject)
+
           return payload.streamId === variables.streamId
         }
       )
@@ -514,12 +583,16 @@ export = {
       subscribe: filteredSubscribe(
         CommitSubscriptions.CommitUpdated,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canReadProject)
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.commitId) {
@@ -534,12 +607,16 @@ export = {
       subscribe: filteredSubscribe(
         CommitSubscriptions.CommitDeleted,
         async (payload, variables, context) => {
-          await authorizeResolver(
-            context.userId,
-            payload.streamId,
-            Roles.Stream.Reviewer,
-            context.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.streamId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canReadProject = await context.authPolicies.project.canRead({
+            userId: context.userId,
+            projectId: payload.streamId
+          })
+          throwIfAuthNotOk(canReadProject)
 
           return payload.streamId === variables.streamId
         }
