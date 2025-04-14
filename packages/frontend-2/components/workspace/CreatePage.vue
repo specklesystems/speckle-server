@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
+import { homeRoute } from '~~/lib/common/helpers/route'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -60,7 +60,6 @@ defineProps<{
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery)
@@ -72,7 +71,6 @@ const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
 const requiresWorkspaceCreation = computed(() => {
   return (
     isWorkspacesEnabled.value &&
-    isWorkspaceNewPlansEnabled.value &&
     (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
     // Legacy projects
     (result.value?.activeUser?.versions.totalCount || 0) === 0
@@ -81,7 +79,7 @@ const requiresWorkspaceCreation = computed(() => {
 
 const onCancelClick = () => {
   if (isFirstStep.value) {
-    navigateTo(workspaceCreateRoute())
+    navigateTo(homeRoute)
     resetWizardState()
     mixpanel.stop_session_recording()
   } else {

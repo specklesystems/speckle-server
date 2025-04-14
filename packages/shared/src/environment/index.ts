@@ -74,7 +74,7 @@ export const parseFeatureFlags = (
     // Enable limits on personal projects
     FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
-      defaults: { production: false, _: false }
+      defaults: { production: false, _: true }
     }
   })
 

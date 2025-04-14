@@ -10,12 +10,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
@@ -35,7 +36,7 @@ describe('canReadProjectSettingsPolicy', () => {
     overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>
   ) =>
     buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
         isDiscoverable: false,
@@ -139,6 +140,22 @@ describe('canReadProjectSettingsPolicy', () => {
       expect(result).toBeOKResult()
     })
 
+    it('fails w/o workspace role role, even w/ project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
+    })
+
     it('fails w/o workspace & project role', async () => {
       const sut = buildWorkspaceSUT({
         getProjectRole: async () => null,
@@ -151,7 +168,7 @@ describe('canReadProjectSettingsPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNoAccessError.code
       })
     })
 

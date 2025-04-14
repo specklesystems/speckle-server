@@ -16,6 +16,7 @@
       ref="selectUsers"
       :invites="invites"
       :allowed-domains="allowedDomains"
+      :target-role="selectedRole"
     >
       <p class="text-body-2xs text-foreground-2 leading-5">
         {{ infoText }}

@@ -6,7 +6,9 @@ import {
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
@@ -33,6 +35,8 @@ export const canLeaveProjectPolicy: AuthPolicy<
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectLastOwnerError
   >
 > =
@@ -68,7 +72,9 @@ export const canLeaveProjectPolicy: AuthPolicy<
       role: Roles.Stream.Owner
     })
     if (ownerCounts < 2) {
-      return err(new ProjectLastOwnerError())
+      return err(
+        new ProjectLastOwnerError('As the last owner of the project, you cannot leave')
+      )
     }
 
     return ok()

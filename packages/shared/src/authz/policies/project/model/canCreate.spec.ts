@@ -1,32 +1,32 @@
 import cryptoRandomString from 'crypto-random-string'
 import { assert, describe, expect, it } from 'vitest'
-import { canCreateModelPolicy } from './canCreateModel.js'
-import { parseFeatureFlags } from '../../../environment/index.js'
-import { Roles } from '../../../core/constants.js'
-import { Workspace } from '../../domain/workspaces/types.js'
-import { WorkspacePlan } from '../../../workspaces/index.js'
-import { Project } from '../../domain/projects/types.js'
+import { canCreateModelPolicy } from './canCreate.js'
+import { parseFeatureFlags } from '../../../../environment/index.js'
+import { Roles } from '../../../../core/constants.js'
+import { Workspace } from '../../../domain/workspaces/types.js'
+import { WorkspacePlan } from '../../../../workspaces/index.js'
+import { Project } from '../../../domain/projects/types.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError
-} from '../../domain/authErrors.js'
+} from '../../../domain/authErrors.js'
+import { getProjectFake } from '../../../../tests/fakes.js'
 
 const buildCanCreateModelPolicy = (
   overrides?: Partial<Parameters<typeof canCreateModelPolicy>[0]>
 ) =>
   canCreateModelPolicy({
     getEnv: async () => parseFeatureFlags({}),
-    getProject: async () => {
-      return {
-        id: cryptoRandomString({ length: 9 }),
-        isPublic: false,
-        isDiscoverable: false,
-        workspaceId: cryptoRandomString({ length: 9 })
-      }
-    },
+    getProject: getProjectFake({
+      id: cryptoRandomString({ length: 9 }),
+      isPublic: false,
+      isDiscoverable: false,
+      workspaceId: cryptoRandomString({ length: 9 })
+    }),
     getProjectRole: async () => {
       return Roles.Stream.Contributor
     },
@@ -79,6 +79,7 @@ describe('canCreateModelPolicy returns a function, that', () => {
       code: ServerNoSessionError.code
     })
   })
+
   it('forbids users without server roles', async () => {
     const result = await buildCanCreateModelPolicy({
       getServerRole: async () => {
@@ -90,6 +91,19 @@ describe('canCreateModelPolicy returns a function, that', () => {
       code: ServerNoAccessError.code
     })
   })
+
+  it('forbids users that have no stream role at all', async () => {
+    const result = await buildCanCreateModelPolicy({
+      getProjectRole: async () => {
+        return null
+      }
+    })(canCreateArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('forbids users that are not at least stream contributors', async () => {
     const result = await buildCanCreateModelPolicy({
       getProjectRole: async () => {
@@ -98,9 +112,10 @@ describe('canCreateModelPolicy returns a function, that', () => {
     })(canCreateArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
+
   it('allows stream contributors to create personal projects when project is not in a workspace', async () => {
     const result = await buildCanCreateModelPolicy({
       getProject: async () => {

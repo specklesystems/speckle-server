@@ -717,12 +717,22 @@
           "description": "The workspace Team Seat Product Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceMonthlyTeamSeatStripePriceId": {
+        "workspaceMonthlyTeamSeatGbpStripePriceId": {
           "type": "string",
           "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceYearlyTeamSeatStripePriceId": {
+        "workspaceYearlyTeamSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamSeatUsdStripePriceId": {
           "type": "string",
           "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
           "default": ""
@@ -732,12 +742,22 @@
           "description": "The workspace Team Unlimited Seat Product Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceMonthlyTeamUnlimitedSeatStripePriceId": {
+        "workspaceMonthlyTeamUnlimitedSeatGbpStripePriceId": {
           "type": "string",
           "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceYearlyTeamUnlimitedSeatStripePriceId": {
+        "workspaceYearlyTeamUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamUnlimitedSeatUsdStripePriceId": {
           "type": "string",
           "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
           "default": ""
@@ -747,12 +767,22 @@
           "description": "The workspace Pro Seat Product Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceMonthlyProSeatStripePriceId": {
+        "workspaceMonthlyProSeatGbpStripePriceId": {
           "type": "string",
           "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceYearlyProSeatStripePriceId": {
+        "workspaceYearlyProSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProSeatUsdStripePriceId": {
           "type": "string",
           "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
           "default": ""
@@ -762,12 +792,22 @@
           "description": "The workspace Pro Unlimited Seat Product Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceMonthlyProUnlimitedSeatStripePriceId": {
+        "workspaceMonthlyProUnlimitedSeatGbpStripePriceId": {
           "type": "string",
           "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
           "default": ""
         },
-        "workspaceYearlyProUnlimitedSeatStripePriceId": {
+        "workspaceYearlyProUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProUnlimitedSeatUsdStripePriceId": {
           "type": "string",
           "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
           "default": ""

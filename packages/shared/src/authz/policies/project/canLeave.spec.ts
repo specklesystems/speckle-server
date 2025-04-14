@@ -8,21 +8,23 @@ import {
   ProjectNoAccessError,
   ServerNoAccessError,
   ServerNoSessionError,
+  WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { getProjectFake } from '../../../tests/fakes.js'
 
 describe('canLeaveProjectPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
     canLeaveProjectPolicy({
       getEnv: async () => parseFeatureFlags({}),
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
         isPublic: false
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
-      getServerRole: async () => Roles.Server.User,
+      getServerRole: async () => Roles.Server.Guest,
       getWorkspace: async () => null,
       getWorkspaceRole: async () => null,
       getWorkspaceSsoProvider: async () => null,
@@ -33,7 +35,7 @@ describe('canLeaveProjectPolicy', () => {
 
   const buildWorkspaceSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
     buildSUT({
-      getProject: async () => ({
+      getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
         isDiscoverable: false,
@@ -141,6 +143,19 @@ describe('canLeaveProjectPolicy', () => {
       const result = await sut({ userId: 'user-id', projectId: 'project-id' })
 
       expect(result).toBeOKResult()
+    })
+
+    it('fails without workspace role, even w/ project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Contributor,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({ userId: 'user-id', projectId: 'project-id' })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code
+      })
     })
 
     it('fails without explicit project role', async () => {

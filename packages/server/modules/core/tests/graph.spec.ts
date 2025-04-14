@@ -1129,8 +1129,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
-        expect(res.body.errors[0].message).to.equal('Branch not found')
+        expect(res.body.errors[0].extensions.code).to.equal('NOT_FOUND_ERROR')
 
         const res1 = await sendRequest(userC.token, {
           query:
@@ -1139,10 +1138,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res1).to.be.json
         expect(res1.body.errors).to.exist
-        expect(res1.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
-        expect(res1.body.errors[0].message).to.equal(
-          'Only the branch creator or stream owners are allowed to delete branches'
-        )
+        expect(res1.body.errors[0].extensions.code).to.equal('FORBIDDEN')
 
         const res2 = await sendRequest(userA.token, {
           query:

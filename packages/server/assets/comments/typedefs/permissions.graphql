@@ -1,0 +1,12 @@
+type CommentPermissionChecks {
+  canArchive: PermissionCheckResult!
+}
+
+extend type Comment {
+  permissions: CommentPermissionChecks!
+}
+
+extend type ProjectPermissionChecks {
+  canCreateComment: PermissionCheckResult!
+  canBroadcastActivity: PermissionCheckResult!
+}

@@ -16,19 +16,6 @@
       class="mb-2"
       v-on="on"
     />
-    <div class="text-body-2xs py-2">
-      You can move up to
-      <span class="font-medium">
-        {{ Math.max(0, remainingProjectCount) }}
-        {{ remainingProjectCount === 1 ? 'project' : 'projects' }}
-      </span>
-      and
-      <span class="font-medium">
-        {{ Math.max(0, remainingModelCount) }}
-        {{ remainingModelCount === 1 ? 'model' : 'models' }}
-      </span>
-      in total.
-    </div>
     <div
       v-if="hasMoveableProjects"
       class="flex flex-col mt-2 border rounded-md border-outline-3"
@@ -66,10 +53,17 @@
       @infinite="onInfiniteLoad"
     />
 
-    <ProjectsMoveToWorkspaceDialog
-      v-if="selectedProject"
-      v-model:open="showMoveToWorkspaceDialog"
+    <ProjectsConfirmMoveDialog
+      v-if="selectedProject && workspace"
+      v-model:open="showConfirmDialog"
+      :project="selectedProject"
       :workspace="workspace"
+      event-source="move-projects-dialog"
+    />
+
+    <ProjectsMoveToWorkspaceDialog
+      v-if="selectedProject && !workspace"
+      v-model:open="showMoveToWorkspaceDialog"
       :project="selectedProject"
       event-source="move-projects-dialog"
     />
@@ -89,7 +83,6 @@ import type {
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
-import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment MoveProjectsDialog_Workspace on Workspace {
@@ -119,7 +112,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: MoveProjectsDialog_WorkspaceFragment
+  workspace?: MoveProjectsDialog_WorkspaceFragment
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -150,14 +143,11 @@ const {
 })
 
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
+const showConfirmDialog = ref(false)
 const showMoveToWorkspaceDialog = ref(false)
 
-const { remainingModelCount, remainingProjectCount } = useWorkspaceLimits(
-  props.workspace.slug
-)
-
-const workspaceProjects = computed(() =>
-  props.workspace.projects.items.map((project) => project.id)
+const workspaceProjects = computed(
+  () => props.workspace?.projects.items.map((project) => project.id) || []
 )
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 
@@ -178,6 +168,10 @@ const buttons = computed((): LayoutDialogButton[] => [
 
 const onMoveClick = (project: ProjectsMoveToWorkspaceDialog_ProjectFragment) => {
   selectedProject.value = project
-  showMoveToWorkspaceDialog.value = true
+  if (props.workspace) {
+    showConfirmDialog.value = true
+  } else {
+    showMoveToWorkspaceDialog.value = true
+  }
 }
 </script>

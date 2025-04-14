@@ -2,6 +2,7 @@
   <HeaderNavNotificationsInvite
     :invite="invite"
     :disabled="loading"
+    is-workspace-invite
     @processed="processInvite"
   >
     <template #message>

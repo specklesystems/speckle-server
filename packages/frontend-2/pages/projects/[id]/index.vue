@@ -7,6 +7,11 @@
         :show-project-name="false"
         @processed="onInviteAccepted"
       />
+      <ProjectsMoveToWorkspaceAlert
+        v-if="isWorkspacesEnabled && !project.workspace"
+        :project-id="project.id"
+      />
+
       <div
         class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mt-2 mb-6"
       >
@@ -14,9 +19,7 @@
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
             <CommonBadge v-if="project.role" rounded color="secondary">
-              <span class="capitalize">
-                {{ project.role?.split(':').reverse()[0] }}
-              </span>
+              {{ RoleInfo.Stream[project.role as StreamRoles].title }}
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
@@ -69,7 +72,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Roles, type Optional } from '@speckle/shared'
+import { Roles, type Optional, RoleInfo, type StreamRoles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
@@ -105,6 +108,7 @@ graphql(`
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
     ...ProjectsMoveToWorkspaceDialog_Project
+    ...ProjectPageSettingsTab_Project
   }
 `)
 

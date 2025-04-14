@@ -4,13 +4,14 @@ extend type Project {
 
 type ProjectPermissionChecks {
   canCreateModel: PermissionCheckResult!
-  canMoveToWorkspace(workspaceId: String!): PermissionCheckResult!
+  canMoveToWorkspace(workspaceId: String): PermissionCheckResult!
   canRead: PermissionCheckResult!
   canUpdate: PermissionCheckResult!
   canUpdateAllowPublicComments: PermissionCheckResult!
   canReadSettings: PermissionCheckResult!
   canReadWebhooks: PermissionCheckResult!
   canLeave: PermissionCheckResult!
+  canRequestRender: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
@@ -19,4 +20,23 @@ type RootPermissionChecks {
 
 extend type User {
   permissions: RootPermissionChecks! @isOwner
+}
+
+type ModelPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
+  canCreateVersion: PermissionCheckResult!
+}
+
+extend type Model {
+  permissions: ModelPermissionChecks!
+}
+
+type VersionPermissionChecks {
+  canUpdate: PermissionCheckResult!
+  canReceive: PermissionCheckResult!
+}
+
+extend type Version {
+  permissions: VersionPermissionChecks!
 }

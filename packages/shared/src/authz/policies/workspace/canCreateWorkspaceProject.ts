@@ -2,6 +2,7 @@ import { AuthPolicy } from '../../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -13,17 +14,12 @@ import {
 import { err, ok } from 'true-myth/result'
 import { Roles } from '../../../core/constants.js'
 import {
+  ensureWorkspaceProjectCanBeCreatedFragment,
   ensureWorkspaceRoleAndSessionFragment,
   ensureWorkspacesEnabledFragment
 } from '../../fragments/workspaces.js'
-import { hasEditorSeat } from '../../checks/workspaceSeat.js'
 import { MaybeUserContext, WorkspaceContext } from '../../domain/context.js'
-import {
-  isNewWorkspacePlan,
-  isWorkspacePlanStatusReadOnly
-} from '../../../workspaces/index.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
-import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 
 export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | 'getEnv'
@@ -46,6 +42,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {
@@ -68,47 +65,16 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
       return err(ensuredWorkspaceAccess.error)
     }
 
-    // guests cannot create projects in the workspace
-    const isNotGuest = await hasMinimumWorkspaceRole(loaders)({
-      userId: userId!,
+    // Ensure workspace accepts new projects
+    const ensuredProjectsAccepted = await ensureWorkspaceProjectCanBeCreatedFragment(
+      loaders
+    )({
       workspaceId,
-      role: Roles.Workspace.Member
+      userId
     })
-
-    if (!isNotGuest)
-      return err(
-        new WorkspaceNotEnoughPermissionsError({
-          message: 'Guests cannot create projects in the workspace'
-        })
-      )
-
-    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) return err(new WorkspaceNoAccessError())
-
-    if (isWorkspacePlanStatusReadOnly(workspacePlan.status))
-      return err(new WorkspaceReadOnlyError())
-
-    if (isNewWorkspacePlan(workspacePlan.name)) {
-      const isEditor = await hasEditorSeat(loaders)({
-        userId: userId!,
-        workspaceId
-      })
-      if (!isEditor) return err(new WorkspaceNoEditorSeatError())
+    if (ensuredProjectsAccepted.isErr) {
+      return err(ensuredProjectsAccepted.error)
     }
 
-    const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
-    if (!workspaceLimits) return err(new WorkspaceNoAccessError())
-
-    // no limits imposed
-    if (workspaceLimits.projectCount === null) return ok()
-    const currentProjectCount = await loaders.getWorkspaceProjectCount({
-      workspaceId
-    })
-
-    // this will not happen in practice
-    if (currentProjectCount === null) return err(new WorkspaceNoAccessError())
-
-    return currentProjectCount < workspaceLimits.projectCount
-      ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+    return ok()
   }
