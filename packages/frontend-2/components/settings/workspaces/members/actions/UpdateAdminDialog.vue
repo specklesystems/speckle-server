@@ -39,20 +39,19 @@
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
           />
-          <p
-            v-if="needsEditorUpgrade && !hasAvailableEditorSeats"
-            class="text-foreground-2 text-body-xs mt-4"
-          >
-            You have an unused Editor seat that is already paid for, so the change will
-            not incur any charges.
-          </p>
-          <p
-            v-if="needsEditorUpgrade && !hasAvailableEditorSeats && !isUnlimitedPlan"
-            class="text-foreground-2 text-body-xs mt-4"
-          >
-            Note that the Editor seat is a paid seat type and this change will incur
-            additional charges to your subscription.
-          </p>
+          <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
+            <p
+              v-if="hasAvailableEditorSeats"
+              class="text-foreground-2 text-body-xs mt-4"
+            >
+              You have an unused Editor seat that is already paid for, so the change
+              will not incur any charges.
+            </p>
+            <p v-else class="text-foreground-2 text-body-xs mt-4">
+              Note that the Editor seat is a paid seat type and this change will incur
+              additional charges to your subscription.
+            </p>
+          </template>
         </CommonCard>
       </template>
 
@@ -67,7 +66,7 @@
         </NuxtLink>
       </p>
 
-      <p v-if="isPurchasablePlan" class="text-foreground-2 text-body-xs mt-3">
+      <p v-if="isPaidPlan" class="text-foreground-2 text-body-xs mt-3">
         Note that the Editor seat is a paid seat type if your workspace is subscribed to
         one of the paid plans.
       </p>
@@ -107,7 +106,7 @@ const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  isPurchasablePlan,
+  isPaidPlan,
   editorSeatPriceFormatted
 } = useWorkspacePlan(props.workspace?.slug || '')
 

@@ -108,6 +108,14 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
     }
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 

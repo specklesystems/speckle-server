@@ -1,9 +1,8 @@
 import { Version } from '@/modules/core/domain/commits/types'
-import { Project } from '@/modules/core/domain/streams/types'
 import { GetWorkspaceLimits } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations'
 import dayjs from 'dayjs'
 
-const PersonalProjectsLimits: {
+export const PersonalProjectsLimits: {
   versionHistory: { value: number; unit: 'week' }
 } = {
   versionHistory: {
@@ -22,35 +21,48 @@ export const getLimitedReferencedObjectFactory =
   }) =>
   async ({
     version,
-    project
+    workspaceId
   }: {
     version: Pick<Version, 'referencedObject' | 'createdAt'>
-    project: Pick<Project, 'workspaceId'>
+    workspaceId?: string | null
   }) => {
-    if (project?.workspaceId) {
-      const workspaceLimits = await getWorkspaceLimits({
-        workspaceId: project.workspaceId
-      })
-      if (!workspaceLimits?.versionsHistory) {
-        return version.referencedObject
+    const limitDate = await getDateFromLimitsFactory({
+      environment: { personalProjectsLimitEnabled },
+      getWorkspaceLimits
+    })({ workspaceId })
+
+    if (dayjs(limitDate).isAfter(version.createdAt)) return null
+    return version.referencedObject
+  }
+
+export const getDateFromLimitsFactory =
+  ({
+    getWorkspaceLimits,
+    environment: { personalProjectsLimitEnabled }
+  }: {
+    getWorkspaceLimits: GetWorkspaceLimits
+    environment: { personalProjectsLimitEnabled: boolean }
+  }) =>
+  async ({ workspaceId }: { workspaceId?: string | null }) => {
+    if (workspaceId) {
+      const limits = await getWorkspaceLimits({ workspaceId })
+      if (!limits?.versionsHistory) {
+        return null
       }
-      const oneWeekAgo = dayjs().subtract(
-        workspaceLimits.versionsHistory.value,
-        workspaceLimits.versionsHistory.unit
-      )
-      if (oneWeekAgo.isAfter(version.createdAt)) return null
-      return version.referencedObject
+
+      return dayjs()
+        .subtract(limits.versionsHistory.value, limits.versionsHistory.unit)
+        .toDate()
     }
 
     if (!personalProjectsLimitEnabled) {
-      return version.referencedObject
+      return null
     }
 
-    const oneWeekAgo = dayjs().subtract(
-      PersonalProjectsLimits.versionHistory.value,
-      PersonalProjectsLimits.versionHistory.unit
-    )
-
-    if (oneWeekAgo.isAfter(version.createdAt)) return null
-    return version.referencedObject
+    return dayjs()
+      .subtract(
+        PersonalProjectsLimits.versionHistory.value,
+        PersonalProjectsLimits.versionHistory.unit
+      )
+      .toDate()
   }

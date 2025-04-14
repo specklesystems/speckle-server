@@ -177,7 +177,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
     const productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
     const priceId = getWorkspacePlanPriceId({
       workspacePlan: workspacePlan.name,
-      billingInterval: workspaceSubscription.billingInterval
+      billingInterval: workspaceSubscription.billingInterval,
+      currency: workspaceSubscription.currency
     })
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
@@ -265,7 +266,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
         productId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
         priceId = getWorkspacePlanPriceId({
           workspacePlan: 'guest',
-          billingInterval: workspaceSubscription.billingInterval
+          billingInterval: workspaceSubscription.billingInterval,
+          currency: workspaceSubscription.currency
         })
         break
       case 'workspace:admin':
@@ -279,7 +281,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
         productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
         priceId = getWorkspacePlanPriceId({
           workspacePlan: workspacePlan.name,
-          billingInterval: workspaceSubscription.billingInterval
+          billingInterval: workspaceSubscription.billingInterval,
+          currency: workspaceSubscription.currency
         })
         break
       default:
