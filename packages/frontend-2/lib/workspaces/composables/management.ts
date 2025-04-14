@@ -48,6 +48,7 @@ import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
 import type { ApolloCache } from '@apollo/client/core'
 import { workspaceLastAdminCheckQuery } from '../graphql/queries'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -369,6 +370,8 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
+  const { mutateActiveWorkspaceSlug } = useNavigation()
+
   return async (
     input: WorkspaceCreateInput,
     options?: Partial<{
@@ -420,6 +423,7 @@ export function useCreateWorkspace() {
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
+        mutateActiveWorkspaceSlug(res.data?.workspaceMutations.create.slug)
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
