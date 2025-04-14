@@ -196,7 +196,7 @@ export const migrateWorkspacePlan =
         case 'proUnlimitedInvoiced':
         case 'teamUnlimitedInvoiced':
         case 'unlimited':
-          // this is just double checking that everythin is right
+          // this is just double checking that everything is right
           // the switch above sets things up properly
           throw new Error('Cannot upgrade stripe for a non paid plan')
       }
@@ -223,7 +223,8 @@ export const migrateWorkspacePlan =
       const productId = getWorkspacePlanProductId({ workspacePlan: newTargetPlan })
       const priceId = getWorkspacePlanPriceId({
         workspacePlan: newTargetPlan,
-        billingInterval: workspaceSubscription.billingInterval
+        billingInterval: workspaceSubscription.billingInterval,
+        currency: workspaceSubscription.currency
       })
 
       const subscriptionData: SubscriptionDataInput = cloneDeep(
