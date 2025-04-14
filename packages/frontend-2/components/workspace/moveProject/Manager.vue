@@ -67,7 +67,7 @@ import {
 import { workspaceCreateRoute } from '~/lib/common/helpers/route'
 
 graphql(`
-  fragment WorkspaceMoveProjectManager_Project on Project {
+  fragment WorkspaceMoveProjectManager_ProjectBase on Project {
     id
     name
     modelCount: models(limit: 0) {
@@ -76,9 +76,16 @@ graphql(`
     versions(limit: 0) {
       totalCount
     }
+  }
+`)
+
+graphql(`
+  fragment WorkspaceMoveProjectManager_Project on Project {
+    ...WorkspaceMoveProjectManager_ProjectBase
     workspace {
+      id
       permissions {
-        canMoveProjectToWorkspace(projectId: $id) {
+        canMoveProjectToWorkspace(projectId: $projectId) {
           ...FullPermissionCheckResult
         }
       }

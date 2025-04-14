@@ -109,7 +109,7 @@ const {
     cursor: null as string | null,
     filter: {
       search: search.value?.length ? search.value : null,
-      workspaceId: null
+      personalOnly: true
     }
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
