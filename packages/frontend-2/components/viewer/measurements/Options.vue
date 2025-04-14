@@ -37,6 +37,15 @@
       />
       <span class="text-body-2xs font-medium">Snap to vertices</span>
     </div>
+    <div class="py-1.5 px-3 flex items-center border-b border-outline-2">
+      <FormCheckbox
+        name="Chain Measurements"
+        hide-label
+        :model-value="measurementParams.chain"
+        @update:model-value="() => toggleMeasurementsChaining()"
+      />
+      <span class="text-body-2xs font-medium">Chain Measurements</span>
+    </div>
     <div class="pb-3 flex flex-col">
       <div class="flex flex-col gap-1.5 p-3 pt-2 pb-3">
         <h6 class="text-body-2xs font-medium">Units</h6>
@@ -87,6 +96,7 @@ const measurementParams = ref({
   visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
+  chain: false,
   units: selectedUnit.value,
   precision: measurementPrecision.value
 })
@@ -106,6 +116,11 @@ const onChangeMeasurementUnits = (newUnit: string) => {
 
 const toggleMeasurementsSnap = () => {
   measurementParams.value.vertexSnap = !measurementParams.value.vertexSnap
+  setMeasurementOptions(measurementParams.value)
+}
+
+const toggleMeasurementsChaining = () => {
+  measurementParams.value.chain = !measurementParams.value.chain
   setMeasurementOptions(measurementParams.value)
 }
 
