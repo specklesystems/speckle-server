@@ -9,10 +9,13 @@ import { Loaders } from '../../../domain/loaders.js'
 import {
   CommentNotFoundError,
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
@@ -38,6 +41,9 @@ export const canArchiveProjectCommentPolicy: AuthPolicy<
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof CommentNotFoundError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>

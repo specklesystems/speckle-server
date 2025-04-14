@@ -1,5 +1,4 @@
 import { err, ok } from 'true-myth/result'
-import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
@@ -10,13 +9,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
-} from '../../domain/authErrors.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
-import { Loaders } from '../../domain/loaders.js'
-import { AuthPolicy } from '../../domain/policies.js'
-import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../fragments/projects.js'
+} from '../../../domain/authErrors.js'
+import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
+import { Loaders } from '../../../domain/loaders.js'
+import { AuthPolicy } from '../../../domain/policies.js'
+import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
 
-export const canReadProjectWebhooksPolicy: AuthPolicy<
+export const canCreateProjectVersionPolicy: AuthPolicy<
   | typeof Loaders.getProject
   | typeof Loaders.getEnv
   | typeof Loaders.getServerRole
@@ -24,33 +23,31 @@ export const canReadProjectWebhooksPolicy: AuthPolicy<
   | typeof Loaders.getWorkspace
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
-  | typeof Loaders.getProjectRole
-  | typeof Loaders.getAdminOverrideEnabled,
+  | typeof Loaders.getProjectRole,
   MaybeUserContext & ProjectContext,
   InstanceType<
     | typeof ProjectNotFoundError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
-    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof WorkspaceNotEnoughPermissionsError
     | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    // Ensure user has at least implicit ownership & read access
-    const hasReadAccess = await ensureImplicitProjectMemberWithReadAccessFragment(
+    // Ensure user has at least implicit membership & write access
+    const hasWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
       loaders
     )({
       userId,
-      projectId,
-      role: Roles.Stream.Owner
+      projectId
     })
-    if (hasReadAccess.isErr) {
-      return err(hasReadAccess.error)
+    if (hasWriteAccess.isErr) {
+      return err(hasWriteAccess.error)
     }
 
     return ok()

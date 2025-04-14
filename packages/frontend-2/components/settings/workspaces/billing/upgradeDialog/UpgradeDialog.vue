@@ -5,8 +5,6 @@
     :buttons="dialogButtons"
     max-width="md"
   >
-    {{ isChangingPlan }}
-    {{ isSamePlanWithAddon }}
     <SettingsWorkspacesBillingUpgradeDialogSelectAddOn
       v-if="showAddonSelect"
       v-model:include-unlimited-addon="includeUnlimitedAddon"
