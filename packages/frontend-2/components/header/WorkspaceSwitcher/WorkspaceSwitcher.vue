@@ -54,6 +54,7 @@
               title="Workspaces"
               :icon-click="isGuest ? undefined : handlePlusClick"
               icon-text="Create workspace"
+              always-show-icon
             >
               <HeaderWorkspaceSwitcherItem
                 v-for="item in workspaces"

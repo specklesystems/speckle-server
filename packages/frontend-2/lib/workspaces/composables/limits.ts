@@ -46,6 +46,7 @@ export const useWorkspaceLimits = (slug: string) => {
   const remainingProjectCount = computed(() =>
     limits.value.projectCount ? limits.value.projectCount - projectCount.value : 0
   )
+
   const remainingModelCount = computed(() =>
     limits.value.modelCount ? limits.value.modelCount - modelCount.value : 0
   )
