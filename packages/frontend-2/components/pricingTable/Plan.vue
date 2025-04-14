@@ -58,7 +58,7 @@
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <PricingTablePlanFeature
         v-for="feature in commonFeatures"
-        :key="feature"
+        :key="feature.displayName"
         :display-name="feature.displayName"
         :description="feature.description"
         is-included
