@@ -17,8 +17,8 @@ export async function getResourceUrls(
   authToken?: string
 ): Promise<string[]> {
   /** I'm up for a better way of doing this */
-  if (url.includes('streams')) return getOldResourceUrls(url, authToken)
-  return getNewResourceUrls(url, authToken)
+  if (url.includes('streams')) return (await getOldResourceUrls(url, authToken)) || []
+  return (await getNewResourceUrls(url, authToken)) || []
 }
 
 async function getOldResourceUrls(url: string, authToken?: string): Promise<string[]> {
@@ -103,7 +103,10 @@ async function getCommitReferencedObjectUrl(
   return `${ref.origin}/streams/${ref.streamId}/objects/${data.stream.commit.referencedObject}`
 }
 
-async function getNewResourceUrls(url: string, authToken?: string): Promise<string[]> {
+async function getNewResourceUrls(
+  url: string,
+  authToken?: string
+): Promise<string[] | void> {
   const parsed = new URL(decodeURI(url))
   const params = parsed.href.match(/[^/]+$/)
   if (!params) {
@@ -142,7 +145,9 @@ async function getNewResourceUrls(url: string, authToken?: string): Promise<stri
     }
   }
 
-  return (await Promise.all(promises)).flat()
+  return Promise.all(promises)
+    .then((results) => results.flatMap((val) => (Array.isArray(val) ? val : [val])))
+    .catch((reason) => Logger.error(reason))
 }
 
 async function objectResourceToUrl(
@@ -208,14 +213,15 @@ async function runModelLastVersionQuery(
   try {
     const data = await getResponse(res)
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.versions.items[0].referencedObject}`
-  } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${
-        resource.modelId
-      }. Error: ${e instanceof Error ? e.message : e}`
+  } catch (e: unknown) {
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId} and model ${
+          resource.modelId
+        }. Error: ${e instanceof Error ? e.message : e}`
+      )
     )
   }
-  return ''
 }
 
 async function runModelVersionQuery(
@@ -249,13 +255,14 @@ async function runModelVersionQuery(
     const data = await getResponse(res)
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.version.referencedObject}`
   } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${
-        resource.modelId
-      }. Error: ${e instanceof Error ? e.message : e}`
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId} and model ${
+          resource.modelId
+        }. Error: ${e instanceof Error ? e.message : e}`
+      )
     )
   }
-  return ''
 }
 
 async function runAllModelsQuery(
@@ -298,13 +305,14 @@ async function runAllModelsQuery(
     )
     return urls
   } catch (e) {
-    Logger.error(
-      `Could not get object URLs for project ${ref.projectId}. Error: ${
-        e instanceof Error ? e.message : e
-      }`
+    return Promise.reject(
+      new Error(
+        `Could not get object URLs for project ${ref.projectId}. Error: ${
+          e instanceof Error ? e.message : e
+        }`
+      )
     )
   }
-  return ['']
 }
 
 async function getResponse(res: Response) {
