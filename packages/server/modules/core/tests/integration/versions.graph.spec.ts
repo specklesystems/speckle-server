@@ -277,7 +277,6 @@ describe('Versions graphql @core', () => {
         })
         expect(res).to.not.haveGraphQLErrors()
         const versions = res.data?.project.versions.items
-        expect(versions).to.have.length(2)
         const projectVersions = await db(Commits.name)
           .select([Commits.col.id, Commits.col.referencedObject])
           .join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)

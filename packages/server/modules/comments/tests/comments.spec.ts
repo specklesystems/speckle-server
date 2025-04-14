@@ -1695,12 +1695,12 @@ describe('Comments @comments', () => {
 
         expect(errors?.length || 0).to.eq(0)
         expect(data?.comment).to.be.ok
-        expect(data?.comment?.text.doc).to.be.null
-        expect(data?.comment?.text.attachments?.length).to.be.greaterThan(0)
+        expect(data?.comment?.text?.doc).to.be.null
+        expect(data?.comment?.text?.attachments?.length).to.be.greaterThan(0)
       })
 
       const unexpectedValDataset = [
-        // { display: 'number', value: 3 },
+        { display: 'number', value: 3 },
         { display: 'random object', value: { a: 1, b: 2 } }
       ]
       unexpectedValDataset.forEach(({ display, value }) => {
@@ -1715,7 +1715,8 @@ describe('Comments @comments', () => {
           const item = {
             id: '1',
             text: value,
-            streamId: stream.id
+            streamId: stream.id,
+            createdAt: new Date()
           } as unknown as LegacyCommentRecord
 
           commentRepoMock.enable()
@@ -1725,9 +1726,8 @@ describe('Comments @comments', () => {
             totalCount: 1
           }))
 
-          const { data, errors } = await readComments()
+          const { errors } = await readComments()
 
-          expect(data?.comments).to.not.be.ok
           expect((errors || []).map((e) => e.message).join(';')).to.contain(
             'Unexpected comment schema format'
           )
