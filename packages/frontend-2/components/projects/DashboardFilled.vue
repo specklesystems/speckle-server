@@ -6,6 +6,7 @@
         :project="project"
         :show-workspace-link="showWorkspaceLink"
         :workspace-page="workspacePage"
+        @move-project="$emit('moveProject', $event)"
       />
     </div>
   </div>
@@ -18,6 +19,10 @@ import type {
   ProjectsDashboardFilledProjectFragment,
   ProjectsDashboardFilledUserFragment
 } from '~~/lib/common/generated/gql/graphql'
+
+defineEmits<{
+  moveProject: (projectId: string) => void
+}>()
 
 const props = defineProps<{
   projects: ProjectsDashboardFilledProjectFragment | ProjectsDashboardFilledUserFragment

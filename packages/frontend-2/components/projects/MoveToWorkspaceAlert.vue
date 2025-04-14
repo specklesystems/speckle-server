@@ -26,7 +26,7 @@
           </div>
 
           <div class="flex gap-2 mt-2 mb-3">
-            <FormButton @click="showMoveProjectDialog = true">
+            <FormButton @click="$emit('moveProject', projectId)">
               {{ projectId ? 'Move project' : 'Show projects to move' }}
             </FormButton>
             <FormButton
@@ -41,11 +41,6 @@
         </div>
       </div>
     </CommonCard>
-    <WorkspaceMoveProjectManager
-      v-if="showMoveProjectDialog"
-      v-model:open="showMoveProjectDialog"
-      :project-id="projectId"
-    />
   </div>
 </template>
 
@@ -57,5 +52,7 @@ defineProps<{
   projectId?: string
 }>()
 
-const showMoveProjectDialog = ref(false)
+defineEmits<{
+  moveProject: (projectId: string) => void
+}>()
 </script>
