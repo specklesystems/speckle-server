@@ -26,11 +26,8 @@
           </div>
 
           <div class="flex gap-2 mt-2 mb-3">
-            <FormButton v-if="projectId" @click="onMoveProject">
-              Move project
-            </FormButton>
-            <FormButton v-else @click="onShowProjectsToMove">
-              Show projects to move
+            <FormButton @click="showMoveProjectDialog = true">
+              {{ projectId ? 'Move project' : 'Show projects to move' }}
             </FormButton>
             <FormButton
               color="outline"
@@ -44,57 +41,21 @@
         </div>
       </div>
     </CommonCard>
-    <ProjectsMoveToWorkspaceDialog
-      v-model:open="showMoveToWorkspaceDialog"
-      :project="selectedProject"
-      event-source="move-to-workspace-alert"
+    <WorkspaceMoveProjectManager
+      v-if="showMoveProjectDialog"
+      v-model:open="showMoveProjectDialog"
+      :project-id="projectId"
     />
-    <WorkspaceMoveProjectsDialog v-model:open="showMoveProjectsDialog" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
-import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
-import type { ProjectsMoveToWorkspaceDialog_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { moveToWorkspaceAlertQuery } from '~/lib/workspaces/graphql/queries'
 
-graphql(`
-  fragment MoveToWorkspaceAlert_Project on Project {
-    ...ProjectsMoveToWorkspaceDialog_Project
-  }
-`)
-
-const props = defineProps<{
+defineProps<{
   projectId?: string
 }>()
 
-const showMoveToWorkspaceDialog = ref(false)
-const showMoveProjectsDialog = ref(false)
-const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | undefined>(
-  undefined
-)
-
-const { result } = useQuery(
-  moveToWorkspaceAlertQuery,
-  () => ({
-    id: props.projectId || ''
-  }),
-  () => ({
-    enabled: !!props.projectId
-  })
-)
-
-const onMoveProject = () => {
-  if (!props.projectId) return
-  selectedProject.value = result.value?.project
-  showMoveToWorkspaceDialog.value = true
-}
-
-const onShowProjectsToMove = () => {
-  selectedProject.value = undefined
-  showMoveProjectsDialog.value = true
-}
+const showMoveProjectDialog = ref(false)
 </script>
