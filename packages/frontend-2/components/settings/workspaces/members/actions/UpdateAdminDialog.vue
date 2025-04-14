@@ -38,6 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
+            :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
@@ -49,7 +50,10 @@
             </p>
             <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
               You'll be charged immediately for the partial period from today until your
-              plan renewal on Feb 27, 2026 (£600/year adjusted for the remaining time).
+              plan renewal on {{ currentBillingCycleEnd }} ({{
+                editorSeatPriceFormatted
+              }}/{{ intervalIsYearly ? 'year' : 'month' }} adjusted for the remaining
+              time).
             </p>
           </template>
         </CommonCard>
@@ -88,7 +92,9 @@ const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  editorSeatPriceFormatted
+  editorSeatPriceFormatted,
+  intervalIsYearly,
+  currentBillingCycleEnd
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const needsEditorUpgrade = computed(() => {

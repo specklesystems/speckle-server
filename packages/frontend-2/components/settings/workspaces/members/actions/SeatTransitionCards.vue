@@ -32,12 +32,17 @@
           </div>
         </div>
         <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
-          <template v-if="hasAvailableSeat || isFreePlan">
-            <div class="line-through text-foreground-2">{{ seatPrice }}/month</div>
+          <template v-if="hasAvailableSeat">
+            <div class="line-through text-foreground-2">
+              {{ seatPrice }}/{{ billingInterval }}
+            </div>
+            <div class="text-primary">Free</div>
+          </template>
+          <template v-else-if="isFreePlan || isUnlimitedPlan">
             <div class="text-primary">Free</div>
           </template>
           <template v-else>
-            <div class="text-primary">{{ seatPrice }}/month</div>
+            <div class="text-primary">{{ seatPrice }}/{{ billingInterval }}</div>
           </template>
         </div>
         <div v-else class="ml-auto text-primary font-medium">Free</div>
@@ -56,6 +61,7 @@ const props = defineProps<{
   isGuest: boolean
   hasAvailableSeat: boolean
   seatPrice: string
+  billingInterval: 'monthly' | 'yearly'
 }>()
 
 const editorDescription = computed(() =>
