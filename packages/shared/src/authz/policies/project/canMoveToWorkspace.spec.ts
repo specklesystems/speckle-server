@@ -6,6 +6,14 @@ import { Project } from '../../domain/projects/types.js'
 import { Roles, SeatTypes } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
+import {
+  ProjectNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError,
+  WorkspaceLimitsReachedError,
+  WorkspaceNotEnoughPermissionsError,
+  WorkspaceProjectMoveInvalidError,
+  WorkspacesNotEnabledError
+} from '../../domain/authErrors.js'
 
 const buildCanMoveToWorkspace = (
   overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
@@ -68,7 +76,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspacesNotEnabled'
+      code: WorkspacesNotEnabledError.code
     })
   })
   it('requires the project to not be in a workspace', async () => {
@@ -81,7 +89,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceProjectMoveInvalid'
+      code: WorkspaceProjectMoveInvalidError.code
     })
   })
   it('requires user to be a server user', async () => {
@@ -92,7 +100,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'ServerNoAccess'
+      code: ServerNotEnoughPermissionsError.code
     })
   })
   it('requires user to be project owner', async () => {
@@ -103,7 +111,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'ProjectNoAccess'
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
   it('requires user to be target workspace admin', async () => {
@@ -114,7 +122,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceNoAccess'
+      code: WorkspaceNotEnoughPermissionsError.code
     })
   })
   it('forbids move if target workspace will exceed plan limits', async () => {
@@ -132,7 +140,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceLimitsReached',
+      code: WorkspaceLimitsReachedError.code,
       payload: { limit: 'projectCount' }
     })
   })

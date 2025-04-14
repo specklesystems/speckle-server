@@ -9,10 +9,13 @@ import {} from '../../fragments/server.js'
 import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 
@@ -31,9 +34,12 @@ export const canReadProjectPolicy: AuthPolicy<
     | typeof ProjectNotFoundError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>

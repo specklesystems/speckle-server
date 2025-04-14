@@ -13,7 +13,7 @@
               />
               <div
                 v-if="hasDiscoverableWorkspaces"
-                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-primary rounded-full"
+                class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
               />
             </div>
             <p class="text-body-xs text-foreground truncate max-w-40">
@@ -66,6 +66,7 @@
                 @on-click="onWorkspaceSelect(item.slug)"
               />
               <HeaderWorkspaceSwitcherItem
+                v-if="hasProjectsToMove"
                 :is-active="route.path === projectsRoute"
                 name="Personal projects"
                 tag="LEGACY"
@@ -80,9 +81,14 @@
                 @click="showDiscoverableWorkspacesModal = true"
               >
                 <p class="text-body-xs text-foreground">Join existing workspaces</p>
-                <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
-                  {{ discoverableWorkspacesCount }}
-                </CommonBadge>
+                <div class="relative">
+                  <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
+                    {{ discoverableWorkspacesCount }}
+                  </CommonBadge>
+                  <div
+                    class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
+                  />
+                </div>
               </NuxtLink>
             </div>
           </MenuItem>
@@ -98,7 +104,10 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import {
+  useActiveUser,
+  useActiveUserProjectsToMove
+} from '~~/lib/auth/composables/activeUser'
 import {
   workspaceCreateRoute,
   workspaceRoute,
@@ -173,6 +182,7 @@ const {
   discoverableWorkspacesCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
+const { hasProjectsToMove } = useActiveUserProjectsToMove()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('lg')
 

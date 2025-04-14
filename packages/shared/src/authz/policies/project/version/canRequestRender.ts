@@ -1,5 +1,4 @@
 import { err, ok } from 'true-myth/result'
-import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
@@ -10,13 +9,13 @@ import {
   WorkspaceNoAccessError,
   WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
-} from '../../domain/authErrors.js'
-import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
-import { Loaders } from '../../domain/loaders.js'
-import { AuthPolicy } from '../../domain/policies.js'
-import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../fragments/projects.js'
+} from '../../../domain/authErrors.js'
+import { MaybeUserContext, ProjectContext } from '../../../domain/context.js'
+import { Loaders } from '../../../domain/loaders.js'
+import { AuthPolicy } from '../../../domain/policies.js'
+import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../../fragments/projects.js'
 
-export const canReadProjectWebhooksPolicy: AuthPolicy<
+export const canRequestProjectVersionRenderPolicy: AuthPolicy<
   | typeof Loaders.getProject
   | typeof Loaders.getEnv
   | typeof Loaders.getServerRole
@@ -31,23 +30,22 @@ export const canReadProjectWebhooksPolicy: AuthPolicy<
     | typeof ProjectNotFoundError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
-    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof WorkspaceNotEnoughPermissionsError
     | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>
   async ({ userId, projectId }) => {
-    // Ensure user has at least implicit ownership & read access
+    // Ensure user has at least implicit membership & read access
     const hasReadAccess = await ensureImplicitProjectMemberWithReadAccessFragment(
       loaders
     )({
       userId,
-      projectId,
-      role: Roles.Stream.Owner
+      projectId
     })
     if (hasReadAccess.isErr) {
       return err(hasReadAccess.error)
