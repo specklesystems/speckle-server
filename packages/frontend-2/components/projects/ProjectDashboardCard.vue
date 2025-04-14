@@ -20,7 +20,10 @@
             Updated
             {{ updatedAt.relative }}
           </span>
-          <span class="text-body-3xs capitalize mb-2 text-foreground-2 select-none">
+          <span
+            v-if="project.role"
+            class="text-body-3xs capitalize mb-2 text-foreground-2 select-none"
+          >
             {{ RoleInfo.Stream[project.role as StreamRoles].title }}
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />

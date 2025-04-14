@@ -6,7 +6,8 @@
       :to="workspaceRoute(activeWorkspaceSlug || '')"
     >
       <p class="text-body-2xs text-foreground-2 capitalize truncate">
-        {{ workspace?.plan?.name }} · {{ workspace?.team?.totalCount ?? 0 }} member{{
+        {{ formatName(workspace?.plan?.name) }} ·
+        {{ workspace?.team?.totalCount ?? 0 }} member{{
           (workspace?.team?.totalCount ?? 0) > 1 ? 's' : ''
         }}
       </p>
@@ -22,16 +23,23 @@
               Settings
             </FormButton>
           </MenuItem>
-          <MenuItem>
-            <FormButton
-              full-width
-              color="outline"
-              size="sm"
-              :disabled="workspace?.role !== Roles.Workspace.Admin"
-              @click="showInviteDialog = true"
+          <MenuItem v-if="workspace?.role !== Roles.Workspace.Guest">
+            <div
+              v-tippy="
+                isAdmin ? undefined : 'Only admins can invite people to the workspace'
+              "
+              class="w-full"
             >
-              Invite members
-            </FormButton>
+              <FormButton
+                full-width
+                color="outline"
+                size="sm"
+                :disabled="!isAdmin"
+                @click="showInviteDialog = true"
+              >
+                Invite members
+              </FormButton>
+            </div>
           </MenuItem>
         </div>
       </template>
@@ -48,6 +56,7 @@ import type { HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment } from '~
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { workspaceRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {
@@ -65,11 +74,13 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
 }>()
 
 const { activeWorkspaceSlug } = useNavigation()
 
 const showInviteDialog = ref(false)
+
+const isAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 </script>

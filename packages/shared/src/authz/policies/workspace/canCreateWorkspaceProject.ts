@@ -2,6 +2,7 @@ import { AuthPolicy } from '../../domain/policies.js'
 import {
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -41,6 +42,7 @@ export const canCreateWorkspaceProjectPolicy: AuthPolicy<
   | InstanceType<typeof WorkspaceLimitsReachedError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
 > =
   (loaders) =>
   async ({ userId, workspaceId }) => {

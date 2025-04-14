@@ -6,10 +6,13 @@ import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../fragme
 import { Loaders } from '../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 
@@ -29,7 +32,10 @@ export const canUpdateProjectPolicy: AuthPolicy<
     | typeof WorkspaceNoAccessError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>

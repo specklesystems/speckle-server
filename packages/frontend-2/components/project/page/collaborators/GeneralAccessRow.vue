@@ -6,22 +6,19 @@
       <WorkspaceAvatar :name="name || ''" :logo="logo" size="sm" />
       <p class="text-body-xs">Workspace members</p>
     </div>
-    <ProjectPageTeamPermissionSelect
-      v-if="canEdit"
-      :model-value="generalAccessRole"
-      :disabled-roles="[Roles.Stream.Contributor]"
-      disabled-item-tooltip="The feature will be available soon"
-      hide-owner
-    />
+    <ProjectPageTeamAccessSelect v-if="canEdit" :model-value="generalAccessRole" />
     <div v-else class="flex items-center justify-end text-body-2xs">
-      {{ roleSelectItems[generalAccessRole].title }}
+      {{ accessSelectItems[generalAccessRole].title }}
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { type StreamRoles, type MaybeNullOrUndefined, Roles } from '@speckle/shared'
-import { roleSelectItems } from '~~/lib/projects/helpers/components'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  AccessSelectItems,
+  accessSelectItems
+} from '~~/lib/projects/helpers/components'
 
 defineProps<{
   name?: MaybeNullOrUndefined<string>
@@ -29,5 +26,5 @@ defineProps<{
   canEdit: boolean
 }>()
 
-const generalAccessRole = ref<StreamRoles>(Roles.Stream.Reviewer)
+const generalAccessRole = ref<AccessSelectItems>(AccessSelectItems.Reviewer)
 </script>
