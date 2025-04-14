@@ -2,17 +2,34 @@
   <BillingTransitionCards :current-state="currentSeat" :new-state="newSeat">
     <template #current-state>
       <div class="flex items-center justify-between">
-        <div>
-          <div class="text-heading-sm">{{ currentSeat.title }}</div>
-          <div class="text-body-2xs">{{ currentSeat.description }}</div>
+        <div class="flex items-center gap-2">
+          <div
+            class="bg-foundation rounded-full border border-outline-3 h-10 w-10 flex items-center justify-center"
+          >
+            <EyeIcon class="w-5 h-5 text-foreground-2" />
+          </div>
+          <div>
+            <div class="text-body-2xs text-foreground">{{ currentSeat.title }}</div>
+            <div class="text-body-3xs text-foreground-2">
+              {{ currentSeat.description }}
+            </div>
+          </div>
         </div>
+        <div class="text-body-3xs font-medium text-foreground-2">Current</div>
       </div>
     </template>
     <template #new-state>
       <div class="flex items-center justify-between">
-        <div>
-          <div class="text-heading-sm">{{ newSeat.title }}</div>
-          <div class="text-body-2xs">{{ newSeat.description }}</div>
+        <div class="flex items-center gap-2">
+          <div
+            class="bg-foundation rounded-full border border-blue-200 h-10 w-10 flex items-center justify-center"
+          >
+            <PencilIcon class="w-4 h-4 text-foreground-2" />
+          </div>
+          <div>
+            <div class="text-body-2xs text-foreground">{{ newSeat.title }}</div>
+            <div class="text-body-3xs text-foreground-2">{{ newSeat.description }}</div>
+          </div>
         </div>
         <div v-if="isUpgrading" class="ml-auto flex items-center gap-1 font-medium">
           <template v-if="hasAvailableSeat || isFreePlan">
