@@ -3,10 +3,8 @@
     <Portal to="navigation">
       <HeaderNavLink
         v-if="project.workspace && isWorkspacesEnabled"
-        :to="
-          isWorkspaceNewPlansEnabled ? 'Home' : workspaceRoute(project.workspace.slug)
-        "
-        :name="project.workspace.name"
+        :to="workspaceRoute(project.workspace.slug)"
+        name="Home"
         :separator="false"
       />
       <HeaderNavLink v-else :to="projectsRoute" name="Projects" :separator="false" />
@@ -57,5 +55,4 @@ const props = defineProps<{
 }>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 </script>

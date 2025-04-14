@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          :name="isWorkspaceNewPlansEnabled ? 'Home' : workspace?.name"
+          name="Home"
           :separator="false"
         />
       </Portal>
@@ -148,7 +148,6 @@ const {
 } = useDebouncedTextInput({
   debouncedBy: 800
 })
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
