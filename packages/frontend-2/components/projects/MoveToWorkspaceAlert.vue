@@ -48,11 +48,9 @@
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
 
+defineEmits(['moveProject'])
+
 defineProps<{
   projectId?: string
-}>()
-
-defineEmits<{
-  moveProject: (projectId: string) => void
 }>()
 </script>
