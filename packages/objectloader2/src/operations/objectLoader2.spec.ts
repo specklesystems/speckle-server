@@ -5,6 +5,7 @@ import { Cache, Downloader } from './interfaces.js'
 import Queue from '../helpers/queue.js'
 import { MemoryDatabase } from './memoryDatabase.js'
 import { MemoryDownloader } from './memoryDownloader.js'
+import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -138,7 +139,7 @@ describe('objectloader2', () => {
     expect(r).toMatchSnapshot()
   })
 
-  test('can get root/child object from cache using iterator and getObject', async () => {
+  test('can get root/child object from memory cache using iterator and getObject', async () => {
     const child1Base = { id: 'child1Id', speckle_type: 'type' } as Base
     const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
 
@@ -161,8 +162,49 @@ describe('objectloader2', () => {
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      cache: new MemoryDatabase(records),
+      cache: new MemoryDatabase({ items: records }),
       downloader: new MemoryDownloader(rootId, records)
+    })
+    const r = []
+    const obj = loader.getObject({ id: child1.baseId })
+    for await (const x of loader.getObjectIterator()) {
+      r.push(x)
+    }
+
+    expect(obj).toBeDefined()
+    expect(r).toMatchSnapshot()
+    const obj2 = await obj
+    expect(obj2).toBe(child1Base)
+    expect(obj2).toMatchSnapshot()
+  })
+
+  test('can get root/child object from memory downloader using iterator and getObject', async () => {
+    const child1Base = { id: 'child1Id', speckle_type: 'type' } as Base
+    const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
+
+    const rootId = 'rootId'
+    const rootBase: Base = {
+      id: 'rootId',
+      speckle_type: 'type',
+      __closure: { child1Id: 100 }
+    }
+    const root = {
+      baseId: rootId,
+      base: rootBase
+    } as unknown as Item
+
+    const records: Record<string, Base> = {}
+    records[root.baseId] = rootBase
+    records[child1.baseId] = child1Base
+
+    const results: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue<Item>()
+    const loader = new ObjectLoader2({
+      serverUrl: 'a',
+      streamId: 'b',
+      objectId: root.baseId,
+      results,
+      cache: new MemoryDatabase(),
+      downloader: new MemoryDownloader(rootId, records, results)
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })

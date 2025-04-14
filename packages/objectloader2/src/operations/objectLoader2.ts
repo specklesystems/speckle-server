@@ -24,7 +24,7 @@ export default class ObjectLoader2 {
     this.#objectId = options.objectId
 
     this.#logger = options.logger || console.log
-    this.#gathered = new AsyncGeneratorQueue()
+    this.#gathered = options.results || new AsyncGeneratorQueue()
     this.#deferments = new DefermentManager()
     this.#database =
       options.cache ||
@@ -120,7 +120,7 @@ export default class ObjectLoader2 {
       serverUrl: 'dummy',
       streamId: 'dummy',
       objectId: root.id,
-      cache: new MemoryDatabase(records),
+      cache: new MemoryDatabase({ items: records }),
       downloader: new MemoryDownloader(root.id, records)
     })
     return loader
