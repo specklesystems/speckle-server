@@ -4,11 +4,16 @@
       <template #current-state>
         <div class="p-2">
           <p class="text-foreground text-body-3xs">
-            Current plan (billed {{ intervalIsYearly ? 'yearly' : 'monthly' }})
+            Current plan
+            <template v-if="!isFreePlan">
+              (billed {{ intervalIsYearly ? 'yearly' : 'monthly' }})
+            </template>
           </p>
           <div class="mt-2 flex justify-between items-center">
             <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
-            <p class="text-body-2xs">{{ currentEditorPrice }} editor seat/month</p>
+            <p v-if="!isFreePlan" class="text-body-2xs">
+              {{ currentEditorPrice }} editor seat/month
+            </p>
           </div>
           <template v-if="hasUnlimitedAddon">
             <div class="mt-2 flex justify-between items-center">
@@ -99,9 +104,8 @@ const props = defineProps<{
   billingInterval: BillingInterval
 }>()
 
-const { intervalIsYearly, plan, currency, hasUnlimitedAddon } = useWorkspacePlan(
-  props.slug
-)
+const { intervalIsYearly, plan, currency, hasUnlimitedAddon, isFreePlan } =
+  useWorkspacePlan(props.slug)
 const { prices: activeWorkspacePrices } = useActiveWorkspacePlanPrices()
 const { prices } = useWorkspacePlanPrices()
 const { addonPrices } = useWorkspaceAddonPrices()
