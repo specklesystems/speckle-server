@@ -54,6 +54,7 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { Version } from '@/modules/core/domain/commits/types'
 import { GraphQLResolveInfo } from 'graphql'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
@@ -154,17 +155,25 @@ export = {
   },
   VersionMutations: {
     async moveToModel(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const versionIds = args.input.versionIds
       throwIfResourceAccessNotAllowed({
-        resourceId: args.input.projectId,
+        resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        versionIds
+      })
+
       const canUpdateAll = await Promise.all(
-        args.input.versionIds.map(async (versionId) =>
+        versionIds.map(async (versionId) =>
           ctx.authPolicies.project.version.canUpdate({
             userId: ctx.userId,
-            projectId: args.input.projectId,
+            projectId,
             versionId
           })
         )
@@ -173,7 +182,6 @@ export = {
         throwIfAuthNotOk(result)
       })
 
-      const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
       const batchMoveCommits = batchMoveCommitsFactory({
@@ -184,20 +192,35 @@ export = {
         moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })
-      return await batchMoveCommits(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await batchMoveCommits(args.input, ctx.userId!),
+        {
+          logger,
+          operationName: 'moveVersionsToModel',
+          operationDescription: `Move versions to model`
+        }
+      )
     },
     async delete(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const versionIds = args.input.versionIds
       throwIfResourceAccessNotAllowed({
-        resourceId: args.input.projectId,
+        resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        versionIds
+      })
+
       const canUpdateAll = await Promise.all(
-        args.input.versionIds.map(async (versionId) =>
+        versionIds.map(async (versionId) =>
           ctx.authPolicies.project.version.canUpdate({
             userId: ctx.userId,
-            projectId: args.input.projectId,
+            projectId,
             versionId
           })
         )
@@ -206,7 +229,6 @@ export = {
         throwIfAuthNotOk(result)
       })
 
-      const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
       const batchDeleteCommits = batchDeleteCommitsFactory({
@@ -215,28 +237,43 @@ export = {
         deleteCommits: deleteCommitsFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })
-      await batchDeleteCommits(args.input, ctx.userId!)
+      await withOperationLogging(
+        async () => await batchDeleteCommits(args.input, ctx.userId!),
+        {
+          logger,
+          operationName: 'deleteVersions',
+          operationDescription: `Delete versions`
+        }
+      )
       return true
     },
     async update(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const versionId = args.input.versionId
       throwIfResourceAccessNotAllowed({
-        resourceId: args.input.projectId,
+        resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        versionId,
+        commitId: versionId //legacy
+      })
+
       const canUpdate = await ctx.authPolicies.project.version.canUpdate({
         userId: ctx.userId,
-        projectId: args.input.projectId,
-        versionId: args.input.versionId
+        projectId,
+        versionId
       })
       throwIfAuthNotOk(canUpdate)
 
-      const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
       const stream = await ctx.loaders
         .forRegion({ db: projectDb })
-        .commits.getCommitStream.load(args.input.versionId)
+        .commits.getCommitStream.load(versionId)
       if (!stream) {
         throw new CommitUpdateError('Commit stream not found')
       }
@@ -253,7 +290,14 @@ export = {
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
-      return await updateCommitAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await updateCommitAndNotify(args.input, ctx.userId!),
+        {
+          logger,
+          operationName: 'updateVersion',
+          operationDescription: `Update version`
+        }
+      )
     },
     async create(_parent, args, ctx) {
       const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
@@ -261,23 +305,33 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      const projectId = args.input.projectId
+      const modelId = args.input.modelId
+
       throwIfResourceAccessNotAllowed({
-        resourceId: args.input.projectId,
+        resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        modelId,
+        branchId: modelId //legacy
+      })
+
       const canCreate = await ctx.authPolicies.project.version.canCreate({
         userId: ctx.userId,
-        projectId: args.input.projectId
+        projectId
       })
       throwIfAuthNotOk(canCreate)
 
       await coreModule.executeHooks('onCreateVersionRequest', {
-        projectId: args.input.projectId
+        projectId
       })
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectDb = await getProjectDbClient({ projectId })
 
       const createCommitByBranchId = createCommitByBranchIdFactory({
         createCommit: createCommitFactory({ db: projectDb }),
@@ -290,41 +344,66 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      const commit = await createCommitByBranchId({
-        authorId: ctx.userId!,
-        streamId: args.input.projectId,
-        branchId: args.input.modelId,
-        message: args.input.message || null,
-        sourceApplication: args.input.sourceApplication || null,
-        objectId: args.input.objectId,
-        parents: args.input.parents || []
-      })
+      const commit = await withOperationLogging(
+        async () =>
+          await createCommitByBranchId({
+            authorId: ctx.userId!,
+            streamId: args.input.projectId,
+            branchId: args.input.modelId,
+            message: args.input.message || null,
+            sourceApplication: args.input.sourceApplication || null,
+            objectId: args.input.objectId,
+            parents: args.input.parents || []
+          }),
+        {
+          logger,
+          operationName: 'createVersion',
+          operationDescription: `Create a new version`
+        }
+      )
 
       return commit
     },
 
     async markReceived(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const versionId = args.input.versionId
       throwIfResourceAccessNotAllowed({
-        resourceId: args.input.projectId,
+        resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        versionId,
+        commitId: versionId //legacy
+      })
+
       const canReceive = await ctx.authPolicies.project.version.canReceive({
         userId: ctx.userId,
-        projectId: args.input.projectId
+        projectId
       })
       throwIfAuthNotOk(canReceive)
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectDb = await getProjectDbClient({ projectId })
 
-      await markCommitReceivedAndNotifyFactory({
-        getCommit: getCommitFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit
-      })({
-        input: args.input,
-        userId: ctx.userId!
-      })
+      await withOperationLogging(
+        async () =>
+          await markCommitReceivedAndNotifyFactory({
+            getCommit: getCommitFactory({ db: projectDb }),
+            emitEvent: getEventBus().emit
+          })({
+            input: args.input,
+            userId: ctx.userId!
+          }),
+        {
+          logger,
+          operationName: 'markVersionReceived',
+          operationDescription: `Mark version as received`
+        }
+      )
 
       return true
     }
