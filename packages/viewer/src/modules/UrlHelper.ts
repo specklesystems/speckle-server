@@ -15,10 +15,10 @@ interface CommitReferencedObjectUrl {
 export async function getResourceUrls(
   url: string,
   authToken?: string
-): Promise<string[]> {
+): Promise<string[] | void> {
   /** I'm up for a better way of doing this */
-  if (url.includes('streams')) return (await getOldResourceUrls(url, authToken)) || []
-  return (await getNewResourceUrls(url, authToken)) || []
+  if (url.includes('streams')) return getOldResourceUrls(url, authToken)
+  return getNewResourceUrls(url, authToken)
 }
 
 async function getOldResourceUrls(url: string, authToken?: string): Promise<string[]> {
@@ -145,9 +145,13 @@ async function getNewResourceUrls(
     }
   }
 
-  return Promise.all(promises)
-    .then((results) => results.flatMap((val) => (Array.isArray(val) ? val : [val])))
-    .catch((reason) => Logger.error(reason))
+  try {
+    const results = await Promise.all(promises)
+    return results.flatMap((val) => (Array.isArray(val) ? val : [val]))
+  } catch (e) {
+    Logger.error(e)
+    return []
+  }
 }
 
 async function objectResourceToUrl(
