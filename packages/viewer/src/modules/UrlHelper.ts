@@ -15,7 +15,7 @@ interface CommitReferencedObjectUrl {
 export async function getResourceUrls(
   url: string,
   authToken?: string
-): Promise<string[] | void> {
+): Promise<string[]> {
   /** I'm up for a better way of doing this */
   if (url.includes('streams')) return getOldResourceUrls(url, authToken)
   return getNewResourceUrls(url, authToken)
@@ -103,10 +103,7 @@ async function getCommitReferencedObjectUrl(
   return `${ref.origin}/streams/${ref.streamId}/objects/${data.stream.commit.referencedObject}`
 }
 
-async function getNewResourceUrls(
-  url: string,
-  authToken?: string
-): Promise<string[] | void> {
+async function getNewResourceUrls(url: string, authToken?: string): Promise<string[]> {
   const parsed = new URL(decodeURI(url))
   const params = parsed.href.match(/[^/]+$/)
   if (!params) {
