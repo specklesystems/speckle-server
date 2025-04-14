@@ -82,7 +82,7 @@
         is-included
         :display-name="
           planLimits.versionsHistory
-            ? `${planLimits.versionsHistory} day version history`
+            ? `${planLimits.versionsHistory.value} day version history`
             : 'Full version history'
         "
         description="Some tooltip text"
@@ -91,7 +91,7 @@
         is-included
         :display-name="
           planLimits.versionsHistory
-            ? `${planLimits.versionsHistory} day comment history`
+            ? `${planLimits.versionsHistory.value} day comment history`
             : 'Full comment history'
         "
         description="Some tooltip text"
@@ -112,8 +112,7 @@ import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
   WorkspacePlanFeaturesMetadata,
-  WorkspacePlanConfigs,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanConfigs
 } from '@speckle/shared'
 import {
   type WorkspacePlan,
@@ -123,7 +122,6 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
 const emit = defineEmits<{
@@ -146,22 +144,27 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { redirectToCheckout } = useBillingActions()
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
+  let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
-    return formatPrice(
+    basePrice =
       prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
-        WorkspacePlanBillingIntervals.Monthly
-      ]
-    )
+        isYearlyIntervalSelected.value
+          ? BillingInterval.Yearly
+          : BillingInterval.Monthly
+      ].amount || 0
   }
 
   return formatPrice({
-    amount: 0,
-    currency: props.currency || 'usd'
+    amount: basePrice
+      ? isYearlyIntervalSelected.value
+        ? basePrice / 12
+        : basePrice
+      : 0,
+    currency: props.currency || Currency.Usd
   })
 })
 
@@ -318,19 +321,6 @@ const badgeText = computed(() =>
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
-
-  if (props.hasSubscription) {
-    if (props.canUpgrade) {
-      emit('onUpgradeClick')
-    }
-  } else {
-    redirectToCheckout({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
+  emit('onUpgradeClick')
 }
 </script>
