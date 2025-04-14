@@ -57,44 +57,11 @@
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <PricingTablePlanFeature
+        v-for="feature in commonFeatures"
+        :key="feature"
+        :display-name="feature.displayName"
+        :description="feature.description"
         is-included
-        display-name="Unlimited editor and viewer seats"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        display-name="Unlimited guests"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.projectCount} project${
-          planLimits.projectCount === 1 ? '' : 's'
-        }`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.modelCount} models per workspace`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory.value} day version history`
-            : 'Full version history'
-        "
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory.value} day comment history`
-            : 'Full comment history'
-        "
-        description="Some tooltip text"
       />
       <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
@@ -147,6 +114,38 @@ const { prices } = useWorkspacePlanPrices()
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const commonFeatures = shallowRef([
+  {
+    displayName: 'Unlimited editor and viewer seats',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: 'Unlimited guests',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.projectCount} project${
+      planLimits.value.projectCount === 1 ? '' : 's'
+    }`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.modelCount} models per workspace`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day version history`
+      : 'Full version history',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day comment history`
+      : 'Full comment history',
+    description: 'Some tooltip text'
+  }
+])
 const planPrice = computed(() => {
   let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {

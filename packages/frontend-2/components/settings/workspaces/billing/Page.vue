@@ -1,5 +1,7 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
+    <BillingAlert v-if="showBillingAlert" :workspace="workspace" />
+
     <SettingsSectionHeader
       title="Billing and plans"
       text="Update your payment information or switch plans according to your needs"
@@ -44,6 +46,7 @@ import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -52,6 +55,7 @@ graphql(`
     subscription {
       currency
     }
+    ...BillingAlert_Workspace
   }
 `)
 
@@ -74,6 +78,14 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
+
+const showBillingAlert = computed(
+  () =>
+    workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+    workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
+    workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+
 watch(
   () => intervalIsYearly.value,
   (newVal) => {
