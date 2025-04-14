@@ -23,8 +23,8 @@
         <CommonCard class="!py-3">
           <p class="text-body-xs font-medium text-foreground">
             {{
-              isFreePlan || isUnlimitedPlan
-                ? 'Seat upgrade required'
+              isFreePlan || hasAvailableEditorSeats || isUnlimitedPlan
+                ? 'Seat change required'
                 : 'Seat purchase required'
             }}
           </p>
@@ -115,7 +115,7 @@ const title = computed(() => {
 const buttonText = computed(() => {
   switch (props.action) {
     case 'make':
-      return needsEditorUpgrade.value ? 'Upgrade and make admin' : 'Make an admin'
+      return needsEditorUpgrade.value ? 'Confirm and pay' : 'Make an admin'
     case 'remove':
       return 'Revoke admin access'
     default:
