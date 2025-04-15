@@ -578,6 +578,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
+- name: FF_ADMIN_OVERRIDE_ENABLED
+  value: {{ .Values.featureFlags.adminOverrideEnabled | quote }}
+
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -851,11 +854,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: DISABLE_FILE_UPLOADS
   value: "true"
 {{ end }}
-
-{{- if .Values.server.adminOverrideEnabled }}
-- name: ADMIN_OVERRIDE_ENABLED
-  value: "true"
-{{- end }}
 
 {{- if .Values.server.weeklyDigestEnabled }}
 - name: WEEKLY_DIGEST_ENABLED

@@ -27,8 +27,7 @@ export const canReadProjectPolicy: AuthPolicy<
   | typeof Loaders.getWorkspace
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
-  | typeof Loaders.getProjectRole
-  | typeof Loaders.getAdminOverrideEnabled,
+  | typeof Loaders.getProjectRole,
   MaybeUserContext & ProjectContext,
   InstanceType<
     | typeof ProjectNotFoundError

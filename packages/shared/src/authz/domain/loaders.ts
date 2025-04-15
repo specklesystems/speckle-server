@@ -7,7 +7,6 @@ import type {
   GetProjectRoleCounts
 } from './projects/operations.js'
 import type {
-  GetAdminOverrideEnabled,
   GetEnv,
   GetWorkspace,
   GetWorkspaceLimits,
@@ -66,7 +65,6 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceLimits: 'getWorkspaceLimits',
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession',
-  getAdminOverrideEnabled: 'getAdminOverrideEnabled',
   getComment: 'getComment',
   getModel: 'getModel',
   getVersion: 'getVersion'
@@ -79,7 +77,6 @@ export type AuthCheckContextLoaderKeys =
 
 export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
-  getAdminOverrideEnabled: GetAdminOverrideEnabled
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts

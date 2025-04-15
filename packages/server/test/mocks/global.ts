@@ -1,4 +1,6 @@
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { createGlobalMock, mockRequireModule } from '@/test/mockHelper'
+import type { FeatureFlags } from '@speckle/shared/dist/commonjs/environment'
 
 /**
  * Global mocks that can be re-used. Early setup ensures that mocks work.
@@ -42,13 +44,15 @@ export const StreamsRepositoryMock = mockRequireModule<
   typeof import('@/modules/core/repositories/streams')
 >(['@/modules/core/repositories/streams'])
 
-export const mockAdminOverride = () => {
-  const enable = (enabled: boolean) => {
-    EnvHelperMock.mockFunction('adminOverrideEnabled', () => enabled)
+export const mockGetFeatureFlags = () => {
+  const enable = (override: Partial<FeatureFlags>) => {
+    EnvHelperMock.mockFunction('getFeatureFlags', () => {
+      return { ...getFeatureFlags(), ...override }
+    })
   }
 
   const disable = () => {
-    EnvHelperMock.resetMockedFunction('adminOverrideEnabled')
+    EnvHelperMock.resetMockedFunction('getFeatureFlags')
   }
 
   return { enable, disable }

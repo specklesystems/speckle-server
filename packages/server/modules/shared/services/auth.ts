@@ -12,7 +12,6 @@ import {
 } from '@/modules/shared/domain/operations'
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
@@ -44,7 +43,7 @@ const workspaceRoleImplicitProjectRoleMap = <const>{
 export const authorizeResolverFactory =
   (deps: {
     getRoles: GetRoles
-    adminOverrideEnabled: typeof adminOverrideEnabled
+    adminOverrideEnabled: boolean
     getUserServerRole: GetUserServerRole
     getStream: GetStream
     getUserAclRole: GetUserAclRole
@@ -73,7 +72,7 @@ export const authorizeResolverFactory =
     }
 
     if (
-      deps.adminOverrideEnabled() &&
+      deps.adminOverrideEnabled &&
       userId &&
       (!operationType || operationType === OperationTypeNode.QUERY)
     ) {

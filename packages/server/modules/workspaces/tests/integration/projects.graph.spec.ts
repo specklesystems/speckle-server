@@ -29,7 +29,6 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { mockAdminOverride } from '@/test/mocks/global'
 import {
   addToStream,
   BasicTestStream,
@@ -41,9 +40,10 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
+import { mockGetFeatureFlags } from '@/test/mocks/global'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-const adminOverrideMock = mockAdminOverride()
+const getFeatureFlagsMock = mockGetFeatureFlags()
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -373,7 +373,7 @@ describe('Workspace project GQL CRUD', () => {
     })
 
     afterEach(async () => {
-      adminOverrideMock.disable()
+      getFeatureFlagsMock.disable()
     })
 
     describe('through Workspace.projects', () => {
@@ -417,7 +417,8 @@ describe('Workspace project GQL CRUD', () => {
             authUserId: serverAdminUser.id
           })
 
-          adminOverrideMock.enable(adminOverrideEnabled)
+          getFeatureFlagsMock.enable({ FF_ADMIN_OVERRIDE_ENABLED: true })
+
           const res = await apollo.execute(GetWorkspaceProjectsDocument, {
             id: queryWorkspace.id,
             limit: 999 // get everything
@@ -614,7 +615,10 @@ describe('Workspace project GQL CRUD', () => {
             authUserId: serverAdminUser.id
           })
 
-          adminOverrideMock.enable(adminOverrideEnabled)
+          getFeatureFlagsMock.enable({
+            FF_ADMIN_OVERRIDE_ENABLED: adminOverrideEnabled
+          })
+
           const res = await apollo.execute(GetProjectDocument, {
             id: implicitProject().id
           })

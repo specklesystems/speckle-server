@@ -57,13 +57,14 @@ export const ensureMinimumServerRoleFragment: AuthPolicyEnsureFragment<
  * Check if user has admin override enabled
  */
 export const checkIfAdminOverrideEnabledFragment: AuthPolicyCheckFragment<
-  typeof Loaders.getAdminOverrideEnabled | typeof Loaders.getServerRole,
+  typeof Loaders.getEnv | typeof Loaders.getServerRole,
   MaybeUserContext,
   never
 > =
   (loaders) =>
   async ({ userId }) => {
-    const adminOverrideAvailable = await loaders.getAdminOverrideEnabled()
+    const env = await loaders.getEnv()
+    const adminOverrideAvailable = env.FF_ADMIN_OVERRIDE_ENABLED
     if (!adminOverrideAvailable) return ok(false)
 
     const hasAdminRole = await ensureMinimumServerRoleFragment(loaders)({

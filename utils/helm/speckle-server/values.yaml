@@ -61,6 +61,8 @@ featureFlags:
   workspacesNewPlanEnabled: false
   ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
   moveProjectRegionEnabled: false
+  ## @param featureFlags.adminOverrideEnabled Toggles whether users with administrator privilege have expanded capabilities.
+  adminOverrideEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -582,7 +584,7 @@ server:
     ## @param server.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
 
-  ## @param server.adminOverrideEnabled Enables the server side admin authz override
+  ## @param server.adminOverrideEnabled DEPRECATED use featureFlags.adminOverrideEnabled instead. Enables the server side admin authz override
   adminOverrideEnabled: false
 
   ## @param server.weeklyDigestEnabled Enables sending out the serevr weekly digest emails

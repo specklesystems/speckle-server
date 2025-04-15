@@ -99,6 +99,11 @@
           "type": "boolean",
           "description": "Enables the ability to move a project region (manually or automatically)",
           "default": false
+        },
+        "adminOverrideEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether users with administrator privilege have expanded capabilities.",
+          "default": false
         }
       }
     },
@@ -879,7 +884,7 @@
         },
         "adminOverrideEnabled": {
           "type": "boolean",
-          "description": "Enables the server side admin authz override",
+          "description": "DEPRECATED use featureFlags.adminOverrideEnabled instead. Enables the server side admin authz override",
           "default": false
         },
         "weeklyDigestEnabled": {

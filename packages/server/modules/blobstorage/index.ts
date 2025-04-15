@@ -35,10 +35,7 @@ import {
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import {
-  adminOverrideEnabled,
-  createS3Bucket
-} from '@/modules/shared/helpers/envHelper'
+import { createS3Bucket } from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
@@ -53,6 +50,9 @@ import {
 } from '@/modules/blobstorage/repositories/blobs'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -103,7 +103,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     })
   const createStreamReadPermissions = () =>
     streamReadPermissionsPipelineFactory({
-      adminOverrideEnabled,
+      adminOverrideEnabled: FF_ADMIN_OVERRIDE_ENABLED,
       getRoles: getRolesFactory({ db }),
       getStream: getStreamFactory({ db })
     })

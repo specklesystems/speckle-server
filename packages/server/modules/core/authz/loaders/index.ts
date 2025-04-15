@@ -1,9 +1,6 @@
 import { defineModuleLoaders } from '@/modules/loaders'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import {
-  adminOverrideEnabled,
-  getFeatureFlags
-} from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
@@ -12,7 +9,6 @@ export default defineModuleLoaders(async () => {
   const getStream = getStreamFactory({ db })
 
   return {
-    getAdminOverrideEnabled: async () => adminOverrideEnabled(),
     getEnv: async () => getFeatureFlags(),
     getProject: async ({ projectId }, { dataLoaders }) => {
       return await dataLoaders.streams.getStream.load(projectId)

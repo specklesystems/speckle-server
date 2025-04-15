@@ -395,10 +395,12 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         isDiscoverable: false,
         isPublic: false
       }),
-      getAdminOverrideEnabled: async () => false,
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_ADMIN_OVERRIDE_ENABLED: 'false'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -478,7 +480,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     const sut = buildSUT({
       getServerRole: async () => Roles.Server.Admin,
       getProjectRole: async () => null,
-      getAdminOverrideEnabled: async () => true
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' })
     })
 
     const result = await sut({

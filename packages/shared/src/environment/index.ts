@@ -75,6 +75,11 @@ export const parseFeatureFlags = (
     FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Enables the admin override module
+    FF_ADMIN_OVERRIDE_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -103,6 +108,7 @@ export type FeatureFlags = {
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
   FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_ADMIN_OVERRIDE_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

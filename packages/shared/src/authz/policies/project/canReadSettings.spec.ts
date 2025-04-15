@@ -16,14 +16,13 @@ import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
     canReadProjectSettingsPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
         isDiscoverable: false,
         isPublic: false
       }),
-      getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
       getWorkspace: async () => null,
@@ -73,7 +72,7 @@ describe('canReadProjectSettingsPolicy', () => {
 
   it('succeeds w/ admin override', async () => {
     const sut = buildSUT({
-      getAdminOverrideEnabled: async () => true,
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getProjectRole: async () => null,
       getServerRole: async () => Roles.Server.Admin
     })

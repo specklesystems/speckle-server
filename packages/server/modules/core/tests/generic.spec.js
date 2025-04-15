@@ -65,7 +65,7 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { mockAdminOverride } = require('@/test/mocks/global')
+const { mockGetFeatureFlags } = require('@/test/mocks/global')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -126,7 +126,7 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
-const adminOverrideMock = mockAdminOverride()
+const getFeatureFlagsMock = mockGetFeatureFlags()
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -257,12 +257,11 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         )
       ])
     })
-
     afterEach(() => {
-      adminOverrideMock.disable()
+      getFeatureFlagsMock.disable()
     })
     after(() => {
-      adminOverrideMock.disable()
+      getFeatureFlagsMock.disable()
     })
     it('should allow stream:owners to be stream:owners', async () => {
       await authorizeResolver(
@@ -274,7 +273,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {
-      adminOverrideMock.enable(true)
+      getFeatureFlagsMock.enable({ FF_ADMIN_OVERRIDE_ENABLED: true })
       await authorizeResolver(
         serverOwner.id,
         myStream.id,
@@ -297,7 +296,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should allow server:admins to be anything if adminOverride is enabled', async () => {
-      adminOverrideMock.enable(true)
+      getFeatureFlagsMock.enable({ FF_ADMIN_OVERRIDE_ENABLED: true })
 
       await authorizeResolver(
         serverOwner.id,
@@ -322,7 +321,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should not allow server:users to be anything if adminOverride is enabled', async () => {
-      adminOverrideMock.enable(true)
+      getFeatureFlagsMock.enable({ FF_ADMIN_OVERRIDE_ENABLED: true })
 
       try {
         await authorizeResolver(

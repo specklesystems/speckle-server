@@ -10,6 +10,7 @@ import {
   ServerNoSessionError,
   ServerNotEnoughPermissionsError
 } from '../domain/authErrors.js'
+import { parseFeatureFlags } from '../../environment/index.js'
 
 describe('ensureMinimumServerRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumServerRoleFragment>) =>
@@ -66,7 +67,7 @@ describe('checkIfAdminOverrideEnabledFragment', () => {
     overrides?: OverridesOf<typeof checkIfAdminOverrideEnabledFragment>
   ) =>
     checkIfAdminOverrideEnabledFragment({
-      getAdminOverrideEnabled: async () => true,
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Admin,
       ...overrides
     })
@@ -79,7 +80,7 @@ describe('checkIfAdminOverrideEnabledFragment', () => {
 
   it('returns false when env var is disabled', async () => {
     const sut = buildSUT({
-      getAdminOverrideEnabled: async () => false
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' })
     })
     const result = await sut({ userId: 'userId' })
     expect(result).toBeOKResult({ value: false })

@@ -36,5 +36,3 @@ export type GetWorkspaceSsoSession = (
 ) => Promise<WorkspaceSsoSession | null>
 
 export type GetEnv = () => Promise<FeatureFlags>
-
-export type GetAdminOverrideEnabled = () => Promise<boolean>

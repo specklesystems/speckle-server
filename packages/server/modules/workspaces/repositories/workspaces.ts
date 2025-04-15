@@ -74,7 +74,9 @@ import {
   decodeCompositeCursor,
   encodeCompositeCursor
 } from '@/modules/shared/helpers/graphqlHelper'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>('branches'),
@@ -583,7 +585,7 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
         })
         .andWhere((w) => {
           // Check server_acl exist first, so subsequent checks can be optimized away
-          if (adminOverrideEnabled() && !withProjectRoleOnly) {
+          if (FF_ADMIN_OVERRIDE_ENABLED && !withProjectRoleOnly) {
             w.whereExists(
               tables
                 .serverAcl(deps.db)

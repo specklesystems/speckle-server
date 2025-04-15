@@ -31,8 +31,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     it('converts not found projects into ProjectNotFoundError', async () => {
       const result = canReadProjectPolicy({
         getWorkspace,
-        getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: async () => null,
         getProjectRole: () => {
           assert.fail()
@@ -59,8 +61,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
   describe('project visibility', () => {
     it('allows anyone on a public project', async () => {
       const canReadProject = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isPublic: true }),
         getProjectRole: () => {
           assert.fail()
@@ -85,8 +89,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('allows anyone on a linkShareable project', async () => {
       const canReadProject = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: true }),
         getProjectRole: () => {
           assert.fail()
@@ -113,9 +119,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
   describe('server roles', () => {
     it('allows access for archived server users with a project role on a public project', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
-          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: true }),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => Roles.Server.ArchivedUser,
@@ -135,9 +143,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not allow access for archived server users with a project role', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
-          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => Roles.Server.ArchivedUser,
@@ -159,9 +169,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not allow access for non public projects for unknown users', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
-          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: async () => Roles.Stream.Owner,
         getServerRole: async () => null,
@@ -189,9 +201,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       'allows access for active server users to private projects with %s role',
       async (role) => {
         const canReadProject = canReadProjectPolicy({
-          getAdminOverrideEnabled: async () => false,
           getEnv: async () =>
-            parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+            parseFeatureFlags({
+              FF_WORKSPACES_MODULE_ENABLED: 'false',
+              FF_ADMIN_OVERRIDE_ENABLED: 'false'
+            }),
           getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
           getProjectRole: async () => role,
           getServerRole: async () => Roles.Server.User,
@@ -213,9 +227,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     )
     it('does not allow access to private projects without a project role', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
-          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getProjectRole: async () => null,
         getWorkspace,
@@ -239,8 +255,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
   describe('admin override', () => {
     it('allows server admins without project roles on private projects if admin override is enabled', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => true,
-        getEnv: async () => parseFeatureFlags({}),
+        getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: async () => Roles.Server.Admin,
         getProjectRole: () => {
@@ -263,10 +278,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
 
     it('does not allow server admins without project roles on private projects if admin override is disabled', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'false'
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({ isDiscoverable: false, isPublic: false }),
         getServerRole: async () => Roles.Server.Admin,
@@ -292,9 +307,11 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
   describe('the workspace world', () => {
     it('does not check workspace rules if the workspaces module is not enabled', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
-          parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'false' }),
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'false',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
+          }),
         getProject: getProjectFake({
           isDiscoverable: false,
           isPublic: false,
@@ -319,10 +336,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not allow project access without a workspace role', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -349,10 +366,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
 
     it('allows project access via workspace role if user does not have project role', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -373,10 +390,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not check SSO sessions if user is workspace guest', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -399,10 +416,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not check SSO sessions if workspace does not have it enabled', async () => {
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -423,10 +440,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
     })
     it('does not allow project access if SSO session is missing', async () => {
       const canReadProject = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -451,10 +468,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       date.setDate(date.getDate() - 1)
 
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -479,10 +496,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       date.setDate(date.getDate() - 1)
 
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,
@@ -511,10 +528,10 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       date.setDate(date.getDate() + 1)
 
       const result = canReadProjectPolicy({
-        getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
           parseFeatureFlags({
-            FF_WORKSPACES_MODULE_ENABLED: 'true'
+            FF_WORKSPACES_MODULE_ENABLED: 'true',
+            FF_ADMIN_OVERRIDE_ENABLED: 'false'
           }),
         getProject: getProjectFake({
           isDiscoverable: false,

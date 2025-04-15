@@ -25,8 +25,7 @@ describe('canRequestProjectVersionRenderPolicy', () => {
         isDiscoverable: false
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
-      getAdminOverrideEnabled: async () => false,
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Guest,
       getWorkspaceRole: async () => null,
       getWorkspace: async () => null,
@@ -74,7 +73,7 @@ describe('canRequestProjectVersionRenderPolicy', () => {
 
   it('should allow for admin w/ override', async () => {
     const sut = buildSUT({
-      getAdminOverrideEnabled: async () => true,
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Admin,
       getProjectRole: async () => null
     })

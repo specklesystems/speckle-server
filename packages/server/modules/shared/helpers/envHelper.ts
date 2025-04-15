@@ -267,10 +267,6 @@ export function getServerMovedTo() {
   return getUrlFromEnv('MIGRATION_SERVER_MOVED_TO')
 }
 
-export function adminOverrideEnabled() {
-  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
-}
-
 export function enableMixpanel() {
   if (isDevEnv() || isTestEnv()) {
     // Check if explicitly enabled

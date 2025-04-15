@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getUserAclRoleFactory,
   getUserServerRoleFactory
@@ -26,10 +26,12 @@ export {
   BranchSubscriptions as BranchPubsubEvents
 }
 
+const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
+
 export const validateScopes = validateScopesFactory()
 export const authorizeResolver = authorizeResolverFactory({
   getRoles: getCachedRolesFactory({ db }),
-  adminOverrideEnabled,
+  adminOverrideEnabled: FF_ADMIN_OVERRIDE_ENABLED,
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),
   getUserAclRole: getUserAclRoleFactory({ db }),

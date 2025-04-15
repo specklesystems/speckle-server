@@ -16,12 +16,13 @@ export const hasMinimumServerRole: AuthPolicyCheck<
   }
 
 export const canUseAdminOverride: AuthPolicyCheck<
-  typeof Loaders.getAdminOverrideEnabled | 'getServerRole',
+  typeof Loaders.getEnv | 'getServerRole',
   UserContext
 > =
   (loaders) =>
   async ({ userId }) => {
-    const adminOverrideEnabled = await loaders.getAdminOverrideEnabled()
+    const env = await loaders.getEnv()
+    const adminOverrideEnabled = env.FF_ADMIN_OVERRIDE_ENABLED
     if (!adminOverrideEnabled) return false
     return await hasMinimumServerRole(loaders)({
       userId,

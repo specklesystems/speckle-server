@@ -26,7 +26,6 @@ describe('canBroadcastProjectActivityPolicy', () => {
         isDiscoverable: false,
         isPublic: false
       }),
-      getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
       getWorkspace: async () => null,
@@ -153,7 +152,6 @@ describe('canBroadcastProjectActivityPolicy', () => {
 
   it('succeeds w/ admin override, even w/o project role', async () => {
     const sut = buildSUT({
-      getAdminOverrideEnabled: async () => true,
       getServerRole: async () => Roles.Server.Admin,
       getProjectRole: async () => null
     })
