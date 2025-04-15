@@ -1,0 +1,12 @@
+extend type Automation {
+  permissions: AutomationPermissionChecks!
+}
+
+type AutomationPermissionChecks {
+  canRead: PermissionCheckResult!
+  canUpdate: PermissionCheckResult!
+}
+
+extend type ProjectPermissionChecks {
+  canCreateAutomation: PermissionCheckResult!
+}

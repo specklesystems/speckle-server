@@ -13,7 +13,7 @@ enum ProjectVisibility {
 }
 
 """
-Visbility without the "discoverable" option
+Visibility without the "discoverable" option
 """
 enum SimpleProjectVisibility {
   PRIVATE
