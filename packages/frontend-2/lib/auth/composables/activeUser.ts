@@ -73,7 +73,12 @@ export function useActiveUserProjectsToMove() {
   const projectsToMoveCount = computed(
     () => result.value?.activeUser?.projects?.totalCount
   )
-  return { projectsToMoveCount }
+
+  const hasProjectsToMove = computed(
+    () => projectsToMoveCount.value && projectsToMoveCount.value > 0
+  )
+
+  return { projectsToMoveCount, hasProjectsToMove }
 }
 
 /**

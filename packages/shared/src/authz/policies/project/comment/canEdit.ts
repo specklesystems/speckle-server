@@ -10,10 +10,13 @@ import {
   CommentNoAccessError,
   CommentNotFoundError,
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { canCreateProjectCommentPolicy } from './canCreate.js'
@@ -38,6 +41,9 @@ export const canEditProjectCommentPolicy: AuthPolicy<
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof CommentNotFoundError
     | typeof CommentNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>

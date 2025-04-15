@@ -47,6 +47,32 @@ export const roleSelectItems: Record<
   }
 }
 
+export enum AccessSelectItems {
+  NoAccess = 'no-access',
+  Reviewer = 'reviewer'
+}
+
+export type SelectableAccessSelectItem = {
+  id: AccessSelectItems
+  title: string
+  description?: string
+}
+
+export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelectItem> =
+  {
+    [AccessSelectItems.NoAccess]: {
+      id: AccessSelectItems.NoAccess,
+      title: 'No access',
+      description: 'Only invited project members can access the project'
+    },
+    [AccessSelectItems.Reviewer]: {
+      id: AccessSelectItems.Reviewer,
+      title: 'Can view',
+      description:
+        'All workspace members can view and comment on models in the web viewer'
+    }
+  }
+
 export enum CommentPermissions {
   Anyone = 'anyone',
   TeamMembersOnly = 'team'

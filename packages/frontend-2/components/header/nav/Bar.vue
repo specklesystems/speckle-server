@@ -49,7 +49,6 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const { activeUser, isLoggedIn } = useActiveUser()
 const route = useRoute()
 const router = useRouter()
@@ -66,7 +65,6 @@ const loginUrl = computed(() =>
 )
 
 const showWorkspaceSwitcher = computed(
-  () =>
-    isWorkspacesEnabled.value && isWorkspaceNewPlansEnabled.value && activeUser.value
+  () => isWorkspacesEnabled.value && activeUser.value
 )
 </script>

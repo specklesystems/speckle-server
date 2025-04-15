@@ -10,6 +10,7 @@
       <ProjectsMoveToWorkspaceAlert
         v-if="isWorkspacesEnabled && !project.workspace"
         :project-id="project.id"
+        @move-project="onMoveProject"
       />
 
       <div
@@ -19,9 +20,7 @@
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
             <CommonBadge v-if="project.role" rounded color="secondary">
-              <span class="capitalize">
-                {{ project.role?.split(':').reverse()[0] }}
-              </span>
+              {{ RoleInfo.Stream[project.role as StreamRoles].title }}
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
@@ -64,17 +63,17 @@
       </LayoutTabsHorizontal>
     </div>
 
-    <ProjectsMoveToWorkspaceDialog
+    <WorkspaceMoveProjectManager
       v-if="project"
       v-model:open="showMoveDialog"
-      :project="project"
       event-source="project-page"
+      :project-id="project.id"
     />
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Roles, type Optional } from '@speckle/shared'
+import { Roles, type Optional, RoleInfo, type StreamRoles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
@@ -109,7 +108,7 @@ graphql(`
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectsMoveToWorkspaceDialog_Project
+    ...WorkspaceMoveProjectManager_ProjectBase
     ...ProjectPageSettingsTab_Project
   }
 `)
@@ -316,5 +315,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       showMoveDialog.value = true
       break
   }
+}
+
+const onMoveProject = () => {
+  showMoveDialog.value = true
 }
 </script>

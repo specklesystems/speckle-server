@@ -5,6 +5,7 @@ import { getModelFake, getProjectFake } from '../../../../tests/fakes.js'
 import {
   ModelNotFoundError,
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ReservedModelNotDeletableError,
   ServerNoAccessError,
@@ -159,6 +160,26 @@ describe('canDeleteModelPolicy', () => {
       modelId: 'model-id'
     })
     expect(result).toBeAuthErrorResult({
+      code: ProjectNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns error if no project role at all', async () => {
+    const sut = buildSUT({
+      getModel: getModelFake({
+        id: 'model-id',
+        projectId: 'project-id',
+        authorId: 'other-user-id'
+      }),
+      getProjectRole: async () => null
+    })
+
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id',
+      modelId: 'model-id'
+    })
+    expect(result).toBeAuthErrorResult({
       code: ProjectNoAccessError.code
     })
   })
@@ -173,7 +194,7 @@ describe('canDeleteModelPolicy', () => {
       modelId: 'model-id'
     })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -247,7 +268,7 @@ describe('canDeleteModelPolicy', () => {
       expect(result).toBeAuthOKResult()
     })
 
-    it('returns error if invalid workspace and project role', async () => {
+    it('returns error if no implicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Member,
         getProjectRole: async () => Roles.Stream.Reviewer
@@ -258,7 +279,7 @@ describe('canDeleteModelPolicy', () => {
         modelId: 'model-id'
       })
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 

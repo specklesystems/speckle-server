@@ -195,7 +195,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
           productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
           priceId: getWorkspacePlanPriceId({
             workspacePlan: 'guest',
-            billingInterval
+            billingInterval,
+            currency: workspaceSubscription.currency
           }),
           subscriptionItemId: undefined
         })
@@ -216,7 +217,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })
@@ -351,6 +353,8 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       default:
         throwUncoveredError(billingInterval)
     }
+    // must update the billing interval to the new one
+    workspaceSubscription.billingInterval = billingInterval
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
       workspaceSubscription.subscriptionData
@@ -383,7 +387,8 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })

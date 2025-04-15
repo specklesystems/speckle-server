@@ -41,7 +41,7 @@
         </div>
         <div
           v-else
-          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
+          :key="`tooltip-${isYearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
           v-tippy="buttonTooltip"
         >
           <FormButton
@@ -80,12 +80,20 @@
       />
       <PricingTablePlanFeature
         is-included
-        :display-name="`${planLimits.versionsHistory?.value} day version history`"
+        :display-name="
+          planLimits.versionsHistory
+            ? `${planLimits.versionsHistory.value} day version history`
+            : 'Full version history'
+        "
         description="Some tooltip text"
       />
       <PricingTablePlanFeature
         is-included
-        :display-name="`${planLimits.versionsHistory?.value} day comment history`"
+        :display-name="
+          planLimits.versionsHistory
+            ? `${planLimits.versionsHistory.value} day comment history`
+            : 'Full comment history'
+        "
         description="Some tooltip text"
       />
       <PricingTablePlanFeature
@@ -104,52 +112,59 @@ import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
   WorkspacePlanFeaturesMetadata,
-  WorkspacePlanConfigs,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanConfigs
 } from '@speckle/shared'
 import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
-  BillingInterval
+  BillingInterval,
+  Currency
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
+  (e: 'onUpgradeClick'): void
 }>()
 
 const props = defineProps<{
   plan: WorkspacePlans
-  yearlyIntervalSelected: boolean
   canUpgrade: boolean
   workspaceId?: MaybeNullOrUndefined<string>
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
+  currency?: Currency
 }>()
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { upgradePlan, redirectToCheckout } = useBillingActions()
-
-const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const planPrice = computed(() => {
+  let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
-    return formatPrice(
-      prices.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
-    )
+    basePrice =
+      prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
+        isYearlyIntervalSelected.value
+          ? BillingInterval.Yearly
+          : BillingInterval.Monthly
+      ].amount || 0
   }
 
-  // This price is not returned from the server settings but is needed to display a price for the free plan
   return formatPrice({
-    amount: 0,
-    currencySymbol: '£'
+    amount: basePrice
+      ? isYearlyIntervalSelected.value
+        ? basePrice / 12
+        : basePrice
+      : 0,
+    currency: props.currency || Currency.Usd
   })
 })
 
@@ -169,7 +184,7 @@ const canUpgradeToPlan = computed(() => {
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
-    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
+    (isYearlyIntervalSelected.value ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 
 const isDowngrade = computed(() => {
@@ -187,7 +202,7 @@ const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    !props.yearlyIntervalSelected
+    !isYearlyIntervalSelected.value
   )
 })
 
@@ -195,7 +210,7 @@ const isMonthlyToAnnual = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    props.yearlyIntervalSelected
+    isYearlyIntervalSelected.value
   )
 })
 
@@ -235,7 +250,7 @@ const isSelectable = computed(() => {
 
 const buttonColor = computed(() => {
   if (props.currentPlan?.name === WorkspacePlans.Free) {
-    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Team ? 'primary' : 'outline'
   }
   return 'outline'
 })
@@ -290,7 +305,7 @@ const buttonTooltip = computed(() => {
 
   if (
     props.activeBillingInterval === BillingInterval.Yearly &&
-    !props.yearlyIntervalSelected &&
+    !isYearlyIntervalSelected.value &&
     canUpgradeToPlan.value
   ) {
     return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
@@ -306,30 +321,6 @@ const badgeText = computed(() =>
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
-
-  if (props.hasSubscription) {
-    upgradePlan({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  } else {
-    redirectToCheckout({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
+  emit('onUpgradeClick')
 }
-
-watch(
-  () => props.yearlyIntervalSelected,
-  (newValue) => {
-    isYearlyIntervalSelected.value = newValue
-  }
-)
 </script>

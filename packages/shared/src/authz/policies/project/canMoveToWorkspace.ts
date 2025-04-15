@@ -1,9 +1,11 @@
 import { err, ok } from 'true-myth/result'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -56,8 +58,13 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceProjectMoveInvalidError>
   | InstanceType<typeof ServerNoSessionError>
   | InstanceType<typeof ServerNoAccessError>
+  | InstanceType<typeof ServerNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceNoEditorSeatError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
+  | InstanceType<
+      | typeof WorkspaceNotEnoughPermissionsError
+      | typeof ProjectNotEnoughPermissionsError
+    >
 
 export const canMoveToWorkspacePolicy: AuthPolicy<
   PolicyLoaderKeys,
@@ -86,7 +93,9 @@ export const canMoveToWorkspacePolicy: AuthPolicy<
         projectId,
         role: Roles.Stream.Owner
       })
-      if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
+      if (ensuredProjectRole.isErr) {
+        return err(ensuredProjectRole.error)
+      }
     }
 
     if (workspaceId) {

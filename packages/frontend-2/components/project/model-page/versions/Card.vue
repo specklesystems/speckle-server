@@ -20,7 +20,8 @@
           :project-id="projectId"
           :model-id="modelId"
           :version-id="version.id"
-          :selection-disabled="selectionDisabled"
+          :selection-disabled="!isSelectionDisabled.authorized"
+          :selection-disabled-message="isSelectionDisabled.message"
           @select="onSelect"
           @chosen="$emit('chosen', $event)"
           @embed="$emit('embed')"
@@ -70,14 +71,12 @@
             v-if="isSelectable"
             v-model="checkboxModel"
             v-tippy="
-              selectionDisabled
-                ? `To select this version you must be its or its project's owner`
-                : undefined
+              !isSelectionDisabled.authorized ? isSelectionDisabled.message : undefined
             "
             name="selected"
             hide-label
             :value="true"
-            :disabled="selectionDisabled"
+            :disabled="!isSelectionDisabled.authorized"
           />
           <div class="text-xs text-foreground-2 mr-1 truncate flex-1">
             Created
@@ -106,6 +105,7 @@
 </template>
 <script lang="ts" setup>
 import type {
+  FullPermissionCheckResultFragment,
   PendingFileUploadFragment,
   ProjectModelPageVersionsCardVersionFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -134,6 +134,11 @@ graphql(`
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
     }
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -151,7 +156,6 @@ const props = defineProps<{
   modelId: string
   selectable?: boolean
   selected?: boolean
-  selectionDisabled?: boolean
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
@@ -198,6 +202,16 @@ const sourceApp = computed(() =>
 
 const isSelectable = computed(
   () => props.selectable && !isPendingVersionFragment(props.version)
+)
+const isSelectionDisabled = computed(
+  (): FullPermissionCheckResultFragment =>
+    isPendingVersionFragment(props.version)
+      ? {
+          authorized: false,
+          message: 'You cannot select a pending version',
+          code: 'PENDING_VERSION_ERROR'
+        }
+      : props.version.permissions.canUpdate
 )
 
 const message = computed(() => {
