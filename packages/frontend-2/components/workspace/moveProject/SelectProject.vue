@@ -124,19 +124,24 @@ const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
 const isProjectDisabled = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (!props.workspaceSlug) {
+    if (project.permissions.canMoveToWorkspace.authorized) {
       return false
     }
-    if (isProjectLimitReached.value(project)) {
-      return false
-    }
+    return true
+  }
+)
 
-    return !canMoveProject.value(project)
+const getProjectTooltip = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    if (project.permissions.canMoveToWorkspace.authorized) {
+      return undefined
+    }
+    return project.permissions.canMoveToWorkspace.message
   }
 )
 
 const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  if (props.workspaceSlug && isProjectLimitReached.value(project)) {
+  if (props.workspaceSlug) {
     showLimitDialog.value = true
     return
   }
@@ -145,41 +150,4 @@ const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
 }
 
 const showLoading = computed(() => loading.value && userProjects.value.length === 0)
-
-const getProjectPermission = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  return (
-    project.permissions?.canMoveToWorkspace || {
-      authorized: false,
-      code: '',
-      message: ''
-    }
-  )
-}
-
-const canMoveProject = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    return permission.authorized
-  }
-)
-
-const isProjectLimitReached = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    return permission.code === 'WorkspaceLimitsReached'
-  }
-)
-
-const getProjectTooltip = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    if (permission.authorized) {
-      return undefined
-    }
-    if (permission.code === 'WorkspaceLimitsReached') {
-      return undefined
-    }
-    return permission.message
-  }
-)
 </script>
