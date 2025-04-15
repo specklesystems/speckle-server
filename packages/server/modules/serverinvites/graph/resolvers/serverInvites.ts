@@ -76,6 +76,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
@@ -184,6 +185,13 @@ export = {
   },
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
+      const inviterId = context.userId!
+      const targetEmail = args.input.email
+
+      const logger = context.log.child({
+        targetEmail
+      })
+
       const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
 
       const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
@@ -193,30 +201,55 @@ export = {
           resourceType: ServerInviteResourceType,
           primary: true
         }
-      await createAndSendInvite(
+      await withOperationLogging(
+        async () =>
+          await createAndSendInvite(
+            {
+              target: targetEmail,
+              inviterId,
+              message: args.input.message,
+              primaryResourceTarget
+            },
+            context.resourceAccessRules
+          ),
         {
-          target: args.input.email,
-          inviterId: context.userId!,
-          message: args.input.message,
-          primaryResourceTarget
-        },
-        context.resourceAccessRules
+          logger,
+          operationName: 'serverInviteCreate',
+          operationDescription: 'Create and send a server invite'
+        }
       )
 
       return true
     },
 
     async streamInviteCreate(_parent, args, context) {
+      const targetId = args.input.userId
+      const targetEmail = args.input.email
+      const projectId = args.input.streamId
+      const logger = context.log.child({
+        targetId,
+        targetEmail,
+        projectId,
+        streamId: projectId //legacy
+      })
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
         getStream
       })
 
-      await createProjectInvite({
-        input: args.input,
-        inviterId: context.userId!,
-        inviterResourceAccessRules: context.resourceAccessRules
-      })
+      await withOperationLogging(
+        async () =>
+          await createProjectInvite({
+            input: args.input,
+            inviterId: context.userId!,
+            inviterResourceAccessRules: context.resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'streamInviteCreate',
+          operationDescription: 'Create and send a stream invite'
+        }
+      )
 
       return true
     },
@@ -230,14 +263,18 @@ export = {
           'Maximum 10 invites can be sent at once by non admins'
         )
       }
+      const logger = context.log.child({
+        inviteCount
+      })
 
       const createAndSendInvite = buildCreateAndSendServerOrProjectInvite()
 
       // Batch calls so that we don't kill the server
       const batches = chunk(paramsArray, 50)
+
       for (const paramsBatchArray of batches) {
         await Promise.all(
-          paramsBatchArray.map((params) => {
+          paramsBatchArray.map(async (params) => {
             const primaryResourceTarget: PrimaryInviteResourceTarget<ServerInviteResourceTarget> =
               {
                 resourceId: '',
@@ -246,14 +283,24 @@ export = {
                 primary: true
               }
 
-            return createAndSendInvite(
+            return await withOperationLogging(
+              async () =>
+                createAndSendInvite(
+                  {
+                    target: params.email,
+                    inviterId: context.userId!,
+                    message: params.message,
+                    primaryResourceTarget
+                  },
+                  context.resourceAccessRules
+                ),
               {
-                target: params.email,
-                inviterId: context.userId!,
-                message: params.message,
-                primaryResourceTarget
-              },
-              context.resourceAccessRules
+                logger: logger.child({
+                  targetEmail: params.email
+                }),
+                operationName: 'serverInviteCreateFromBatch',
+                operationDescription: 'Create and send a server invite from a batch'
+              }
             )
           })
         )
@@ -275,6 +322,10 @@ export = {
         }
       }
 
+      const logger = context.log.child({
+        inviteCount: paramsArray.length
+      })
+
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
         getStream
@@ -282,14 +333,28 @@ export = {
 
       // Batch calls so that we don't kill the server
       const batches = chunk(paramsArray, 50)
+
       for (const paramsBatchArray of batches) {
         await Promise.all(
-          paramsBatchArray.map((params) => {
-            return createProjectInvite({
-              input: params,
-              inviterId: context.userId!,
-              inviterResourceAccessRules: context.resourceAccessRules
-            })
+          paramsBatchArray.map(async (params) => {
+            return await withOperationLogging(
+              async () =>
+                createProjectInvite({
+                  input: params,
+                  inviterId: context.userId!,
+                  inviterResourceAccessRules: context.resourceAccessRules
+                }),
+              {
+                logger: logger.child({
+                  projectId: params.streamId,
+                  streamId: params.streamId, //legacy
+                  targetId: params.userId,
+                  targetEmail: params.email
+                }),
+                operationName: 'streamInviteCreateFromBatch',
+                operationDescription: 'Create and send a stream invite from a batch'
+              }
+            )
           })
         )
       }
@@ -298,6 +363,11 @@ export = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
+      const projectId = args.streamId
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
       const useProjectInvite = useProjectInviteAndNotifyFactory({
         finalizeInvite: finalizeResourceInviteFactory({
           findInvite: findInviteFactory({ db }),
@@ -328,13 +398,25 @@ export = {
         })
       })
 
-      await useProjectInvite(args, ctx.userId!, ctx.resourceAccessRules)
+      await withOperationLogging(
+        async () => await useProjectInvite(args, ctx.userId!, ctx.resourceAccessRules),
+        {
+          logger,
+          operationName: 'streamInviteUse',
+          operationDescription: 'Use a stream invite'
+        }
+      )
       return true
     },
 
     async streamInviteCancel(_parent, args, ctx) {
       const { streamId, inviteId } = args
       const { userId, resourceAccessRules } = ctx
+      const logger = ctx.log.child({
+        projectId: streamId,
+        streamId, //legacy
+        inviteId
+      })
 
       const cancelInvite = cancelResourceInviteFactory({
         findInvite: findInviteFactory({ db }),
@@ -346,19 +428,30 @@ export = {
       })
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
-      await cancelInvite({
-        inviteId,
-        resourceId: streamId,
-        resourceType: ProjectInviteResourceType,
-        cancelerId: userId!,
-        cancelerResourceAccessLimits: resourceAccessRules
-      })
+      await withOperationLogging(
+        async () =>
+          await cancelInvite({
+            inviteId,
+            resourceId: streamId,
+            resourceType: ProjectInviteResourceType,
+            cancelerId: userId!,
+            cancelerResourceAccessLimits: resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'streamInviteCancel',
+          operationDescription: 'Cancel a stream invite'
+        }
+      )
 
       return true
     },
 
-    async inviteResend(_parent, args) {
+    async inviteResend(_parent, args, ctx) {
       const { inviteId } = args
+      const logger = ctx.log.child({
+        inviteId
+      })
 
       const resendInviteEmail = resendInviteEmailFactory({
         buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -371,44 +464,80 @@ export = {
         getServerInfo
       })
 
-      await resendInviteEmail({ inviteId })
+      await withOperationLogging(async () => await resendInviteEmail({ inviteId }), {
+        logger,
+        operationName: 'inviteResend',
+        operationDescription: 'Resend an invite'
+      })
 
       return true
     },
 
     async inviteDelete(_parent, args, ctx) {
       const { inviteId } = args
+      const logger = ctx.log.child({
+        inviteId
+      })
 
-      await deleteInviteFactory({
+      const deleteInvite = deleteInviteFactory({
         findInvite: findInviteFactory({ db }),
         deleteInvite: deleteInviteFromDbFactory({ db }),
         emitEvent: getEventBus().emit
-      })(inviteId, ctx.userId!)
+      })
+
+      await withOperationLogging(
+        async () => await deleteInvite(inviteId, ctx.userId!),
+        {
+          logger,
+          operationName: 'inviteDelete',
+          operationDescription: 'Delete an invite'
+        }
+      )
 
       return true
     }
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
+      const projectId = args.projectId
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
         getStream
       })
 
-      await createProjectInvite({
-        input: {
-          projectId: args.projectId,
-          ...args.input
-        },
-        inviterId: ctx.userId!,
-        inviterResourceAccessRules: ctx.resourceAccessRules
-      })
-      return ctx.loaders.streams.getStream.load(args.projectId)
+      await withOperationLogging(
+        async () =>
+          await createProjectInvite({
+            input: {
+              projectId,
+              ...args.input
+            },
+            inviterId: ctx.userId!,
+            inviterResourceAccessRules: ctx.resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'projectInviteCreate',
+          operationDescription: 'Create and send a project invite'
+        }
+      )
+      return ctx.loaders.streams.getStream.load(projectId)
     },
     async batchCreate(_parent, args, ctx) {
+      const projectId = args.projectId
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        inviteCount: args.input.length
+      })
       await authorizeResolver(
         ctx.userId,
-        args.projectId,
+        projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
@@ -429,20 +558,32 @@ export = {
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createProjectInvite({
-              input: {
-                ...i,
-                projectId: args.projectId
-              },
-              inviterId: ctx.userId!,
-              inviterResourceAccessRules: ctx.resourceAccessRules
-            })
+            withOperationLogging(
+              async () =>
+                await createProjectInvite({
+                  input: {
+                    ...i,
+                    projectId
+                  },
+                  inviterId: ctx.userId!,
+                  inviterResourceAccessRules: ctx.resourceAccessRules
+                }),
+              {
+                logger: logger.child({
+                  targetId: i.userId,
+                  targetEmail: i.email
+                }),
+                operationName: 'projectInviteCreateFromBatch',
+                operationDescription: 'Create and send a project invite from a batch'
+              }
+            )
           )
         )
       }
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
+      const logger = ctx.log
       const useProjectInvite = useProjectInviteAndNotifyFactory({
         finalizeInvite: finalizeResourceInviteFactory({
           findInvite: findInviteFactory({ db }),
@@ -473,16 +614,32 @@ export = {
         })
       })
 
-      await useProjectInvite(args.input, ctx.userId!, ctx.resourceAccessRules)
+      await withOperationLogging(
+        async () =>
+          await useProjectInvite(args.input, ctx.userId!, ctx.resourceAccessRules),
+        {
+          logger,
+          operationName: 'projectInviteUse',
+          operationDescription: 'Use a project invite'
+        }
+      )
       return true
     },
     async cancel(_parent, args, ctx) {
+      const projectId = args.projectId
+      const inviteId = args.inviteId
       await authorizeResolver(
         ctx.userId,
-        args.projectId,
+        projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
+
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        inviteId
+      })
 
       const cancelInvite = cancelResourceInviteFactory({
         findInvite: findInviteFactory({ db }),
@@ -493,14 +650,22 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      await cancelInvite({
-        resourceId: args.projectId,
-        inviteId: args.inviteId,
-        cancelerId: ctx.userId!,
-        resourceType: ProjectInviteResourceType,
-        cancelerResourceAccessLimits: ctx.resourceAccessRules
-      })
-      return ctx.loaders.streams.getStream.load(args.projectId)
+      await withOperationLogging(
+        async () =>
+          await cancelInvite({
+            resourceId: projectId,
+            inviteId,
+            cancelerId: ctx.userId!,
+            resourceType: ProjectInviteResourceType,
+            cancelerResourceAccessLimits: ctx.resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'projectInviteCancel',
+          operationDescription: 'Cancel a project invite'
+        }
+      )
+      return ctx.loaders.streams.getStream.load(projectId)
     }
   }
 } as Resolvers
