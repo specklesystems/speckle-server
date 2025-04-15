@@ -16986,6 +16986,7 @@ __metadata:
     "@vitest/coverage-v8": "npm:^3.0.9"
     "@vitest/ui": "npm:^3.0.9"
     crypto-random-string: "npm:^5.0.0"
+    dayjs: "npm:^1.11.13"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     knex: "npm:^2.5.1"
@@ -27569,6 +27570,13 @@ __metadata:
   version: 4.6.3
   resolution: "dateformat@npm:4.6.3"
   checksum: 10/5c149c91bf9ce2142c89f84eee4c585f0cb1f6faf2536b1af89873f862666a28529d1ccafc44750aa01384da2197c4f76f4e149a3cc0c1cb2c46f5cc45f2bcb5
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.13":
+  version: 1.11.13
+  resolution: "dayjs@npm:1.11.13"
+  checksum: 10/7374d63ab179b8d909a95e74790def25c8986e329ae989840bacb8b1888be116d20e1c4eee75a69ea0dfbae13172efc50ef85619d304ee7ca3c01d5878b704f5
   languageName: node
   linkType: hard
 

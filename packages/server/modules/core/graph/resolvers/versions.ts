@@ -48,14 +48,21 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { getLimitedReferencedObjectFactory } from '@/modules/core/services/versions/limits'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { Version } from '@/modules/core/domain/commits/types'
 import { GraphQLResolveInfo } from 'graphql'
+import {
+  Authz,
+  getProjectLimitDate,
+  isCreatedBeyondHistoryLimitCutoff
+} from '@speckle/shared'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
+  : () => Promise.resolve(null)
 
 /**
  * Simple utility to check if version is inside a Model or a Project
@@ -126,12 +133,12 @@ export = {
         })
       }
 
-      const getLimitedReferencedObject = getLimitedReferencedObjectFactory({
-        environment: {
-          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        },
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })
+      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoff({
+        getProjectLimitDate: getProjectLimitDate({
+          getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
+          getPersonalProjectLimits
+        })
+      })({ entity: parent, limitType: 'versionsHistory', project })
       let lastVersion: Version | null
       if (getTypeFromPath(info) === 'Model') {
         lastVersion = await ctx.loaders
@@ -143,10 +150,8 @@ export = {
           .streams.getLastVersion.load(parent.streamId)
       }
       if (lastVersion?.id === parent.id) return parent.referencedObject
-      return await getLimitedReferencedObject({
-        version: parent,
-        workspaceId: project.workspaceId
-      })
+      if (isBeyondLimit) return null
+      return parent.referencedObject
     }
   },
   Mutation: {

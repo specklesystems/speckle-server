@@ -112,7 +112,7 @@ describe('Project Comments', () => {
       expect(res1).to.not.haveGraphQLErrors()
       expect(threadId).to.be.ok
       expect(res1.data?.commentMutations.create.rawText).to.equal(parentText)
-      expect(res1.data?.commentMutations.create.text.doc).to.be.ok
+      expect(res1.data?.commentMutations.create.text?.doc).to.be.ok
       expect(res1.data?.commentMutations.create.authorId).to.equal(me.id)
       expect(createEventFired).to.be.true
     })
@@ -161,7 +161,7 @@ describe('Project Comments', () => {
 
         expect(res2).to.not.haveGraphQLErrors()
         expect(res2.data?.commentMutations.reply.rawText).to.equal(replyText)
-        expect(res2.data?.commentMutations.reply.text.doc).to.be.ok
+        expect(res2.data?.commentMutations.reply.text?.doc).to.be.ok
         expect(res2.data?.commentMutations.reply.authorId).to.equal(me.id)
         expect(replyEventFired).to.be.true
       })
@@ -190,7 +190,7 @@ describe('Project Comments', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.commentMutations.edit.rawText).to.equal(newText)
-        expect(res.data?.commentMutations.edit.text.doc).to.be.ok
+        expect(res.data?.commentMutations.edit.text?.doc).to.be.ok
         expect(res.data?.commentMutations.edit.authorId).to.equal(me.id)
         expect(editEventFired).to.be.true
       })
