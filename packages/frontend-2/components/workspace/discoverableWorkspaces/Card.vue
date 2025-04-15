@@ -21,7 +21,6 @@
       <FormButton v-else color="outline" size="sm" @click="onRequest">
         Request to join
       </FormButton>
-      <FormButton color="subtle" size="sm">Dismiss</FormButton>
     </template>
   </WorkspaceCard>
 </template>
