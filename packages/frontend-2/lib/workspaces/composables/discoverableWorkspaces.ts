@@ -151,6 +151,26 @@ export const useDiscoverableWorkspaces = () => {
                 return id !== workspaceId
               }
             )
+          },
+          workspaceJoinRequests(existingRefs = []) {
+            // Add the workspace to join requests with Pending status
+            const workspace = discoverableWorkspaces.value?.find(
+              (w) => w.id === workspaceId
+            )
+            if (workspace) {
+              return {
+                ...existingRefs,
+                items: [
+                  ...(existingRefs?.items || []),
+                  {
+                    id: workspaceId,
+                    status: 'Pending',
+                    workspace
+                  }
+                ]
+              }
+            }
+            return existingRefs
           }
         }
       })
