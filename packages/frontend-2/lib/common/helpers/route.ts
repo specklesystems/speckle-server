@@ -213,4 +213,4 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
 // Link to Workspace roles and seats documentation
 // TODO: Add link when ready
 export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
-export const LearnMoreMoveProjectsUrl = 'https://speckle.guide/'
+export const LearnMoreMoveProjectsUrl = 'https://speckle.systems/pricing'
