@@ -12,6 +12,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 
 describe('canLeaveProjectPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canLeaveProjectPolicy>) =>
@@ -53,7 +54,7 @@ describe('canLeaveProjectPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(TIME_MS.day)
       }),
       ...overrides
     })

@@ -14,6 +14,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 // Default deps allow test to succeed, this makes it so that we need to override less of them
 const buildSUT = (overrides?: OverridesOf<typeof canUpdateProjectVersionPolicy>) =>
@@ -60,7 +61,7 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoSession: async () => ({
       userId: 'user-id',
       providerId: 'provider-id',
-      validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+      validUntil: new Date(TIME_MS.day)
     }),
     ...overrides
   })

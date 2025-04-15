@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { canDeleteModelPolicy } from './canDelete.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 const buildSUT = (overrides?: Partial<Parameters<typeof canDeleteModelPolicy>[0]>) =>
   canDeleteModelPolicy({
@@ -59,7 +60,7 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoSession: async () => ({
       userId: 'user-id',
       providerId: 'provider-id',
-      validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+      validUntil: new Date(TIME_MS.day)
     }),
     ...overrides
   })
