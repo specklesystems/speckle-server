@@ -15,15 +15,14 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { z } from 'zod'
 
-const getDefaultWorkspaceSeatTypeByWorkspaceRole = ({
-  workspaceRole
-}: {
+const getDefaultWorkspaceSeatTypeByWorkspaceRole = ({}: {
   workspaceRole: WorkspaceRoles
 }): WorkspaceSeatType => {
-  if (workspaceRole === Roles.Workspace.Admin) {
-    return 'editor'
-  }
-  return 'viewer'
+  // this is here as part of a hotfix for old plans.
+  return 'editor'
+  // if (workspaceRole === Roles.Workspace.Admin) {
+  // }
+  // return 'viewer'
 }
 
 const WorkspaceRoleWorkspaceSeatTypeMapping = z.union([
