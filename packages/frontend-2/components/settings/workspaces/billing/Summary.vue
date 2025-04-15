@@ -6,9 +6,19 @@
     >
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
-        <p class="text-heading-lg text-foreground capitalize">
-          {{ formatName(plan?.name) }}
+        <p class="flex gap-x-2">
+          <span class="text-heading-lg text-foreground">
+            {{ formatName(plan?.name) }}
+          </span>
+          <span v-if="hasUnlimitedAddon" class="text-body-xs text-foreground-2">
+            including add-ons:
+          </span>
         </p>
+        <div v-if="hasUnlimitedAddon" class="mt-1">
+          <CommonBadge rounded color="secondary">
+            Unlimited Projects & Models
+          </CommonBadge>
+        </div>
       </div>
 
       <div class="p-5 pt-4 flex flex-col">
@@ -66,9 +76,13 @@ const { billingPortalRedirect } = useBillingActions()
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { plan, isPaidPlan, intervalIsYearly, currentBillingCycleEnd } = useWorkspacePlan(
-  slug.value
-)
+const {
+  plan,
+  isPaidPlan,
+  intervalIsYearly,
+  currentBillingCycleEnd,
+  hasUnlimitedAddon
+} = useWorkspacePlan(slug.value)
 
 const showBillingPortalLink = computed(
   () =>

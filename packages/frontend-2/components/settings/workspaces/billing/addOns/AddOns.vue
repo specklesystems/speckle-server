@@ -16,6 +16,7 @@
             v-model="isYearlyIntervalSelected"
             :show-label="false"
             name="billing-interval"
+            :disabled="hasUnlimitedAddon"
           />
           <span class="text-body-2xs">Billed yearly</span>
           <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
