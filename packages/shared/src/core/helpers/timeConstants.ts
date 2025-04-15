@@ -1,4 +1,4 @@
-import { mapValues } from 'lodash'
+import { mapValues } from '#lodash'
 
 /*
  * Time with seconds as the base unit
