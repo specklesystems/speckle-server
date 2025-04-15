@@ -4,6 +4,7 @@
       :to="to"
       class="flex items-center text-sm"
       active-class="text-primary font-bold"
+      :class="disabled && 'pointer-events-none'"
     >
       <div v-if="separator">
         <ChevronRightIcon class="flex w-4 h-4 mt-[3px] mx-0 md:mx-1" />
@@ -28,6 +29,10 @@ defineProps({
   name: {
     type: String,
     default: null
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 </script>
