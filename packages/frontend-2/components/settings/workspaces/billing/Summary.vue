@@ -32,11 +32,13 @@
       </div>
 
       <div class="p-5 pt-4 flex flex-col">
-        <h3 class="text-body-xs text-foreground-2 pb-4">Next payment due</h3>
+        <h3 class="text-body-xs text-foreground-2 pb-4">
+          {{ nextPaymentHeadingText }}
+        </h3>
         <p class="text-heading-lg text-foreground capitalize">
           {{
             currentBillingCycleEnd
-              ? dayjs(currentBillingCycleEnd).format('DD-MMMM-YYYY')
+              ? dayjs(currentBillingCycleEnd).format('DD-MM-YYYY')
               : 'Not applicable'
           }}
         </p>
@@ -81,8 +83,17 @@ const {
   isPaidPlan,
   intervalIsYearly,
   currentBillingCycleEnd,
+  statusIsCanceled,
+  statusIsCancelationScheduled,
   hasUnlimitedAddon
 } = useWorkspacePlan(slug.value)
+
+const nextPaymentHeadingText = computed(() => {
+  if (statusIsCanceled.value) return 'Cancelled on'
+  if (statusIsCancelationScheduled.value) return 'Cancellation scheduled for'
+
+  return 'Next payment due '
+})
 
 const showBillingPortalLink = computed(
   () =>
