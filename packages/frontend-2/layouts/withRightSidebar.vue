@@ -27,5 +27,9 @@
         </div>
       </div>
     </div>
+    <WorkspaceAnnouncementDialog v-model:open="isAnnouncementDialogOpen" />
   </div>
 </template>
+<script setup lang="ts">
+const isAnnouncementDialogOpen = ref(true)
+</script>
