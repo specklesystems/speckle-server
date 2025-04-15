@@ -55,7 +55,7 @@ describe('canReadProjectSettingsPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date(TIME_MS.day)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })

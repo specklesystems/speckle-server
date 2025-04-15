@@ -61,7 +61,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(TIME_MS.day)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -267,7 +267,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(TIME_MS.day)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -427,7 +427,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(TIME_MS.day)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -647,7 +647,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(TIME_MS.day)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       ...overrides
