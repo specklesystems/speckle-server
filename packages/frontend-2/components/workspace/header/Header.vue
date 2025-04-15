@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="!isWorkspaceGuest">
+    <div v-if="!isWorkspaceGuest && showBillingAlert">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
     </div>
     <div class="flex items-center justify-between gap-4">
@@ -110,6 +110,12 @@ const canCreateProject = computed(
 )
 const canMoveProjectToWorkspace = computed(
   () => props.workspaceInfo.permissions.canMoveProjectToWorkspace
+)
+const showBillingAlert = computed(
+  () =>
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Canceled ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.CancelationScheduled
 )
 
 const billingAlertAction = computed<Array<AlertAction>>(() => {

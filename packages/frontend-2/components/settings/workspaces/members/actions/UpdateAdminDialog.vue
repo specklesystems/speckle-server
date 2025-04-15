@@ -23,13 +23,13 @@
         <CommonCard class="!py-3">
           <p class="text-body-xs font-medium text-foreground">
             {{
-              isFreePlan || isUnlimitedPlan
-                ? 'Seat upgrade required'
+              isFreePlan || hasAvailableEditorSeats || isUnlimitedPlan
+                ? 'Seat change required'
                 : 'Seat purchase required'
             }}
           </p>
-          <p class="text-body-2xs text-foreground mb-4">
-            All admins need to be on a paid Editor seat.
+          <p class="text-body-2xs text-foreground mb-4 mt-2">
+            Admins have to be on an Editor seat.
           </p>
           <SeatTransitionCards
             :is-upgrading="true"
@@ -38,6 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
+            :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
@@ -47,38 +48,23 @@
               You have an unused Editor seat that is already paid for, so the change
               will not incur any charges.
             </p>
-            <p v-else class="text-foreground-2 text-body-xs mt-4">
-              Note that the Editor seat is a paid seat type and this change will incur
-              additional charges to your subscription.
+            <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
+              You'll be charged immediately for the partial period from today until your
+              plan renewal on {{ currentBillingCycleEnd }} ({{
+                editorSeatPriceFormatted
+              }}/{{ intervalIsYearly ? 'year' : 'month' }} adjusted for the remaining
+              time).
             </p>
           </template>
         </CommonCard>
       </template>
-
-      <p class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }} Learn more about
-        <NuxtLink
-          :to="LearnMoreRolesSeatsUrl"
-          target="_blank"
-          class="text-foreground-2 underline"
-        >
-          workspace roles.
-        </NuxtLink>
-      </p>
-
-      <p v-if="isPaidPlan" class="text-foreground-2 text-body-xs mt-3">
-        Note that the Editor seat is a paid seat type if your workspace is subscribed to
-        one of the paid plans.
-      </p>
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles, SeatTypes } from '@speckle/shared'
-import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import SeatTransitionCards from './SeatTransitionCards.vue'
@@ -106,8 +92,9 @@ const {
   hasAvailableEditorSeats,
   isFreePlan,
   isUnlimitedPlan,
-  isPaidPlan,
-  editorSeatPriceFormatted
+  editorSeatPriceFormatted,
+  intervalIsYearly,
+  currentBillingCycleEnd
 } = useWorkspacePlan(props.workspace?.slug || '')
 
 const needsEditorUpgrade = computed(() => {
@@ -128,7 +115,7 @@ const title = computed(() => {
 const buttonText = computed(() => {
   switch (props.action) {
     case 'make':
-      return needsEditorUpgrade.value ? 'Upgrade and make admin' : 'Make an admin'
+      return needsEditorUpgrade.value ? 'Confirm and pay' : 'Make an admin'
     case 'remove':
       return 'Revoke admin access'
     default:
@@ -145,12 +132,6 @@ const mainMessage = computed(() => {
     default:
       return ''
   }
-})
-
-const roleInfo = computed(() => {
-  return props.action === 'make'
-    ? undefined
-    : WorkspaceRoleDescriptions[Roles.Workspace.Member]
 })
 
 const handleConfirm = async () => {
