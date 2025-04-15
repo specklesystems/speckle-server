@@ -12,11 +12,13 @@ import { InputEvent } from '../../input/Input.js'
 import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
 import { AreaMeasurement } from './AreaMeasurement.js'
+import { PointMeasurement } from './PointMeasurement.js'
 
 export enum MeasurementType {
   PERPENDICULAR,
   POINTTOPOINT,
-  AREA
+  AREA,
+  POINT
 }
 
 export interface MeasurementOptions {
@@ -30,7 +32,7 @@ export interface MeasurementOptions {
 
 const DefaultMeasurementsOptions = {
   visible: true,
-  type: MeasurementType.AREA,
+  type: MeasurementType.POINT,
   vertexSnap: true,
   units: 'm',
   precision: 2,
@@ -308,9 +310,11 @@ export class MeasurementsExtension extends Extension {
       measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
       measurement = new PointToPointMeasurement()
-    else if (this._options.type === MeasurementType.AREA) {
+    else if (this._options.type === MeasurementType.AREA)
       measurement = new AreaMeasurement()
-    } else throw new Error('Unsupported measurement type!')
+    else if (this._options.type === MeasurementType.POINT)
+      measurement = new PointMeasurement()
+    else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
     measurement.units =

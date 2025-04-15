@@ -65,7 +65,7 @@ export class MeasurementPointGizmo extends Group {
   private normalIndicatorNormal: Vector3 = new Vector3()
   private normalIndicatorTangent: Vector3 = new Vector3()
   private normalIndicatorBitangent: Vector3 = new Vector3()
-  public line: LineSegments2
+  private line: LineSegments2
   private point: Mesh
   private text: SpeckleText
   private _style: MeasurementPointGizmoStyle = Object.assign(
@@ -427,7 +427,7 @@ export class MeasurementPointGizmo extends Group {
         textValue: value,
         height: 1,
         anchorX: '50%',
-        anchorY: '43%' // Apparently this makes it vertically centered
+        anchorY: '50%'
       })
       .then(() => {
         this.text.style = {
