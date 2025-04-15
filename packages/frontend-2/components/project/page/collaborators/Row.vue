@@ -100,7 +100,7 @@ const props = defineProps<{
 }>()
 
 const { activeUser } = useActiveUser()
-
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const showActionsMenu = ref(false)
 const menuId = useId()
 const showCancelInviteDialog = ref(false)
@@ -150,7 +150,7 @@ const disabledRoles = computed(() => {
     return [Roles.Stream.Owner]
   }
 
-  if (props.collaborator.seatType === 'viewer') {
+  if (props.collaborator.seatType === 'viewer' && isWorkspaceNewPlansEnabled.value) {
     return [Roles.Stream.Owner, Roles.Stream.Contributor]
   }
 
@@ -162,7 +162,7 @@ const disabledRolesTooltip = computed(() => {
     return 'Workspace guests cannot be project owners'
   }
 
-  if (props.collaborator.seatType === 'viewer') {
+  if (props.collaborator.seatType === 'viewer' && isWorkspaceNewPlansEnabled.value) {
     return 'Users with a viewer seat cannot be project owners or contributors'
   }
 
