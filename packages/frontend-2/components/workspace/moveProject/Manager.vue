@@ -82,6 +82,11 @@ graphql(`
 graphql(`
   fragment WorkspaceMoveProjectManager_Project on Project {
     ...WorkspaceMoveProjectManager_ProjectBase
+    permissions {
+      canMoveToWorkspace {
+        ...FullPermissionCheckResult
+      }
+    }
     workspace {
       id
       permissions {
