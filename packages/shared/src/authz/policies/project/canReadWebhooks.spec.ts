@@ -55,7 +55,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
       }),
       ...overrides
     })
