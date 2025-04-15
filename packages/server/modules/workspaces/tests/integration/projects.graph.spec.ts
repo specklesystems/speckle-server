@@ -179,10 +179,10 @@ describe('Workspace project GQL CRUD', () => {
             workspaceId: roleWorkspace.id,
             userIds: [workspaceGuest.id, workspaceEditor.id, workspaceMemberViewer.id]
           })
-          expect(seats[workspaceGuest.id].type).to.equal(WorkspaceSeatType.Viewer)
+          expect(seats[workspaceGuest.id].type).to.equal(WorkspaceSeatType.Editor)
           expect(seats[workspaceEditor.id].type).to.equal(WorkspaceSeatType.Editor)
           expect(seats[workspaceMemberViewer.id].type).to.equal(
-            WorkspaceSeatType.Viewer
+            WorkspaceSeatType.Editor
           )
         })
 

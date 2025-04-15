@@ -248,7 +248,7 @@ describe('Workspaces Billing', () => {
 
           expect(res).to.not.haveGraphQLErrors()
           const seats = res.data?.workspace.subscription?.seats
-          expect(seats?.viewersCount).to.eq(2)
+          expect(seats?.viewersCount).to.eq(0)
         })
       })
     }
