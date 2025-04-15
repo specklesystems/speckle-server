@@ -84,7 +84,7 @@ const {
   intervalIsYearly,
   currentBillingCycleEnd,
   statusIsCanceled,
-  statusIsCancelationScheduled
+  statusIsCancelationScheduled,
   hasUnlimitedAddon
 } = useWorkspacePlan(slug.value)
 
