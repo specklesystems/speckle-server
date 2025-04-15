@@ -19,7 +19,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
     overrides?: OverridesOf<typeof canBroadcastProjectActivityPolicy>
   ) =>
     canBroadcastProjectActivityPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
@@ -152,6 +152,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
 
   it('succeeds w/ admin override, even w/o project role', async () => {
     const sut = buildSUT({
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
       getServerRole: async () => Roles.Server.Admin,
       getProjectRole: async () => null
     })
