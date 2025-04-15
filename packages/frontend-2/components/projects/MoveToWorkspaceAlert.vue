@@ -80,7 +80,6 @@
 <script setup lang="ts">
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
-import { ref } from 'vue'
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/20/solid'
 
 defineEmits(['moveProject'])
