@@ -25,7 +25,7 @@ describe('canRequestProjectVersionRenderPolicy', () => {
         isDiscoverable: false
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
-      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'true' }),
+      getEnv: async () => parseFeatureFlags({ FF_ADMIN_OVERRIDE_ENABLED: 'false' }),
       getServerRole: async () => Roles.Server.Guest,
       getWorkspaceRole: async () => null,
       getWorkspace: async () => null,
