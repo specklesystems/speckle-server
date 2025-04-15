@@ -417,7 +417,9 @@ describe('Workspace project GQL CRUD', () => {
             authUserId: serverAdminUser.id
           })
 
-          getFeatureFlagsMock.enable({ FF_ADMIN_OVERRIDE_ENABLED: true })
+          getFeatureFlagsMock.enable({
+            FF_ADMIN_OVERRIDE_ENABLED: adminOverrideEnabled
+          })
 
           const res = await apollo.execute(GetWorkspaceProjectsDocument, {
             id: queryWorkspace.id,
