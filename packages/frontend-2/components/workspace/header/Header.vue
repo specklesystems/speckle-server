@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
     <div v-if="!isWorkspaceGuest && showBillingAlert">
-      <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
+      <BillingAlert :workspace="workspaceInfo" />
     </div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-x-2">
@@ -61,7 +61,6 @@ import {
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
-import type { AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
@@ -117,21 +116,4 @@ const showBillingAlert = computed(
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Canceled ||
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.CancelationScheduled
 )
-
-const billingAlertAction = computed<Array<AlertAction>>(() => {
-  if (
-    isWorkspaceAdmin.value ||
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
-  ) {
-    return [
-      {
-        title: 'Subscribe',
-        onClick: () =>
-          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
-      }
-    ]
-  }
-
-  return []
-})
 </script>
