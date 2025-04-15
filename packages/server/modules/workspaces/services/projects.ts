@@ -46,7 +46,7 @@ import {
   GetWorkspaceWithPlan,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
@@ -226,7 +226,7 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
       throw new WorkspaceNotFoundError()
     }
 
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (isNewPlan) {
       throw new NotImplementedError(
         'This function is not supported for this workspace plan'
@@ -267,7 +267,7 @@ export const getWorkspaceSeatTypeToProjectRoleMappingFactory =
       throw new WorkspaceNotFoundError()
     }
 
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (!isNewPlan) {
       throw new NotImplementedError(
         'This function is not supported for this workspace plan'
