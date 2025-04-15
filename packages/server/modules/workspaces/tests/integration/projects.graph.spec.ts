@@ -182,7 +182,7 @@ describe('Workspace project GQL CRUD', () => {
           expect(seats[workspaceGuest.id].type).to.equal(WorkspaceSeatType.Editor)
           expect(seats[workspaceEditor.id].type).to.equal(WorkspaceSeatType.Editor)
           expect(seats[workspaceMemberViewer.id].type).to.equal(
-            WorkspaceSeatType.Editor
+            WorkspaceSeatType.Viewer
           )
         })
 
