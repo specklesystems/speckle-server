@@ -75,8 +75,6 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
-
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
@@ -369,7 +367,8 @@ export = {
     async streams(parent, args, ctx) {
       // a little escape hatch for admins to look into users streams
       const isAdminOverride =
-        FF_ADMIN_OVERRIDE_ENABLED && ctx.role === Roles.Server.Admin
+        getFeatureFlags().FF_ADMIN_OVERRIDE_ENABLED && //HACK to support tests, evaluate at runtime instead of initialization
+        ctx.role === Roles.Server.Admin
 
       // if isAdminOverride, then the ctx.user has to be treaded as the parent user
       // to give the admin full view into the parent user's project streams

@@ -76,8 +76,6 @@ import {
 } from '@/modules/shared/helpers/graphqlHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
-
 const tables = {
   branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
@@ -585,7 +583,10 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
         })
         .andWhere((w) => {
           // Check server_acl exist first, so subsequent checks can be optimized away
-          if (FF_ADMIN_OVERRIDE_ENABLED && !withProjectRoleOnly) {
+          if (
+            getFeatureFlags().FF_ADMIN_OVERRIDE_ENABLED && //HACK to support tests, evaluate at runtime instead of initialization
+            !withProjectRoleOnly
+          ) {
             w.whereExists(
               tables
                 .serverAcl(deps.db)

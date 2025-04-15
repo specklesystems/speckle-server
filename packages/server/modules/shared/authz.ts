@@ -313,7 +313,7 @@ export const streamWritePermissionsPipelineFactory = (
 export const streamReadPermissionsPipelineFactory = (
   deps: ValidateRoleBuilderDeps &
     ValidateRequiredStreamDeps & {
-      adminOverrideEnabled: boolean
+      adminOverrideEnabled: () => boolean
     }
 ): AuthPipelineFunction[] => {
   const ret: AuthPipelineFunction[] = [
@@ -324,7 +324,7 @@ export const streamReadPermissionsPipelineFactory = (
     validateResourceAccess
   ]
 
-  if (deps.adminOverrideEnabled) ret.push(allowForServerAdmins)
+  if (deps.adminOverrideEnabled()) ret.push(allowForServerAdmins)
 
   return ret
 }

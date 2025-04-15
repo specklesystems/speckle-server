@@ -41,7 +41,7 @@ import { authorizeResolver } from '@/modules/shared'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
-  adminOverrideEnabled: boolean
+  adminOverrideEnabled: () => boolean
 }
 
 export const authorizeProjectCommentsAccessFactory =
@@ -69,7 +69,8 @@ export const authorizeProjectCommentsAccessFactory =
     if (!project.isPublic && !project.role) success = false
     if (requireProjectRole && !project.role && !project.allowPublicComments)
       success = false
-    if (deps.adminOverrideEnabled && authCtx.role === Roles.Server.Admin) success = true
+    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
+      success = true
 
     // TODO: Until we do canCommentCreate & canCommentRead, fallback:
     if (authCtx.userId && (!requireProjectRole || project.allowPublicComments)) {

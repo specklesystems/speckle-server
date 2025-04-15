@@ -52,8 +52,6 @@ import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorag
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
-
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.info('📦 Blob storage is DISABLED')
@@ -103,7 +101,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     })
   const createStreamReadPermissions = () =>
     streamReadPermissionsPipelineFactory({
-      adminOverrideEnabled: FF_ADMIN_OVERRIDE_ENABLED,
+      adminOverrideEnabled: () => getFeatureFlags().FF_ADMIN_OVERRIDE_ENABLED, //HACK to support tests, evaluate at runtime instead of initialization
       getRoles: getRolesFactory({ db }),
       getStream: getStreamFactory({ db })
     })

@@ -43,7 +43,7 @@ const workspaceRoleImplicitProjectRoleMap = <const>{
 export const authorizeResolverFactory =
   (deps: {
     getRoles: GetRoles
-    adminOverrideEnabled: boolean
+    adminOverrideEnabled: () => boolean
     getUserServerRole: GetUserServerRole
     getStream: GetStream
     getUserAclRole: GetUserAclRole
@@ -72,7 +72,7 @@ export const authorizeResolverFactory =
     }
 
     if (
-      deps.adminOverrideEnabled &&
+      deps.adminOverrideEnabled() &&
       userId &&
       (!operationType || operationType === OperationTypeNode.QUERY)
     ) {

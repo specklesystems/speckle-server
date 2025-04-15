@@ -26,12 +26,10 @@ export {
   BranchSubscriptions as BranchPubsubEvents
 }
 
-const { FF_ADMIN_OVERRIDE_ENABLED } = getFeatureFlags()
-
 export const validateScopes = validateScopesFactory()
 export const authorizeResolver = authorizeResolverFactory({
   getRoles: getCachedRolesFactory({ db }),
-  adminOverrideEnabled: FF_ADMIN_OVERRIDE_ENABLED,
+  adminOverrideEnabled: () => getFeatureFlags().FF_ADMIN_OVERRIDE_ENABLED, //HACK to support tests, evaluate at runtime instead of initialization
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),
   getUserAclRole: getUserAclRoleFactory({ db }),
