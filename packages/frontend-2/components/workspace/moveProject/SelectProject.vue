@@ -65,7 +65,16 @@
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitDialog"
       subtitle="Upgrade your plan to move project"
-    ></WorkspacePlanLimitReachedDialog>
+    >
+      <template v-if="limitReachedWorkspace">
+        <p class="text-body-xs text-foreground-2">
+          The workspace
+          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
+          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
+          of 1 project and 5 models. Upgrade the workspace to add more projects.
+        </p>
+      </template>
+    </WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 
@@ -76,11 +85,13 @@ import {
   useDebouncedTextInput
 } from '@speckle/ui-components'
 import type {
+  PermissionCheckResult,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspacePermissionChecks
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -91,7 +102,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   workspaceSlug?: string
-  workspacePermissions?: WorkspacePermissionChecks
+  projectPermissions?: PermissionCheckResult
 }>()
 
 const {
@@ -117,6 +128,9 @@ const {
 })
 
 const showLimitDialog = ref(false)
+const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
+  null
+)
 
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 const moveableProjects = computed(() => userProjects.value)
@@ -142,6 +156,9 @@ const getProjectTooltip = computed(
 
 const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
   if (props.workspaceSlug) {
+    limitReachedWorkspace.value = {
+      name: props.workspaceSlug
+    } as WorkspaceMoveProjectManager_WorkspaceFragment
     showLimitDialog.value = true
     return
   }
