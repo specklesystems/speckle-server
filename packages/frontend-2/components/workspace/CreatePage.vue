@@ -57,6 +57,9 @@ defineProps<{
   workspaceId?: string
 }>()
 
+const route = useRoute()
+const isForcedCreation = computed(() => route.query.isForcedCreation === 'true')
+
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
@@ -73,7 +76,8 @@ const requiresWorkspaceCreation = computed(() => {
     isWorkspacesEnabled.value &&
     (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
     // Legacy projects
-    (result.value?.activeUser?.versions.totalCount || 0) === 0
+    (result.value?.activeUser?.versions.totalCount || 0) === 0 &&
+    isForcedCreation.value
   )
 })
 

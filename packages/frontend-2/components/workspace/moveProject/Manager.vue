@@ -32,11 +32,7 @@
     />
     <template #buttons>
       <div class="-my-1 w-full flex justify-end">
-        <FormButton
-          v-if="!selectedProject"
-          color="outline"
-          @click="navigateTo(workspaceCreateRoute())"
-        >
+        <FormButton v-if="!selectedProject" color="outline" @click="open = false">
           Cancel
         </FormButton>
         <FormButton
