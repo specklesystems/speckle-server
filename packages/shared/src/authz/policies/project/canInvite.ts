@@ -10,11 +10,12 @@ import {
   ProjectNoAccessError,
   ProjectNotFoundError,
   ServerNotEnoughPermissionsError,
-  ProjectNotEnoughPermissionsError
+  ProjectNotEnoughPermissionsError,
+  WorkspaceNotEnoughPermissionsError
 } from '../../domain/authErrors.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
-import { ensureMinimumProjectRoleFragment } from '../../fragments/projects.js'
+import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../fragments/projects.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -37,6 +38,7 @@ type PolicyErrors =
   | InstanceType<typeof ProjectNotEnoughPermissionsError>
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
 
 export const canInvitePolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
   (loaders) =>
@@ -45,13 +47,16 @@ export const canInvitePolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErr
       userId,
       role: Roles.Server.User
     })
-    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
 
-    const ensuredProjectRole = await ensureMinimumProjectRoleFragment(loaders)({
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
+    const ensuredProjectRole = await ensureImplicitProjectMemberWithWriteAccessFragment(
+      loaders
+    )({
       userId: userId!,
       projectId,
       role: Roles.Stream.Owner
     })
+
     if (ensuredProjectRole.isErr) return err(ensuredProjectRole.error)
 
     return ok()
