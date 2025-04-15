@@ -46,6 +46,7 @@ generates:
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
+        AutomationPermissionChecks: '@/modules/automate/helpers/graphTypes#AutomationPermissionChecksGraphQLReturn'
         AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
         AutomationRevisionFunction: '@/modules/automate/helpers/graphTypes#AutomationRevisionFunctionGraphQLReturn'
         AutomateRun: '@/modules/automate/helpers/graphTypes#AutomateRunGraphQLReturn'

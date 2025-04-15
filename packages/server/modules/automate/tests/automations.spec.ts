@@ -75,7 +75,6 @@ const buildAutomationUpdate = () => {
   const update = validateAndUpdateAutomationFactory({
     getAutomation,
     updateAutomation: updateDbAutomation,
-    validateStreamAccess,
     eventEmit: getEventBus().emit
   })
 
