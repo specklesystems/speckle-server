@@ -27,9 +27,9 @@ const vec2Buff0: Vector2 = new Vector2()
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
-  private midPoint: Vector3 = new Vector3()
   private normalIndicatorPixelSize = 15 * window.devicePixelRatio
-  private flipStartNormal: boolean = false
+  public flipStartNormal: boolean = false
+  public midPoint: Vector3 = new Vector3()
 
   public set isVisible(value: boolean) {
     this.startGizmo?.enable(value, value, value, value)

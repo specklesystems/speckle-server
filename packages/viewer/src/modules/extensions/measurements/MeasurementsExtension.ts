@@ -347,13 +347,28 @@ export class MeasurementsExtension extends Extension {
       this.renderer.scene.remove(this._activeMeasurement)
       Logger.error('Ignoring zero value measurement!')
     }
-    this._activeMeasurement = null
 
     if (this._options.chain) {
+      const startPoint = new Vector3()
+      const startNormal = new Vector3()
+      let oldMeasurement
+      switch (this._options.type) {
+        case MeasurementType.PERPENDICULAR:
+          oldMeasurement = this._activeMeasurement as PerpendicularMeasurement
+          startPoint.copy(oldMeasurement.midPoint)
+          startNormal.copy(oldMeasurement.startNormal)
+          break
+        default:
+          oldMeasurement = this._activeMeasurement
+          startPoint.copy(this.pointBuff)
+          startNormal.copy(this.normalBuff)
+          break
+      }
       this._activeMeasurement = this.startMeasurement()
-      this._activeMeasurement.locationUpdated(this.pointBuff, this.normalBuff)
+      this._activeMeasurement.locationUpdated(startPoint, startNormal)
       this._activeMeasurement.locationSelected()
-    }
+    } else this._activeMeasurement = null
+
     this.viewer.requestRender()
   }
 
