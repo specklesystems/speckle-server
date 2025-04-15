@@ -107,7 +107,7 @@ const actions = computed((): AlertAction[] => {
     })
   }
 
-  if (planStatus.value === WorkspacePlanStatuses.Canceled && !props.settingLinks) {
+  if (planStatus.value === WorkspacePlanStatuses.Canceled && !props.hideSettingsLinks) {
     actions.push({
       title: 'Resubscribe',
       onClick: () =>
