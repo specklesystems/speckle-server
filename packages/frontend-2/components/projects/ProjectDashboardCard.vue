@@ -64,7 +64,12 @@
               }}
             </FormButton>
             <FormButton
-              v-if="!project.workspace?.id && isWorkspacesEnabled"
+              v-if="
+                !project.workspace?.id &&
+                isWorkspacesEnabled &&
+                (project.role === Roles.Stream.Contributor ||
+                  project.role === Roles.Stream.Owner)
+              "
               size="sm"
               color="outline"
               @click="$emit('moveProject', project.id)"
@@ -107,6 +112,7 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { Roles } from '@speckle/shared'
 import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {

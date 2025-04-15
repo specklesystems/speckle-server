@@ -49,7 +49,7 @@ const props = defineProps<{
   hideTextOnMobile?: boolean
   buttonCopy?: string
   canCreateProject: FullPermissionCheckResultFragment | undefined
-  canMoveProject: FullPermissionCheckResultFragment | undefined
+  canMoveProjectToWorkspace: FullPermissionCheckResultFragment | undefined
 }>()
 
 const menuId = useId()
@@ -65,7 +65,9 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
     },
     {
       title: 'Move existing project...',
-      id: AddNewProjectActionTypes.MoveProject
+      id: AddNewProjectActionTypes.MoveProject,
+      disabled: !props.canMoveProjectToWorkspace?.authorized,
+      disabledTooltip: props.canMoveProjectToWorkspace?.message
     }
   ]
 ])

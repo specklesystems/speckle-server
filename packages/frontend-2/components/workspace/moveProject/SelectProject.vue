@@ -37,7 +37,7 @@
             </div>
           </div>
           <div
-            :key="`${project.id}-${project.workspace?.permissions?.canMoveProjectToWorkspace?.code}`"
+            :key="`${project.id}-${project.permissions.canMoveToWorkspace.code}`"
             v-tippy="getProjectTooltip(project)"
           >
             <FormButton
@@ -76,8 +76,8 @@ import {
   useDebouncedTextInput
 } from '@speckle/ui-components'
 import type {
-  FullPermissionCheckResultFragment,
-  WorkspaceMoveProjectManager_ProjectFragment
+  WorkspaceMoveProjectManager_ProjectFragment,
+  WorkspacePermissionChecks
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
@@ -91,12 +91,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   workspaceSlug?: string
-  canMoveToWorkspace: (permission: FullPermissionCheckResultFragment) => boolean
-  isLimitReached: (permission: FullPermissionCheckResultFragment) => boolean
-  isSsoRequired: (permission: FullPermissionCheckResultFragment) => boolean
-  getDisabledTooltip: (
-    permission: FullPermissionCheckResultFragment
-  ) => string | undefined
+  workspacePermissions?: WorkspacePermissionChecks
 }>()
 
 const {
@@ -132,8 +127,11 @@ const isProjectDisabled = computed(
     if (!props.workspaceSlug) {
       return false
     }
+    if (isProjectLimitReached.value(project)) {
+      return false
+    }
 
-    return !canMoveProject.value(project) && !isProjectLimitReached.value(project)
+    return !canMoveProject.value(project)
   }
 )
 
@@ -150,7 +148,7 @@ const showLoading = computed(() => loading.value && userProjects.value.length ==
 
 const getProjectPermission = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
   return (
-    project.workspace?.permissions?.canMoveProjectToWorkspace || {
+    project.permissions?.canMoveToWorkspace || {
       authorized: false,
       code: '',
       message: ''
@@ -161,24 +159,27 @@ const getProjectPermission = (project: WorkspaceMoveProjectManager_ProjectFragme
 const canMoveProject = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
     const permission = getProjectPermission(project)
-    return props.canMoveToWorkspace(permission)
+    return permission.authorized
   }
 )
 
 const isProjectLimitReached = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
     const permission = getProjectPermission(project)
-    return props.isLimitReached(permission)
+    return permission.code === 'WorkspaceLimitsReached'
   }
 )
 
 const getProjectTooltip = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
     const permission = getProjectPermission(project)
-    if (props.isLimitReached(permission)) {
+    if (permission.authorized) {
       return undefined
     }
-    return props.getDisabledTooltip(permission)
+    if (permission.code === 'WorkspaceLimitsReached') {
+      return undefined
+    }
+    return permission.message
   }
 )
 </script>
