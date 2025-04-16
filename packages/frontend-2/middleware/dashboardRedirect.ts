@@ -21,7 +21,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     mutateActiveWorkspaceSlug,
     mutateIsProjectsActive
   } = useNavigation()
+
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+  if (!isWorkspacesEnabled.value) {
+    mutateIsProjectsActive(true)
+    return navigateTo(projectsRoute)
+  }
 
   const { data: workspaceExistenceData } = await client
     .query({
