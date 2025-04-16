@@ -19,7 +19,7 @@
               {{
                 plan === WorkspacePlans.Free && !isYearlySelected
                   ? 'Get started for free'
-                  : `Subscribe to ${startCase(plan)}`
+                  : `Subscribe to ${formatName(plan)}`
               }}
             </FormButton>
           </template>
@@ -39,7 +39,7 @@ import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { WorkspacePlans, type PaidWorkspacePlans } from '@speckle/shared'
-import { startCase } from 'lodash'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()

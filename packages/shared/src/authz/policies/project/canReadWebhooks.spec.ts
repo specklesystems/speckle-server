@@ -12,6 +12,7 @@ import {
 } from '../../domain/authErrors.js'
 import { canReadProjectWebhooksPolicy } from './canReadWebhooks.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 
 describe('canReadProjectWebhooksPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>) =>
@@ -55,7 +56,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })

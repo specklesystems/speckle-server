@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          name="Home"
+          name="Projects"
           :separator="false"
         />
       </Portal>
@@ -46,15 +46,16 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
+        class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
       >
+        <WorkspaceEmptyStateIllustration />
         <span class="text-body-2xs text-foreground-2 text-center">
           Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
           button-copy="Add your first project"
           :can-create-project="canCreateProject"
-          :can-move-project="canMoveProject"
+          :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -83,7 +84,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { Roles, type Nullable, type Optional, type StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -91,10 +92,7 @@ import {
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  FullPermissionCheckResultFragment,
-  WorkspaceProjectsQueryQueryVariables
-} from '~~/lib/common/generated/gql/graphql'
+import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
@@ -195,14 +193,9 @@ const { finalizeWizard } = useWorkspacesWizard()
 const canCreateProject = computed(
   () => initialQueryResult.value?.workspaceBySlug?.permissions.canCreateProject
 )
-const canMoveProject = computed((): FullPermissionCheckResultFragment => {
-  // TODO: Until we have a real resolver
-  return {
-    authorized: isWorkspaceAdmin.value,
-    message: isWorkspaceAdmin.value ? 'OK' : 'You must be a workspace admin',
-    code: isWorkspaceAdmin.value ? 'OK' : 'FORBIDDEN'
-  }
-})
+const canMoveProjectToWorkspace = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canMoveProjectToWorkspace
+)
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -212,8 +205,6 @@ const showEmptyState = computed(() => {
 
   return projects.value && !projects.value?.items?.length
 })
-
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {
   const isLoading = areQueriesLoading.value || (!!search.value && query.loading.value)

@@ -28,7 +28,7 @@
         </template>
         <template v-else>
           <CommonTiptapTextEditor
-            v-if="comment.text.doc"
+            v-if="comment?.text?.doc"
             :model-value="comment.text.doc"
             :schema-options="{ multiLine: false }"
             :project-id="projectId"

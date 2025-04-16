@@ -51,8 +51,10 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
   }
 )
 
-const { upgradePlan } = useBillingActions()
-const { hasUnlimitedAddon, plan } = useWorkspacePlan(props.slug)
+const { upgradePlan, redirectToCheckout } = useBillingActions()
+const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
+  props.slug
+)
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
 const showAddonSelect = ref<boolean>(true)
@@ -124,17 +126,25 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const backButtonText = computed(() => (showAddonSelect.value ? 'Cancel' : 'Back'))
 const nextButtonText = computed(() =>
-  showAddonSelect.value ? 'Continue' : 'Continue and upgrade'
+  showAddonSelect.value || statusIsCanceled.value ? 'Continue' : 'Continue and upgrade'
 )
 
 const onSubmit = () => {
   if (!props.workspaceId) return
 
-  upgradePlan({
-    plan: finalNewPlan.value,
-    cycle: props.billingInterval,
-    workspaceId: props.workspaceId
-  })
+  if (!subscription.value || statusIsCanceled.value) {
+    redirectToCheckout({
+      plan: finalNewPlan.value,
+      cycle: props.billingInterval,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    upgradePlan({
+      plan: finalNewPlan.value,
+      cycle: props.billingInterval,
+      workspaceId: props.workspaceId
+    })
+  }
 
   isOpen.value = false
 }
@@ -145,7 +155,7 @@ watch(
     if (newVal) {
       showAddonSelect.value = props.isChangingPlan && !isSamePlanWithAddon.value
       // If the add-on is required or already included, set it to yes
-      if (usageExceedsNewPlanLimit.value) {
+      if (usageExceedsNewPlanLimit.value && props.isChangingPlan) {
         includeUnlimitedAddon.value = 'yes'
       } else {
         includeUnlimitedAddon.value = undefined

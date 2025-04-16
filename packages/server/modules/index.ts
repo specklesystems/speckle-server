@@ -409,7 +409,7 @@ export const moduleAuthLoaders = async (params: {
       // since its the inmemory cache, we dont have to worry about true-myth results being
       // serialized and deserialized as they would be with redis
       cacheProvider: inMemoryCacheProviderFactory({ cache }),
-      ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be)
+      ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be),
     })
     acc[key] = newLoader
 
@@ -421,6 +421,7 @@ export const moduleAuthLoaders = async (params: {
     clearCache: () => {
       cache.clear()
       dataLoaders.clearAll()
-    }
+    },
+    internalCache: cache
   }
 }

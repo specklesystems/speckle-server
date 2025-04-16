@@ -79,7 +79,9 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 
       const ttlMs = isNumber(params.ttlMs) ? params.ttlMs : params.ttlMs(...args)
       const cacheKey = key(...args)
-      const logger = (getRequestLogger() || cacheLogger).child({ cacheName: name })
+      const logger = (getRequestLogger() || cacheLogger).child({
+        cacheName: name
+      })
 
       if (skipCache) {
         logger.info("Cache '{cacheName}' skipped for specific args")
