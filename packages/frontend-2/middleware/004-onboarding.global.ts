@@ -140,12 +140,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Mark as initialized for future navigations
   isAppInitialized.value = true
 
-  const workspacesWithCompletedCreationState = workspaces.filter(
-    (w) => w.creationState?.completed !== false
-  )
-  const hasCompletedCreationStateWorkspaces =
-    workspacesWithCompletedCreationState.length > 0
-
   const { data: navigationCheckData } = await client
     .query({
       query: activeUserActiveWorkspaceCheckQuery
@@ -156,16 +150,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const activeUserActiveWorkspaceSlug =
     navigationCheckData?.activeUser?.activeWorkspace?.slug
   const belongsToWorkspace = (slug: string) =>
-    workspacesWithCompletedCreationState.find((workspace) => workspace.slug === slug)
+    workspaces.find((workspace) => workspace.slug === slug)
 
   // 4.2 If going to legacy projects, set it active
   if (to.path === projectsRoute) {
     if (hasLegacyProjects) {
       mutateIsProjectsActive(true)
     } else {
-      if (hasCompletedCreationStateWorkspaces) {
-        mutateActiveWorkspaceSlug(workspacesWithCompletedCreationState[0].slug)
-        navigateTo(workspaceRoute(workspacesWithCompletedCreationState[0].slug))
+      if (hasWorkspaces) {
+        mutateActiveWorkspaceSlug(workspaces[0].slug)
+        navigateTo(workspaceRoute(workspaces[0].slug))
       }
     }
     return
