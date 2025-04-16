@@ -54,19 +54,24 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
 
 export type GraphQLContext = BaseContext &
   AuthContext & {
-    authPolicies: Authz.AuthPolicies & { clearCache: () => void }
+    authPolicies: Authz.AuthPolicies & {
+      clearCache: () => void
+    }
     /**
      * Request-scoped GraphQL dataloaders
      * @see https://github.com/graphql/dataloader
      */
     loaders: RequestDataLoaders
     log: Logger
+    /**
+     * @deprecated Should be cleaned up soon, just use dataloaders
+     */
     authLoaders: AuthCheckContextLoaders
     /**
      * Clear dataloader, auth policy loader etc. caches. Usually necessary after mutations
      * are done in resolvers
      */
-    clearCache: () => Promise<void>
+    clearCache: () => void
   }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

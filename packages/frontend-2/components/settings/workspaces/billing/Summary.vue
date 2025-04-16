@@ -5,7 +5,9 @@
       class="grid grid-cols-1 lg:grid-cols-3 divide-y divide-outline-3 lg:divide-y-0 lg:divide-x"
     >
       <div class="p-5 pt-4 flex flex-col">
-        <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
+        <h3 class="text-body-xs text-foreground-2 pb-4">
+          {{ statusIsCanceled ? 'Plan' : 'Current plan' }}
+        </h3>
         <p class="flex gap-x-2">
           <span class="text-heading-lg text-foreground">
             {{ formatName(plan?.name) }}
@@ -24,7 +26,7 @@
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Billing period</h3>
         <p class="text-heading-lg text-foreground inline-block">
-          <span v-if="isPaidPlan">
+          <span v-if="isPaidPlan && billingInterval">
             {{ intervalIsYearly ? 'Yearly' : 'Monthly' }}
           </span>
           <span v-else>Not applicable</span>
@@ -85,7 +87,8 @@ const {
   currentBillingCycleEnd,
   statusIsCanceled,
   statusIsCancelationScheduled,
-  hasUnlimitedAddon
+  hasUnlimitedAddon,
+  billingInterval
 } = useWorkspacePlan(slug.value)
 
 const nextPaymentHeadingText = computed(() => {
