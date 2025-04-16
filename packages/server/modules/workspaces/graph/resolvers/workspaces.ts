@@ -99,8 +99,11 @@ import {
 } from '@/modules/workspaces/services/management'
 import {
   createWorkspaceProjectFactory,
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  getWorkspaceSeatTypeToProjectRoleMappingFactory,
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
+  queryAllWorkspaceProjectsFactory,
+  validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -205,6 +208,7 @@ import {
 import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
   createWorkspaceSeatFactory,
+  getWorkspaceRoleAndSeatFactory,
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
@@ -233,7 +237,21 @@ const buildCollectAndValidateResourceTargets = () =>
     getStream,
     getWorkspace: getWorkspaceFactory({ db }),
     getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
-    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db })
+    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+    getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db }),
+    validateWorkspaceMemberProjectRoleFactory:
+      validateWorkspaceMemberProjectRoleFactory({
+        getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db }),
+        getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
+        getWorkspaceRoleToDefaultProjectRoleMapping:
+          getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+          }),
+        getWorkspaceSeatTypeToProjectRoleMapping:
+          getWorkspaceSeatTypeToProjectRoleMappingFactory({
+            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+          })
+      })
   })
 
 const buildCreateAndSendServerOrProjectInvite = () =>

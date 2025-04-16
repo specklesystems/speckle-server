@@ -33,23 +33,19 @@ const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
     regions: {}
   })
 
+  if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
+    return emptyReturn()
+  }
+
   if (!multiRegionConfig) {
     const relativePath = getMultiRegionConfigPath({ unsafe: isDevOrTestEnv() })
     if (!relativePath) return emptyReturn()
 
     const configPath = path.resolve(packageRoot, relativePath)
 
-    try {
-      multiRegionConfig = await loadMultiRegionsConfig({
-        path: configPath
-      })
-    } catch (e) {
-      if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
-        return emptyReturn()
-      } else {
-        throw e
-      }
-    }
+    multiRegionConfig = await loadMultiRegionsConfig({
+      path: configPath
+    })
   }
 
   return multiRegionConfig
