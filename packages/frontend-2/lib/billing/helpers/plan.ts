@@ -19,7 +19,7 @@ export const formatName = (plan?: WorkspacePlans) => {
   const formattedPlanNames: Record<WorkspacePlans, string> = {
     [WorkspacePlans.Unlimited]: 'Unlimited',
     [WorkspacePlans.Academia]: 'Academia',
-    [WorkspacePlans.StarterInvoiced]: 'Starter (invoiced)',
+    [WorkspacePlans.StarterInvoiced]: 'Starter',
     [WorkspacePlans.PlusInvoiced]: 'Plus (Invoiced)',
     [WorkspacePlans.BusinessInvoiced]: 'Business (Invoiced)',
     [WorkspacePlans.Starter]: 'Starter',
@@ -27,11 +27,11 @@ export const formatName = (plan?: WorkspacePlans) => {
     [WorkspacePlans.Business]: 'Business',
     [WorkspacePlans.Free]: 'Free',
     [WorkspacePlans.Team]: 'Starter',
-    [WorkspacePlans.TeamUnlimited]: 'Starter Unlimited',
-    [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter Unlimited (Invoiced)',
+    [WorkspacePlans.TeamUnlimited]: 'Starter',
+    [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter (Invoiced)',
     [WorkspacePlans.Pro]: 'Business',
-    [WorkspacePlans.ProUnlimited]: 'Business Unlimited',
-    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business Unlimited (Invoiced)'
+    [WorkspacePlans.ProUnlimited]: 'Business',
+    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)'
   }
   return formattedPlanNames[plan]
 }
