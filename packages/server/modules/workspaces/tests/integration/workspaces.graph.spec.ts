@@ -1082,7 +1082,9 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(deleteRes).to.not.haveGraphQLErrors()
-        expect(getRes).to.haveGraphQLErrors('Workspace not found')
+        expect(getRes).to.haveGraphQLErrors(
+          'You are not authorized to access this resource'
+        )
       })
 
       it('should throw if non-workspace-admin triggers delete', async () => {

@@ -9,6 +9,8 @@ import { canReadProjectSettingsPolicy } from './project/canReadSettings.js'
 import { canReadProjectWebhooksPolicy } from './project/canReadWebhooks.js'
 import { canUpdateProjectAllowPublicCommentsPolicy } from './project/canUpdateAllowPublicComments.js'
 import { canLeaveProjectPolicy } from './project/canLeave.js'
+import { canInvitePolicy as canInviteToWorkspacePolicy } from './workspace/canInvite.js'
+import { canInvitePolicy as canInviteToProjectPolicy } from './project/canInvite.js'
 import { canBroadcastProjectActivityPolicy } from './project/canBroadcastActivity.js'
 import { canCreateProjectCommentPolicy } from './project/comment/canCreate.js'
 import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
@@ -46,10 +48,12 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canUpdateAllowPublicComments: canUpdateProjectAllowPublicCommentsPolicy(loaders),
     canReadSettings: canReadProjectSettingsPolicy(loaders),
     canReadWebhooks: canReadProjectWebhooksPolicy(loaders),
-    canLeave: canLeaveProjectPolicy(loaders)
+    canLeave: canLeaveProjectPolicy(loaders),
+    canInvite: canInviteToProjectPolicy(loaders)
   },
   workspace: {
-    canCreateProject: canCreateWorkspaceProjectPolicy(loaders)
+    canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
+    canInvite: canInviteToWorkspacePolicy(loaders)
   }
 })
 
