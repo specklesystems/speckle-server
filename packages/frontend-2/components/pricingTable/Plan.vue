@@ -16,7 +16,7 @@
           <span class="font-medium">
             {{ planPrice }}
           </span>
-          per seat/month
+          per editor seat/month
         </p>
         <template v-if="plan !== WorkspacePlans.Free">
           <div class="flex items-center gap-x-2 mt-3 px-1">
