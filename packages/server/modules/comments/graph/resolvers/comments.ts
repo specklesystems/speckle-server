@@ -94,6 +94,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { isCreatedBeyondHistoryLimitCutoff, getProjectLimitDate } from '@speckle/shared'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { Authz } from '@speckle/shared'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
@@ -538,6 +539,11 @@ export = {
       })
       throwIfAuthNotOk(canCreate)
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
       const projectDb = await getProjectDbClient({ projectId })
 
       const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
@@ -560,16 +566,28 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      return await createCommentThreadAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await createCommentThreadAndNotify(args.input, ctx.userId!),
+        {
+          operationName: 'createCommentThread',
+          operationDescription: 'Create comment thread',
+          logger
+        }
+      )
     },
     async reply(_parent, args, ctx) {
+      const projectId = args.input.projectId
       const canCreateComment = await ctx.authPolicies.project.comment.canCreate({
         userId: ctx.userId,
-        projectId: args.input.projectId
+        projectId
       })
       throwIfAuthNotOk(canCreateComment)
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectDb = await getProjectDbClient({ projectId })
       const getComment = getCommentFactory({ db: projectDb })
       const validateInputAttachments = validateInputAttachmentsFactory({
         getBlobs: getBlobsFactory({ db: projectDb })
@@ -592,18 +610,33 @@ export = {
         })
       })
 
-      return await createCommentReplyAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await createCommentReplyAndNotify(args.input, ctx.userId!),
+        {
+          operationName: 'replyToComment',
+          operationDescription: 'Reply to comment',
+          logger
+        }
+      )
     },
     async edit(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const commentId = args.input.commentId
       const canEditComment = await ctx.authPolicies.project.comment.canEdit({
-        projectId: args.input.projectId,
+        projectId,
         userId: ctx.userId,
-        commentId: args.input.commentId
+        commentId
       })
       throwIfAuthNotOk(canEditComment)
 
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        commentId
+      })
+
       const projectDb = await getProjectDbClient({
-        projectId: args.input.projectId
+        projectId
       })
       const getComment = getCommentFactory({ db: projectDb })
       const validateInputAttachments = validateInputAttachmentsFactory({
@@ -618,18 +651,28 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      return await editCommentAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await editCommentAndNotify(args.input, ctx.userId!),
+        { logger, operationName: 'editComment', operationDescription: 'Edit comment' }
+      )
     },
     async archive(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const commentId = args.input.commentId
       const canArchive = await ctx.authPolicies.project.comment.canArchive({
         userId: ctx.userId,
-        projectId: args.input.projectId,
-        commentId: args.input.commentId
+        projectId,
+        commentId
       })
       throwIfAuthNotOk(canArchive)
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        commentId
+      })
 
       const projectDb = await getProjectDbClient({
-        projectId: args.input.projectId
+        projectId
       })
       const getComment = getCommentFactory({ db: projectDb })
       const getStream = getStreamFactory({ db: projectDb })
@@ -648,10 +691,14 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      await archiveCommentAndNotify(
-        args.input.commentId,
-        ctx.userId!,
-        args.input.archived
+      await withOperationLogging(
+        async () =>
+          await archiveCommentAndNotify(commentId, ctx.userId!, args.input.archived),
+        {
+          logger,
+          operationName: 'archiveComment',
+          operationDescription: 'Archive comment'
+        }
       )
       return true
     }
@@ -718,13 +765,19 @@ export = {
     },
 
     async commentCreate(_parent, args, context) {
+      const projectId = args.input.streamId
       const canCreate = await context.authPolicies.project.comment.canCreate({
         userId: context.userId,
-        projectId: args.input.streamId
+        projectId
       })
       throwIfAuthNotOk(canCreate)
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
       const getViewerResourcesFromLegacyIdentifiers =
         buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
 
@@ -742,23 +795,39 @@ export = {
         emitEvent: getEventBus().emit,
         getViewerResourcesFromLegacyIdentifiers
       })
-      const comment = await createComment({
-        userId: context.userId!,
-        input: args.input
-      })
+      const comment = await withOperationLogging(
+        async () =>
+          await createComment({
+            userId: context.userId!,
+            input: args.input
+          }),
+        {
+          operationName: 'createComment',
+          operationDescription: 'Create comment',
+          logger
+        }
+      )
 
       return comment.id
     },
 
     async commentEdit(_parent, args, context) {
+      const projectId = args.input.streamId
+      const commentId = args.input.id
       const canEdit = await context.authPolicies.project.comment.canEdit({
         userId: context.userId,
-        projectId: args.input.streamId,
-        commentId: args.input.id
+        projectId,
+        commentId
       })
       throwIfAuthNotOk(canEdit)
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        commentId
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
       const editComment = editCommentFactory({
         getComment: getCommentFactory({ db: projectDb }),
         validateInputAttachments: validateInputAttachmentsFactory({
@@ -768,7 +837,10 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      await editComment({ userId: context.userId!, input: args.input })
+      await withOperationLogging(
+        async () => await editComment({ userId: context.userId!, input: args.input }),
+        { operationName: 'editComment', operationDescription: 'Edit comment', logger }
+      )
       return true
     },
 
@@ -788,38 +860,59 @@ export = {
     },
 
     async commentArchive(_parent, args, context) {
+      const projectId = args.streamId
+      const commentId = args.commentId
       const canArchive = await context.authPolicies.project.comment.canArchive({
         userId: context.userId,
-        projectId: args.streamId,
-        commentId: args.commentId
+        projectId,
+        commentId
       })
       throwIfAuthNotOk(canArchive)
 
-      const projectDb = await getProjectDbClient({ projectId: args.streamId })
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        commentId
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
       const archiveComment = archiveCommentFactory({
         getComment: getCommentFactory({ db: projectDb }),
         getStream,
         updateComment: updateCommentFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })
-      await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
+      await withOperationLogging(
+        async () => await archiveComment({ ...args, userId: context.userId! }), // NOTE: permissions check inside service
+        {
+          logger,
+          operationName: 'archiveComment',
+          operationDescription: 'Archive comment'
+        }
+      )
 
       return true
     },
 
     async commentReply(_parent, args, context) {
+      const projectId = args.input.streamId
       if (!context.userId)
         throw new ForbiddenError('Only registered users can comment.')
 
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
       const stream = await getStream({
-        streamId: args.input.streamId,
+        streamId: projectId,
         userId: context.userId
       })
 
       if (!stream?.allowPublicComments && !stream?.role)
         throw new ForbiddenError('You are not authorized.')
 
-      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const projectDb = await getProjectDbClient({ projectId })
 
       const createCommentReply = createCommentReplyFactory({
         validateInputAttachments: validateInputAttachmentsFactory({
@@ -839,14 +932,22 @@ export = {
             buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
         })
       })
-      const reply = await createCommentReply({
-        authorId: context.userId,
-        parentCommentId: args.input.parentComment,
-        streamId: args.input.streamId,
-        text: args.input.text as SmartTextEditorValueSchema,
-        data: args.input.data ?? null,
-        blobIds: args.input.blobIds
-      })
+      const reply = await withOperationLogging(
+        async () =>
+          await createCommentReply({
+            authorId: context.userId!,
+            parentCommentId: args.input.parentComment,
+            streamId: args.input.streamId,
+            text: args.input.text as SmartTextEditorValueSchema,
+            data: args.input.data ?? null,
+            blobIds: args.input.blobIds
+          }),
+        {
+          logger,
+          operationName: 'createCommentReply',
+          operationDescription: 'Create comment reply'
+        }
+      )
 
       return reply.id
     }
