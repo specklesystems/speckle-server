@@ -237,7 +237,8 @@ export const testApolloServer = async (params?: {
           })
         : undefined
 
-    const ctx = operationCtx || baseCtx
+    // Re-apply createTestContext to reset dataloaders, authpolicy etc. state
+    const ctx = await createTestContext(operationCtx || baseCtx)
 
     const res = (await instance.executeOperation(
       {
