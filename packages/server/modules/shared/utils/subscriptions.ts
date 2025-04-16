@@ -413,7 +413,10 @@ export type PublishSubscription = typeof publish
 
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers
- * depending on the payload, variables and/or GQL context
+ * depending on the payload, variables and/or GQL context.
+ *
+ * Additionally clear "request" caches after each event, so that dataloaders/authloaders don't
+ * get cached
  */
 export const filteredSubscribe = <T extends SubscriptionEvent>(
   event: T,
@@ -428,7 +431,13 @@ export const filteredSubscribe = <T extends SubscriptionEvent>(
   // https://github.com/dotansimha/graphql-code-generator/issues/7197#issuecomment-1098014584
   return withFilter(
     () => pubsub.asyncIterator([event]),
-    filterFn
+    async (...args: Parameters<typeof filterFn>) => {
+      // const [, , ctx] = args
+
+      // TODO: Can we instead clear before subscription result gets returned to client?
+
+      return await filterFn(...args)
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) as unknown as SubscriptionSubscribeFn<any, any, any, any>
 }

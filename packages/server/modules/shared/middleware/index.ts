@@ -47,6 +47,7 @@ import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
 import { moduleAuthLoaders } from '@/modules'
+import { getRequestLogger } from '@/observability/components/express/requestContext'
 
 export const authMiddlewareCreator = (
   steps: AuthPipelineFunction[]
@@ -198,6 +199,14 @@ export async function buildContext(params?: {
     req?.context ||
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req), validateToken))
 
+  // Update req.log w/ userId
+  const reqLogger = getRequestLogger()
+  if (reqLogger) {
+    reqLogger.setBindings({
+      userId: ctx.userId || null
+    })
+  }
+
   const log = Observability.extendLoggerComponent(
     req?.log || subscriptionLogger,
     'graphql'
@@ -221,7 +230,8 @@ export async function buildContext(params?: {
       ...authPolicies,
       clearCache: () => {
         authLoaders.clearCache()
-      }
+      },
+      internalCache: authLoaders.internalCache
     },
     authLoaders: authLoaders.loaders,
     clearCache: async () => {
