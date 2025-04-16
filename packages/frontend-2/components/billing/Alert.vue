@@ -1,15 +1,13 @@
 <template>
   <div>
-    <template v-if="showBillingAlert">
-      <CommonAlert :color="alertColor" :actions="actions">
-        <template #title>
-          {{ title }}
-        </template>
-        <template #description>
-          {{ description }}
-        </template>
-      </CommonAlert>
-    </template>
+    <CommonAlert :color="alertColor" :actions="actions">
+      <template #title>
+        {{ title }}
+      </template>
+      <template #description>
+        {{ description }}
+      </template>
+    </CommonAlert>
   </div>
 </template>
 
@@ -21,6 +19,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { AlertAction, AlertColor } from '@speckle/ui-components'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment BillingAlert_Workspace on Workspace {
@@ -38,14 +37,14 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: BillingAlert_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<BillingAlert_WorkspaceFragment>
   actions?: Array<AlertAction>
   condensed?: boolean
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
 
-const planStatus = computed(() => props.workspace.plan?.status)
+const planStatus = computed(() => props.workspace?.plan?.status)
 const isPaymentFailed = computed(
   () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
 )
@@ -76,12 +75,6 @@ const description = computed(() => {
       return ''
   }
 })
-const showBillingAlert = computed(
-  () =>
-    planStatus.value === WorkspacePlanStatuses.PaymentFailed ||
-    planStatus.value === WorkspacePlanStatuses.Canceled ||
-    planStatus.value === WorkspacePlanStatuses.CancelationScheduled
-)
 
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
@@ -101,14 +94,14 @@ const actions = computed((): AlertAction[] => {
   if (isPaymentFailed.value) {
     actions.push({
       title: 'Update payment information',
-      onClick: () => billingPortalRedirect(props.workspace.id),
-      disabled: !props.workspace.id
+      onClick: () => billingPortalRedirect(props.workspace?.id),
+      disabled: !props.workspace?.id
     })
   } else if (isScheduledForCancelation.value) {
     actions.push({
       title: 'Renew subscription',
-      onClick: () => billingPortalRedirect(props.workspace.id),
-      disabled: !props.workspace.id
+      onClick: () => billingPortalRedirect(props.workspace?.id),
+      disabled: !props.workspace?.id
     })
   }
 

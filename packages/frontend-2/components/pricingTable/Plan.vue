@@ -57,44 +57,11 @@
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <PricingTablePlanFeature
+        v-for="feature in commonFeatures"
+        :key="feature.displayName"
+        :display-name="feature.displayName"
+        :description="feature.description"
         is-included
-        display-name="Unlimited editor and viewer seats"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        display-name="Unlimited guests"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.projectCount} project${
-          planLimits.projectCount === 1 ? '' : 's'
-        }`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.modelCount} models per workspace`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory} day version history`
-            : 'Full version history'
-        "
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory} day comment history`
-            : 'Full comment history'
-        "
-        description="Some tooltip text"
       />
       <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
@@ -112,8 +79,7 @@ import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
   WorkspacePlanFeaturesMetadata,
-  WorkspacePlanConfigs,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanConfigs
 } from '@speckle/shared'
 import {
   type WorkspacePlan,
@@ -123,7 +89,6 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
 const emit = defineEmits<{
@@ -146,22 +111,59 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { redirectToCheckout } = useBillingActions()
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const commonFeatures = shallowRef([
+  {
+    displayName: 'Unlimited editor and viewer seats',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: 'Unlimited guests',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.projectCount} project${
+      planLimits.value.projectCount === 1 ? '' : 's'
+    }`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.modelCount} models per workspace`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day version history`
+      : 'Full version history',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day comment history`
+      : 'Full comment history',
+    description: 'Some tooltip text'
+  }
+])
 const planPrice = computed(() => {
+  let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
-    return formatPrice(
+    basePrice =
       prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
-        WorkspacePlanBillingIntervals.Monthly
-      ]
-    )
+        isYearlyIntervalSelected.value
+          ? BillingInterval.Yearly
+          : BillingInterval.Monthly
+      ].amount || 0
   }
 
   return formatPrice({
-    amount: 0,
-    currency: props.currency || 'usd'
+    amount: basePrice
+      ? isYearlyIntervalSelected.value
+        ? basePrice / 12
+        : basePrice
+      : 0,
+    currency: props.currency || Currency.Usd
   })
 })
 
@@ -318,19 +320,6 @@ const badgeText = computed(() =>
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
-
-  if (props.hasSubscription) {
-    if (props.canUpgrade) {
-      emit('onUpgradeClick')
-    }
-  } else {
-    redirectToCheckout({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
+  emit('onUpgradeClick')
 }
 </script>

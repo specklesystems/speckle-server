@@ -27,8 +27,10 @@ import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import {
+  StreamInvalidAccessError,
+  StreamNotFoundError
+} from '@/modules/core/errors/stream'
 import {
   throwIfResourceAccessNotAllowed,
   toProjectIdWhitelist
@@ -81,9 +83,18 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getDateFromLimitsFactory } from '@/modules/core/services/versions/limits'
+import {
+  Authz,
+  getProjectLimitDate,
+  isNonNullable,
+  MaybeNullOrUndefined,
+  Roles
+} from '@speckle/shared'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
+  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
+  : () => Promise.resolve(null)
 
 const getStreams = getStreamsFactory({ db })
 
@@ -209,12 +220,10 @@ export = {
     async commits(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
 
-      const limitsDate = await getDateFromLimitsFactory({
-        environment: {
-          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        },
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })({ workspaceId: parent.workspaceId })
+      const limitsDate = await getProjectLimitDate({
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
+        getPersonalProjectLimits
+      })({ limitType: 'versionsHistory', project: parent })
 
       const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
         db: projectDB,
@@ -330,13 +339,17 @@ export = {
         }
       }
 
-      const stream = await ctx.loaders.streams.getStream.load(parent.streamId)
-      const limitsDate = await getDateFromLimitsFactory({
-        environment: {
-          personalProjectsLimitEnabled: FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-        },
-        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits
-      })({ workspaceId: stream?.workspaceId })
+      const project = await ctx.loaders.streams.getStream.load(parent.streamId)
+      if (!project) {
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      }
+
+      const limitsDate = await getProjectLimitDate({
+        getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
+        getPersonalProjectLimits
+      })({ limitType: 'versionsHistory', project })
 
       const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),

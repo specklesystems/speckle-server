@@ -20,6 +20,7 @@ import {
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { getProjectFake } from '../../tests/fakes.js'
+import { TIME_MS } from '../../core/index.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
@@ -60,7 +61,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -266,7 +267,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -426,7 +427,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -646,7 +647,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       ...overrides

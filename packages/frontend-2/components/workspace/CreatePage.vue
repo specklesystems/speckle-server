@@ -62,7 +62,9 @@ const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery)
+const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery, null, {
+  enabled: isWorkspacesEnabled.value
+})
 
 const isCancelDialogOpen = ref(false)
 

@@ -36,6 +36,7 @@
     "3d"
   ],
   "dependencies": {
+    "dayjs": "^1.11.13",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "nanoid": "^5.1.5",

@@ -12,6 +12,7 @@ import {
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 describe('canArchiveProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canArchiveProjectCommentPolicy>) =>
@@ -60,7 +61,7 @@ describe('canArchiveProjectCommentPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })

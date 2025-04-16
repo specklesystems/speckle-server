@@ -10,6 +10,7 @@
       <ProjectsMoveToWorkspaceAlert
         v-if="isWorkspacesEnabled && !project.workspace"
         :project-id="project.id"
+        @move-project="onMoveProject"
       />
 
       <div
@@ -62,11 +63,11 @@
       </LayoutTabsHorizontal>
     </div>
 
-    <ProjectsMoveToWorkspaceDialog
-      v-if="project"
+    <WorkspaceMoveProjectManager
+      v-if="project && isWorkspacesEnabled"
       v-model:open="showMoveDialog"
-      :project="project"
       event-source="project-page"
+      :project-id="projectId"
     />
   </div>
 </template>
@@ -107,7 +108,7 @@ graphql(`
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectsMoveToWorkspaceDialog_Project
+    ...WorkspaceMoveProjectManager_ProjectBase
     ...ProjectPageSettingsTab_Project
   }
 `)
@@ -314,5 +315,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       showMoveDialog.value = true
       break
   }
+}
+
+const onMoveProject = () => {
+  showMoveDialog.value = true
 }
 </script>
