@@ -26,7 +26,7 @@
                 <template #text>
                   <div class="flex flex-col gap-2 items-start">
                     <CommonBadge
-                      v-if="isSsoRequired(ws.permissions?.canMoveProjectToWorkspace)"
+                      v-if="isSsoRequired(ws)"
                       color="secondary"
                       class="capitalize"
                       rounded
@@ -80,9 +80,9 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
+  PermissionCheckResult,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment,
-  FullPermissionCheckResultFragment
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
@@ -109,12 +109,7 @@ graphql(`
 
 const props = defineProps<{
   project: WorkspaceMoveProjectManager_ProjectFragment
-  canMoveToWorkspace: (permission: FullPermissionCheckResultFragment) => boolean
-  isLimitReached: (permission: FullPermissionCheckResultFragment) => boolean
-  isSsoRequired: (permission: FullPermissionCheckResultFragment) => boolean
-  getDisabledTooltip: (
-    permission: FullPermissionCheckResultFragment
-  ) => string | undefined
+  workspacePermissions?: PermissionCheckResult
 }>()
 
 const emit = defineEmits<{
@@ -157,31 +152,38 @@ const isWorkspaceDisabled = computed(
       return true
     }
 
-    return (
-      !props.canMoveToWorkspace(workspace.permissions?.canMoveProjectToWorkspace) &&
-      !props.isLimitReached(workspace.permissions?.canMoveProjectToWorkspace)
-    )
+    const permission = workspace.permissions?.canMoveProjectToWorkspace
+    return !permission?.authorized && permission?.code !== 'WorkspaceLimitsReached'
   }
 )
 
 const getWorkspaceTooltip = computed(
   () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
+    if (workspace.permissions.canMoveProjectToWorkspace.authorized) {
+      return undefined
+    }
+    if (
+      workspace.permissions.canMoveProjectToWorkspace.code === 'WorkspaceLimitsReached'
+    ) {
+      return undefined
+    }
     if (!isWorkspaceAdmin.value(workspace)) {
       return 'Only workspace administrators can move projects to this workspace'
     }
 
-    return props.getDisabledTooltip(workspace.permissions?.canMoveProjectToWorkspace)
+    const permission = workspace.permissions?.canMoveProjectToWorkspace
+    return permission?.message
   }
 )
 
 const sortedWorkspaces = computed(() => {
   return [...workspaces.value].sort((a, b) => {
     const aEnabled =
-      props.canMoveToWorkspace(a.permissions?.canMoveProjectToWorkspace) ||
-      props.isLimitReached(a.permissions?.canMoveProjectToWorkspace)
+      a.permissions?.canMoveProjectToWorkspace?.authorized ||
+      a.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
     const bEnabled =
-      props.canMoveToWorkspace(b.permissions?.canMoveProjectToWorkspace) ||
-      props.isLimitReached(b.permissions?.canMoveProjectToWorkspace)
+      b.permissions?.canMoveProjectToWorkspace?.authorized ||
+      b.permissions?.canMoveProjectToWorkspace?.code === 'WorkspaceLimitsReached'
 
     if (aEnabled && !bEnabled) return -1
     if (!aEnabled && bEnabled) return 1
@@ -192,14 +194,24 @@ const sortedWorkspaces = computed(() => {
 const handleWorkspaceClick = (
   workspace: WorkspaceMoveProjectManager_WorkspaceFragment
 ) => {
-  if (props.isLimitReached(workspace.permissions?.canMoveProjectToWorkspace)) {
+  const permission = workspace.permissions?.canMoveProjectToWorkspace
+  if (permission?.code === 'WorkspaceLimitsReached') {
     limitReachedWorkspace.value = workspace
     showLimitDialog.value = true
     return
   }
 
-  if (props.canMoveToWorkspace(workspace.permissions?.canMoveProjectToWorkspace)) {
+  if (permission?.authorized) {
     emit('workspace-selected', workspace)
   }
 }
+
+const isSsoRequired = computed(
+  () => (workspace: WorkspaceMoveProjectManager_WorkspaceFragment) => {
+    return (
+      workspace.permissions?.canMoveProjectToWorkspace?.code ===
+      'WorkspaceSsoSessionNoAccess'
+    )
+  }
+)
 </script>

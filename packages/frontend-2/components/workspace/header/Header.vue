@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="!isWorkspaceGuest">
-      <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
+    <div v-if="!isWorkspaceGuest && showBillingAlert">
+      <BillingAlert :workspace="workspaceInfo" />
     </div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-x-2">
@@ -21,9 +21,12 @@
 
       <div class="flex gap-1.5 md:gap-2">
         <WorkspaceHeaderAddProjectMenu
+          :workspace-name="workspaceInfo.name"
+          :workspace-slug="workspaceInfo.slug"
+          :workspace-plan="workspaceInfo.plan?.name ? workspaceInfo.plan?.name : null"
           hide-text-on-mobile
           :can-create-project="canCreateProject"
-          :can-move-project="canMoveProject"
+          :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"
         />
@@ -58,11 +61,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   WorkspacePlanStatuses,
-  type FullPermissionCheckResultFragment,
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
-import type { AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
@@ -75,6 +76,9 @@ graphql(`
     readOnly
     permissions {
       canCreateProject {
+        ...FullPermissionCheckResult
+      }
+      canMoveProjectToWorkspace {
         ...FullPermissionCheckResult
       }
     }
@@ -106,29 +110,13 @@ const isWorkspaceMember = computed(
 const canCreateProject = computed(
   () => props.workspaceInfo.permissions.canCreateProject
 )
-const canMoveProject = computed((): FullPermissionCheckResultFragment => {
-  // TODO: Until we have a real resolver
-  return {
-    authorized: isWorkspaceAdmin.value,
-    message: isWorkspaceAdmin.value ? 'OK' : 'You must be a workspace admin',
-    code: isWorkspaceAdmin.value ? 'OK' : 'FORBIDDEN'
-  }
-})
-
-const billingAlertAction = computed<Array<AlertAction>>(() => {
-  if (
-    isWorkspaceAdmin.value ||
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
-  ) {
-    return [
-      {
-        title: 'Subscribe',
-        onClick: () =>
-          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
-      }
-    ]
-  }
-
-  return []
-})
+const canMoveProjectToWorkspace = computed(
+  () => props.workspaceInfo.permissions.canMoveProjectToWorkspace
+)
+const showBillingAlert = computed(
+  () =>
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Canceled ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
 </script>

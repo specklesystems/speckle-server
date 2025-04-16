@@ -393,13 +393,13 @@ const saveNewThreadsFactory =
 
     const threadInputs: { originalComment: ViewerThread; input: CreateCommentInput }[] =
       threads
-        .filter((t) => !!t.text.doc)
+        .filter((t) => !!t.text?.doc)
         .map((t) => ({
           originalComment: t,
           input: {
             projectId: targetStream.id,
             content: {
-              doc: t.text.doc,
+              doc: t.text?.doc,
               blobIds: [] // TODO: Currently not supported
             },
             viewerState: t.viewerState
@@ -436,12 +436,12 @@ const saveNewThreadsFactory =
       )
       await Promise.all(
         replies.items
-          .filter((i) => !!i.text.doc)
+          .filter((i) => !!i.text?.doc)
           .map((r) =>
             deps.createCommentReplyAndNotify(
               {
                 content: {
-                  doc: r.text.doc,
+                  doc: r.text?.doc,
                   blobIds: []
                 },
                 threadId: newComment.id,

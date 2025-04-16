@@ -66,7 +66,8 @@ export type WorkspacePlanPriceStructure = {
 const unlimited: WorkspaceLimits = {
   projectCount: null,
   modelCount: null,
-  versionsHistory: null
+  versionsHistory: null,
+  commentHistory: null
 }
 
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
@@ -109,7 +110,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 5,
       modelCount: 25,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
   // New
@@ -119,7 +121,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -133,7 +136,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 10,
       modelCount: 50,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -147,7 +151,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   }
 }
@@ -203,7 +208,8 @@ export const WorkspaceUnpaidPlanConfigs: {
     limits: {
       projectCount: 1,
       modelCount: 5,
-      versionsHistory: { value: 7, unit: 'day' }
+      versionsHistory: { value: 7, unit: 'day' },
+      commentHistory: { value: 7, unit: 'day' }
     }
   }
 }

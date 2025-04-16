@@ -293,6 +293,8 @@ export const UsersMeta = buildMetaTableHelper(
     'onboardingStreamId',
     'activeWorkspace',
     'isProjectsActive',
+    'newWorkspaceExplainerDismissed',
+    'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
     'bar'
