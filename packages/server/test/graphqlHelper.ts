@@ -92,8 +92,8 @@ export async function executeOperation<
 
   const results = getResponseResults(res)
 
-  // Replicate clearing dataloaders after each request
-  contextValue.loaders.clearAll()
+  // Replicate clearing dataloaders/policies after each request
+  contextValue.clearCache()
 
   return {
     ...results,
