@@ -18,9 +18,19 @@
       >
         {{ workspace.requestStatus }}
       </FormButton>
-      <FormButton v-else color="outline" size="sm" @click="onRequest">
-        Request to join
-      </FormButton>
+      <div v-else class="flex flex-col gap-2 items-end">
+        <FormButton color="outline" size="sm" @click="onRequest">
+          Request to join
+        </FormButton>
+        <FormButton
+          v-if="showDismissButton"
+          color="subtle"
+          size="sm"
+          @click="onDismiss"
+        >
+          Dismiss
+        </FormButton>
+      </div>
     </template>
   </WorkspaceCard>
 </template>
@@ -28,6 +38,7 @@
 <script setup lang="ts">
 import type { LimitedWorkspace } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type WorkspaceWithStatus = LimitedWorkspace & {
   requestStatus: string | null
@@ -35,11 +46,24 @@ type WorkspaceWithStatus = LimitedWorkspace & {
 
 const props = defineProps<{
   workspace: WorkspaceWithStatus
+  showDismissButton?: boolean
 }>()
 
-const { requestToJoinWorkspace } = useDiscoverableWorkspaces()
+const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
+  useDiscoverableWorkspaces()
+const mixpanel = useMixpanel()
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace.id)
+}
+
+const onDismiss = async () => {
+  await dismissDiscoverableWorkspace(props.workspace.id)
+  mixpanel.track('Workspace Discovery Banner Dismissed', {
+    workspaceId: props.workspace.id,
+    location: 'discovery card',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspace.id
+  })
 }
 </script>
