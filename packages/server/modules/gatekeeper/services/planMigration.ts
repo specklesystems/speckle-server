@@ -45,6 +45,11 @@ export const migrateOldWorkspacePlans =
         'unlimited'
       ])
 
+    if (oldPlanWorkspaces.length === 0) {
+      logger.info('No old workspace plans to migrate')
+      return
+    }
+
     for (const oldPlan of oldPlanWorkspaces) {
       try {
         await migrateWorkspacePlan({ db, stripe, logger })({
@@ -63,7 +68,7 @@ export const migrateWorkspacePlan =
   ({ db, stripe, logger }: { db: Knex; stripe: Stripe; logger: Logger }) =>
   async ({ workspaceId }: { workspaceId: string }) => {
     let log = logger.child({ workspaceId })
-    log.info('Starting workspace plan migration')
+    log.info('Starting workspace plan migration for {workspaceId}')
     const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
     if (!workspacePlan)
       throw new Error(`Workspace ${workspaceId} has no workspace plan`)
@@ -90,7 +95,9 @@ export const migrateWorkspacePlan =
             newTargetPlan = 'free'
             break
           case 'paymentFailed':
-            throw new Error('Cant migrate workspace, its currently failed in payment')
+            throw new Error(
+              `Cant migrate workspace ${workspaceId}, its currently an old 'starter' plan that has failed in payment`
+            )
           case 'canceled':
             // just switch the plan, no need to change stripe
             newTargetPlan = 'teamUnlimited'
@@ -110,7 +117,9 @@ export const migrateWorkspacePlan =
       case 'business':
         switch (workspacePlan.status) {
           case 'paymentFailed':
-            throw new Error('Cant migrate workspace, its currently failed in payment')
+            throw new Error(
+              `Cant migrate workspace ${workspaceId}, its currently an old 'business' plan that has failed in payment`
+            )
           case 'canceled':
             newTargetPlan = 'proUnlimited'
             isStripeMigrationNeeded = false
@@ -148,13 +157,13 @@ export const migrateWorkspacePlan =
     }
 
     if (!newTargetPlan) {
-      log.info('No migration needed for this plan')
+      log.info('No migration needed for {workspaceId} from old plan {workspacePlan}')
       return
     }
 
     log.info(
       { newTargetPlan, newPlanStatus, isStripeMigrationNeeded },
-      'Migrating to new plan'
+      'Migrating {workspaceId} from old plan {workspacePlan} to new plan {newTargetPlan}'
     )
 
     const trx = await db.transaction()
@@ -170,14 +179,20 @@ export const migrateWorkspacePlan =
       createdAt: new Date(),
       updatedAt: new Date()
     }))
-    log.debug({ seats }, 'Inserting new seats for the workspace')
+    log.debug(
+      { migratedSeats: seats, migratedSeatsCount: seats.length },
+      'Inserting {migratedSeatsCount} new seats for the workspace {workspaceId}'
+    )
 
     await trx<WorkspaceSeat>('workspace_seats')
       .insert(seats)
       .onConflict(['workspaceId', 'userId'])
       .merge()
 
-    log.debug('Workspace seats added')
+    log.debug(
+      { migratedSeatsCount: seats.length },
+      'Workspace {workspaceId} has added {migratedSeatsCount} seats'
+    )
     await upsertWorkspacePlanFactory({ db: trx })({
       //@ts-expect-error the switch above makes sure things are ok
       workspacePlan: {
@@ -187,9 +202,11 @@ export const migrateWorkspacePlan =
         createdAt: workspacePlan.createdAt
       }
     })
-    log.debug('workspace plan changed to the new plan')
+    log.debug(
+      'workspace {workspaceId} has had plan {workspacePlan} changed to the new plan {newTargetPlan}'
+    )
     if (isStripeMigrationNeeded) {
-      log.info('Migrating stripe subscription data')
+      log.info('Migrating stripe subscription data for workspace {workspaceId}')
       switch (newTargetPlan) {
         case 'academia':
         case 'free':
@@ -198,14 +215,18 @@ export const migrateWorkspacePlan =
         case 'unlimited':
           // this is just double checking that everything is right
           // the switch above sets things up properly
-          throw new Error('Cannot upgrade stripe for a non paid plan')
+          throw new Error(
+            `Cannot upgrade stripe for a non paid plan for workspace ${workspaceId}`
+          )
       }
       // if stripe paid plan, convert the stripe sub to use all editor seats
       const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db: trx })({
         workspaceId
       })
       if (!workspaceSubscription)
-        throw new Error('Subscription data not found, cant do stripe migration')
+        throw new Error(
+          `Subscription data not found for workspace ${workspaceId}, cannot do stripe migration`
+        )
 
       let memberAndGuestSeatCount = workspaceSubscription.subscriptionData.products
         .map((p) => p.quantity)
@@ -215,8 +236,8 @@ export const migrateWorkspacePlan =
       const workspaceTeamCount = workspaceMembers.length
       if (memberAndGuestSeatCount < workspaceTeamCount) {
         logger.warn(
-          { workspaceId, memberAndGuestSeatCount, workspaceTeamCount },
-          'Workspace has less paid member and guest seats, than people in the workspace. Reconciling'
+          { memberAndGuestSeatCount, workspaceTeamCount },
+          'Workspace {workspaceId} has less paid member and guest seats, than people in the workspace. Reconciling'
         )
         memberAndGuestSeatCount = workspaceTeamCount
       }
@@ -244,7 +265,7 @@ export const migrateWorkspacePlan =
       })
     }
     await trx.commit()
-    log.info('Workspace plan migration completed')
+    log.info('🥳 Workspace plan migration completed for workspace {workspaceId}')
 
     // add and editor seat to all workspace members
     // convert current plan to the new plan
