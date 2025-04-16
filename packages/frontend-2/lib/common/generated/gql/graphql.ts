@@ -27,6 +27,7 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  meta: UserMetaMutations;
   setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
@@ -3872,6 +3873,7 @@ export type User = {
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
   /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
   isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
+  meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   permissions: RootPermissionChecks;
@@ -4090,6 +4092,28 @@ export type UserGendoAiCredits = {
   limit: Scalars['Int']['output'];
   resetDate: Scalars['DateTime']['output'];
   used: Scalars['Int']['output'];
+};
+
+export type UserMeta = {
+  __typename?: 'UserMeta';
+  legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
+  newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+};
+
+export type UserMetaMutations = {
+  __typename?: 'UserMetaMutations';
+  setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
+  setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
 };
 
 export type UserProjectCollection = {
@@ -7593,6 +7617,8 @@ export type AllObjectTypes = {
   UserEmail: UserEmail,
   UserEmailMutations: UserEmailMutations,
   UserGendoAICredits: UserGendoAiCredits,
+  UserMeta: UserMeta,
+  UserMetaMutations: UserMetaMutations,
   UserProjectCollection: UserProjectCollection,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessage,
   UserSearchResultCollection: UserSearchResultCollection,
@@ -7644,6 +7670,7 @@ export type AllObjectTypes = {
 export type ActiveUserMutationsFieldArgs = {
   emailMutations: {},
   finishOnboarding: ActiveUserMutationsFinishOnboardingArgs,
+  meta: {},
   setActiveWorkspace: ActiveUserMutationsSetActiveWorkspaceArgs,
   update: ActiveUserMutationsUpdateArgs,
 }
@@ -8682,6 +8709,7 @@ export type UserFieldArgs = {
   id: {},
   isOnboardingFinished: {},
   isProjectsActive: {},
+  meta: {},
   name: {},
   notificationPreferences: {},
   permissions: {},
@@ -8721,6 +8749,14 @@ export type UserGendoAiCreditsFieldArgs = {
   limit: {},
   resetDate: {},
   used: {},
+}
+export type UserMetaFieldArgs = {
+  legacyProjectsExplainerCollapsed: {},
+  newWorkspaceExplainerDismissed: {},
+}
+export type UserMetaMutationsFieldArgs = {
+  setLegacyProjectsExplainerCollapsed: UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs,
+  setNewWorkspaceExplainerDismissed: UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs,
 }
 export type UserProjectCollectionFieldArgs = {
   cursor: {},
@@ -9150,6 +9186,8 @@ export type AllObjectFieldArgTypes = {
   UserEmail: UserEmailFieldArgs,
   UserEmailMutations: UserEmailMutationsFieldArgs,
   UserGendoAICredits: UserGendoAiCreditsFieldArgs,
+  UserMeta: UserMetaFieldArgs,
+  UserMetaMutations: UserMetaMutationsFieldArgs,
   UserProjectCollection: UserProjectCollectionFieldArgs,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessageFieldArgs,
   UserSearchResultCollection: UserSearchResultCollectionFieldArgs,
