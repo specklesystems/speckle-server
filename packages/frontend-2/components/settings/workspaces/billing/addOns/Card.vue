@@ -1,14 +1,13 @@
 <template>
   <CommonCard class="flex flex-col gap-y-4 p-6">
     <div class="flex flex-col">
-      <h3 class="text-body font-medium">{{ title }}</h3>
+      <h3 class="text-body font-medium mb-1">{{ title }}</h3>
+      <p v-if="info" class="text-body-xs text-foreground-2 mb-2">
+        {{ info }}
+      </p>
       <p v-if="subtitle" class="text-foreground-3 text-body-sm pt-1">{{ subtitle }}</p>
       <slot name="subtitle" />
     </div>
-    <p class="flex-1 mb-3">
-      <span v-if="info" class="text-foreground-2 text-body-xs">{{ info }}</span>
-      <slot name="info" />
-    </p>
     <div class="flex items-center gap-x-2">
       <div
         v-for="(button, index) in buttons"

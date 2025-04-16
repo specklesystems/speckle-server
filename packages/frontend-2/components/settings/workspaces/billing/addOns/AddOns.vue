@@ -2,13 +2,13 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
     <SettingsWorkspacesBillingAddOnsCard
       title="Unlimited projects and models"
-      info="Add unlimited projects and models to your workspace."
-      disclaimer="Only on Starter & Business plans"
+      info="Power through with unlimited projects and models in your workspace."
+      disclaimer="Only on Starter & Business"
       :buttons="[unlimitedAddOnButton]"
     >
       <template #subtitle>
         <p class="text-foreground-3 text-body-sm pt-1">
-          {{ addonPrice }} per editor/month
+          {{ addonPrice }} per editor seat/month
         </p>
         <div class="flex items-center gap-x-2 mt-3 px-1">
           <FormSwitch
@@ -27,7 +27,7 @@
 
     <SettingsWorkspacesBillingAddOnsCard
       title="Extra data regions"
-      info="Access to almost all data residency regions."
+      info="Unlock per-project data residency by adding additional data regions to your workspace."
       disclaimer="Only on Business plan"
       :buttons="[contactButton]"
     >
@@ -41,7 +41,7 @@
     <SettingsWorkspacesBillingAddOnsCard
       title="Priority support"
       subtitle="Talk to us"
-      info="Private support channel for your workspace."
+      info="White-glove treatment with private support channel, onboarding calls and more."
       disclaimer="Only on Business plan"
       :buttons="[contactButton]"
     />
