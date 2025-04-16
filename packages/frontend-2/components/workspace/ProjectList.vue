@@ -46,8 +46,9 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
+        class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
       >
+        <WorkspaceEmptyStateIllustration />
         <span class="text-body-2xs text-foreground-2 text-center">
           Workspace is empty
         </span>
