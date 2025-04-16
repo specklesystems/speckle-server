@@ -72,7 +72,7 @@ const toggleUpgradeDialog = (plan: PaidWorkspacePlansNew) => {
 }
 
 const onYearlyIntervalSelected = (newValue: boolean) => {
-  isYearlySelected.value = newValue
+  isYearlyIntervalSelected.value = newValue
 }
 
 watch(
