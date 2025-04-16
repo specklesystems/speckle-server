@@ -24,41 +24,30 @@
             limits and pricing, and workspaces are now the default.
           </p>
           <div class="flex items-center gap-x-2 mt-2 justify-end">
-            <FormButton color="subtle" @click="dismissedCookie = true">
-              Dismiss
+            <FormButton color="subtle" @click="handleDismiss">Dismiss</FormButton>
+            <FormButton color="primary" @click="handleReadAnnouncement">
+              Read announcement
             </FormButton>
-            <!-- TODO: Add link to announcement -->
-            <FormButton color="primary">Read announcement</FormButton>
           </div>
         </div>
-        <WorkspaceCreateDialog
-          v-model:open="showWorkspaceCreateDialog"
-          navigate-on-success
-          event-source="promo-banner"
-          @created="dismissedCookie = true"
-        />
       </div>
     </div>
   </ClientOnly>
 </template>
 <script setup lang="ts">
-// This is a temporary component, to meassure if in app-notifications can be succesful
-// It will be remove after a certain period, if we continue with in-app notification we should further develop this
-
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const mixpanel = useMixpanel()
-
-// TODO: Use boolean froms server
-const dismissedCookie = ref(false)
-
-const showWorkspaceCreateDialog = ref(false)
+const { hasDismissedNewWorkspaceExplainer, updateNewWorkspaceExplainerDismissed } =
+  useActiveUserMeta()
 
 const showBanner = computed(
   () =>
-    isWorkspacesEnabled.value && (import.meta.client ? !dismissedCookie.value : false)
+    isWorkspacesEnabled.value &&
+    (import.meta.client ? !hasDismissedNewWorkspaceExplainer.value : false)
 )
 
 watch(
@@ -72,4 +61,19 @@ watch(
   },
   { immediate: true }
 )
+
+const handleDismiss = async () => {
+  await updateNewWorkspaceExplainerDismissed(true)
+}
+
+// TODO: Add link to announcement
+const handleReadAnnouncement = async () => {
+  await navigateTo('https://speckle.systems', {
+    external: true,
+    open: {
+      target: '_blank'
+    }
+  })
+  handleDismiss()
+}
 </script>

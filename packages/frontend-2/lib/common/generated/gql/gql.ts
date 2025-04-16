@@ -328,6 +328,8 @@ type Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": typeof types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
+    "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n": typeof types.UpdateUserMetaDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -747,6 +749,8 @@ const documents: Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
+    "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n": types.UpdateUserMetaDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -2122,6 +2126,14 @@ export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
