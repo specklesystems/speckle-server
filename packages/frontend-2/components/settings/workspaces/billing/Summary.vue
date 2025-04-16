@@ -26,7 +26,6 @@
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">Billing period</h3>
         <p class="text-heading-lg text-foreground inline-block">
-          {{ billingInterval }}
           <span v-if="isPaidPlan && billingInterval">
             {{ intervalIsYearly ? 'Yearly' : 'Monthly' }}
           </span>
