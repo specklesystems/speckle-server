@@ -7,7 +7,8 @@ import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1,
-  AREA = 2
+  AREA = 2,
+  POINT = 3
 }
 
 interface MeasurementOptions {
@@ -16,6 +17,7 @@ interface MeasurementOptions {
   vertexSnap?: boolean
   units?: string
   precision?: number
+  chain?: boolean
 }
 
 /**

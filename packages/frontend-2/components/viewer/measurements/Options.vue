@@ -155,6 +155,13 @@ const measurementTypeOptions = [
     icon: IconPerpendicular,
     value: MeasurementType.AREA,
     description: 'Area description'
+  },
+  // TODO: Add area measurement descripion and icon
+  {
+    title: 'Point',
+    icon: IconPointToPoint,
+    value: MeasurementType.POINT,
+    description: 'Point description'
   }
 ]
 </script>
