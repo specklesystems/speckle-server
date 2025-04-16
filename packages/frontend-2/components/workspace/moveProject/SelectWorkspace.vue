@@ -80,9 +80,9 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
+  PermissionCheckResult,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment,
-  WorkspacePermissionChecks
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
@@ -109,7 +109,7 @@ graphql(`
 
 const props = defineProps<{
   project: WorkspaceMoveProjectManager_ProjectFragment
-  workspacePermissions?: WorkspacePermissionChecks
+  workspacePermissions?: PermissionCheckResult
 }>()
 
 const emit = defineEmits<{

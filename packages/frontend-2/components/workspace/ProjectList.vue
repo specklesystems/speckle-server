@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          name="Home"
+          name="Projects"
           :separator="false"
         />
       </Portal>
