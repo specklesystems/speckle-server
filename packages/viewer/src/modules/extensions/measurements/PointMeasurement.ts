@@ -22,6 +22,13 @@ import { SpeckleText } from '../../objects/SpeckleText.js'
 import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
+const _vec40 = new Vector4()
+const _vec41 = new Vector4()
+const _vec42 = new Vector4()
+const _vec43 = new Vector4()
+const _mat40 = new Matrix4()
+const _mat41 = new Matrix4()
+
 export class PointMeasurement extends Measurement {
   protected gizmo: MeasurementPointGizmo
   protected xLabel: SpeckleText
@@ -30,6 +37,8 @@ export class PointMeasurement extends Measurement {
   protected xLabelPosition: Vector3 = new Vector3()
   protected yLabelPosition: Vector3 = new Vector3()
   protected zLabelPosition: Vector3 = new Vector3()
+  protected readonly pixelsOffX = 50 * window.devicePixelRatio
+  protected readonly pixelsOffY = 27 * window.devicePixelRatio
 
   public set isVisible(value: boolean) {
     this.gizmo.visible = value
@@ -127,7 +136,7 @@ export class PointMeasurement extends Measurement {
   protected updateLabelPositions() {
     const camera = this.renderingCamera as PerspectiveCamera | OrthographicCamera
     if (!camera) return
-    const ndcPos = new Vector4(
+    const ndcPos = _vec40.set(
       this.startPoint.x,
       this.startPoint.y,
       this.startPoint.z,
@@ -136,14 +145,14 @@ export class PointMeasurement extends Measurement {
     ndcPos.applyMatrix4(camera.matrixWorldInverse).applyMatrix4(camera.projectionMatrix)
     const perspective = ndcPos.w
     ndcPos.multiplyScalar(1 / perspective)
-    const xOff = (50 / this.renderingSize.x) * 2
-    const yOff = (27 / this.renderingSize.y) * 2
-    const xPos = new Vector4(ndcPos.x + xOff, ndcPos.y + yOff, ndcPos.z, 1)
-    const yPos = new Vector4(ndcPos.x + xOff, ndcPos.y, ndcPos.z, 1)
-    const zPos = new Vector4(ndcPos.x + xOff, ndcPos.y - yOff, ndcPos.z, 1)
+    const xOff = (this.pixelsOffX / this.renderingSize.x) * 2
+    const yOff = (this.pixelsOffY / this.renderingSize.y) * 2
+    const xPos = _vec41.set(ndcPos.x + xOff, ndcPos.y + yOff, ndcPos.z, 1)
+    const yPos = _vec42.set(ndcPos.x + xOff, ndcPos.y, ndcPos.z, 1)
+    const zPos = _vec43.set(ndcPos.x + xOff, ndcPos.y - yOff, ndcPos.z, 1)
 
-    const invProjection = new Matrix4().copy(camera.projectionMatrix).invert()
-    const invView = new Matrix4().copy(camera.matrixWorldInverse).invert()
+    const invProjection = _mat40.copy(camera.projectionMatrix).invert()
+    const invView = _mat41.copy(camera.matrixWorldInverse).invert()
     xPos.multiplyScalar(perspective)
     xPos.applyMatrix4(invProjection)
     xPos.applyMatrix4(invView)
