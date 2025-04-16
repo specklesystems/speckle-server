@@ -7,9 +7,8 @@
       :buttons="[unlimitedAddOnButton]"
     >
       <template #subtitle>
-        <p class="text-body pt-1">
-          <span class="font-medium">{{ addonPrice }}</span>
-          per editor/month
+        <p class="text-foreground-3 text-body-sm pt-1">
+          {{ addonPrice }} per editor/month
         </p>
         <div class="flex items-center gap-x-2 mt-3 px-1">
           <FormSwitch
@@ -28,11 +27,16 @@
 
     <SettingsWorkspacesBillingAddOnsCard
       title="Extra data regions"
-      subtitle="Talk to us"
       info="Access to almost all data residency regions."
       disclaimer="Only on Business plan"
       :buttons="[contactButton]"
-    />
+    >
+      <template #subtitle>
+        <p class="text-foreground-3 text-body-sm pt-1">
+          {{ currency === Currency.Gbp ? '£' : '$' }}500 per region/year
+        </p>
+      </template>
+    </SettingsWorkspacesBillingAddOnsCard>
 
     <SettingsWorkspacesBillingAddOnsCard
       title="Priority support"
@@ -59,7 +63,7 @@ import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
 import { PaidWorkspacePlansNew, type MaybeNullOrUndefined } from '@speckle/shared'
-import { BillingInterval } from '~/lib/common/generated/gql/graphql'
+import { BillingInterval, Currency } from '~/lib/common/generated/gql/graphql'
 import { useActiveWorkspace } from '~/lib/workspaces/composables/activeWorkspace'
 
 const props = defineProps<{
@@ -70,14 +74,8 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
   default: false
 })
 
-const {
-  isBusinessPlan,
-  isPaidPlan,
-  currency,
-  plan,
-  intervalIsYearly,
-  hasUnlimitedAddon
-} = useWorkspacePlan(props.slug)
+const { isPaidPlan, currency, plan, intervalIsYearly, hasUnlimitedAddon } =
+  useWorkspacePlan(props.slug)
 const { addonPrices } = useWorkspaceAddonPrices()
 const { isAdmin } = useActiveWorkspace(props.slug)
 
@@ -86,7 +84,6 @@ const isUpgradeDialogOpen = ref(false)
 const contactButton = computed(() => ({
   text: 'Contact us',
   id: 'contact-us',
-  disabled: !isBusinessPlan.value,
   onClick: () => {
     window.location.href = 'mailto:billing@speckle.systems'
   }

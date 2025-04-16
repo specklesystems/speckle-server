@@ -1,5 +1,5 @@
 import { describe, expect, it, assert } from 'vitest'
-import { canReadProjectPolicy } from './canReadProject.js'
+import { canReadProjectPolicy } from './canRead.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import crs from 'crypto-random-string'
 import { Roles } from '../../../core/constants.js'
