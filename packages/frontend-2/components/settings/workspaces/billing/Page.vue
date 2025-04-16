@@ -9,7 +9,7 @@
 
     <SettingsSectionHeader
       title="Billing and plans"
-      text="Update your payment information or switch plans according to your needs"
+      text="Get billing information and upgrade your plan"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
