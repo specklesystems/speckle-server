@@ -235,7 +235,7 @@ export const migrateWorkspacePlan =
 
       const workspaceTeamCount = workspaceMembers.length
       if (memberAndGuestSeatCount < workspaceTeamCount) {
-        logger.warn(
+        log.warn(
           { memberAndGuestSeatCount, workspaceTeamCount },
           'Workspace {workspaceId} has less paid member and guest seats, than people in the workspace. Reconciling'
         )
