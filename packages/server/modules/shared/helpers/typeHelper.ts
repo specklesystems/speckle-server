@@ -14,7 +14,6 @@ import type { Logger } from 'pino'
 import type { BaseContext } from '@apollo/server'
 import type { Registry } from 'prom-client'
 import { AuthCheckContextLoaders } from '@speckle/shared/dist/commonjs/authz'
-import TTLCache from '@isaacs/ttlcache'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -57,7 +56,6 @@ export type GraphQLContext = BaseContext &
   AuthContext & {
     authPolicies: Authz.AuthPolicies & {
       clearCache: () => void
-      internalCache: TTLCache<string, unknown>
     }
     /**
      * Request-scoped GraphQL dataloaders

@@ -432,11 +432,19 @@ export const filteredSubscribe = <T extends SubscriptionEvent>(
   return withFilter(
     () => pubsub.asyncIterator([event]),
     async (...args: Parameters<typeof filterFn>) => {
-      // const [, , ctx] = args
+      const [, , ctx] = args
 
-      // TODO: Can we instead clear before subscription result gets returned to client?
-
-      return await filterFn(...args)
+      // Clear ctx cache on return false/throw, otherwise subsequent iterations
+      // will have a stale cache.
+      // No need to do this on return true, as the cache will be cleared in the formatResponse handler
+      try {
+        const res = await filterFn(...args)
+        if (!res) ctx.clearCache()
+        return res
+      } catch (e) {
+        ctx.clearCache()
+        throw e
+      }
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ) as unknown as SubscriptionSubscribeFn<any, any, any, any>

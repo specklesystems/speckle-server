@@ -230,8 +230,7 @@ export async function buildContext(params?: {
       ...authPolicies,
       clearCache: () => {
         authLoaders.clearCache()
-      },
-      internalCache: authLoaders.internalCache
+      }
     },
     authLoaders: authLoaders.loaders,
     clearCache: async () => {
