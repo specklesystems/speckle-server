@@ -25,7 +25,9 @@
             v-if="adminWorkspacesJoinRequestsCount && isWorkspaceAdmin"
             class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
             @click="
-              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
+              navigateTo(
+                settingsWorkspaceRoutes.membersRequests.route(workspaceInfo.slug)
+              )
             "
           >
             {{ adminWorkspacesJoinRequestsCount }} join
@@ -35,7 +37,9 @@
             v-if="invitedTeamCount && isWorkspaceAdmin"
             class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
             @click="
-              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
+              navigateTo(
+                settingsWorkspaceRoutes.membersInvites.route(workspaceInfo.slug)
+              )
             "
           >
             {{ invitedTeamCount }} pending

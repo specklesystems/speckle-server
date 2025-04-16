@@ -11,7 +11,6 @@
       :workspace-id="props.workspaceId"
       :has-subscription="!!subscription"
       :currency="props.currency"
-      @on-yearly-interval-selected="onYearlyIntervalSelected"
       @on-upgrade-click="toggleUpgradeDialog(plan as PaidWorkspacePlansNew)"
     />
 
@@ -53,10 +52,10 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 const {
   billingInterval,
   plan: currentPlan,
-  subscription
+  subscription,
+  intervalIsYearly
 } = useWorkspacePlan(props.slug)
 
-const isYearlySelected = ref(false)
 const isUpgradeDialogOpen = ref(false)
 const planToUpgrade = ref<PaidWorkspacePlansNew | null>(null)
 
@@ -73,7 +72,7 @@ const toggleUpgradeDialog = (plan: PaidWorkspacePlansNew) => {
   isUpgradeDialogOpen.value = !isUpgradeDialogOpen.value
 }
 
-const onYearlyIntervalSelected = (newValue: boolean) => {
-  isYearlySelected.value = newValue
-}
+onMounted(() => {
+  isYearlyIntervalSelected.value = intervalIsYearly.value
+})
 </script>
