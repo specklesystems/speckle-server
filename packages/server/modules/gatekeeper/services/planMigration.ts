@@ -169,103 +169,110 @@ export const migrateWorkspacePlan =
     const trx = await db.transaction()
     // add editor seats to everyone
 
-    const workspaceMembers = await getWorkspaceRolesFactory({ db: trx })({
-      workspaceId
-    })
-    const seats = workspaceMembers.map((m) => ({
-      workspaceId,
-      userId: m.userId,
-      type: 'editor' as const,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }))
-    log.debug(
-      { migratedSeats: seats, migratedSeatsCount: seats.length },
-      'Inserting {migratedSeatsCount} new seats for the workspace {workspaceId}'
-    )
-
-    await trx<WorkspaceSeat>('workspace_seats')
-      .insert(seats)
-      .onConflict(['workspaceId', 'userId'])
-      .merge()
-
-    log.debug(
-      { migratedSeatsCount: seats.length },
-      'Workspace {workspaceId} has added {migratedSeatsCount} seats'
-    )
-    await upsertWorkspacePlanFactory({ db: trx })({
-      //@ts-expect-error the switch above makes sure things are ok
-      workspacePlan: {
-        workspaceId,
-        name: newTargetPlan,
-        status: newPlanStatus ?? workspacePlan.status,
-        createdAt: workspacePlan.createdAt
-      }
-    })
-    log.debug(
-      'workspace {workspaceId} has had plan {workspacePlan} changed to the new plan {newTargetPlan}'
-    )
-    if (isStripeMigrationNeeded) {
-      log.info('Migrating stripe subscription data for workspace {workspaceId}')
-      switch (newTargetPlan) {
-        case 'academia':
-        case 'free':
-        case 'proUnlimitedInvoiced':
-        case 'teamUnlimitedInvoiced':
-        case 'unlimited':
-          // this is just double checking that everything is right
-          // the switch above sets things up properly
-          throw new Error(
-            `Cannot upgrade stripe for a non paid plan for workspace ${workspaceId}`
-          )
-      }
-      // if stripe paid plan, convert the stripe sub to use all editor seats
-      const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db: trx })({
+    try {
+      const workspaceMembers = await getWorkspaceRolesFactory({ db: trx })({
         workspaceId
       })
-      if (!workspaceSubscription)
-        throw new Error(
-          `Subscription data not found for workspace ${workspaceId}, cannot do stripe migration`
-        )
-
-      let memberAndGuestSeatCount = workspaceSubscription.subscriptionData.products
-        .map((p) => p.quantity)
-        // we're just summing all the seats
-        .reduce((acc, curr) => acc + curr, 0)
-
-      const workspaceTeamCount = workspaceMembers.length
-      if (memberAndGuestSeatCount < workspaceTeamCount) {
-        log.warn(
-          { memberAndGuestSeatCount, workspaceTeamCount },
-          'Workspace {workspaceId} has less paid member and guest seats, than people in the workspace. Reconciling'
-        )
-        memberAndGuestSeatCount = workspaceTeamCount
-      }
-      const productId = getWorkspacePlanProductId({ workspacePlan: newTargetPlan })
-      const priceId = getWorkspacePlanPriceId({
-        workspacePlan: newTargetPlan,
-        billingInterval: workspaceSubscription.billingInterval,
-        currency: workspaceSubscription.currency
-      })
-
-      const subscriptionData: SubscriptionDataInput = cloneDeep(
-        workspaceSubscription.subscriptionData
+      const seats = workspaceMembers.map((m) => ({
+        workspaceId,
+        userId: m.userId,
+        type: 'editor' as const,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }))
+      log.debug(
+        { migratedSeats: seats, migratedSeatsCount: seats.length },
+        'Inserting {migratedSeatsCount} new seats for the workspace {workspaceId}'
       )
-      subscriptionData.products = []
 
-      subscriptionData.products.push({
-        productId,
-        priceId,
-        quantity: memberAndGuestSeatCount
-      })
+      await trx<WorkspaceSeat>('workspace_seats')
+        .insert(seats)
+        .onConflict(['workspaceId', 'userId'])
+        .merge()
 
-      await reconcileWorkspaceSubscriptionFactory({ stripe })({
-        subscriptionData,
-        prorationBehavior: 'create_prorations'
+      log.debug(
+        { migratedSeatsCount: seats.length },
+        'Workspace {workspaceId} has added {migratedSeatsCount} seats'
+      )
+      await upsertWorkspacePlanFactory({ db: trx })({
+        //@ts-expect-error the switch above makes sure things are ok
+        workspacePlan: {
+          workspaceId,
+          name: newTargetPlan,
+          status: newPlanStatus ?? workspacePlan.status,
+          createdAt: workspacePlan.createdAt
+        }
       })
+      log.debug(
+        'workspace {workspaceId} has had plan {workspacePlan} changed to the new plan {newTargetPlan}'
+      )
+      if (isStripeMigrationNeeded) {
+        log.info('Migrating stripe subscription data for workspace {workspaceId}')
+        switch (newTargetPlan) {
+          case 'academia':
+          case 'free':
+          case 'proUnlimitedInvoiced':
+          case 'teamUnlimitedInvoiced':
+          case 'unlimited':
+            // this is just double checking that everything is right
+            // the switch above sets things up properly
+            throw new Error(
+              `Cannot upgrade stripe for a non paid plan for workspace ${workspaceId}`
+            )
+        }
+        // if stripe paid plan, convert the stripe sub to use all editor seats
+        const workspaceSubscription = await getWorkspaceSubscriptionFactory({
+          db: trx
+        })({
+          workspaceId
+        })
+        if (!workspaceSubscription)
+          throw new Error(
+            `Subscription data not found for workspace ${workspaceId}, cannot do stripe migration`
+          )
+
+        let memberAndGuestSeatCount = workspaceSubscription.subscriptionData.products
+          .map((p) => p.quantity)
+          // we're just summing all the seats
+          .reduce((acc, curr) => acc + curr, 0)
+
+        const workspaceTeamCount = workspaceMembers.length
+        if (memberAndGuestSeatCount < workspaceTeamCount) {
+          log.warn(
+            { memberAndGuestSeatCount, workspaceTeamCount },
+            'Workspace {workspaceId} has less paid member and guest seats, than people in the workspace. Reconciling'
+          )
+          memberAndGuestSeatCount = workspaceTeamCount
+        }
+        const productId = getWorkspacePlanProductId({ workspacePlan: newTargetPlan })
+        const priceId = getWorkspacePlanPriceId({
+          workspacePlan: newTargetPlan,
+          billingInterval: workspaceSubscription.billingInterval,
+          currency: workspaceSubscription.currency
+        })
+
+        const subscriptionData: SubscriptionDataInput = cloneDeep(
+          workspaceSubscription.subscriptionData
+        )
+        subscriptionData.products = []
+
+        subscriptionData.products.push({
+          productId,
+          priceId,
+          quantity: memberAndGuestSeatCount
+        })
+
+        await reconcileWorkspaceSubscriptionFactory({ stripe })({
+          subscriptionData,
+          prorationBehavior: 'create_prorations'
+        })
+      }
+      await trx.commit()
+      log.info('🥳 Workspace plan migration completed for workspace {workspaceId}')
+    } catch (err) {
+      await trx.rollback()
+      throw err
     }
-    await trx.commit()
-    log.info('🥳 Workspace plan migration completed for workspace {workspaceId}')
 
     // add and editor seat to all workspace members
     // convert current plan to the new plan
