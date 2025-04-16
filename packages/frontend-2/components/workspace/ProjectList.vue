@@ -53,6 +53,9 @@
         </span>
         <WorkspaceHeaderAddProjectMenu
           button-copy="Add your first project"
+          :workspace-name="workspace?.name || ''"
+          :workspace-slug="workspaceSlug"
+          :workspace-plan="workspace?.plan?.name || ''"
           :can-create-project="canCreateProject"
           :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"
