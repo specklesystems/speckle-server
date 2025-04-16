@@ -82,10 +82,11 @@
               >
                 <p class="text-body-xs text-foreground">Join existing workspaces</p>
                 <div class="relative">
-                  <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
-                    {{ discoverableWorkspacesCount }}
+                  <CommonBadge v-if="hasDiscoverableWorkspacesOrJoinRequests" rounded>
+                    {{ discoverableWorkspacesAndJoinRequestsCount }}
                   </CommonBadge>
                   <div
+                    v-if="hasDiscoverableWorkspaces"
                     class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
                   />
                 </div>
@@ -179,7 +180,7 @@ const {
 const route = useRoute()
 const {
   hasDiscoverableWorkspaces,
-  discoverableWorkspacesCount,
+  discoverableWorkspacesAndJoinRequestsCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
 const { hasProjectsToMove } = useActiveUserProjectsToMove()
