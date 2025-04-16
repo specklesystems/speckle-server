@@ -35,21 +35,8 @@
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup>
-              <template v-if="!isWorkspacesEnabled">
-                <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
-                  <LayoutSidebarMenuGroupItem
-                    label="Projects"
-                    :active="isActive(projectsRoute)"
-                  >
-                    <template #icon>
-                      <IconProjects class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
-              </template>
-
               <NuxtLink
-                v-if="activeWorkspaceSlug"
+                v-if="activeWorkspaceSlug && isWorkspacesEnabled"
                 :to="workspaceRoute(activeWorkspaceSlug)"
                 @click="isOpenMobile = false"
               >
@@ -64,7 +51,7 @@
               </NuxtLink>
 
               <NuxtLink
-                v-else-if="isProjectsActive"
+                v-else-if="isProjectsActive && !isWorkspacesEnabled"
                 :to="projectsRoute"
                 @click="isOpenMobile = false"
               >
