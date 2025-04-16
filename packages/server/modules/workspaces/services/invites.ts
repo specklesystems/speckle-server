@@ -227,20 +227,6 @@ export const collectAndValidateWorkspaceTargetsFactory =
       })
     }
 
-    // If inviting to workspace project, disallow workspace guests to become project owners
-    // TODO: Remove?
-    if (
-      workspaceRole === Roles.Workspace.Guest &&
-      projectTarget?.role === Roles.Stream.Owner
-    ) {
-      throw new InviteCreateValidationError(
-        'Workspace guests cannot be owners of workspace projects'
-      )
-    }
-
-    // If inviting to workspace project, disallow viewers to get editor roles
-    // TODO:
-
     // Do further validation only if we're actually planning to invite to a workspace
     // (maybe the invitation is implicitly there, but user already is a member of the workspace)
     const isInvitingToWorkspace =
