@@ -125,7 +125,7 @@ const currentEditorPrice = computed(() => {
   ) {
     const basePlanType =
       plan.value.name === WorkspacePlans.TeamUnlimited ? 'team' : 'pro'
-    const amount = intervalIsYearly
+    const amount = intervalIsYearly.value
       ? (prices.value?.[currency.value]?.[basePlanType]?.yearly.amount || 0) / 12
       : prices.value?.[currency.value]?.[basePlanType]?.monthly.amount || 0
 
@@ -140,7 +140,9 @@ const currentEditorPrice = computed(() => {
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -183,7 +185,9 @@ const totalPrice = computed(() => {
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -208,7 +212,7 @@ const currentAddonPrice = computed(() => {
     addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlansNew]
   if (!addonPrice) return null
 
-  return intervalIsYearly
+  return intervalIsYearly.value
     ? formatPrice({
         amount: addonPrice.yearly.amount / 12,
         currency: addonPrice.yearly.currency
