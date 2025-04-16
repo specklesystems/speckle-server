@@ -8,7 +8,7 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                name="Home"
+                name="Projects"
                 :separator="false"
               />
             </template>

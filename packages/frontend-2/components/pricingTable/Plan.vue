@@ -57,44 +57,11 @@
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <PricingTablePlanFeature
+        v-for="feature in commonFeatures"
+        :key="feature.displayName"
+        :display-name="feature.displayName"
+        :description="feature.description"
         is-included
-        display-name="Unlimited editor and viewer seats"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        display-name="Unlimited guests"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.projectCount} project${
-          planLimits.projectCount === 1 ? '' : 's'
-        }`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="`${planLimits.modelCount} models per workspace`"
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory.value} day version history`
-            : 'Full version history'
-        "
-        description="Some tooltip text"
-      />
-      <PricingTablePlanFeature
-        is-included
-        :display-name="
-          planLimits.versionsHistory
-            ? `${planLimits.versionsHistory.value} day comment history`
-            : 'Full comment history'
-        "
-        description="Some tooltip text"
       />
       <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
@@ -147,6 +114,38 @@ const { prices } = useWorkspacePlanPrices()
 
 const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const commonFeatures = shallowRef([
+  {
+    displayName: 'Unlimited editor and viewer seats',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: 'Unlimited guests',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.projectCount} project${
+      planLimits.value.projectCount === 1 ? '' : 's'
+    }`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.modelCount} models per workspace`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day version history`
+      : 'Full version history',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day comment history`
+      : 'Full comment history',
+    description: 'Some tooltip text'
+  }
+])
 const planPrice = computed(() => {
   let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
@@ -175,7 +174,9 @@ const canUpgradeToPlan = computed(() => {
 
   const allowedUpgrades: Partial<Record<WorkspacePlans, WorkspacePlans[]>> = {
     [WorkspacePlans.Free]: [WorkspacePlans.Team, WorkspacePlans.Pro],
-    [WorkspacePlans.Team]: [WorkspacePlans.Pro]
+    [WorkspacePlans.Team]: [WorkspacePlans.Pro],
+    [WorkspacePlans.TeamUnlimited]: [WorkspacePlans.Team, WorkspacePlans.Pro],
+    [WorkspacePlans.ProUnlimited]: [WorkspacePlans.Pro]
   }
 
   return allowedUpgrades[props.currentPlan.name]?.includes(props.plan)
@@ -195,7 +196,17 @@ const isCurrentPlan = computed(() => {
   if (props.plan === WorkspacePlans.Free) {
     return props.currentPlan?.name === props.plan
   }
-  return isMatchingInterval.value && props.currentPlan?.name === props.plan
+
+  const isMatchingTier =
+    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+      props.plan === WorkspacePlans.Pro)
+
+  return (
+    isMatchingInterval.value &&
+    (props.currentPlan?.name === props.plan || isMatchingTier)
+  )
 })
 
 const isAnnualToMonthly = computed(() => {
@@ -226,6 +237,10 @@ const isSelectable = computed(() => {
   )
     return true
 
+  // Dont allow upgrades during cancelation
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return false
+  }
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
 
@@ -295,6 +310,10 @@ const buttonTooltip = computed(() => {
   )
     return undefined
 
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return 'You must renew your subscription first'
+  }
+
   if (isDowngrade.value) {
     return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
   }
@@ -315,7 +334,11 @@ const buttonTooltip = computed(() => {
 })
 
 const badgeText = computed(() =>
-  props.currentPlan?.name === props.plan ? 'Current plan' : ''
+  props.currentPlan?.name === props.plan &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.Canceled &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.CancelationScheduled
+    ? 'Current plan'
+    : ''
 )
 
 const handleUpgradeClick = () => {

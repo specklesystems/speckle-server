@@ -35,42 +35,10 @@
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup>
-              <template v-if="!isWorkspacesEnabled">
-                <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
-                  <LayoutSidebarMenuGroupItem
-                    label="Projects"
-                    :active="isActive(projectsRoute)"
-                  >
-                    <template #icon>
-                      <IconProjects class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
-              </template>
-
-              <NuxtLink
-                v-if="activeWorkspaceSlug"
-                :to="workspaceRoute(activeWorkspaceSlug)"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  label="Home"
-                  :active="route.name === 'workspaces-slug'"
-                >
-                  <template #icon>
-                    <HomeIcon class="size-4 stroke-[1.5px]" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
-              <NuxtLink
-                v-else-if="isProjectsActive"
-                :to="projectsRoute"
-                @click="isOpenMobile = false"
-              >
+              <NuxtLink :to="projectsLink" @click="isOpenMobile = false">
                 <LayoutSidebarMenuGroupItem
                   label="Projects"
-                  :active="isActive(projectsRoute)"
+                  :active="route.name === 'workspaces-slug' || isActive(projectsRoute)"
                 >
                   <template #icon>
                     <IconProjects class="size-4 text-foreground-2" />
@@ -170,7 +138,6 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
@@ -178,13 +145,20 @@ import { useBreakpoints } from '@vueuse/core'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { activeWorkspaceSlug } = useNavigation()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
 
+const projectsLink = computed(() => {
+  return isWorkspacesEnabled.value
+    ? projectsRoute
+    : activeWorkspaceSlug.value
+    ? workspaceRoute(activeWorkspaceSlug.value)
+    : projectsRoute
+})
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }

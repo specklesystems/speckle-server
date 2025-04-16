@@ -342,7 +342,7 @@ export = {
       )
 
       // Reset loader cache
-      await ctx.clearCache()
+      ctx.clearCache()
 
       return ret
     },
@@ -364,7 +364,7 @@ export = {
       await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
 
       // Reset loader cache
-      await context.clearCache()
+      context.clearCache()
 
       return true
     },
