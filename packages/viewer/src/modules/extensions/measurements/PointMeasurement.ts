@@ -23,10 +23,13 @@ import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
 export class PointMeasurement extends Measurement {
-  private gizmo: MeasurementPointGizmo
-  private xLabel: SpeckleText
-  private yLabel: SpeckleText
-  private zLabel: SpeckleText
+  protected gizmo: MeasurementPointGizmo
+  protected xLabel: SpeckleText
+  protected yLabel: SpeckleText
+  protected zLabel: SpeckleText
+  protected xLabelPosition: Vector3 = new Vector3()
+  protected yLabelPosition: Vector3 = new Vector3()
+  protected zLabelPosition: Vector3 = new Vector3()
 
   public set isVisible(value: boolean) {
     this.gizmo.visible = value
@@ -104,8 +107,12 @@ export class PointMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
+
+    this.updateLabelPositions()
+    this.xLabel.setTransform(this.xLabelPosition)
+    this.yLabel.setTransform(this.yLabelPosition)
+    this.zLabel.setTransform(this.zLabelPosition)
     this.gizmo.frameUpdate(camera, size)
-    void this.update()
   }
 
   public locationUpdated(point: Vector3, normal: Vector3): void {
@@ -117,7 +124,7 @@ export class PointMeasurement extends Measurement {
       this.state = MeasurementState.COMPLETE
   }
 
-  public async update(): Promise<void> {
+  protected updateLabelPositions() {
     const camera = this.renderingCamera as PerspectiveCamera | OrthographicCamera
     if (!camera) return
     const ndcPos = new Vector4(
@@ -149,7 +156,13 @@ export class PointMeasurement extends Measurement {
     zPos.applyMatrix4(invProjection)
     zPos.applyMatrix4(invView)
 
-    const plm = this.xLabel
+    this.xLabelPosition.set(xPos.x, xPos.y, xPos.z)
+    this.yLabelPosition.set(yPos.x, yPos.y, yPos.z)
+    this.zLabelPosition.set(zPos.x, zPos.y, zPos.z)
+  }
+
+  public async update(): Promise<void> {
+    const xP = this.xLabel
       .update({
         textValue: `x : ${(
           this.startPoint.x * getConversionFactor('m', this.units)
@@ -164,11 +177,11 @@ export class PointMeasurement extends Measurement {
           billboard: true,
           backgroundPixelHeight: 20
         }
-        this.xLabel.setTransform(new Vector3(xPos.x, xPos.y, xPos.z))
+        this.xLabel.setTransform(this.xLabelPosition)
         if (this.xLabel.backgroundMesh) this.xLabel.backgroundMesh.renderOrder = 3
         this.xLabel.textMesh.renderOrder = 4
       })
-    const plm2 = this.yLabel
+    const yP = this.yLabel
       .update({
         textValue: `y : ${(
           this.startPoint.y * getConversionFactor('m', this.units)
@@ -183,14 +196,12 @@ export class PointMeasurement extends Measurement {
           billboard: true,
           backgroundPixelHeight: 20
         }
-        this.yLabel.setTransform(
-          new Vector3().copy(new Vector3(yPos.x, yPos.y, yPos.z))
-        )
+        this.yLabel.setTransform(this.yLabelPosition)
         if (this.yLabel.backgroundMesh) this.yLabel.backgroundMesh.renderOrder = 3
         this.yLabel.textMesh.renderOrder = 4
       })
 
-    const plm3 = this.zLabel
+    const zP = this.zLabel
       .update({
         textValue: `z : ${(
           this.startPoint.z * getConversionFactor('m', this.units)
@@ -205,9 +216,7 @@ export class PointMeasurement extends Measurement {
           billboard: true,
           backgroundPixelHeight: 20
         }
-        this.zLabel.setTransform(
-          new Vector3().copy(new Vector3(zPos.x, zPos.y, zPos.z))
-        )
+        this.zLabel.setTransform(this.zLabelPosition)
         if (this.zLabel.backgroundMesh) this.zLabel.backgroundMesh.renderOrder = 3
         this.zLabel.textMesh.renderOrder = 4
       })
@@ -218,7 +227,7 @@ export class PointMeasurement extends Measurement {
 
     this.value = this.startPoint.length()
 
-    await Promise.all([plm, plm2, plm3])
+    await Promise.all([xP, yP, zP])
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
