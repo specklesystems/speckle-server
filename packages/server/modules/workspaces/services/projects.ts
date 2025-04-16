@@ -46,7 +46,7 @@ import {
   GetWorkspaceWithPlan,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
-import { isNewPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
@@ -226,12 +226,30 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
       throw new WorkspaceNotFoundError()
     }
 
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
-    if (isNewPlan) {
-      throw new NotImplementedError(
-        'This function is not supported for this workspace plan'
-      )
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
+    const allowed = {
+      [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
+      [Roles.Workspace.Member]: [
+        Roles.Stream.Reviewer,
+        Roles.Stream.Contributor,
+        Roles.Stream.Owner
+      ],
+      [Roles.Workspace.Admin]: [
+        Roles.Stream.Reviewer,
+        Roles.Stream.Contributor,
+        Roles.Stream.Owner
+      ]
     }
+
+    if (isNewPlan)
+      return {
+        default: {
+          [Roles.Workspace.Guest]: null,
+          [Roles.Workspace.Member]: null,
+          [Roles.Workspace.Admin]: null
+        },
+        allowed
+      }
 
     return {
       default: {
@@ -239,19 +257,7 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
         [Roles.Workspace.Member]: Roles.Stream.Reviewer,
         [Roles.Workspace.Admin]: Roles.Stream.Owner
       },
-      allowed: {
-        [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
-        [Roles.Workspace.Member]: [
-          Roles.Stream.Reviewer,
-          Roles.Stream.Contributor,
-          Roles.Stream.Owner
-        ],
-        [Roles.Workspace.Admin]: [
-          Roles.Stream.Reviewer,
-          Roles.Stream.Contributor,
-          Roles.Stream.Owner
-        ]
-      }
+      allowed
     }
   }
 
@@ -267,7 +273,7 @@ export const getWorkspaceSeatTypeToProjectRoleMappingFactory =
       throw new WorkspaceNotFoundError()
     }
 
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (!isNewPlan) {
       throw new NotImplementedError(
         'This function is not supported for this workspace plan'

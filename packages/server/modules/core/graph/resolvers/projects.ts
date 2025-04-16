@@ -409,7 +409,7 @@ export = {
       )
 
       // Reset loader cache
-      await ctx.clearCache()
+      ctx.clearCache()
 
       return ret
     },
@@ -450,7 +450,7 @@ export = {
       )
 
       // Reset loader cache
-      await context.clearCache()
+      context.clearCache()
 
       return true
     },

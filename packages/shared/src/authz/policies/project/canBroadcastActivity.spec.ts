@@ -12,6 +12,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 
 describe('canBroadcastProjectActivityPolicy', () => {
   const buildSUT = (
@@ -57,7 +58,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })

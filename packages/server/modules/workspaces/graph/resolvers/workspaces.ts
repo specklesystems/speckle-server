@@ -1,5 +1,8 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
@@ -205,6 +208,7 @@ import {
   getWorkspaceRolesAndSeatsFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import {
   mapAuthToServerError,
   throwIfAuthNotOk
@@ -316,6 +320,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           if (!workspace) {
             throw new WorkspaceNotFoundError()
           }
+
           await authorizeResolver(
             ctx.userId,
             workspace.id,
@@ -368,18 +373,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       ProjectInviteMutations: {
         async createForWorkspace(_parent, args, ctx) {
-          await authorizeResolver(
-            ctx.userId,
-            args.projectId,
-            Roles.Stream.Owner,
-            ctx.resourceAccessRules
-          )
+          const { projectId } = args
 
           const inviteCount = args.inputs.length
           if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
               'Maximum 10 invites can be sent at once by non admins'
             )
+          }
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: args.projectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canInvite = await ctx.authPolicies.project.canInvite({
+            userId: ctx.userId,
+            projectId
+          })
+          if (!canInvite.isOk) {
+            throw mapAuthToServerError(canInvite.error)
           }
 
           const createProjectInvite = createProjectInviteFactory({
@@ -838,12 +852,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
             input: { inviteId, workspaceId }
           } = args
 
-          await authorizeResolver(
-            ctx.userId!,
-            workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceId: workspaceId,
+            resourceType: TokenResourceIdentifierType.Workspace,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canInvite = await ctx.authPolicies.workspace.canInvite({
+            userId: ctx.userId,
+            workspaceId
+          })
+          if (!canInvite.isOk) {
+            throw mapAuthToServerError(canInvite.error)
+          }
 
           const resendInviteEmail = resendInviteEmailFactory({
             buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
@@ -871,6 +892,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         create: async (_parent, args, ctx) => {
+          const { workspaceId } = args
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: workspaceId,
+            resourceType: TokenResourceIdentifierType.Workspace,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canInvite = await ctx.authPolicies.workspace.canInvite({
+            userId: ctx.userId,
+            workspaceId
+          })
+          if (!canInvite.isOk) {
+            throw mapAuthToServerError(canInvite.error)
+          }
+
           const createInvite = createWorkspaceInviteFactory({
             createAndSendInvite: buildCreateAndSendWorkspaceInvite()
           })
@@ -884,11 +921,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         },
         batchCreate: async (_parent, args, ctx) => {
+          const { workspaceId } = args
+
           const inviteCount = args.input.length
           if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
               'Maximum 10 invites can be sent at once by non admins'
             )
+          }
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: workspaceId,
+            resourceType: TokenResourceIdentifierType.Workspace,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canInvite = await ctx.authPolicies.workspace.canInvite({
+            userId: ctx.userId,
+            workspaceId
+          })
+          if (!canInvite.isOk) {
+            throw mapAuthToServerError(canInvite.error)
           }
 
           const createInvite = createWorkspaceInviteFactory({
@@ -970,12 +1023,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         cancel: async (_parent, args, ctx) => {
-          await authorizeResolver(
-            ctx.userId,
-            args.workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
+          const { workspaceId } = args
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: workspaceId,
+            resourceType: TokenResourceIdentifierType.Workspace,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canInvite = await ctx.authPolicies.workspace.canInvite({
+            userId: ctx.userId,
+            workspaceId
+          })
+          if (!canInvite.isOk) {
+            throw mapAuthToServerError(canInvite.error)
+          }
 
           const cancelInvite = cancelResourceInviteFactory({
             findInvite: findInviteFactory({
@@ -1576,12 +1638,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
               if (!requestedWorkspaceId) return false
 
               if (payload.workspaceId !== requestedWorkspaceId) return false
-              await authorizeResolver(
-                ctx.userId!,
-                payload.workspaceId,
-                Roles.Workspace.Guest,
-                ctx.resourceAccessRules
-              )
+
+              // TODO: Subs dont clear until actual response!! formatResponse/formatError, doesn't kick in
+              // if this handler returns false
+              const projectId = payload.workspaceProjectsUpdated.projectId
+              const canGetMessage =
+                await ctx.authPolicies.workspace.canReceiveProjectsUpdatedMessage({
+                  userId: ctx.userId,
+                  projectId,
+                  workspaceId: requestedWorkspaceId
+                })
+              if (canGetMessage.isErr) {
+                return false
+              }
 
               return true
             }

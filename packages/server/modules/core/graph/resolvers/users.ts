@@ -17,7 +17,7 @@ import {
   lookupUsersFactory,
   bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
-import { UsersMeta } from '@/modules/core/dbSchema'
+import { Users, UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   deleteAllUserInvitesFactory,
@@ -46,6 +46,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -202,6 +203,25 @@ export = {
         key: UsersMeta.metaKey.isOnboardingFinished
       })
       return !!metaVal?.value
+    },
+    meta: async (parent) => ({
+      userId: parent.id
+    })
+  },
+  UserMeta: {
+    newWorkspaceExplainerDismissed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.newWorkspaceExplainerDismissed
+      })
+      return !!metaVal?.value
+    },
+    legacyProjectsExplainerCollapsed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.legacyProjectsExplainerCollapsed
+      })
+      return !!metaVal?.value
     }
   },
   LimitedUser: {
@@ -331,17 +351,39 @@ export = {
       return success
     },
     async update(_parent, args, context) {
-      const logger = context.log.child({
-        userIdToOperateOn: context.userId
-      })
-      return await withOperationLogging(
+      const logger = context.log
+      const newUser = await withOperationLogging(
         async () => await updateUserAndNotify(context.userId!, args.user),
         {
           logger,
           operationName: 'updateUser',
-          operationDescription: `Update user`
+          operationDescription: 'Update user'
         }
       )
+      return newUser
+    },
+    meta: () => ({})
+  },
+  UserMetaMutations: {
+    setLegacyProjectsExplainerCollapsed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.legacyProjectsExplainerCollapsed,
+        args.value
+      )
+
+      return !!res.value
+    },
+    setNewWorkspaceExplainerDismissed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.newWorkspaceExplainerDismissed,
+        args.value
+      )
+
+      return !!res.value
     }
   }
 } as Resolvers

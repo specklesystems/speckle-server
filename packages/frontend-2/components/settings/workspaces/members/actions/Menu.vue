@@ -55,11 +55,10 @@
       @success="onDialogSuccess"
     />
 
-    <SettingsWorkspacesMembersActionsLeaveWorkspaceDialog
+    <SettingsWorkspacesGeneralLeaveDialog
       v-if="dialogToShow.leaveWorkspace"
       v-model:open="showDialog"
       :workspace="workspace"
-      :is-only-admin="hasSingleAdmin"
     />
 
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog

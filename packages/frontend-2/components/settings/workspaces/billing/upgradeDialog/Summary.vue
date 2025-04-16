@@ -1,16 +1,21 @@
 <template>
   <div>
-    <BillingTransitionCards>
+    <BillingTransitionCards class="mb-4">
       <template #current-state>
         <div class="p-2">
           <p class="text-foreground text-body-3xs">
-            Current plan (billed {{ intervalIsYearly ? 'yearly' : 'monthly' }})
+            {{ statusIsCanceled ? 'Old plan' : 'Current plan' }}
+            <template v-if="!isFreePlan && !statusIsCanceled">
+              (billed {{ intervalIsYearly ? 'yearly' : 'monthly' }})
+            </template>
           </p>
           <div class="mt-2 flex justify-between items-center">
             <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
-            <p class="text-body-2xs">{{ currentEditorPrice }} editor seat/month</p>
+            <p v-if="!isFreePlan && !statusIsCanceled" class="text-body-2xs">
+              {{ currentEditorPrice }} editor seat/month
+            </p>
           </div>
-          <template v-if="hasUnlimitedAddon">
+          <template v-if="hasUnlimitedAddon && !statusIsCanceled">
             <div class="mt-2 flex justify-between items-center">
               <CommonBadge
                 color-classes="bg-foundation border-blue-200 dark:border-blue-800 border"
@@ -68,8 +73,8 @@
     </BillingTransitionCards>
 
     <p
-      v-if="plan?.name && isPaidPlan(plan.name)"
-      class="text-foreground-2 text-body-2xs mt-6 mb-2"
+      v-if="plan?.name && isPaidPlan(plan.name) && !statusIsCanceled"
+      class="text-foreground-2 text-body-2xs my-2"
     >
       The amount you will be charged today will be prorated based on the time remaining
       in your billing cycle. The prorated amount will be lower than the listed price.
@@ -99,9 +104,14 @@ const props = defineProps<{
   billingInterval: BillingInterval
 }>()
 
-const { intervalIsYearly, plan, currency, hasUnlimitedAddon } = useWorkspacePlan(
-  props.slug
-)
+const {
+  intervalIsYearly,
+  plan,
+  currency,
+  hasUnlimitedAddon,
+  isFreePlan,
+  statusIsCanceled
+} = useWorkspacePlan(props.slug)
 const { prices: activeWorkspacePrices } = useActiveWorkspacePlanPrices()
 const { prices } = useWorkspacePlanPrices()
 const { addonPrices } = useWorkspaceAddonPrices()
