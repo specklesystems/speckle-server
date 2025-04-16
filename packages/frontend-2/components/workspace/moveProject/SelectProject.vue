@@ -65,7 +65,16 @@
     <WorkspacePlanLimitReachedDialog
       v-model:open="showLimitDialog"
       subtitle="Upgrade your plan to move project"
-    ></WorkspacePlanLimitReachedDialog>
+    >
+      <template v-if="limitReachedWorkspace">
+        <p class="text-body-xs text-foreground-2">
+          The workspace
+          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
+          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
+          of 1 project and 5 models. Upgrade the workspace to add more projects.
+        </p>
+      </template>
+    </WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 
@@ -76,11 +85,13 @@ import {
   useDebouncedTextInput
 } from '@speckle/ui-components'
 import type {
+  PermissionCheckResult,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspacePermissionChecks
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -91,7 +102,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   workspaceSlug?: string
-  workspacePermissions?: WorkspacePermissionChecks
+  projectPermissions?: PermissionCheckResult
 }>()
 
 const {
@@ -117,6 +128,9 @@ const {
 })
 
 const showLimitDialog = ref(false)
+const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
+  null
+)
 
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 const moveableProjects = computed(() => userProjects.value)
@@ -124,19 +138,27 @@ const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
 const isProjectDisabled = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (!props.workspaceSlug) {
+    if (project.permissions.canMoveToWorkspace.authorized) {
       return false
     }
-    if (isProjectLimitReached.value(project)) {
-      return false
-    }
+    return true
+  }
+)
 
-    return !canMoveProject.value(project)
+const getProjectTooltip = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    if (project.permissions.canMoveToWorkspace.authorized) {
+      return undefined
+    }
+    return project.permissions.canMoveToWorkspace.message
   }
 )
 
 const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  if (props.workspaceSlug && isProjectLimitReached.value(project)) {
+  if (props.workspaceSlug) {
+    limitReachedWorkspace.value = {
+      name: props.workspaceSlug
+    } as WorkspaceMoveProjectManager_WorkspaceFragment
     showLimitDialog.value = true
     return
   }
@@ -145,41 +167,4 @@ const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
 }
 
 const showLoading = computed(() => loading.value && userProjects.value.length === 0)
-
-const getProjectPermission = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  return (
-    project.permissions?.canMoveToWorkspace || {
-      authorized: false,
-      code: '',
-      message: ''
-    }
-  )
-}
-
-const canMoveProject = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    return permission.authorized
-  }
-)
-
-const isProjectLimitReached = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    return permission.code === 'WorkspaceLimitsReached'
-  }
-)
-
-const getProjectTooltip = computed(
-  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    const permission = getProjectPermission(project)
-    if (permission.authorized) {
-      return undefined
-    }
-    if (permission.code === 'WorkspaceLimitsReached') {
-      return undefined
-    }
-    return permission.message
-  }
-)
 </script>

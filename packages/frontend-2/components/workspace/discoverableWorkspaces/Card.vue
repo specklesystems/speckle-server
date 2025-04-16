@@ -2,7 +2,7 @@
   <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
     <template #text>
       <div class="flex flex-col gap-y-1">
-        <div class="text-body-2xs">
+        <div class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
         <div class="text-body-2xs">{{ workspace.team?.totalCount }} members</div>

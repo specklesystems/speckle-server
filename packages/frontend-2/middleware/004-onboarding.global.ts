@@ -104,10 +104,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  const workspaces =
-    workspaceExistenceData?.activeUser?.workspaces?.items.filter(
-      (w) => w.creationState?.completed !== false
-    ) ?? []
+  const workspaces = workspaceExistenceData?.activeUser?.workspaces?.items ?? []
   const hasWorkspaces = workspaces.length > 0
   const hasDiscoverableWorkspaces =
     (workspaceExistenceData?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||

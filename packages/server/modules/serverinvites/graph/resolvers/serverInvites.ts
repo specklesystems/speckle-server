@@ -18,7 +18,10 @@ import {
 } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import db from '@/db/knex'
 import { ServerRoles } from '@speckle/shared'
 import {
@@ -76,6 +79,8 @@ import {
 } from '@/modules/core/services/streams/access'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
@@ -390,6 +395,22 @@ export = {
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
+      const { projectId } = args
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canInvite = await ctx.authPolicies.project.canInvite({
+        userId: ctx.userId,
+        projectId
+      })
+      if (!canInvite.isOk) {
+        throw mapAuthToServerError(canInvite.error)
+      }
+
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite(),
         getStream
@@ -406,18 +427,27 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
+      const { projectId } = args
 
       const inviteCount = args.input.length
       if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
           'Maximum 10 invites can be sent at once by non admins'
         )
+      }
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canInvite = await ctx.authPolicies.project.canInvite({
+        userId: ctx.userId,
+        projectId
+      })
+      if (!canInvite.isOk) {
+        throw mapAuthToServerError(canInvite.error)
       }
 
       const createProjectInvite = createProjectInviteFactory({
@@ -477,12 +507,21 @@ export = {
       return true
     },
     async cancel(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
+      const { projectId } = args
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canInvite = await ctx.authPolicies.project.canInvite({
+        userId: ctx.userId,
+        projectId
+      })
+      if (!canInvite.isOk) {
+        throw mapAuthToServerError(canInvite.error)
+      }
 
       const cancelInvite = cancelResourceInviteFactory({
         findInvite: findInviteFactory({ db }),

@@ -4,10 +4,7 @@
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
       :workspace-slug="workspaceSlug"
-      :can-move-to-workspace="canMoveToWorkspace"
-      :is-sso-required="isSsoRequired"
-      :is-limit-reached="isLimitReached"
-      :get-disabled-tooltip="getDisabledTooltip"
+      :project-permissions="projectResult?.project.permissions.canMoveToWorkspace"
       @project-selected="onProjectSelected"
     />
 
@@ -15,10 +12,9 @@
     <WorkspaceMoveProjectSelectWorkspace
       v-if="selectedProject && activeDialog === 'workspace'"
       :project="selectedProject"
-      :can-move-to-workspace="canMoveToWorkspace"
-      :is-sso-required="isSsoRequired"
-      :is-limit-reached="isLimitReached"
-      :get-disabled-tooltip="getDisabledTooltip"
+      :workspace-permissions="
+        workspaceResult?.workspaceBySlug.permissions.canMoveProjectToWorkspace
+      "
       @workspace-selected="onWorkspaceSelected"
     />
 
@@ -56,7 +52,6 @@
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
-  FullPermissionCheckResultFragment,
   WorkspaceMoveProjectManager_ProjectFragment,
   WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
@@ -139,43 +134,6 @@ const open = defineModel<boolean>('open', { required: true })
 const selectedProject = ref<WorkspaceMoveProjectManager_ProjectFragment | null>(null)
 const selectedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
   null
-)
-
-// Permission check computeds
-const isSsoRequired = computed(
-  () => (permission: FullPermissionCheckResultFragment) => {
-    return permission?.code === 'WorkspaceSsoSessionNoAccess'
-  }
-)
-
-const isLimitReached = computed(
-  () => (permission: FullPermissionCheckResultFragment) => {
-    return permission?.code === 'WorkspaceLimitsReached'
-  }
-)
-
-const canMoveToWorkspace = computed(
-  () => (permission: FullPermissionCheckResultFragment) => {
-    return permission?.authorized && permission?.code === 'OK'
-  }
-)
-
-const getDisabledTooltip = computed(
-  () => (permission: FullPermissionCheckResultFragment) => {
-    if (permission?.code === 'WorkspaceLimitsReached') {
-      return undefined
-    }
-
-    if (permission?.code === 'WorkspaceSsoSessionNoAccess') {
-      return 'SSO login required to access this workspace'
-    }
-
-    if (!permission?.authorized) {
-      return permission?.message
-    }
-
-    return undefined
-  }
 )
 
 // Dialog states based on what we have
