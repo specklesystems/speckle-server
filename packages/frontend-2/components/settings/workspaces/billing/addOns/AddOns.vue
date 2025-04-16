@@ -3,7 +3,7 @@
     <SettingsWorkspacesBillingAddOnsCard
       title="Unlimited projects and models"
       :subtitle="`${addonPrice} per editor/month`"
-      info="Add unlimited projects and models to your workspace."
+      info="Power through with unlimited projects and models in your workspace."
       disclaimer="Only on Starter & Business plans"
       :buttons="[unlimitedAddOnButton]"
     />
@@ -11,7 +11,7 @@
     <SettingsWorkspacesBillingAddOnsCard
       title="Extra data regions"
       :subtitle="`${currency === Currency.Gbp ? '£' : '$'}500 per region/year`"
-      info="Access to almost all data residency regions."
+      info="Unlock per-project data residency by adding additional data regions to your workspace."
       disclaimer="Only on Business plan"
       :buttons="[contactButton]"
     />
@@ -19,7 +19,7 @@
     <SettingsWorkspacesBillingAddOnsCard
       title="Priority support"
       subtitle="Talk to us"
-      info="Private support channel for your workspace."
+      info="White-glove treatment with private support channel, onboarding calls and more."
       disclaimer="Only on Business plan"
       :buttons="[contactButton]"
     />
