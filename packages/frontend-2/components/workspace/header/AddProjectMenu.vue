@@ -32,40 +32,34 @@
       v-model:open="showLimitDialog"
       subtitle="Upgrade your plan to move project"
     >
-      <template v-if="limitReachedWorkspace">
-        <p class="text-body-xs text-foreground-2">
-          The workspace
-          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
-          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
-          of 1 project and 5 models. Upgrade the workspace to add more projects.
-        </p>
-        <div class="flex justify-end gap-1">
-          <FormButton color="subtle" @click="showLimitDialog = false">
-            Cancel
-          </FormButton>
-          <FormButton
-            @click="
-              navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug))
-            "
-          >
-            See plans
-          </FormButton>
-        </div>
-      </template>
+      <p class="text-body-xs text-foreground-2">
+        The workspace
+        <span class="font-bold">{{ workspaceName }}</span>
+        is on a {{ workspacePlan ? formatName(workspacePlan) : undefined }} plan with a
+        limit of 1 project and 5 models. Upgrade the workspace to add more projects.
+      </p>
+      <div class="flex justify-end gap-1">
+        <FormButton color="subtle" @click="showLimitDialog = false">Cancel</FormButton>
+        <FormButton
+          @click="
+            navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug))
+          "
+        >
+          See plans
+        </FormButton>
+      </div>
     </WorkspacePlanLimitReachedDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import type {
-  FullPermissionCheckResultFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
+import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import type { WorkspacePlans } from '@speckle/shared'
 
 enum AddNewProjectActionTypes {
   NewProject = 'new-project',
@@ -80,7 +74,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   workspaceName: string
   workspaceSlug: string
-  workspacePlan: string
+  workspacePlan?: WorkspacePlans | null
   hideTextOnMobile?: boolean
   buttonCopy?: string
   canCreateProject: FullPermissionCheckResultFragment | undefined
@@ -90,9 +84,6 @@ const props = defineProps<{
 const menuId = useId()
 const showMenu = ref(false)
 const showLimitDialog = ref(false)
-const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
-  null
-)
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
@@ -117,9 +108,6 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
   const { item } = params
 
   if (isLimitReached.value) {
-    limitReachedWorkspace.value = {
-      name: props.workspaceName
-    } as WorkspaceMoveProjectManager_WorkspaceFragment
     showLimitDialog.value = true
     return
   }
