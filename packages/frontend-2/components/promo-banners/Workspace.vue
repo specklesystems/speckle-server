@@ -66,14 +66,16 @@ const handleDismiss = async () => {
   await updateNewWorkspaceExplainerDismissed(true)
 }
 
-// TODO: Add link to announcement
 const handleReadAnnouncement = async () => {
-  await navigateTo('https://speckle.systems', {
-    external: true,
-    open: {
-      target: '_blank'
+  await navigateTo(
+    'https://speckle.systems/blog/projects-get-a-new-home-and-pricing-plans',
+    {
+      external: true,
+      open: {
+        target: '_blank'
+      }
     }
-  })
+  )
   handleDismiss()
 }
 </script>
