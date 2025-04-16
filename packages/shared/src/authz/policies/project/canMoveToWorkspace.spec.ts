@@ -3,9 +3,17 @@ import { assert, describe, expect, it } from 'vitest'
 import { canMoveToWorkspacePolicy } from './canMoveToWorkspace.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Project } from '../../domain/projects/types.js'
-import { Roles } from '../../../core/constants.js'
+import { Roles, SeatTypes } from '../../../core/constants.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
+import {
+  ProjectNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError,
+  WorkspaceLimitsReachedError,
+  WorkspaceNotEnoughPermissionsError,
+  WorkspaceProjectMoveInvalidError,
+  WorkspacesNotEnabledError
+} from '../../domain/authErrors.js'
 
 const buildCanMoveToWorkspace = (
   overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
@@ -27,6 +35,7 @@ const buildCanMoveToWorkspace = (
     getWorkspaceRole: async () => {
       return Roles.Workspace.Admin
     },
+    getWorkspaceSeat: async () => SeatTypes.Editor,
     getWorkspaceSsoProvider: async () => {
       return null
     },
@@ -42,7 +51,8 @@ const buildCanMoveToWorkspace = (
       return {
         modelCount: 5,
         projectCount: 5,
-        versionsHistory: null
+        versionsHistory: null,
+        commentHistory: null
       }
     },
     getWorkspaceProjectCount: async () => {
@@ -67,7 +77,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspacesNotEnabled'
+      code: WorkspacesNotEnabledError.code
     })
   })
   it('requires the project to not be in a workspace', async () => {
@@ -80,7 +90,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceProjectMoveInvalid'
+      code: WorkspaceProjectMoveInvalidError.code
     })
   })
   it('requires user to be a server user', async () => {
@@ -91,7 +101,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'ServerNoAccess'
+      code: ServerNotEnoughPermissionsError.code
     })
   })
   it('requires user to be project owner', async () => {
@@ -102,7 +112,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'ProjectNoAccess'
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
   it('requires user to be target workspace admin', async () => {
@@ -113,7 +123,7 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceNoAccess'
+      code: WorkspaceNotEnoughPermissionsError.code
     })
   })
   it('forbids move if target workspace will exceed plan limits', async () => {
@@ -122,7 +132,8 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
         return {
           projectCount: 1,
           modelCount: 5,
-          versionsHistory: null
+          versionsHistory: null,
+          commentHistory: null
         }
       },
       getWorkspaceProjectCount: async () => {
@@ -131,12 +142,40 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
     })(canMoveToWorkspaceArgs())
 
     expect(result).toBeAuthErrorResult({
-      code: 'WorkspaceLimitsReached',
+      code: WorkspaceLimitsReachedError.code,
       payload: { limit: 'projectCount' }
     })
   })
   it('allows move project if target workspace will be within limits', async () => {
     const result = await buildCanMoveToWorkspace({})(canMoveToWorkspaceArgs())
+    expect(result).toBeAuthOKResult()
+  })
+  it('allows validation without providing a project id', async () => {
+    const result = await buildCanMoveToWorkspace({
+      getProject: async () => {
+        assert.fail()
+      },
+      getProjectRole: async () => {
+        return null
+      }
+    })({
+      userId: cryptoRandomString({ length: 9 }),
+      workspaceId: cryptoRandomString({ length: 9 })
+    })
+    expect(result).toBeAuthOKResult()
+  })
+  it('allows validation without providing a workspace id', async () => {
+    const result = await buildCanMoveToWorkspace({
+      getWorkspace: async () => {
+        assert.fail()
+      },
+      getWorkspaceRole: async () => {
+        return null
+      }
+    })({
+      userId: cryptoRandomString({ length: 9 }),
+      projectId: cryptoRandomString({ length: 9 })
+    })
     expect(result).toBeAuthOKResult()
   })
 })

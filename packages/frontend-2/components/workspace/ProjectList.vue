@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          :name="isWorkspaceNewPlansEnabled ? 'Home' : workspace?.name"
+          name="Projects"
           :separator="false"
         />
       </Portal>
@@ -52,10 +52,9 @@
           Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
-          v-if="!isWorkspaceGuest"
           button-copy="Add your first project"
-          :is-workspace-admin="isWorkspaceAdmin"
-          :disabled="workspace?.readOnly"
+          :can-create-project="canCreateProject"
+          :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -72,9 +71,9 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <WorkspaceMoveProjectsDialog
+        <WorkspaceMoveProjectManager
           v-model:open="showMoveProjectsDialog"
-          :workspace="workspace"
+          :workspace-slug="workspaceSlug"
         />
       </template>
     </template>
@@ -84,7 +83,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { Roles, type Nullable, type Optional, type StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -104,6 +103,7 @@ graphql(`
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
+    ...WorkspaceHeader_Workspace
     ...BillingAlert_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
@@ -113,7 +113,11 @@ graphql(`
       completed
       state
     }
-    readOnly
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -141,7 +145,6 @@ const {
 } = useDebouncedTextInput({
   debouncedBy: 800
 })
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
@@ -186,6 +189,13 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
 })
 const { finalizeWizard } = useWorkspacesWizard()
 
+const canCreateProject = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canCreateProject
+)
+const canMoveProjectToWorkspace = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canMoveProjectToWorkspace
+)
+
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
@@ -194,9 +204,6 @@ const showEmptyState = computed(() => {
 
   return projects.value && !projects.value?.items?.length
 })
-
-const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {
   const isLoading = areQueriesLoading.value || (!!search.value && query.loading.value)

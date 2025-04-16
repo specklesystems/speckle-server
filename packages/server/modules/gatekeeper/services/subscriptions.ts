@@ -20,9 +20,9 @@ import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import {
+  PaidWorkspacePlansNew,
   PaidWorkspacePlanStatuses,
   throwUncoveredError,
-  WorkspacePlan,
   WorkspaceRoles
 } from '@speckle/shared'
 import { cloneDeep, sum } from 'lodash'
@@ -177,7 +177,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
     const productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
     const priceId = getWorkspacePlanPriceId({
       workspacePlan: workspacePlan.name,
-      billingInterval: workspaceSubscription.billingInterval
+      billingInterval: workspaceSubscription.billingInterval,
+      currency: workspaceSubscription.currency
     })
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
@@ -265,7 +266,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
         productId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
         priceId = getWorkspacePlanPriceId({
           workspacePlan: 'guest',
-          billingInterval: workspaceSubscription.billingInterval
+          billingInterval: workspaceSubscription.billingInterval,
+          currency: workspaceSubscription.currency
         })
         break
       case 'workspace:admin':
@@ -279,7 +281,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryOld =
         productId = getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
         priceId = getWorkspacePlanPriceId({
           workspacePlan: workspacePlan.name,
-          billingInterval: workspaceSubscription.billingInterval
+          billingInterval: workspaceSubscription.billingInterval,
+          currency: workspaceSubscription.currency
         })
         break
       default:
@@ -316,14 +319,11 @@ export const getTotalSeatsCountByPlanFactory =
     workspacePlan,
     subscriptionData
   }: {
-    workspacePlan: Pick<WorkspacePlan, 'name'>
+    workspacePlan: PaidWorkspacePlansNew
     subscriptionData: Pick<SubscriptionData, 'products'>
   }) => {
-    if (workspacePlan.name === 'free') {
-      return 3 // Max editors seats in the free plan
-    }
     const productId = getWorkspacePlanProductId({
-      workspacePlan: workspacePlan.name as 'pro' | 'team'
+      workspacePlan
     })
     const product = subscriptionData.products.find(
       (product) => product.productId === productId

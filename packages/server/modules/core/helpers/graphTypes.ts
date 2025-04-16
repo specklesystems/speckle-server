@@ -142,3 +142,13 @@ export type ProjectPermissionChecksGraphQLReturn = {
 }
 
 export type RootPermissionChecksGraphQLReturn = GraphQLEmptyReturn
+
+export type ModelPermissionChecksGraphQLReturn = {
+  modelId: string
+  projectId: string
+}
+
+export type VersionPermissionChecksGraphQLReturn = {
+  versionId: string
+  projectId: string
+}

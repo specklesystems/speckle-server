@@ -855,7 +855,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, true],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -875,7 +875,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -895,7 +895,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -978,8 +978,8 @@ describe('Graphql @comments', () => {
             [archiveOthersComment, false],
             [editOthersComment, false],
             [replyToAComment, false],
-            [queryComment, false],
-            [queryComments, false],
+            [queryComment, true],
+            [queryComments, true],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
@@ -996,8 +996,8 @@ describe('Graphql @comments', () => {
             [archiveOthersComment, false],
             [editOthersComment, false],
             [replyToAComment, false],
-            [queryComment, false],
-            [queryComments, false],
+            [queryComment, true],
+            [queryComments, true],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
@@ -1164,13 +1164,13 @@ describe('Graphql @comments', () => {
           }
         })
 
-        describe(`testing ${streamContext.cases.length} cases of acting on ${
+        describe(`testing ${streamContext.cases.length} cases of acting on "${
           stream.name
-        } stream where I'm a ${
-          user && stream.role ? stream.role : 'trouble:maker'
+        }" stream where I ${
+          user && stream.role ? 'have the role ' + stream.role : 'have no role'
         }`, () => {
           streamContext.cases.forEach(([testCase, shouldSucceed]) => {
-            it(`${shouldSucceed ? 'can' : 'am not allowed to'} ${
+            it(`${shouldSucceed ? 'should' : 'should not be allowed to'} ${
               testCase.name
             }`, async () => {
               await testCase({ apollo, streamId: stream.id, resources, shouldSucceed })

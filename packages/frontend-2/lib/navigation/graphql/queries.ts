@@ -17,13 +17,21 @@ export const navigationWorkspaceListQuery = graphql(`
   }
 `)
 
-export const navigationInvitesQuery = graphql(`
-  query NavigationInvites {
+export const navigationProjectInvitesQuery = graphql(`
+  query NavigationProjectInvites {
     activeUser {
       id
       projectInvites {
         ...HeaderNavNotificationsProjectInvite_PendingStreamCollaborator
       }
+    }
+  }
+`)
+
+export const navigationWorkspaceInvitesQuery = graphql(`
+  query NavigationWorkspaceInvites {
+    activeUser {
+      id
       workspaceInvites {
         ...HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaborator
       }

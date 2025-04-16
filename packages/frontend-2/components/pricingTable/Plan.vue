@@ -41,7 +41,7 @@
         </div>
         <div
           v-else
-          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
+          :key="`tooltip-${isYearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
           v-tippy="buttonTooltip"
         >
           <FormButton
@@ -56,29 +56,20 @@
       </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
-      <li
+      <PricingTablePlanFeature
+        v-for="feature in commonFeatures"
+        :key="feature.displayName"
+        :display-name="feature.displayName"
+        :description="feature.description"
+        is-included
+      />
+      <PricingTablePlanFeature
         v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
         :key="feature"
-        class="flex items-center text-body-xs"
-        :class="{
-          'lg:hidden': !planFeatures.includes(feature)
-        }"
-      >
-        <IconCheck
-          v-if="planFeatures.includes(feature)"
-          class="w-4 h-4 text-foreground mx-2"
-        />
-        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
-        <span
-          v-tippy="featureMetadata.description"
-          class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
-          :class="{
-            'text-foreground-2': !planFeatures.includes(feature)
-          }"
-        >
-          {{ featureMetadata.displayName }}
-        </span>
-      </li>
+        :is-included="planFeatures.includes(feature)"
+        :display-name="featureMetadata.displayName"
+        :description="featureMetadata.description"
+      />
     </ul>
   </div>
 </template>
@@ -88,52 +79,91 @@ import {
   type MaybeNullOrUndefined,
   WorkspacePlans,
   WorkspacePlanFeaturesMetadata,
-  WorkspacePlanConfigs,
-  WorkspacePlanBillingIntervals
+  WorkspacePlanConfigs
 } from '@speckle/shared'
 import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
-  BillingInterval
+  BillingInterval,
+  Currency
 } from '~/lib/common/generated/gql/graphql'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SetupContext } from 'vue'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
+  (e: 'onUpgradeClick'): void
 }>()
 
 const props = defineProps<{
   plan: WorkspacePlans
-  yearlyIntervalSelected: boolean
   canUpgrade: boolean
   workspaceId?: MaybeNullOrUndefined<string>
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
+  currency?: Currency
 }>()
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
-const { upgradePlan, redirectToCheckout } = useBillingActions()
 
-const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
-
+const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const commonFeatures = shallowRef([
+  {
+    displayName: 'Unlimited editor and viewer seats',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: 'Unlimited guests',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.projectCount} project${
+      planLimits.value.projectCount === 1 ? '' : 's'
+    }`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: `${planLimits.value.modelCount} models per workspace`,
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day version history`
+      : 'Full version history',
+    description: 'Some tooltip text'
+  },
+  {
+    displayName: planLimits.value.versionsHistory
+      ? `${planLimits.value.versionsHistory.value} day comment history`
+      : 'Full comment history',
+    description: 'Some tooltip text'
+  }
+])
 const planPrice = computed(() => {
+  let basePrice = 0
   if (props.plan === WorkspacePlans.Team || props.plan === WorkspacePlans.Pro) {
-    return formatPrice(
-      prices.value?.[props.plan]?.[WorkspacePlanBillingIntervals.Monthly]
-    )
+    basePrice =
+      prices.value?.[props.currency || Currency.Usd]?.[props.plan]?.[
+        isYearlyIntervalSelected.value
+          ? BillingInterval.Yearly
+          : BillingInterval.Monthly
+      ].amount || 0
   }
 
-  // This price is not returned from the server settings but is needed to display a price for the free plan
   return formatPrice({
-    amount: 0,
-    currencySymbol: '£'
+    amount: basePrice
+      ? isYearlyIntervalSelected.value
+        ? basePrice / 12
+        : basePrice
+      : 0,
+    currency: props.currency || Currency.Usd
   })
 })
 
@@ -153,7 +183,7 @@ const canUpgradeToPlan = computed(() => {
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
-    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
+    (isYearlyIntervalSelected.value ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 
 const isDowngrade = computed(() => {
@@ -171,7 +201,7 @@ const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    !props.yearlyIntervalSelected
+    !isYearlyIntervalSelected.value
   )
 })
 
@@ -179,7 +209,7 @@ const isMonthlyToAnnual = computed(() => {
   return (
     !isMatchingInterval.value &&
     props.currentPlan?.name === props.plan &&
-    props.yearlyIntervalSelected
+    isYearlyIntervalSelected.value
   )
 })
 
@@ -219,7 +249,7 @@ const isSelectable = computed(() => {
 
 const buttonColor = computed(() => {
   if (props.currentPlan?.name === WorkspacePlans.Free) {
-    return props.plan === WorkspacePlans.Pro ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Team ? 'primary' : 'outline'
   }
   return 'outline'
 })
@@ -274,7 +304,7 @@ const buttonTooltip = computed(() => {
 
   if (
     props.activeBillingInterval === BillingInterval.Yearly &&
-    !props.yearlyIntervalSelected &&
+    !isYearlyIntervalSelected.value &&
     canUpgradeToPlan.value
   ) {
     return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
@@ -290,30 +320,6 @@ const badgeText = computed(() =>
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
   if (props.plan !== WorkspacePlans.Team && props.plan !== WorkspacePlans.Pro) return
-
-  if (props.hasSubscription) {
-    upgradePlan({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  } else {
-    redirectToCheckout({
-      plan: props.plan,
-      cycle: isYearlyIntervalSelected.value
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
+  emit('onUpgradeClick')
 }
-
-watch(
-  () => props.yearlyIntervalSelected,
-  (newValue) => {
-    isYearlyIntervalSelected.value = newValue
-  }
-)
 </script>

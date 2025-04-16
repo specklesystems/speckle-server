@@ -8,7 +8,7 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
+                name="Projects"
                 :separator="false"
               />
             </template>
@@ -161,7 +161,6 @@ const projectId = writableAsyncComputed({
   asyncRead: false
 })
 
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })

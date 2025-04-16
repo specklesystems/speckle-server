@@ -15,9 +15,15 @@
           class="w-3 h-3 rounded"
           :style="`background-color: #${color};`"
         ></span>
-        <span class="truncate">
-          {{ item.value || 'No name' }}
+        <span v-if="searchTerm && hasMatch" class="truncate">
+          <span>{{ beforeMatch }}</span>
+          <span class="font-bold">{{ match }}</span>
+          <span>{{ afterMatch }}</span>
         </span>
+        <span v-else-if="item.value" class="truncate">
+          {{ item.value }}
+        </span>
+        <span v-else class="truncate">No name</span>
         <div class="flex">
           <span
             v-if="props.item.ids.length !== availableTargetIds.length"
@@ -77,6 +83,7 @@ const props = defineProps<{
     value: string
     ids: string[]
   }
+  searchTerm?: string
 }>()
 
 const {
@@ -120,6 +127,36 @@ const isIsolated = computed(() => {
 const color = computed(() => {
   return filteringState.value?.colorGroups?.find((gr) => gr.value === props.item.value)
     ?.color
+})
+
+// Simple text highlighting for search matches
+const hasMatch = computed(() => {
+  if (!props.searchTerm) return false
+  const value = props.item.value
+  return value.toLowerCase().includes(props.searchTerm.toLowerCase())
+})
+
+const beforeMatch = computed(() => {
+  if (!hasMatch.value || !props.searchTerm) return ''
+  const value = props.item.value
+  const index = value.toLowerCase().indexOf(props.searchTerm.toLowerCase())
+  return value.substring(0, index)
+})
+
+const match = computed(() => {
+  if (!hasMatch.value || !props.searchTerm) return ''
+  const value = props.item.value
+  const searchTerm = props.searchTerm.toLowerCase()
+  const index = value.toLowerCase().indexOf(searchTerm)
+  return value.substring(index, index + props.searchTerm.length)
+})
+
+const afterMatch = computed(() => {
+  if (!hasMatch.value || !props.searchTerm) return ''
+  const value = props.item.value
+  const searchTerm = props.searchTerm.toLowerCase()
+  const index = value.toLowerCase().indexOf(searchTerm)
+  return value.substring(index + props.searchTerm.length)
 })
 
 // It is possible to control the visibility and isolation of objects from here, There are

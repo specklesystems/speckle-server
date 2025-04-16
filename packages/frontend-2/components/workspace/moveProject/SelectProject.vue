@@ -1,0 +1,170 @@
+<template>
+  <div>
+    <FormTextInput
+      v-bind="bind"
+      label="Move projects"
+      name="search"
+      color="foundation"
+      placeholder="Search projects..."
+      show-clear
+      full-width
+      class="mb-2"
+      v-on="on"
+    />
+    <div v-if="showLoading" class="py-4 flex items-center justify-center w-full h-32">
+      <CommonLoadingIcon size="sm" />
+    </div>
+    <template v-else>
+      <div
+        v-if="hasMoveableProjects"
+        class="flex flex-col mt-2 border rounded-md border-outline-3"
+      >
+        <div
+          v-for="project in moveableProjects"
+          :key="project.id"
+          class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
+        >
+          <div class="flex flex-col flex-1 truncate text-body-xs">
+            <span class="font-medium text-foreground truncate">
+              {{ project.name }}
+            </span>
+            <div class="flex items-center gap-x-1">
+              <span class="text-foreground-3 truncate">
+                {{ project.modelCount.totalCount }} model{{
+                  project.modelCount.totalCount !== 1 ? 's' : ''
+                }}
+              </span>
+            </div>
+          </div>
+          <div
+            :key="`${project.id}-${project.permissions.canMoveToWorkspace.code}`"
+            v-tippy="getProjectTooltip(project)"
+          >
+            <FormButton
+              size="sm"
+              color="outline"
+              :disabled="isProjectDisabled(project)"
+              @click="onMoveClick(project)"
+            >
+              Move...
+            </FormButton>
+          </div>
+        </div>
+      </div>
+      <p v-else class="py-4 text-body-xs text-foreground-2">
+        You don't have any projects that can be moved into this workspace. Only projects
+        you own and that aren't in another workspace can be moved.
+      </p>
+    </template>
+    <InfiniteLoading
+      v-if="moveableProjects?.length && !search?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
+    <WorkspacePlanLimitReachedDialog
+      v-model:open="showLimitDialog"
+      subtitle="Upgrade your plan to move project"
+    >
+      <template v-if="limitReachedWorkspace">
+        <p class="text-body-xs text-foreground-2">
+          The workspace
+          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
+          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
+          of 1 project and 5 models. Upgrade the workspace to add more projects.
+        </p>
+      </template>
+    </WorkspacePlanLimitReachedDialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import {
+  CommonLoadingIcon,
+  FormTextInput,
+  useDebouncedTextInput
+} from '@speckle/ui-components'
+import type {
+  PermissionCheckResult,
+  WorkspaceMoveProjectManager_ProjectFragment,
+  WorkspaceMoveProjectManager_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
+import { formatName } from '~/lib/billing/helpers/plan'
+
+const search = defineModel<string>('search')
+const { on, bind } = useDebouncedTextInput({ model: search })
+
+const emit = defineEmits<{
+  (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
+}>()
+
+const props = defineProps<{
+  workspaceSlug?: string
+  projectPermissions?: PermissionCheckResult
+}>()
+
+const {
+  query: { result, loading },
+  identifier,
+  onInfiniteLoad
+} = usePaginatedQuery({
+  query: workspaceMoveProjectManagerUserQuery,
+  baseVariables: computed(() => ({
+    cursor: null as string | null,
+    filter: {
+      search: search.value?.length ? search.value : null,
+      personalOnly: true
+    }
+  })),
+  resolveKey: (vars) => [vars.filter?.search || ''],
+  resolveCurrentResult: (res) => res?.activeUser?.projects,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const showLimitDialog = ref(false)
+const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
+  null
+)
+
+const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
+const moveableProjects = computed(() => userProjects.value)
+const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
+
+const isProjectDisabled = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    if (project.permissions.canMoveToWorkspace.authorized) {
+      return false
+    }
+    return true
+  }
+)
+
+const getProjectTooltip = computed(
+  () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+    if (project.permissions.canMoveToWorkspace.authorized) {
+      return undefined
+    }
+    return project.permissions.canMoveToWorkspace.message
+  }
+)
+
+const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  if (props.workspaceSlug) {
+    limitReachedWorkspace.value = {
+      name: props.workspaceSlug
+    } as WorkspaceMoveProjectManager_WorkspaceFragment
+    showLimitDialog.value = true
+    return
+  }
+
+  emit('project-selected', project)
+}
+
+const showLoading = computed(() => loading.value && userProjects.value.length === 0)
+</script>

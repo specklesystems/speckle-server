@@ -74,14 +74,6 @@ export const workspaceInviteQuery = graphql(`
   }
 `)
 
-export const moveProjectsDialogQuery = graphql(`
-  query MoveProjectsDialog($cursor: String, $filter: UserProjectsFilter) {
-    activeUser {
-      ...MoveProjectsDialog_User
-    }
-  }
-`)
-
 export const validateWorkspaceSlugQuery = graphql(`
   query ValidateWorkspaceSlug($slug: String!) {
     validateWorkspaceSlug(slug: $slug)
@@ -178,6 +170,37 @@ export const workspaceUsageQuery = graphql(`
   query WorkspaceUsage($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...WorkspaceUsage_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerProjectQuery = graphql(`
+  query WorkspaceMoveProjectManagerProject($projectId: String!) {
+    project(id: $projectId) {
+      ...WorkspaceMoveProjectManager_Project
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerWorkspaceQuery = graphql(`
+  query WorkspaceMoveProjectManagerWorkspace(
+    $workspaceSlug: String!
+    $projectId: String
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceMoveProjectManager_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerUserQuery = graphql(`
+  query WorkspaceMoveProjectManagerUser(
+    $cursor: String
+    $filter: UserProjectsFilter
+    $projectId: String
+  ) {
+    activeUser {
+      ...WorkspaceMoveProjectSelectWorkspace_User
     }
   }
 `)

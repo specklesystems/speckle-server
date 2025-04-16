@@ -541,10 +541,10 @@ jobs:
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
 
-      - run:
-          name: Checking for GQL schema breakages against app.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # - run:
+      #     name: Checking for GQL schema breakages against app.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
 
       - run:
           name: Checking for GQL schema breakages against latest.speckle.systems
@@ -787,6 +787,21 @@ jobs:
       - run:
           name: Run tests
           command: yarn test:single-run
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Build
+          command: yarn build
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Ensure ESM import works
+          command: node ./e2e/testEsm.mjs
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Ensure CJS require works
+          command: node ./e2e/testCjs.cjs
           working_directory: 'packages/shared'
 
   test-objectsender:

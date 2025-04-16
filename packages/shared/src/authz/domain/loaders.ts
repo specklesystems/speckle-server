@@ -1,7 +1,11 @@
 import { OverrideProperties } from 'type-fest'
 import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
-import type { GetProject, GetProjectRole } from './projects/operations.js'
+import type {
+  GetProject,
+  GetProjectRole,
+  GetProjectRoleCounts
+} from './projects/operations.js'
 import type {
   GetAdminOverrideEnabled,
   GetEnv,
@@ -15,6 +19,9 @@ import type {
   GetWorkspaceSsoProvider,
   GetWorkspaceSsoSession
 } from './workspaces/operations.js'
+import { GetComment } from './comments/operations.js'
+import { GetModel } from './models/operations.js'
+import { GetVersion } from './versions/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -47,6 +54,7 @@ type AuthContextLoaderMappingDefinition<
 export const AuthCheckContextLoaderKeys = <const>{
   getEnv: 'getEnv',
   getProject: 'getProject',
+  getProjectRoleCounts: 'getProjectRoleCounts',
   getProjectRole: 'getProjectRole',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
@@ -58,7 +66,10 @@ export const AuthCheckContextLoaderKeys = <const>{
   getWorkspaceLimits: 'getWorkspaceLimits',
   getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
   getWorkspaceSsoSession: 'getWorkspaceSsoSession',
-  getAdminOverrideEnabled: 'getAdminOverrideEnabled'
+  getAdminOverrideEnabled: 'getAdminOverrideEnabled',
+  getComment: 'getComment',
+  getModel: 'getModel',
+  getVersion: 'getVersion'
 }
 export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
@@ -71,6 +82,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getAdminOverrideEnabled: GetAdminOverrideEnabled
   getProject: GetProject
   getProjectRole: GetProjectRole
+  getProjectRoleCounts: GetProjectRoleCounts
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole
@@ -81,6 +93,9 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getWorkspaceModelCount: GetWorkspaceModelCount
   getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   getWorkspaceSsoSession: GetWorkspaceSsoSession
+  getComment: GetComment
+  getModel: GetModel
+  getVersion: GetVersion
 }>
 
 export type AuthCheckContextLoaders<

@@ -8,15 +8,12 @@
         </FormButton>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
-        <div
-          v-if="isWorkspaceNewPlansEnabled && project.workspace"
-          class="flex flex-col gap-y-3"
-        >
+        <div v-if="project.workspace" class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
           <ProjectPageCollaboratorsGeneralAccessRow
             :name="project.workspace?.name"
             :logo="project.workspace?.logo"
-            :can-edit="canEdit"
+            :can-edit="!!canUpdate?.authorized"
           />
         </div>
         <div class="flex flex-col gap-y-3">
@@ -25,7 +22,7 @@
             <ProjectPageCollaboratorsRow
               v-for="collaborator in collaboratorListItems"
               :key="collaborator.id"
-              :can-edit="canEdit"
+              :can-edit="!!canUpdate?.authorized"
               :collaborator="collaborator"
               :loading="loading"
               @cancel-invite="onCancelInvite"
@@ -60,12 +57,24 @@ import {
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
 
+graphql(`
+  fragment ProjectPageCollaborators_Project on Project {
+    id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
 const projectPageCollaboratorsQuery = graphql(`
   query ProjectPageCollaborators($projectId: String!) {
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
       ...InviteDialogProject_Project
+      ...ProjectPageCollaborators_Project
       workspaceId
       workspace {
         ...ProjectPageTeamInternals_Workspace
@@ -79,7 +88,6 @@ const projectPageCollaboratorsQuery = graphql(`
 const projectId = computed(() => route.params.id as string)
 
 const route = useRoute()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
@@ -90,7 +98,7 @@ const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
 const showInviteDialog = ref(false)
 const loading = ref(false)
 
-const canEdit = computed(() => isOwner.value && !isServerGuest.value)
+const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
 const canInvite = computed(() =>
   workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
 )
@@ -98,10 +106,7 @@ const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
 const projectRole = computed(() => project.value?.role)
 const updateRole = useUpdateUserRole(project)
-const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
-  project,
-  workspace
-)
+const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true

@@ -163,18 +163,21 @@ export const migrateWorkspacePlan =
     const workspaceMembers = await getWorkspaceRolesFactory({ db: trx })({
       workspaceId
     })
+    const seats = workspaceMembers.map((m) => ({
+      workspaceId,
+      userId: m.userId,
+      type: 'editor' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }))
+    log.debug({ seats }, 'Inserting new seats for the workspace')
+
     await trx<WorkspaceSeat>('workspace_seats')
-      .insert(
-        workspaceMembers.map((m) => ({
-          workspaceId,
-          userId: m.userId,
-          type: 'editor',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }))
-      )
+      .insert(seats)
       .onConflict(['workspaceId', 'userId'])
       .merge()
+
+    log.debug('Workspace seats added')
     await upsertWorkspacePlanFactory({ db: trx })({
       //@ts-expect-error the switch above makes sure things are ok
       workspacePlan: {
@@ -184,6 +187,7 @@ export const migrateWorkspacePlan =
         createdAt: workspacePlan.createdAt
       }
     })
+    log.debug('workspace plan changed to the new plan')
     if (isStripeMigrationNeeded) {
       log.info('Migrating stripe subscription data')
       switch (newTargetPlan) {
@@ -192,7 +196,7 @@ export const migrateWorkspacePlan =
         case 'proUnlimitedInvoiced':
         case 'teamUnlimitedInvoiced':
         case 'unlimited':
-          // this is just double checking that everythin is right
+          // this is just double checking that everything is right
           // the switch above sets things up properly
           throw new Error('Cannot upgrade stripe for a non paid plan')
       }
@@ -219,7 +223,8 @@ export const migrateWorkspacePlan =
       const productId = getWorkspacePlanProductId({ workspacePlan: newTargetPlan })
       const priceId = getWorkspacePlanPriceId({
         workspacePlan: newTargetPlan,
-        billingInterval: workspaceSubscription.billingInterval
+        billingInterval: workspaceSubscription.billingInterval,
+        currency: workspaceSubscription.currency
       })
 
       const subscriptionData: SubscriptionDataInput = cloneDeep(

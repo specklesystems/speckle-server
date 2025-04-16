@@ -11,18 +11,12 @@
         :is-guest="user.role === Roles.Workspace.Guest"
         :has-available-seat="hasAvailableEditorSeats"
         :seat-price="editorSeatPriceFormatted"
+        :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
       />
 
       <p v-if="billingMessage" class="text-foreground-2 text-body-xs mt-4">
         {{ billingMessage }}
       </p>
-
-      <NuxtLink
-        :to="LearnMoreRolesSeatsUrl"
-        class="text-foreground-2 text-body-xs underline mt-3"
-      >
-        Learn more about seats
-      </NuxtLink>
     </div>
   </LayoutDialog>
 </template>
@@ -36,7 +30,6 @@ import {
 } from '@speckle/shared'
 import { useWorkspaceUpdateSeatType } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
@@ -59,8 +52,8 @@ const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
   hasAvailableEditorSeats,
   editorSeatPriceFormatted,
-  billingCycleEnd,
-  isPurchasablePlan,
+  currentBillingCycleEnd,
+  isPaidPlan,
   isFreePlan,
   intervalIsYearly,
   isUnlimitedPlan
@@ -74,10 +67,10 @@ const billingMessage = computed(() => {
   if (isUpgrading.value) {
     return hasAvailableEditorSeats.value
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `This adds an extra Editor seat to your subscription, increasing your total billing by ${editorSeatPriceFormatted.value}/${annualOrMonthly.value}.`
+      : `You'll be charged immediately for the partial period from today until your plan renewal on ${currentBillingCycleEnd.value} (${editorSeatPriceFormatted.value}/${annualOrMonthly.value} adjusted for the remaining time).`
   } else {
-    return isPurchasablePlan.value
-      ? `The Editor seat will still be paid for until your plan renews on ${billingCycleEnd.value}. You can freely reassign it to another person.`
+    return isPaidPlan.value
+      ? `The Editor seat will still be paid for until your plan renews on ${currentBillingCycleEnd.value}. You can freely reassign it to another person.`
       : null
   }
 })
@@ -110,7 +103,11 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: () => (open.value = false)
   },
   {
-    text: isUpgrading.value ? 'Confirm and upgrade' : 'Confirm and downgrade',
+    text: isUpgrading.value
+      ? isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
+        ? 'Upgrade seat'
+        : 'Confirm and pay'
+      : 'Downgrade seat',
     props: {
       color: 'primary'
     },

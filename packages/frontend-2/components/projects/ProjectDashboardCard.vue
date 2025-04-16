@@ -4,9 +4,16 @@
       class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border border-outline-3 rounded-xl p-4 transition bg-foundation"
     >
       <div
-        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-2 pr-6 py-2"
+        class="w-full md:w-56 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-2 pr-6 py-2"
       >
         <div class="flex flex-col">
+          <CommonBadge
+            v-if="!project.workspace?.id && isWorkspacesEnabled"
+            class="mb-2 max-w-max"
+            rounded
+          >
+            Project to move
+          </CommonBadge>
           <NuxtLink
             :to="projectRoute(project.id)"
             class="break-words hover:text-primary text-heading mb-2"
@@ -20,8 +27,11 @@
             Updated
             {{ updatedAt.relative }}
           </span>
-          <span class="text-body-3xs capitalize mb-2 text-foreground-2 select-none">
-            {{ project.role?.split(':').reverse()[0] }}
+          <span
+            v-if="project.role"
+            class="text-body-3xs capitalize mb-2 text-foreground-2 select-none"
+          >
+            {{ RoleInfo.Stream[project.role as StreamRoles].title }}
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
@@ -40,16 +50,33 @@
               {{ project.workspace.name }}
             </p>
           </NuxtLink>
-          <FormButton
-            :to="allProjectModelsRoute(project.id) + '/'"
-            size="sm"
-            color="outline"
-            :icon-right="ChevronRightIcon"
-          >
-            {{
-              `${modelItemTotalCount} ${modelItemTotalCount === 1 ? 'model' : 'models'}`
-            }}
-          </FormButton>
+          <div class="flex gap-2">
+            <FormButton
+              :to="allProjectModelsRoute(project.id) + '/'"
+              size="sm"
+              color="outline"
+              :icon-right="ChevronRightIcon"
+            >
+              {{
+                `${modelItemTotalCount} ${
+                  modelItemTotalCount === 1 ? 'model' : 'models'
+                }`
+              }}
+            </FormButton>
+            <FormButton
+              v-if="
+                !project.workspace?.id &&
+                isWorkspacesEnabled &&
+                (project.role === Roles.Stream.Contributor ||
+                  project.role === Roles.Stream.Owner)
+              "
+              size="sm"
+              color="outline"
+              @click="$emit('moveProject', project.id)"
+            >
+              Move project...
+            </FormButton>
+          </div>
         </div>
       </div>
       <div :class="gridClasses">
@@ -85,6 +112,7 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { Roles } from '@speckle/shared'
 import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
@@ -95,6 +123,11 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { RoleInfo, type StreamRoles } from '@speckle/shared'
+
+defineEmits<{
+  moveProject: [projectId: string]
+}>()
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment

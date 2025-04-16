@@ -150,6 +150,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
       }
@@ -227,6 +228,7 @@ describe('subscriptions @gatekeeper', () => {
         billingInterval: 'monthly' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
+        currency: 'usd' as const,
         currentBillingCycleEnd: new Date(),
         workspaceId
       }
@@ -2372,20 +2374,11 @@ describe('subscriptions @gatekeeper', () => {
     })
   })
   describe('getTotalSeatsCountByPlanFactory returns a function that, ', () => {
-    it('should return the fixed value for the free plan', () => {
-      const getWorkspacePlanProductId = () => expect.fail()
-      expect(
-        getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-          workspacePlan: { name: 'free' },
-          subscriptionData: { products: [] }
-        })
-      ).to.eq(3)
-    })
     it('should return 0 if subscription data has no product', () => {
       const getWorkspacePlanProductId = () => 'any'
       expect(
         getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-          workspacePlan: { name: 'pro' },
+          workspacePlan: 'pro',
           subscriptionData: { products: [] }
         })
       ).to.eq(0)
@@ -2394,7 +2387,7 @@ describe('subscriptions @gatekeeper', () => {
       const getWorkspacePlanProductId = () => 'productId'
       expect(
         getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-          workspacePlan: { name: 'pro' },
+          workspacePlan: 'pro',
           subscriptionData: {
             products: [
               {

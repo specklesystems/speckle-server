@@ -12,7 +12,12 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import {
+  isResourceAllowed,
+  throwIfNewResourceNotAllowed,
+  throwIfResourceAccessNotAllowed,
+  toProjectIdWhitelist
+} from '@/modules/core/helpers/token'
 import {
   createBranchFactory,
   getBatchedStreamBranchesFactory,
@@ -197,6 +202,14 @@ export = {
   },
   ProjectMutations: {
     async batchDelete(_parent, args, ctx) {
+      args.ids.forEach((id) => {
+        throwIfResourceAccessNotAllowed({
+          resourceId: id,
+          resourceType: TokenResourceIdentifierType.Project,
+          resourceAccessRules: ctx.resourceAccessRules
+        })
+      })
+
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const projectDb = await getProjectDbClient({ projectId: id })
@@ -213,13 +226,23 @@ export = {
       )
       return results.every((res) => res === true)
     },
-    async delete(_parent, { id: projectId }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        projectId,
-        Roles.Stream.Owner,
+    async delete(
+      _parent,
+      { id: projectId },
+      { userId, resourceAccessRules, authPolicies }
+    ) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules
-      )
+      })
+
+      const canUpdate = await authPolicies.project.canUpdate({
+        projectId,
+        userId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
@@ -238,20 +261,35 @@ export = {
         logger: log
       })
     },
-    async update(_parent, { update }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        update.id,
-        Roles.Stream.Owner,
+    async update(
+      _parent,
+      { update },
+      { userId, resourceAccessRules, authPolicies, clearCache }
+    ) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: update.id,
+        resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules
-      )
+      })
+
+      const canUpdate = await authPolicies.project.canUpdate({
+        projectId: update.id,
+        userId
+      })
+      throwIfAuthNotOk(canUpdate)
+
       const projectDB = await getProjectDbClient({ projectId: update.id })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!)
+      const res = await updateStreamAndNotify(update, userId!)
+
+      // Reset loader cache
+      await clearCache()
+
+      return res
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
@@ -260,6 +298,10 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      throwIfNewResourceNotAllowed({
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
       const canCreate = await context.authPolicies.project.canCreatePersonal({
         userId: context.userId
       })
@@ -293,16 +335,37 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      return await updateStreamRoleAndNotify(
+      const ret = await updateStreamRoleAndNotify(
         args.input,
         ctx.userId!,
         ctx.resourceAccessRules
       )
+
+      // Reset loader cache
+      await ctx.clearCache()
+
+      return ret
     },
     async leave(_parent, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
+      const canLeave = await context.authPolicies.project.canLeave({
+        projectId: args.id,
+        userId: context.userId
+      })
+      throwIfAuthNotOk(canLeave)
+
       const { id } = args
       const { userId } = context
       await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
+
+      // Reset loader cache
+      await context.clearCache()
+
       return true
     },
     invites: () => ({})
@@ -425,12 +488,19 @@ export = {
         ProjectSubscriptions.ProjectUpdated,
         async (payload, args, ctx) => {
           if (args.id !== payload.projectUpdated.id) return false
-          await authorizeResolver(
-            ctx.userId,
-            payload.projectUpdated.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectUpdated.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canRead = await ctx.authPolicies.project.canRead({
+            projectId: payload.projectUpdated.id,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )

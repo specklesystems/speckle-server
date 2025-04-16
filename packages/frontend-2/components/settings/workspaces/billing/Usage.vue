@@ -1,7 +1,10 @@
 <!-- TODO: Update these with real limits once available -->
 <template>
   <div class="border border-outline-3 rounded-lg divide-y divide-outline-3">
-    <div class="px-5 py-8 gap-y-6 flex flex-col sm:items-center sm:flex-row">
+    <div
+      v-if="isPaidPlan && !statusIsCanceled"
+      class="px-5 py-8 gap-y-6 flex flex-col sm:items-center sm:flex-row"
+    >
       <div
         class="flex-1 flex flex-col gap-y-4 xl:w-[66%] lg:grid lg:grid-cols-2 lg:gap-x-4"
       >
@@ -93,7 +96,7 @@ const props = defineProps<{
 
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 const { limits } = useWorkspaceLimits(props.slug)
-const { seats } = useWorkspacePlan(props.slug)
+const { seats, isPaidPlan, statusIsCanceled } = useWorkspacePlan(props.slug)
 
 const formatUsageText = (current: number, max: number, type: string) => {
   return `${current} ${type}${current === 1 ? '' : 's'} used / ${max} included`
