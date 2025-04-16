@@ -12,17 +12,21 @@ export const activeUserMetaQuery = graphql(`
   }
 `)
 
-export const userMetaMutation = graphql(`
-  mutation UpdateUserMeta(
-    $value: Boolean!
-    $setLegacyProjectsExplainerCollapsedValue2: Boolean!
-  ) {
+export const updateWorkspaceExplainerMutation = graphql(`
+  mutation UpdateWorkspaceExplainer($value: Boolean!) {
     activeUserMutations {
       meta {
         setNewWorkspaceExplainerDismissed(value: $value)
-        setLegacyProjectsExplainerCollapsed(
-          value: $setLegacyProjectsExplainerCollapsedValue2
-        )
+      }
+    }
+  }
+`)
+
+export const updateLegacyProjectsExplainerMutation = graphql(`
+  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {
+    activeUserMutations {
+      meta {
+        setLegacyProjectsExplainerCollapsed(value: $value)
       }
     }
   }
@@ -30,7 +34,12 @@ export const userMetaMutation = graphql(`
 
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
-  const { mutate: updateMeta } = useMutation(userMetaMutation)
+  const { mutate: updateWorkspaceExplainer } = useMutation(
+    updateWorkspaceExplainerMutation
+  )
+  const { mutate: updateLegacyProjectsExplainer } = useMutation(
+    updateLegacyProjectsExplainerMutation
+  )
   const apollo = useApolloClient().client
   const cache = apollo.cache
   const { activeUser } = useActiveUser()
@@ -47,26 +56,22 @@ export function useActiveUserMeta() {
   )
 
   const updateNewWorkspaceExplainerDismissed = async (value: boolean) => {
-    await updateMeta({
-      value,
-      setLegacyProjectsExplainerCollapsedValue2:
-        hasCollapsedLegacyProjectsExplainer.value ?? false
-    })
+    await updateWorkspaceExplainer({ value })
+
     modifyObjectField(
       cache,
       getCacheId('User', activeUserId.value),
       'meta',
       ({ helpers: { createUpdatedValue } }) =>
         createUpdatedValue(({ update }) => {
-          update('newWorkspaceExplainerDismissed', () => true)
+          update('newWorkspaceExplainerDismissed', () => value)
         })
     )
   }
+
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
-    await updateMeta({
-      value: hasDismissedNewWorkspaceExplainer.value ?? false,
-      setLegacyProjectsExplainerCollapsedValue2: value
-    })
+    await updateLegacyProjectsExplainer({ value })
+
     modifyObjectField(
       cache,
       getCacheId('User', activeUserId.value),

@@ -329,7 +329,8 @@ type Documents = {
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
     "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
-    "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n": typeof types.UpdateUserMetaDocument,
+    "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateWorkspaceExplainerDocument,
+    "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateLegacyProjectsExplainerDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -750,7 +751,8 @@ const documents: Documents = {
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
     "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
-    "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n": types.UpdateUserMetaDocument,
+    "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateWorkspaceExplainerDocument,
+    "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": types.UpdateLegacyProjectsExplainerDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -2133,7 +2135,11 @@ export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateUserMeta(\n    $value: Boolean!\n    $setLegacyProjectsExplainerCollapsedValue2: Boolean!\n  ) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n        setLegacyProjectsExplainerCollapsed(\n          value: $setLegacyProjectsExplainerCollapsedValue2\n        )\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
