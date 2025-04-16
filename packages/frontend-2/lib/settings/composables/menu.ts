@@ -220,7 +220,7 @@ export const useSettingsMembersActions = (params: {
         title: 'Make guest...',
         id: WorkspaceUserActionTypes.MakeGuest,
         disabled: targetUserRole.value === Roles.Workspace.Admin,
-        disabledTooltip: 'Admins must be on an Member seat'
+        disabledTooltip: 'Admins must be on an Editor seat'
       })
     }
     if (showMakeMember.value) {

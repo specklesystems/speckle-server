@@ -22,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import {
   SeatTypes,
@@ -67,10 +68,16 @@ const billingMessage = computed(() => {
   if (isUpgrading.value) {
     return hasAvailableEditorSeats.value
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `You'll be charged immediately for the partial period from today until your plan renewal on ${currentBillingCycleEnd.value} (${editorSeatPriceFormatted.value}/${annualOrMonthly.value} adjusted for the remaining time).`
+      : `You'll be charged immediately for the partial period from today until your plan renewal on ${dayjs(
+          currentBillingCycleEnd.value
+        ).format('DD-MM-YYYY')} (${editorSeatPriceFormatted.value}/${
+          annualOrMonthly.value
+        } adjusted for the remaining time).`
   } else {
     return isPaidPlan.value
-      ? `The Editor seat will still be paid for until your plan renews on ${currentBillingCycleEnd.value}. You can freely reassign it to another person.`
+      ? `The Editor seat will still be paid for until your plan renews on ${dayjs(
+          currentBillingCycleEnd.value
+        ).format('DD-MM-YYYY')}. You can freely reassign it to another person.`
       : null
   }
 })
