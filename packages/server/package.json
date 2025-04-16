@@ -114,7 +114,7 @@
     "pg-query-stream": "^4.2.3",
     "pino": "^8.7.0",
     "pino-http": "^8.6.1",
-    "pino-pretty": "^9.1.1",
+    "pino-pretty": "^13.0.0",
     "prom-client": "^14.0.1",
     "rate-limiter-flexible": "^2.4.1",
     "request": "^2.88.2",

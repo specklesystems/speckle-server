@@ -49,10 +49,7 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import {
-  getWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -489,14 +486,20 @@ describe('Workspaces GQL CRUD', () => {
       })
 
       it('should return workspace team projectRoles', async () => {
-        const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: createRandomString() }
+        // create workspace w/ infinite limits (otherwise test fails)
+        const workspace: BasicTestWorkspace = {
+          name: createRandomString(),
+          id: '',
+          ownerId: '',
+          slug: ''
+        }
+        await createTestWorkspace(workspace, testMemberUser, {
+          addPlan: {
+            name: 'teamUnlimited',
+            status: 'valid'
+          }
         })
-        expect(createRes).to.not.haveGraphQLErrors()
-        const workspaceId = createRes.data!.workspaceMutations.create.id
-        const workspace = (await getWorkspaceFactory({ db })({
-          workspaceId
-        })) as unknown as BasicTestWorkspace
+        const workspaceId = workspace.id
 
         const member = {
           id: createRandomString(),
@@ -1082,7 +1085,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(deleteRes).to.not.haveGraphQLErrors()
-        expect(getRes).to.haveGraphQLErrors('Workspace not found')
+        expect(getRes).to.haveGraphQLErrors({ code: WorkspaceNotFoundError.code })
       })
 
       it('should throw if non-workspace-admin triggers delete', async () => {

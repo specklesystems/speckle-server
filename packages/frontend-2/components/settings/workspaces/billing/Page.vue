@@ -1,6 +1,11 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
-    <BillingAlert v-if="showBillingAlert" :workspace="workspace" />
+    <BillingAlert
+      v-if="showBillingAlert"
+      class="mb-4"
+      :workspace="workspace"
+      hide-settings-links
+    />
 
     <SettingsSectionHeader
       title="Billing and plans"

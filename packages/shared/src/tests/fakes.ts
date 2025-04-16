@@ -1,4 +1,4 @@
-import { merge } from 'lodash'
+import { merge } from '#lodash'
 import { Project } from '../authz/domain/projects/types.js'
 import { Comment } from '../authz/domain/comments/types.js'
 import { nanoid } from 'nanoid'

@@ -129,7 +129,7 @@ export const publicAutomateFunctionsRoute = '/functions'
 export const automateFunctionRoute = (functionId: string) =>
   `${publicAutomateFunctionsRoute}/${functionId}`
 
-export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
+export const workspaceRoute = (slug?: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
 export const workspaceCreateRoute = (slug?: string) =>
@@ -213,4 +213,4 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
 // Link to Workspace roles and seats documentation
 // TODO: Add link when ready
 export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
-export const LearnMoreMoveProjectsUrl = 'https://speckle.guide/'
+export const LearnMoreMoveProjectsUrl = 'https://speckle.systems/pricing'

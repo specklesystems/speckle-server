@@ -19,11 +19,14 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { AlertAction, AlertColor } from '@speckle/ui-components'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { type MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment BillingAlert_Workspace on Workspace {
     id
+    role
+    slug
     plan {
       name
       status
@@ -38,19 +41,13 @@ graphql(`
 
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<BillingAlert_WorkspaceFragment>
-  actions?: Array<AlertAction>
-  condensed?: boolean
+  hideSettingsLinks?: boolean
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
 
 const planStatus = computed(() => props.workspace?.plan?.status)
-const isPaymentFailed = computed(
-  () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
-)
-const isScheduledForCancelation = computed(
-  () => planStatus.value === WorkspacePlanStatuses.CancelationScheduled
-)
+
 const title = computed(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
@@ -63,12 +60,13 @@ const title = computed(() => {
       return ''
   }
 })
+
 const description = computed(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
       return 'Once the current billing cycle ends your workspace will enter read-only mode. Renew your subscription to undo.'
     case WorkspacePlanStatuses.Canceled:
-      return 'Your workspace has been cancelled and is in read-only mode. Subscribe to a plan to regain full access.'
+      return 'Your workspace has been cancelled and is in read-only mode. Resubscribe to a plan to regain full access.'
     case WorkspacePlanStatuses.PaymentFailed:
       return "Update your payment information now to ensure your workspace doesn't go into maintenance mode."
     default:
@@ -88,20 +86,32 @@ const alertColor = computed<AlertColor>(() => {
   }
 })
 
-const actions = computed((): AlertAction[] => {
-  const actions: Array<AlertAction> = props.actions ?? []
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
 
-  if (isPaymentFailed.value) {
+const actions = computed((): AlertAction[] => {
+  const actions: Array<AlertAction> = []
+
+  if (isWorkspaceGuest.value) return actions
+
+  if (planStatus.value === WorkspacePlanStatuses.PaymentFailed) {
     actions.push({
       title: 'Update payment information',
-      onClick: () => billingPortalRedirect(props.workspace?.id),
-      disabled: !props.workspace?.id
+      onClick: () => billingPortalRedirect(props.workspace?.id)
     })
-  } else if (isScheduledForCancelation.value) {
+  }
+
+  if (planStatus.value === WorkspacePlanStatuses.CancelationScheduled) {
     actions.push({
       title: 'Renew subscription',
-      onClick: () => billingPortalRedirect(props.workspace?.id),
-      disabled: !props.workspace?.id
+      onClick: () => billingPortalRedirect(props.workspace?.id)
+    })
+  }
+
+  if (planStatus.value === WorkspacePlanStatuses.Canceled && !props.hideSettingsLinks) {
+    actions.push({
+      title: 'Resubscribe',
+      onClick: () =>
+        navigateTo(settingsWorkspaceRoutes.billing.route(props.workspace?.slug || ''))
     })
   }
 
