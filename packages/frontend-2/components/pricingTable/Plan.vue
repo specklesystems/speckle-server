@@ -24,9 +24,6 @@
               v-model="isYearlyIntervalSelected"
               :show-label="false"
               name="billing-interval"
-              @update:model-value="
-                (newValue) => $emit('onYearlyIntervalSelected', newValue)
-              "
             />
             <span class="text-body-2xs">Billed yearly</span>
             <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
@@ -92,7 +89,6 @@ import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import type { SetupContext } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'onYearlyIntervalSelected', value: boolean): void
   (e: 'onUpgradeClick'): void
 }>()
 
