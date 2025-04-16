@@ -21,7 +21,7 @@
               introducing new pricing including limits to the free plan.
             </p>
 
-            <div v-show="showDetails" class="mb-3">
+            <div v-show="!hasCollapsedLegacyProjectsExplainer" class="mb-3">
               <h3 class="font-medium text-warning-darker">By June 1st 2025</h3>
               <p>Move your projects to a workspace to:</p>
               <ul class="list-disc list-inside pl-2 mb-4">
@@ -51,10 +51,12 @@
               color="primary"
               size="sm"
               class="mb-5"
-              :icon-right="showDetails ? ChevronUpIcon : ChevronDownIcon"
-              @click="showDetails = !showDetails"
+              :icon-right="
+                hasCollapsedLegacyProjectsExplainer ? ChevronUpIcon : ChevronDownIcon
+              "
+              @click="handleToggleExpand"
             >
-              {{ showDetails ? 'Show less' : 'Show more' }}
+              {{ hasCollapsedLegacyProjectsExplainer ? 'Show less' : 'Show more' }}
             </FormButton>
 
             <div class="flex gap-2">
@@ -81,12 +83,17 @@
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/20/solid'
-
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 defineEmits(['moveProject'])
 
 defineProps<{
   projectId?: string
 }>()
 
-const showDetails = ref(false)
+const { hasCollapsedLegacyProjectsExplainer, updateLegacyProjectsExplainerCollapsed } =
+  useActiveUserMeta()
+
+const handleToggleExpand = () => {
+  updateLegacyProjectsExplainerCollapsed(!hasCollapsedLegacyProjectsExplainer.value)
+}
 </script>
