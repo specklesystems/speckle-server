@@ -51,7 +51,8 @@ const buildCanMoveToWorkspace = (
       return {
         modelCount: 5,
         projectCount: 5,
-        versionsHistory: null
+        versionsHistory: null,
+        commentHistory: null
       }
     },
     getWorkspaceProjectCount: async () => {
@@ -131,7 +132,8 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
         return {
           projectCount: 1,
           modelCount: 5,
-          versionsHistory: null
+          versionsHistory: null,
+          commentHistory: null
         }
       },
       getWorkspaceProjectCount: async () => {

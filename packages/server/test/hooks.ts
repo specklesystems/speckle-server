@@ -354,7 +354,7 @@ let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
-      console.log('Running tests in multi-region mode...')
+      logger.info('Running tests in multi-region mode...')
     }
 
     logger.info('running before all')

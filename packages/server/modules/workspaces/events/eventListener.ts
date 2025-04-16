@@ -119,7 +119,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
-import { isNewPaidPlanType, isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
@@ -292,7 +292,7 @@ export const onWorkspaceSeatUpdatedFactory =
     if (!workspace || !role) return
 
     // Only new plans only rely on seat types
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (!isNewPlan) {
       return
     }
@@ -353,7 +353,7 @@ export const onWorkspaceRoleUpdatedFactory =
     if (!workspace) return
 
     // New plans don't do automatic project role assignment
-    const isNewPlan = workspace.plan && isNewPaidPlanType(workspace.plan.name)
+    const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (isNewPlan) {
       return
     }
@@ -630,10 +630,19 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     let allowedRoles: StreamRoles[]
     const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
     if (isNewPlan) {
-      const seatRoleMapping = await deps.getWorkspaceSeatTypeToProjectRoleMapping({
-        workspaceId: project.workspaceId
-      })
-      allowedRoles = seatRoleMapping.allowed[seatType]
+      const workspaceAllowedRoles = (
+        await deps.getWorkspaceRoleToDefaultProjectRoleMapping({
+          workspaceId: project.workspaceId
+        })
+      ).allowed[workspaceRole]
+      const seatAllowedRoles = (
+        await deps.getWorkspaceSeatTypeToProjectRoleMapping({
+          workspaceId: project.workspaceId
+        })
+      ).allowed[seatType]
+      allowedRoles = Array.from(
+        new Set(workspaceAllowedRoles).intersection(new Set(seatAllowedRoles))
+      )
     } else {
       const roleMapping = await deps.getWorkspaceRoleToDefaultProjectRoleMapping({
         workspaceId: project.workspaceId

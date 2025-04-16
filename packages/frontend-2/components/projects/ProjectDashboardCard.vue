@@ -8,7 +8,7 @@
       >
         <div class="flex flex-col">
           <CommonBadge
-            v-if="!project.workspace?.id && isWorkspacesEnabled"
+            v-if="!project.workspace?.id && isWorkspacesEnabled && isOwner"
             class="mb-2 max-w-max"
             rounded
           >
@@ -64,7 +64,7 @@
               }}
             </FormButton>
             <FormButton
-              v-if="!project.workspace?.id && isWorkspacesEnabled"
+              v-if="!project.workspace?.id && isWorkspacesEnabled && isOwner"
               size="sm"
               color="outline"
               @click="$emit('moveProject', project.id)"
@@ -107,6 +107,7 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { Roles } from '@speckle/shared'
 import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
@@ -132,6 +133,7 @@ const props = defineProps<{
 const router = useRouter()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
+const isOwner = computed(() => props.project.role === Roles.Stream.Owner)
 const projectId = computed(() => props.project.id)
 const updatedAt = computed(() => {
   return {

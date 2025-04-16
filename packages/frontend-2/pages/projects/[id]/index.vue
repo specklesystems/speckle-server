@@ -64,10 +64,10 @@
     </div>
 
     <WorkspaceMoveProjectManager
-      v-if="project"
+      v-if="project && isWorkspacesEnabled"
       v-model:open="showMoveDialog"
       event-source="project-page"
-      :project-id="project.id"
+      :project-id="projectId"
     />
   </div>
 </template>

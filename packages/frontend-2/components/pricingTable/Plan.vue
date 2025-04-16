@@ -174,7 +174,9 @@ const canUpgradeToPlan = computed(() => {
 
   const allowedUpgrades: Partial<Record<WorkspacePlans, WorkspacePlans[]>> = {
     [WorkspacePlans.Free]: [WorkspacePlans.Team, WorkspacePlans.Pro],
-    [WorkspacePlans.Team]: [WorkspacePlans.Pro]
+    [WorkspacePlans.Team]: [WorkspacePlans.Pro],
+    [WorkspacePlans.TeamUnlimited]: [WorkspacePlans.Team, WorkspacePlans.Pro],
+    [WorkspacePlans.ProUnlimited]: [WorkspacePlans.Pro]
   }
 
   return allowedUpgrades[props.currentPlan.name]?.includes(props.plan)
@@ -194,7 +196,17 @@ const isCurrentPlan = computed(() => {
   if (props.plan === WorkspacePlans.Free) {
     return props.currentPlan?.name === props.plan
   }
-  return isMatchingInterval.value && props.currentPlan?.name === props.plan
+
+  const isMatchingTier =
+    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+      props.plan === WorkspacePlans.Pro)
+
+  return (
+    isMatchingInterval.value &&
+    (props.currentPlan?.name === props.plan || isMatchingTier)
+  )
 })
 
 const isAnnualToMonthly = computed(() => {
@@ -225,6 +237,10 @@ const isSelectable = computed(() => {
   )
     return true
 
+  // Dont allow upgrades during cancelation
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return false
+  }
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
 
@@ -294,6 +310,10 @@ const buttonTooltip = computed(() => {
   )
     return undefined
 
+  if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
+    return 'You must renew your subscription first'
+  }
+
   if (isDowngrade.value) {
     return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
   }
@@ -314,7 +334,11 @@ const buttonTooltip = computed(() => {
 })
 
 const badgeText = computed(() =>
-  props.currentPlan?.name === props.plan ? 'Current plan' : ''
+  props.currentPlan?.name === props.plan &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.Canceled &&
+  props.currentPlan?.status !== WorkspacePlanStatuses.CancelationScheduled
+    ? 'Current plan'
+    : ''
 )
 
 const handleUpgradeClick = () => {

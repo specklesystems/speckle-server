@@ -282,6 +282,7 @@ export const useWorkspaceInviteManager = <
   const route = options?.route || useRoute()
   const goHome = useNavigateToHome()
   const { activeUser } = useActiveUser()
+  const { mutateActiveWorkspaceSlug } = useNavigation()
 
   const loading = ref(false)
 
@@ -336,7 +337,8 @@ export const useWorkspaceInviteManager = <
           // Redirect
           if (accept) {
             if (workspaceSlug) {
-              window.location.href = workspaceRoute(workspaceSlug)
+              navigateTo(workspaceRoute(workspaceSlug))
+              mutateActiveWorkspaceSlug(workspaceSlug)
             } else {
               window.location.reload()
             }

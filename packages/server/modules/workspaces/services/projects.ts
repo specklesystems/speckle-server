@@ -227,11 +227,29 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
     }
 
     const isNewPlan = workspace.plan && isNewPlanType(workspace.plan.name)
-    if (isNewPlan) {
-      throw new NotImplementedError(
-        'This function is not supported for this workspace plan'
-      )
+    const allowed = {
+      [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
+      [Roles.Workspace.Member]: [
+        Roles.Stream.Reviewer,
+        Roles.Stream.Contributor,
+        Roles.Stream.Owner
+      ],
+      [Roles.Workspace.Admin]: [
+        Roles.Stream.Reviewer,
+        Roles.Stream.Contributor,
+        Roles.Stream.Owner
+      ]
     }
+
+    if (isNewPlan)
+      return {
+        default: {
+          [Roles.Workspace.Guest]: null,
+          [Roles.Workspace.Member]: null,
+          [Roles.Workspace.Admin]: null
+        },
+        allowed
+      }
 
     return {
       default: {
@@ -239,19 +257,7 @@ export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =
         [Roles.Workspace.Member]: Roles.Stream.Reviewer,
         [Roles.Workspace.Admin]: Roles.Stream.Owner
       },
-      allowed: {
-        [Roles.Workspace.Guest]: [Roles.Stream.Reviewer, Roles.Stream.Contributor],
-        [Roles.Workspace.Member]: [
-          Roles.Stream.Reviewer,
-          Roles.Stream.Contributor,
-          Roles.Stream.Owner
-        ],
-        [Roles.Workspace.Admin]: [
-          Roles.Stream.Reviewer,
-          Roles.Stream.Contributor,
-          Roles.Stream.Owner
-        ]
-      }
+      allowed
     }
   }
 
