@@ -500,10 +500,6 @@ export function useProcessProjectInvite() {
       }
     }
 
-    if (data?.projectMutations.invites.use) {
-      navigateTo(projectRoute(input.projectId))
-    }
-
     return data?.projectMutations.invites.use
   }
 }
