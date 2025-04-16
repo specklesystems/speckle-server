@@ -133,7 +133,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  return
   // 4. Redirect to the correct workspace
   // If there is an active workspace slug or legacy projects if active, we don't need to do anything
   if (activeWorkspaceSlug.value || isProjectsActive.value) return
