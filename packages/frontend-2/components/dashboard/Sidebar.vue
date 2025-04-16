@@ -51,7 +51,7 @@
               </NuxtLink>
 
               <NuxtLink
-                v-else-if="isProjectsActive && !isWorkspacesEnabled"
+                v-else-if="isProjectsActive || !isWorkspacesEnabled"
                 :to="projectsRoute"
                 @click="isOpenMobile = false"
               >

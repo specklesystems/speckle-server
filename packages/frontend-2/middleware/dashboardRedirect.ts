@@ -14,6 +14,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isSSOPath = to.path.includes('/sso/')
   if (isAuthPage || isSSOPath) return
 
+  return
   const client = useApolloClientFromNuxt()
   const {
     activeWorkspaceSlug,
