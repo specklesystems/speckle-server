@@ -1,6 +1,6 @@
 import { AllAuthCheckContextLoaders } from '../domain/loaders.js'
 import { canCreateWorkspaceProjectPolicy } from './workspace/canCreateWorkspaceProject.js'
-import { canReadProjectPolicy } from './project/canReadProject.js'
+import { canReadProjectPolicy } from './project/canRead.js'
 import { canCreateModelPolicy } from './project/model/canCreate.js'
 import { canMoveToWorkspacePolicy } from './project/canMoveToWorkspace.js'
 import { canCreatePersonalProjectPolicy } from './project/canCreatePersonal.js'
@@ -21,6 +21,7 @@ import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
 import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
 import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
+import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './workspace/canReceiveProjectsUpdatedMessage.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -53,7 +54,9 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   },
   workspace: {
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
-    canInvite: canInviteToWorkspacePolicy(loaders)
+    canInvite: canInviteToWorkspacePolicy(loaders),
+    canReceiveProjectsUpdatedMessage:
+      canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders)
   }
 })
 

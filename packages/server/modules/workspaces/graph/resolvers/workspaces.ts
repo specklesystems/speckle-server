@@ -320,6 +320,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           if (!workspace) {
             throw new WorkspaceNotFoundError()
           }
+
           await authorizeResolver(
             ctx.userId,
             workspace.id,
@@ -1637,12 +1638,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
               if (!requestedWorkspaceId) return false
 
               if (payload.workspaceId !== requestedWorkspaceId) return false
-              await authorizeResolver(
-                ctx.userId!,
-                payload.workspaceId,
-                Roles.Workspace.Guest,
-                ctx.resourceAccessRules
-              )
+
+              // TODO: Subs dont clear until actual response!! formatResponse/formatError, doesn't kick in
+              // if this handler returns false
+              const projectId = payload.workspaceProjectsUpdated.projectId
+              const canGetMessage =
+                await ctx.authPolicies.workspace.canReceiveProjectsUpdatedMessage({
+                  userId: ctx.userId,
+                  projectId,
+                  workspaceId: requestedWorkspaceId
+                })
+              if (canGetMessage.isErr) {
+                return false
+              }
 
               return true
             }
