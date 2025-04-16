@@ -52,7 +52,6 @@ import {
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useRouter } from 'vue-router'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -466,8 +465,6 @@ export function useProcessProjectInvite() {
   ) => {
     if (!activeUser.value) return
 
-    const { mutateIsProjectsActive } = useNavigation()
-
     const { data, errors } = await apollo
       .mutate({
         mutation: useProjectInviteMutation,
@@ -501,11 +498,6 @@ export function useProcessProjectInvite() {
           description: errMsg
         })
       }
-    }
-
-    if (data?.projectMutations.invites.use) {
-      navigateTo(projectRoute(input.projectId))
-      mutateIsProjectsActive()
     }
 
     return data?.projectMutations.invites.use

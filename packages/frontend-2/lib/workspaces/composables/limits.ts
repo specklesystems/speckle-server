@@ -50,34 +50,12 @@ export const useWorkspaceLimits = (slug: string) => {
   const remainingModelCount = computed(() =>
     limits.value.modelCount ? limits.value.modelCount - modelCount.value : 0
   )
-
-  // TODO; move to permissions
-  const canAddProject = computed(() => {
-    // Unlimited
-    if (limits.value.projectCount === null) return true
-
-    return projectCount.value + 1 <= limits.value.projectCount
-  })
-
-  // TODO; move to permissions
-  const canAddModels = (additionalModels?: number) => {
-    // Unlimited
-    if (limits.value.modelCount === null) return true
-
-    if (!additionalModels) {
-      return remainingModelCount.value > 0
-    }
-    return modelCount.value + additionalModels <= limits.value.modelCount
-  }
-
   return {
     projectCount,
     modelCount,
     limits,
     remainingProjectCount,
     remainingModelCount,
-    canAddProject,
-    canAddModels,
     versionLimitFormatted
   }
 }
