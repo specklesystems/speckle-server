@@ -116,34 +116,42 @@ const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const commonFeatures = shallowRef([
   {
-    displayName: 'Unlimited editor and viewer seats',
-    description: 'Some tooltip text'
+    displayName: 'Unlimited members and guests',
+    description: 'You can have unlimited people in your workspace'
   },
   {
-    displayName: 'Unlimited guests',
-    description: 'Some tooltip text'
+    displayName: 'Free viewer seats',
+    description:
+      'People on a viewer seat can view and comment on models in the web viewer free of charge.'
   },
   {
     displayName: `${planLimits.value.projectCount} project${
       planLimits.value.projectCount === 1 ? '' : 's'
     }`,
-    description: 'Some tooltip text'
+    description:
+      props.plan !== WorkspacePlans.Free
+        ? 'Your maximum number of projects. Can be extended with the Unlimited projects and models add-on.'
+        : 'Your maximum number of projects'
   },
   {
     displayName: `${planLimits.value.modelCount} models per workspace`,
-    description: 'Some tooltip text'
+    description:
+      props.plan !== WorkspacePlans.Free
+        ? 'Your maximum number of models. Can be extended with the Unlimited projects and models add-on.'
+        : 'Your maximum number of models'
   },
   {
     displayName: planLimits.value.versionsHistory
       ? `${planLimits.value.versionsHistory.value} day version history`
       : 'Full version history',
-    description: 'Some tooltip text'
+    description:
+      'Access and compare earlier versions of your models. Latest version is always accessible.'
   },
   {
     displayName: planLimits.value.versionsHistory
       ? `${planLimits.value.versionsHistory.value} day comment history`
       : 'Full comment history',
-    description: 'Some tooltip text'
+    description: 'Access past comments in the 3D web viewer'
   }
 ])
 const planPrice = computed(() => {
