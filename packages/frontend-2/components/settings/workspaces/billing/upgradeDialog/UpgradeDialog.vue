@@ -11,7 +11,7 @@
       :slug="slug"
       :plan="finalNewPlan"
       :billing-interval="billingInterval"
-      :enable-no-option="!usageExceedsNewPlanLimit"
+      :enable-no-option="!forceAddonPurchase"
     />
     <SettingsWorkspacesBillingUpgradeDialogSummary
       v-else
@@ -61,6 +61,7 @@ const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
 const showAddonSelect = ref<boolean>(true)
+const isLoading = ref<boolean>(false)
 
 const title = computed(() => {
   if (showAddonSelect.value) {
@@ -83,6 +84,13 @@ const usageExceedsNewPlanLimit = computed(() => {
 
   if (!modelLimit || !projectLimit) return true
   return modelCount.value > modelLimit || projectCount.value > projectLimit
+})
+
+const forceAddonPurchase = computed(() => {
+  return (
+    usageExceedsNewPlanLimit.value ||
+    (statusIsCanceled.value && hasUnlimitedAddon.value)
+  )
 })
 
 const isSamePlanWithAddon = computed(
@@ -115,7 +123,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: nextButtonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: () => {
       if (showAddonSelect.value) {
@@ -132,9 +141,10 @@ const nextButtonText = computed(() =>
   showAddonSelect.value || statusIsCanceled.value ? 'Continue' : 'Continue and upgrade'
 )
 
-const onSubmit = () => {
+const onSubmit = async () => {
   if (!props.workspaceId) return
 
+  isLoading.value = true
   if (!subscription.value || statusIsCanceled.value) {
     mixpanel.track('Workspace Creation Checkout Session Started')
 
@@ -163,11 +173,13 @@ const onSubmit = () => {
       })
     }
 
-    upgradePlan({
+    await upgradePlan({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,
       workspaceId: props.workspaceId
     })
+
+    isLoading.value = false
   }
 
   isOpen.value = false
