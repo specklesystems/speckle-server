@@ -1,7 +1,6 @@
 <template>
   <WorkspacePlanLimitReachedDialog
     v-model:open="dialogOpen"
-    :title="title"
     :buttons="buttons"
     prevent-close
     :condensed="isEmbedEnabled || undefined"
