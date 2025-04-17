@@ -147,7 +147,7 @@ import {
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { commandFactory } from '@/modules/shared/command'
+import { asOperation, commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   getRateLimitResult,
@@ -506,86 +506,84 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const logger = context.log
 
-          const createWorkspace = commandFactory({
-            db,
-            eventBus,
-            operationFactory: ({ trx, emit }) => {
+          return await asOperation(
+            async ({ db, emit }) => {
               const createWorkspace = createWorkspaceFactory({
                 validateSlug: validateSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
                 }),
                 generateValidSlug: generateValidSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
                 }),
-                upsertWorkspace: upsertWorkspaceFactory({ db: trx }),
-                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                upsertWorkspace: upsertWorkspaceFactory({ db }),
+                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: emit,
                 ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                  createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
                   eventEmit: emit
                 })
               })
 
               const updateWorkspace = updateWorkspaceFactory({
                 validateSlug: validateSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
                 }),
-                getWorkspace: getWorkspaceWithDomainsFactory({ db: trx }),
+                getWorkspace: getWorkspaceWithDomainsFactory({ db }),
                 getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
-                  db: trx,
+                  db,
                   decrypt: getDecryptor()
                 }),
-                upsertWorkspace: upsertWorkspaceFactory({ db: trx }),
+                upsertWorkspace: upsertWorkspaceFactory({ db }),
                 emitWorkspaceEvent: emit
               })
 
               const addDomain = addDomainToWorkspaceFactory({
-                getWorkspace: getWorkspaceFactory({ db: trx }),
-                findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
-                storeWorkspaceDomain: storeWorkspaceDomainFactory({ db: trx }),
-                getDomains: getWorkspaceDomainsFactory({ db: trx }),
+                getWorkspace: getWorkspaceFactory({ db }),
+                findEmailsByUserId: findEmailsByUserIdFactory({ db }),
+                storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
+                getDomains: getWorkspaceDomainsFactory({ db }),
                 emitWorkspaceEvent: emit
               })
 
-              return async () => {
-                let workspace = await createWorkspace({
+              let workspace = await createWorkspace({
+                userId: context.userId!,
+                workspaceInput: {
+                  name,
+                  slug,
+                  description: description ?? null,
+                  logo: logo ?? null
+                },
+                userResourceAccessLimits: context.resourceAccessRules
+              })
+
+              if (enableDomainDiscoverabilityForDomain) {
+                // Add domain & enable discoverability
+                await addDomain({
+                  workspaceId: workspace.id,
                   userId: context.userId!,
-                  workspaceInput: {
-                    name,
-                    slug,
-                    description: description ?? null,
-                    logo: logo ?? null
-                  },
-                  userResourceAccessLimits: context.resourceAccessRules
+                  domain: enableDomainDiscoverabilityForDomain
                 })
 
-                if (enableDomainDiscoverabilityForDomain) {
-                  // Add domain & enable discoverability
-                  await addDomain({
-                    workspaceId: workspace.id,
-                    userId: context.userId!,
-                    domain: enableDomainDiscoverabilityForDomain
-                  })
-
-                  workspace = await updateWorkspace({
-                    workspaceId: workspace.id,
-                    workspaceInput: {
-                      discoverabilityEnabled: true
-                    }
-                  })
-                }
-
-                return workspace
+                workspace = await updateWorkspace({
+                  workspaceId: workspace.id,
+                  workspaceInput: {
+                    discoverabilityEnabled: true
+                  }
+                })
               }
-            }
-          })
 
-          return await withOperationLogging(async () => await createWorkspace(), {
-            logger,
-            operationName: 'createWorkspace',
-            operationDescription: 'Create workspace'
-          })
+              return workspace
+            },
+            {
+              db,
+              eventBus,
+              logger,
+              name: 'createWorkspace',
+              description: 'Create workspace',
+              transaction: true
+            }
+          )
         },
         delete: async (_parent, args, context) => {
           const { workspaceId } = args

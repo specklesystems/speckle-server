@@ -1,12 +1,13 @@
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { EmitArg, EventBus, EventBusEmit } from '@/modules/shared/services/eventBus'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { MaybeAsync } from '@speckle/shared'
 import { Knex } from 'knex'
+import { Logger } from 'pino'
 
 /**
- * TODO: Fix api - make operationFactory db arg actually return the trx. Currently many usages of this
- * are not working correctly cause they just use the db, skipping the transaction
- *
- * Also: withOperationLogging and withOperationTransaction could all be merged into this, with
- * this having a better name like `operationFactory`
+ * @deprecated asOperation does this and more. Also many usages of commandFactory are broken
+ * in the sense that they're not actually using the transaction correctly
  */
 export const commandFactory =
   <TOperation extends (...args: Parameters<TOperation>) => ReturnType<TOperation>>({
@@ -40,3 +41,53 @@ export const commandFactory =
       throw err
     }
   }
+
+/**
+ * Adds logging & transaction support to an operation
+ */
+export const asOperation = async <T>(
+  operation: (args: { db: Knex; emit: EventBusEmit }) => MaybeAsync<T>,
+  params: {
+    db: Knex
+    eventBus: EventBus
+    logger: Logger
+    name: string
+    description?: string
+    /**
+     * Whether to treat the operation as a transaction. That makes the injected DB a knex transaction
+     * and also collects eventBus events to be emitted at the end of the operation.
+     */
+    transaction?: boolean
+  }
+): Promise<T> => {
+  const { db, eventBus, logger, name, description, transaction } = params
+
+  return await withOperationLogging(
+    async () => {
+      if (!transaction) {
+        return await operation({ db, emit: eventBus.emit })
+      }
+
+      const events: EmitArg[] = []
+      const emit: EventBusEmit = async ({ eventName, payload }) => {
+        events.push({ eventName, payload })
+      }
+      const trxRet = await withTransaction(
+        async ({ trx }) => {
+          return await operation({ db: trx, emit })
+        },
+        { db }
+      )
+      for (const event of events) {
+        await eventBus.emit(event)
+      }
+
+      return trxRet
+    },
+    {
+      logger,
+      operationName: name,
+      operationDescription: description
+    }
+  )
+}
