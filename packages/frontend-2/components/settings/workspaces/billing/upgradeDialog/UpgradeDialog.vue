@@ -28,11 +28,13 @@ import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
   PaidWorkspacePlansNew,
   WorkspacePlanConfigs,
-  type MaybeNullOrUndefined
+  type MaybeNullOrUndefined,
+  doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
 import type { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 type AddonIncludedSelect = 'yes' | 'no'
 
@@ -55,6 +57,7 @@ const { upgradePlan, redirectToCheckout } = useBillingActions()
 const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
   props.slug
 )
+const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
 const showAddonSelect = ref<boolean>(true)
@@ -133,12 +136,33 @@ const onSubmit = () => {
   if (!props.workspaceId) return
 
   if (!subscription.value || statusIsCanceled.value) {
+    mixpanel.track('Workspace Creation Checkout Session Started')
+
     redirectToCheckout({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,
       workspaceId: props.workspaceId
     })
   } else {
+    if (props.isChangingPlan) {
+      mixpanel.track('Workspace Upgrade Button Clicked', {
+        plan: finalNewPlan.value,
+        cycle: props.billingInterval,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId,
+        includesUnlimitedAddon: doesPlanIncludeUnlimitedProjectsAddon(
+          finalNewPlan.value
+        )
+      })
+    } else {
+      mixpanel.track('Add-on Purchase Button Clicked', {
+        plan: finalNewPlan.value,
+        cycle: props.billingInterval,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    }
+
     upgradePlan({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,
