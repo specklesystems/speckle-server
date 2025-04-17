@@ -206,6 +206,7 @@ export const useSettingsMembersActions = (params: {
   const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
+    const headerItems: LayoutMenuItem[] = []
     const mainItems: LayoutMenuItem[] = []
     const footerItems: LayoutMenuItem[] = []
 
@@ -230,13 +231,13 @@ export const useSettingsMembersActions = (params: {
       })
     }
     if (showUpgradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Upgrade to editor...',
         id: WorkspaceUserActionTypes.UpgradeEditor
       })
     }
     if (showDowngradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
         disabled: targetUserRole.value === Roles.Workspace.Admin,
@@ -278,6 +279,7 @@ export const useSettingsMembersActions = (params: {
     }
 
     const result: LayoutMenuItem[][] = []
+    if (headerItems.length) result.push(headerItems)
     if (mainItems.length) result.push(mainItems)
     if (footerItems.length) result.push(footerItems)
     return result
