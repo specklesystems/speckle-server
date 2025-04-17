@@ -43,9 +43,11 @@ const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const mixpanel = useMixpanel()
 const { hasDismissedNewWorkspaceExplainer, updateNewWorkspaceExplainerDismissed } =
   useActiveUserMeta()
+const { isLoggedIn } = useActiveUser()
 
 const showBanner = computed(
   () =>
+    isLoggedIn.value &&
     isWorkspacesEnabled.value &&
     (import.meta.client ? !hasDismissedNewWorkspaceExplainer.value : false)
 )

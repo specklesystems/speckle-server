@@ -8,7 +8,8 @@
         @processed="onInviteAccepted"
       />
       <ProjectsMoveToWorkspaceAlert
-        v-if="isWorkspacesEnabled && !project.workspace"
+        v-if="shouldShowWorkspaceAlert"
+        :disable-button="disableLegacyMoveProjectButton"
         :project-id="project.id"
         @move-project="onMoveProject"
       />
@@ -140,6 +141,7 @@ enum ActionTypes {
 const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
+const { isLoggedIn } = useActiveUser()
 
 const projectId = computed(() => route.params.id as string)
 const token = computed(() => route.query.token as Optional<string>)
@@ -303,6 +305,18 @@ const activePageTab = computed({
     }
   }
 })
+
+const shouldShowWorkspaceAlert = computed(
+  () =>
+    isWorkspacesEnabled.value &&
+    isLoggedIn.value &&
+    !project.value?.workspace &&
+    hasRole.value
+)
+
+const disableLegacyMoveProjectButton = computed(
+  () => project.value && project.value.role !== Roles.Stream.Owner
+)
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
