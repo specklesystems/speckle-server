@@ -6,7 +6,7 @@ import BufferQueue from '../helpers/bufferQueue.js'
 
 describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
-    const i: Item = { baseId: 'id', base: { id: 'id' } }
+    const i: Item = { baseId: 'id', base: { id: 'id', speckle_type: 'type' } }
     const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
       keyRange: IDBKeyRange,
@@ -16,13 +16,12 @@ describe('database cache', () => {
     await database.disposeAsync()
 
     const x = await database.getItem({ id: 'id' })
-    expect(x).toBeDefined()
-    expect(JSON.stringify(x)).toBe(JSON.stringify(i))
+    expect(x).toMatchSnapshot()
   })
 
   test('write two items to queue use getItem', async () => {
-    const i1: Item = { baseId: 'id1', base: { id: 'id' } }
-    const i2: Item = { baseId: 'id2', base: { id: 'id' } }
+    const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
+    const i2: Item = { baseId: 'id2', base: { id: 'id', speckle_type: 'type' } }
     const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
       keyRange: IDBKeyRange
@@ -32,17 +31,15 @@ describe('database cache', () => {
     await database.disposeAsync()
 
     const x1 = await database.getItem({ id: i1.baseId })
-    expect(x1).toBeDefined()
-    expect(JSON.stringify(x1)).toBe(JSON.stringify(i1))
+    expect(x1).toMatchSnapshot()
 
     const x2 = await database.getItem({ id: i2.baseId })
-    expect(x2).toBeDefined()
-    expect(JSON.stringify(x2)).toBe(JSON.stringify(i2))
+    expect(x2).toMatchSnapshot()
   })
 
-  test('write two items to queue use getItem', async () => {
-    const i1: Item = { baseId: 'id1', base: { id: 'id' } }
-    const i2: Item = { baseId: 'id2', base: { id: 'id' } }
+  test('write two items to queue use processItems', async () => {
+    const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
+    const i2: Item = { baseId: 'id2', base: { id: 'id', speckle_type: 'type' } }
     const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
       keyRange: IDBKeyRange
@@ -60,10 +57,7 @@ describe('database cache', () => {
       notFoundItems
     })
 
-    expect(foundItems.values().length).toBe(2)
-    expect(JSON.stringify(foundItems.values()[0])).toBe(JSON.stringify(i1))
-    expect(JSON.stringify(foundItems.values()[1])).toBe(JSON.stringify(i2))
-
-    expect(notFoundItems.values().length).toBe(0)
+    expect(foundItems.values()).toMatchSnapshot()
+    expect(notFoundItems.values()).toMatchSnapshot()
   })
 })
