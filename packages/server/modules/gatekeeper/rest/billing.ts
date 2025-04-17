@@ -29,10 +29,7 @@ import {
   OperationStatus,
   stripeEventId
 } from '@/observability/domain/fields'
-import {
-  logErrorThenThrow,
-  withOperationLogging
-} from '@/observability/domain/businessLogging'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -121,44 +118,50 @@ export const getBillingRouter = (): Router => {
             logger.info(OperationStatus.start, '[{operationName} ({operationStatus})] ')
 
             await withOperationLogging(
-              async () =>
-                await withTransaction(
-                  async ({ db }) => {
-                    const completeCheckout = completeCheckoutSessionFactory({
-                      getCheckoutSession: getCheckoutSessionFactory({ db }),
-                      updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory({
-                        db
-                      }),
-                      upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-                      upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({
-                        db
-                      }),
-                      getSubscriptionData: getSubscriptionDataFactory({
-                        stripe
-                      }),
-                      emitEvent: getEventBus().emit
-                    })
+              async () => {
+                try {
+                  await withTransaction(
+                    async ({ db }) => {
+                      const completeCheckout = completeCheckoutSessionFactory({
+                        getCheckoutSession: getCheckoutSessionFactory({ db }),
+                        updateCheckoutSessionStatus: updateCheckoutSessionStatusFactory(
+                          {
+                            db
+                          }
+                        ),
+                        upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+                        upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory(
+                          {
+                            db
+                          }
+                        ),
+                        getSubscriptionData: getSubscriptionDataFactory({
+                          stripe
+                        }),
+                        emitEvent: getEventBus().emit
+                      })
 
-                    return completeCheckout({
-                      sessionId: session.id,
-                      subscriptionId
-                    })
-                  },
-                  { db }
-                ),
+                      return completeCheckout({
+                        sessionId: session.id,
+                        subscriptionId
+                      })
+                    },
+                    { db }
+                  )
+                } catch (e) {
+                  if (e instanceof WorkspaceAlreadyPaidError) {
+                    // ignore the request, this is prob a replay from stripe
+                    logger.info('Workspace is already paid, ignoring')
+                  } else {
+                    throw e
+                  }
+                }
+              },
               {
                 logger,
                 operationName: 'completeCheckoutSession',
                 operationDescription:
-                  'Payment succeeded or Stripe session completed, and payment was paid',
-                errorHandler: async (err, logger) => {
-                  if (err instanceof WorkspaceAlreadyPaidError) {
-                    // ignore the request, this is prob a replay from stripe
-                    logger.info('Workspace is already paid, ignoring')
-                  } else {
-                    logErrorThenThrow(err, logger)
-                  }
-                }
+                  'Payment succeeded or Stripe session completed, and payment was paid'
               }
             )
 
