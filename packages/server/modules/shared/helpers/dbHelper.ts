@@ -106,30 +106,13 @@ export const numberOfFreeConnections = (knex: Knex) => {
   return Math.max(pgMaxConnections - demand, 0)
 }
 
-/**
- * @deprecated use withOperationTransaction for a better API
- */
 export const withTransaction = async <T>(
-  callback: Promise<T> | T,
-  trx: Knex.Transaction
-): Promise<T> => {
-  try {
-    return await callback
-  } catch (e) {
-    await trx.rollback()
-    throw e
-  } finally {
-    if (trx.isTransaction && !trx.isCompleted()) {
-      await trx.commit()
-    }
+  operation: (args: { db: Knex }) => MaybeAsync<T>,
+  params: {
+    db: Knex
   }
-}
-
-export const withOperationTransaction = async <T>(params: {
-  operation: (args: { db: Knex }) => MaybeAsync<T>
-  db: Knex
-}) => {
-  const { operation, db } = params
+) => {
+  const { db } = params
   const trx = await db.transaction()
 
   try {

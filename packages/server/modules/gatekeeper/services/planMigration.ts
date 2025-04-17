@@ -23,7 +23,7 @@ import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clie
 import Stripe from 'stripe'
 import { cloneDeep } from 'lodash'
 import { Logger } from '@/observability/logging'
-import { withOperationTransaction } from '@/modules/shared/helpers/dbHelper'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
 export const migrateOldWorkspacePlans =
   ({ db, stripe, logger }: { db: Knex; stripe: Stripe; logger: Logger }) =>
@@ -50,14 +50,14 @@ export const migrateOldWorkspacePlans =
 
     for (const oldPlan of oldPlanWorkspaces) {
       try {
-        await withOperationTransaction({
-          operation: async ({ db }) => {
+        await withTransaction(
+          async ({ db }) => {
             await migrateWorkspacePlan({ db, stripe, logger })({
               workspaceId: oldPlan.workspaceId
             })
           },
-          db
-        })
+          { db }
+        )
       } catch (err) {
         logger.error(
           { err, workspaceId: oldPlan.workspaceId, oldPlan },
