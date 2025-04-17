@@ -147,53 +147,87 @@ export const startQueue = async () => {
 
         const sourceDb = await getProjectDbClient({ projectId })
         const sourceObjectStorage = await getProjectObjectStorage({ projectId })
-        const targetDb = await (await getRegionDb({ regionKey })).transaction()
+        const targetDb = await getRegionDb({ regionKey })
         const targetObjectStorage = await getRegionObjectStorage({ regionKey })
 
-        const updateProjectRegion = updateProjectRegionFactory({
-          getProject: getProjectFactory({ db: sourceDb }),
-          getAvailableRegions: getAvailableRegionsFactory({
-            getRegions: getRegionsFactory({ db }),
-            canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
-              getWorkspacePlan: getWorkspacePlanFactory({ db })
-            })
-          }),
-          copyWorkspace: copyWorkspaceFactory({ sourceDb, targetDb }),
-          copyProjects: copyProjectsFactory({ sourceDb, targetDb }),
-          copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
-          copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
-          copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
-          copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
-          copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb }),
-          copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb }),
-          copyProjectBlobs: copyProjectBlobs({
-            sourceDb,
-            sourceObjectStorage,
-            targetDb,
-            targetObjectStorage
-          }),
-          validateProjectRegionCopy: validateProjectRegionCopyFactory({
-            countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
-            countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
-            countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
-            countProjectAutomations: getProjectAutomationsTotalCountFactory({
-              db: sourceDb
-            }),
-            countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
-            getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
-          }),
-          updateProjectRegionKey: updateProjectRegionKeyFactory({
-            upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
-            cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
-              redis: getGenericRedis()
-            }),
-            emitEvent: getEventBus().emit
-          })
-        })
-
         return await withTransaction(
-          updateProjectRegion({ projectId, regionKey }),
-          targetDb
+          async ({ db: targetDbTrx }) => {
+            const updateProjectRegion = updateProjectRegionFactory({
+              getProject: getProjectFactory({ db: sourceDb }),
+              getAvailableRegions: getAvailableRegionsFactory({
+                getRegions: getRegionsFactory({ db }),
+                canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+                  getWorkspacePlan: getWorkspacePlanFactory({ db })
+                })
+              }),
+              copyWorkspace: copyWorkspaceFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjects: copyProjectsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectModels: copyProjectModelsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectVersions: copyProjectVersionsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectObjects: copyProjectObjectsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectAutomations: copyProjectAutomationsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectComments: copyProjectCommentsFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectWebhooks: copyProjectWebhooksFactory({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
+              copyProjectBlobs: copyProjectBlobs({
+                sourceDb,
+                sourceObjectStorage,
+                targetDb: targetDbTrx,
+                targetObjectStorage
+              }),
+              validateProjectRegionCopy: validateProjectRegionCopyFactory({
+                countProjectModels: getStreamBranchCountFactory({
+                  db: sourceDb
+                }),
+                countProjectVersions: getStreamCommitCountFactory({
+                  db: sourceDb
+                }),
+                countProjectObjects: getStreamObjectCountFactory({
+                  db: sourceDb
+                }),
+                countProjectAutomations: getProjectAutomationsTotalCountFactory({
+                  db: sourceDb
+                }),
+                countProjectComments: getStreamCommentCountFactory({
+                  db: sourceDb
+                }),
+                getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
+              }),
+              updateProjectRegionKey: updateProjectRegionKeyFactory({
+                upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
+                cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
+                  redis: getGenericRedis()
+                }),
+                emitEvent: getEventBus().emit
+              })
+            })
+
+            return updateProjectRegion({ projectId, regionKey })
+          },
+          { db: targetDb }
         )
       }
       case 'delete-project-region-data':

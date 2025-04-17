@@ -38,7 +38,7 @@ export const scheduledCallbackWrapper = async (
     const finishDate = new Date()
     boundLogger.info(
       { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
-      'Finished scheduled function {taskName} execution in {durationSeconds} seconds'
+      'Finished scheduled function {taskName} execution succeeded in {durationSeconds} seconds'
     )
   } catch (error) {
     boundLogger.error(

@@ -130,6 +130,8 @@ export type StreamCollaboratorGraphQLReturn = {
 
 export type ServerInfoGraphQLReturn = ServerInfo
 
+export type UserMetaGraphQLReturn = { userId: string }
+
 export type ProjectCollaboratorGraphQLReturn = {
   id: string
   user: LimitedUserRecord

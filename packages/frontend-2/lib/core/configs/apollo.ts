@@ -134,6 +134,9 @@ function createCache(): InMemoryCache {
       },
       User: {
         fields: {
+          meta: {
+            merge: mergeAsObjectsFunction
+          },
           timeline: {
             keyArgs: ['after', 'before'],
             merge: buildAbstractCollectionMergeFunction('ActivityCollection')

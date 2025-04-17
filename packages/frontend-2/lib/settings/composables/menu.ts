@@ -264,7 +264,7 @@ export const useSettingsMembersActions = (params: {
       footerItems.push({
         title: 'Remove from workspace...',
         id: WorkspaceUserActionTypes.RemoveFromWorkspace,
-        disabled: isOnlyAdmin.value,
+        disabled: isOnlyAdmin.value && targetUserRole.value === Roles.Workspace.Admin,
         disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }

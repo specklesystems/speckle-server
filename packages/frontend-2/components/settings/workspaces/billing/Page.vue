@@ -1,10 +1,15 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
-    <BillingAlert v-if="showBillingAlert" :workspace="workspace" />
+    <BillingAlert
+      v-if="showBillingAlert"
+      class="mb-4"
+      :workspace="workspace"
+      hide-settings-links
+    />
 
     <SettingsSectionHeader
       title="Billing and plans"
-      text="Update your payment information or switch plans according to your needs"
+      text="Get billing information and upgrade your plan"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
@@ -20,7 +25,6 @@
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Upgrade your plan" subheading />
         <PricingTable
-          v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
           :slug="slug"
           :workspace-id="workspace?.id"
           :role="workspace?.role as WorkspaceRoles"
@@ -30,11 +34,7 @@
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns
-          v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
-          :slug="slug"
-          :workspace-id="workspace?.id"
-        />
+        <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
       </section>
     </div>
   </div>
@@ -59,14 +59,10 @@ graphql(`
   }
 `)
 
-const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
-  default: false
-})
-
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isFreePlan, isNewPlan, intervalIsYearly } = useWorkspacePlan(slug.value)
+const { isFreePlan, isNewPlan } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -84,13 +80,5 @@ const showBillingAlert = computed(
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
-)
-
-watch(
-  () => intervalIsYearly.value,
-  (newVal) => {
-    isYearlyIntervalSelected.value = newVal
-  },
-  { immediate: true }
 )
 </script>

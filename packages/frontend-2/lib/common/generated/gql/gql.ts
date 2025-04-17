@@ -40,7 +40,7 @@ type Documents = {
     "\n  fragment AutomateRunsTriggerStatusDialogRunsRows_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateRunsTriggerStatusDialogFunctionRun_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": typeof types.AutomateRunsTriggerStatusDialogRunsRows_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanel_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateViewerPanelFunctionRunRow_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": typeof types.AutomateViewerPanel_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": typeof types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
-    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": typeof types.BillingAlert_WorkspaceFragmentDoc,
+    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": typeof types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": typeof types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
@@ -107,7 +107,7 @@ type Documents = {
     "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": typeof types.SettingsSidebar_UserFragmentDoc,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": typeof types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": typeof types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
-    "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": typeof types.SettingsSharedProjects_ProjectFragmentDoc,
+    "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.SettingsSharedProjects_ProjectFragmentDoc,
     "\n  fragment SettingsUserProfileChangePassword_User on User {\n    id\n    email\n  }\n": typeof types.SettingsUserProfileChangePassword_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": typeof types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": typeof types.SettingsUserProfileDetails_UserFragmentDoc,
@@ -328,6 +328,9 @@ type Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": typeof types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
+    "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateWorkspaceExplainerDocument,
+    "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateLegacyProjectsExplainerDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -459,7 +462,7 @@ const documents: Documents = {
     "\n  fragment AutomateRunsTriggerStatusDialogRunsRows_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateRunsTriggerStatusDialogFunctionRun_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": types.AutomateRunsTriggerStatusDialogRunsRows_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanel_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateViewerPanelFunctionRunRow_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": types.AutomateViewerPanel_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
-    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
+    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
@@ -526,7 +529,7 @@ const documents: Documents = {
     "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.SettingsSidebar_UserFragmentDoc,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
-    "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
+    "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
     "\n  fragment SettingsUserProfileChangePassword_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileChangePassword_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
@@ -747,6 +750,9 @@ const documents: Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
+    "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateWorkspaceExplainerDocument,
+    "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": types.UpdateLegacyProjectsExplainerDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -973,7 +979,7 @@ export function graphql(source: "\n  fragment AutomateViewerPanelFunctionRunRow_
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"): (typeof documents)["\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"];
+export function graphql(source: "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"): (typeof documents)["\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1241,7 +1247,7 @@ export function graphql(source: "\n  fragment SettingsServerRegionsTable_ServerR
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2122,6 +2128,18 @@ export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        newWorkspaceExplainerDismissed\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateWorkspaceExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setNewWorkspaceExplainerDismissed(value: $value)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -52,7 +52,9 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
 )
 
 const { upgradePlan, redirectToCheckout } = useBillingActions()
-const { hasUnlimitedAddon, plan, subscription } = useWorkspacePlan(props.slug)
+const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
+  props.slug
+)
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
 const showAddonSelect = ref<boolean>(true)
@@ -124,13 +126,13 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const backButtonText = computed(() => (showAddonSelect.value ? 'Cancel' : 'Back'))
 const nextButtonText = computed(() =>
-  showAddonSelect.value ? 'Continue' : 'Continue and upgrade'
+  showAddonSelect.value || statusIsCanceled.value ? 'Continue' : 'Continue and upgrade'
 )
 
 const onSubmit = () => {
   if (!props.workspaceId) return
 
-  if (!subscription.value) {
+  if (!subscription.value || statusIsCanceled.value) {
     redirectToCheckout({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,

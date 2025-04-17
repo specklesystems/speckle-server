@@ -47,14 +47,9 @@ const props = withDefaults(
   { showWorkspaceName: true }
 )
 
-const { loading, accept, decline } = useWorkspaceInviteManager(
-  {
-    invite: computed(() => props.invite)
-  },
-  {
-    preventRedirect: true
-  }
-)
+const { loading, accept, decline } = useWorkspaceInviteManager({
+  invite: computed(() => props.invite)
+})
 
 const processInvite = async (shouldAccept: boolean, token: Optional<string>) => {
   if (!token) return
