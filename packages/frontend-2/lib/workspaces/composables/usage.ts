@@ -11,6 +11,20 @@ graphql(`
         modelCount
       }
     }
+    team {
+      totalCount
+    }
+    teamByRole {
+      admins {
+        totalCount
+      }
+      members {
+        totalCount
+      }
+      guests {
+        totalCount
+      }
+    }
   }
 `)
 
@@ -32,8 +46,24 @@ export const useWorkspaceUsage = (slug: string) => {
     () => result.value?.workspaceBySlug?.plan?.usage.modelCount ?? 0
   )
 
+  const teamCount = computed(() => result.value?.workspaceBySlug?.team?.totalCount ?? 0)
+
+  const adminCount = computed(
+    () => result.value?.workspaceBySlug?.teamByRole.admins?.totalCount ?? 0
+  )
+  const memberCount = computed(
+    () => result.value?.workspaceBySlug?.teamByRole.members?.totalCount ?? 0
+  )
+  const guestCount = computed(
+    () => result.value?.workspaceBySlug?.teamByRole.guests?.totalCount ?? 0
+  )
+
   return {
     projectCount,
-    modelCount
+    modelCount,
+    teamCount,
+    adminCount,
+    memberCount,
+    guestCount
   }
 }
