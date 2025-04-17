@@ -11,7 +11,7 @@
       :slug="slug"
       :plan="finalNewPlan"
       :billing-interval="billingInterval"
-      :enable-no-option="!usageExceedsNewPlanLimit"
+      :enable-no-option="!forceAddonPurchase"
     />
     <SettingsWorkspacesBillingUpgradeDialogSummary
       v-else
@@ -83,6 +83,13 @@ const usageExceedsNewPlanLimit = computed(() => {
 
   if (!modelLimit || !projectLimit) return true
   return modelCount.value > modelLimit || projectCount.value > projectLimit
+})
+
+const forceAddonPurchase = computed(() => {
+  return (
+    usageExceedsNewPlanLimit.value ||
+    (statusIsCanceled.value && hasUnlimitedAddon.value)
+  )
 })
 
 const isSamePlanWithAddon = computed(
