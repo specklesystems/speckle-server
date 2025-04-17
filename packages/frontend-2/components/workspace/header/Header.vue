@@ -23,6 +23,7 @@
         <WorkspaceHeaderAddProjectMenu
           :workspace-name="workspaceInfo.name"
           :workspace-slug="workspaceInfo.slug"
+          :workspace-role="workspaceInfo.role"
           :workspace-plan="workspaceInfo.plan?.name ? workspaceInfo.plan?.name : null"
           hide-text-on-mobile
           :can-create-project="canCreateProject"

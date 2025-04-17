@@ -3,7 +3,7 @@
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
-      :workspace-slug="workspaceSlug"
+      :workspace="workspaceResult?.workspaceBySlug"
       :project-permissions="projectResult?.project.permissions.canMoveToWorkspace"
       @project-selected="onProjectSelected"
     />
@@ -84,6 +84,7 @@ graphql(`
     }
     workspace {
       id
+      slug
       permissions {
         canMoveProjectToWorkspace(projectId: $projectId) {
           ...FullPermissionCheckResult
