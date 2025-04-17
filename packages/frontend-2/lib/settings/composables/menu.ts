@@ -184,7 +184,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const showMakeGuest = computed(
-    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Guest
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
   )
 
   const showMakeMember = computed(
@@ -206,6 +206,7 @@ export const useSettingsMembersActions = (params: {
   const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
+    const headerItems: LayoutMenuItem[] = []
     const mainItems: LayoutMenuItem[] = []
     const footerItems: LayoutMenuItem[] = []
 
@@ -213,6 +214,14 @@ export const useSettingsMembersActions = (params: {
       mainItems.push({
         title: 'Make admin...',
         id: WorkspaceUserActionTypes.MakeAdmin
+      })
+    }
+    if (showRemoveAdmin.value) {
+      mainItems.push({
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
     if (showMakeGuest.value) {
@@ -230,13 +239,13 @@ export const useSettingsMembersActions = (params: {
       })
     }
     if (showUpgradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Upgrade to editor...',
         id: WorkspaceUserActionTypes.UpgradeEditor
       })
     }
     if (showDowngradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
         disabled: targetUserRole.value === Roles.Workspace.Admin,
@@ -252,14 +261,6 @@ export const useSettingsMembersActions = (params: {
       })
     }
 
-    if (showRemoveAdmin.value) {
-      footerItems.push({
-        title: 'Revoke admin access...',
-        id: WorkspaceUserActionTypes.RemoveAdmin,
-        disabled: isOnlyAdmin.value,
-        disabledTooltip: 'There must be at least one admin in this workspace'
-      })
-    }
     if (showRemoveFromWorkspace.value) {
       footerItems.push({
         title: 'Remove from workspace...',
@@ -278,6 +279,7 @@ export const useSettingsMembersActions = (params: {
     }
 
     const result: LayoutMenuItem[][] = []
+    if (headerItems.length) result.push(headerItems)
     if (mainItems.length) result.push(mainItems)
     if (footerItems.length) result.push(footerItems)
     return result
