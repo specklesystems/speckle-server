@@ -53,16 +53,16 @@ export const useWorkspaceUsage = (slug: string) => {
   const projectCount = computed(() => usageState.value?.plan?.usage.projectCount ?? 0)
   const modelCount = computed(() => usageState.value?.plan?.usage.modelCount ?? 0)
 
-  const teamCount = computed(() => result.value?.workspaceBySlug?.team?.totalCount ?? 0)
+  const teamCount = computed(() => usageState.value?.team?.totalCount ?? 0)
 
   const adminCount = computed(
-    () => result.value?.workspaceBySlug?.teamByRole.admins?.totalCount ?? 0
+    () => usageState.value?.teamByRole.admins?.totalCount ?? 0
   )
   const memberCount = computed(
-    () => result.value?.workspaceBySlug?.teamByRole.members?.totalCount ?? 0
+    () => usageState.value?.teamByRole.members?.totalCount ?? 0
   )
   const guestCount = computed(
-    () => result.value?.workspaceBySlug?.teamByRole.guests?.totalCount ?? 0
+    () => usageState.value?.teamByRole.guests?.totalCount ?? 0
   )
 
   return {
