@@ -203,13 +203,21 @@ export = {
   },
   ProjectMutations: {
     async batchDelete(_parent, args, ctx) {
-      args.ids.forEach((id) => {
-        throwIfResourceAccessNotAllowed({
-          resourceId: id,
-          resourceType: TokenResourceIdentifierType.Project,
-          resourceAccessRules: ctx.resourceAccessRules
+      await Promise.all(
+        args.ids.map(async (id) => {
+          throwIfResourceAccessNotAllowed({
+            resourceId: id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canDelete = await ctx.authPolicies.project.canDelete({
+            projectId: id,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canDelete)
         })
-      })
+      )
 
       const results = await withOperationLogging(
         async () =>
@@ -251,11 +259,11 @@ export = {
         streamId: projectId //legacy
       })
 
-      const canUpdate = await authPolicies.project.canUpdate({
+      const canDelete = await authPolicies.project.canDelete({
         projectId,
         userId
       })
-      throwIfAuthNotOk(canUpdate)
+      throwIfAuthNotOk(canDelete)
 
       const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
