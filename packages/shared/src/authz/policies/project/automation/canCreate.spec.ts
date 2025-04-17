@@ -20,7 +20,7 @@ const buildCanCreatePolicy = (
     getEnv: async () => parseFeatureFlags({}),
     getProject: async () => ({
       id: 'project-id',
-      workspaceId: 'workspace-id',
+      workspaceId: null,
       isDiscoverable: false,
       isPublic: false,
       allowPublicComments: false
@@ -127,6 +127,13 @@ describe('canCreateAutomation', () => {
 
   describe('with workspace project', () => {
     const overrides = {
+      getProject: async () => ({
+        id: 'project-id',
+        workspaceId: 'workspace-id',
+        isDiscoverable: false,
+        isPublic: false,
+        allowPublicComments: false
+      }),
       getWorkspace: async () => ({
         id: 'workspace-id',
         slug: 'workspace-slug'
