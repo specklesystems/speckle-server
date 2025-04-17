@@ -2,7 +2,7 @@
   <ClientOnly>
     <div class="position left-2 sm:left-auto right-2 bottom-2 fixed z-[45]">
       <div
-        v-if="showBanner"
+        v-show="showBanner"
         class="rounded-lg flex flex-col w-full sm:max-w-96 border border-outline-2 shadow-md bg-foundation-3 dark:bg-foundation"
       >
         <img
