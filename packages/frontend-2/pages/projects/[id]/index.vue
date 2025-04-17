@@ -105,6 +105,9 @@ graphql(`
       canUpdate {
         ...FullPermissionCheckResult
       }
+      canMoveToWorkspace {
+        ...FullPermissionCheckResult
+      }
     }
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
@@ -315,7 +318,7 @@ const shouldShowWorkspaceAlert = computed(
 )
 
 const disableLegacyMoveProjectButton = computed(
-  () => project.value && project.value.role !== Roles.Stream.Owner
+  () => !project.value?.permissions.canMoveToWorkspace.authorized
 )
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
