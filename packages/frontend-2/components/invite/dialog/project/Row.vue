@@ -80,6 +80,17 @@
               </Transition>
             </div>
           </div>
+          <FormSelectProjectRoles
+            v-if="showProjectRoles"
+            v-model="projectRole"
+            label="Select role"
+            :name="`fields.${index}.projectRole`"
+            class="w-40"
+            mount-menu-on-body
+            show-label
+            :allow-unset="false"
+            :hidden-items="[Roles.Stream.Owner]"
+          />
         </div>
       </div>
       <CommonTextLink class="mt-7">
@@ -107,6 +118,7 @@ import type { CSSProperties } from 'vue'
 import type { InviteProjectItem } from '~~/lib/invites/helpers/types'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import { Roles } from '@speckle/shared'
 
 type SelectedUser = {
   id: string
@@ -139,6 +151,7 @@ const props = defineProps<{
   index: number
   showDelete?: boolean
   canInviteNewMembers?: boolean
+  showProjectRoles?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -187,6 +200,16 @@ const isMenuOpen = ref(false)
 const filteredSuggestions = computed(() =>
   search.value ? result.value?.project?.invitableCollaborators?.items || [] : []
 )
+
+const projectRole = computed({
+  get: () => props.modelValue.projectRole,
+  set: (value) => {
+    emit('update:modelValue', {
+      ...props.modelValue,
+      projectRole: value
+    })
+  }
+})
 
 const email = computed({
   get: () => props.modelValue.email,

@@ -11,7 +11,8 @@
             :item="item"
             :index="index"
             :show-delete="fields.length > 1"
-            :can-invite-new-members="isAdmin"
+            :can-invite-new-members="isAdmin || !isInWorkspace"
+            :show-project-roles="!isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
           />
@@ -44,6 +45,7 @@ graphql(`
   fragment InviteDialogProject_Project on Project {
     id
     name
+    workspaceId
     workspace {
       id
       name
@@ -81,6 +83,7 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteProjectItem>('fields')
 
+const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
