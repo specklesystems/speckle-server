@@ -9,6 +9,7 @@ import {
   isNewWorkspacePlan,
   doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
+import type { WorkspacesPlan_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import {
   WorkspacePlanStatuses,
   BillingInterval
@@ -19,6 +20,7 @@ import { useActiveWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 graphql(`
   fragment WorkspacesPlan_Workspace on Workspace {
     id
+    slug
     plan {
       status
       createdAt
@@ -47,22 +49,30 @@ graphql(`
   }
 `)
 
+export const usePlanState = () =>
+  useState<WorkspacesPlan_WorkspaceFragment | null>('plan', () => null)
+
 export const useWorkspacePlan = (slug: string) => {
+  const planState = usePlanState()
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
   const { prices } = useActiveWorkspacePlanPrices()
 
-  const { result } = useQuery(
+  const { onResult } = useQuery(
     workspacePlanQuery,
     () => ({
       slug
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled
+      enabled: isBillingIntegrationEnabled.value && slug !== planState.value?.slug
     })
   )
 
-  const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
-  const plan = computed(() => result.value?.workspaceBySlug?.plan)
+  onResult((result) => {
+    planState.value = result.data?.workspaceBySlug
+  })
+
+  const subscription = computed(() => planState.value?.subscription)
+  const plan = computed(() => planState.value?.plan)
   const currency = computed(() => subscription.value?.currency || 'usd')
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
