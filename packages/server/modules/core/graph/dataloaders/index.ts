@@ -12,7 +12,8 @@ import {
   getStreamRolesFactory,
   getUserStreamCountsFactory,
   getStreamsSourceAppsFactory,
-  getStreamsCollaboratorsFactory
+  getStreamsCollaboratorsFactory,
+  getStreamsCollaboratorCountsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash'
 import {
@@ -32,14 +33,9 @@ import {
   getUserAuthoredCommitCountsFactory,
   getUserStreamCommitCountsFactory
 } from '@/modules/core/repositories/commits'
-import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
+import { Scope } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCountsFactory,
-  getCommentParentsFactory,
-  getCommentReplyAuthorIdsFactory,
-  getCommentReplyCountsFactory,
-  getCommentsResourcesFactory,
-  getCommentsViewedAtFactory,
   getCommitCommentCountsFactory,
   getStreamCommentCountsFactory
 } from '@/modules/comments/repositories/comments'
@@ -50,13 +46,12 @@ import {
   getStreamBranchCountsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
-import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import {
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationRunTriggerRecord,
@@ -71,8 +66,8 @@ import {
   getRevisionsTriggerDefinitionsFactory
 } from '@/modules/automate/repositories/automations'
 import {
-  getFunction,
-  getFunctionReleases
+  getFunctionFactory,
+  getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
 import {
   FunctionReleaseSchemaType,
@@ -96,6 +91,9 @@ import {
   CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata
 } from '@/modules/core/domain/commits/types'
+import { logger } from '@/observability/logging'
+import { getLastVersionByProjectIdFactory } from '@/modules/core/repositories/versions'
+import { StreamRoles } from '@speckle/shared'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -115,13 +113,8 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
     const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
     const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
-    const getCommentsResources = getCommentsResourcesFactory({ db })
-    const getCommentsViewedAt = getCommentsViewedAtFactory({ db })
     const getCommitCommentCounts = getCommitCommentCountsFactory({ db })
     const getBranchCommentCounts = getBranchCommentCountsFactory({ db })
-    const getCommentReplyCounts = getCommentReplyCountsFactory({ db })
-    const getCommentReplyAuthorIds = getCommentReplyAuthorIdsFactory({ db })
-    const getCommentParents = getCommentParentsFactory({ db })
     const getBranchesByIds = getBranchesByIdsFactory({ db })
     const getStreamBranchesByName = getStreamBranchesByNameFactory({ db })
     const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
@@ -144,6 +137,10 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
     const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
+    const getLastVersionByProjectId = getLastVersionByProjectIdFactory({ db })
+    const getStreamsCollaboratorCounts = getStreamsCollaboratorCountsFactory({
+      db
+    })
 
     return {
       streams: {
@@ -214,6 +211,22 @@ const dataLoadersDefinition = defineRequestDataloaders(
             return streamIds.map((i) => results[i] || [])
           }
         ),
+
+        /**
+         * Get stream collaborator counts by role
+         */
+        getCollaboratorCounts: createLoader<
+          string,
+          Nullable<{
+            [role in StreamRoles]?: number
+          }>
+        >(async (streamIds) => {
+          const results = await getStreamsCollaboratorCounts({
+            streamIds: streamIds.slice()
+          })
+
+          return streamIds.map((i) => results[i] || null)
+        }),
 
         /**
          * Get favorite metadata for a specific stream and user
@@ -357,7 +370,16 @@ const dataLoadersDefinition = defineRequestDataloaders(
               return loader
             }
           }
-        })()
+        })(),
+        getLastVersion: createLoader<string, Nullable<CommitRecord>>(
+          async (projectIds) => {
+            const results = keyBy(
+              await getLastVersionByProjectId({ projectIds }),
+              (c) => c.projectId
+            )
+            return projectIds.map((projectId) => results[projectId] || null)
+          }
+        )
       },
       branches: {
         getCommitCount: createLoader<string, number>(async (branchIds) => {
@@ -435,38 +457,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
           const results = keyBy(await getCommits(commitIds.slice()), (c) => c.id)
           return commitIds.map((i) => results[i] || null)
         })
-      },
-      comments: {
-        getViewedAt: createLoader<string, Nullable<Date>>(async (commentIds) => {
-          if (!userId) return commentIds.slice().map(() => null)
-
-          const results = keyBy(
-            await getCommentsViewedAt(commentIds.slice(), userId),
-            'commentId'
-          )
-          return commentIds.map((id) => results[id]?.viewedAt || null)
-        }),
-        getResources: createLoader<string, ResourceIdentifier[]>(async (commentIds) => {
-          const results = await getCommentsResources(commentIds.slice())
-          return commentIds.map((id) => results[id]?.resources || [])
-        }),
-        getReplyCount: createLoader<string, number>(async (threadIds) => {
-          const results = keyBy(
-            await getCommentReplyCounts(threadIds.slice()),
-            'threadId'
-          )
-          return threadIds.map((id) => results[id]?.count || 0)
-        }),
-        getReplyAuthorIds: createLoader<string, string[]>(async (threadIds) => {
-          const results = await getCommentReplyAuthorIds(threadIds.slice())
-          return threadIds.map((id) => results[id] || [])
-        }),
-        getReplyParent: createLoader<string, Nullable<CommentRecord>>(
-          async (replyIds) => {
-            const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
-            return replyIds.map((id) => results[id] || null)
-          }
-        )
       },
       users: {
         /**
@@ -595,7 +585,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
           })
           return ids.map((i) => results[i] || [])
         }),
-        getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        getRevisionFunctions: createLoader<string, AutomationRevisionFunctionRecord[]>(
           async (ids) => {
             const results = await getRevisionsFunctions({
               automationRevisionIds: ids.slice()
@@ -618,7 +608,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
             const results = await Promise.all(
               fnIds.map(async (fnId) => {
                 try {
-                  return await getFunction({ functionId: fnId })
+                  return await getFunctionFactory({ logger })({ functionId: fnId })
                 } catch (e) {
                   const isNotFound =
                     e instanceof ExecutionEngineFailedResponseError &&
@@ -642,7 +632,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
         >(
           async (keys) => {
             const results = keyBy(
-              await getFunctionReleases({
+              await getFunctionReleasesFactory({ logger })({
                 ids: keys.map(([fnId, fnReleaseId]) => ({
                   functionId: fnId,
                   functionReleaseId: fnReleaseId

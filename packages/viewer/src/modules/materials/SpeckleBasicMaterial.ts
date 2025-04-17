@@ -22,7 +22,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff: Vector2 = new Vector2()
 
-  private _billboardPixelHeight!: number
+  private _billboardPixelHeight: number
 
   protected get vertexProgram(): string {
     return speckleBasicVert
@@ -95,6 +95,8 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff)
       SpeckleBasicMaterial.matBuff.copy(camera.projectionMatrix).invert()
       this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
+      /** TO DO: Revisit and Enable this */
+      // this.userData.billboardPos.value.copy(object.position)
     }
 
     if (this.defines && this.defines['USE_RTE']) {

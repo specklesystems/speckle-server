@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          :name="workspace?.name"
+          name="Projects"
           :separator="false"
         />
       </Portal>
@@ -46,16 +46,19 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
+        class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
       >
+        <WorkspaceEmptyStateIllustration />
         <span class="text-body-2xs text-foreground-2 text-center">
           Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
-          v-if="!isWorkspaceGuest"
           button-copy="Add your first project"
-          :is-workspace-admin="isWorkspaceAdmin"
-          :disabled="workspace?.readOnly"
+          :workspace-name="workspace?.name || ''"
+          :workspace-slug="workspaceSlug"
+          :workspace-plan="workspace?.plan?.name ? workspace?.plan?.name : null"
+          :can-create-project="canCreateProject"
+          :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -72,9 +75,9 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <WorkspaceMoveProjectsDialog
+        <WorkspaceMoveProjectManager
           v-model:open="showMoveProjectsDialog"
-          :workspace="workspace"
+          :workspace-slug="workspaceSlug"
         />
       </template>
     </template>
@@ -84,7 +87,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { Roles, type Nullable, type Optional, type StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -94,11 +97,9 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -106,9 +107,8 @@ graphql(`
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
+    ...WorkspaceHeader_Workspace
     ...BillingAlert_Workspace
-    ...WorkspaceMixpanelUpdateGroup_Workspace
-    ...MoveProjectsDialog_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
@@ -117,7 +117,11 @@ graphql(`
       completed
       state
     }
-    readOnly
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -131,9 +135,11 @@ graphql(`
   }
 `)
 
-const { activeUser } = useActiveUser()
+const props = defineProps<{
+  workspaceSlug: string
+}>()
+
 const { validateCheckoutSession } = useBillingActions()
-const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
 const {
@@ -143,10 +149,6 @@ const {
 } = useDebouncedTextInput({
   debouncedBy: 800
 })
-
-const props = defineProps<{
-  workspaceSlug: string
-}>()
 
 const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
@@ -191,6 +193,13 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
 })
 const { finalizeWizard } = useWorkspacesWizard()
 
+const canCreateProject = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canCreateProject
+)
+const canMoveProjectToWorkspace = computed(
+  () => initialQueryResult.value?.workspaceBySlug?.permissions.canMoveProjectToWorkspace
+)
+
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
@@ -199,9 +208,6 @@ const showEmptyState = computed(() => {
 
   return projects.value && !projects.value?.items?.length
 })
-
-const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {
   const isLoading = areQueriesLoading.value || (!!search.value && query.loading.value)
@@ -236,10 +242,6 @@ onResult((queryResult) => {
   }
 
   if (queryResult.data?.workspaceBySlug) {
-    workspaceMixpanelUpdateGroup(
-      queryResult.data.workspaceBySlug,
-      activeUser.value?.email
-    )
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })

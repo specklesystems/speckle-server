@@ -59,32 +59,26 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
   legacyCreateStreamFactory,
-  legacyUpdateStreamFactory
+  updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -100,7 +94,6 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { addBranchDeletedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -115,10 +108,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -131,11 +120,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -171,13 +156,20 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
-const deleteStream = deleteStreamFactory({ db })
-const updateStream = legacyUpdateStreamFactory({
-  updateStream: updateStreamFactory({ db })
+const deleteStream = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  getStream,
+  emitEvent: getEventBus().emit,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+
+const updateStream = updateStreamAndNotifyFactory({
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
@@ -185,14 +177,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -200,21 +185,20 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 const getStreamsUsers = getStreamsCollaboratorsFactory({ db })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
 
   const userTwo: BasicTestUser = {
     name: 'Dimitrie Stefanescu 2',
-    email: 'didimitrie2@gmail.com',
+    email: 'didimitrie2@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
@@ -285,11 +269,14 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update a stream', async () => {
-      await updateStream({
-        id: testStream.id,
-        name: 'Modified Name',
-        description: 'Wooot'
-      })
+      await updateStream(
+        {
+          id: testStream.id,
+          name: 'Modified Name',
+          description: 'Wooot'
+        },
+        userOne.id
+      )
       const stream = await getStream({ streamId: testStream.id })
       expect(stream?.name).to.equal('Modified Name')
       expect(stream?.description).to.equal('Wooot')
@@ -320,7 +307,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
 
-      await deleteStream(id)
+      await deleteStream(id, userOne.id)
       const stream = await getStream({ streamId: id })
 
       expect(stream).to.not.be.ok
@@ -449,7 +436,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update stream updatedAt on stream update ', async () => {
-      await updateStream({ id: updatableStream.id, name: 'TU1' })
+      await updateStream({ id: updatableStream.id, name: 'TU1' }, userOne.id)
       const su = await getStream({ streamId: updatableStream.id })
 
       expect(su?.updatedAt).to.be.ok

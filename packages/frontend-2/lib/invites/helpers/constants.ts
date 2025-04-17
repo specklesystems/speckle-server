@@ -1,4 +1,8 @@
-import type { InviteServerItem, InviteGenericItem } from '~~/lib/invites/helpers/types'
+import type {
+  InviteServerItem,
+  InviteWorkspaceItem,
+  InviteProjectItem
+} from '~~/lib/invites/helpers/types'
 import { Roles } from '@speckle/shared'
 
 export const emptyInviteServerItem: InviteServerItem = {
@@ -7,7 +11,14 @@ export const emptyInviteServerItem: InviteServerItem = {
   project: undefined
 }
 
-export const emptyInviteGenericItem: InviteGenericItem = {
+export const emptyInviteProjectItem: InviteProjectItem = {
+  email: '',
+  serverRole: Roles.Server.User,
+  projectRole: Roles.Stream.Contributor,
+  project: undefined
+}
+
+export const emptyInviteWorkspaceItem: InviteWorkspaceItem = {
   email: '',
   workspaceRole: undefined,
   projectRole: undefined,

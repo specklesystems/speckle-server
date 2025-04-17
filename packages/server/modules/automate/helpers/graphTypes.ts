@@ -1,5 +1,5 @@
 import {
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionRecord,
@@ -56,7 +56,7 @@ export type AutomationRunTriggerGraphQLReturn = AutomationRunTriggerRecord & {
 }
 
 export type AutomationRevisionFunctionGraphQLReturn = Merge<
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   {
     functionInputs: Nullable<Record<string, unknown>>
     release: AutomateFunctionReleaseGraphQLReturn

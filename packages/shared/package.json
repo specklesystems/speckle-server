@@ -18,7 +18,11 @@
     "lint:eslint": "eslint .",
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc",
-    "lint:ci": "yarn lint:tsc"
+    "lint:ci": "yarn lint:tsc",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:single-run": "vitest run"
   },
   "sideEffects": false,
   "engines": {
@@ -32,8 +36,11 @@
     "3d"
   ],
   "dependencies": {
+    "dayjs": "^1.11.13",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
+    "nanoid": "^5.1.5",
+    "true-myth": "^8.5.0",
     "type-fest": "^3.11.1"
   },
   "peerDependencies": {
@@ -54,6 +61,9 @@
     "@types/ua-parser-js": "^0.7.39",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
+    "@vitest/coverage-v8": "^3.0.9",
+    "@vitest/ui": "^3.0.9",
+    "crypto-random-string": "^5.0.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "knex": "^2.5.1",
@@ -63,29 +73,43 @@
     "tshy": "^1.14.0",
     "typescript": "^4.5.4",
     "ua-parser-js": "^1.0.38",
+    "vitest": "^3.0.7",
     "znv": "^0.4.0",
     "zod": "^3.22.4"
   },
   "stableVersion": "0.1.0",
   "tshy": {
     "exports": {
+      ".": "./src/index.ts",
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
       "./observability": "./src/observability/index.ts",
-      "./dist/*": "./dist/*",
-      ".": "./src/index.ts"
-    }
+      "./authz": "./src/authz/index.ts",
+      "./dist/*": "./dist/*"
+    },
+    "exclude": [
+      "**/*.spec.ts",
+      "src/tests/**/*.ts"
+    ]
   },
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   },
   "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    },
     "./package.json": "./package.json",
     "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
     "./environment": {
@@ -108,16 +132,16 @@
         "default": "./dist/commonjs/observability/index.js"
       }
     },
-    "./dist/*": "./dist/*",
-    ".": {
+    "./authz": {
       "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "types": "./dist/esm/authz/index.d.ts",
+        "default": "./dist/esm/authz/index.js"
       },
       "require": {
-        "types": "./dist/commonjs/index.d.ts",
-        "default": "./dist/commonjs/index.js"
+        "types": "./dist/commonjs/authz/index.d.ts",
+        "default": "./dist/commonjs/authz/index.js"
       }
-    }
+    },
+    "./dist/*": "./dist/*"
   }
 }

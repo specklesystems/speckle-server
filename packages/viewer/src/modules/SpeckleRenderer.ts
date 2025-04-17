@@ -348,10 +348,7 @@ export default class SpeckleRenderer {
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
-    this.batcher = new Batcher(
-      this.renderer.capabilities.maxVertexUniforms,
-      this.renderer.capabilities.floatVertexTextures
-    )
+    this.batcher = new Batcher(this.renderer.capabilities)
 
     this._pipeline = new DefaultPipeline(this)
 
@@ -688,7 +685,7 @@ export default class SpeckleRenderer {
     } else if (Materials.isFilterMaterial(material)) {
       this.setFilterMaterial(rvMap, material)
     } else if (
-      Materials.isRendeMaterial(material) ||
+      Materials.isRenderMaterial(material) ||
       Materials.isDisplayStyle(material)
     ) {
       this.setDataMaterial(rvMap, material)
@@ -807,14 +804,14 @@ export default class SpeckleRenderer {
     if (!rv || !rv.batchId) {
       return null
     }
-    return this.batcher.getBatch(rv).getMaterial(rv)
+    return this.batcher.getBatch(rv)?.getMaterial(rv) ?? null
   }
 
   public getBatchMaterial(rv: NodeRenderView): Material | null {
     if (!rv || !rv.batchId) {
       return null
     }
-    return this.batcher.getBatch(rv).batchMaterial
+    return this.batcher.getBatch(rv)?.batchMaterial ?? null
   }
 
   public resetMaterials() {
@@ -1258,7 +1255,7 @@ export default class SpeckleRenderer {
 
   public getObject(rv: NodeRenderView): BatchObject | null {
     const batch = this.batcher.getBatch(rv) as MeshBatch
-    if (batch.geometryType !== GeometryType.MESH) {
+    if (!batch || batch.geometryType !== GeometryType.MESH) {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }

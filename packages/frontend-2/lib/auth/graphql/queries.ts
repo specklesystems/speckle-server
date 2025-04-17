@@ -59,3 +59,59 @@ export const authorizableAppMetadataQuery = graphql(`
     }
   }
 `)
+
+export const activeUserWorkspaceExistenceCheckQuery = graphql(`
+  query ActiveUserWorkspaceExistenceCheck {
+    activeUser {
+      id
+      verified
+      isOnboardingFinished
+      versions(limit: 0) {
+        totalCount
+      }
+      workspaces(limit: 0) {
+        totalCount
+        items {
+          id
+          slug
+          creationState {
+            completed
+          }
+        }
+      }
+      discoverableWorkspaces {
+        id
+      }
+      workspaceJoinRequests(limit: 0) {
+        totalCount
+      }
+    }
+  }
+`)
+
+export const activeUserActiveWorkspaceCheckQuery = graphql(`
+  query ActiveUserActiveWorkspaceCheck {
+    activeUser {
+      id
+      isProjectsActive
+      activeWorkspace {
+        id
+        slug
+      }
+    }
+  }
+`)
+
+export const projectWorkspaceAccessCheckQuery = graphql(`
+  query projectWorkspaceAccessCheck($projectId: String!) {
+    project(id: $projectId) {
+      id
+      role
+      workspace {
+        id
+        slug
+        role
+      }
+    }
+  }
+`)

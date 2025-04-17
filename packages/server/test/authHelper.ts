@@ -32,8 +32,10 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -83,11 +85,15 @@ export type BasicTestUser = {
    */
   id: string
   role?: ServerRoles
+  /**
+   * Even if disabled server-wide, allow personal emails for this user
+   */
+  allowPersonalEmail?: boolean
 } & Partial<UserRecord>
 
 const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
   name: faker.person.fullName(),
-  email: faker.internet.email(),
+  email: `${cryptoRandomString({ length: 15 })}@example.org`,
   id: '',
   ...user
 })
@@ -114,10 +120,13 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   }
 
   if (!baseUser.email) {
-    setVal('email', `${kebabCase(baseUser.name)}@someemail.com`)
+    setVal('email', `${kebabCase(baseUser.name)}@example.org`)
   }
 
-  const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
+  const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
+    skipPropertyValidation: true,
+    allowPersonalEmail: baseUser.allowPersonalEmail
+  })
   setVal('id', id)
 
   return baseUser
@@ -191,4 +200,20 @@ export async function createAuthTokenForUser(
     'test-runner-token',
     scopes as ServerScope[]
   )
+}
+
+/**
+ * Login a user for tests and return the ApolloServer instance
+ */
+export async function login(user: Pick<BasicTestUser, 'id' | 'role'>) {
+  const token = await createAuthTokenForUser(user.id, AllScopes)
+  return await testApolloServer({
+    context: await createTestContext({
+      auth: true,
+      userId: user.id,
+      token,
+      role: user.role,
+      scopes: AllScopes
+    })
+  })
 }

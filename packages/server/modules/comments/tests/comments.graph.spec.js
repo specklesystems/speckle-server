@@ -22,7 +22,8 @@ const {
   markCommentViewedFactory,
   insertCommentsFactory,
   insertCommentLinksFactory,
-  deleteCommentFactory
+  deleteCommentFactory,
+  getCommentsResourcesFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const {
@@ -36,7 +37,8 @@ const {
 const {
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   getBranchByIdFactory,
@@ -54,7 +56,7 @@ const {
 const {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  getStreamObjectsFactory
 } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -80,11 +82,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const {
-  addCommitCreatedActivityFactory
-} = require('@/modules/activitystream/services/commitActivity')
 const {
   getUsersFactory,
   getUserFactory,
@@ -114,6 +111,10 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  getViewerResourcesFromLegacyIdentifiersFactory,
+  getViewerResourcesForCommentsFactory
+} = require('@/modules/core/services/commit/viewerResources')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -123,6 +124,18 @@ const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
 const markCommentViewed = markCommentViewedFactory({ db })
+
+const getViewerResourcesFromLegacyIdentifiers =
+  getViewerResourcesFromLegacyIdentifiersFactory({
+    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers: (...args) =>
+        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    }),
+    getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+    getStreamObjects: getStreamObjectsFactory({ db })
+  })
+
 const createComment = createCommentFactory({
   checkStreamResourcesAccess: streamResourceCheck,
   validateInputAttachments: validateInputAttachmentsFactory({
@@ -132,7 +145,8 @@ const createComment = createCommentFactory({
   insertCommentLinks: insertCommentLinksFactory({ db }),
   deleteComment: deleteCommentFactory({ db }),
   markCommentViewed,
-  emitEvent: getEventBus().emit
+  emitEvent: getEventBus().emit,
+  getViewerResourcesFromLegacyIdentifiers
 })
 
 const getObject = getObjectFactory({ db })
@@ -144,11 +158,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -219,8 +229,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString) {
@@ -846,7 +855,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, true],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -866,7 +875,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -886,7 +895,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, true],
+            [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -969,8 +978,8 @@ describe('Graphql @comments', () => {
             [archiveOthersComment, false],
             [editOthersComment, false],
             [replyToAComment, false],
-            [queryComment, false],
-            [queryComments, false],
+            [queryComment, true],
+            [queryComments, true],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
@@ -987,8 +996,8 @@ describe('Graphql @comments', () => {
             [archiveOthersComment, false],
             [editOthersComment, false],
             [replyToAComment, false],
-            [queryComment, false],
-            [queryComments, false],
+            [queryComment, true],
+            [queryComments, true],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
@@ -1155,13 +1164,13 @@ describe('Graphql @comments', () => {
           }
         })
 
-        describe(`testing ${streamContext.cases.length} cases of acting on ${
+        describe(`testing ${streamContext.cases.length} cases of acting on "${
           stream.name
-        } stream where I'm a ${
-          user && stream.role ? stream.role : 'trouble:maker'
+        }" stream where I ${
+          user && stream.role ? 'have the role ' + stream.role : 'have no role'
         }`, () => {
           streamContext.cases.forEach(([testCase, shouldSucceed]) => {
-            it(`${shouldSucceed ? 'can' : 'am not allowed to'} ${
+            it(`${shouldSucceed ? 'should' : 'should not be allowed to'} ${
               testCase.name
             }`, async () => {
               await testCase({ apollo, streamId: stream.id, resources, shouldSucceed })

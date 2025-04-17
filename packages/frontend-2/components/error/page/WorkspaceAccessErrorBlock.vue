@@ -5,7 +5,7 @@
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">
-import { type Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { workspaceInviteQuery } from '~/lib/workspaces/graphql/queries'
 

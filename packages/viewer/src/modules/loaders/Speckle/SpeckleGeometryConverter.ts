@@ -75,6 +75,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.TransformToGeometryData(node)
       case SpeckleType.InstanceProxy:
         return this.InstanceProxyToGeometyData(node)
+      case SpeckleType.Region:
+        return this.RegionGeometyData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -235,6 +237,17 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   }
 
   /**
+   * REGION
+   */
+  protected RegionGeometyData(node: NodeData): GeometryData | null {
+    /** Regions don't (currently) have inherent geometryic description in the viewer. They are replaced
+     * by their display values
+     */
+    node
+    return null
+  }
+
+  /**
    * MESH
    */
   protected MeshToGeometryData(node: NodeData): GeometryData | null {
@@ -250,6 +263,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
+    let normals = node.raw.vertexNormals
     let colors = undefined
     let k = 0
     while (k < faces.length) {
@@ -291,11 +305,21 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         colors = this.unpackColors(colorsRaw, true)
     }
 
+    if (normals && normals.length !== 0) {
+      if (normals.length !== vertices.length) {
+        Logger.warn(
+          `Mesh (id ${node.raw.id}) normals are mismatched with vertice counts. The number of normals must equal the number of vertices.`
+        )
+        normals = undefined
+      }
+    } else normals = undefined
+
     return {
       attributes: {
         POSITION: vertices,
         INDEX: indices,
-        ...(colors && { COLOR: colors })
+        ...(colors && { COLOR: colors }),
+        ...(normals && { NORMAL: normals })
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,

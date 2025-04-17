@@ -7,7 +7,7 @@
   >
     <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to permanently delete
-      <span class="font-medium">{{ workspace.name }}?</span>
+      <span class="font-medium">{{ workspace?.name }}?</span>
       This action cannot be undone.
     </p>
     <FormTextInput
@@ -58,6 +58,8 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useForm } from 'vee-validate'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -67,7 +69,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment>
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -80,13 +82,17 @@ const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const { sendWebhook } = useZapier()
 const { resetForm } = useForm<{ feedback: string }>()
+const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const workspaceNameInput = ref('')
 const feedback = ref('')
 
 const onDelete = async () => {
+  if (!props.workspace) return
   if (workspaceNameInput.value !== props.workspace.name) return
 
+  // Create a copy of the workspace name and ID before deletion to avoid errors after deletion/cache update
+  const { name: workspaceName, id: workspaceId } = props.workspace
   const cache = apollo.cache
   const result = await deleteWorkspace({
     workspaceId: props.workspace.id
@@ -119,26 +125,28 @@ const onDelete = async () => {
 
     mixpanel.track('Workspace Deleted', {
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspace.id,
+      workspace_id: workspaceId,
       feedback: feedback.value
-    })
-    mixpanel.get_group('workspace_id', props.workspace.id).set_once({
-      isDeleted: true
     })
 
-    await sendWebhook(defaultZapierWebhookUrl, {
-      userId: activeUser.value?.id ?? '',
-      feedback: feedback.value
-        ? `Action: Workspace Deleted(${props.workspace.name}) Feedback: ${feedback.value}`
-        : `Action: Workspace Deleted(${props.workspace.name}) - No feedback provided`
-    })
+    if (feedback.value) {
+      await sendWebhook(defaultZapierWebhookUrl, {
+        feedback: [
+          `**Action:** Workspace Deleted`,
+          `**Workspace:** ${workspaceName}`,
+          `**User ID:** ${activeUser.value?.id}`,
+          `**Workspace ID:** ${workspaceId}`,
+          `**Feedback:** ${feedback.value}`
+        ].join('\n')
+      })
+    }
 
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Workspace deleted',
-      description: `The ${props.workspace.name} workspace has been deleted`
+      title: `${workspaceName} workspace deleted`
     })
 
+    mutateActiveWorkspaceSlug(null)
     router.push(homeRoute)
     isOpen.value = false
   } else {
@@ -163,7 +171,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Delete',
     props: {
       color: 'danger',
-      disabled: workspaceNameInput.value !== props.workspace.name
+      disabled: workspaceNameInput.value !== props.workspace?.name
     },
     onClick: onDelete
   }

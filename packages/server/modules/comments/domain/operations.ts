@@ -57,6 +57,8 @@ export type GetComment = (params: {
   userId?: string
 }) => Promise<Optional<ExtendedComment>>
 
+export type GetComments = (params: { ids: string[] }) => Promise<CommentRecord[]>
+
 export type CheckStreamResourceAccess = (
   res: ResourceIdentifier,
   streamId: string
@@ -319,3 +321,8 @@ export type GetPaginatedProjectComments = (
   items: CommentRecord[]
   cursor: string | null
 }>
+
+export type GetStreamCommentCount = (
+  streamId: string,
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+) => Promise<number>

@@ -70,9 +70,6 @@ export type CreateCommitByBranchId = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  }>,
-  options?: Partial<{
-    notify: boolean
   }>
 ) => Promise<CommitWithStreamBranchId>
 
@@ -86,9 +83,6 @@ export type CreateCommitByBranchName = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  }>,
-  options?: Partial<{
-    notify: boolean
   }>
 ) => Promise<Commit>
 

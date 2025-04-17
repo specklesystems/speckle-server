@@ -23,7 +23,8 @@ import {
   type SpeckleView,
   type SunLightConfiguration,
   type ViewerParams,
-  StencilOutlineType
+  StencilOutlineType,
+  UpdateFlags
 } from '../IViewer.js'
 import { Viewer } from './Viewer.js'
 import { SectionTool } from './extensions/SectionTool.js'
@@ -44,6 +45,7 @@ import { BatchObject } from './batching/BatchObject.js'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
+import { HybridCameraController } from './extensions/HybridCameraController.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -120,7 +122,7 @@ export class LegacyViewer extends Viewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super(container, params)
-    this.cameraController = this.createExtension(CameraController)
+    this.cameraController = this.createExtension(HybridCameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
     this.sections = this.createExtension(SectionTool)
     this.createExtension(SectionOutlines)
@@ -206,6 +208,7 @@ export class LegacyViewer extends Viewer {
     this.selection.clearSelection()
     if (this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects.length = 0
+    this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
     return Promise.resolve(this.filtering.filteringState)
   }
 

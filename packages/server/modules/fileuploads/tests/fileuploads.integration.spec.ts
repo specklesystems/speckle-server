@@ -124,13 +124,13 @@ const createToken = createTokenFactory({
   })
 })
 
-describe('FileUploads @fileuploads', () => {
+describe('FileUploads @fileuploads integration', () => {
   let server: Server
   let app: Express
 
   const userOne = {
     name: 'User',
-    email: 'user@gmail.com',
+    email: 'user@example.org',
     password: 'jdsadjsadasfdsa'
   }
 

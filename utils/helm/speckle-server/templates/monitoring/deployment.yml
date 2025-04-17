@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,12 +30,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.monitoring.requests }}
           requests:
-            cpu: {{ .Values.monitoring.requests.cpu }}
-            memory: {{ .Values.monitoring.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.monitoring.limits }}
           limits:
-            cpu: {{ .Values.monitoring.limits.cpu }}
-            memory: {{ .Values.monitoring.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -97,6 +100,9 @@ spec:
           - name: LOG_PRETTY
             value: {{ .Values.monitoring.logPretty | quote }}
 
+          {{- with .Values.monitoring.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
+          {{- end }}
         startupProbe:
           periodSeconds: 10
           failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
@@ -125,6 +131,12 @@ spec:
       priorityClassName: low-priority
       {{- if .Values.monitoring.serviceAccount.create }}
       serviceAccountName: {{ include "monitoring.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: 10
       securityContext:
@@ -163,3 +175,4 @@ spec:
       {{- if .Values.monitoring.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
+{{- end }}

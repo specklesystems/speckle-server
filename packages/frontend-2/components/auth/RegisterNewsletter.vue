@@ -1,5 +1,6 @@
 <template>
   <FormCheckbox
+    id="newsletter-consent-checkbox"
     v-model="newsletterConsent"
     name="newsletter"
     label="Opt in for exclusive Speckle news and tips"
@@ -8,5 +9,7 @@
 </template>
 
 <script setup lang="ts">
-const newsletterConsent = ref<true | undefined>(undefined)
+const newsletterConsent = defineModel<boolean>('newsletterConsent', {
+  required: true
+})
 </script>

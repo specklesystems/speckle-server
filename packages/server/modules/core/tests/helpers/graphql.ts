@@ -143,3 +143,88 @@ export const activeUserProjectsQuery = gql`
     }
   }
 `
+
+export const verifyUserEmailMutation = gql`
+  mutation VerifyUserEmail($input: VerifyUserEmailInput!) {
+    activeUserMutations {
+      emailMutations {
+        verify(input: $input)
+      }
+    }
+  }
+`
+
+export const getProjectWithVersionsQuery = gql`
+  query GetProjectWithVersions($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+      versions {
+        items {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`
+
+export const getProjectWithModelVersionsQuery = gql`
+  query GetProjectWithModelVersions($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+      models {
+        items {
+          versions {
+            items {
+              id
+              referencedObject
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const getNewWorkspaceExplainerDismissedQuery = gql`
+  query GetNewWorkspaceExplainerDismissed {
+    activeUser {
+      meta {
+        newWorkspaceExplainerDismissed
+      }
+    }
+  }
+`
+export const setNewWorkspaceExplainerDismissedMutation = gql`
+  mutation SetNewWorkspaceExplainerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setNewWorkspaceExplainerDismissed(value: $input)
+      }
+    }
+  }
+`
+
+export const getLegacyProjectsExplainerCollapsedQuery = gql`
+  query GetLegacyProjectsExplainerCollapsed {
+    activeUser {
+      meta {
+        legacyProjectsExplainerCollapsed
+      }
+    }
+  }
+`
+
+export const setLegacyProjectsExplainerCollapsedMutation = gql`
+  mutation SetLegacyProjectsExplainerCollapsed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setLegacyProjectsExplainerCollapsed(value: $input)
+      }
+    }
+  }
+`

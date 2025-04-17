@@ -6,13 +6,14 @@
         v-model="email"
         type="email"
         name="email"
-        label="Email"
+        label="Work email"
         placeholder="Email"
         size="lg"
         color="foundation"
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        autocomplete="email"
       />
       <FormTextInput
         type="text"
@@ -25,6 +26,7 @@
         show-label
         :disabled="loading"
         auto-focus
+        autocomplete="name"
       />
       <FormTextInput
         v-model="password"
@@ -37,6 +39,7 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="new-password"
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
@@ -55,7 +58,7 @@
     <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
     <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
       <span class="mr-2 text-foreground-3">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
+      <NuxtLink class="text-foreground" :to="finalLoginRoute">Log in</NuxtLink>
     </div>
   </form>
 </template>
@@ -66,16 +69,13 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
-import { passwordRules } from '~~/lib/auth/helpers/validation'
+import {
+  passwordRules,
+  doesNotContainBlockedDomain
+} from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
-
-/**
- * TODO:
- * - (BE) Password strength check? Do we want to use it anymore?
- * - Dim's answer: no, `passwordRules` are legit enough for now.
- */
 
 graphql(`
   fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {
@@ -96,13 +96,18 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
+const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
-const emailRules = [isEmail]
+const emailRules = computed(() =>
+  inviteToken.value || !isNoPersonalEmailsEnabled.value
+    ? [isEmail]
+    : [isEmail, doesNotContainBlockedDomain]
+)
 const nameRules = [isRequired]
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)

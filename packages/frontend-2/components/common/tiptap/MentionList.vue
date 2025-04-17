@@ -1,11 +1,11 @@
 <template>
   <div
     v-show="(query?.length || 0) >= 1"
-    class="bg-foundation text-foreground rounded shadow-md p-2"
+    class="bg-foundation dark:bg-foundation-page text-foreground rounded-md border border-outline-2 shadow"
   >
-    <ul>
+    <ul class="divide-y divide-outline-2">
       <template v-if="items.length">
-        <li v-for="(item, i) in items" :key="item.id">
+        <li v-for="(item, i) in items" :key="item.id" class="p-1">
           <CommonTiptapMentionListItem
             :item="item"
             :is-selected="i === selectedIndex"
@@ -14,7 +14,7 @@
         </li>
       </template>
       <template v-else>
-        <li>Couldn't find anyone</li>
+        <li class="p-2 text-body-2xs text-foreground-2">No matching users found</li>
       </template>
     </ul>
   </div>

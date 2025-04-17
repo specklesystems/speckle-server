@@ -60,7 +60,7 @@ export const validateContextView = (contextView: string) => {
   // Try parsing URL
   try {
     new URL(contextView, 'https://unimportant.com')
-  } catch (e) {
+  } catch {
     throw new FunctionRunReportStatusError('Invalid relative URL')
   }
 }
@@ -85,15 +85,13 @@ export const resolveStatusFromFunctionRunStatuses = (
   return AutomationRunStatuses.succeeded
 }
 
-export type ReportFunctionRunStatusDeps = {
-  getAutomationFunctionRunRecord: GetFunctionRun
-  upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
-  automationRunUpdater: UpdateAutomationRun
-  emitEvent: EventBusEmit
-}
-
 export const reportFunctionRunStatusFactory =
-  (deps: ReportFunctionRunStatusDeps) =>
+  (deps: {
+    getAutomationFunctionRunRecord: GetFunctionRun
+    upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
+    automationRunUpdater: UpdateAutomationRun
+    emitEvent: EventBusEmit
+  }) =>
   async (
     params: Pick<
       AutomationFunctionRunRecord,

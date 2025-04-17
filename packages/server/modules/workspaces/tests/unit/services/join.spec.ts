@@ -18,7 +18,7 @@ import { expect } from 'chai'
 import { assign } from 'lodash'
 
 const createTestWorkspaceWithDomains = (
-  arg?: Partial<WorkspaceWithDomains> | undefined
+  arg?: Partial<WorkspaceWithDomains>
 ): WorkspaceWithDomains => {
   const workspace: WorkspaceWithDomains = {
     createdAt: new Date(),
@@ -30,9 +30,7 @@ const createTestWorkspaceWithDomains = (
     logo: null,
     domains: [],
     discoverabilityEnabled: false,
-    domainBasedMembershipProtectionEnabled: false,
-    defaultProjectRole: Roles.Stream.Contributor,
-    defaultLogoIndex: 0
+    domainBasedMembershipProtectionEnabled: false
   }
   if (arg) assign(workspace, arg)
   return workspace
@@ -54,6 +52,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -76,6 +77,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -99,6 +103,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -123,7 +130,14 @@ describe('Workspace join services', () => {
         },
         emitWorkspaceEvent: async ({ eventName }) => {
           firedEvents.push(eventName)
-        }
+        },
+        ensureValidWorkspaceRoleSeat: async () => ({
+          type: 'editor',
+          workspaceId,
+          userId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
       })({ userId, workspaceId })
 
       expect(storedWorkspaceRole!.userId).to.equal(userId)

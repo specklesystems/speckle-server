@@ -1,6 +1,5 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueMacros from 'unplugin-vue-macros/vite'
 import dts from 'vite-plugin-dts'
 import pkg from './package.json'
 import { resolve } from 'path'
@@ -14,15 +13,11 @@ export default defineConfig({
     dts({
       exclude: ['**/*.stories.ts', '**/*.test.ts', '**/*.spec.ts', '.storybook/**/*']
     }),
-    vueMacros({
-      plugins: {
-        vue: vue({
-          script: {
-            defineModel: true
-          }
-        })
+    vue({
+      script: {
+        defineModel: true
       }
-    })
+    }) as Plugin
   ],
   build: {
     lib: {

@@ -34,7 +34,8 @@ const cleanup = async () => await truncateTables([Streams.name, Users.name])
 const getStream = getStreamFactory({ db })
 const setStreamFavorited = setStreamFavoritedFactory({ db })
 
-describe('Discoverable streams', () => {
+// Discoverability currently disabled
+describe.skip('Discoverable streams', () => {
   let apollo: ServerAndContext
 
   const me: BasicTestUser = {

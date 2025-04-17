@@ -53,11 +53,12 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   GetWorkspace,
   GetWorkspaceBySlug,
-  GetWorkspaceDomains
+  GetWorkspaceDomains,
+  ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
@@ -72,6 +73,7 @@ import {
 } from '@/modules/workspaces/domain/logic'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
 
 export const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -122,6 +124,8 @@ export const createWorkspaceInviteFactory =
 type CollectAndValidateWorkspaceTargetsFactoryDeps =
   CollectAndValidateCoreTargetsFactoryDeps & {
     getWorkspace: GetWorkspace
+    getWorkspaceRoleAndSeat: GetWorkspaceRoleAndSeat
+    validateWorkspaceMemberProjectRoleFactory: ValidateWorkspaceMemberProjectRole
     getWorkspaceDomains: GetWorkspaceDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
     getStream: GetStream
@@ -191,31 +195,42 @@ export const collectAndValidateWorkspaceTargetsFactory =
       return [...baseTargets]
     }
 
-    const workspace = await deps.getWorkspace({
-      workspaceId,
-      userId: targetUser?.id
-    })
+    const [workspace, workspaceRoleAndSeat] = await Promise.all([
+      deps.getWorkspace({
+        workspaceId
+      }),
+      ...(targetUser?.id
+        ? [
+            deps.getWorkspaceRoleAndSeat({
+              workspaceId,
+              userId: targetUser.id
+            })
+          ]
+        : [])
+    ])
     if (!workspace) {
       throw new InviteCreateValidationError(
         'Attempting to invite into a non-existant workspace'
       )
     }
 
-    // If inviting to workspace project, disallow workspace guests to become project owners
+    const workspaceRole = workspaceRoleAndSeat?.role.role
+
+    // If inviting to workspace project, validate target role
     const projectTarget = baseTargets.find(isProjectResourceTarget)
-    if (
-      workspace?.role === Roles.Workspace.Guest &&
-      projectTarget?.role === Roles.Stream.Owner
-    ) {
-      throw new InviteCreateValidationError(
-        'Workspace guests cannot be owners of workspace projects'
-      )
+    const projectRole = projectTarget?.role
+    if (projectRole && targetUser) {
+      await deps.validateWorkspaceMemberProjectRoleFactory({
+        workspaceId,
+        userId: targetUser.id,
+        projectRole
+      })
     }
 
     // Do further validation only if we're actually planning to invite to a workspace
     // (maybe the invitation is implicitly there, but user already is a member of the workspace)
     const isInvitingToWorkspace =
-      primaryWorkspaceResourceTarget || (workspace && !workspace.role)
+      primaryWorkspaceResourceTarget || (workspace && !workspaceRole)
     if (!isInvitingToWorkspace) {
       return [...baseTargets]
     }
@@ -236,7 +251,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
     }
 
     // Only check this on creation, on finalization its fine if the user's already a member
-    if (workspace.role && !finalizingInvite) {
+    if (workspaceRole && !finalizingInvite) {
       throw new InviteCreateValidationError(
         'The target user is already a member of the specified workspace'
       )
@@ -326,7 +341,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const mjml = {
       bodyStart: `
-  <mj-text>
+  <mj-text align="center" line-height="2">
   Hello!
   <br />
   <br />
@@ -334,7 +349,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
   </mj-text>
   `,
       bodyEnd:
-        '<mj-text>Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
+        '<mj-text align="center" line-height="2">Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
     }
     const text = {
       bodyStart: `Hello!
@@ -575,7 +590,8 @@ export const processFinalizedWorkspaceInviteFactory =
         userId: finalizerUserId,
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member,
-        preventRoleDowngrade: true
+        preventRoleDowngrade: true,
+        updatedByUserId: invite.inviterId
       })
     }
   }

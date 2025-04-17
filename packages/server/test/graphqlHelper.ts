@@ -3,7 +3,7 @@ import { DocumentNode, FormattedExecutionResult } from 'graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { buildApolloServer, buildApolloSubscriptionServer } from '@/app'
-import { addLoadersToCtx } from '@/modules/shared/middleware'
+import { buildContext } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   AllScopes,
@@ -92,8 +92,8 @@ export async function executeOperation<
 
   const results = getResponseResults(res)
 
-  // Replicate clearing dataloaders after each request
-  contextValue.loaders.clearAll()
+  // Replicate clearing dataloaders/policies after each request
+  contextValue.clearCache()
 
   return {
     ...results,
@@ -108,28 +108,32 @@ export async function executeOperation<
 export const createTestContext = async (
   ctx?: Partial<GraphQLContext>
 ): Promise<GraphQLContext> =>
-  addLoadersToCtx({
-    auth: false,
-    userId: undefined,
-    role: undefined,
-    token: undefined,
-    scopes: [],
-    stream: undefined,
-    err: undefined,
-    ...(ctx || {})
+  await buildContext({
+    authContext: {
+      auth: false,
+      userId: undefined,
+      role: undefined,
+      token: undefined,
+      scopes: [],
+      stream: undefined,
+      err: undefined,
+      ...(ctx || {})
+    }
   })
 
 export const createAuthedTestContext = async (
   userId: string,
   ctxOverrides?: Partial<GraphQLContext>
 ): Promise<GraphQLContext> =>
-  addLoadersToCtx({
-    auth: true,
-    userId,
-    role: Roles.Server.User,
-    token: 'asd',
-    scopes: AllScopes,
-    ...(ctxOverrides || {})
+  await buildContext({
+    authContext: {
+      auth: true,
+      userId,
+      role: Roles.Server.User,
+      token: 'asd',
+      scopes: AllScopes,
+      ...(ctxOverrides || {})
+    }
   })
 
 const buildMergedContext = async (params: {
@@ -233,7 +237,8 @@ export const testApolloServer = async (params?: {
           })
         : undefined
 
-    const ctx = operationCtx || baseCtx
+    // Re-apply createTestContext to reset dataloaders, authpolicy etc. state
+    const ctx = await createTestContext(operationCtx || baseCtx)
 
     const res = (await instance.executeOperation(
       {
@@ -290,7 +295,7 @@ export const testApolloSubscriptionServer = async () => {
   set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
 
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
-  const apolloSubServer = buildApolloSubscriptionServer(mockWsServer)
+  const apolloSubServer = buildApolloSubscriptionServer({ server: mockWsServer })
 
   // weakRef to ensure we dont prevent garbage collection
   const clients: WeakRef<SubscriptionClient>[] = []

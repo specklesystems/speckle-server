@@ -39,7 +39,6 @@
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
-          :can-edit="canEdit"
           @click.stop.prevent
           @upload-version="triggerVersionUpload"
         />
@@ -88,7 +87,7 @@
             :project-id="projectId"
             :model-name="model.name"
             class="w-full h-full"
-            :disabled="project?.workspace?.readOnly"
+            :disabled="!canCreateModel?.authorized"
           />
         </div>
       </div>
@@ -131,7 +130,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 
@@ -141,9 +139,10 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
-    workspace {
-      id
-      readOnly
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -167,9 +166,6 @@ const props = withDefaults(
   }
 )
 
-// TODO: Get rid of this, its not reactive. Is it even necessary?
-provide('projectId', props.projectId)
-
 const router = useRouter()
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
@@ -181,6 +177,7 @@ const importArea = ref(
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
+const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const containerClasses = computed(() => {
   const classParts = [
     'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
@@ -215,7 +212,6 @@ const updatedAtFullDate = computed(() => {
     : props.model.updatedAt
 })
 
-const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 })

@@ -95,6 +95,7 @@ export class DiffExtension extends Extension {
     this.addedMaterialMesh.transparent = true
     this.addedMaterialMesh.clipShadows = true
     this.addedMaterialMesh.color.convertSRGBToLinear()
+    this.addedMaterialMesh.clippingPlanes = []
 
     this.changedNewMaterialMesh = new SpeckleStandardMaterial(
       {
@@ -109,9 +110,10 @@ export class DiffExtension extends Extension {
     )
     this.changedNewMaterialMesh.vertexColors = false
     this.changedNewMaterialMesh.transparent = true
-    this.addedMaterialMesh.depthWrite = true
+    this.changedNewMaterialMesh.depthWrite = true
     this.changedNewMaterialMesh.clipShadows = true
     this.changedNewMaterialMesh.color.convertSRGBToLinear()
+    this.changedNewMaterialMesh.clippingPlanes = []
 
     this.changedOldMaterialMesh = new SpeckleStandardMaterial(
       {
@@ -126,9 +128,10 @@ export class DiffExtension extends Extension {
     )
     this.changedOldMaterialMesh.vertexColors = false
     this.changedOldMaterialMesh.transparent = true
-    this.addedMaterialMesh.depthWrite = true
+    this.changedOldMaterialMesh.depthWrite = true
     this.changedOldMaterialMesh.clipShadows = true
     this.changedOldMaterialMesh.color.convertSRGBToLinear()
+    this.changedOldMaterialMesh.clippingPlanes = []
 
     this.removedMaterialMesh = new SpeckleStandardMaterial(
       {
@@ -143,9 +146,10 @@ export class DiffExtension extends Extension {
     )
     this.removedMaterialMesh.vertexColors = false
     this.removedMaterialMesh.transparent = true
-    this.addedMaterialMesh.depthWrite = true
+    this.removedMaterialMesh.depthWrite = true
     this.removedMaterialMesh.clipShadows = true
     this.removedMaterialMesh.color.convertSRGBToLinear()
+    this.removedMaterialMesh.clippingPlanes = []
 
     this.addedMaterialPoint = new SpecklePointMaterial(
       {
@@ -159,6 +163,7 @@ export class DiffExtension extends Extension {
     this.addedMaterialPoint.transparent = true
     this.addedMaterialPoint.color.convertSRGBToLinear()
     this.addedMaterialPoint.toneMapped = false
+    this.addedMaterialPoint.clippingPlanes = []
 
     this.changedNewMaterialPoint = new SpecklePointMaterial(
       {
@@ -172,6 +177,7 @@ export class DiffExtension extends Extension {
     this.changedNewMaterialPoint.transparent = true
     this.changedNewMaterialPoint.color.convertSRGBToLinear()
     this.changedNewMaterialPoint.toneMapped = false
+    this.changedNewMaterialPoint.clippingPlanes = []
 
     this.changedOldMaterialPoint = new SpecklePointMaterial(
       {
@@ -185,6 +191,7 @@ export class DiffExtension extends Extension {
     this.changedOldMaterialPoint.transparent = true
     this.changedOldMaterialPoint.color.convertSRGBToLinear()
     this.changedOldMaterialPoint.toneMapped = false
+    this.changedOldMaterialPoint.clippingPlanes = []
 
     this.removedMaterialPoint = new SpecklePointMaterial(
       {
@@ -198,6 +205,7 @@ export class DiffExtension extends Extension {
     this.removedMaterialPoint.transparent = true
     this.removedMaterialPoint.color.convertSRGBToLinear()
     this.removedMaterialPoint.toneMapped = false
+    this.removedMaterialPoint.clippingPlanes = []
   }
 
   private dynamicallyLoadedDiffResources = [] as string[]
@@ -301,12 +309,12 @@ export class DiffExtension extends Extension {
     const renderTreeB = this.tree.getRenderTree(urlB)
     if (!renderTreeA) {
       return Promise.reject(
-        `Could not make diff. Resource ${urlA} could not be fetched`
+        new Error(`Could not make diff. Resource ${urlA} could not be fetched`)
       )
     }
     if (!renderTreeB) {
       return Promise.reject(
-        `Could not make diff. Resource ${urlB} could not be fetched`
+        new Error(`Could not make diff. Resource ${urlB} could not be fetched`)
       )
     }
     let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)

@@ -107,12 +107,9 @@ class ObjectLoader {
     }
   }
 
-  static createFromJSON(json) {
-    const start = performance.now()
-    const jsonObj = JSON.parse(json)
-    console.warn('JSON Parse Time -> ', performance.now() - start)
+  static createFromObjects(objects) {
+    const rootObject = objects[0]
 
-    const rootObject = jsonObj[0]
     const loader = new (class extends ObjectLoader {
       constructor() {
         super({
@@ -136,7 +133,7 @@ class ObjectLoader {
       async *getObjectIterator() {
         const t0 = Date.now()
         let count = 0
-        for await (const { id, obj } of this.getRawObjectIterator(jsonObj)) {
+        for await (const { id, obj } of this.getRawObjectIterator(objects)) {
           this.buffer[id] = obj
           count += 1
           yield obj
@@ -170,6 +167,14 @@ class ObjectLoader {
     return loader
   }
 
+  static createFromJSON(json) {
+    const start = performance.now()
+    const jsonObj = JSON.parse(json)
+    console.warn('JSON Parse Time -> ', performance.now() - start)
+
+    return this.createFromObjects(jsonObj)
+  }
+
   async asyncPause() {
     // Don't freeze the UI
     // while ( this.existingAsyncPause ) {
@@ -192,20 +197,23 @@ class ObjectLoader {
   }
 
   async getTotalObjectCount() {
-    /** This is fine, because it gets cached */
-    const rootObjJson = await this.getRawRootObject()
-    /** Ideally we shouldn't to a `parse` here since it's going to pointlessly allocate
-     *  But doing string gymnastics in order to get closure length is going to be the same
-     *  if not even more memory constly
-     */
-    const rootObj = JSON.parse(rootObjJson)
+    const rootObj = await this.getRootObject()
     const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
     return totalChildrenCount
   }
 
   async getRootObject() {
+    /** This is fine, because it gets cached */
     const rootObjJson = await this.getRawRootObject()
-    return JSON.parse(rootObjJson)
+    let rootObj
+    try {
+      rootObj = JSON.parse(rootObjJson)
+    } catch (e) {
+      throw new Error(
+        `Error parsing root object. "${e.message}". Root object: '${rootObjJson}'`
+      )
+    }
+    return rootObj
   }
 
   /**
@@ -604,10 +612,15 @@ class ObjectLoader {
     const cachedRootObject = await this.cacheGetObjects([this.objectId])
     if (cachedRootObject[this.objectId]) return cachedRootObject[this.objectId]
     const response = await this.fetch(this.requestUrlRootObj, { headers: this.headers })
-    const responseText = await response.text()
-    if ([401, 403].includes(response.status)) {
-      throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+    if (!response.ok) {
+      if ([401, 403].includes(response.status)) {
+        throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+      }
+      throw new ObjectLoaderRuntimeError(
+        `Failed to fetch root object: ${response.status} ${response.statusText})`
+      )
     }
+    const responseText = await response.text()
 
     this.cacheStoreObjects([`${this.objectId}\t${responseText}`])
     return responseText

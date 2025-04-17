@@ -2,7 +2,11 @@
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Projects" text="Manage projects on your server" />
-      <SettingsSharedProjects v-model:search="search" :projects="projects" />
+      <SettingsSharedProjects
+        v-model:search="search"
+        :projects="projects"
+        :disable-create="!canCreatePersonalProject?.authorized"
+      />
       <InfiniteLoading
         v-if="projects?.length"
         :settings="{ identifier }"
@@ -15,15 +19,26 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
+import { adminPanelProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment SettingsServerProjects_ProjectCollection on ProjectCollection {
     totalCount
     items {
       ...SettingsSharedProjects_Project
+    }
+  }
+`)
+
+graphql(`
+  fragment SettingsServerProjects_User on User {
+    permissions {
+      canCreatePersonalProject {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -43,10 +58,11 @@ const {
   onInfiniteLoad,
   query: { result }
 } = usePaginatedQuery({
-  query: getProjectsQuery,
+  query: adminPanelProjectsQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.projectList,
@@ -58,4 +74,7 @@ const {
 })
 
 const projects = computed(() => result.value?.admin.projectList.items || [])
+const canCreatePersonalProject = computed(
+  () => result.value?.activeUser?.permissions.canCreatePersonalProject
+)
 </script>

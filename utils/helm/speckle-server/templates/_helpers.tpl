@@ -528,7 +528,6 @@ Retrieve the s3 parameters from ConfigMap if enabled, or default to retrieving t
 {{- end }}
 {{- end }}
 
-
 {{/*
 Generate the environment variables for Speckle server and Speckle objects deployments
 */}}
@@ -542,13 +541,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: PORT
   value: {{ include "server.port" $ | quote }}
+
+- name: PRIVATE_OBJECTS_SERVER_URL
+  value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
+
 - name: LOG_LEVEL
   value: {{ .Values.server.logLevel }}
 - name: LOG_PRETTY
   value: {{ .Values.server.logPretty | quote }}
-
-- name: USE_FRONTEND_2
-  value: {{ .Values.frontend_2.enabled | quote }}
 
 - name: FRONTEND_ORIGIN
   {{- if .Values.ssl_canonical_url }}
@@ -566,8 +566,17 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
+
+- name: FF_WORKSPACES_NEW_PLANS_ENABLED
+  value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
+
+- name: FF_MOVE_PROJECT_REGION_ENABLED
+  value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
@@ -589,93 +598,118 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
-- name: FF_FORCE_EMAIL_VERIFICATION
-  value: {{ .Values.featureFlags.forceEmailVerification | quote }}
+- name: FF_FORCE_ONBOARDING
+  value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
     secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.stripeApiKey.secretKey }}
+      name: "{{ default .Values.secretName .Values.billing.secretName }}"
+      key: {{ .Values.billing.stripeApiKey.secretKey }}
 
 - name: STRIPE_ENDPOINT_SIGNING_KEY
   valueFrom:
     secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.stripeEndpointSigningKey.secretKey }}
+      name: "{{ default .Values.secretName .Values.billing.secretName }}"
+      key: {{ .Values.billing.stripeEndpointSigningKey.secretKey }}
 
 - name: WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceGuestSeatStripeProductId.secretKey }}
+  value: {{ .Values.billing.workspaceGuestSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey }}
+  value: {{ .Values.billing.workspaceMonthlyGuestSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey }}
+  value: {{ .Values.billing.workspaceYearlyGuestSeatStripePriceId }}
 
-- name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceTeamSeatStripeProductId.secretKey }}
+- name: WORKSPACE_STARTER_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspaceStarterSeatStripeProductId }}
 
-- name: WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey }}
+- name: WORKSPACE_MONTHLY_STARTER_SEAT_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyStarterSeatStripePriceId }}
 
-- name: WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey }}
+- name: WORKSPACE_YEARLY_STARTER_SEAT_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyStarterSeatStripePriceId }}
 
-- name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceProSeatStripeProductId.secretKey }}
+- name: WORKSPACE_PLUS_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspacePlusSeatStripeProductId }}
 
-- name: WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyProSeatStripePriceId.secretKey }}
+- name: WORKSPACE_MONTHLY_PLUS_SEAT_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyPlusSeatStripePriceId }}
 
-- name: WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyProSeatStripePriceId.secretKey }}
+- name: WORKSPACE_YEARLY_PLUS_SEAT_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyPlusSeatStripePriceId }}
 
 - name: WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceBusinessSeatStripeProductId.secretKey }}
+  value: {{ .Values.billing.workspaceBusinessSeatStripeProductId }}
 
 - name: WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey }}
+  value: {{ .Values.billing.workspaceMonthlyBusinessSeatStripePriceId }}
 
 - name: WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  valueFrom:
-    secretKeyRef:
-      name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
+  value: {{ .Values.billing.workspaceYearlyBusinessSeatStripePriceId }}
+
+- name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspaceTeamSeatStripeProductId }}
+
+- name: WORKSPACE_MONTHLY_TEAM_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyTeamSeatGbpStripePriceId }}
+
+- name: WORKSPACE_MONTHLY_TEAM_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyTeamSeatUsdStripePriceId }}
+
+- name: WORKSPACE_YEARLY_TEAM_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyTeamSeatGbpStripePriceId }}
+
+- name: WORKSPACE_YEARLY_TEAM_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyTeamSeatUsdStripePriceId }}
+
+- name: WORKSPACE_TEAM_UNLIMITED_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspaceTeamUnlimitedSeatStripeProductId }}
+
+- name: WORKSPACE_MONTHLY_TEAM_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyTeamUnlimitedSeatGbpStripePriceId }}
+
+- name: WORKSPACE_MONTHLY_TEAM_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyTeamUnlimitedSeatUsdStripePriceId }}
+
+- name: WORKSPACE_YEARLY_TEAM_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyTeamUnlimitedSeatGbpStripePriceId }}
+
+- name: WORKSPACE_YEARLY_TEAM_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyTeamUnlimitedSeatUsdStripePriceId }}
+
+- name: WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspaceProSeatStripeProductId }}
+
+- name: WORKSPACE_MONTHLY_PRO_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyProSeatGbpStripePriceId }}
+
+- name: WORKSPACE_MONTHLY_PRO_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyProSeatUsdStripePriceId }}
+
+- name: WORKSPACE_YEARLY_PRO_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyProSeatGbpStripePriceId }}
+
+- name: WORKSPACE_YEARLY_PRO_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyProSeatUsdStripePriceId }}
+
+- name: WORKSPACE_PRO_UNLIMITED_SEAT_STRIPE_PRODUCT_ID
+  value: {{ .Values.billing.workspaceProUnlimitedSeatStripeProductId }}
+
+- name: WORKSPACE_MONTHLY_PRO_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyProUnlimitedSeatGbpStripePriceId }}
+
+- name: WORKSPACE_MONTHLY_PRO_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceMonthlyProUnlimitedSeatUsdStripePriceId }}
+
+- name: WORKSPACE_YEARLY_PRO_UNLIMITED_SEAT_GBP_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyProUnlimitedSeatGbpStripePriceId }}
+
+- name: WORKSPACE_YEARLY_PRO_UNLIMITED_SEAT_USD_STRIPE_PRICE_ID
+  value: {{ .Values.billing.workspaceYearlyProUnlimitedSeatUsdStripePriceId }}
+
 {{- end }}
 
 {{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
@@ -702,6 +736,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FILE_SIZE_LIMIT_MB
   value: {{ .Values.file_size_limit_mb | quote }}
 
+- name: FILE_IMPORT_TIME_LIMIT_MIN
+  value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
+
 - name: MAX_PROJECT_MODELS_PER_PAGE
   value: {{ .Values.server.max_project_models_per_page | quote }}
 
@@ -725,10 +762,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: ASYNC_REQUEST_CONTEXT_ENABLED
   value: {{ .Values.server.asyncRequestContextEnabled | quote }}
 {{- end}}
-
-# *** No more closures flag - prevents writing to the closure table ***
-- name: FF_NO_CLOSURE_WRITES
-  value: {{ .Values.featureFlags.noClosureWrites | quote }}
 
 # *** Gendo render module ***
 - name: FF_GENDOAI_MODULE_ENABLED
@@ -760,12 +793,27 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
 {{- end }}
 
+# *** Preview service ***
+{{- if .Values.preview_service.enabled }}
+- name: PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL
+  value: "true"
+{{- end }}
+
 # *** Redis ***
 - name: REDIS_URL
   valueFrom:
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
       key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+
+
+{{- if .Values.preview_service.dedicatedPreviewsQueue }}
+- name: PREVIEW_SERVICE_REDIS_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
+      key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
+{{- end }}
 
 # *** PostgreSQL Database ***
 - name: POSTGRES_URL
@@ -1074,6 +1122,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: RATELIMIT_BURST_GET_AUTH
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
 {{- end }}
+
+# OpenTelemetry
+
 {{- if .Values.openTelemetry.tracing.url }}
 - name: OTEL_TRACE_URL
   value: {{ .Values.openTelemetry.tracing.url | quote }}
@@ -1086,6 +1137,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: OTEL_TRACE_VALUE
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
+
+# Multi-region
+
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"

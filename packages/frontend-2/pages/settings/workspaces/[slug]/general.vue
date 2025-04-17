@@ -18,9 +18,9 @@
           validate-on-value-update
           @change="save()"
         />
-
         <hr class="my-4 border-outline-3" />
         <FormTextInput
+          id="short-id"
           v-model="slug"
           color="foundation"
           label="Short ID"
@@ -48,6 +48,7 @@
           label-position="left"
           :disabled="!isAdmin || needsSsoLogin"
           :rules="[isStringOfLength({ maxLength: 512 })]"
+          help="Maximum 512 characters"
           @change="save()"
         />
         <hr class="my-4 border-outline-3" />
@@ -63,32 +64,9 @@
               v-if="workspaceResult?.workspaceBySlug"
               :workspace="workspaceResult?.workspaceBySlug"
               :disabled="!isAdmin || needsSsoLogin"
-              size="xxl"
+              size="3xl"
             />
           </div>
-        </div>
-      </div>
-      <hr class="my-6 border-outline-2" />
-      <div class="flex flex-col sm:flex-row space-y-2 sm:space-x-8 items-center">
-        <div class="flex flex-col w-full sm:w-6/12">
-          <span class="text-body-xs font-medium text-foreground">
-            Default project role
-          </span>
-          <span class="text-body-2xs text-foreground-2">
-            Role workspace members get when added to the workspace and in newly created
-            projects
-          </span>
-        </div>
-        <div class="w-full sm:w-6/12">
-          <FormSelectProjectRoles
-            v-model="defaultProjectRole"
-            disabled-items-tooltip="Use project settings to assign a member as project owner"
-            label="Project role"
-            size="md"
-            :disabled-items="[Roles.Stream.Owner]"
-            :disabled="!isAdmin || needsSsoLogin"
-            @update:model-value="save()"
-          />
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
@@ -126,25 +104,28 @@
           </div>
         </div>
       </template>
+      <template v-if="(isServerAdmin || isAdmin) && workspaceId">
+        <hr class="mb-6 mt-8 border-outline-2" />
+        <p class="text-body-2xs text-foreground-2">
+          Workspace ID: #{{ workspaceResult?.workspaceBySlug?.id }}
+        </p>
+      </template>
     </div>
 
     <SettingsWorkspacesGeneralLeaveDialog
-      v-if="workspaceResult"
       v-model:open="showLeaveDialog"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralDeleteDialog
-      v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralEditSlugDialog
-      v-if="workspaceResult && isAdmin"
       v-model:open="showEditSlugDialog"
       :base-url="baseUrl"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
       @update:slug="updateWorkspaceSlug"
     />
   </section>
@@ -164,11 +145,10 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { Roles, type StreamRoles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 
 graphql(`
@@ -182,7 +162,6 @@ graphql(`
     description
     logo
     role
-    defaultProjectRole
     plan {
       status
       name
@@ -198,7 +177,7 @@ useHead({
   title: 'Settings | Workspace - General'
 })
 
-type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
+type FormValues = { name: string; description: string }
 
 const routeSlug = computed(() => (route.params.slug as string) || '')
 
@@ -211,16 +190,14 @@ const route = useRoute()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
-const { result: workspaceResult, onResult } = useQuery(
-  settingsWorkspaceGeneralQuery,
-  () => ({
-    slug: routeSlug.value
-  })
-)
+const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
+  slug: routeSlug.value
+}))
 const config = useRuntimeConfig()
 const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => workspaceResult.value?.workspaceBySlug?.slug || '')
 })
+const { isAdmin: isServerAdmin } = useActiveUser()
 
 const name = ref('')
 const slug = ref('')
@@ -228,11 +205,11 @@ const description = ref('')
 const showDeleteDialog = ref(false)
 const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
-const defaultProjectRole = ref<StreamRoles>()
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
 )
+const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug?.id)
 const canDeleteWorkspace = computed(
   () =>
     isAdmin.value &&
@@ -243,10 +220,11 @@ const canDeleteWorkspace = computed(
           WorkspacePlanStatuses.Valid,
           WorkspacePlanStatuses.PaymentFailed,
           WorkspacePlanStatuses.CancelationScheduled
-        ].includes(
-          workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
-        ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
-      ))
+        ] as string[]
+      ).includes(
+        workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
+      ) ||
+      workspaceResult.value?.workspaceBySlug?.plan?.name === WorkspacePlans.Free)
 )
 const deleteWorkspaceTooltip = computed(() => {
   if (needsSsoLogin.value)
@@ -265,11 +243,6 @@ const save = handleSubmit(async () => {
   if (name.value !== workspaceResult.value.workspaceBySlug.name) input.name = name.value
   if (description.value !== workspaceResult.value.workspaceBySlug.description)
     input.description = description.value
-  if (
-    defaultProjectRole.value !==
-    workspaceResult.value.workspaceBySlug.defaultProjectRole
-  )
-    input.defaultProjectRole = defaultProjectRole.value
 
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
@@ -309,19 +282,15 @@ watch(
   { deep: true, immediate: true }
 )
 
-onResult((res) => {
-  if (res.data) {
-    defaultProjectRole.value = res.data.workspaceBySlug
-      .defaultProjectRole as StreamRoles
-  }
-})
-
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
-  return `${baseUrl}/workspaces/${slug.value}`
+  // Ensure the correct slug is used both on the server and client
+  if (!workspaceResult.value?.workspaceBySlug) {
+    return `${baseUrl}/workspaces/${routeSlug.value}`
+  }
+  return `${baseUrl}/workspaces/${workspaceResult.value.workspaceBySlug.slug}`
 })
-
 // Using toRef to fix reactivity bug around tooltips
 const adminRef = toRef(isAdmin)
 

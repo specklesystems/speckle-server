@@ -1,4 +1,5 @@
 <template>
+  <!-- If multiple, use FormSelectMultiple instead -->
   <div>
     <Listbox
       :key="forceUpdateKey"

@@ -1,6 +1,6 @@
 import { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { WorkspaceRoles } from '@speckle/shared'
 
 declare module '@/modules/serverinvites/domain/types' {
   interface InviteResourceTargetTypeMap {
@@ -27,20 +27,16 @@ export type Workspace = {
   createdAt: Date
   updatedAt: Date
   logo: string | null
-  defaultLogoIndex: number
-  defaultProjectRole: WorkspaceDefaultProjectRole
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
 }
 
 export type LimitedWorkspace = Pick<
   Workspace,
-  'id' | 'slug' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+  'id' | 'slug' | 'name' | 'description' | 'logo'
 >
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
-
-export type WorkspaceDefaultProjectRole = Exclude<StreamRoles, 'stream:owner'>
 
 export type WorkspaceDomain = {
   id: string
@@ -73,6 +69,21 @@ export type WorkspaceJoinRequest = {
   workspaceId: string
   userId: string
   status: WorkspaceJoinRequestStatus
+  createdAt: Date
+  updatedAt: Date
+}
+
+export const WorkspaceSeatType = <const>{
+  Viewer: 'viewer',
+  Editor: 'editor'
+}
+export type WorkspaceSeatType =
+  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
   createdAt: Date
   updatedAt: Date
 }

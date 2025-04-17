@@ -5,6 +5,7 @@ import {
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { throwUncoveredError } from '@speckle/shared'
 
 export type AutomateTrackingDeps = {
@@ -27,7 +28,7 @@ export const getUserEmailFromAutomationRunFactory =
         const version = await deps.getCommit(trigger.triggeringId, {
           streamId: projectId
         })
-        if (!version) throw new Error("Version doesn't exist any more")
+        if (!version) throw new CommitNotFoundError("Version doesn't exist any more")
         const userId = version.author
         if (userId) {
           const user = await deps.getUser(userId)

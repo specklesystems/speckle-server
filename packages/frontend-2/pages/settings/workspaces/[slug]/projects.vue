@@ -13,7 +13,7 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="result?.workspaceBySlug.id"
-        :disable-create="result?.workspaceBySlug.readOnly"
+        :disable-create="!canCreateProject?.authorized"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -30,12 +30,25 @@ import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
+import type { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
     totalCount
     items {
       ...SettingsSharedProjects_Project
+    }
+  }
+`)
+
+graphql(`
+  fragment SettingsWorkspacesProjects_Workspace on Workspace {
+    id
+    slug
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -63,7 +76,8 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    slug: slug.value
+    slug: slug.value,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspaceBySlug.projects,
@@ -75,5 +89,9 @@ const {
 })
 
 const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
+const canCreateProject = computed(
+  () => result.value?.workspaceBySlug.permissions.canCreateProject
+)
+
 useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

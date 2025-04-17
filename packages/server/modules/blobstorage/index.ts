@@ -15,7 +15,7 @@ import {
   ResourceMismatch,
   BadRequestError
 } from '@/modules/shared/errors'
-import { moduleLogger, logger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,
@@ -68,7 +68,7 @@ const ensureConditions = async () => {
   }
 
   if (!process.env.S3_BUCKET) {
-    logger.warn(
+    moduleLogger.warn(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -94,7 +94,7 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
   }
 }
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   await ensureConditions()
   const createStreamWritePermissions = () =>
     streamWritePermissionsPipelineFactory({
@@ -304,7 +304,7 @@ export const init: SpeckleModule['init'] = async (app) => {
       ])(req, res, next)
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
@@ -339,7 +339,7 @@ export const init: SpeckleModule['init'] = async (app) => {
       await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
@@ -378,7 +378,7 @@ export const init: SpeckleModule['init'] = async (app) => {
       const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
         db: projectDb
       })
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,
           query: fileName as string

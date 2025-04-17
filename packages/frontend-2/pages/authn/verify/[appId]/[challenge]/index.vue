@@ -50,7 +50,7 @@
               </DisclosureButton>
 
               <DisclosurePanel
-                class="flex flex-col px-2 py-5 space-y-5 label-light border-b border-outline-3 label-light"
+                class="flex flex-col px-2 py-5 space-y-5 label-light border-b border-outline-3"
               >
                 <table v-if="app.author || app.description?.length" class="table-fixed">
                   <tbody>

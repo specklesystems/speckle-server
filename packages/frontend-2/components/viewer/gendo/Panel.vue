@@ -15,78 +15,65 @@
         </CommonBadge>
       </div>
     </template>
-    <div v-if="!loading" class="pt-3">
-      <div class="px-3 flex flex-col gap-y-3">
-        <CommonAlert v-if="!limits" color="danger" size="xs">
-          <template #title>No credits available</template>
-          <template #description>
-            <div class="leading-snug">
-              AI Renders are only available on
-              <NuxtLink
-                class="border-b border-outline-3 hover:border-outline-5 pb-px leading-none"
+
+    <template v-if="!loading && limits" #actions>
+      <div class="text-body-2xs">
+        {{ limits.used }}/{{ limits.limit }} free renders used
+        <span class="hidden-under-250">this month</span>
+      </div>
+    </template>
+
+    <div class="pt-3">
+      <div class="px-3 pb-3">
+        <div class="flex flex-col gap-y-2">
+          <CommonAlert v-if="!activeUser" color="danger" size="2xs">
+            <template #title>Sign in required</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="!canContribute?.authorized" color="danger" size="2xs">
+            <template #title>You do not have permission</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="!limits" color="neutral" size="2xs">
+            <template #title>No credits available</template>
+          </CommonAlert>
+          <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="2xs">
+            <template #title>Out of credits</template>
+            <template #description>Credits reset on {{ formattedResetDate }}</template>
+          </CommonAlert>
+          <div class="flex flex-col gap-y-2">
+            <FormTextArea
+              v-model="prompt"
+              name="prompt"
+              :placeholder="randomPlaceholder"
+              color="foundation"
+              :disabled="textAreaDisabled"
+              textarea-classes="sm:!min-h-24 !text-body-xs !leading-snug"
+              @keypress.enter.prevent="!buttonDisabled && enqueMagic()"
+            />
+            <div class="flex justify-between gap-2 items-center text-foreground-2">
+              <FormButton
+                color="outline"
+                size="sm"
                 external
-                to="https://app.speckle.systems"
+                to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
                 target="_blank"
               >
-                app.speckle.systems
-              </NuxtLink>
-            </div>
-          </template>
-        </CommonAlert>
-        <CommonAlert v-else-if="!activeUser" color="danger" size="xs">
-          <template #title>Sign in required</template>
-          <template #description>
-            <div class="leading-snug">Please sign in to generate AI renders</div>
-          </template>
-        </CommonAlert>
-        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
-          <template #title>Credits reset on {{ formattedResetDate }}</template>
-        </CommonAlert>
-        <div class="flex flex-col gap-y-3">
-          <FormTextArea
-            v-model="prompt"
-            name="prompt"
-            size="lg"
-            :placeholder="randomPlaceholder"
-            color="foundation"
-            :disabled="textAreaDisabled"
-            textarea-classes="sm:!min-h-24"
-            @keypress.enter.prevent="!buttonDisabled && enqueMagic()"
-          />
-          <div class="flex justify-between gap-2 items-center text-foreground-2">
-            <FormButton
-              color="outline"
-              size="sm"
-              external
-              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
-              target="_blank"
-            >
-              <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span>Learn to prompt</span>
-                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
-
-            <div
-              v-if="!limits"
-              :key="`gendo-tooltip-${buttonDisabled}`"
-              v-tippy="`No credits available`"
-            >
-              <FormButton disabled>Generate</FormButton>
-            </div>
-            <div
-              v-else
-              :key="`gendo-tooltip-${buttonDisabled}`"
-              v-tippy="tooltipMessage"
-            >
-              <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
-                Generate
+                <div class="flex items-center gap-1 text-foreground font-normal">
+                  <span>Learn to prompt</span>
+                  <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+                </div>
               </FormButton>
+              <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+                <FormButton :disabled="buttonDisabled" size="sm" @click="enqueMagic()">
+                  Generate
+                </FormButton>
+              </div>
             </div>
           </div>
         </div>
-        <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
+
+      <ViewerGendoList @reuse-prompt="prompt = $event" />
+
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
@@ -108,15 +95,7 @@
         </FormButton>
       </div>
     </div>
-    <div v-else class="flex w-full h-full items-center justify-center">
-      <CommonLoadingIcon />
-    </div>
-    <template v-if="!loading && limits" #actions>
-      <div class="text-body-2xs p-1">
-        {{ limits.used }}/{{ limits.limit }} free renders used
-        <span class="hidden-under-250">this month</span>
-      </div>
-    </template>
+
     <FeedbackDialog
       v-model:open="isFeedbackOpen"
       intro="Help us improve Gendo AI renders. What did you like or dislike? How could we improve the experience for you and your workflow?"
@@ -138,7 +117,18 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
-import { canModifyModels } from '~/lib/projects/helpers/permissions'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment ViewerGendoPanel_Project on Project {
+    id
+    permissions {
+      canRequestRender {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const {
   projectId,
@@ -170,9 +160,7 @@ const suggestedPrompts = ref<string[]>([
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
-const canContribute = computed(() =>
-  project.value ? canModifyModels(project.value) : false
-)
+const canContribute = computed(() => project.value?.permissions.canRequestRender)
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
@@ -189,13 +177,23 @@ const textAreaDisabled = computed(() => {
     isLoading.value ||
     timeOutWait.value ||
     isOutOfCredits.value ||
-    !canContribute.value ||
-    !activeUser.value
+    !canContribute.value?.authorized ||
+    !activeUser.value ||
+    !limits.value
   )
 })
 
 const buttonDisabled = computed(() => {
   return !prompt.value || textAreaDisabled.value
+})
+
+const tooltipMessage = computed(() => {
+  if (!activeUser.value) return 'You must be logged in'
+  if (!canContribute.value?.authorized)
+    return canContribute.value?.message || 'Project permissions required'
+  if (isOutOfCredits.value) return 'No credits remaining'
+  if (!limits.value) return 'No credits available'
+  return undefined
 })
 
 const randomPlaceholder = computed(() => {
@@ -209,7 +207,7 @@ const isOutOfCredits = computed(() => {
 
 const formattedResetDate = computed(() => {
   if (!limits.value?.resetDate) return ''
-  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
+  return dayjs(limits.value.resetDate).format('D MMMM YYYY')
 })
 
 const enqueMagic = async () => {
@@ -286,11 +284,4 @@ const lodgeRequest = async (screenshot: string) => {
   isLoading.value = false
   refetch()
 }
-
-const tooltipMessage = computed(() => {
-  if (!activeUser.value) return 'You must be logged in'
-  if (!canContribute.value) return 'Project permissions required'
-  if (isOutOfCredits.value) return 'No credits remaining'
-  return undefined
-})
 </script>

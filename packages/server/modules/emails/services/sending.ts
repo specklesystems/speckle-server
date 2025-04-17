@@ -1,8 +1,12 @@
-import { logger } from '@/logging/logging'
+import { emailLogger } from '@/observability/logging'
 import { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 import { resolveMixpanelUserId } from '@speckle/shared'
+import {
+  getRequestLogger,
+  loggerWithMaybeContext
+} from '@/observability/components/express/requestContext'
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'
 /**
@@ -15,6 +19,7 @@ export const sendEmail: SendEmail = async ({
   text,
   html
 }: SendEmailParams): Promise<boolean> => {
+  const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const transporter = getTransporter()
   if (!transporter) {
     logger.warn('No email transport present. Cannot send emails. Skipping send...')

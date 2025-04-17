@@ -7,7 +7,7 @@
       block
       @processed="onProcessed"
     />
-    <ErrorPageGenericUnauthorizedBlock v-else />
+    <ErrorPageGenericUnauthorizedBlock v-else resource-type="project" />
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">

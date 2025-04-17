@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { logger, moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
@@ -8,29 +8,33 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
-import { getStripeClient, getWorkspacePlanProductId } from '@/modules/gatekeeper/stripe'
+import {
+  getStripeClient,
+  getWorkspacePlanProductAndPriceIds,
+  getWorkspacePlanProductId
+} from '@/modules/gatekeeper/stripe'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import {
-  downscaleWorkspaceSubscriptionFactory,
-  manageSubscriptionDownscaleFactory
-} from '@/modules/gatekeeper/services/subscriptions'
-import {
   changeExpiredTrialWorkspacePlanStatusesFactory,
   getWorkspacePlanByProjectIdFactory,
   getWorkspacePlanFactory,
   getWorkspacesByPlanAgeFactory,
-  getWorkspaceSubscriptionsPastBillingCycleEndFactory,
+  getWorkspaceSubscriptionsPastBillingCycleEndFactoryNewPlans,
+  getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
+import {
+  getSubscriptionDataFactory,
+  reconcileWorkspaceSubscriptionFactory
+} from '@/modules/gatekeeper/clients/stripe'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { EventBusEmit, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendWorkspaceTrialExpiresEmailFactory } from '@/modules/gatekeeper/services/trialEmails'
@@ -41,6 +45,15 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import coreModule from '@/modules/core/index'
 import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
+import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
+import {
+  downscaleWorkspaceSubscriptionFactoryNew,
+  downscaleWorkspaceSubscriptionFactoryOld,
+  manageSubscriptionDownscaleFactoryNew,
+  manageSubscriptionDownscaleFactoryOld
+} from '@/modules/gatekeeper/services/subscriptions/manageSubscriptionDownscale'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { migrateOldWorkspacePlans } from '@/modules/gatekeeper/services/planMigration'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -57,26 +70,60 @@ const scheduleWorkspaceSubscriptionDownscale = ({
 }) => {
   const stripe = getStripeClient()
 
-  const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
-    logger,
-    downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
+  const manageSubscriptionDownscaleOld = manageSubscriptionDownscaleFactoryOld({
+    downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactoryOld({
       countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
       reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
       getWorkspacePlanProductId
     }),
-    getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
-      db
+    getWorkspaceSubscriptions:
+      getWorkspaceSubscriptionsPastBillingCycleEndFactoryOldPlans({
+        db
+      }),
+    updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+  })
+  const manageSubscriptionDownscaleNew = manageSubscriptionDownscaleFactoryNew({
+    downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactoryNew({
+      countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
+      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
+      getWorkspacePlanProductId
     }),
+    getWorkspaceSubscriptions:
+      getWorkspaceSubscriptionsPastBillingCycleEndFactoryNewPlans({
+        db
+      }),
+    getSubscriptionData: getSubscriptionDataFactory({ stripe }),
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 
-  const cronExpression = '*/5 * * * *'
+  const cronExpression = '*/5 * * * *' // every 5 minutes
   return scheduleExecution(
     cronExpression,
     'WorkspaceSubscriptionDownscale',
-    async () => {
-      await manageSubscriptionDownscale()
+    async (_scheduledTime, { logger }) => {
+      await Promise.all([
+        manageSubscriptionDownscaleOld({ logger }), // Only takes old plans subscriptions
+        manageSubscriptionDownscaleNew({ logger }) // Only takes new plans subscriptions
+      ])
+    }
+  )
+}
+
+const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
+  let isMigrationComplete = false
+  let isMigrationRunning = false
+  const cronExpression = '*/5 * * * * *' // every 5 seconds
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceNewPlanMigration',
+    async (_scheduledTime, { logger }) => {
+      if (isMigrationComplete || isMigrationRunning) return
+      isMigrationRunning = true
+      await migrateOldWorkspacePlans({ db, stripe: getStripeClient(), logger })()
+      isMigrationRunning = false
+      isMigrationComplete = true
     }
   )
 }
@@ -97,36 +144,41 @@ const scheduleWorkspaceTrialEmails = ({
   // const cronExpression = '*/5 * * * * *'
   // every day at noon
   const cronExpression = '0 12 * * *'
-  return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
-    const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
-    const trialValidForDays = 31
-    const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
-      daysTillExpiry: 3,
-      planValidFor: trialValidForDays,
-      plan: 'starter',
-      status: 'trial'
-    })
-    if (trialWorkspacesExpireIn3Days.length) {
-      await Promise.all(
-        trialWorkspacesExpireIn3Days.map((workspace) =>
-          sendWorkspaceTrialEmail({ workspace, expiresInDays: 3 })
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceTrialEmails',
+    async (_scheduledTime, { logger }) => {
+      logger.info('Sending workspace trial emails.')
+      const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
+      const trialValidForDays = 31
+      const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
+        daysTillExpiry: 3,
+        planValidFor: trialValidForDays,
+        plan: 'starter',
+        status: 'trial'
+      })
+      if (trialWorkspacesExpireIn3Days.length) {
+        await Promise.all(
+          trialWorkspacesExpireIn3Days.map((workspace) =>
+            sendWorkspaceTrialEmail({ workspace, expiresInDays: 3 })
+          )
         )
-      )
-    }
-    const trialWorkspacesExpireToday = await getWorkspacesByPlanAge({
-      daysTillExpiry: 0,
-      planValidFor: trialValidForDays,
-      plan: 'starter',
-      status: 'trial'
-    })
-    if (trialWorkspacesExpireToday.length) {
-      await Promise.all(
-        trialWorkspacesExpireToday.map((workspace) =>
-          sendWorkspaceTrialEmail({ workspace, expiresInDays: 0 })
+      }
+      const trialWorkspacesExpireToday = await getWorkspacesByPlanAge({
+        daysTillExpiry: 0,
+        planValidFor: trialValidForDays,
+        plan: 'starter',
+        status: 'trial'
+      })
+      if (trialWorkspacesExpireToday.length) {
+        await Promise.all(
+          trialWorkspacesExpireToday.map((workspace) =>
+            sendWorkspaceTrialEmail({ workspace, expiresInDays: 0 })
+          )
         )
-      )
+      }
     }
-  })
+  )
 }
 
 const scheduleWorkspaceTrialExpiry = ({
@@ -138,31 +190,35 @@ const scheduleWorkspaceTrialExpiry = ({
 }) => {
   const changeExpiredStatuses = changeExpiredTrialWorkspacePlanStatusesFactory({ db })
   const cronExpression = '*/5 * * * *'
-  return scheduleExecution(cronExpression, 'WorkspaceTrialExpiry', async () => {
-    const expiredWorkspacePlans = await changeExpiredStatuses({ numberOfDays: 31 })
+  return scheduleExecution(
+    cronExpression,
+    'WorkspaceTrialExpiry',
+    async (_scheduledTime, { logger }) => {
+      const expiredWorkspacePlans = await changeExpiredStatuses({ numberOfDays: 31 })
 
-    if (expiredWorkspacePlans.length) {
-      logger.info(
-        { workspaceIds: expiredWorkspacePlans.map((p) => p.workspaceId) },
-        'Workspace trial expired for {workspaceIds}.'
-      )
-      await Promise.all(
-        expiredWorkspacePlans.map(async (plan) => {
-          emit({
-            eventName: 'gatekeeper.workspace-trial-expired',
-            payload: { workspaceId: plan.workspaceId }
-          })
-        })
-      )
+      if (expiredWorkspacePlans.length) {
+        logger.info(
+          { workspaceIds: expiredWorkspacePlans.map((p) => p.workspaceId) },
+          'Workspace trial expired for {workspaceIds}.'
+        )
+        await Promise.all(
+          expiredWorkspacePlans.map(async (plan) =>
+            emit({
+              eventName: 'gatekeeper.workspace-trial-expired',
+              payload: { workspaceId: plan.workspaceId }
+            })
+          )
+        )
+      }
     }
-  })
+  )
 }
 
 let scheduledTasks: cron.ScheduledTask[] = []
 let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     await initScopes()
     if (!FF_GATEKEEPER_MODULE_ENABLED) return
 
@@ -170,7 +226,7 @@ const gatekeeperModule: SpeckleModule = {
       requiredModules: ['gatekeeper']
     })
     if (!isLicenseValid)
-      throw new Error(
+      throw new InvalidLicenseError(
         'The gatekeeper module needs a valid license to run, contact Speckle to get one.'
       )
 
@@ -179,6 +235,8 @@ const gatekeeperModule: SpeckleModule = {
     if (isInitial) {
       // TODO: need to subscribe to the workspaceCreated event and store the workspacePlan as a trial if billing enabled, else store as unlimited
       if (FF_BILLING_INTEGRATION_ENABLED) {
+        // this validates that product and priceId-s can be loaded on server startup
+        getWorkspacePlanProductAndPriceIds()
         app.use(getBillingRouter())
 
         const eventBus = getEventBus()
@@ -191,7 +249,8 @@ const gatekeeperModule: SpeckleModule = {
         scheduledTasks = [
           scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
           scheduleWorkspaceTrialEmails({ scheduleExecution }),
-          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit }),
+          scheduleWorkspacePlanMigrations(scheduleExecution)
         ]
 
         quitListeners = initializeEventListenersFactory({
@@ -203,7 +262,7 @@ const gatekeeperModule: SpeckleModule = {
           requiredModules: ['billing']
         })
         if (!isLicenseValid)
-          throw new Error(
+          throw new InvalidLicenseError(
             'The the billing module needs a valid license to run, contact Speckle to get one.'
           )
         // TODO: create a cron job, that removes unused seats from the subscription at the beginning of each workspace plan's billing cycle

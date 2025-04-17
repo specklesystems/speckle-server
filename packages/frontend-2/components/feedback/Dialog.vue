@@ -98,8 +98,12 @@ const onSubmit = handleSubmit(async () => {
   })
 
   await sendWebhook(defaultZapierWebhookUrl, {
-    userId: user.value?.id ?? '',
-    feedback: feedback.value
+    feedback: [
+      `**Action:** User Feedback`,
+      `**Type:** ${props.type}`,
+      `**User ID:** ${user.value?.id}`,
+      `**Feedback:** ${feedback.value}`
+    ].join('\n')
   })
 })
 

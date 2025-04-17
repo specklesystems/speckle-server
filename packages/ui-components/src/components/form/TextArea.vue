@@ -10,9 +10,15 @@
     >
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
-        <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
-        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
+        <div v-if="!showRequired" class="text-body-2xs font-normal">(optional)</div>
       </label>
+      <span
+        v-if="labelPosition === 'left' && helpTipId"
+        :id="`${helpTipId}-left`"
+        :class="helpTipClasses"
+      >
+        {{ helpTip }}
+      </span>
     </div>
     <div
       class="relative"
@@ -37,6 +43,7 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @keydown.stop
       />
       <a
         v-if="shouldShowClear"
@@ -48,26 +55,10 @@
         <span class="text-xs sr-only">Clear input</span>
         <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
       </a>
-      <div
-        v-if="errorMessage"
-        :class="[
-          'pointer-events-none absolute top-0 bottom-0 right-0 flex items-start mt-2',
-          shouldShowClear ? 'pr-8' : 'pr-2'
-        ]"
-      >
-        <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-      </div>
-      <div
-        v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute top-0 bottom-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
-        :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
-      >
-        *
-      </div>
     </div>
     <p
       v-if="labelPosition === 'top' && helpTipId"
-      :id="helpTipId"
+      :id="`${helpTipId}-top`"
       :class="['mt-1.5', helpTipClasses]"
     >
       {{ helpTip }}
@@ -75,7 +66,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import type { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'

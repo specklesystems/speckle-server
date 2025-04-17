@@ -18,7 +18,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { useTourStageState } from '~~/lib/viewer/composables/tour'
 import { Vector3, Box3 } from 'three'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -27,7 +26,6 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
-import { SnowPipeline } from '~/lib/viewer/pipelines/snow/SnowPipeline'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -435,11 +433,9 @@ export function useMeasurementUtilities() {
  * Some conditional rendering values depend on multiple & overlapping states. This utility reconciles that.
  */
 export function useConditionalViewerRendering() {
-  const tourState = useTourStageState()
   const embedMode = useEmbedState()
 
   const showControls = computed(() => {
-    if (tourState.value.showTour && !tourState.value.showViewerControls) return false
     if (
       embedMode.embedOptions.value?.isEnabled &&
       embedMode.embedOptions.value.hideControls
@@ -452,7 +448,6 @@ export function useConditionalViewerRendering() {
 
   const showNavbar = computed(() => {
     if (!showControls.value) return false
-    if (tourState.value.showTour && !tourState.value.showNavbar) return false
     if (embedMode.embedOptions.value?.isEnabled) return false
     return true
   })
@@ -502,16 +497,9 @@ export function useViewModeUtilities() {
     }
   }
 
-  const letItSnow = () => {
-    const snowPipeline = new SnowPipeline(instance.getRenderer())
-    instance.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
-  }
-
   return {
     currentViewMode,
-    setViewMode,
-    letItSnow
+    setViewMode
   }
 }
 

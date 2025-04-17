@@ -1,4 +1,3 @@
-import { AddStreamInviteDeclinedActivity } from '@/modules/activitystream/domain/operations'
 import {
   AddOrUpdateStreamCollaborator,
   GetStream
@@ -77,28 +76,19 @@ export const validateProjectInviteBeforeFinalizationFactory =
 
 type ProcessFinalizedProjectInviteFactoryDeps = {
   getProject: GetStream
-  addInviteDeclinedActivity: AddStreamInviteDeclinedActivity
   addProjectRole: AddOrUpdateStreamCollaborator
 }
 
 export const processFinalizedProjectInviteFactory =
   (deps: ProcessFinalizedProjectInviteFactoryDeps): ProcessFinalizedResourceInvite =>
   async (params) => {
-    const { getProject, addInviteDeclinedActivity, addProjectRole } = deps
+    const { getProject, addProjectRole } = deps
     const { invite, finalizerUserId, action } = params
 
     const project = await getProject({ streamId: invite.resource.resourceId })
 
     if (action === InviteFinalizationAction.DECLINE) {
       // Skip validation so user can get rid of the invite regardless
-      if (project) {
-        await addInviteDeclinedActivity({
-          streamId: invite.resource.resourceId,
-          inviteTargetId: finalizerUserId,
-          inviterId: invite.inviterId,
-          stream: project
-        })
-      }
       return
     }
 
@@ -116,7 +106,7 @@ export const processFinalizedProjectInviteFactory =
           invite.resource.role || Roles.Stream.Contributor,
           invite.inviterId,
           null,
-          { fromInvite: true }
+          { fromInvite: invite }
         )
       } catch (e) {
         if (!(e instanceof StreamInvalidAccessError)) {

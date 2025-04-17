@@ -1,6 +1,5 @@
 import type { MaybeRef } from '@vueuse/core'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -26,11 +25,7 @@ export function usePreviewImageBlob(
   }>
 ) {
   const { enabled = ref(true) } = options || {}
-  const authToken = useAuthCookie()
   const logger = useLogger()
-  const {
-    public: { enableDirectPreviews }
-  } = useRuntimeConfig()
 
   const url = ref(PreviewPlaceholder as Nullable<string>)
   const hasDoneFirstLoad = ref(false)
@@ -49,21 +44,15 @@ export function usePreviewImageBlob(
     hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value)
   }
 
-  if (enableDirectPreviews) {
-    const directPreviewUrl = unref(previewUrl)
-    // const directPanoramicUrl = basePanoramaUrl.value
-
-    useHead({
-      link: [
-        ...(directPreviewUrl?.length
-          ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
-          : [])
-        // ...(directPanoramicUrl?.length
-        //   ? [{ rel: 'prefetch', as: <const>'image', href: directPanoramicUrl }]
-        //   : [])
-      ]
-    })
-  }
+  // Preload the image
+  const directPreviewUrl = unref(previewUrl)
+  useHead({
+    link: [
+      ...(directPreviewUrl?.length
+        ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
+        : [])
+    ]
+  })
 
   if (import.meta.server) return ret
 
@@ -133,23 +122,9 @@ export function usePreviewImageBlob(
         return
       }
 
-      let blobUrl: string
-      if (enableDirectPreviews || import.meta.server) {
-        const blobUrlConfig = new URL(basePreviewUrl)
-        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
-        blobUrl = blobUrlConfig.toString()
-      } else {
-        const res = await fetch(basePreviewUrl, {
-          headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
-        })
-
-        if (res.headers.has('X-Preview-Error')) {
-          throw new Error('Failed getting preview')
-        }
-
-        const blob = await res.blob()
-        blobUrl = URL.createObjectURL(blob)
-      }
+      const blobUrlConfig = new URL(basePreviewUrl)
+      blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+      const blobUrl = blobUrlConfig.toString()
 
       // Load img in browser first, before we set the url
       if (import.meta.client) {
@@ -181,30 +156,9 @@ export function usePreviewImageBlob(
         return
       }
 
-      let blobUrl: string
-      if (enableDirectPreviews || import.meta.server) {
-        const blobUrlConfig = new URL(basePanoramaUrl.value)
-        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
-        blobUrl = blobUrlConfig.toString()
-      } else {
-        const res = await fetch(basePanoramaUrl.value, {
-          headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
-        })
-
-        const errCode = res.headers.get('X-Preview-Error-Code')
-        if (errCode?.length) {
-          if (errCode === 'ANGLE_NOT_FOUND') {
-            throw new AngleNotFoundError()
-          }
-        }
-
-        if (res.headers.has('X-Preview-Error')) {
-          throw new Error('Failed getting preview')
-        }
-
-        const blob = await res.blob()
-        blobUrl = URL.createObjectURL(blob)
-      }
+      const blobUrlConfig = new URL(basePanoramaUrl.value)
+      blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+      const blobUrl = blobUrlConfig.toString()
 
       // Load img in browser first, before we set the url
       if (import.meta.client) {

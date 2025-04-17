@@ -18,7 +18,6 @@ import {
   type VisualDiffMode,
   ViewMode
 } from '@speckle/viewer'
-import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
@@ -82,7 +81,7 @@ export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
-  projectId: ComputedRef<string>
+  projectId: AsyncWritableComputedRef<string>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -277,6 +276,7 @@ export type InjectableViewerState = Readonly<{
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
+    loadProgress: Ref<number>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -399,8 +399,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
-  const projectId = computed(() => unref(params.projectId))
-
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
@@ -411,7 +409,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const hasDoneInitialLoad = ref(false)
 
   return {
-    projectId,
+    projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -919,6 +917,8 @@ function setupInterfaceState(
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
 
+  const loadProgress = ref(0)
+
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
@@ -978,6 +978,7 @@ function setupInterfaceState(
       explodeFactor,
       spotlightUserSessionId,
       viewerBusy,
+      loadProgress,
       threads: {
         items: commentThreads,
         openThread: {
@@ -1026,7 +1027,7 @@ function setupInterfaceState(
   }
 }
 
-type UseSetupViewerParams = { projectId: MaybeRef<string> }
+type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on

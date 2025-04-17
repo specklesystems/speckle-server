@@ -111,14 +111,14 @@ function buildEmailTemplateMjml(
 
   return {
     bodyStart: `
-  <mj-text>
+  <mj-text align="center" line-height="2" >
   Hello,<br/>
   <br/>
   <b>${author.name}</b> has just mentioned you in a comment on the <b>${stream.name}</b> project.
   Please click on the button below to see the comment. 
   </mj-text>
   `,
-    bodyEnd: undefined
+    bodyEnd: `<br/><br/>`
   }
 }
 

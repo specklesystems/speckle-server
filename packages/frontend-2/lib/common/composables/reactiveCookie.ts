@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import type { CookieOptions } from 'nuxt/dist/app/composables/cookie'
 import dayjs from 'dayjs'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { isUndefined } from 'lodash-es'
 import { isBraveOrSafari } from '@speckle/shared'
+import type { CookieOptions } from '#app'
 
 /**
  * Makes useCookie() synchronized across the app so that a change to it from one place

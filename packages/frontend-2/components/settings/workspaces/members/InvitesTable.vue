@@ -4,6 +4,7 @@
       v-model:search="search"
       search-placeholder="Search pending invites..."
       :workspace="workspace"
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -107,7 +108,7 @@ graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    invitedTeam(filter: $invitesFilter) {
+    invitedTeam {
       ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
     }
   }

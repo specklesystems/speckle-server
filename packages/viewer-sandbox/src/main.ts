@@ -4,9 +4,9 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  HybridCameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -45,29 +45,19 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
+  viewer.createExtension(HybridCameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(MeasurementsExtension)
+  viewer.createExtension(FilteringExtension)
+  viewer.createExtension(ExplodeExtension)
+  viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -84,6 +74,14 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
+    const loadingWrapper = document.getElementById('loadingWrapper')
+    if (loadingWrapper) {
+      loadingWrapper.addEventListener('transitionend', function () {
+        // Remove the loading wrapper from the page
+        loadingWrapper.style.display = 'none'
+      })
+      loadingWrapper.style.opacity = '0'
+    }
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -104,6 +102,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
+  // await sandbox.objectLoaderOnly(_stream)
   await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
@@ -111,9 +110,8 @@ const createViewer = async (containerName: string, _stream: string) => {
 const getStream = () => {
   return (
     // prettier-ignore
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -387,6 +385,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
     // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
     // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
+    // DEFAUL WEIRD MODEL
     // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
@@ -458,6 +457,8 @@ const getStream = () => {
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
+    // big baker
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716'
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
@@ -472,7 +473,49 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
 
     // FAR OFF
-    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+    'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+
+    // SUPER TINY
+    // 'https://latest.speckle.systems/projects/6631c0378c/models/4fed65a49c'
+
+    // v2 colored lines
+    // 'https://app.speckle.systems/projects/052b576a45/models/c756235fcc'
+
+    // Custom normals
+    // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
+
+    // Meshed together - like objects
+    // 'https://app.speckle.systems/projects/edccdee0fd/models/944c475581'
+
+    // Engine thing with outlines
+    // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
+
+    // Dim's meshed together non instanced + instanced
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
+
+    // A LOT of text objects
+    // 'https://app.speckle.systems/projects/e771a388b1/models/f5c967dfa9'
+
+    // 'https://app.speckle.systems/projects/16cffbc224/models/1e142b07a0'
+
+    // REGIONS
+    // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
+
+    // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
+
+    // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
+    // 'https://app.speckle.systems/projects/0edb6ef628/models/ff3d8480bc@cd83d90a2c'
+
+    /* ObjectLoader 2 tests */
+    // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
+    //crashing out of memory?
+    //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
+    //too big?
+    // `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
+
+    // BUSTED model ID
+    // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
   )
 }
 

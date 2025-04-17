@@ -4,7 +4,7 @@ import { WorldTree } from '../../tree/WorldTree.js'
 import Logger from '../../utils/Logger.js'
 
 export class SpeckleOfflineLoader extends SpeckleLoader {
-  constructor(targetTree: WorldTree, resourceData: string, resourceId?: string) {
+  constructor(targetTree: WorldTree, resourceData: unknown, resourceId?: string) {
     super(targetTree, resourceId || '', undefined, undefined, resourceData)
   }
 
@@ -12,7 +12,7 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
     _resource: string,
     _authToken?: string,
     _enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer
+    resourceData?: unknown
   ): ObjectLoader {
     return ObjectLoader.createFromJSON(resourceData as string)
   }

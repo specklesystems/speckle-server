@@ -39,7 +39,7 @@ import { useDebouncedTextInput } from '@speckle/ui-components'
 import { useQueryLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
-import type { Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const searchQuery = graphql(`
@@ -91,7 +91,8 @@ const {
   query: searchQuery,
   baseVariables: computed(() => ({
     workspaceId: props.workspaceId ?? '',
-    search: search.value?.length ? search.value : ''
+    search: search.value?.length ? search.value : '',
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.search || ''],
   resolveCurrentResult: (res) => res?.workspace?.automateFunctions,

@@ -4,11 +4,7 @@ import {
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { logger } from '@/logging/logging'
-import {
-  ContextResourceAccessRules,
-  isNewResourceAllowed
-} from '@/modules/core/helpers/token'
+import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import {
   CloneStream,
@@ -17,7 +13,7 @@ import {
   UpdateStreamRecord
 } from '@/modules/core/domain/streams/operations'
 import { GetOnboardingBaseProject } from '@/modules/cross-server-sync/domain/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
 
 export const createOnboardingStreamFactory =
   (deps: {
@@ -27,10 +23,8 @@ export const createOnboardingStreamFactory =
     getUser: GetUser
     updateStream: UpdateStreamRecord
   }): CreateOnboardingStream =>
-  async (
-    targetUserId: string,
-    targetUserResourceAccessRules: ContextResourceAccessRules
-  ) => {
+  async (params) => {
+    const { targetUserId, targetUserResourceAccessRules, logger } = params
     const canCreateStream = isNewResourceAllowed({
       resourceType: TokenResourceIdentifierType.Project,
       resourceAccessRules: targetUserResourceAccessRules

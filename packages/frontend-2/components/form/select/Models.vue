@@ -63,11 +63,11 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { type Nullable, type Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { FormSelectBase, useFormSelectChildInternals } from '@speckle/ui-components'
 import { useApolloClient } from '@vue/apollo-composable'
-import { type RuleExpression } from 'vee-validate'
-import { type PropType } from 'vue'
+import type { RuleExpression } from 'vee-validate'
+import type { PropType } from 'vue'
 import { graphql } from '~/lib/common/generated/gql'
 import type { FormSelectModels_ModelFragment } from '~/lib/common/generated/gql/graphql'
 import { searchModelsQuery } from '~/lib/form/graphql/queries'

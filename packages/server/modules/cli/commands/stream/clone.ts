@@ -1,7 +1,5 @@
 import { db } from '@/db/knex'
-import { cliLogger } from '@/logging/logging'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamClonedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import { cliLogger as logger } from '@/observability/logging'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
@@ -25,7 +23,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule<
@@ -65,17 +63,14 @@ const command: CommandModule<
       insertComments: insertCommentsFactory({ db }),
       getCommentLinks: getCommentLinksFactory({ db }),
       insertCommentLinks: insertCommentLinksFactory({ db }),
-      addStreamClonedActivity: addStreamClonedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
-    cliLogger.info(
+    logger.info(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
     const { id } = await cloneStream(targetUserId, sourceStreamId)
-    cliLogger.info('Cloning successful! New stream ID: ' + id)
+    logger.info('Cloning successful! New stream ID: ' + id)
   }
 }
 

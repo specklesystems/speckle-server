@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -136,6 +134,9 @@ function createCache(): InMemoryCache {
       },
       User: {
         fields: {
+          meta: {
+            merge: mergeAsObjectsFunction
+          },
           timeline: {
             keyArgs: ['after', 'before'],
             merge: buildAbstractCollectionMergeFunction('ActivityCollection')
@@ -155,6 +156,9 @@ function createCache(): InMemoryCache {
           versions: {
             keyArgs: ['authoredOnly', 'limit'],
             merge: buildAbstractCollectionMergeFunction('CountOnlyCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -204,6 +208,9 @@ function createCache(): InMemoryCache {
           },
           pendingImportedModels: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -215,6 +222,16 @@ function createCache(): InMemoryCache {
           },
           pendingImportedVersions: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
+          }
+        }
+      },
+      Version: {
+        fields: {
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -222,6 +239,9 @@ function createCache(): InMemoryCache {
         fields: {
           replies: {
             keyArgs: ['limit']
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -302,6 +322,15 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          subscription: {
+            merge: mergeAsObjectsFunction
+          },
+          creationState: {
+            merge: mergeAsObjectsFunction
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       }
@@ -380,16 +409,28 @@ function createLink(params: {
         ? res.graphQLErrors
         : []
       const errMsg = res.networkError?.message || gqlErrors[0]?.message
-      logger.error(
-        {
-          ...omit(res, ['forward', 'response']),
-          networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: gqlErrors.map((e) => e.message),
-          errorMessage: errMsg,
-          graphql: true
-        },
-        'Apollo Client error: {errorMessage}'
+
+      // only log as error if at least one error has a status code of 5xx or has no status code
+      const shouldLogAsWarn = gqlErrors.every(
+        (e) =>
+          e.extensions &&
+          'statusCode' in e.extensions &&
+          typeof e.extensions.statusCode === 'number' &&
+          e.extensions.statusCode < 500
       )
+      const logContext = {
+        ...omit(res, ['forward', 'response']),
+        networkErrorMessage: res.networkError?.message,
+        gqlErrorMessages: gqlErrors.map((e) => e.message),
+        errorMessage: errMsg,
+        graphql: true
+      }
+
+      if (shouldLogAsWarn) {
+        logger.warn(logContext, 'Apollo Client error: {errorMessage}')
+      } else {
+        logger.error(logContext, 'Apollo Client error: {errorMessage}')
+      }
     }
 
     const { networkError } = res

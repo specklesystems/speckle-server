@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-50" @close="onClose">
+    <Dialog as="div" class="relative z-50" open @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -97,16 +97,24 @@
                 }"
               >
                 <template v-if="buttons">
-                  <FormButton
+                  <div
                     v-for="(button, index) in buttons"
                     :key="button.id || index"
-                    v-bind="button.props || {}"
-                    :disabled="button.props?.disabled || button.disabled"
-                    :submit="button.props?.submit || button.submit"
-                    @click="($event) => button.onClick?.($event)"
+                    v-tippy="
+                      button.props?.disabled || button.disabled
+                        ? button.disabledMessage
+                        : undefined
+                    "
                   >
-                    {{ button.text }}
-                  </FormButton>
+                    <FormButton
+                      v-bind="button.props || {}"
+                      :disabled="button.props?.disabled || button.disabled"
+                      :submit="button.props?.submit || button.submit"
+                      @click="($event) => button.onClick?.($event)"
+                    >
+                      {{ button.text }}
+                    </FormButton>
+                  </div>
                 </template>
                 <template v-else>
                   <slot name="buttons" />
@@ -124,7 +132,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
-import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
+import { computed, ref, useSlots, watch, onUnmounted, type SetupContext } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
@@ -165,7 +173,7 @@ const props = withDefaults(
   }
 )
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)

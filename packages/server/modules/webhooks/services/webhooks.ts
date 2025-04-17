@@ -18,6 +18,7 @@ import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { WebhookCreationError } from '@/modules/webhooks/errors/webhooks'
 
 const MAX_STREAM_WEBHOOKS = 100
 
@@ -40,7 +41,7 @@ export const createWebhookFactory =
     Partial<SetValuesNullable<Pick<Webhook, 'url' | 'description' | 'secret'>>>) => {
     const streamWebhookCount = await countWebhooksByStreamId({ streamId })
     if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
-      throw new Error(
+      throw new WebhookCreationError(
         `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`
       )
     }

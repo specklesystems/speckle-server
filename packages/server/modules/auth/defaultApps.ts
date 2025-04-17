@@ -7,11 +7,16 @@ import {
 import { ServerScope } from '@speckle/shared'
 import { Merge } from 'type-fest'
 
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
+const workspaceScopes = FF_WORKSPACES_MODULE_ENABLED ? [Scopes.Workspaces.Read] : []
+
 export enum DefaultAppIds {
   Web = 'spklwebapp',
   Explorer = 'explorer',
   DesktopManager = 'sdm',
   Connector = 'sca',
+  SpeckleDesktopAuthService = 'sdas',
   Excel = 'spklexcel',
   PowerBI = 'spklpwerbi',
   Automate = 'spklautoma'
@@ -55,7 +60,8 @@ const SpeckleDesktopApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -73,7 +79,29 @@ const SpeckleConnectorApp = {
     Scopes.Profile.Read,
     Scopes.Profile.Email,
     Scopes.Users.Read,
-    Scopes.Users.Invite
+    Scopes.Users.Invite,
+    ...workspaceScopes
+  ]
+}
+
+/** Next gen connectors */
+const SpeckleDesktopAuthService = {
+  id: DefaultAppIds.SpeckleDesktopAuthService,
+  secret: DefaultAppIds.SpeckleDesktopAuthService,
+  name: 'Speckle Connector',
+  description:
+    'Speckle desktop authentication service. This application helps link your Speckle account with all host application connectors, like Revit, Rhino etc.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'http://localhost:29364',
+  scopes: [
+    Scopes.Streams.Read,
+    Scopes.Streams.Write,
+    Scopes.Profile.Read,
+    Scopes.Profile.Email,
+    Scopes.Users.Read,
+    Scopes.Users.Invite,
+    ...workspaceScopes
   ]
 }
 
@@ -140,6 +168,7 @@ const defaultApps = [
   SpeckleApiExplorer,
   SpeckleDesktopApp,
   SpeckleConnectorApp,
+  SpeckleDesktopAuthService,
   SpeckleExcel,
   SpecklePowerBi,
   SpeckleAutomate

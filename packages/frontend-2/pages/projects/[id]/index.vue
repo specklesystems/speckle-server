@@ -7,25 +7,31 @@
         :show-project-name="false"
         @processed="onInviteAccepted"
       />
+      <ProjectsMoveToWorkspaceAlert
+        v-if="isWorkspacesEnabled && !project.workspace"
+        :project-id="project.id"
+        @move-project="onMoveProject"
+      />
+
       <div
         class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mt-2 mb-6"
       >
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge
-              v-if="project.role"
-              rounded
-              :color-classes="'text-foreground-2 bg-primary-muted'"
-            >
-              <span class="capitalize">
-                {{ project.role?.split(':').reverse()[0] }}
-              </span>
+            <CommonBadge v-if="project.role" rounded color="secondary">
+              {{ RoleInfo.Stream[project.role as StreamRoles].title }}
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
             <div v-tippy="collaboratorsTooltip">
-              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : ''">
+              <NuxtLink
+                :to="
+                  canReadSettings?.authorized
+                    ? projectRoute(project.id, 'collaborators')
+                    : ''
+                "
+              >
                 <UserAvatarGroup
                   :users="teamUsers"
                   :max-count="2"
@@ -57,24 +63,22 @@
       </LayoutTabsHorizontal>
     </div>
 
-    <ProjectsMoveToWorkspaceDialog
-      v-if="project"
+    <WorkspaceMoveProjectManager
+      v-if="project && isWorkspacesEnabled"
       v-model:open="showMoveDialog"
-      :project="project"
       event-source="project-page"
+      :project-id="projectId"
     />
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Roles, type Optional } from '@speckle/shared'
+import { Roles, type Optional, RoleInfo, type StreamRoles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
-import { canEditProject } from '~~/lib/projects/helpers/permissions'
-import { projectCollaboratorsRoute } from '~~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -93,10 +97,19 @@ graphql(`
     workspace {
       id
     }
+    permissions {
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectsMoveToWorkspaceDialog_Project
+    ...WorkspaceMoveProjectManager_ProjectBase
+    ...ProjectPageSettingsTab_Project
   }
 `)
 
@@ -155,9 +168,11 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+
+const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
-const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
-const teamUsers = computed(() => project.value?.team.map((t) => t.user))
+const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
   const items: LayoutMenuItem[][] = [
     [
@@ -183,7 +198,13 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
 })
 
 useHead({
-  title: projectName
+  title: projectName,
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow'
+    }
+  ]
 })
 
 const onInviteAccepted = async (params: { accepted: boolean }) => {
@@ -220,7 +241,12 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (hasRole.value) {
+  if (canReadSettings.value?.authorized) {
+    items.push({
+      title: 'Collaborators',
+      id: 'collaborators'
+    })
+
     items.push({
       title: 'Settings',
       id: 'settings'
@@ -234,7 +260,11 @@ const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
 
 const collaboratorsTooltip = computed(() =>
-  hasRole.value ? (canEdit.value ? 'Manage collaborators' : 'View collaborators') : null
+  canReadSettings.value?.authorized
+    ? canUpdate.value?.authorized
+      ? 'Manage collaborators'
+      : 'View collaborators'
+    : null
 )
 
 const activePageTab = computed({
@@ -242,7 +272,10 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
-    if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
+    if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
+      return findTabById('collaborators')
+    if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
+      return findTabById('settings')
     return findTabById('models')
   },
   set: (val: LayoutPageTabItem) => {
@@ -257,8 +290,13 @@ const activePageTab = computed({
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
+      case 'collaborators':
+        if (canReadSettings.value?.authorized) {
+          router.push({ path: projectRoute(projectId.value, 'collaborators') })
+        }
+        break
       case 'settings':
-        if (hasRole.value) {
+        if (canReadSettings.value?.authorized) {
           router.push({ path: projectRoute(projectId.value, 'settings') })
         }
         break
@@ -277,5 +315,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       showMoveDialog.value = true
       break
   }
+}
+
+const onMoveProject = () => {
+  showMoveDialog.value = true
 }
 </script>

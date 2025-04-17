@@ -47,6 +47,7 @@ export class InstancedMeshBatch implements Batch {
   private instanceTransformBuffer1: Float32Array
   private transformBufferIndex: number = 0
   private instanceGradientBuffer: Float32Array
+  private instanceObjectIdBuffer: Float32Array | undefined
 
   private needsShuffle = false
 
@@ -107,10 +108,16 @@ export class InstancedMeshBatch implements Batch {
     return this.mesh.groups
   }
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+  public constructor(
+    id: string,
+    subtreeId: string,
+    renderViews: NodeRenderView[],
+    webGL2: boolean
+  ) {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+    if (!webGL2) this.instanceObjectIdBuffer = new Float32Array(this.renderViews.length)
   }
 
   public setBatchMaterial(material: Material) {
@@ -323,7 +330,8 @@ export class InstancedMeshBatch implements Batch {
     } else
       this.mesh.updateDrawGroups(
         this.getCurrentTransformBuffer(),
-        this.getCurrentGradientBuffer()
+        this.getCurrentGradientBuffer(),
+        this.getCurrentObjectIndexBuffer()
       )
   }
 
@@ -448,7 +456,11 @@ export class InstancedMeshBatch implements Batch {
       })
     }
     sourceGradientBuffer.set(targetGradientBuffer, 0)
-    this.mesh.updateDrawGroups(targetTransformBuffer, sourceGradientBuffer)
+    this.mesh.updateDrawGroups(
+      targetTransformBuffer,
+      sourceGradientBuffer,
+      this.getCurrentObjectIndexBuffer()
+    )
 
     /** Solve hidden groups */
     const hiddenGroup = this.groups.find((value) => {
@@ -477,7 +489,8 @@ export class InstancedMeshBatch implements Batch {
     this.setVisibleRange([AllBatchUpdateRange])
     this.mesh.updateDrawGroups(
       this.getCurrentTransformBuffer(),
-      this.getCurrentGradientBuffer()
+      this.getCurrentGradientBuffer(),
+      this.getCurrentObjectIndexBuffer()
     )
   }
 
@@ -495,6 +508,10 @@ export class InstancedMeshBatch implements Batch {
 
   private getCurrentGradientBuffer(): Float32Array {
     return this.instanceGradientBuffer
+  }
+
+  private getCurrentObjectIndexBuffer(): Float32Array | undefined {
+    return this.instanceObjectIdBuffer
   }
 
   public buildBatch(): Promise<void> {
@@ -528,6 +545,8 @@ export class InstancedMeshBatch implements Batch {
         k * INSTANCE_TRANSFORM_BUFFER_STRIDE,
         INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
+      if (this.instanceObjectIdBuffer) this.instanceObjectIdBuffer[k] = k
+
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
         const transform = new Matrix4().makeTranslation(
@@ -562,6 +581,9 @@ export class InstancedMeshBatch implements Batch {
     const colors: number[] | undefined =
       this.renderViews[0].renderData.geometry.attributes?.COLOR
 
+    const normals: number[] | undefined =
+      this.renderViews[0].renderData.geometry.attributes?.NORMAL
+
     /** Catering to typescript
      *  There is no unniverse where indices or positions are undefined at this point
      */
@@ -573,6 +595,7 @@ export class InstancedMeshBatch implements Batch {
         ? new Uint32Array(indices)
         : new Uint16Array(indices),
       new Float64Array(positions),
+      normals ? new Float32Array(normals) : undefined,
       colors ? new Float32Array(colors) : undefined
     )
     this.mesh = new SpeckleInstancedMesh(this.geometry)
@@ -596,7 +619,8 @@ export class InstancedMeshBatch implements Batch {
     })
     this.mesh.updateDrawGroups(
       this.getCurrentTransformBuffer(),
-      this.getCurrentGradientBuffer()
+      this.getCurrentGradientBuffer(),
+      this.getCurrentObjectIndexBuffer()
     )
 
     return Promise.resolve()
@@ -631,6 +655,7 @@ export class InstancedMeshBatch implements Batch {
   private makeInstancedMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normal?: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -655,7 +680,11 @@ export class InstancedMeshBatch implements Batch {
 
     this.instanceGradientBuffer = new Float32Array(this.renderViews.length)
 
-    Geometry.computeVertexNormals(this.geometry, position)
+    if (normal) {
+      this.geometry
+        .setAttribute('normal', new Float32BufferAttribute(normal, 3))
+        .normalizeNormals()
+    } else Geometry.computeVertexNormals(this.geometry, position)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 

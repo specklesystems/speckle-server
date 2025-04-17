@@ -1,8 +1,0 @@
-{
-  "javascript.suggest.autoImports": true,
-  "typescript.suggest.autoImports": true,
-  "typescript.preferences.importModuleSpecifier": "non-relative",
-  "javascript.preferences.importModuleSpecifier": "non-relative",
-  "volar.completion.preferredTagNameCase": "kebab",
-  "vitest.disableWorkspaceWarning": true
-}

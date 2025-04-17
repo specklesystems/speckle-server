@@ -26,14 +26,16 @@ import FormRadio from '~~/src/components/form/Radio.vue'
 import FormRadioGroup from '~~/src/components/form/RadioGroup.vue'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
-import * as ValidationHelpers from '~~/src/helpers/common/validation'
+import * as ValidationHelpers from './helpers/common/validation' // dts plugin bug, hence the relative path
 import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resize'
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import FormSelectBadges from '~~/src/components/form/select/Badges.vue'
+import FormSelectMulti from '~~/src/components/form/select/Multi.vue'
 import FormSwitch from '~~/src/components/form/Switch.vue'
 import FormClipboardInput from '~~/src/components/form/ClipboardInput.vue'
+import FormCodeInput from '~~/src/components/form/CodeInput.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
@@ -129,12 +131,14 @@ export {
   FormTextInput,
   FormSwitch,
   FormClipboardInput,
+  FormCodeInput,
   ValidationHelpers,
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,
   FormSelectBase,
   FormSelectBadges,
   FormSelectSourceApps,
+  FormSelectMulti,
   CommonLoadingBar,
   SourceAppBadge,
   onKeyboardShortcut,

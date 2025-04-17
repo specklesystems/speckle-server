@@ -40,7 +40,7 @@ import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'

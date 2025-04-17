@@ -17,11 +17,12 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useApolloClient } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
+import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
 import {
-  type Workspace,
-  type SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
-} from '~/lib/common/generated/gql/graphql'
-import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectField
+} from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -69,16 +70,16 @@ const handleRemove = async () => {
         const { data } = res
         if (!data?.workspaceMutations || !props.workspaceId) return
 
-        cache.modify<Workspace>({
-          id: getCacheId('Workspace', props.workspaceId),
-          fields: {
-            domains(currentDomains, { isReference }) {
-              return [...(currentDomains ?? [])].filter((domain) =>
-                isReference(domain) ? false : domain.id !== props.domain.id
-              )
-            }
+        modifyObjectField(
+          cache,
+          getCacheId('Workspace', props.workspaceId),
+          'domains',
+          ({ value, helpers }) => {
+            return value?.filter(
+              (domain) => helpers.readField(domain, 'id') !== props.domain.id
+            )
           }
-        })
+        )
       }
     })
     .catch(convertThrowIntoFetchResult)

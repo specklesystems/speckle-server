@@ -74,14 +74,6 @@ export const workspaceInviteQuery = graphql(`
   }
 `)
 
-export const moveProjectsDialogQuery = graphql(`
-  query MoveProjectsDialog {
-    activeUser {
-      ...MoveProjectsDialog_User
-    }
-  }
-`)
-
 export const validateWorkspaceSlugQuery = graphql(`
   query ValidateWorkspaceSlug($slug: String!) {
     validateWorkspaceSlug(slug: $slug)
@@ -120,6 +112,95 @@ export const workspaceWizardRegionQuery = graphql(`
   query WorkspaceWizardRegion {
     serverInfo {
       ...WorkspaceWizardStepRegion_ServerInfo
+    }
+  }
+`)
+
+export const discoverableWorkspacesQuery = graphql(`
+  query DiscoverableWorkspaces {
+    activeUser {
+      id
+      ...DiscoverableList_Discoverable
+    }
+  }
+`)
+
+export const discoverableWorkspacesRequestsQuery = graphql(`
+  query DiscoverableWorkspacesRequests {
+    activeUser {
+      id
+      ...DiscoverableList_Requests
+    }
+  }
+`)
+
+export const workspacePlanQuery = graphql(`
+  query WorkspacePlan($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacesPlan_Workspace
+    }
+  }
+`)
+
+export const activeWorkspaceQuery = graphql(`
+  query activeWorkspace($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...ActiveWorkspace_Workspace
+    }
+  }
+`)
+
+export const workspaceLastAdminCheckQuery = graphql(`
+  query WorkspaceLastAdminCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceLastAdminCheck_Workspace
+    }
+  }
+`)
+
+export const workspaceLimitsQuery = graphql(`
+  query WorkspaceLimits($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacePlanLimits_Workspace
+    }
+  }
+`)
+
+export const workspaceUsageQuery = graphql(`
+  query WorkspaceUsage($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceUsage_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerProjectQuery = graphql(`
+  query WorkspaceMoveProjectManagerProject($projectId: String!) {
+    project(id: $projectId) {
+      ...WorkspaceMoveProjectManager_Project
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerWorkspaceQuery = graphql(`
+  query WorkspaceMoveProjectManagerWorkspace(
+    $workspaceSlug: String!
+    $projectId: String
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceMoveProjectManager_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerUserQuery = graphql(`
+  query WorkspaceMoveProjectManagerUser(
+    $cursor: String
+    $filter: UserProjectsFilter
+    $projectId: String
+  ) {
+    activeUser {
+      ...WorkspaceMoveProjectSelectWorkspace_User
     }
   }
 `)

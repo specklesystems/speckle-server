@@ -3,13 +3,18 @@ import mailchimp from '@mailchimp/mailchimp_marketing'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
 
 let mailchimpInitialized = false
 
 function initializeMailchimp() {
   if (mailchimpInitialized) return
   const config = getMailchimpConfig() // Note: throws an error if not configured
-  if (!config) throw new Error('Cannot initialize mailchimp without config values')
+  if (!config)
+    throw new MisconfiguredEnvironmentError(
+      'Cannot initialize mailchimp without config values'
+    )
 
   mailchimp.setConfig({
     apiKey: config.apiKey,
@@ -59,4 +64,55 @@ async function triggerMailchimpCustomerJourney(
   })
 }
 
-export { addToMailchimpAudience, triggerMailchimpCustomerJourney }
+async function updateMailchimpMemberTags(
+  user: UserRecord,
+  listId: string,
+  onboardingData: OnboardingCompletionInput
+) {
+  initializeMailchimp()
+  const subscriberHash = md5(user.email.toLowerCase())
+
+  // Check if user is already in audience (meaning they consented to marketing emails)
+  try {
+    await mailchimp.lists.getListMember(listId, subscriberHash)
+  } catch {
+    throw new Error(
+      `User ${user.email} not found in Mailchimp audience. They should have been added during registration.`
+    )
+  }
+
+  const tags: { name: string; status: 'active' | 'inactive' }[] = []
+
+  if (onboardingData.role) {
+    tags.push({
+      name: `Role: ${onboardingData.role}`,
+      status: 'active'
+    })
+  }
+
+  if (onboardingData.plans?.length) {
+    onboardingData.plans.forEach((plan) => {
+      tags.push({
+        name: `Use case: ${plan}`,
+        status: 'active'
+      })
+    })
+  }
+
+  if (onboardingData.source) {
+    tags.push({
+      name: `Source: ${onboardingData.source}`,
+      status: 'active'
+    })
+  }
+
+  await mailchimp.lists.updateListMemberTags(listId, subscriberHash, {
+    tags
+  })
+}
+
+export {
+  addToMailchimpAudience,
+  triggerMailchimpCustomerJourney,
+  updateMailchimpMemberTags
+}

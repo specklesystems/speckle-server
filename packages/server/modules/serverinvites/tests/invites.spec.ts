@@ -57,14 +57,14 @@ const mailerMock = EmailSendingServiceMock
 describe('[Stream & Server Invites]', () => {
   const me: BasicTestUser = {
     name: 'Authenticated server invites guy',
-    email: 'serverinvitesguy@gmail.com',
+    email: 'serverinvitesguy@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
 
   const otherGuy: BasicTestUser = {
     name: 'Some Other DUde',
-    email: 'otherguy111@gmail.com',
+    email: 'otherguy111@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
@@ -392,7 +392,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'Invalid project ID'
+            projectInvite ? 'Project not found' : 'Invalid project ID specified'
           )
         })
 
@@ -418,7 +418,9 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'You are not authorized to access this resource'
+            projectInvite
+              ? 'You do not have access to the project'
+              : "Inviter doesn't have owner access to"
           )
         })
 
@@ -883,7 +885,7 @@ describe('[Stream & Server Invites]', () => {
 
       const ownInvitesGuy: BasicTestUser = {
         name: "Some guy who's invited a lot",
-        email: 'mrinvitedguy111@gmail.com',
+        email: 'mrinvitedguy111@example.org',
         password: 'sn3aky-1337-b1m',
         id: ''
       }

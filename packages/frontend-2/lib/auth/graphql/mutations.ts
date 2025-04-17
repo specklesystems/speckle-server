@@ -1,9 +1,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const finishOnboardingMutation = graphql(`
-  mutation FinishOnboarding {
+  mutation FinishOnboarding($input: OnboardingCompletionInput) {
     activeUserMutations {
-      finishOnboarding
+      finishOnboarding(input: $input)
     }
   }
 `)

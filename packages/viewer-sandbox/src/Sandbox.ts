@@ -57,6 +57,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
+import ObjectLoader2 from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -179,7 +180,6 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
-      url
       this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
@@ -909,8 +909,7 @@ export default class Sandbox {
         min: 0,
         max: 10
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -921,8 +920,7 @@ export default class Sandbox {
 
     shadowcatcherFolder
       .addInput(this.lightParams, 'shadowcatcher', { label: 'Enabled' })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -1060,8 +1058,7 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)
@@ -1264,6 +1261,7 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
+    const colorImage = document.getElementById('colorImage')
     const authToken = localStorage.getItem(
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
@@ -1278,9 +1276,10 @@ export default class Sandbox {
         undefined
       )
       /** Too spammy */
-      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-      //   console.warn(arg)
-      // })
+      loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+        if (colorImage)
+          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+      })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })
@@ -1303,5 +1302,49 @@ export default class Sandbox {
     })
 
     void this.viewer.loadObject(loader, true)
+  }
+
+  public async objectLoaderOnly(resource: string) {
+    const token = localStorage.getItem(
+      resource.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(resource, token)
+    const url = new URL(objUrls[0])
+
+    const segments = url.pathname.split('/')
+    if (
+      segments.length < 5 ||
+      url.pathname.indexOf('streams') === -1 ||
+      url.pathname.indexOf('objects') === -1
+    ) {
+      throw new Error('Unexpected object url format.')
+    }
+
+    const serverUrl = url.origin
+    const streamId = segments[2]
+    const objectId = segments[4]
+
+    const t0 = performance.now()
+    console.log('About to start  ' + (performance.now() - t0) / 1000)
+    /*const loader = new ObjectLoader({
+      serverUrl,
+      token,
+      streamId,
+      objectId,
+
+      options: { enableCaching: true }
+    })*/
+
+    const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
+    let count = 0
+
+    for await (const {} of loader.getObjectIterator()) {
+      if (count % 1000 === 0) {
+        console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
+      }
+      count++
+    }
+    await loader.disposeAsync()
+    console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
   }
 }

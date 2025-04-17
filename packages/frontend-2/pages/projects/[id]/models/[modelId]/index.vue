@@ -1,8 +1,8 @@
 <template>
   <div :class="isTransparent ? 'viewer-transparent' : ''">
-    <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
-    <LazyViewerPreSetupWrapper v-else @setup="state = $event" />
     <ClientOnly>
+      <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
+      <LazyViewerPreSetupWrapper v-else @setup="state = $event" />
       <Component
         :is="state ? ViewerScope : 'div'"
         :state="state"

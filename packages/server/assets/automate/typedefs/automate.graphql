@@ -352,6 +352,13 @@ input AutomateAuthCodePayloadTest {
   action: String!
 }
 
+"""
+Additional resources to validate user access to.
+"""
+input AutomateAuthCodeResources {
+  workspaceId: String
+}
+
 extend type Query {
   automateFunctions(
     filter: AutomateFunctionsFilter
@@ -366,7 +373,10 @@ extend type Query {
   """
   Part of the automation/function creation handshake mechanism
   """
-  automateValidateAuthCode(payload: AutomateAuthCodePayloadTest!): Boolean!
+  automateValidateAuthCode(
+    payload: AutomateAuthCodePayloadTest!
+    resources: AutomateAuthCodeResources
+  ): Boolean!
 }
 
 extend type Mutation {

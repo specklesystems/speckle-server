@@ -1,6 +1,7 @@
 import cron from 'node-cron'
+import crs from 'crypto-random-string'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { logger } from '@/logging/logging'
+import { type Logger, taskSchedulerLogger as logger } from '@/observability/logging'
 import {
   AcquireTaskLock,
   ReleaseTaskLock,
@@ -11,11 +12,12 @@ export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
   taskName: string,
   lockTimeout: number,
-  callback: (scheduledTime: Date) => Promise<void>,
+  callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
   acquireLock: AcquireTaskLock,
   releaseTaskLock: ReleaseTaskLock
 ) => {
-  const boundLogger = logger.child({ taskName })
+  const taskId = crs({ length: 10 })
+  const boundLogger = logger.child({ taskName, taskId })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
   const lock = await acquireLock({ taskName, lockExpiresAt })
@@ -31,12 +33,12 @@ export const scheduledCallbackWrapper = async (
       { scheduledTime },
       'Executing scheduled function {taskName} at {scheduledTime}'
     )
-    await callback(scheduledTime)
+    await callback(scheduledTime, { logger: boundLogger })
     // update lock as succeeded
     const finishDate = new Date()
     boundLogger.info(
       { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
-      'Finished scheduled function {taskName} execution in {durationSeconds} seconds'
+      'Finished scheduled function {taskName} execution succeeded in {durationSeconds} seconds'
     )
   } catch (error) {
     boundLogger.error(
@@ -44,7 +46,7 @@ export const scheduledCallbackWrapper = async (
       'The triggered task execution {taskName} failed at {scheduledTime}'
     )
   } finally {
-    releaseTaskLock(lock)
+    await releaseTaskLock(lock)
   }
 }
 
@@ -59,7 +61,7 @@ export const scheduleExecutionFactory =
   (
     cronExpression: string,
     taskName: string,
-    callback: (scheduledTime: Date) => Promise<void>,
+    callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
     lockTimeout = 60 * 1000
   ): cron.ScheduledTask => {
     const expressionValid = cron.validate(cronExpression)

@@ -44,7 +44,10 @@ export const initializeRegion = async (params: {
     // getAvailableRegionConfig allows getting configs that may not be registered yet
     const regionConfigs = await getAvailableRegionConfig()
     config = regionConfigs[regionKey].blobStorage
-    if (!config) throw new Error(`RegionKey ${regionKey} not available in config`)
+    if (!config)
+      throw new MisconfiguredEnvironmentError(
+        `RegionKey ${regionKey} not available in config`
+      )
   }
 
   const storage = getObjectStorage({

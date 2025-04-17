@@ -35,8 +35,9 @@ describe('project services @core', () => {
       expect(storedProject!.isDiscoverable).to.be.false
       expect(storedProject!.allowPublicComments).to.be.false
     })
-    // ;(['PUBLIC', 'UNLISTED'] as const).forEach((visibility) =>
-    it(`makes PUBLIC projects public and discoverable`, async () => {
+
+    // Discoverability currently disabled
+    it.skip(`makes PUBLIC projects public and discoverable`, async () => {
       const visibility = 'PUBLIC'
       const ownerId = cryptoRandomString({ length: 10 })
 
@@ -249,7 +250,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+      })
     })
     it('successfully creates a project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
@@ -309,7 +314,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+      })
     })
   })
 })

@@ -16,47 +16,61 @@ import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type BadgeSize = 'base' | 'lg'
+type BadgeColors = 'primary' | 'secondary'
 
 const emit = defineEmits<{
   (e: 'click-icon', v: MouseEvent): void
 }>()
 
-const props = defineProps<{
-  size?: BadgeSize
-  /**
-   * Set text & bg color. Defaults to primary variation.
-   */
-  colorClasses?: string
+const props = withDefaults(
+  defineProps<{
+    size?: BadgeSize
+    color?: BadgeColors
+    /**
+     * Set text & bg color. Defaults to primary variation.
+     */
+    colorClasses?: string
 
-  /**
-   * Show dot to the right
-   */
-  dot?: boolean
+    /**
+     * Show dot to the right
+     */
+    dot?: boolean
 
-  /**
-   * Set dot/icon bg color. Defaults to primary variation.
-   */
-  dotIconColorClasses?: string
+    /**
+     * Set dot/icon bg color. Defaults to primary variation.
+     */
+    dotIconColorClasses?: string
 
-  /**
-   * Optionally show icon to the left of the text
-   */
-  iconLeft?: PropAnyComponent
+    /**
+     * Optionally show icon to the left of the text
+     */
+    iconLeft?: PropAnyComponent
 
-  /**
-   * A more square, but still rounded look
-   */
-  rounded?: boolean
+    /**
+     * A more square, but still rounded look
+     */
+    rounded?: boolean
 
-  /**
-   * Track icon clicks
-   */
-  clickableIcon?: boolean
-}>()
-
-const badgeColorClasses = computed(
-  () => props.colorClasses || 'bg-info-lighter text-primary-focus'
+    /**
+     * Track icon clicks
+     */
+    clickableIcon?: boolean
+  }>(),
+  {
+    size: 'base',
+    color: 'primary'
+  }
 )
+
+const badgeColorClasses = computed(() => {
+  if (props.colorClasses) {
+    return props.colorClasses
+  } else if (props.color === 'secondary') {
+    return 'bg-highlight-3 text-foreground-2'
+  } else {
+    return 'bg-info-lighter text-primary-focus dark:text-foreground'
+  }
+})
 
 const badgeDotIconColorClasses = computed(
   () => props.dotIconColorClasses || 'text-blue-400'

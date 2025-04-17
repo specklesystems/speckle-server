@@ -16,6 +16,7 @@ import {
   GetLatestAutomationRevision,
   GetLatestAutomationRevisions,
   GetLatestVersionAutomationRuns,
+  GetProjectAutomationCount,
   GetRevisionsFunctions,
   GetRevisionsTriggerDefinitions,
   StoreAutomation,
@@ -37,7 +38,7 @@ import {
   AutomationRunRecord,
   AutomationTokenRecord,
   AutomationTriggerRecordBase,
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationRunWithTriggersFunctionRuns,
   AutomationRunTriggerRecord,
   AutomationFunctionRunRecord,
@@ -86,7 +87,7 @@ const tables = {
   automationRevisions: (db: Knex) =>
     db<AutomationRevisionRecord>(AutomationRevisions.name),
   automationRevisionFunctions: (db: Knex) =>
-    db<AutomateRevisionFunctionRecord>(AutomationRevisionFunctions.name),
+    db<AutomationRevisionFunctionRecord>(AutomationRevisionFunctions.name),
   automationTriggers: (db: Knex) =>
     db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
   automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
@@ -321,7 +322,7 @@ export const storeAutomationTokenFactory =
   }
 
 export type InsertableAutomationRevisionFunction = Omit<
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   'automationRevisionId'
 >
 
@@ -369,7 +370,7 @@ export const storeAutomationRevisionFactory =
         .automationRevisionFunctions(deps.db)
         .insert(
           revision.functions.map(
-            (f): AutomateRevisionFunctionRecord => ({
+            (f): AutomationRevisionFunctionRecord => ({
               ...f,
               automationRevisionId: id
             })
@@ -742,10 +743,12 @@ const getProjectAutomationsBaseQueryFactory =
   }
 
 export const getProjectAutomationsTotalCountFactory =
-  (deps: { db: Knex }) => async (params: GetProjectAutomationsParams) => {
-    const q = getProjectAutomationsBaseQueryFactory(deps)(params).count<
-      [{ count: string }]
-    >(Automations.col.id)
+  (deps: { db: Knex }): GetProjectAutomationCount =>
+  async ({ projectId }) => {
+    const q = getProjectAutomationsBaseQueryFactory(deps)({
+      projectId,
+      args: {}
+    }).count<[{ count: string }]>(Automations.col.id)
 
     const [ret] = await q
 

@@ -40,14 +40,8 @@ import {
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
-  addCommitUpdatedActivityFactory,
-  addCommitDeletedActivityFactory,
-  addCommitCreatedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
-import {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -64,8 +58,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getUsersFactory,
   getUserFactory,
@@ -91,7 +83,6 @@ import {
   getPaginatedBranchCommitsItemsByNameFactory
 } from '@/modules/core/services/commit/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { ensureError } from '@speckle/shared'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 
@@ -105,10 +96,7 @@ const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  addBranchCreatedActivity: addBranchCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  eventEmit: getEventBus().emit
 })
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
@@ -116,10 +104,7 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity: addCommitDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const getObject = getObjectFactory({ db })
@@ -131,11 +116,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -152,10 +133,7 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   getCommitBranch: getCommitBranchFactory({ db }),
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
-  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
@@ -227,14 +205,13 @@ const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Commits @core-commits', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie4342@gmail.com',
+    email: 'didimitrie4342@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

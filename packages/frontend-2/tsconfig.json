@@ -3,6 +3,7 @@
   "extends": "./.nuxt/tsconfig.json",
   "include": ["./.nuxt/nuxt.d.ts", "**/*", ".storybook/**/*"],
   "exclude": [
+    "**/node_modules",
     "./lib/core/nuxt-modules/**/templates/*.js",
     "./type-augmentations/eslint-only/*.d.ts"
   ]

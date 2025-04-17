@@ -41,7 +41,7 @@ export const Default: SwitchStoryType = {
     `,
     methods: {
       onModelUpdate(value: boolean) {
-        args['update:modelValue'] && args['update:modelValue'](value)
+        if (args['update:modelValue']) args['update:modelValue'](value)
         ctx.updateArgs({ ...args, modelValue: value })
       }
     }

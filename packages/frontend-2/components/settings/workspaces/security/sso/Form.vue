@@ -104,7 +104,9 @@ const onSubmit = handleSubmit(() => {
     url.searchParams.set('challenge', challenge.value)
   }
 
-  postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?ssoValidationSuccess=true`)
+  postAuthRedirect.set(
+    `/settings/workspaces/${props.workspaceSlug}/security?ssoValidationSuccess=true`
+  )
 
   mixpanel.track('Workspace SSO Configuration Started', {
     // eslint-disable-next-line camelcase

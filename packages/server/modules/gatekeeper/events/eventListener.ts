@@ -1,16 +1,15 @@
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
-  getWorkspaceSubscriptionFactory,
-  upsertTrialWorkspacePlanFactory
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { addWorkspaceSubscriptionSeatIfNeededFactoryNew } from '@/modules/gatekeeper/services/subscriptions'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getWorkspacePlanProductId
 } from '@/modules/gatekeeper/stripe'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import Stripe from 'stripe'
@@ -20,29 +19,22 @@ export const initializeEventListenersFactory =
   () => {
     const eventBus = getEventBus()
     const quitCbs = [
-      eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
+      eventBus.listen(WorkspaceEvents.SeatUpdated, async ({ payload }) => {
         const addWorkspaceSubscriptionSeatIfNeeded =
-          addWorkspaceSubscriptionSeatIfNeededFactory({
+          addWorkspaceSubscriptionSeatIfNeededFactoryNew({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({
-              db
-            }),
-            getWorkspacePlanPrice,
+            getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
-            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe })
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db })
           })
 
-        await addWorkspaceSubscriptionSeatIfNeeded(payload)
-      }),
-      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
-        await upsertTrialWorkspacePlanFactory({ db })({
-          workspacePlan: {
-            name: 'starter',
-            status: 'trial',
-            workspaceId: payload.workspace.id,
-            createdAt: new Date()
-          }
+        await addWorkspaceSubscriptionSeatIfNeeded({
+          ...payload.seat,
+          seatType: payload.seat.type
         })
       })
     ]

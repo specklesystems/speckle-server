@@ -26,7 +26,7 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer
+    resourceData?: unknown
   ) {
     super(resource, resourceData)
     this.tree = targetTree
@@ -49,14 +49,13 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer
+    resourceData?: unknown
   ): ObjectLoader {
     resourceData
-
     let token = undefined
     try {
       token = authToken || (localStorage.getItem('AuthToken') as string | undefined)
-    } catch (error) {
+    } catch {
       // Accessing localStorage may throw when executing on sandboxed document, ignore.
     }
 

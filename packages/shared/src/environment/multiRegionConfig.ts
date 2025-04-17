@@ -70,7 +70,7 @@ export const loadMultiRegionsConfig = async ({
   let parsedJson: Record<string, unknown>
   try {
     parsedJson = JSON.parse(file) as Record<string, unknown> // This will throw if the file is not valid JSON
-  } catch (e) {
+  } catch {
     throw new Error(`Multi-region config file at path '${path}' is not valid JSON`)
   }
 

@@ -1,12 +1,4 @@
 /* istanbul ignore file */
-const { mockRequireModule } = require('@/test/mockHelper')
-const envHelperMock = mockRequireModule(
-  [
-    '@/modules/shared/helpers/envHelper',
-    require.resolve('../../shared/helpers/envHelper')
-  ],
-  ['@/modules/shared/index']
-)
 const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
@@ -73,6 +65,7 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { mockAdminOverride } = require('@/test/mocks/global')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -133,6 +126,7 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
+const adminOverrideMock = mockAdminOverride()
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -240,12 +234,12 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     }
     const serverOwner = {
       name: 'Itsa Me',
-      email: 'me@gmail.com',
+      email: 'me@example.org',
       password: 'sn3aky-1337-b1m'
     }
     const otherGuy = {
       name: 'Some Other DUde',
-      email: 'otherguy@gmail.com',
+      email: 'otherguy@example.org',
       password: 'sn3aky-1337-b1m'
     }
 
@@ -265,11 +259,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     afterEach(() => {
-      envHelperMock.disable()
+      adminOverrideMock.disable()
     })
     after(() => {
-      envHelperMock.destroy()
-      envHelperMock.resetMockedFunctions()
+      adminOverrideMock.disable()
     })
     it('should allow stream:owners to be stream:owners', async () => {
       await authorizeResolver(
@@ -281,8 +274,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {
-      envHelperMock.enable()
-      envHelperMock.mockFunction('adminOverrideEnabled', () => true)
+      adminOverrideMock.enable(true)
       await authorizeResolver(
         serverOwner.id,
         myStream.id,
@@ -305,8 +297,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should allow server:admins to be anything if adminOverride is enabled', async () => {
-      envHelperMock.enable()
-      envHelperMock.mockFunction('adminOverrideEnabled', () => true)
+      adminOverrideMock.enable(true)
 
       await authorizeResolver(
         serverOwner.id,
@@ -331,8 +322,8 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should not allow server:users to be anything if adminOverride is enabled', async () => {
-      envHelperMock.enable()
-      envHelperMock.mockFunction('adminOverrideEnabled', () => true)
+      adminOverrideMock.enable(true)
+
       try {
         await authorizeResolver(
           otherGuy.id,

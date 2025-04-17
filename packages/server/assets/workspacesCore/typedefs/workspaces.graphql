@@ -41,11 +41,14 @@ input WorkspaceCreateInput {
   name: String!
   slug: String
   description: String
-  defaultLogoIndex: Int
   """
   Logo image as base64-encoded string
   """
   logo: String
+  """
+  Add this domain to the workspace as a verified domain and enable domain discoverability
+  """
+  enableDomainDiscoverabilityForDomain: String
 }
 
 input WorkspaceUpdateInput {
@@ -57,8 +60,8 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
-  defaultLogoIndex: Int
   defaultProjectRole: String
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
 }
@@ -117,7 +120,7 @@ extend type ProjectInviteMutations {
   createForWorkspace(
     projectId: ID!
     inputs: [WorkspaceProjectInviteCreateInput!]!
-  ): Project! @hasScope(scope: "users:invite") @hasServerRole(role: SERVER_USER)
+  ): Project! @hasScope(scope: "users:invite")
 }
 
 extend type Mutation {
@@ -139,12 +142,8 @@ type WorkspaceMutations {
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
   join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
-  # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteSsoProvider(workspaceId: String!): Boolean!
@@ -230,14 +229,10 @@ input WorkspaceInviteResendInput {
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
-  resend(input: WorkspaceInviteResendInput!): Boolean!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  resend(input: WorkspaceInviteResendInput!): Boolean! @hasScope(scope: "users:invite")
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
@@ -259,13 +254,10 @@ type Workspace {
   """
   logo: String
   """
-  Selected fallback when `logo` not set
-  """
-  defaultLogoIndex: Int!
-  """
   The default role workspace members will receive for workspace projects.
   """
   defaultProjectRole: String!
+    @deprecated(reason: "Always the reviewer role. Will be removed in the future.")
   """
   Verified workspace domains
   """
@@ -279,6 +271,7 @@ type Workspace {
     cursor: String
     filter: WorkspaceTeamFilter
   ): WorkspaceCollaboratorCollection!
+  teamByRole: WorkspaceTeamByRole!
   """
   Only available to workspace owners/members
   """
@@ -318,10 +311,20 @@ type Workspace {
     filter: AdminWorkspaceJoinRequestFilter
     cursor: String
     limit: Int! = 25
-  ): WorkspaceJoinRequestCollection!
+  ): WorkspaceJoinRequestCollection
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceTeamByRole {
+  admins: WorkspaceRoleCollection
+  members: WorkspaceRoleCollection
+  guests: WorkspaceRoleCollection
+}
+
+type WorkspaceRoleCollection {
+  totalCount: Int!
 }
 
 type WorkspaceCreationState {
@@ -374,9 +377,19 @@ type LimitedWorkspace {
   """
   logo: String
   """
-  Index of fallback workspace logo to use
+  Workspace members visible to people with verified email domain
   """
-  defaultLogoIndex: Int!
+  team(cursor: String, limit: Int! = 25): DiscoverableWorkspaceCollaboratorCollection
+}
+
+type DiscoverableWorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [DiscoverableWorkspaceCollaborator!]!
+}
+
+type DiscoverableWorkspaceCollaborator {
+  avatar: String
 }
 
 type WorkspaceDomain {
@@ -389,6 +402,11 @@ input WorkspaceProjectsFilter {
   Filter out projects by name
   """
   search: String
+
+  """
+  Only return workspace projects that the active user has an explicit project role in
+  """
+  withProjectRoleOnly: Boolean
 }
 
 input WorkspaceTeamFilter {
@@ -400,6 +418,7 @@ input WorkspaceTeamFilter {
   Search for team members by name or email
   """
   search: String
+  seatType: WorkspaceSeatType
 }
 
 type WorkspaceCollaboratorCollection {
@@ -421,6 +440,10 @@ type WorkspaceCollaborator {
   role: String!
   user: LimitedUser!
   projectRoles: [ProjectRole!]!
+  """
+  Date that the user joined the workspace.
+  """
+  joinDate: DateTime!
 }
 
 type PendingWorkspaceCollaborator {
@@ -515,10 +538,28 @@ extend type User {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
     @isOwner
+
+  """
+  The last-visited workspace for the given user
+  """
+  activeWorkspace: Workspace
+  """
+  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
+  """
+  isProjectsActive: Boolean
 }
 
 extend type Project {
   workspace: Workspace
+  """
+  Returns information about the potential effects of moving a project to a given workspace.
+  """
+  moveToWorkspaceDryRun(workspaceId: String!): ProjectMoveToWorkspaceDryRun!
+}
+
+type ProjectMoveToWorkspaceDryRun {
+  addedToWorkspace(limit: Int): [LimitedUser!]!
+  addedToWorkspaceTotalCount: Int!
 }
 
 type ServerWorkspacesInfo {
@@ -551,7 +592,7 @@ extend type Project {
 
 # case of using userSearch, and we alway expose this
 extend type LimitedUser {
-  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceDomainPolicyCompliant(workspaceSlug: String): Boolean
   workspaceRole(workspaceId: String): String
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
@@ -628,4 +669,8 @@ input AdminUpdateWorkspacePlanInput {
 
 type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+}
+
+extend type ActiveUserMutations {
+  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
 }

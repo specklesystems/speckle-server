@@ -2,7 +2,7 @@
 
 This component generates object previews for Speckle Objects.
 
-It reads preview tasks from the DB and uses Puppeteer and an internal Viewer to generate previews, which are currently stored in the DB.
+It reads preview tasks from a Redis backed Bull queue and uses Puppeteer and an internal Viewer to generate previews, which are sent back to a response queue.
 
 This is an overview of this service:
 
@@ -30,7 +30,17 @@ Then build the service:
 yarn build
 ```
 
-This builds both typescript and webpack (for the page that is deployed to chromium to create the views). It should be rerun whenever you make changes to the viewer (if you make local viewer changes, don't forget to build the viewer module before running this)
+We also need to build the preview-service frontend:
+
+```bash
+yarn build:frontend
+```
+
+Then, we need to copy the built artefacts from the preview-service frontend in to the preview-service (backend) directory:
+
+```bash
+yarn link:frontend
+```
 
 Finally, you can run the preview service with:
 
@@ -38,7 +48,7 @@ Finally, you can run the preview service with:
 yarn dev
 ```
 
-This will use the default dev DB connection of `postgres://speckle:speckle@127.0.0.1/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
+This will use the default dev DB connection. You can pass the environment variable `REDIS_URL` to change this to a different DB.
 
 ### In a docker image
 
@@ -51,7 +61,7 @@ docker build -f packages/preview-service/Dockerfile -t speckle-preview-service:l
 Once you have built the preview service Dockerfile, you can run it like so:
 
 ```bash
-docker run --rm -p 3001:3001 -e PORT=3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle speckle-preview-service:local
+docker run --rm -p 3001:3001 -e PORT=3001 -e REDIS_URL=redis://redis:6379 speckle-preview-service:local
 ```
 
 ## Deployment notes

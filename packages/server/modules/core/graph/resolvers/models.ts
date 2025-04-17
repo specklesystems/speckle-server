@@ -1,4 +1,3 @@
-import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createBranchAndNotifyFactory,
@@ -9,7 +8,6 @@ import {
   getPaginatedProjectModelsFactory,
   getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
-import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
 
@@ -20,8 +18,7 @@ import {
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
@@ -51,20 +48,18 @@ import {
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivityFactory,
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
 } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export = {
   User: {
@@ -211,6 +206,7 @@ export = {
   },
   Model: {
     async author(parent, _args, ctx) {
+      if (!parent.authorId) return null
       return await ctx.loaders.users.getUser.load(parent.authorId)
     },
     async previewUrl(parent, _args, ctx) {
@@ -302,49 +298,111 @@ export = {
   },
   ModelMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Contributor,
-        ctx.resourceAccessRules
-      )
-      const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canCreate = await ctx.authPolicies.project.model.canCreate({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canCreate)
+
+      const projectDB = await getProjectDbClient({ projectId })
+
+      // Sanitize model name by trimming spaces around slashes
+      const sanitizedInput = {
+        ...args.input,
+        name: args.input.name
+          .split('/')
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0)
+          .join('/')
+      }
+
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDB }),
         createBranch: createBranchFactory({ db: projectDB }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
-      return await createBranchAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await createBranchAndNotify(sanitizedInput, ctx.userId!),
+        {
+          logger,
+          operationName: 'createModel',
+          operationDescription: `Create a new Model`
+        }
+      )
     },
     async update(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Contributor,
-        ctx.resourceAccessRules
-      )
-      const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectId = args.input.projectId
+      const modelId = args.input.id
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        modelId,
+        branchId: modelId //legacy
+      })
+
+      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+        userId: ctx.userId,
+        projectId
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const projectDB = await getProjectDbClient({ projectId })
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         updateBranch: updateBranchFactory({ db: projectDB }),
-        addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
-      return await updateBranchAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await updateBranchAndNotify(args.input, ctx.userId!),
+        {
+          logger,
+          operationName: 'updateModel',
+          operationDescription: `Update a Model`
+        }
+      )
     },
     async delete(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Contributor,
-        ctx.resourceAccessRules
-      )
-      const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
+      const projectId = args.input.projectId
+      const modelId = args.input.id
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.input.projectId,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        modelId,
+        branchId: modelId //legacy
+      })
+
+      const canDelete = await ctx.authPolicies.project.model.canDelete({
+        userId: ctx.userId,
+        projectId,
+        modelId
+      })
+      throwIfAuthNotOk(canDelete)
+
+      const projectDB = await getProjectDbClient({ projectId })
       const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
       const getStream = getStreamFactory({ db })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
@@ -352,13 +410,16 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        addBranchDeletedActivity: addBranchDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
-      return await deleteBranchAndNotify(args.input, ctx.userId!)
+      return await withOperationLogging(
+        async () => await deleteBranchAndNotify(args.input, ctx.userId!),
+        {
+          logger,
+          operationName: 'deleteModel',
+          operationDescription: `Delete a Model`
+        }
+      )
     }
   },
   Subscription: {
@@ -369,12 +430,18 @@ export = {
           const { id: projectId, modelIds } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(
-            ctx.userId,
-            projectId,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+          throwIfResourceAccessNotAllowed({
+            resourceAccessRules: ctx.resourceAccessRules,
+            resourceId: projectId,
+            resourceType: TokenResourceIdentifierType.Project
+          })
+
+          const canReadProject = await ctx.authPolicies.project.canRead({
+            userId: ctx.userId,
+            projectId
+          })
+          throwIfAuthNotOk(canReadProject)
+
           if (!modelIds?.length) return true
           return modelIds.includes(payload.projectModelsUpdated.id)
         }

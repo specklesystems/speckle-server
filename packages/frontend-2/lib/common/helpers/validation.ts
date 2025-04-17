@@ -33,6 +33,8 @@ export const isUrl = ValidationHelpers.isUrl
 
 export const isItemSelected = ValidationHelpers.isItemSelected
 
+export const isMultiItemSelected = ValidationHelpers.isMultiItemSelected
+
 /**
  * Wrapper over useForm's `resetForm` that fully resets the form and its initial values
  * @param veeValidateResetForm The `resetForm` function returned by vee-validate's `useForm`

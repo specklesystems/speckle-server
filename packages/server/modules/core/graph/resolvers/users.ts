@@ -17,7 +17,7 @@ import {
   lookupUsersFactory,
   bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
-import { UsersMeta } from '@/modules/core/dbSchema'
+import { Users, UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   deleteAllUserInvitesFactory,
@@ -35,11 +35,18 @@ import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getMailchimpStatus,
+  getMailchimpOnboardingIds
+} from '@/modules/shared/helpers/envHelper'
+import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -196,6 +203,25 @@ export = {
         key: UsersMeta.metaKey.isOnboardingFinished
       })
       return !!metaVal?.value
+    },
+    meta: async (parent) => ({
+      userId: parent.id
+    })
+  },
+  UserMeta: {
+    newWorkspaceExplainerDismissed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.newWorkspaceExplainerDismissed
+      })
+      return !!metaVal?.value
+    },
+    legacyProjectsExplainerCollapsed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.legacyProjectsExplainerCollapsed
+      })
+      return !!metaVal?.value
     }
   },
   LimitedUser: {
@@ -206,15 +232,36 @@ export = {
   Mutation: {
     async userUpdate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
-      await updateUserAndNotify(context.userId!, args.user)
+      const logger = context.log.child({
+        userIdToOperateOn: context.userId
+      })
+      await withOperationLogging(
+        async () => await updateUserAndNotify(context.userId!, args.user),
+        {
+          logger,
+          operationName: 'updateUser',
+          operationDescription: `Update user`
+        }
+      )
       return true
     },
 
-    async userRoleChange(_parent, args) {
-      await changeUserRole({
-        role: args.userRoleInput.role,
-        userId: args.userRoleInput.id
+    async userRoleChange(_parent, args, ctx) {
+      const logger = ctx.log.child({
+        userIdToOperateOn: args.userRoleInput.id
       })
+      await withOperationLogging(
+        async () =>
+          await changeUserRole({
+            role: args.userRoleInput.role,
+            userId: args.userRoleInput.id
+          }),
+        {
+          logger,
+          operationName: 'changeUserRole',
+          operationDescription: `Change user role`
+        }
+      )
       return true
     },
 
@@ -223,12 +270,25 @@ export = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser(user.id, context.userId)
+      const logger = context.log.child({
+        userIdToOperateOn: user.id
+      })
+      await withOperationLogging(
+        async () => await deleteUser(user.id, context.userId),
+        {
+          logger,
+          operationName: 'adminDeleteUser',
+          operationDescription: `Admin deletion of an user`
+        }
+      )
       return true
     },
 
     async userDelete(_parent, args, context) {
       const user = await getUser(context.userId!)
+      const logger = context.log.child({
+        userIdToOperateOn: context.userId
+      })
 
       if (args.userConfirmation.email !== user.email) {
         throw new BadRequestError('Malformed input: emails do not match.')
@@ -240,7 +300,14 @@ export = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId!, context.userId!)
+      await withOperationLogging(
+        async () => await deleteUser(context.userId!, context.userId!),
+        {
+          logger,
+          operationName: 'deleteUser',
+          operationDescription: `Delete user`
+        }
+      )
 
       return true
     },
@@ -248,12 +315,75 @@ export = {
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
-    async finishOnboarding(_parent, _args, ctx) {
-      return await markOnboardingComplete(ctx.userId || '')
+    async finishOnboarding(_parent, args, ctx) {
+      const userId = ctx.userId
+      if (!userId) return false
+      const logger = ctx.log.child({
+        userIdToOperateOn: userId
+      })
+
+      const success = await withOperationLogging(
+        async () => await markOnboardingComplete(userId),
+        {
+          logger,
+          operationName: 'finishOnboarding',
+          operationDescription: `Finish onboarding`
+        }
+      )
+
+      // If onboarding was marked complete successfully and we have onboarding data
+      if (success && args.input && getMailchimpStatus()) {
+        try {
+          const user = await getUser(userId)
+          const { listId } = getMailchimpOnboardingIds()
+
+          await updateMailchimpMemberTags(user, listId, {
+            role: args.input?.role || undefined,
+            plans: args.input?.plans || undefined,
+            source: args.input?.source || undefined
+          })
+        } catch (error) {
+          // Log but don't fail the request
+          ctx.log.warn({ err: error }, 'Failed to update Mailchimp tags')
+        }
+      }
+
+      return success
     },
     async update(_parent, args, context) {
-      const newUser = await updateUserAndNotify(context.userId!, args.user)
+      const logger = context.log
+      const newUser = await withOperationLogging(
+        async () => await updateUserAndNotify(context.userId!, args.user),
+        {
+          logger,
+          operationName: 'updateUser',
+          operationDescription: 'Update user'
+        }
+      )
       return newUser
+    },
+    meta: () => ({})
+  },
+  UserMetaMutations: {
+    setLegacyProjectsExplainerCollapsed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.legacyProjectsExplainerCollapsed,
+        args.value
+      )
+
+      return !!res.value
+    },
+    setNewWorkspaceExplainerDismissed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.newWorkspaceExplainerDismissed,
+        args.value
+      )
+
+      return !!res.value
     }
   }
 } as Resolvers

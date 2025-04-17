@@ -1,42 +1,44 @@
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import {
-  GetWorkspaceWithDomains,
   DeleteWorkspaceDomain,
   CountDomainsByWorkspaceId,
-  UpdateWorkspace
+  UpdateWorkspace,
+  GetWorkspaceBySlug,
+  GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 export const isUserWorkspaceDomainPolicyCompliantFactory =
   ({
-    getWorkspaceWithDomains,
+    getWorkspaceBySlug,
+    getWorkspaceDomains,
     findEmailsByUserId
   }: {
-    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    getWorkspaceBySlug: GetWorkspaceBySlug
+    getWorkspaceDomains: GetWorkspaceDomains
     findEmailsByUserId: FindEmailsByUserId
   }) =>
   async ({
-    workspaceId,
+    workspaceSlug,
     userId
   }: {
-    workspaceId: string
+    workspaceSlug: string
     userId: string
   }): Promise<boolean | null> => {
-    const workspace = await getWorkspaceWithDomains({
-      id: workspaceId
-    })
-    // maybe we should throw
+    const workspace = await getWorkspaceBySlug({ workspaceSlug })
     if (!workspace) throw new WorkspaceNotFoundError()
 
     // if workspace is not protected, the value is not true, its an empty response
     if (!workspace.domainBasedMembershipProtectionEnabled) return null
 
+    const workspaceDomains = await getWorkspaceDomains({ workspaceIds: [workspace.id] })
+
     const userEmails = await findEmailsByUserId({ userId })
 
     return userEmailsCompliantWithWorkspaceDomains({
       userEmails,
-      workspaceDomains: workspace.domains
+      workspaceDomains
     })
   }
 
