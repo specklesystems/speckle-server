@@ -43,16 +43,24 @@ import { formatPrice } from '~/lib/billing/helpers/plan'
 import { PaidWorkspacePlansNew, type MaybeNullOrUndefined } from '@speckle/shared'
 import { BillingInterval, Currency } from '~/lib/common/generated/gql/graphql'
 import { useActiveWorkspace } from '~/lib/workspaces/composables/activeWorkspace'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   slug: string
   workspaceId: MaybeNullOrUndefined<string>
 }>()
 
-const { isPaidPlan, currency, plan, intervalIsYearly, hasUnlimitedAddon } =
-  useWorkspacePlan(props.slug)
+const {
+  isPaidPlan,
+  currency,
+  plan,
+  intervalIsYearly,
+  billingInterval,
+  hasUnlimitedAddon
+} = useWorkspacePlan(props.slug)
 const { addonPrices } = useWorkspaceAddonPrices()
 const { isAdmin } = useActiveWorkspace(props.slug)
+const mixpanel = useMixpanel()
 
 const isUpgradeDialogOpen = ref(false)
 
@@ -71,6 +79,14 @@ const unlimitedAddOnButton = computed(() => ({
   disabled: !isPaidPlan.value || hasUnlimitedAddon.value || !isAdmin.value,
   onClick: () => {
     isUpgradeDialogOpen.value = true
+
+    mixpanel.track('Add-on CTA Clicked', {
+      plan: plan.value?.name,
+      cycle: billingInterval.value,
+      type: 'unlimited',
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
   }
 }))
 

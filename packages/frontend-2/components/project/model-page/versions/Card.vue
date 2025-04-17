@@ -9,8 +9,8 @@
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
         <NuxtLink
-          class="text-body-xs font-medium truncate text-foreground pl-1"
-          :href="viewerRoute"
+          class="text-body-xs font-medium truncate text-foreground pl-1 select-none"
+          :href="isLimited ? undefined : viewerRoute"
         >
           {{ message }}
         </NuxtLink>
@@ -46,7 +46,7 @@
             >
               <ViewerResourcesUpgradeLimitAlert
                 class="!bg-foundation !text-foreground-2"
-                text="Upgrade to view versions older than (count) days."
+                :text="`Upgrade to view versions older than ${versionLimitFormatted} days.`"
               />
             </div>
             <div
@@ -114,6 +114,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
@@ -156,9 +157,11 @@ const props = defineProps<{
   modelId: string
   selectable?: boolean
   selected?: boolean
+  workspaceSlug?: string
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
+const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug ?? '')
 
 const showActionsMenu = ref(false)
 

@@ -154,9 +154,9 @@ const showFeedbackDialog = ref(false)
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
-    ? projectsRoute
-    : activeWorkspaceSlug.value
-    ? workspaceRoute(activeWorkspaceSlug.value)
+    ? activeWorkspaceSlug.value
+      ? workspaceRoute(activeWorkspaceSlug.value)
+      : projectsRoute
     : projectsRoute
 })
 const isActive = (...routes: string[]): boolean => {
