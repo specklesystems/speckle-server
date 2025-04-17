@@ -38,6 +38,7 @@ import {
   Roles
 } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   slug: string
@@ -55,6 +56,7 @@ const {
   subscription,
   intervalIsYearly
 } = useWorkspacePlan(props.slug)
+const mixpanel = useMixpanel()
 
 const isUpgradeDialogOpen = ref(false)
 const planToUpgrade = ref<PaidWorkspacePlansNew | null>(null)
@@ -70,6 +72,13 @@ const isAdmin = computed(() => props.role === Roles.Workspace.Admin)
 const toggleUpgradeDialog = (plan: PaidWorkspacePlansNew) => {
   planToUpgrade.value = plan
   isUpgradeDialogOpen.value = !isUpgradeDialogOpen.value
+
+  mixpanel.track('Pricing Plan CTA Clicked', {
+    plan,
+    cycle: billingInterval.value,
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
 }
 
 onMounted(() => {
