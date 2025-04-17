@@ -102,6 +102,10 @@ graphql(`
     slug
     plan {
       name
+      usage {
+        projectCount
+        modelCount
+      }
     }
     permissions {
       canMoveProjectToWorkspace(projectId: $projectId) {
