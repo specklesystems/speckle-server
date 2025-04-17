@@ -471,6 +471,14 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'teamByRole',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
+          )
           if (input.role === Roles.Workspace.Admin) {
             modifyObjectField(
               cache,
