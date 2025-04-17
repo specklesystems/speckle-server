@@ -104,5 +104,5 @@ export const countInvitableCollaboratorsByProjectIdFactory =
       search
     })
     const [res] = await query.count()
-    return parseInt(res.count.toString())
+    return parseInt(res?.count?.toString() ?? '0')
   }
