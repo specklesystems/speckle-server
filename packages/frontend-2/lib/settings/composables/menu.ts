@@ -184,7 +184,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const showMakeGuest = computed(
-    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Guest
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
   )
 
   const showMakeMember = computed(
@@ -214,6 +214,14 @@ export const useSettingsMembersActions = (params: {
       mainItems.push({
         title: 'Make admin...',
         id: WorkspaceUserActionTypes.MakeAdmin
+      })
+    }
+    if (showRemoveAdmin.value) {
+      mainItems.push({
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
     if (showMakeGuest.value) {
@@ -253,14 +261,6 @@ export const useSettingsMembersActions = (params: {
       })
     }
 
-    if (showRemoveAdmin.value) {
-      footerItems.push({
-        title: 'Revoke admin access...',
-        id: WorkspaceUserActionTypes.RemoveAdmin,
-        disabled: isOnlyAdmin.value,
-        disabledTooltip: 'There must be at least one admin in this workspace'
-      })
-    }
     if (showRemoveFromWorkspace.value) {
       footerItems.push({
         title: 'Remove from workspace...',

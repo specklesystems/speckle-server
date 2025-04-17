@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-5xl md:mx-auto pb-16">
       <SettingsSectionHeader
         hide-divider
         title="People"
