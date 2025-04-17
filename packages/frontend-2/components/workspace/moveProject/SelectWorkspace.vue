@@ -34,8 +34,8 @@
                       SSO login required
                     </CommonBadge>
                     <p>
-                      {{ ws.projects.totalCount }} projects,
-                      {{ ws.projects.totalCount }} models
+                      {{ ws.plan?.usage.projectCount }} projects,
+                      {{ ws.plan?.usage.modelCount }} models
                     </p>
                     <UserAvatarGroup
                       :users="ws.team.items.map((t) => t.user)"
