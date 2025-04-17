@@ -733,17 +733,19 @@ export = FF_WORKSPACES_MODULE_ENABLED
           if (!role) {
             // this is currently not working with the command factory
             // TODO: include the onWorkspaceRoleDeletedFactory listener service
-            const trx = await db.transaction()
-            const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
-              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit
-            })
             await withOperationLogging(
               async () =>
                 await withTransaction(
-                  deleteWorkspaceRole({ workspaceId, userId }),
-                  trx
+                  async ({ db: trx }) => {
+                    const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+                      deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+                      getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+                      emitWorkspaceEvent: getEventBus().emit
+                    })
+
+                    return await deleteWorkspaceRole({ workspaceId, userId })
+                  },
+                  { db }
                 ),
               {
                 logger,
@@ -758,18 +760,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const updateWorkspaceRole = commandFactory({
               db,
               eventBus,
-              operationFactory: ({ db, emit }) =>
+              operationFactory: ({ trx, emit }) =>
                 updateWorkspaceRoleFactory({
-                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
                   findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                    db
+                    db: trx
                   }),
-                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
                   emitWorkspaceEvent: emit,
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
                     eventEmit: emit
                   })
                 })
@@ -946,17 +948,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
           // this is currently not working with the command factory
           // TODO: include the onWorkspaceRoleDeletedFactory listener service
-          const trx = await db.transaction()
-          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
-            getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-            emitWorkspaceEvent: getEventBus().emit
-          })
           await withOperationLogging(
             async () =>
               await withTransaction(
-                deleteWorkspaceRole({ workspaceId, userId: context.userId! }),
-                trx
+                async ({ db: trx }) => {
+                  const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+                    deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
+                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+                    emitWorkspaceEvent: getEventBus().emit
+                  })
+
+                  return await deleteWorkspaceRole({
+                    workspaceId,
+                    userId: context.userId!
+                  })
+                },
+                { db }
               ),
             {
               logger,
