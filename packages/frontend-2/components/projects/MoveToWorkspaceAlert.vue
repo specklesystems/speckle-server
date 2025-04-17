@@ -52,11 +52,11 @@
               size="sm"
               class="mb-5"
               :icon-right="
-                hasCollapsedLegacyProjectsExplainer ? ChevronUpIcon : ChevronDownIcon
+                !hasCollapsedLegacyProjectsExplainer ? ChevronUpIcon : ChevronDownIcon
               "
               @click="handleToggleExpand"
             >
-              {{ hasCollapsedLegacyProjectsExplainer ? 'Show less' : 'Show more' }}
+              {{ !hasCollapsedLegacyProjectsExplainer ? 'Show less' : 'Show more' }}
             </FormButton>
 
             <div class="flex gap-2">
