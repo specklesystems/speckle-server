@@ -41,8 +41,8 @@ const buildInvitableCollaboratorsByProjectIdQueryFactory =
         Users.col.id,
         tables
           .streamAcl(db)
-          .select(StreamAcl.col.resourceId)
-          .whereNot(StreamAcl.col.resourceId, projectId)
+          .select(StreamAcl.col.userId)
+          .where(StreamAcl.col.resourceId, projectId)
       )
     if (search) {
       query
