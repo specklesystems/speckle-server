@@ -23,9 +23,7 @@ import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clie
 import Stripe from 'stripe'
 import { cloneDeep } from 'lodash'
 import { Logger } from '@/observability/logging'
-
-// get all workspace plan from the DB
-// foreach workspace:
+import { withOperationTransaction } from '@/modules/shared/helpers/dbHelper'
 
 export const migrateOldWorkspacePlans =
   ({ db, stripe, logger }: { db: Knex; stripe: Stripe; logger: Logger }) =>
@@ -52,8 +50,13 @@ export const migrateOldWorkspacePlans =
 
     for (const oldPlan of oldPlanWorkspaces) {
       try {
-        await migrateWorkspacePlan({ db, stripe, logger })({
-          workspaceId: oldPlan.workspaceId
+        await withOperationTransaction({
+          operation: async ({ db }) => {
+            await migrateWorkspacePlan({ db, stripe, logger })({
+              workspaceId: oldPlan.workspaceId
+            })
+          },
+          db
         })
       } catch (err) {
         logger.error(
@@ -166,10 +169,9 @@ export const migrateWorkspacePlan =
       'Migrating {workspaceId} from old plan {workspacePlan} to new plan {newTargetPlan}'
     )
 
-    const trx = await db.transaction()
     // add editor seats to everyone
 
-    const workspaceMembers = await getWorkspaceRolesFactory({ db: trx })({
+    const workspaceMembers = await getWorkspaceRolesFactory({ db })({
       workspaceId
     })
     const seats = workspaceMembers.map((m) => ({
@@ -184,7 +186,7 @@ export const migrateWorkspacePlan =
       'Inserting {migratedSeatsCount} new seats for the workspace {workspaceId}'
     )
 
-    await trx<WorkspaceSeat>('workspace_seats')
+    await db<WorkspaceSeat>('workspace_seats')
       .insert(seats)
       .onConflict(['workspaceId', 'userId'])
       .merge()
@@ -193,7 +195,7 @@ export const migrateWorkspacePlan =
       { migratedSeatsCount: seats.length },
       'Workspace {workspaceId} has added {migratedSeatsCount} seats'
     )
-    await upsertWorkspacePlanFactory({ db: trx })({
+    await upsertWorkspacePlanFactory({ db })({
       //@ts-expect-error the switch above makes sure things are ok
       workspacePlan: {
         workspaceId,
@@ -220,7 +222,7 @@ export const migrateWorkspacePlan =
           )
       }
       // if stripe paid plan, convert the stripe sub to use all editor seats
-      const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db: trx })({
+      const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
         workspaceId
       })
       if (!workspaceSubscription)
@@ -264,7 +266,6 @@ export const migrateWorkspacePlan =
         prorationBehavior: 'create_prorations'
       })
     }
-    await trx.commit()
     log.info('🥳 Workspace plan migration completed for workspace {workspaceId}')
 
     // add and editor seat to all workspace members

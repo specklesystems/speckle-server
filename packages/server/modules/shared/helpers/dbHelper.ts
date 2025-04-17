@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { isString } from 'lodash'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { isNonNullable } from '@speckle/shared'
+import { isNonNullable, MaybeAsync } from '@speckle/shared'
 
 export type BatchedSelectOptions = {
   /**
@@ -106,6 +106,9 @@ export const numberOfFreeConnections = (knex: Knex) => {
   return Math.max(pgMaxConnections - demand, 0)
 }
 
+/**
+ * @deprecated use withOperationTransaction for a better API
+ */
 export const withTransaction = async <T>(
   callback: Promise<T> | T,
   trx: Knex.Transaction
@@ -119,5 +122,22 @@ export const withTransaction = async <T>(
     if (trx.isTransaction && !trx.isCompleted()) {
       await trx.commit()
     }
+  }
+}
+
+export const withOperationTransaction = async <T>(params: {
+  operation: (args: { db: Knex }) => MaybeAsync<T>
+  db: Knex
+}) => {
+  const { operation, db } = params
+  const trx = await db.transaction()
+
+  try {
+    const result = await operation({ db: trx })
+    await trx.commit()
+    return result
+  } catch (e) {
+    await trx.rollback()
+    throw e
   }
 }

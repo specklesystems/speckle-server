@@ -758,18 +758,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             const updateWorkspaceRole = commandFactory({
               db,
               eventBus,
-              operationFactory: ({ db, emit }) =>
+              operationFactory: ({ trx, emit }) =>
                 updateWorkspaceRoleFactory({
-                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
                   findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                    db
+                    db: trx
                   }),
-                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
                   emitWorkspaceEvent: emit,
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
                     eventEmit: emit
                   })
                 })
