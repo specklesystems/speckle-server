@@ -22,6 +22,7 @@ import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
 import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
 import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './workspace/canReceiveProjectsUpdatedMessage.js'
+import { canDeleteProjectPolicy } from './project/canDelete.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
@@ -46,6 +47,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canMoveToWorkspace: canMoveToWorkspacePolicy(loaders),
     canCreatePersonal: canCreatePersonalProjectPolicy(loaders),
     canUpdate: canUpdateProjectPolicy(loaders),
+    canDelete: canDeleteProjectPolicy(loaders),
     canUpdateAllowPublicComments: canUpdateProjectAllowPublicCommentsPolicy(loaders),
     canReadSettings: canReadProjectSettingsPolicy(loaders),
     canReadWebhooks: canReadProjectWebhooksPolicy(loaders),
