@@ -348,7 +348,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/3deaea94af'
     // Text and Dimensions
     // 'https://latest.speckle.systems/streams/3f895e614f/commits/fbc78286c9'
-    // 'https://latest.speckle.systems/streams/55cc1cbf0a/commits/aa72674507'
+    'https://latest.speckle.systems/streams/55cc1cbf0a/commits/aa72674507'
 
     // 'https://latest.speckle.systems/streams/55cc1cbf0a/commits/a7f74b6524'
     // 'https://latest.speckle.systems/streams/85e05b8c72/commits/53f4328211'
@@ -473,7 +473,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
 
     // FAR OFF
-    'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
 
     // SUPER TINY
     // 'https://latest.speckle.systems/projects/6631c0378c/models/4fed65a49c'

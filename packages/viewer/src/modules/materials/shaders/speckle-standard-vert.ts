@@ -214,7 +214,7 @@ void main() {
 	#if NUM_DIR_LIGHT_SHADOWS > 0
 	#pragma unroll_loop_start
 	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
-        vec4 shadowPosition = vec4(transformed, 1.0);
+        highp vec4 shadowPosition = vec4(transformed, 1.0);
         mat4 shadowMatrix = directionalShadowMatrix[ i ];
 
         #ifdef USE_RTE
@@ -222,7 +222,7 @@ void main() {
             shadowMatrix = rteShadowMatrix;
         #endif
         #ifdef TRANSFORM_STORAGE
-            vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
+            highp vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowPosition.xyz = rotate_scaled_vertex_position_delta(shadowPosition, rtePivotShadow, tScale, tQuaternion) + rtePivotShadow.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
