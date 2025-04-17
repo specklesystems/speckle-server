@@ -5,12 +5,6 @@ import {
   OperationStatus
 } from '@/observability/domain/fields'
 import { logWithErr } from '@/observability/utils/logLevels'
-import { MaybeAsync } from '@speckle/shared'
-
-export const logErrorThenThrow = (err: unknown, logger: Logger) => {
-  logWithErr(logger, err, OperationStatus.failure, OperationLogLinePrefix)
-  throw err
-}
 
 /**
  * @description withOperationLogging is intended to be used for adding observability to high-level 'business' operations
@@ -26,11 +20,9 @@ export const withOperationLogging = async <T>(
     logger: Logger
     operationName: string
     operationDescription?: string
-    errorHandler?: (err: unknown, logger: Logger) => MaybeAsync<T>
   }
 ): Promise<T> => {
   const { operationName, operationDescription } = params
-  const errorHandler = params.errorHandler || logErrorThenThrow
   const logger = params.logger.child(OperationName(operationName))
 
   try {
@@ -44,6 +36,7 @@ export const withOperationLogging = async <T>(
     logger.info(OperationStatus.success, OperationLogLinePrefix)
     return results
   } catch (err) {
-    return await errorHandler(err, logger)
+    logWithErr(logger, err, OperationStatus.failure, OperationLogLinePrefix)
+    throw err
   }
 }

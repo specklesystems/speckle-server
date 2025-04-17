@@ -39,6 +39,7 @@
           :version="item"
           :model-id="project.model.id"
           :project-id="project.id"
+          :workspace-slug="project.workspace?.slug"
           :style="`z-index: ${items.length - i};`"
           :selectable="!!selectedItems.length"
           :selection-disabled="disabledSelections[item.id]"
@@ -51,6 +52,7 @@
           :version="item"
           :model-id="project.model.id"
           :project-id="project.id"
+          :workspace-slug="project.workspace?.slug"
           :style="`z-index: ${items.length - i};`"
         />
       </template>

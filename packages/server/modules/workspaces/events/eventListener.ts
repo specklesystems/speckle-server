@@ -711,60 +711,87 @@ export const initializeEventListenersFactory =
         })
       }),
       eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
-        const trx = await db.transaction()
-        const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
-          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
-          deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-          deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx })
-        })
-        await withTransaction(onWorkspaceRoleDeleted(payload.acl), trx)
+        await withTransaction(
+          async ({ db: trx }) => {
+            const onWorkspaceRoleDeleted = onWorkspaceRoleDeletedFactory({
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
+              deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx })
+            })
+
+            return await onWorkspaceRoleDeleted(payload.acl)
+          },
+          { db }
+        )
       }),
       eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
-        const trx = await db.transaction()
-        const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
-          getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
-          getWorkspaceRoleToDefaultProjectRoleMapping:
-            getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-            }),
-          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
-          setStreamCollaborator: setStreamCollaboratorFactory({
-            getUser: getUserFactory({ db }),
-            validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-            emitEvent: eventBus.emit,
-            grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
-            isStreamCollaborator: isStreamCollaboratorFactory({
-              getStream: getStreamFactory({ db })
-            }),
-            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx })
-          }),
-          getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db })
-        })
-        await withTransaction(onWorkspaceRoleUpdated(payload), trx)
+        await withTransaction(
+          async ({ db: trx }) => {
+            const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
+              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
+              getWorkspaceRoleToDefaultProjectRoleMapping:
+                getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                  getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+                }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              setStreamCollaborator: setStreamCollaboratorFactory({
+                getUser: getUserFactory({ db }),
+                validateStreamAccess: validateStreamAccessFactory({
+                  authorizeResolver
+                }),
+                emitEvent: eventBus.emit,
+                grantStreamPermissions: grantStreamPermissionsFactory({
+                  db: trx
+                }),
+                isStreamCollaborator: isStreamCollaboratorFactory({
+                  getStream: getStreamFactory({ db })
+                }),
+                revokeStreamPermissions: revokeStreamPermissionsFactory({
+                  db: trx
+                })
+              }),
+              getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db })
+            })
+            return await onWorkspaceRoleUpdated(payload)
+          },
+          { db }
+        )
       }),
       eventBus.listen(WorkspaceEvents.SeatUpdated, async (payload) => {
-        const trx = await db.transaction()
-        const onWorkspaceSeatUpdated = onWorkspaceSeatUpdatedFactory({
-          setStreamCollaborator: setStreamCollaboratorFactory({
-            getUser: getUserFactory({ db }),
-            validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-            emitEvent: eventBus.emit,
-            grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
-            isStreamCollaborator: isStreamCollaboratorFactory({
-              getStream: getStreamFactory({ db })
-            }),
-            revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx })
-          }),
-          queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
-          getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
-          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
-          getWorkspaceSeatTypeToProjectRoleMapping:
-            getWorkspaceSeatTypeToProjectRoleMappingFactory({
-              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+        await withTransaction(
+          async ({ db: trx }) => {
+            const onWorkspaceSeatUpdated = onWorkspaceSeatUpdatedFactory({
+              setStreamCollaborator: setStreamCollaboratorFactory({
+                getUser: getUserFactory({ db }),
+                validateStreamAccess: validateStreamAccessFactory({
+                  authorizeResolver
+                }),
+                emitEvent: eventBus.emit,
+                grantStreamPermissions: grantStreamPermissionsFactory({ db: trx }),
+                isStreamCollaborator: isStreamCollaboratorFactory({
+                  getStream: getStreamFactory({ db })
+                }),
+                revokeStreamPermissions: revokeStreamPermissionsFactory({ db: trx })
+              }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+              getWorkspaceSeatTypeToProjectRoleMapping:
+                getWorkspaceSeatTypeToProjectRoleMappingFactory({
+                  getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+                })
             })
-        })
 
-        await withTransaction(onWorkspaceSeatUpdated(payload), trx)
+            return await onWorkspaceSeatUpdated(payload)
+          },
+          { db }
+        )
       }),
       eventBus.listen('**', emitWorkspaceGraphqlSubscriptions),
       eventBus.listen(

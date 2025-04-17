@@ -60,9 +60,18 @@
             </FormButton>
 
             <div class="flex gap-2">
-              <FormButton @click="$emit('moveProject', projectId)">
-                {{ projectId ? 'Move project' : 'Move projects' }}
-              </FormButton>
+              <div
+                v-tippy="
+                  disableButton ? 'You must be the owner of the project' : undefined
+                "
+              >
+                <FormButton
+                  :disabled="disableButton"
+                  @click="$emit('moveProject', projectId)"
+                >
+                  {{ projectId ? 'Move project' : 'Move projects' }}
+                </FormButton>
+              </div>
               <FormButton
                 color="outline"
                 :to="LearnMoreMoveProjectsUrl"
@@ -88,6 +97,7 @@ defineEmits(['moveProject'])
 
 defineProps<{
   projectId?: string
+  disableButton?: boolean
 }>()
 
 const { hasCollapsedLegacyProjectsExplainer, updateLegacyProjectsExplainerCollapsed } =
