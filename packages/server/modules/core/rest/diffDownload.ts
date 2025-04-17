@@ -54,6 +54,8 @@ export default (app: Application) => {
       'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json'
     })
 
+    let startTime: number = Date.now() //will be reset on every batch
+
     // "output" stream, connected to res with `pipeline` (auto-closing res)
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
@@ -77,9 +79,10 @@ export default (app: Application) => {
         req.log.info(
           {
             childCount: childrenList.length,
-            mbWritten: gzipStream.bytesWritten / 1000000
+            mbWritten: gzipStream.bytesWritten / 1000000,
+            elapsedSeconds: (Date.now() - startTime) / 1000
           },
-          'Streamed {childCount} objects (size: {mbWritten} MB)'
+          'Streamed {childCount} objects (size: {mbWritten} MB) in {elapsedSeconds} seconds'
         )
       }
     )
@@ -110,6 +113,7 @@ export default (app: Application) => {
         await new Promise((resolve, reject) => {
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
+          startTime = Date.now()
           dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
         })
       }
