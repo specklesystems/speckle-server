@@ -576,8 +576,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               return workspace
             },
             {
-              db,
-              eventBus,
               logger,
               name: 'createWorkspace',
               description: 'Create workspace',

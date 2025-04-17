@@ -1,8 +1,15 @@
+import { mainDb } from '@/db/knex'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { EmitArg, EventBus, EventBusEmit } from '@/modules/shared/services/eventBus'
+import {
+  EmitArg,
+  EventBus,
+  EventBusEmit,
+  getEventBus
+} from '@/modules/shared/services/eventBus'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { MaybeAsync } from '@speckle/shared'
 import { Knex } from 'knex'
+import { isBoolean } from 'lodash'
 import { Logger } from 'pino'
 
 /**
@@ -48,19 +55,39 @@ export const commandFactory =
 export const asOperation = async <T>(
   operation: (args: { db: Knex; emit: EventBusEmit }) => MaybeAsync<T>,
   params: {
-    db: Knex
-    eventBus: EventBus
-    logger: Logger
     name: string
+    logger: Logger
     description?: string
+    /**
+     * Defaults to main DB
+     */
+    db?: Knex
+    /**
+     * Defaults to main event bus
+     */
+    eventBus?: EventBus
     /**
      * Whether to treat the operation as a transaction. That makes the injected DB a knex transaction
      * and also collects eventBus events to be emitted at the end of the operation.
+     *
+     * Can be a bool or an obj describing how the trx should be set up
      */
-    transaction?: boolean
+    transaction?:
+      | boolean
+      | {
+          db: true // db trx can't be turned off, only the eventBus trx can
+          eventBus: boolean
+        }
   }
 ): Promise<T> => {
-  const { db, eventBus, logger, name, description, transaction } = params
+  const {
+    db = mainDb,
+    eventBus = getEventBus(),
+    logger,
+    name,
+    description,
+    transaction
+  } = params
 
   return await withOperationLogging(
     async () => {
@@ -74,7 +101,9 @@ export const asOperation = async <T>(
       }
       const trxRet = await withTransaction(
         async ({ trx }) => {
-          return await operation({ db: trx, emit })
+          const useEmitTrx = isBoolean(transaction) ? transaction : transaction.eventBus
+
+          return await operation({ db: trx, emit: useEmitTrx ? emit : eventBus.emit })
         },
         { db }
       )
