@@ -43,7 +43,6 @@
         </div>
         <FormButton
           v-if="canCreatePersonalProject?.authorized"
-          class="!text-body-xs !font-normal"
           @click="openNewProject = true"
         >
           New project

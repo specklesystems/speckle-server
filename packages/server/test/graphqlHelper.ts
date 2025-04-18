@@ -92,8 +92,8 @@ export async function executeOperation<
 
   const results = getResponseResults(res)
 
-  // Replicate clearing dataloaders after each request
-  contextValue.loaders.clearAll()
+  // Replicate clearing dataloaders/policies after each request
+  contextValue.clearCache()
 
   return {
     ...results,
@@ -237,7 +237,8 @@ export const testApolloServer = async (params?: {
           })
         : undefined
 
-    const ctx = operationCtx || baseCtx
+    // Re-apply createTestContext to reset dataloaders, authpolicy etc. state
+    const ctx = await createTestContext(operationCtx || baseCtx)
 
     const res = (await instance.executeOperation(
       {

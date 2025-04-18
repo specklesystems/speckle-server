@@ -4,7 +4,6 @@ import {
   Roles,
   type StreamRoles,
   type WorkspaceRoles,
-  type ServerRoles,
   type MaybeNullOrUndefined
 } from '@speckle/shared'
 
@@ -41,34 +40,6 @@ export const canHaveRole =
       }
       if (projectRole && projectRole !== Roles.Stream.Reviewer) {
         return 'This email does not match the set domain policy, and can only be invited as a reviewer'
-      }
-    }
-
-    return true
-  }
-
-export const isRequiredIfDependencyExists =
-  (dependency: () => string) => (val?: string) =>
-    !dependency() || !!val || 'This field is required'
-
-export const canBeServerGuest =
-  ({
-    workspaceRole,
-    projectRole
-  }: {
-    workspaceRole?: WorkspaceRoles
-    projectRole?: StreamRoles
-  }) =>
-  (val?: ServerRoles) => {
-    if (val === Roles.Server.Guest) {
-      if (projectRole === Roles.Stream.Owner) {
-        return 'A guest user cannot be a stream owner'
-      }
-      if (workspaceRole === Roles.Workspace.Admin) {
-        return 'A guest user cannot be a workspace admin'
-      }
-      if (workspaceRole === Roles.Workspace.Member) {
-        return 'A guest user cannot be a workspace member'
       }
     }
 

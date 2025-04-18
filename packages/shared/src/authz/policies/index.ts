@@ -1,6 +1,6 @@
 import { AllAuthCheckContextLoaders } from '../domain/loaders.js'
 import { canCreateWorkspaceProjectPolicy } from './workspace/canCreateWorkspaceProject.js'
-import { canReadProjectPolicy } from './project/canReadProject.js'
+import { canReadProjectPolicy } from './project/canRead.js'
 import { canCreateModelPolicy } from './project/model/canCreate.js'
 import { canMoveToWorkspacePolicy } from './project/canMoveToWorkspace.js'
 import { canCreatePersonalProjectPolicy } from './project/canCreatePersonal.js'
@@ -9,6 +9,8 @@ import { canReadProjectSettingsPolicy } from './project/canReadSettings.js'
 import { canReadProjectWebhooksPolicy } from './project/canReadWebhooks.js'
 import { canUpdateProjectAllowPublicCommentsPolicy } from './project/canUpdateAllowPublicComments.js'
 import { canLeaveProjectPolicy } from './project/canLeave.js'
+import { canInvitePolicy as canInviteToWorkspacePolicy } from './workspace/canInvite.js'
+import { canInvitePolicy as canInviteToProjectPolicy } from './project/canInvite.js'
 import { canBroadcastProjectActivityPolicy } from './project/canBroadcastActivity.js'
 import { canCreateProjectCommentPolicy } from './project/comment/canCreate.js'
 import { canArchiveProjectCommentPolicy } from './project/comment/canArchive.js'
@@ -19,9 +21,19 @@ import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
 import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
 import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
+import { canCreateAutomationPolicy } from './project/automation/canCreate.js'
+import { canUpdateAutomationPolicy } from './project/automation/canUpdate.js'
+import { canReadAutomationPolicy } from './project/automation/canRead.js'
+import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './workspace/canReceiveProjectsUpdatedMessage.js'
+import { canDeleteProjectPolicy } from './project/canDelete.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
+    automation: {
+      canCreate: canCreateAutomationPolicy(loaders),
+      canRead: canReadAutomationPolicy(loaders),
+      canUpdate: canUpdateAutomationPolicy(loaders)
+    },
     model: {
       canCreate: canCreateModelPolicy(loaders),
       canUpdate: canUpdateModelPolicy(loaders),
@@ -43,13 +55,18 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canMoveToWorkspace: canMoveToWorkspacePolicy(loaders),
     canCreatePersonal: canCreatePersonalProjectPolicy(loaders),
     canUpdate: canUpdateProjectPolicy(loaders),
+    canDelete: canDeleteProjectPolicy(loaders),
     canUpdateAllowPublicComments: canUpdateProjectAllowPublicCommentsPolicy(loaders),
     canReadSettings: canReadProjectSettingsPolicy(loaders),
     canReadWebhooks: canReadProjectWebhooksPolicy(loaders),
-    canLeave: canLeaveProjectPolicy(loaders)
+    canLeave: canLeaveProjectPolicy(loaders),
+    canInvite: canInviteToProjectPolicy(loaders)
   },
   workspace: {
-    canCreateProject: canCreateWorkspaceProjectPolicy(loaders)
+    canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
+    canInvite: canInviteToWorkspacePolicy(loaders),
+    canReceiveProjectsUpdatedMessage:
+      canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders)
   }
 })
 

@@ -11,7 +11,7 @@
       :slug="slug"
       :plan="finalNewPlan"
       :billing-interval="billingInterval"
-      :enable-no-option="!usageExceedsNewPlanLimit"
+      :enable-no-option="!forceAddonPurchase"
     />
     <SettingsWorkspacesBillingUpgradeDialogSummary
       v-else
@@ -28,11 +28,13 @@ import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
   PaidWorkspacePlansNew,
   WorkspacePlanConfigs,
-  type MaybeNullOrUndefined
+  type MaybeNullOrUndefined,
+  doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
 import type { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 type AddonIncludedSelect = 'yes' | 'no'
 
@@ -52,10 +54,14 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
 )
 
 const { upgradePlan, redirectToCheckout } = useBillingActions()
-const { hasUnlimitedAddon, plan, subscription } = useWorkspacePlan(props.slug)
+const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
+  props.slug
+)
+const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
 const showAddonSelect = ref<boolean>(true)
+const isLoading = ref<boolean>(false)
 
 const title = computed(() => {
   if (showAddonSelect.value) {
@@ -78,6 +84,13 @@ const usageExceedsNewPlanLimit = computed(() => {
 
   if (!modelLimit || !projectLimit) return true
   return modelCount.value > modelLimit || projectCount.value > projectLimit
+})
+
+const forceAddonPurchase = computed(() => {
+  return (
+    usageExceedsNewPlanLimit.value ||
+    (statusIsCanceled.value && hasUnlimitedAddon.value)
+  )
 })
 
 const isSamePlanWithAddon = computed(
@@ -110,7 +123,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: nextButtonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: () => {
       if (showAddonSelect.value) {
@@ -124,24 +138,48 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 
 const backButtonText = computed(() => (showAddonSelect.value ? 'Cancel' : 'Back'))
 const nextButtonText = computed(() =>
-  showAddonSelect.value ? 'Continue' : 'Continue and upgrade'
+  showAddonSelect.value || statusIsCanceled.value ? 'Continue' : 'Continue and upgrade'
 )
 
-const onSubmit = () => {
+const onSubmit = async () => {
   if (!props.workspaceId) return
 
-  if (!subscription.value) {
+  isLoading.value = true
+  if (!subscription.value || statusIsCanceled.value) {
+    mixpanel.track('Workspace Creation Checkout Session Started')
+
     redirectToCheckout({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,
       workspaceId: props.workspaceId
     })
   } else {
-    upgradePlan({
+    if (props.isChangingPlan) {
+      mixpanel.track('Workspace Upgrade Button Clicked', {
+        plan: finalNewPlan.value,
+        cycle: props.billingInterval,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId,
+        includesUnlimitedAddon: doesPlanIncludeUnlimitedProjectsAddon(
+          finalNewPlan.value
+        )
+      })
+    } else {
+      mixpanel.track('Add-on Purchase Button Clicked', {
+        plan: finalNewPlan.value,
+        cycle: props.billingInterval,
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    }
+
+    await upgradePlan({
       plan: finalNewPlan.value,
       cycle: props.billingInterval,
       workspaceId: props.workspaceId
     })
+
+    isLoading.value = false
   }
 
   isOpen.value = false

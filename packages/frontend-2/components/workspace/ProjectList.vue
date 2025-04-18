@@ -14,7 +14,7 @@
       <Portal v-if="workspace?.name" to="navigation">
         <HeaderNavLink
           :to="workspaceRoute(workspaceSlug)"
-          name="Home"
+          name="Projects"
           :separator="false"
         />
       </Portal>
@@ -46,13 +46,18 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
+        class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
       >
+        <WorkspaceEmptyStateIllustration />
         <span class="text-body-2xs text-foreground-2 text-center">
           Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
           button-copy="Add your first project"
+          :workspace-name="workspace?.name || ''"
+          :workspace-slug="workspaceSlug"
+          :workspace-role="workspace?.role"
+          :workspace-plan="workspace?.plan?.name"
           :can-create-project="canCreateProject"
           :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"

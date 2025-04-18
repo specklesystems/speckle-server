@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-5xl md:mx-auto pb-16">
       <SettingsSectionHeader
         hide-divider
         title="People"
@@ -23,6 +23,7 @@ import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -58,25 +59,18 @@ useHead({
 })
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const router = useRouter()
+const { memberCount, guestCount, adminCount } = useWorkspaceUsage(slug.value)
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
   slug: slug.value
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
-const memberCount = computed(
-  () =>
-    workspace.value?.team.items.filter((item) => item.role !== Roles.Workspace.Guest)
-      .length
-)
-const guestCount = computed(
-  () =>
-    workspace.value?.team.items.filter((item) => item.role === Roles.Workspace.Guest)
-      .length
-)
+
+const memberTotalCount = computed(() => memberCount.value + adminCount.value)
 const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
 const joinRequestCount = computed(
   () =>
@@ -85,7 +79,7 @@ const joinRequestCount = computed(
     ).length
 )
 const tabItems = computed<LayoutPageTabItem[]>(() => [
-  { title: 'Members', id: 'members', count: memberCount.value },
+  { title: 'Members', id: 'members', count: memberTotalCount.value },
   { title: 'Guests', id: 'guests', count: guestCount.value },
   {
     title: 'Pending invites',

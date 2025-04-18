@@ -3,33 +3,49 @@ import { useQuery } from '@vue/apollo-composable'
 import { workspaceLimitsQuery } from '~/lib/workspaces/graphql/queries'
 import { WorkspacePlanConfigs } from '@speckle/shared'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
+import type { WorkspacePlanLimits_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspacePlanLimits_Workspace on Workspace {
     id
+    slug
     plan {
       name
     }
   }
 `)
 
+export const useLimitsState = () =>
+  useState<WorkspacePlanLimits_WorkspaceFragment | null>('limits', () => null)
+
 export const useWorkspaceLimits = (slug: string) => {
   const { modelCount, projectCount } = useWorkspaceUsage(slug)
+  const limitsState = useLimitsState()
 
-  const { result } = useQuery(
+  const { onResult } = useQuery(
     workspaceLimitsQuery,
     () => ({
       slug
     }),
     () => ({
-      enabled: !!slug
+      enabled: !!slug && slug !== limitsState.value?.slug
     })
   )
 
+  onResult((result) => {
+    limitsState.value = result.data?.workspaceBySlug
+  })
+
   // Plan limits
   const limits = computed(() => {
-    const planName = result.value?.workspaceBySlug?.plan?.name
-    if (!planName) return { projectCount: 0, modelCount: 0, versionsHistory: null }
+    const planName = limitsState.value?.plan?.name
+    if (!planName)
+      return {
+        projectCount: 0,
+        modelCount: 0,
+        versionsHistory: null,
+        commentHistory: null
+      }
 
     const planConfig = WorkspacePlanConfigs[planName]
     return planConfig?.limits
@@ -43,6 +59,14 @@ export const useWorkspaceLimits = (slug: string) => {
     return `${value} ${unit}`
   })
 
+  const commentLimitFormatted = computed(() => {
+    const commentHistory = limits.value?.commentHistory
+    if (!commentHistory) return 'Unlimited'
+
+    const { value, unit } = commentHistory
+    return `${value} ${unit}`
+  })
+
   const remainingProjectCount = computed(() =>
     limits.value.projectCount ? limits.value.projectCount - projectCount.value : 0
   )
@@ -50,34 +74,13 @@ export const useWorkspaceLimits = (slug: string) => {
   const remainingModelCount = computed(() =>
     limits.value.modelCount ? limits.value.modelCount - modelCount.value : 0
   )
-
-  // TODO; move to permissions
-  const canAddProject = computed(() => {
-    // Unlimited
-    if (limits.value.projectCount === null) return true
-
-    return projectCount.value + 1 <= limits.value.projectCount
-  })
-
-  // TODO; move to permissions
-  const canAddModels = (additionalModels?: number) => {
-    // Unlimited
-    if (limits.value.modelCount === null) return true
-
-    if (!additionalModels) {
-      return remainingModelCount.value > 0
-    }
-    return modelCount.value + additionalModels <= limits.value.modelCount
-  }
-
   return {
     projectCount,
     modelCount,
     limits,
     remainingProjectCount,
     remainingModelCount,
-    canAddProject,
-    canAddModels,
-    versionLimitFormatted
+    versionLimitFormatted,
+    commentLimitFormatted
   }
 }

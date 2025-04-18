@@ -27,23 +27,24 @@ export type WorkspacePlanFeatures =
 export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.AutomateBeta]: {
     displayName: 'Automate beta access',
-    description: 'Some automate text'
+    description: 'Run custom automations on every new model version'
   },
   [WorkspacePlanFeatures.DomainDiscoverability]: {
     displayName: 'Domain discoverability',
-    description: 'Some domain discoverability text'
+    description:
+      'Allow people to discover your workspace if they use a verified company email'
   },
   [WorkspacePlanFeatures.DomainSecurity]: {
-    displayName: 'Domain security',
+    displayName: 'Domain protection',
     description: 'Require workspace members to use a verified company email'
   },
   [WorkspacePlanFeatures.SSO]: {
     displayName: 'Single Sign-On (SSO)',
-    description: 'Require workspace members to log in with your SSO provider'
+    description: 'Require workspace members to authenticate with your SSO provider'
   },
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
-    description: 'Store the workspace data in a custom region'
+    description: 'Store your data in EU, UK, North America, or Asia Pacific'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,

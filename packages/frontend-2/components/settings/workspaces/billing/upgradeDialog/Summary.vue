@@ -1,21 +1,30 @@
 <template>
   <div>
-    <BillingTransitionCards>
+    <BillingTransitionCards class="mb-4">
       <template #current-state>
         <div class="p-2">
           <p class="text-foreground text-body-3xs">
-            Current plan
-            <template v-if="!isFreePlan">
+            {{ statusIsCanceled ? 'Old plan' : 'Current plan' }}
+            <template v-if="!isFreePlan && !statusIsCanceled">
               (billed {{ intervalIsYearly ? 'yearly' : 'monthly' }})
             </template>
           </p>
           <div class="mt-2 flex justify-between items-center">
-            <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
-            <p v-if="!isFreePlan" class="text-body-2xs">
-              {{ currentEditorPrice }} editor seat/month
+            <div class="flex items-center gap-x-2">
+              <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
+              <CommonBadge
+                v-if="hasUnlimitedAddon && statusIsCanceled"
+                color-classes="bg-foundation border-blue-200 dark:border-blue-800 border"
+                rounded
+              >
+                Unlimited Projects & Models
+              </CommonBadge>
+            </div>
+            <p v-if="!isFreePlan && !statusIsCanceled" class="text-body-2xs">
+              {{ currentEditorPrice }} per editor seat/month
             </p>
           </div>
-          <template v-if="hasUnlimitedAddon">
+          <template v-if="hasUnlimitedAddon && !statusIsCanceled">
             <div class="mt-2 flex justify-between items-center">
               <CommonBadge
                 color-classes="bg-foundation border-blue-200 dark:border-blue-800 border"
@@ -23,12 +32,12 @@
               >
                 Unlimited Projects & Models
               </CommonBadge>
-              <p class="text-body-2xs">{{ currentAddonPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ currentAddonPrice }} per editor seat/month</p>
             </div>
             <hr class="my-4 border-outline-2" />
             <div class="mt-2 flex justify-between items-center">
               <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ totalPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ totalPrice }} per per editor seat/month</p>
             </div>
           </template>
         </div>
@@ -50,7 +59,7 @@
 
           <div class="mt-2 flex justify-between items-center">
             <h3 class="text-body">{{ formatName(props.plan) }}</h3>
-            <p class="text-body-2xs">{{ newEditorPrice }} editor seat/month</p>
+            <p class="text-body-2xs">{{ newEditorPrice }} per editor seat/month</p>
           </div>
           <template v-if="newPlanHasUnlimitedAddon">
             <div class="mt-2 flex justify-between items-center">
@@ -60,12 +69,12 @@
               >
                 Unlimited Projects & Models
               </CommonBadge>
-              <p class="text-body-2xs">{{ newAddonPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ newAddonPrice }} per editor seat/month</p>
             </div>
             <hr class="my-4 border-outline-2" />
             <div class="mt-2 flex justify-between items-center">
               <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ newTotalPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ newTotalPrice }} per editor seat/month</p>
             </div>
           </template>
         </div>
@@ -73,11 +82,11 @@
     </BillingTransitionCards>
 
     <p
-      v-if="plan?.name && isPaidPlan(plan.name)"
-      class="text-foreground-2 text-body-2xs mt-6 mb-2"
+      v-if="plan?.name && isPaidPlan(plan.name) && !statusIsCanceled"
+      class="text-foreground-2 text-body-2xs my-2"
     >
       The amount you will be charged today will be prorated based on the time remaining
-      in your billing cycle. The prorated amount will be lower than the listed price.
+      in your billing cycle.
     </p>
   </div>
 </template>
@@ -104,8 +113,14 @@ const props = defineProps<{
   billingInterval: BillingInterval
 }>()
 
-const { intervalIsYearly, plan, currency, hasUnlimitedAddon, isFreePlan } =
-  useWorkspacePlan(props.slug)
+const {
+  intervalIsYearly,
+  plan,
+  currency,
+  hasUnlimitedAddon,
+  isFreePlan,
+  statusIsCanceled
+} = useWorkspacePlan(props.slug)
 const { prices: activeWorkspacePrices } = useActiveWorkspacePlanPrices()
 const { prices } = useWorkspacePlanPrices()
 const { addonPrices } = useWorkspaceAddonPrices()
@@ -119,7 +134,7 @@ const currentEditorPrice = computed(() => {
   ) {
     const basePlanType =
       plan.value.name === WorkspacePlans.TeamUnlimited ? 'team' : 'pro'
-    const amount = intervalIsYearly
+    const amount = intervalIsYearly.value
       ? (prices.value?.[currency.value]?.[basePlanType]?.yearly.amount || 0) / 12
       : prices.value?.[currency.value]?.[basePlanType]?.monthly.amount || 0
 
@@ -134,7 +149,9 @@ const currentEditorPrice = computed(() => {
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -177,7 +194,9 @@ const totalPrice = computed(() => {
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -202,7 +221,7 @@ const currentAddonPrice = computed(() => {
     addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlansNew]
   if (!addonPrice) return null
 
-  return intervalIsYearly
+  return intervalIsYearly.value
     ? formatPrice({
         amount: addonPrice.yearly.amount / 12,
         currency: addonPrice.yearly.currency

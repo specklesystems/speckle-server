@@ -315,9 +315,9 @@ export async function init() {
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(LoggingExpressMiddleware)
   app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
-  app.use(LoggingExpressMiddleware)
 
   if (asyncRequestContextEnabled()) {
     startupLogger.info('Async request context tracking enabled 👀')

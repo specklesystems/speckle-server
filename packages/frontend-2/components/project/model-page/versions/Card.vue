@@ -9,8 +9,8 @@
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
         <NuxtLink
-          class="text-body-xs font-medium truncate text-foreground pl-1"
-          :href="viewerRoute"
+          class="text-body-xs font-medium truncate text-foreground pl-1 select-none"
+          :href="isLimited ? undefined : viewerRoute"
         >
           {{ message }}
         </NuxtLink>
@@ -46,7 +46,7 @@
             >
               <ViewerResourcesUpgradeLimitAlert
                 class="!bg-foundation !text-foreground-2"
-                text="Upgrade to view versions older than (count) days."
+                limit-type="version"
               />
             </div>
             <div
@@ -156,6 +156,7 @@ const props = defineProps<{
   modelId: string
   selectable?: boolean
   selected?: boolean
+  workspaceSlug?: string
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()

@@ -34,8 +34,8 @@
                       SSO login required
                     </CommonBadge>
                     <p>
-                      {{ ws.projects.totalCount }} projects,
-                      {{ ws.projects.totalCount }} models
+                      {{ ws.plan?.usage.projectCount }} projects,
+                      {{ ws.plan?.usage.modelCount }} models
                     </p>
                     <UserAvatarGroup
                       :users="ws.team.items.map((t) => t.user)"
@@ -61,28 +61,22 @@
       </p>
     </template>
 
-    <WorkspacePlanLimitReachedDialog
+    <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      subtitle="Upgrade your plan to move project"
-    >
-      <template v-if="limitReachedWorkspace">
-        <p class="text-body-xs text-foreground-2">
-          The workspace
-          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
-          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
-          of 1 project and 5 models. Upgrade the workspace to add more projects.
-        </p>
-      </template>
-    </WorkspacePlanLimitReachedDialog>
+      :workspace-name="limitReachedWorkspace?.name"
+      :plan="limitReachedWorkspace?.plan?.name"
+      :workspace-role="limitReachedWorkspace?.role"
+      :workspace-slug="limitReachedWorkspace?.slug || ''"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
+  PermissionCheckResult,
   WorkspaceMoveProjectManager_ProjectFragment,
-  WorkspaceMoveProjectManager_WorkspaceFragment,
-  WorkspacePermissionChecks
+  WorkspaceMoveProjectManager_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { UserAvatarGroup } from '@speckle/ui-components'
@@ -109,7 +103,7 @@ graphql(`
 
 const props = defineProps<{
   project: WorkspaceMoveProjectManager_ProjectFragment
-  workspacePermissions?: WorkspacePermissionChecks
+  workspacePermissions?: PermissionCheckResult
 }>()
 
 const emit = defineEmits<{

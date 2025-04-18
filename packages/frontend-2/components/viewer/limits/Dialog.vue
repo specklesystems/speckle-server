@@ -1,7 +1,6 @@
 <template>
   <WorkspacePlanLimitReachedDialog
     v-model:open="dialogOpen"
-    :title="title"
     :buttons="buttons"
     prevent-close
     :condensed="isEmbedEnabled || undefined"
@@ -35,7 +34,9 @@ const emit = defineEmits<{
 }>()
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
-const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug)
+const { versionLimitFormatted, commentLimitFormatted } = useWorkspaceLimits(
+  props.workspaceSlug
+)
 
 const dialogOpen = computed({
   get: () => props.open || false,
@@ -62,7 +63,7 @@ const message = computed(() => {
     case 'federated':
       return `One of the models is older than the ${versionLimitFormatted.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'comment':
-      return 'Loading a comment in a federated model view, where one of the models is an old version'
+      return `The comment is older than the ${commentLimitFormatted.value} comment history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     default:
       return "You've reached the limit of your plan. Please upgrade to continue."
   }
