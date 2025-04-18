@@ -83,7 +83,6 @@
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
-            :id="`menu-button-${item.id}`"
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
             :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
