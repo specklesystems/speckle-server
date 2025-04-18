@@ -142,14 +142,14 @@ export class TopLevelAccelerationStructure {
   public refit() {
     const positions = this.accelerationStructure.geometry.attributes.position
       .array as number[]
-    const boxBuffer: Box3 = new Box3()
+    // const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart
-      const basBox =
-        this.batchObjects[k].accelerationStructure.getBoundingBox(boxBuffer)
+      const basBox = this.batchObjects[k].aabb //accelerationStructure.getBoundingBox(boxBuffer)
       this.updateVertArray(basBox, start * 3, positions)
     }
     this.accelerationStructure.bvh.refit()
+    this.bvhHelper?.update()
   }
 
   /* Core Cast Functions */

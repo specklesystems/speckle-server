@@ -84,7 +84,13 @@ varying vec2 vHighPrecisionZW;
         return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
     }
 
-    highp vec3 rotate_vertex_position_delta(highp vec4 v0, highp vec4 v1, highp vec4 quat)
+    /** Another workaround for Apple's stupid compiler */
+    vec4 safeMul(vec4 a, vec4 b) {
+        // Prevents constant folding and optimization
+        return (a + vec4(0.0)) * (b + vec4(1.0)) - a * vec4(1.0);
+    }
+
+    highp vec3 rotate_scaled_vertex_position_delta(highp vec4 v0, highp vec4 v1, highp vec4 scale, highp vec4 quat)
     {
         /** !!! WORKAROUND FOR Intel IrisXe CARDS !!! */
         /** The code below will not produce correct results in intel IrisXE integrated GPUs. 
@@ -96,10 +102,10 @@ varying vec2 vHighPrecisionZW;
         // return position.xyz + 2.0 * cross(quat.xyz, cross(quat.xyz, position.xyz) + quat.w * position.xyz);
 
         /** Subtracting the rotated vectors works. */
-        return rotate_vertex_position(v0.xyz, quat) - rotate_vertex_position(v1.xyz, quat);
+        return rotate_vertex_position(safeMul(v0, scale).xyz, quat)  - rotate_vertex_position(safeMul(v1, scale).xyz, quat) ;
 
         /** An alternate workaround is
-         * highp vec3 position = (v0.xyz * (1. + 1e-7)) - (v1.xyz * (1. _ 1e-7));
+         * highp vec3 position = (v0.xyz * (1. + 1e-7)) - (v1.xyz * (1. + 1e-7));
            return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
 
            However I'm not such a fan of the (1. + 1e-7) part
@@ -155,10 +161,10 @@ void main() {
         vec4 position_highT = vec4(position, 1.);
         const vec3 ZERO3 = vec3(0., 0., 0.);
 
-        vec4 rteLocalPosition = computeRelativePosition(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
+        highp vec4 rteLocalPosition = computeRelativePosition(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
-            vec4 rtePivot = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
-            rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+            highp vec4 rtePivot = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
+            rteLocalPosition.xyz = rotate_scaled_vertex_position_delta(rteLocalPosition, rtePivot, tScale, tQuaternion) + rtePivot.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
             vec4 instancePivot = computeRelativePosition(ZERO3, ZERO3, uViewer_low, uViewer_high);
