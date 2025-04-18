@@ -114,7 +114,7 @@ const scheduleWorkspaceSubscriptionDownscale = ({
 const scheduleWorkspacePlanMigrations = (scheduleExecution: ScheduleExecution) => {
   let isMigrationComplete = false
   let isMigrationRunning = false
-  const cronExpression = '*/5 * * * * *' // every 5 seconds
+  const cronExpression = '*/1 * * * *' // every minute
   return scheduleExecution(
     cronExpression,
     'WorkspaceNewPlanMigration',

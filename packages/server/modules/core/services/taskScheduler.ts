@@ -24,19 +24,19 @@ export const scheduledCallbackWrapper = async (
 
   // if couldn't acquire it, stop execution
   if (!lock) {
-    boundLogger.warn('Could not acquire task lock for {taskName}, stopping execution.')
+    boundLogger.info('Could not acquire task lock for {taskName}, stopping execution.')
     return
   }
   try {
     // else continue executing the callback...
-    boundLogger.info(
+    boundLogger.debug(
       { scheduledTime },
       'Executing scheduled function {taskName} at {scheduledTime}'
     )
     await callback(scheduledTime, { logger: boundLogger })
     // update lock as succeeded
     const finishDate = new Date()
-    boundLogger.info(
+    boundLogger.debug(
       { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
       'Finished scheduled function {taskName} execution succeeded in {durationSeconds} seconds'
     )

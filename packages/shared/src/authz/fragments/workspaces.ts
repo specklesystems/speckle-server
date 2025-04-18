@@ -204,7 +204,13 @@ export const ensureWorkspaceProjectCanBeCreatedFragment: AuthPolicyEnsureFragmen
 
     return currentProjectCount < workspaceLimits.projectCount
       ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+      : err(
+          new WorkspaceLimitsReachedError({
+            message:
+              'You have reached the maximum number of projects for your plan. Upgrade to increase it.',
+            payload: { limit: 'projectCount' }
+          })
+        )
   }
 
 /**
@@ -263,5 +269,13 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
 
     return currentModelCount < workspaceLimits.modelCount
       ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'modelCount' } }))
+      : err(
+          new WorkspaceLimitsReachedError({
+            message:
+              'You have reached the maximum number of models for your plan. Upgrade to increase it.',
+            payload: {
+              limit: 'modelCount'
+            }
+          })
+        )
   }
