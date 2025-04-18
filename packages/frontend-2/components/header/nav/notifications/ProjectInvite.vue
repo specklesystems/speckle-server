@@ -11,6 +11,7 @@
     </template>
   </HeaderNavNotificationsInvite>
 </template>
+
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'

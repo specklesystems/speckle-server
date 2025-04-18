@@ -60,7 +60,6 @@ export type CreateAutomationDeps = {
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
-  validateStreamAccess: ValidateStreamAccess
   eventEmit: EventBusEmit
 }
 
@@ -75,26 +74,17 @@ export const createAutomationFactory =
     const {
       input: { name, enabled },
       projectId,
-      userId,
-      userResourceAccessRules
+      userId
     } = params
     const {
       createAuthCode,
       automateCreateAutomation,
       storeAutomation,
       storeAutomationToken,
-      validateStreamAccess,
       eventEmit
     } = deps
 
     validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     const authCode = await createAuthCode({
       userId,
@@ -253,7 +243,6 @@ export const createTestAutomationFactory =
 export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
-  validateStreamAccess: ValidateStreamAccess
   eventEmit: EventBusEmit
 }
 
@@ -268,8 +257,8 @@ export const validateAndUpdateAutomationFactory =
      */
     projectId?: string
   }) => {
-    const { getAutomation, updateAutomation, validateStreamAccess, eventEmit } = deps
-    const { input, userId, userResourceAccessRules, projectId } = params
+    const { getAutomation, updateAutomation, eventEmit } = deps
+    const { input, projectId } = params
 
     const existingAutomation = await getAutomation({
       automationId: input.id,
@@ -278,13 +267,6 @@ export const validateAndUpdateAutomationFactory =
     if (!existingAutomation) {
       throw new AutomationUpdateError('Automation not found')
     }
-
-    await validateStreamAccess(
-      userId,
-      existingAutomation.projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
 
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)

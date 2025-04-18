@@ -1,12 +1,13 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectsInviteBanner
-        v-if="invite"
-        :invite="invite"
-        :show-project-name="false"
-        @processed="onInviteAccepted"
-      />
+      <div v-if="invite" class="mb-4">
+        <ProjectsInviteBanner
+          :invite="invite"
+          :show-project-name="false"
+          @processed="onInviteAccepted"
+        />
+      </div>
       <ProjectsMoveToWorkspaceAlert
         v-if="shouldShowWorkspaceAlert"
         :disable-button="disableLegacyMoveProjectButton"
