@@ -25,7 +25,7 @@
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <HeaderNavNotifications v-if="isLoggedIn" />
-          <div class="flex justify-end">
+          <div class="flex justify-end gap-x-2">
             <FormButton
               v-if="!activeUser"
               :to="loginUrl.fullPath"
