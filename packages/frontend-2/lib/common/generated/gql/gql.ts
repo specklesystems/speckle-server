@@ -102,8 +102,7 @@ type Documents = {
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": typeof types.ProjectsHiddenProjectWarning_UserFragmentDoc,
     "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    readOnly\n    slug\n  }\n": typeof types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": typeof types.ProjectsInviteBannerFragmentDoc,
-    "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n": typeof types.SettingsSidebar_WorkspaceFragmentDoc,
-    "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": typeof types.SettingsSidebar_UserFragmentDoc,
+    "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n  }\n": typeof types.SettingsSidebar_WorkspaceFragmentDoc,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": typeof types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": typeof types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.SettingsSharedProjects_ProjectFragmentDoc,
@@ -314,7 +313,7 @@ type Documents = {
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": typeof types.DeleteWorkspaceDomainDocument,
     "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": typeof types.SettingsLeaveWorkspaceDocument,
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": typeof types.SettingsBillingCancelCheckoutSessionDocument,
-    "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": typeof types.SettingsSidebarDocument,
+    "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": typeof types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": typeof types.SettingsWorkspaceBillingCustomerPortalDocument,
@@ -521,8 +520,7 @@ const documents: Documents = {
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
     "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    readOnly\n    slug\n  }\n": types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
-    "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n": types.SettingsSidebar_WorkspaceFragmentDoc,
-    "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.SettingsSidebar_UserFragmentDoc,
+    "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n  }\n": types.SettingsSidebar_WorkspaceFragmentDoc,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canReadSettings {\n        ...FullPermissionCheckResult\n      }\n      canRead {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
@@ -733,7 +731,7 @@ const documents: Documents = {
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": types.DeleteWorkspaceDomainDocument,
     "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": types.SettingsLeaveWorkspaceDocument,
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": types.SettingsBillingCancelCheckoutSessionDocument,
-    "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": types.SettingsSidebarDocument,
+    "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
@@ -1221,11 +1219,7 @@ export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n  }\n"): (typeof documents)["\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2069,7 +2063,7 @@ export function graphql(source: "\n  mutation SettingsBillingCancelCheckoutSessi
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
