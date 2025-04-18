@@ -46,7 +46,7 @@
             >
               <ViewerResourcesUpgradeLimitAlert
                 class="!bg-foundation !text-foreground-2"
-                :text="`Upgrade to view versions older than ${versionLimitFormatted} days.`"
+                limit-type="version"
               />
             </div>
             <div
@@ -114,7 +114,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
-import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
@@ -161,7 +160,6 @@ const props = defineProps<{
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
-const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug ?? '')
 
 const showActionsMenu = ref(false)
 
