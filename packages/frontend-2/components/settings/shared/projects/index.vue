@@ -79,9 +79,11 @@
           :items="actionItems[item.id]"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="menuId"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
+            :id="`menu-button-${item.id}`"
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
             :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
@@ -163,6 +165,7 @@ const props = defineProps<{
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
+const menuId = useId()
 
 const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
