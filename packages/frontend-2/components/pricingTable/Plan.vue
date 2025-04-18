@@ -298,7 +298,7 @@ const buttonText = computed(() => {
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
-    return `Downgrade to ${props.plan}`
+    return `Downgrade to ${formatName(props.plan)}`
   }
   // Billing interval change and current plan
   if (isAnnualToMonthly.value) {
