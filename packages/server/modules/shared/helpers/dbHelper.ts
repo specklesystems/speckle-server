@@ -107,7 +107,7 @@ export const numberOfFreeConnections = (knex: Knex) => {
 }
 
 export const withTransaction = async <T>(
-  operation: (args: { db: Knex }) => MaybeAsync<T>,
+  operation: (args: { db: Knex; trx: Knex }) => MaybeAsync<T>,
   params: {
     db: Knex
   }
@@ -116,7 +116,8 @@ export const withTransaction = async <T>(
   const trx = await db.transaction()
 
   try {
-    const result = await operation({ db: trx })
+    // db and trx are just aliases, you can use whichever is more convenient
+    const result = await operation({ db: trx, trx })
     await trx.commit()
     return result
   } catch (e) {
