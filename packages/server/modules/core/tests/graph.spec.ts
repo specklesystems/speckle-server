@@ -5,7 +5,7 @@ import request from 'supertest'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { generateManyObjects } from '@/test/helpers'
 
-import { Roles, Scopes } from '@speckle/shared'
+import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
 import {
@@ -1957,7 +1957,7 @@ describe('GraphQL API Core @core-api', () => {
           tokenInput: {
             scopes: [Scopes.Streams.Read],
             name: 'thisWillNotBeCreated',
-            lifespan: 1000000
+            lifespan: 1_000 * TIME_MS.second
           }
         }
       })

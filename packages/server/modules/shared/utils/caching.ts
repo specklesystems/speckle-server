@@ -4,7 +4,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getRequestLogger } from '@/observability/components/express/requestContext'
 import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
-import { MaybeAsync } from '@speckle/shared'
+import { MaybeAsync, TIME_MS } from '@speckle/shared'
 import Redis from 'ioredis'
 import { isNumber } from 'lodash'
 
@@ -201,7 +201,7 @@ export const redisCacheProviderFactory = (deps?: {
         key,
         JSON.stringify(value),
         'EX',
-        Math.floor(ttlMs / 1000) // convert milliseconds to seconds
+        Math.floor(ttlMs / TIME_MS.second) // convert milliseconds to seconds
       )
     },
     delete: async (key) => {

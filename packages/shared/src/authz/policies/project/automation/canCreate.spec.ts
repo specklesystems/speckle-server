@@ -12,6 +12,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/index.js'
 
 const buildCanCreatePolicy = (
   overrides?: Partial<Parameters<typeof canCreateAutomationPolicy>[0]>
@@ -240,7 +241,7 @@ describe('canCreateAutomation', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(new Date().getTime() - 1000)
+          validUntil: new Date(new Date().getTime() - TIME_MS.second)
         })
       })
       const result = await canCreateAutomation({
