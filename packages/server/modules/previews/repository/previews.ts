@@ -1,7 +1,10 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
   GetObjectPreviewInfo,
+  GetPaginatedObjectPreviewsPage,
+  GetPaginatedObjectPreviewsTotalCount,
   GetPreviewImage,
+  PaginatedObjectPreviewsParams,
   StoreObjectPreview,
   StorePreview,
   UpsertObjectPreview
@@ -13,6 +16,7 @@ import {
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 
 const ObjectPreview = buildTableHelper('object_preview', [
   'streamId',
@@ -37,6 +41,50 @@ export const getObjectPreviewInfoFactory =
       .select('*')
       .where({ streamId, objectId })
       .first()
+  }
+
+export const getPaginatedObjectsPreviewsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (params: Omit<PaginatedObjectPreviewsParams, 'limit' | 'cursor'>) => {
+    const query = tables.objectPreview(deps.db).select('*')
+
+    if (params.filter?.status) {
+      query.where('previewStatus', params.filter.status)
+    }
+
+    return query
+  }
+
+export const getPaginatedObjectPreviewsPageFactory =
+  (deps: { db: Knex }): GetPaginatedObjectPreviewsPage =>
+  async (params) => {
+    const { limit, cursor } = params
+    const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
+      .orderBy('lastUpdate', 'desc') //newest first
+      .limit(limit)
+
+    if (cursor) {
+      query.where('lastUpdate', '<', decodeCursor(cursor)) //everything older than the cursor
+    }
+
+    const items = await query
+
+    return {
+      items,
+      cursor: items.length
+        ? encodeCursor(items[items.length - 1].lastUpdate.toISOString())
+        : null
+    }
+  }
+
+export const getPaginatedObjectPreviewsTotalCountFactory =
+  (deps: { db: Knex }): GetPaginatedObjectPreviewsTotalCount =>
+  async (params) => {
+    const baseQ = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const [row] = await q
+
+    return parseInt(row.count || '0')
   }
 
 /**
