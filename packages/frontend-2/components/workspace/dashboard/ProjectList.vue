@@ -26,7 +26,7 @@
       <span class="text-body-2xs text-foreground-2 text-center">
         Workspace is empty
       </span>
-      <WorkspaceAddProjectMenu :workspace="workspace" />
+      <WorkspaceAddProjectMenu :workspace="workspace" :workspace-slug="workspaceSlug" />
     </section>
 
     <section v-else-if="projects?.items?.length">

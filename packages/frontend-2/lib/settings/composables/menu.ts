@@ -149,7 +149,7 @@ export const useSettingsMembersActions = (params: {
 }) => {
   const { activeUser } = useActiveUser()
 
-  const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+  const { isLastAdmin } = useWorkspaceLastAdminCheck({
     workspaceSlug: params.workspaceSlug.value || ''
   })
 
@@ -164,7 +164,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const isOnlyAdmin = computed(
-    () => hasSingleAdmin.value && isActiveUserWorkspaceAdmin.value
+    () => isLastAdmin.value && isActiveUserWorkspaceAdmin.value
   )
 
   const isActiveUserTargetUser = computed(

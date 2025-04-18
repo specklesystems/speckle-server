@@ -30,28 +30,11 @@
     </LayoutMenu>
     <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      subtitle="Upgrade your plan to move project"
-    >
-      <p class="text-body-xs text-foreground-2">
-        The workspace
-        <span class="font-bold">{{ workspace?.name }}</span>
-        is on a
-        {{ formatName(workspace?.plan?.name) }} plan with a limit of 1 project and 5
-        models. Upgrade the workspace to add more projects.
-      </p>
-      <div class="flex justify-end gap-1">
-        <FormButton color="subtle" @click="showLimitDialog = false">Cancel</FormButton>
-        <FormButton
-          @click="
-            navigateTo(
-              settingsWorkspaceRoutes.billing.route(props.workspace?.slug || '')
-            )
-          "
-        >
-          See plans
-        </FormButton>
-      </div>
-    </WorkspacePlanProjectModelLimitReachedDialog>
+      :workspace-name="workspace?.name"
+      :plan="workspace?.plan"
+      :workspace-role="workspace?.role"
+      :workspace-slug="workspaceSlug"
+    />
   </div>
 </template>
 
@@ -60,8 +43,6 @@ import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { WorkspaceAddProjectMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { formatName } from '~/lib/billing/helpers/plan'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 
@@ -70,6 +51,7 @@ graphql(`
     id
     name
     slug
+    role
     projects {
       totalCount
     }
@@ -98,6 +80,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
+  workspaceSlug: string
   workspace: MaybeNullOrUndefined<WorkspaceAddProjectMenu_WorkspaceFragment>
   hideTextOnMobile?: boolean
 }>()

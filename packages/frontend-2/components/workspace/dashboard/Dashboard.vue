@@ -9,6 +9,7 @@
     </Portal>
     <WorkspaceDashboardHeader
       :workspace="workspace"
+      :workspace-slug="workspaceSlug"
       :show-billing-alert="showBillingAlert"
     />
     <WorkspaceDashboardProjectList

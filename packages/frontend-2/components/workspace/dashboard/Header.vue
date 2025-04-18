@@ -20,7 +20,11 @@
       </div>
 
       <div class="flex gap-1.5 md:gap-2">
-        <WorkspaceAddProjectMenu :workspace="workspace" hide-text-on-mobile />
+        <WorkspaceAddProjectMenu
+          :workspace-slug="workspace?.slug"
+          :workspace="workspace"
+          hide-text-on-mobile
+        />
         <FormButton
           color="outline"
           :icon-left="Cog8ToothIcon"
@@ -63,6 +67,7 @@ graphql(`
 `)
 
 const props = defineProps<{
+  workspaceSlug: string
   workspace: MaybeNullOrUndefined<WorkspaceDashboardHeader_WorkspaceFragment>
   showBillingAlert?: boolean
 }>()

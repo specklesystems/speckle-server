@@ -154,7 +154,11 @@ export const activeWorkspaceQuery = graphql(`
 export const workspaceLastAdminCheckQuery = graphql(`
   query WorkspaceLastAdminCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      ...WorkspaceLastAdminCheck_Workspace
+      teamByRole {
+        admins {
+          totalCount
+        }
+      }
     }
   }
 `)
