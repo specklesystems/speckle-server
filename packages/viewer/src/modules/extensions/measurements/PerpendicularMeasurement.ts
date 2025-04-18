@@ -5,20 +5,31 @@ import {
   Raycaster,
   Vector2,
   Vector3,
+  Vector4,
   type Intersection
 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 
-const _vecBuff: Vector3 = new Vector3()
+const vec3Buff0: Vector3 = new Vector3()
+const vec3Buff1: Vector3 = new Vector3()
+const vec3Buff2: Vector3 = new Vector3()
+const vec3Buff3: Vector3 = new Vector3()
+const vec3Buff4: Vector3 = new Vector3()
+const vec3Buff5: Vector3 = new Vector3()
+const vec4Buff0: Vector4 = new Vector4()
+const vec4Buff1: Vector4 = new Vector4()
+const vec4Buff2: Vector4 = new Vector4()
+const vec2Buff0: Vector2 = new Vector2()
 
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
-  private midPoint: Vector3 = new Vector3()
   private normalIndicatorPixelSize = 15 * window.devicePixelRatio
+  public flipStartNormal: boolean = false
+  public midPoint: Vector3 = new Vector3()
 
   public set isVisible(value: boolean) {
     this.startGizmo?.enable(value, value, value, value)
@@ -45,8 +56,8 @@ export class PerpendicularMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.startGizmo?.frameUpdate(camera, bounds)
-    this.endGizmo?.frameUpdate(camera, bounds)
+    this.startGizmo?.frameUpdate(camera, size)
+    this.endGizmo?.frameUpdate(camera, size)
     /** Not a fan of this but the camera library fails to tell us when zooming happens
      *  so we need to update the screen space normal indicator each frame, otherwise it
      *  won't look correct while zooming
@@ -56,21 +67,42 @@ export class PerpendicularMeasurement extends Measurement {
     }
   }
 
+  public locationUpdated(point: Vector3, normal: Vector3): void {
+    if (this.state === MeasurementState.DANGLING_START) {
+      this.startPoint.copy(point)
+      this.startNormal.copy(normal)
+    } else if (this.state === MeasurementState.DANGLING_END) {
+      const dir = new Vector3().subVectors(point, this.startPoint).normalize()
+      const dot = dir.dot(this.startNormal)
+      if (dot < 0) this.flipStartNormal = true
+      else this.flipStartNormal = false
+
+      this.endPoint.copy(point)
+      this.endNormal.copy(normal)
+    }
+  }
+  public locationSelected(): void {
+    if (this.state === MeasurementState.DANGLING_START)
+      this.state = MeasurementState.DANGLING_END
+    else if (this.state === MeasurementState.DANGLING_END)
+      this.state = MeasurementState.COMPLETE
+  }
+
   public update(): Promise<void> {
     let ret = Promise.resolve()
 
     if (isNaN(this.startPoint.length())) return ret
     if (!this.renderingCamera) return ret
 
-    this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
+    this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
-    this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
+    this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
+      const startLine0 = vec3Buff0.copy(this.startPoint)
 
       // Compute start point in clip space
-      const startNDC = Measurement.vec4Buff0
+      const startNDC = vec4Buff0
         .set(this.startPoint.x, this.startPoint.y, this.startPoint.z, 1)
         .applyMatrix4(this.renderingCamera.matrixWorldInverse)
         .applyMatrix4(this.renderingCamera.projectionMatrix)
@@ -79,31 +111,22 @@ export class PerpendicularMeasurement extends Measurement {
       startNDC.multiplyScalar(1 / startpDiv)
 
       // Compute start point normal in clip space
-      const normalNDC = Measurement.vec4Buff1
+      const normalNDC = vec4Buff1
         .set(this.startNormal.x, this.startNormal.y, this.startNormal.z, 0)
         .applyMatrix4(this.renderingCamera.matrixWorldInverse)
         .applyMatrix4(this.renderingCamera.projectionMatrix)
         .normalize()
-      /** If we apply perspective division, the result is off **/
-      // Move to NDC
-      // const normalpDiv = normalNDC.w === 0 ? 1 : normalNDC.w
-      // normalNDC.multiplyScalar(1 / normalpDiv).normalize()
 
-      const pixelScale = Measurement.vec2Buff0.set(
+      const pixelScale = vec2Buff0.set(
         (this.normalIndicatorPixelSize / this.renderingSize.x) * 2,
         (this.normalIndicatorPixelSize / this.renderingSize.y) * 2
       )
 
       // Add the scaled NDC normal to the NDC start point, we get the end point in NDC
-      const endNDC = Measurement.vec4Buff2
+      const endNDC = vec4Buff2
         .set(startNDC.x, startNDC.y, startNDC.z, 1)
         .add(
-          Measurement.vec4Buff1.set(
-            normalNDC.x * pixelScale.x,
-            normalNDC.y * pixelScale.y,
-            0,
-            0
-          )
+          vec4Buff1.set(normalNDC.x * pixelScale.x, normalNDC.y * pixelScale.y, 0, 0)
         )
       // Back to clip
       endNDC.multiplyScalar(startpDiv)
@@ -113,36 +136,28 @@ export class PerpendicularMeasurement extends Measurement {
         .applyMatrix4(this.renderingCamera.matrixWorld)
       this.startGizmo?.updateLine([
         startLine0,
-        Measurement.vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
+        vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
       ])
 
       this.endGizmo?.enable(false, false, false, false)
     }
 
     if (this._state === MeasurementState.DANGLING_END) {
-      _vecBuff.copy(this.startNormal)
-      if (this.flipStartNormal) _vecBuff.negate()
+      vec3Buff5.copy(this.startNormal)
+      if (this.flipStartNormal) vec3Buff5.negate()
 
       const startEndDist = this.startPoint.distanceTo(this.endPoint)
-      const endStartDir = Measurement.vec3Buff0
-        .copy(this.startPoint)
-        .sub(this.endPoint)
-        .normalize()
-      let dot = _vecBuff.dot(endStartDir)
+      const endStartDir = vec3Buff0.copy(this.startPoint).sub(this.endPoint).normalize()
+      let dot = vec3Buff5.dot(endStartDir)
       const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
       this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
 
       this.midPoint.copy(
-        Measurement.vec3Buff0
+        vec3Buff0
           .copy(this.startPoint)
-          .add(
-            Measurement.vec3Buff1.copy(_vecBuff).multiplyScalar(this.startLineLength)
-          )
+          .add(vec3Buff1.copy(vec3Buff5).multiplyScalar(this.startLineLength))
       )
-      const endLineNormal = Measurement.vec3Buff1
-        .copy(this.midPoint)
-        .sub(this.endPoint)
-        .normalize()
+      const endLineNormal = vec3Buff1.copy(this.midPoint).sub(this.endPoint).normalize()
 
       this.endLineLength = this.midPoint.distanceTo(this.endPoint)
 
@@ -150,17 +165,17 @@ export class PerpendicularMeasurement extends Measurement {
       const angle1 = Math.acos(Math.min(Math.max(dot, -1), 1))
       const dist1 = this.endLineLength * Math.cos(angle1)
 
-      const endLine3 = Measurement.vec3Buff1
+      const endLine3 = vec3Buff1
         .copy(this.endPoint)
-        .add(Measurement.vec3Buff2.copy(this.endNormal).multiplyScalar(dist1))
+        .add(vec3Buff2.copy(this.endNormal).multiplyScalar(dist1))
 
-      const startLine0 = Measurement.vec3Buff2.copy(this.startPoint)
-      const startLine1 = Measurement.vec3Buff3
+      const startLine0 = vec3Buff2.copy(this.startPoint)
+      const startLine1 = vec3Buff3
         .copy(this.startPoint)
-        .add(Measurement.vec3Buff4.copy(_vecBuff).multiplyScalar(this.startLineLength))
+        .add(vec3Buff4.copy(vec3Buff5).multiplyScalar(this.startLineLength))
       this.startGizmo?.updateLine([startLine0, startLine1])
 
-      const endLine0 = Measurement.vec3Buff3.copy(this.endPoint)
+      const endLine0 = vec3Buff3.copy(this.endPoint)
 
       this.endGizmo?.updateLine([
         endLine0,
@@ -172,13 +187,9 @@ export class PerpendicularMeasurement extends Measurement {
       ])
       this.endGizmo?.updatePoint(this.midPoint)
 
-      const textPos = Measurement.vec3Buff0
+      const textPos = vec3Buff0
         .copy(this.startPoint)
-        .add(
-          Measurement.vec3Buff1
-            .copy(_vecBuff)
-            .multiplyScalar(this.startLineLength * 0.5)
-        )
+        .add(vec3Buff1.copy(vec3Buff5).multiplyScalar(this.startLineLength * 0.5))
 
       this.value = this.midPoint.distanceTo(this.startPoint)
       if (this.startGizmo)

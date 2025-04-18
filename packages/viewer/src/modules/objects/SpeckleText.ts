@@ -147,6 +147,21 @@ export class SpeckleText extends Mesh {
       if (this._style.billboard) {
         this.textMesh.material.userData.billboardPos.value.copy(position)
         if (this._background) {
+          const textSize = this.textMesh.geometry.boundingBox.getSize(new Vector3())
+          const textCenter = this.textMesh.geometry.boundingBox.getCenter(new Vector3())
+          const offset = new Vector3()
+            .copy(textCenter)
+            .multiplyScalar(BACKGROUND_OVERSIZE)
+          const sizeOffset = new Vector3()
+            .copy(textSize)
+            .multiplyScalar(BACKGROUND_OVERSIZE)
+            .sub(textSize)
+          offset.x +=
+            textCenter.x < 0 ? sizeOffset.x : textCenter.x > 0 ? -sizeOffset.x : 0
+          offset.y +=
+            textCenter.y < 0 ? sizeOffset.y : textCenter.y > 0 ? -sizeOffset.y : 0
+          ;(this._background.material as SpeckleBasicMaterial).billboardOffset =
+            new Vector2(offset.x, offset.y)
           ;(
             this._background.material as SpeckleBasicMaterial
           ).userData.billboardPos.value.copy(position)
@@ -304,7 +319,7 @@ export class SpeckleText extends Mesh {
       new BufferAttribute(new Float32Array(positions), 3)
     )
     geometry.setAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
-
+    geometry.computeBoundingBox()
     return geometry
 
     function contour(j: number) {

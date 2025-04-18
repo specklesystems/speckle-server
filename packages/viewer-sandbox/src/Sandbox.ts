@@ -148,10 +148,11 @@ export default class Sandbox {
   public measurementsParams = {
     enabled: false,
     visible: true,
-    type: MeasurementType.POINTTOPOINT,
+    type: MeasurementType.POINT,
     vertexSnap: true,
     units: 'm',
-    precision: 2
+    precision: 2,
+    chain: false
   }
 
   public constructor(
@@ -1203,7 +1204,9 @@ export default class Sandbox {
         label: 'Type',
         options: {
           PERPENDICULAR: MeasurementType.PERPENDICULAR,
-          POINTTOPOINT: MeasurementType.POINTTOPOINT
+          POINTTOPOINT: MeasurementType.POINTTOPOINT,
+          AREA: MeasurementType.AREA,
+          POINT: MeasurementType.POINT
         }
       })
       .on('change', () => {
@@ -1234,6 +1237,14 @@ export default class Sandbox {
         step: 1,
         min: 1,
         max: 5
+      })
+      .on('change', () => {
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
+      })
+    container
+      .addInput(this.measurementsParams, 'chain', {
+        label: 'Chain'
       })
       .on('change', () => {
         this.viewer.getExtension(MeasurementsExtension).options =
