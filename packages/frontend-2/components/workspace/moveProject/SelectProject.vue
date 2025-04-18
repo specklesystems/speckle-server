@@ -62,19 +62,13 @@
       class="py-4"
       @infinite="onInfiniteLoad"
     />
-    <WorkspacePlanLimitReachedDialog
+    <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      subtitle="Upgrade your plan to move project"
-    >
-      <template v-if="limitReachedWorkspace">
-        <p class="text-body-xs text-foreground-2">
-          The workspace
-          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
-          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
-          of 1 project and 5 models. Upgrade the workspace to add more projects.
-        </p>
-      </template>
-    </WorkspacePlanLimitReachedDialog>
+      :workspace-name="workspace?.name"
+      :plan="workspace?.plan?.name"
+      :workspace-role="workspace?.role"
+      :workspace-slug="workspace?.slug || ''"
+    />
   </div>
 </template>
 
@@ -91,7 +85,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
-import { formatName } from '~/lib/billing/helpers/plan'
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -101,7 +94,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  workspaceSlug?: string
+  workspace?: WorkspaceMoveProjectManager_WorkspaceFragment
   projectPermissions?: PermissionCheckResult
 }>()
 
@@ -155,9 +148,9 @@ const getProjectTooltip = computed(
 )
 
 const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  if (props.workspaceSlug) {
+  if (props.workspace?.slug) {
     limitReachedWorkspace.value = {
-      name: props.workspaceSlug
+      name: props.workspace.slug
     } as WorkspaceMoveProjectManager_WorkspaceFragment
     showLimitDialog.value = true
     return

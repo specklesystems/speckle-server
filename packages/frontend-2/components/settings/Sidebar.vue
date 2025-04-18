@@ -128,7 +128,6 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import {
-  homeRoute,
   projectsRoute,
   settingsWorkspaceRoutes,
   workspaceRoute
@@ -209,7 +208,6 @@ const needsSsoSession = (
 }
 
 const exitSettingsRoute = computed(() => {
-  if (import.meta.server) return homeRoute
   if (!settingsMenuState.value.previousRoute) {
     return activeWorkspaceSlug.value
       ? workspaceRoute(activeWorkspaceSlug.value)

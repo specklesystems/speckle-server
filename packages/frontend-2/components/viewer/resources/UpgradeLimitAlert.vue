@@ -23,9 +23,9 @@ const { commentLimitFormatted, versionLimitFormatted } = useWorkspaceLimits(
 
 const text = computed(() => {
   if (props.limitType === 'comment') {
-    return `Upgrade to view comments older than ${commentLimitFormatted.value}.`
+    return `Upgrade your plan to view comments older than ${commentLimitFormatted.value}.`
   }
-  return `Upgrade to view versions older than ${versionLimitFormatted.value}.`
+  return `Upgrade your plan to view versions older than ${versionLimitFormatted.value}.`
 })
 
 const actions = computed((): AlertAction[] => [

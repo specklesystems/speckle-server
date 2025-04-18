@@ -28,7 +28,7 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <WorkspacePlanLimitReachedDialog
+    <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
       subtitle="Upgrade your plan to move project"
     >
@@ -51,7 +51,7 @@
           See plans
         </FormButton>
       </div>
-    </WorkspacePlanLimitReachedDialog>
+    </WorkspacePlanProjectModelLimitReachedDialog>
   </div>
 </template>
 
