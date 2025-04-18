@@ -17,7 +17,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
-import { Roles, WorkspacePlans } from '@speckle/shared'
+import { Roles, TIME_MS, WorkspacePlans } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 
@@ -184,10 +184,10 @@ export const useWorkspacesWizard = () => {
       })
     } else {
       // Keep loading state for a second
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       mutateActiveWorkspaceSlug(wizardState.value.state.slug)
       await router.push(workspaceRoute(wizardState.value.state.slug))
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       isLoading.value = false
       resetWizardState()
     }

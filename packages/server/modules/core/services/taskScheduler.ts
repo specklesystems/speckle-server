@@ -7,6 +7,7 @@ import {
   ReleaseTaskLock,
   ScheduleExecution
 } from '@/modules/core/domain/scheduledTasks/operations'
+import { TIME_MS } from '@speckle/shared'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
@@ -37,7 +38,10 @@ export const scheduledCallbackWrapper = async (
     // update lock as succeeded
     const finishDate = new Date()
     boundLogger.debug(
-      { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
+      {
+        durationSeconds:
+          (finishDate.getTime() - scheduledTime.getTime()) / TIME_MS.second
+      },
       'Finished scheduled function {taskName} execution succeeded in {durationSeconds} seconds'
     )
   } catch (error) {
@@ -62,7 +66,7 @@ export const scheduleExecutionFactory =
     cronExpression: string,
     taskName: string,
     callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
-    lockTimeout = 60 * 1000
+    lockTimeout = 1 * TIME_MS.minute
   ): cron.ScheduledTask => {
     const expressionValid = cron.validate(cronExpression)
     if (!expressionValid)

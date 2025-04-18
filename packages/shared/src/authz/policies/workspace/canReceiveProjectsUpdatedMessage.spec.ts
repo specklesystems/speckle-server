@@ -3,7 +3,7 @@ import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './canReceivePro
 import { OverridesOf } from '../../../tests/helpers/types.js'
 import { getProjectFake } from '../../../tests/fakes.js'
 import { Roles } from '../../../core/constants.js'
-import { TIME } from '../../../core/index.js'
+import { TIME_MS } from '../../../core/index.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import {
   ProjectNotEnoughPermissionsError,
@@ -36,7 +36,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date(Date.now() + TIME.day * 1000)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getAdminOverrideEnabled: async () => false,
       ...overrides

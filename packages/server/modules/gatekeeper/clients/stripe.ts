@@ -7,6 +7,7 @@ import {
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import { LogicError } from '@/modules/shared/errors'
+import { TIME_MS } from '@speckle/shared'
 import { isString } from 'lodash'
 import { Stripe } from 'stripe'
 
@@ -64,9 +65,9 @@ export const parseSubscriptionData = (
     subscriptionId: stripeSubscription.id,
     status: stripeSubscription.status,
     cancelAt: stripeSubscription.cancel_at
-      ? new Date(stripeSubscription.cancel_at * 1000)
+      ? new Date(stripeSubscription.cancel_at * TIME_MS.second)
       : null,
-    currentPeriodEnd: stripeSubscription.current_period_end * 1000, // this value arrives as a UNIX timestamp
+    currentPeriodEnd: stripeSubscription.current_period_end * TIME_MS.second, // this value arrives as a UNIX timestamp
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
         typeof subscriptionItem.price.product === 'string'

@@ -49,7 +49,7 @@ import {
   updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { Automate } from '@speckle/shared'
+import { Automate, TIME_MS } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
@@ -532,7 +532,7 @@ const createAppToken = createAppTokenFactory({
             expect(payload.source).to.equal(RunTriggerSource.Manual)
             eventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
         const executionEngineRunId = cryptoRandomString({ length: 10 })
         const { automationRunId } = await triggerAutomationRevisionRunFactory({
@@ -1382,7 +1382,7 @@ const createAppToken = createAppTokenFactory({
               expect(payload.functionRun.id).to.equal(functionRunId)
               eventFired = true
             },
-            { timeout: 1000 }
+            { timeout: TIME_MS.second }
           )
           await expect(report(params)).to.eventually.be.true
 

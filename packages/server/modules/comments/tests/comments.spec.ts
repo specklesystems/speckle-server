@@ -122,7 +122,7 @@ import {
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import { MaybeNullOrUndefined, TIME_MS } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
   getViewerResourcesForCommentFactory,
@@ -390,7 +390,7 @@ describe('Comments @comments', () => {
         expect(payload.payload.comment.data).to.deep.equal(threadFakeData)
         threadEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     const thread = await createComment({
@@ -416,7 +416,7 @@ describe('Comments @comments', () => {
         expect(payload.payload.comment.parentComment).to.equal(thread.id)
         replyEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     const reply = await createCommentReply({
@@ -1151,7 +1151,7 @@ describe('Comments @comments', () => {
         )
         editEventFired = true
       },
-      { timeout: 1000 }
+      { timeout: TIME_MS.second }
     )
 
     await editComment({

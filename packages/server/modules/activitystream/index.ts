@@ -25,6 +25,7 @@ import { reportCommentActivityFactory } from '@/modules/activitystream/events/co
 import { reportStreamInviteActivityFactory } from '@/modules/activitystream/events/streamInviteListeners'
 import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { reportStreamActivityFactory } from '@/modules/activitystream/events/streamListeners'
+import { TIME_MS } from '@speckle/shared'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -115,7 +116,7 @@ const scheduleWeeklyActivityNotifications = () => {
         getActiveUserStreams: getActiveUserStreamsFactory({ db })
       })(start, end)
     },
-    10 * 60 * 1000
+    10 * TIME_MS.minute
   )
 }
 

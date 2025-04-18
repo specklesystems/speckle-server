@@ -18,6 +18,7 @@ import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/observability/logging'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
+import { TIME_MS } from '@speckle/shared'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -53,13 +54,13 @@ export const buildNotificationsQueue = (queueName: string) =>
       ? {
           limiter: {
             max: 10,
-            duration: 1000
+            duration: TIME_MS.second
           }
         }
       : {}),
     defaultJobOptions: {
       attempts: 1,
-      timeout: 10 * 1000, // 10s execution timeout
+      timeout: 10 * TIME_MS.second,
       removeOnComplete: isProdEnv(),
       removeOnFail: isProdEnv()
     }

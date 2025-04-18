@@ -22,6 +22,7 @@ import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/en
 import {
   type Nullable,
   type SourceAppName,
+  TIME_MS,
   isNonNullable,
   isNullOrUndefined,
   retry,
@@ -138,7 +139,10 @@ const invokeRequest = async (params: {
         }).catch((e) => {
           throw new ExecutionEngineNetworkError({ method, url, body }, e)
         }),
-        timeoutAt(20 * 1000, 'Automate Execution Engine API request timed out')
+        timeoutAt(
+          20 * TIME_MS.second,
+          'Automate Execution Engine API request timed out'
+        )
       ]),
     params.retry !== false ? 3 : 1,
     (i, error) => {
@@ -146,7 +150,7 @@ const invokeRequest = async (params: {
         { url, method, err: error },
         'Automate Execution Engine API call failed, retrying...'
       )
-      return i * 1000
+      return i * TIME_MS.second
     }
   )
 

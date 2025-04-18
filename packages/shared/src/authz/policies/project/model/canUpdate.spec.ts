@@ -199,7 +199,7 @@ describe('canUpdateProject', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(new Date().getTime() - 1000)
+          validUntil: new Date(new Date().getTime() - TIME_MS.second)
         })
       })
       const result = await sut({

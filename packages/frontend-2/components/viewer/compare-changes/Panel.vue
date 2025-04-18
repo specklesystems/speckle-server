@@ -69,6 +69,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { uniqBy, debounce } from 'lodash-es'
 import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { TIME_MS } from '@speckle/shared'
 
 defineEmits<{
   (e: 'close'): void
@@ -97,7 +98,7 @@ const debouncedTrackChangeDiffTime = debounce(() => {
     action: 'set-diff-time',
     value: localDiffTime.value
   })
-}, 1000)
+}, TIME_MS.second)
 
 watch(diffState.result, () => {
   localDiffTime.value = 0.5

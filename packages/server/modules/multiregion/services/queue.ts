@@ -2,7 +2,7 @@ import Bull from 'bull'
 import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Optional } from '@speckle/shared'
+import { Optional, TIME_MS } from '@speckle/shared'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
@@ -84,16 +84,16 @@ export const buildMultiregionQueue = (queueName: string) =>
       ? {
           limiter: {
             max: 10,
-            duration: 1000
+            duration: TIME_MS.second
           }
         }
       : {}),
     defaultJobOptions: {
       attempts: 5,
-      timeout: 1000 * 60 * 15, // 15 minute timeout
+      timeout: 15 * TIME_MS.minute,
       backoff: {
         type: 'fixed',
-        delay: 1000 * 60 * 5
+        delay: 5 * TIME_MS.minute
       },
       removeOnComplete: isProdEnv(),
       removeOnFail: false

@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/index.js'
 
 // Default deps allow test to succeed, this makes it so that we need to override less of them
 const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateProjectPolicy>[0]>) =>
@@ -236,7 +237,7 @@ describe('canUpdateProject', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(new Date().getTime() - 1000)
+          validUntil: new Date(new Date().getTime() - TIME_MS.second)
         })
       })
       const result = await canUpdateProject({

@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { canCreateProjectVersionPolicy } from './canCreate.js'
+import { TIME_MS } from '../../../../core/index.js'
 
 describe('canReceiveProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectVersionPolicy>) =>
@@ -51,7 +52,7 @@ describe('canReceiveProjectVersionPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60)
+        validUntil: new Date(Date.now() + TIME_MS.hour)
       }),
       getWorkspaceSsoProvider: async () => ({
         providerId: 'provider-id'
@@ -252,7 +253,7 @@ describe('canReceiveProjectVersionPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60)
+          validUntil: new Date(Date.now() - TIME_MS.hour)
         })
       })
 

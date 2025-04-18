@@ -1,3 +1,4 @@
+import { TIME_MS } from '@speckle/shared'
 import {
   Load,
   LoadArgs,
@@ -83,7 +84,7 @@ const takeScreenshot: TakeScreenshot = async () => {
     ret.screenshots[i + ''] = await viewer.screenshot()
     console.log(`Screenshot taken at ${i}`)
   }
-  ret.durationSeconds = (Date.now() - t0) / 1000
+  ret.durationSeconds = (Date.now() - t0) / TIME_MS.second
   return ret
 }
 window.takeScreenshot = takeScreenshot

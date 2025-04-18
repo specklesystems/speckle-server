@@ -2,6 +2,7 @@ import { Serializer } from './utils/Serializer'
 import { ServerTransport } from './transports/ServerTransport'
 import type { TransportOptions } from './transports/ServerTransport'
 import { Base } from './utils/Base'
+import { TIME_MS } from '@speckle/shared'
 export { Base }
 
 export { Detach, Chunkable } from './utils/Decorators'
@@ -59,6 +60,6 @@ export const send = async (
     serializer.dispose()
   }
   const t1 = performance.now()
-  logger.log(`Finished sending in ${(t1 - t0) / 1000}s.`)
+  logger.log(`Finished sending in ${(t1 - t0) / TIME_MS.second}s.`)
   return result
 }

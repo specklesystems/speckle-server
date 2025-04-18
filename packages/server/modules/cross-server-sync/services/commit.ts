@@ -2,7 +2,7 @@ import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { Roles, timeoutAt } from '@speckle/shared'
+import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/observability/logging'
@@ -576,7 +576,7 @@ const loadAllObjectsFromParentFactory =
           () =>
             Promise.race([
               deps.createNewObject(typedObj, targetStreamId, { logger }),
-              timeoutAt(10 * 1000, `Object create timed out! - ${id}`)
+              timeoutAt(10 * TIME_MS.second, `Object create timed out! - ${id}`)
             ]),
           3
         )

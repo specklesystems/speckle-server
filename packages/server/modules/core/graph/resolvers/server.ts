@@ -1,5 +1,11 @@
 import { validateScopes } from '@/modules/shared'
-import { Roles, Scopes, RoleInfo, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Roles,
+  Scopes,
+  RoleInfo,
+  removeNullOrUndefinedKeys,
+  TIME_MS
+} from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   speckleAutomateUrl,
@@ -19,7 +25,7 @@ import { LRUCache } from 'lru-cache'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
-const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 60 * 1000 })
+const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 1 * TIME_MS.minute })
 const getServerInfoFromCache = getServerInfoFromCacheFactory({ cache })
 const storeServerInfoInCache = storeServerInfoInCacheFactory({ cache })
 const getServerInfo = getServerInfoFactory({ db })

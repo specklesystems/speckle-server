@@ -18,6 +18,7 @@ import { NotFoundError } from '@/modules/shared/errors'
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
+  TIME_MS,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 
@@ -117,8 +118,7 @@ export const startCheckoutSessionFactory =
         throw new WorkspaceAlreadyPaidError()
       if (
         new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        1000
-        // 10 * 60 * 1000
+        1 * TIME_MS.second
       ) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id

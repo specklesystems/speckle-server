@@ -57,8 +57,8 @@ describe('Activity digest notifications @notifications', () => {
     version: 'testing 1 2 3',
     guestModeEnabled: false,
     configuration: {
-      objectMultipartUploadSizeLimitBytes: 1000000,
-      objectSizeLimitBytes: 1000000,
+      objectMultipartUploadSizeLimitBytes: 1_000_000,
+      objectSizeLimitBytes: 1_000_000,
       isEmailEnabled: true
     }
   }

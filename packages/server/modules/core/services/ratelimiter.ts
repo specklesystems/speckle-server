@@ -11,7 +11,7 @@ import {
   RateLimiterRedis,
   RateLimiterRes
 } from 'rate-limiter-flexible'
-import { TIME } from '@speckle/shared'
+import { TIME, TIME_MS } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { rateLimiterLogger } from '@/observability/logging'
@@ -277,7 +277,7 @@ export const sendRateLimitResponse = (
   rateLimitBreached: RateLimitBreached
 ): express.Response => {
   if (res.headersSent) return res
-  res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
+  res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / TIME_MS.second)
   res.removeHeader('X-RateLimit-Remaining')
   res.setHeader(
     'X-RateLimit-Reset',

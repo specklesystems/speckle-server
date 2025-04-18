@@ -266,7 +266,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - TIME_MS.second)
         })
       })
 

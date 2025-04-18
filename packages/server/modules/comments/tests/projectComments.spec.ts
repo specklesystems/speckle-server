@@ -22,7 +22,7 @@ import {
 } from '@/test/speckle-helpers/branchHelper'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, TIME_MS } from '@speckle/shared'
 import { RichTextEditor } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -93,7 +93,7 @@ describe('Project Comments', () => {
           expect(commentTextToRawString(payload.comment.text)).to.equal(parentText)
           createEventFired = true
         },
-        { timeout: 1000 }
+        { timeout: TIME_MS.second }
       )
 
       const threadInput: CreateCommentInput = {
@@ -147,7 +147,7 @@ describe('Project Comments', () => {
             expect(payload.comment.parentComment).to.equal(threadId)
             replyEventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
 
         const replyInput: CreateCommentReplyInput = {
@@ -177,7 +177,7 @@ describe('Project Comments', () => {
             expect(payload.newComment.id).to.equal(threadId)
             editEventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
 
         const res = await editProjectComment({

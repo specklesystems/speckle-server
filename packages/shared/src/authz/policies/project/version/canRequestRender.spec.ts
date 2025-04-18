@@ -12,6 +12,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/index.js'
 
 describe('canRequestProjectVersionRenderPolicy', () => {
   const buildSUT = (
@@ -53,7 +54,7 @@ describe('canRequestProjectVersionRenderPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60)
+        validUntil: new Date(Date.now() + TIME_MS.hour)
       }),
       getWorkspaceSsoProvider: async () => ({
         providerId: 'provider-id'
@@ -222,7 +223,7 @@ describe('canRequestProjectVersionRenderPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60)
+          validUntil: new Date(Date.now() - TIME_MS.hour)
         })
       })
 
