@@ -8,26 +8,66 @@ export const workspaceAccessCheckQuery = graphql(`
   }
 `)
 
-export const workspacePageQuery = graphql(`
-  query WorkspacePageQuery(
+export const workspaceSidebarQuery = graphql(`
+  query WorkspaceSidebar(
     $workspaceSlug: String!
-    $invitesFilter: PendingWorkspaceCollaboratorsFilter
-    $token: String
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter # $token: String
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      ...WorkspaceProjectList_Workspace
+      ...WorkspaceSidebar_Workspace
     }
-    workspaceInvite(
-      workspaceId: $workspaceSlug
-      token: $token
-      options: { useSlug: true }
-    ) {
-      id
-      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
-      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
-    }
+    # workspaceInvite(
+    #   workspaceId: $workspaceSlug
+    #   token: $token
+    #   options: { useSlug: true }
+    # ) {
+    #   id
+    #   ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
+    #   ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
+    # }
   }
 `)
+
+export const workspaceDashboardQuery = graphql(`
+  query WorkspaceDashboard(
+    $workspaceSlug: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter # $token: String
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceDashboard_Workspace
+    }
+    # workspaceInvite(
+    #   workspaceId: $workspaceSlug
+    #   token: $token
+    #   options: { useSlug: true }
+    # ) {
+    #   id
+    #   ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
+    #   ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
+    # }
+  }
+`)
+
+// export const workspacePageQuery = graphql(`
+//   query WorkspacePageQuery(
+//     $workspaceSlug: String!
+//     $invitesFilter: PendingWorkspaceCollaboratorsFilter
+//     $token: String
+//   ) {
+//     workspaceBySlug(slug: $workspaceSlug) {
+//       ...WorkspaceProjectList_Workspace
+//     }
+//     workspaceInvite(
+//       workspaceId: $workspaceSlug
+//       token: $token
+//       options: { useSlug: true }
+//     ) {
+//       id
+//       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
+//       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
+//     }
+//   }
+// `)
 
 export const workspaceProjectsQuery = graphql(`
   query WorkspaceProjectsQuery(
@@ -38,7 +78,7 @@ export const workspaceProjectsQuery = graphql(`
     workspaceBySlug(slug: $workspaceSlug) {
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
-        ...WorkspaceProjectList_ProjectCollection
+        ...WorkspaceDashboardProjectList_ProjectCollection
       }
     }
   }
