@@ -8,6 +8,7 @@
     :hide-closer="preventClose"
     :prevent-close-on-click-outside="preventClose"
     :title="condensed ? 'Plan limit reached' : undefined"
+    closer-classes="hover:!bg-transparent !text-white hover:opacity-65"
   >
     <div class="flex flex-col">
       <div v-if="!condensed" class="relative bg-primary h-32 md:h-48 select-none">

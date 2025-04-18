@@ -122,6 +122,7 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -209,6 +210,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Project: {
         async automation(parent, args, ctx) {
+          const canReadAutomation = await ctx.authPolicies.project.automation.canRead({
+            userId: ctx.userId,
+            projectId: parent.id
+          })
+          if (!canReadAutomation.isOk) {
+            throw mapAuthToServerError(canReadAutomation.error)
+          }
+
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
           const res = ctx.loaders
@@ -224,7 +233,15 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           return res
         },
-        async automations(parent, args) {
+        async automations(parent, args, ctx) {
+          const canReadAutomation = await ctx.authPolicies.project.automation.canRead({
+            userId: ctx.userId,
+            projectId: parent.id
+          })
+          if (!canReadAutomation.isOk) {
+            throw mapAuthToServerError(canReadAutomation.error)
+          }
+
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
           const retrievalArgs: GetProjectAutomationsParams = {
@@ -607,6 +624,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
+          const canCreate = await ctx.authPolicies.project.automation.canCreate({
+            userId: ctx.userId,
+            projectId: parent.projectId
+          })
+          if (!canCreate.isOk) {
+            throw mapAuthToServerError(canCreate.error)
+          }
+
           const projectId = parent.projectId
 
           const logger = ctx.log.child({
@@ -621,7 +646,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
-            validateStreamAccess,
             eventEmit: getEventBus().emit
           })
 
@@ -643,6 +667,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return automation
         },
         async update(parent, { input }, ctx) {
+          const canUpdate = await ctx.authPolicies.project.automation.canUpdate({
+            userId: ctx.userId,
+            projectId: parent.projectId
+          })
+          if (!canUpdate.isOk) {
+            throw mapAuthToServerError(canUpdate.error)
+          }
+
           const projectId = parent.projectId
           const automationId = input.id
 
@@ -657,7 +689,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const update = validateAndUpdateAutomationFactory({
             getAutomation: getAutomationFactory({ db: projectDb }),
             updateAutomation: updateAutomationFactory({ db: projectDb }),
-            validateStreamAccess,
             eventEmit: getEventBus().emit
           })
 

@@ -111,7 +111,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: isUpgrading.value
-      ? isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
+      ? hasAvailableEditorSeats.value || !isPaidPlan.value
         ? 'Upgrade seat'
         : 'Confirm and pay'
       : 'Downgrade seat',
