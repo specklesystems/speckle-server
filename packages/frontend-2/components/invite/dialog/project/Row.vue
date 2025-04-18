@@ -21,6 +21,7 @@
                 :rules="[isEmailOrEmpty]"
               />
               <FormTextInput
+                v-else
                 v-model="input"
                 :name="`input-${item.key}`"
                 color="foundation"
