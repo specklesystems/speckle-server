@@ -28,13 +28,13 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <WorkspacePlanProjectModelLimitReachedDialog
+    <!-- <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
       :workspace-name="workspace?.name"
       :plan="workspace?.plan"
       :workspace-role="workspace?.role"
       :workspace-slug="workspaceSlug"
-    />
+    /> -->
   </div>
 </template>
 
