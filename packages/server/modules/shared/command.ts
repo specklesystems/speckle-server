@@ -1,6 +1,13 @@
 import { EmitArg, EventBus, EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Knex } from 'knex'
 
+/**
+ * TODO: Fix api - make operationFactory db arg actually return the trx. Currently many usages of this
+ * are not working correctly cause they just use the db, skipping the transaction
+ *
+ * Also: withOperationLogging and withOperationTransaction could all be merged into this, with
+ * this having a better name like `operationFactory`
+ */
 export const commandFactory =
   <TOperation extends (...args: Parameters<TOperation>) => ReturnType<TOperation>>({
     db,

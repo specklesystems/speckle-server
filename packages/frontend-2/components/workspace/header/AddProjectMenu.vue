@@ -28,27 +28,13 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <WorkspacePlanLimitReachedDialog
+    <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      subtitle="Upgrade your plan to move project"
-    >
-      <p class="text-body-xs text-foreground-2">
-        The workspace
-        <span class="font-bold">{{ workspaceName }}</span>
-        is on a {{ workspacePlan ? formatName(workspacePlan) : undefined }} plan with a
-        limit of 1 project and 5 models. Upgrade the workspace to add more projects.
-      </p>
-      <div class="flex justify-end gap-1">
-        <FormButton color="subtle" @click="showLimitDialog = false">Cancel</FormButton>
-        <FormButton
-          @click="
-            navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug))
-          "
-        >
-          See plans
-        </FormButton>
-      </div>
-    </WorkspacePlanLimitReachedDialog>
+      :workspace-name="props.workspaceName"
+      :plan="props.workspacePlan"
+      :workspace-role="props.workspaceRole"
+      :workspace-slug="props.workspaceSlug"
+    />
   </div>
 </template>
 
@@ -57,9 +43,7 @@ import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { formatName } from '~/lib/billing/helpers/plan'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import type { WorkspacePlans } from '@speckle/shared'
+import type { MaybeNullOrUndefined, WorkspacePlans } from '@speckle/shared'
 
 enum AddNewProjectActionTypes {
   NewProject = 'new-project',
@@ -74,11 +58,12 @@ const emit = defineEmits<{
 const props = defineProps<{
   workspaceName: string
   workspaceSlug: string
-  workspacePlan?: WorkspacePlans | null
+  workspacePlan?: WorkspacePlans
   hideTextOnMobile?: boolean
   buttonCopy?: string
   canCreateProject: FullPermissionCheckResultFragment | undefined
   canMoveProjectToWorkspace: FullPermissionCheckResultFragment | undefined
+  workspaceRole: MaybeNullOrUndefined<string>
 }>()
 
 const menuId = useId()

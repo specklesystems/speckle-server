@@ -16,7 +16,7 @@
           <span class="font-medium">
             {{ planPrice }}
           </span>
-          per seat/month
+          per editor seat/month
         </p>
         <template v-if="plan !== WorkspacePlans.Free">
           <div class="flex items-center gap-x-2 mt-3 px-1">
@@ -24,9 +24,6 @@
               v-model="isYearlyIntervalSelected"
               :show-label="false"
               name="billing-interval"
-              @update:model-value="
-                (newValue) => $emit('onYearlyIntervalSelected', newValue)
-              "
             />
             <span class="text-body-2xs">Billed yearly</span>
             <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
@@ -92,7 +89,6 @@ import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import type { SetupContext } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'onYearlyIntervalSelected', value: boolean): void
   (e: 'onUpgradeClick'): void
 }>()
 
@@ -116,34 +112,42 @@ const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
 const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 const commonFeatures = shallowRef([
   {
-    displayName: 'Unlimited editor and viewer seats',
-    description: 'Some tooltip text'
+    displayName: 'Unlimited members and guests',
+    description: 'You can have unlimited people in your workspace'
   },
   {
-    displayName: 'Unlimited guests',
-    description: 'Some tooltip text'
+    displayName: 'Free viewer seats',
+    description:
+      'People on a viewer seat can view and comment on models in the web viewer free of charge.'
   },
   {
     displayName: `${planLimits.value.projectCount} project${
       planLimits.value.projectCount === 1 ? '' : 's'
     }`,
-    description: 'Some tooltip text'
+    description:
+      props.plan === WorkspacePlans.Free
+        ? 'Your maximum number of projects'
+        : 'Your maximum number of projects. Can be extended with the Unlimited projects and models add-on.'
   },
   {
     displayName: `${planLimits.value.modelCount} models per workspace`,
-    description: 'Some tooltip text'
+    description:
+      props.plan === WorkspacePlans.Free
+        ? 'Your maximum number of models'
+        : 'Your maximum number of models. Can be extended with the Unlimited projects and models add-on.'
   },
   {
     displayName: planLimits.value.versionsHistory
       ? `${planLimits.value.versionsHistory.value} day version history`
       : 'Full version history',
-    description: 'Some tooltip text'
+    description:
+      'Access and compare earlier versions of your models. Latest version is always accessible.'
   },
   {
     displayName: planLimits.value.versionsHistory
       ? `${planLimits.value.versionsHistory.value} day comment history`
       : 'Full comment history',
-    description: 'Some tooltip text'
+    description: 'Access past comments in the 3D web viewer'
   }
 ])
 const planPrice = computed(() => {
@@ -192,20 +196,27 @@ const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
+const isMatchingTier = computed(() => {
+  return (
+    (props.currentPlan?.name === WorkspacePlans.Team &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.Pro &&
+      props.plan === WorkspacePlans.Pro) ||
+    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+      props.plan === WorkspacePlans.Pro)
+  )
+})
+
 const isCurrentPlan = computed(() => {
   if (props.plan === WorkspacePlans.Free) {
     return props.currentPlan?.name === props.plan
   }
 
-  const isMatchingTier =
-    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
-      props.plan === WorkspacePlans.Team) ||
-    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
-      props.plan === WorkspacePlans.Pro)
-
   return (
     isMatchingInterval.value &&
-    (props.currentPlan?.name === props.plan || isMatchingTier)
+    (props.currentPlan?.name === props.plan || isMatchingTier.value)
   )
 })
 
@@ -230,17 +241,16 @@ const isSelectable = computed(() => {
   // Free CTA has no clickable scenario
   if (props.plan === WorkspacePlans.Free) return false
 
-  // Always enable buttons during expired or canceled state
-  if (
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return true
-
   // Dont allow upgrades during cancelation
   if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
     return false
   }
+
+  // Allow selection if current plan is canceled and plan is upgradeable or the same
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    return canUpgradeToPlan.value || isMatchingTier.value
+  }
+
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
 
@@ -272,20 +282,23 @@ const buttonColor = computed(() => {
 
 const buttonText = computed(() => {
   // Current plan case
-  if (isCurrentPlan.value) {
+  if (
+    isCurrentPlan.value &&
+    props.currentPlan?.status !== WorkspacePlanStatuses.Canceled
+  ) {
     return 'Current plan'
   }
+
   // Allow if current plan is Free, or the current plan is expired/canceled
   if (
     props.currentPlan?.name === WorkspacePlans.Free ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
     return `Subscribe to ${formatName(props.plan)}`
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
-    return `Downgrade to ${props.plan}`
+    return `Downgrade to ${formatName(props.plan)}`
   }
   // Billing interval change and current plan
   if (isAnnualToMonthly.value) {
@@ -303,12 +316,11 @@ const buttonTooltip = computed(() => {
     return 'You must be a workspace admin.'
   }
 
-  if (
-    isCurrentPlan.value ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return undefined
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    if (!canUpgradeToPlan.value && !isMatchingTier.value) {
+      return 'You can only resubcribe to the same or higher plan'
+    }
+  }
 
   if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
     return 'You must renew your subscription first'

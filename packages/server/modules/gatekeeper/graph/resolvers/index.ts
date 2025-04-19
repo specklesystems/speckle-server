@@ -258,9 +258,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             type: 'editor'
           })
 
+          const available = purchased - assigned > 0 ? purchased - assigned : 0
+
           return {
             assigned,
-            available: purchased - assigned
+            available
           }
         },
 

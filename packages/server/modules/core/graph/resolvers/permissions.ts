@@ -50,6 +50,13 @@ export default {
       })
       return Authz.toGraphqlResult(canUpdate)
     },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canDelete)
+    },
     canUpdateAllowPublicComments: async (parent, _args, ctx) => {
       const canUpdateAllowPublicComments =
         await ctx.authPolicies.project.canUpdateAllowPublicComments({
