@@ -34,9 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
-const { versionLimitFormatted, commentLimitFormatted } = useWorkspaceLimits(
-  props.workspaceSlug
-)
+const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug)
 
 const dialogOpen = computed({
   get: () => props.open || false,
@@ -63,7 +61,7 @@ const message = computed(() => {
     case 'federated':
       return `One of the models is older than the ${versionLimitFormatted.value}-day version history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
     case 'comment':
-      return `The comment is older than the ${commentLimitFormatted.value} comment history limit allowed by your workspace plan. Upgrade your workspace plan to gain access.`
+      return `Unable to load the comment because one or more of the referenced models is older than the ${versionLimitFormatted.value}-day version history limit. Upgrade your workspace plan to gain access.`
     default:
       return "You've reached the limit of your plan. Please upgrade to continue."
   }
