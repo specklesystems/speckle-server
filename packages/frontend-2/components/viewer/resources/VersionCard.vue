@@ -180,7 +180,7 @@ const handleViewChanges = () => {
 }
 
 const handleUpgradeClick = () => {
-  mp.track('Hidden Version Button Clicked', {
+  mp.track('Hidden Version Upgrade Button Clicked', {
     location: 'viewer',
     // eslint-disable-next-line camelcase
     workspace_id: activeWorkspaceSlug.value
