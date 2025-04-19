@@ -28,6 +28,7 @@
         v-for="workspace in discoverableWorkspacesAndJoinRequests"
         :key="`discoverable-${workspace.id}`"
         :workspace="workspace"
+        location="workspace join page"
       />
       <div class="mt-2 w-full flex flex-col gap-2">
         <FormButton

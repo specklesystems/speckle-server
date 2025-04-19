@@ -14,6 +14,7 @@
         :key="workspace.id"
         :workspace="workspace"
         show-dismiss-button
+        location="workspace switcher"
       />
     </div>
   </LayoutDialog>

@@ -31,7 +31,7 @@ const invite = computed(() => ({
 
 const handleRequest = async (accept: boolean) => {
   if (accept) {
-    await requestToJoinWorkspace(props.workspace.id)
+    await requestToJoinWorkspace(props.workspace.id, 'discovery banner')
   } else {
     await dismissDiscoverableWorkspace(props.workspace.id)
     mixpanel.track('Workspace Discovery Banner Dismissed', {

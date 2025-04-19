@@ -47,6 +47,7 @@ type WorkspaceWithStatus = LimitedWorkspace & {
 const props = defineProps<{
   workspace: WorkspaceWithStatus
   showDismissButton?: boolean
+  location?: string
 }>()
 
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
@@ -54,7 +55,7 @@ const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
 const mixpanel = useMixpanel()
 
 const onRequest = () => {
-  requestToJoinWorkspace(props.workspace.id)
+  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery card')
 }
 
 const onDismiss = async () => {
