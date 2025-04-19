@@ -57,7 +57,7 @@ watch(
   (newVal) => {
     if (newVal) {
       mixpanel.track('New Workspaces Explainer Banner Viewed', {
-        source: 'promo-banner'
+        location: 'promo_banner'
       })
     }
   },
@@ -70,7 +70,7 @@ const handleDismiss = async () => {
 
 const handleReadAnnouncement = async () => {
   mixpanel.track('New Workspaces Explainer Banner CTA Clicked', {
-    source: 'promo-banner'
+    location: 'promo_banner'
   })
   await navigateTo(
     'https://speckle.systems/blog/projects-get-a-new-home-and-pricing-plans',
