@@ -34,6 +34,8 @@
       :plan="props.workspacePlan"
       :workspace-role="props.workspaceRole"
       :workspace-slug="props.workspaceSlug"
+      location="add project menu"
+      limit-type="project"
     />
   </div>
 </template>
