@@ -68,6 +68,7 @@
       :plan="workspace?.plan?.name"
       :workspace-role="workspace?.role"
       :workspace-slug="workspace?.slug || ''"
+      location="move project dialog - select project"
     />
   </div>
 </template>

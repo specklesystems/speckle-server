@@ -105,6 +105,8 @@
       :plan="project?.workspace?.plan?.name"
       :workspace-role="project?.workspace?.role"
       :workspace-slug="project?.workspace?.slug || ''"
+      location="add model button"
+      limit-type="model"
     />
   </div>
 </template>
