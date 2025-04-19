@@ -130,7 +130,7 @@ export const useDiscoverableWorkspaces = () => {
     () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
   )
 
-  const requestToJoinWorkspace = async (workspaceId: string) => {
+  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
     const cache = apollo.cache
     const activeUserId = activeUser.value?.id
 
@@ -177,7 +177,7 @@ export const useDiscoverableWorkspaces = () => {
 
       mixpanel.track('Workspace Join Request Sent', {
         workspaceId,
-        location: 'onboarding',
+        location,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
