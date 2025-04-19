@@ -126,9 +126,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo(workspaceJoinRoute)
     }
     if (!hasDiscoverableWorkspaces && !isGoingToCreateWorkspace) {
-      return navigateTo({
-        path: workspaceCreateRoute()
-      })
+      return navigateTo(workspaceCreateRoute())
     }
   }
 
