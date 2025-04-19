@@ -89,9 +89,7 @@
           v-if="isLimited"
           color="outline"
           size="sm"
-          @click="
-            navigateTo(settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug || ''))
-          "
+          @click="handleUpgradeClick"
         >
           Upgrade
         </FormButton>
@@ -179,5 +177,14 @@ const handleViewChanges = () => {
     name: 'diffs',
     action: 'enable'
   })
+}
+
+const handleUpgradeClick = () => {
+  mp.track('Hidden Version Button Clicked', {
+    location: 'viewer',
+    // eslint-disable-next-line camelcase
+    workspace_id: activeWorkspaceSlug.value
+  })
+  navigateTo(settingsWorkspaceRoutes.billing.route(activeWorkspaceSlug.value || ''))
 }
 </script>
