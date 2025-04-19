@@ -10,17 +10,17 @@
     >
       <FormButton
         color="outline"
-        :class="hideTextOnMobile ? 'hidden md:block' : ''"
+        :class="hideTextOnMobile ? 'hidden sm:block' : ''"
         @click="showMenu = !showMenu"
       >
         <div class="flex items-center gap-1">
-          {{ hasProjects ? 'Add project' : 'Add your first project' }}
+          {{ ctaLabel || 'Add project' }}
           <ChevronDownIcon class="h-3 w-3" />
         </div>
       </FormButton>
       <FormButton
         color="outline"
-        :class="hideTextOnMobile ? 'md:hidden' : 'hidden'"
+        :class="hideTextOnMobile ? 'sm:hidden' : 'hidden'"
         hide-text
         :icon-left="PlusIcon"
         @click="showMenu = !showMenu"
@@ -52,9 +52,6 @@ graphql(`
     name
     slug
     role
-    projects {
-      totalCount
-    }
     plan {
       name
     }
@@ -83,6 +80,7 @@ const props = defineProps<{
   workspaceSlug: string
   workspace: MaybeNullOrUndefined<WorkspaceAddProjectMenu_WorkspaceFragment>
   hideTextOnMobile?: boolean
+  ctaLabel?: string
 }>()
 
 const menuId = useId()
@@ -100,12 +98,6 @@ const isDisabled = computed(() => {
   return (
     !props.workspace?.permissions.canCreateProject?.authorized && !isLimitReached.value
   )
-})
-
-const hasProjects = computed(() => {
-  return props.workspace?.projects?.totalCount
-    ? props.workspace?.projects?.totalCount > 0
-    : false
 })
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [

@@ -26,7 +26,11 @@
       <span class="text-body-2xs text-foreground-2 text-center">
         Workspace is empty
       </span>
-      <WorkspaceAddProjectMenu :workspace="workspace" :workspace-slug="workspaceSlug" />
+      <WorkspaceAddProjectMenu
+        :workspace="workspace"
+        :workspace-slug="workspaceSlug"
+        cta-label="Add your first project"
+      />
     </section>
 
     <section v-else-if="projects?.items?.length">
