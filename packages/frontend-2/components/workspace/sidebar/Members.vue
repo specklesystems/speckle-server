@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 py-2">
+  <div class="lg:px-4 lg:py-2">
     <LayoutSidebarMenuGroup
       :title="collapsible ? 'Members' : undefined"
       :collapsible="collapsible"
@@ -15,7 +15,7 @@
           <UserAvatarGroup
             :overlap="false"
             :users="team.map((teamMember) => teamMember.user)"
-            :max-avatars="isDesktop ? 5 : 3"
+            :max-avatars="5"
             class="shrink-0"
             :on-hidden-count-click="
               () => {
@@ -23,9 +23,14 @@
               }
             "
           />
-          <div class="w-full flex items-center gap-x-2">
+          <div
+            v-if="
+              isWorkspaceAdmin && (adminWorkspacesJoinRequestsCount || invitedTeamCount)
+            "
+            class="w-full flex items-center gap-x-2"
+          >
             <button
-              v-if="adminWorkspacesJoinRequestsCount && isWorkspaceAdmin"
+              v-if="adminWorkspacesJoinRequestsCount"
               class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
               @click="
                 navigateTo(
@@ -37,7 +42,7 @@
               {{ adminWorkspacesJoinRequestsCount > 1 ? 'requests' : 'request' }}
             </button>
             <button
-              v-if="invitedTeamCount && isWorkspaceAdmin"
+              v-if="invitedTeamCount"
               class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
               @click="
                 navigateTo(
@@ -67,8 +72,6 @@ import {
   WorkspaceJoinRequestStatus
 } from '~/lib/common/generated/gql/graphql'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useBreakpoints } from '@vueuse/core'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
@@ -112,9 +115,6 @@ const props = defineProps<{
   isWorkspaceAdmin?: boolean
   isWorkspaceGuest?: boolean
 }>()
-
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isDesktop = breakpoints.greaterOrEqual('lg')
 
 const team = computed(() => props.workspace?.team.items || [])
 

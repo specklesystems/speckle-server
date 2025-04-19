@@ -21,7 +21,7 @@
 
       <div class="flex gap-1.5 md:gap-2">
         <WorkspaceAddProjectMenu
-          :workspace-slug="workspace?.slug"
+          :workspace-slug="workspaceSlug"
           :workspace="workspace"
           hide-text-on-mobile
         />
