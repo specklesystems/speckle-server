@@ -36,7 +36,7 @@ const handleRequest = async (accept: boolean) => {
     await dismissDiscoverableWorkspace(props.workspace.id)
     mixpanel.track('Workspace Discovery Banner Dismissed', {
       workspaceId: props.workspace.id,
-      location: 'discovery banner',
+      location: 'discovery_banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.workspace.id
     })

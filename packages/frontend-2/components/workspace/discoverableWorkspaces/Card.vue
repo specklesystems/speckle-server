@@ -55,14 +55,14 @@ const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
 const mixpanel = useMixpanel()
 
 const onRequest = () => {
-  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery card')
+  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')
 }
 
 const onDismiss = async () => {
   await dismissDiscoverableWorkspace(props.workspace.id)
   mixpanel.track('Workspace Discovery Banner Dismissed', {
     workspaceId: props.workspace.id,
-    location: 'discovery card',
+    location: 'discovery_card',
     // eslint-disable-next-line camelcase
     workspace_id: props.workspace.id
   })
