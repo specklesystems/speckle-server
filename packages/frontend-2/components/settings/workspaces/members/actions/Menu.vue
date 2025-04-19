@@ -24,7 +24,7 @@
       :workspace="workspace"
       :new-role="newRole"
       :is-active-user-target-user="isActiveUserTargetUser"
-      :is-only-admin="hasSingleAdmin"
+      :is-only-admin="isLastAdmin"
       :is-domain-compliant="targetUser.user.workspaceDomainPolicyCompliant"
       @success="onDialogSuccess"
     />
@@ -110,7 +110,7 @@ const showMenu = ref(false)
 const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
 
-const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+const { isLastAdmin } = useWorkspaceLastAdminCheck({
   workspaceSlug: props.workspace?.slug || ''
 })
 

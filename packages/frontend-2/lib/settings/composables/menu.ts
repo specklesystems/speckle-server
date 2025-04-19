@@ -39,37 +39,37 @@ export const useSettingsMenu = () => {
     {
       title: 'General',
       name: settingsWorkspaceRoutes.general.name,
-      route: (slug: string) => settingsWorkspaceRoutes.general.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.general.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     {
       title: 'People',
       name: settingsWorkspaceRoutes.members.name,
-      route: (slug: string) => settingsWorkspaceRoutes.members.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.members.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Projects',
       name: settingsWorkspaceRoutes.projects.name,
-      route: (slug: string) => settingsWorkspaceRoutes.projects.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.projects.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
-      route: (slug: string) => settingsWorkspaceRoutes.security.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.security.route(slug),
       permission: [Roles.Workspace.Admin]
     },
     {
       title: 'Billing',
       name: settingsWorkspaceRoutes.billing.name,
-      route: (slug: string) => settingsWorkspaceRoutes.billing.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.billing.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Data residency',
       name: settingsWorkspaceRoutes.regions.name,
-      route: (slug: string) => settingsWorkspaceRoutes.regions.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.regions.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(!isMultiRegionEnabled
         ? {
@@ -149,7 +149,7 @@ export const useSettingsMembersActions = (params: {
 }) => {
   const { activeUser } = useActiveUser()
 
-  const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+  const { isLastAdmin } = useWorkspaceLastAdminCheck({
     workspaceSlug: params.workspaceSlug.value || ''
   })
 
@@ -164,7 +164,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const isOnlyAdmin = computed(
-    () => hasSingleAdmin.value && isActiveUserWorkspaceAdmin.value
+    () => isLastAdmin.value && isActiveUserWorkspaceAdmin.value
   )
 
   const isActiveUserTargetUser = computed(

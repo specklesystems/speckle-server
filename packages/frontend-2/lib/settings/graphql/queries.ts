@@ -3,7 +3,9 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const settingsSidebarQuery = graphql(`
   query SettingsSidebar {
     activeUser {
-      ...SettingsSidebar_User
+      activeWorkspace {
+        ...SettingsSidebar_Workspace
+      }
     }
   }
 `)

@@ -14,7 +14,7 @@
         @click="showMenu = !showMenu"
       >
         <div class="flex items-center gap-1">
-          {{ buttonCopy || 'Add project' }}
+          {{ hasProjects ? 'Add project' : 'Add your first project' }}
           <ChevronDownIcon class="h-3 w-3" />
         </div>
       </FormButton>
@@ -28,22 +28,46 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <WorkspacePlanProjectModelLimitReachedDialog
+    <!-- <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      :workspace-name="props.workspaceName"
-      :plan="props.workspacePlan"
-      :workspace-role="props.workspaceRole"
-      :workspace-slug="props.workspaceSlug"
-    />
+      :workspace-name="workspace?.name"
+      :plan="workspace?.plan"
+      :workspace-role="workspace?.role"
+      :workspace-slug="workspaceSlug"
+    /> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceAddProjectMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import type { MaybeNullOrUndefined, WorkspacePlans } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceAddProjectMenu_Workspace on Workspace {
+    id
+    name
+    slug
+    role
+    projects {
+      totalCount
+    }
+    plan {
+      name
+    }
+    permissions {
+      canCreateProject {
+        ...FullPermissionCheckResult
+      }
+      canMoveProjectToWorkspace {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 enum AddNewProjectActionTypes {
   NewProject = 'new-project',
@@ -56,19 +80,33 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  workspaceName: string
   workspaceSlug: string
-  workspacePlan?: WorkspacePlans
+  workspace: MaybeNullOrUndefined<WorkspaceAddProjectMenu_WorkspaceFragment>
   hideTextOnMobile?: boolean
-  buttonCopy?: string
-  canCreateProject: FullPermissionCheckResultFragment | undefined
-  canMoveProjectToWorkspace: FullPermissionCheckResultFragment | undefined
-  workspaceRole: MaybeNullOrUndefined<string>
 }>()
 
 const menuId = useId()
+
 const showMenu = ref(false)
 const showLimitDialog = ref(false)
+
+const isLimitReached = computed(() => {
+  return (
+    props.workspace?.permissions.canCreateProject?.code === 'WorkspaceLimitsReached'
+  )
+})
+
+const isDisabled = computed(() => {
+  return (
+    !props.workspace?.permissions.canCreateProject?.authorized && !isLimitReached.value
+  )
+})
+
+const hasProjects = computed(() => {
+  return props.workspace?.projects?.totalCount
+    ? props.workspace?.projects?.totalCount > 0
+    : false
+})
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
@@ -76,14 +114,16 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
       title: 'Create new project...',
       id: AddNewProjectActionTypes.NewProject,
       disabled: isDisabled.value,
-      disabledTooltip: isDisabled.value ? props.canCreateProject?.message : undefined
+      disabledTooltip: isDisabled.value
+        ? props.workspace?.permissions.canCreateProject?.message
+        : undefined
     },
     {
       title: 'Move existing project...',
       id: AddNewProjectActionTypes.MoveProject,
       disabled: isDisabled.value,
       disabledTooltip: isDisabled.value
-        ? props.canMoveProjectToWorkspace?.message
+        ? props.workspace?.permissions.canMoveProjectToWorkspace?.message
         : undefined
     }
   ]
@@ -106,12 +146,4 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
   }
 }
-
-const isLimitReached = computed(() => {
-  return props.canCreateProject?.code === 'WorkspaceLimitsReached'
-})
-
-const isDisabled = computed(() => {
-  return !props.canCreateProject?.authorized && !isLimitReached.value
-})
 </script>
