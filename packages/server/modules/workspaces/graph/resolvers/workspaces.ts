@@ -1604,8 +1604,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 query: args.filter?.search ?? undefined,
                 cursor: args.cursor ?? undefined,
                 limit: args.limit,
-                requireRelease: true,
-                includeFeatured: true,
+                requireRelease: args.filter?.requireRelease ?? true,
+                includeFeatured: args.filter?.includeFeatured ?? true,
                 includeWorkspaces: [parent.id],
                 includeUsers: []
               }

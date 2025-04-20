@@ -535,40 +535,6 @@ export const getFunctionsFactory =
     })
   }
 
-export type GetPublicFunctionsResponse = {
-  totalCount: number
-  cursor: Nullable<string>
-  items: FunctionWithVersionsSchemaType[]
-}
-
-export const getPublicFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-      functionsWithoutVersions?: boolean
-    }
-  }) => {
-    const { logger } = deps
-    const { query } = params
-    const url = getApiUrl(`/api/v1/functions`, {
-      query: {
-        ...query,
-        featuredFunctionsOnly: true
-      },
-      logger
-    })
-
-    return await invokeSafeJsonRequestFactory<GetFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'get'
-    })
-  }
-
 type GetUserFunctionsResponse = {
   functions: FunctionWithVersionsSchemaType[]
 }
@@ -591,40 +557,6 @@ export const getUserFunctionsFactory =
     const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query, logger })
 
     return await invokeSafeJsonRequestFactory<GetUserFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'POST',
-      body,
-      retry: false
-    })
-  }
-
-type GetWorkspaceFunctionsResponse = {
-  functions: FunctionWithVersionsSchemaType[]
-}
-
-export const getWorkspaceFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    workspaceId: string
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-    }
-    body: {
-      speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-    }
-  }) => {
-    const { logger } = deps
-    const { workspaceId, query, body } = params
-    const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, {
-      query,
-      logger
-    })
-
-    return await invokeSafeJsonRequestFactory<GetWorkspaceFunctionsResponse>({
       logger
     })({
       url,
