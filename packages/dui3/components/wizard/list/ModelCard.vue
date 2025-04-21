@@ -34,9 +34,9 @@
         </div>
       </div>
       <div class="space-y-2 max-[275px]:hidden">
-        <div class="rounded-full px-1 text-xs truncate shrink flex">
+        <div class="px-1 text-xs flex items-center">
           <div>{{ model.versions.totalCount }}</div>
-          <ClockIcon class="ml-1 w-3" />
+          <ClockIcon class="ml-1 h-3" />
         </div>
         <div class="text-right">
           <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
