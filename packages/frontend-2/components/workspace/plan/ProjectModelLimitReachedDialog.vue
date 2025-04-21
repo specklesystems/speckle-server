@@ -1,5 +1,5 @@
 <template>
-  <WorkspacePlanLimitReachedDialog v-model:open="open" :buttons="buttons">
+  <WorkspacePlanLimitReachedDialog v-model:open="dialogOpen" :buttons="buttons">
     <template #header>Plan limit reached</template>
     <div class="mb-2">
       The workspace
@@ -32,7 +32,7 @@ const props = defineProps<{
 const mixpanel = useMixpanel()
 const { modelCount, projectCount } = useWorkspaceUsage(props.workspaceSlug)
 
-const open = defineModel<boolean>('open', {
+const dialogOpen = defineModel<boolean>('open', {
   required: true
 })
 
