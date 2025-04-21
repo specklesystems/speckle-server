@@ -1,6 +1,6 @@
 <template>
   <button
-    :class="`group block w-full p-1 text-left rounded-md items-center space-x-2  select-none group transition hover:bg-primary-muted hover:cursor-pointer hover:text-primary ${
+    :class="`group block w-full p-1 text-left rounded-md items-center space-x-2 select-none group transition hover:bg-primary-muted hover:text-primary ${
       workspace.readOnly
         ? 'text-danger bg-rose-500/10 cursor-not-allowed'
         : 'cursor-pointer'
