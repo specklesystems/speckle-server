@@ -1,6 +1,5 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import {
-  Roles,
   SeatTypes,
   waitForever,
   type MaybeAsync,
@@ -479,14 +478,12 @@ export const useWorkspaceUpdateRole = () => {
               return evict()
             }
           )
-          if (input.role === Roles.Workspace.Admin) {
-            modifyObjectField(
-              cache,
-              getCacheId('WorkspaceCollaborator', input.userId),
-              'seatType',
-              () => SeatTypes.Editor
-            )
-          }
+          modifyObjectField(
+            cache,
+            getCacheId('WorkspaceCollaborator', input.userId),
+            'seatType',
+            () => SeatTypes.Editor
+          )
         }
       }
     ).catch(convertThrowIntoFetchResult)
