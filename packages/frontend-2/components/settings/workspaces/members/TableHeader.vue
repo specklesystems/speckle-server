@@ -63,6 +63,7 @@ import {
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
     id
+    slug
     role
     ...InviteDialogWorkspace_Workspace
   }

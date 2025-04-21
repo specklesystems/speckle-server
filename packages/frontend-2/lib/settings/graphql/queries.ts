@@ -50,15 +50,7 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembers_Workspace
-    }
-  }
-`)
-
-export const settingsWorkspacesMembersTableQuery = graphql(`
-  query SettingsWorkspacesMembersTable($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersTable_Workspace
+      ...SettingsWorkspacesMembersCounts_Workspace
     }
   }
 `)
@@ -83,11 +75,15 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
   query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
     workspaceBySlug(slug: $slug) {
       id
+      role
+      ...SettingsWorkspacesMembersTableHeader_Workspace
       team(filter: $filter, limit: 250) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
         }
+        cursor
+        totalCount
       }
     }
   }

@@ -31,7 +31,7 @@
         }
       ]"
       :items="guests"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
         search.length
           ? `No guests found for '${search}'`
@@ -97,6 +97,12 @@
         <span v-else />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="guests?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
       v-model:open="showProjectPermissionsDialog"
       :user="targetUser"
@@ -108,16 +114,14 @@
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersActionsMenu_UserFragment,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
@@ -128,26 +132,36 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: [Roles.Workspace.Guest]
+      roles: [Roles.Workspace.Guest],
+      seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || '', vars.filter?.seatType || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
   }),
-  () => ({
-    enabled: !!search.value.length || !!seatTypeFilter.value
-  })
-)
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const guests = computed(() => {
-  const guestArray =
-    search.value.length || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const guestArray = workspace.value?.team.items
 
   return (guestArray || [])
     .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
@@ -155,5 +169,5 @@ const guests = computed(() => {
     .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 </script>

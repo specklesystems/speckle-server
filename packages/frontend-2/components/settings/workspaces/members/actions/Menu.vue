@@ -80,7 +80,7 @@ import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 import { graphql } from '~/lib/common/generated/gql'
@@ -103,7 +103,7 @@ graphql(`
 
 const props = defineProps<{
   targetUser: SettingsWorkspacesMembersActionsMenu_UserFragment
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const showMenu = ref(false)
