@@ -5,9 +5,10 @@
       The workspace
       <span class="font-bold">{{ workspaceName }}</span>
       is on a {{ formatName(plan) }} plan with a limit of
-      {{ projectCount }}
-      {{ projectCount === 1 ? 'project' : 'projects' }} and {{ modelCount }}
-      {{ modelCount === 1 ? 'model' : 'models' }}. Upgrade the workspace to add more.
+      {{ limits?.projectCount }}
+      {{ limits?.projectCount === 1 ? 'project' : 'projects' }} and
+      {{ limits?.modelCount }} {{ limits?.modelCount === 1 ? 'model' : 'models' }}.
+      Upgrade the workspace to add more.
     </div>
   </WorkspacePlanLimitReachedDialog>
 </template>
@@ -16,7 +17,7 @@ import type { MaybeNullOrUndefined, WorkspacePlans } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
+import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -30,7 +31,7 @@ const props = defineProps<{
 }>()
 
 const mixpanel = useMixpanel()
-const { modelCount, projectCount } = useWorkspaceUsage(props.workspaceSlug)
+const { limits } = useWorkspaceLimits(props.workspaceSlug)
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true
