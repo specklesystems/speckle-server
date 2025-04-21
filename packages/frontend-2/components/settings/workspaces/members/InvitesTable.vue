@@ -4,8 +4,7 @@
       v-model:search="search"
       search-placeholder="Search pending invites..."
       show-invite-button
-      :is-workspace-admin="isWorkspaceAdmin"
-      @open-invite-dialog="emit('openInviteDialog')"
+      :workspace="workspace"
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -85,7 +84,7 @@ import {
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -120,10 +119,6 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersInvitesTable_WorkspaceFragment>
 }>()
 
-const emit = defineEmits<{
-  (e: 'openInviteDialog'): void
-}>()
-
 const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
 
@@ -147,8 +142,6 @@ const invites = computed(() =>
     ? searchResult.value?.workspaceBySlug.invitedTeam
     : props.workspace?.invitedTeam
 )
-
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
 const actionsItems: LayoutMenuItem[][] = [
   [{ title: 'Resend invite', id: 'resend-invite' }],

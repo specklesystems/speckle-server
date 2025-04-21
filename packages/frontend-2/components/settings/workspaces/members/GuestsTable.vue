@@ -16,8 +16,6 @@
       :workspace="workspace"
       show-invite-button
       show-seat-filter
-      :is-workspace-admin="isWorkspaceAdmin"
-      @open-invite-dialog="emit('openInviteDialog')"
     />
     <LayoutTable
       class="mt-6 md:mt-8"
@@ -125,10 +123,6 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
   workspaceSlug: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'openInviteDialog'): void
 }>()
 
 const search = ref('')

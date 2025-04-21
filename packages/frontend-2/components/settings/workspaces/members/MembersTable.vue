@@ -15,11 +15,9 @@
       v-model:seat-type="seatTypeFilter"
       search-placeholder="Search members..."
       :workspace="workspace"
-      :is-workspace-admin="isWorkspaceAdmin"
       show-role-filter
       show-seat-filter
       show-invite-button
-      @open-invite-dialog="emit('openInviteDialog')"
     />
     <LayoutTable
       class="mt-6 mb-12"
@@ -161,10 +159,6 @@ graphql(`
 
 const props = defineProps<{
   workspaceSlug: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'openInviteDialog'): void
 }>()
 
 const search = ref('')
