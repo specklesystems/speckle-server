@@ -16,6 +16,8 @@
       :workspace="workspace"
       show-invite-button
       show-seat-filter
+      :is-workspace-admin="isWorkspaceAdmin"
+      @open-invite-dialog="emit('openInviteDialog')"
     />
     <LayoutTable
       class="mt-6 md:mt-8"
@@ -108,17 +110,19 @@
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersActionsMenu_UserFragment,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'openInviteDialog'): void
 }>()
 
 const search = ref('')
@@ -128,6 +132,8 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
+const workspace = computed(() => searchResult.value?.workspaceBySlug)
+
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
@@ -135,19 +141,12 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
       search: search.value,
       roles: [Roles.Workspace.Guest]
     },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
-  }),
-  () => ({
-    enabled: !!search.value.length || !!seatTypeFilter.value
+    slug: props.workspaceSlug
   })
 )
 
 const guests = computed(() => {
-  const guestArray =
-    search.value.length || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const guestArray = workspace.value?.team.items
 
   return (guestArray || [])
     .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
@@ -155,5 +154,5 @@ const guests = computed(() => {
     .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 </script>
