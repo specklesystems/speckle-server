@@ -44,19 +44,26 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const isLoading = ref(false)
+
 const updateUserRole = useWorkspaceUpdateRole()
 
 const handleConfirm = async () => {
   if (!props.workspace?.id) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: null,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: null,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -67,6 +74,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: 'Remove',
+    props: {
+      color: 'primary',
+      loading: isLoading.value
+    },
     onClick: handleConfirm
   }
 ])

@@ -74,6 +74,8 @@ const open = defineModel<boolean>('open', { required: true })
 
 const updateUserRole = useWorkspaceUpdateRole()
 
+const isLoading = ref(false)
+
 const title = computed(() => {
   if (!props.newRole) return ''
   if (props.newRole === Roles.Workspace.Member) return 'Make a member?'
@@ -106,14 +108,19 @@ const roleInfo = computed(() => {
 const handleConfirm = async () => {
   if (!props.workspace?.id || !props.newRole) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: props.newRole as string,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: props.newRole as string,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -125,7 +132,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: buttonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm,
     disabled: props.user.user.workspaceDomainPolicyCompliant === false
