@@ -29,13 +29,13 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{

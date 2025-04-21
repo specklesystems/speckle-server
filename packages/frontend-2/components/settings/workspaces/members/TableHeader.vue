@@ -50,6 +50,7 @@ import { Roles, type WorkspaceRoles, type WorkspaceSeatType } from '@speckle/sha
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
     id
+    slug
     role
     ...InviteDialogWorkspace_Workspace
   }
