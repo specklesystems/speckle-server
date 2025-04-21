@@ -127,7 +127,11 @@ const onSubmit = handleSubmit(async () => {
   const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
     invites.map((u) => ({
       role: u.projectRole,
-      ...(isAdmin.value ? { email: u.email } : { userId: u.userId }),
+      ...(isInWorkspace.value
+        ? isAdmin.value
+          ? { email: u.email }
+          : { userId: u.userId }
+        : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
             workspaceRole: u.project?.id
