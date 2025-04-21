@@ -100,11 +100,12 @@ const loading = ref(false)
 
 const canUpdate = computed(() => pageResult.value?.project?.permissions?.canUpdate)
 const canInvite = computed(() =>
-  workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
+  project.value?.workspaceId
+    ? isOwner.value || workspace.value?.role === Roles.Workspace.Admin
+    : isOwner.value
 )
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
-const projectRole = computed(() => project.value?.role)
 const updateRole = useUpdateUserRole(project)
 const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
 

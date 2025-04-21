@@ -23,6 +23,16 @@
         </FormButton>
       </div>
     </form>
+    <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      Project owners without admin rights can only add existing workspace members.
+    </p>
+    <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      Users not currently in the workspace will be added with a free viewer seat. Read
+      more about
+      <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
+        Speckle roles and seats.
+      </NuxtLink>
+    </p>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -40,6 +50,7 @@ import type {
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {
@@ -116,7 +127,11 @@ const onSubmit = handleSubmit(async () => {
   const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
     invites.map((u) => ({
       role: u.projectRole,
-      ...(isAdmin.value ? { email: u.email } : { userId: u.userId }),
+      ...(isInWorkspace.value
+        ? isAdmin.value
+          ? { email: u.email }
+          : { userId: u.userId }
+        : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
             workspaceRole: u.project?.id
@@ -126,7 +141,10 @@ const onSubmit = handleSubmit(async () => {
         : {})
     }))
 
-  if (!inputs.length) return
+  if (!inputs.length) {
+    isOpen.value = false
+    return
+  }
 
   await createInvite(props.project.id, inputs)
 
