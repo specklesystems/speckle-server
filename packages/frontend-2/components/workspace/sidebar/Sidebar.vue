@@ -14,7 +14,6 @@
         :workspace="workspace"
         :is-workspace-admin="isWorkspaceAdmin"
         collapsible
-        @show-invite-dialog="$emit('show-invite-dialog')"
       />
       <WorkspaceSidebarSecurity
         v-if="isWorkspaceAdmin && !hasDomains"
@@ -45,10 +44,6 @@ graphql(`
     }
   }
 `)
-
-defineEmits<{
-  (e: 'show-invite-dialog'): void
-}>()
 
 const props = defineProps<{
   workspaceSlug: string

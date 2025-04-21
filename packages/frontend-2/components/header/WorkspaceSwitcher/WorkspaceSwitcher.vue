@@ -46,6 +46,7 @@
           <HeaderWorkspaceSwitcherHeaderWorkspace
             v-else-if="!!activeWorkspace"
             :workspace="activeWorkspace"
+            @show-invite-dialog="showInviteDialog = true"
           />
           <div
             class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar"
@@ -100,6 +101,11 @@
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
+
+    <InviteDialogWorkspace
+      v-model:open="showInviteDialog"
+      :workspace="activeWorkspace"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -123,10 +129,11 @@ import type { HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment } from '~/l
 
 graphql(`
   fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
+    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
+    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
-    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
   }
 `)
 
@@ -184,6 +191,7 @@ const {
 const { hasProjectsToMove } = useActiveUserProjectsToMove()
 
 const showDiscoverableWorkspacesModal = ref(false)
+const showInviteDialog = ref(false)
 
 const activeWorkspace = computed(() => {
   return activeWorkspaceData.value

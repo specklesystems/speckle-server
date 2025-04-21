@@ -58,14 +58,16 @@
           v-if="isWorkspaceAdmin"
           color="outline"
           size="sm"
-          @click="$emit('show-invite-dialog')"
+          @click="showInviteDialog = true"
         >
           Invite your team
         </FormButton>
       </div>
     </LayoutSidebarMenuGroup>
+    <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
   </div>
 </template>
+
 <script setup lang="ts">
 import {
   type WorkspaceSidebarMembers_WorkspaceFragment,
@@ -77,6 +79,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceSidebarMembers_Workspace on Workspace {
+    ...InviteDialogWorkspace_Workspace
     id
     slug
     team {
@@ -105,10 +108,6 @@ graphql(`
   }
 `)
 
-defineEmits<{
-  (e: 'show-invite-dialog'): void
-}>()
-
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<WorkspaceSidebarMembers_WorkspaceFragment>
   collapsible?: boolean
@@ -116,12 +115,11 @@ const props = defineProps<{
   isWorkspaceGuest?: boolean
 }>()
 
+const showInviteDialog = ref(false)
+
 const team = computed(() => props.workspace?.team.items || [])
 
-const iconName = computed(() => {
-  if (props.isWorkspaceAdmin) return 'edit'
-  return 'view'
-})
+const iconName = computed(() => (props.isWorkspaceAdmin ? 'edit' : 'view'))
 
 const iconClick = computed(() => {
   if (props.isWorkspaceGuest) return undefined
@@ -135,6 +133,7 @@ const iconText = computed(() => {
 })
 
 const invitedTeamCount = computed(() => props.workspace?.invitedTeam?.length ?? 0)
+
 const adminWorkspacesJoinRequestsCount = computed(
   () =>
     props.workspace?.adminWorkspacesJoinRequests?.items.filter(

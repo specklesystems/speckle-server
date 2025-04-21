@@ -28,17 +28,22 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <!-- <WorkspacePlanProjectModelLimitReachedDialog
-      v-model:open="showLimitDialog"
-      :workspace-name="workspace?.name"
-      :plan="workspace?.plan"
-      :workspace-role="workspace?.role"
-      :workspace-slug="workspaceSlug"
-    /> -->
+    <WorkspaceMoveProjectManager v-model:open="showMoveProjectDialog" />
+    <ProjectsAddDialog v-model:open="showNewProjectDialog" />
+    <ClientOnly>
+      <WorkspacePlanProjectModelLimitReachedDialog
+        v-model:open="showLimitDialog"
+        :workspace-name="workspace?.name"
+        :plan="workspace?.plan"
+        :workspace-role="workspace?.role"
+        :workspace-slug="workspaceSlug"
+      />
+    </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
+// TODO: The ClientOnly is to avoid the dialog from being rendered on the server and have hydration sideeffects. These need to be addressed and fixed instead of the ClientOnly
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import type { WorkspaceAddProjectMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -71,11 +76,6 @@ enum AddNewProjectActionTypes {
   MoveProject = 'move-project'
 }
 
-const emit = defineEmits<{
-  (e: 'new-project'): void
-  (e: 'move-project'): void
-}>()
-
 const props = defineProps<{
   workspaceSlug: string
   workspace: MaybeNullOrUndefined<WorkspaceAddProjectMenu_WorkspaceFragment>
@@ -87,6 +87,8 @@ const menuId = useId()
 
 const showMenu = ref(false)
 const showLimitDialog = ref(false)
+const showMoveProjectDialog = ref(false)
+const showNewProjectDialog = ref(false)
 
 const isLimitReached = computed(() => {
   return (
@@ -125,16 +127,18 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
   const { item } = params
 
   if (isLimitReached.value) {
+    showMoveProjectDialog.value = false
+    showNewProjectDialog.value = false
     showLimitDialog.value = true
     return
   }
 
   switch (item.id) {
     case AddNewProjectActionTypes.NewProject:
-      emit('new-project')
+      showNewProjectDialog.value = true
       break
     case AddNewProjectActionTypes.MoveProject:
-      emit('move-project')
+      showMoveProjectDialog.value = true
       break
   }
 }
