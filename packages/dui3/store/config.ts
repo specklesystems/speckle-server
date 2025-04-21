@@ -22,7 +22,11 @@ export const useConfigStore = defineStore('configStore', () => {
 
   const setUserSelectedWorkspace = (workspaceId: string) => {
     userSelectedWorkspaceId.value = workspaceId
-    $configBinding.setUserSelectedWorkspaceId(workspaceId)
+    try {
+      $configBinding.setUserSelectedWorkspaceId(workspaceId)
+    } catch (error) {
+      console.warn(error) // for the users who do not have latest version with workspace config handling
+    }
   }
 
   const isInitialized = ref(false)
