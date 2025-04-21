@@ -15,9 +15,11 @@
       v-model:seat-type="seatTypeFilter"
       search-placeholder="Search members..."
       :workspace="workspace"
+      :is-workspace-admin="isWorkspaceAdmin"
       show-role-filter
       show-seat-filter
       show-invite-button
+      @open-invite-dialog="emit('openInviteDialog')"
     />
     <LayoutTable
       class="mt-6 mb-12"
@@ -127,12 +129,11 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment,
   type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
@@ -152,24 +153,12 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
-    id
-    slug
-    name
-    ...SettingsWorkspacesMembersTableHeader_Workspace
-    team(limit: 250) {
-      items {
-        id
-        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
-      }
-    }
-  }
-`)
-
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'openInviteDialog'): void
 }>()
 
 const search = ref('')
@@ -192,19 +181,14 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         : [Roles.Workspace.Admin, Roles.Workspace.Member],
       seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
-  }),
-  () => ({
-    enabled: !!search.value.length || !!roleFilter.value || !!seatTypeFilter.value
+    slug: props.workspaceSlug
   })
 )
 
+const workspace = computed(() => searchResult.value?.workspaceBySlug)
+
 const members = computed(() => {
-  const memberArray =
-    search.value.length || roleFilter.value || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const memberArray = workspace.value?.team.items
   return (memberArray || [])
     .map((member) => ({
       ...member,
@@ -213,13 +197,9 @@ const members = computed(() => {
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
 
-const hasNoResults = computed(
-  () =>
-    (search.value.length || roleFilter.value || seatTypeFilter.value) &&
-    searchResult.value?.workspaceBySlug?.team.items.length === 0
-)
+const hasNoResults = computed(() => workspace.value?.team.items.length === 0)
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 </script>

@@ -36,29 +36,16 @@
         <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
           <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
         </div>
-        <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
-          Invite
-        </FormButton>
+        <FormButton v-else @click="() => emit('openInviteDialog')">Invite</FormButton>
       </template>
     </div>
-    <InviteDialogWorkspace
-      v-if="workspace"
-      v-model:open="isInviteDialogOpen"
-      :workspace="workspace"
-    />
   </div>
 </template>
 <script setup lang="ts">
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
-import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  Roles,
-  type WorkspaceRoles,
-  type MaybeNullOrUndefined,
-  type WorkspaceSeatType
-} from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type WorkspaceSeatType } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
@@ -68,19 +55,20 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   searchPlaceholder: string
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
   showInviteButton?: boolean
   showSeatFilter?: boolean
+  isWorkspaceAdmin: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'openInviteDialog'): void
 }>()
 
 const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
 const seatType = defineModel<WorkspaceSeatType>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
-const isInviteDialogOpen = ref(false)
-
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 </script>
