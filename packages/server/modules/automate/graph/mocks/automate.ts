@@ -250,6 +250,11 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             const rand = faker.datatype.boolean()
             return getMockRef('LimitedUser', { id: !rand ? ctx.userId : undefined })
           }),
+          repo: resolveAndCache(() => {
+            return {
+              
+            }
+          }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
