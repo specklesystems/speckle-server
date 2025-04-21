@@ -60,6 +60,8 @@ const {
   isUnlimitedPlan
 } = useWorkspacePlan(props.workspace?.slug || '')
 
+const isLoading = ref(false)
+
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
 const annualOrMonthly = computed(() => (intervalIsYearly.value ? 'year' : 'month'))
 
@@ -89,18 +91,24 @@ const title = computed(() => {
 const handleConfirm = async () => {
   if (!props.workspace?.id) return
 
-  const newSeatType: WorkspaceSeatType = isUpgrading.value
-    ? SeatTypes.Editor
-    : SeatTypes.Viewer
+  isLoading.value = true
 
-  await updateUserSeatType({
-    userId: props.user.id,
-    seatType: newSeatType,
-    workspaceId: props.workspace.id
-  })
+  try {
+    const newSeatType: WorkspaceSeatType = isUpgrading.value
+      ? SeatTypes.Editor
+      : SeatTypes.Viewer
 
-  open.value = false
-  emit('success')
+    await updateUserSeatType({
+      userId: props.user.id,
+      seatType: newSeatType,
+      workspaceId: props.workspace.id
+    })
+
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -116,7 +124,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
         : 'Confirm and pay'
       : 'Downgrade seat',
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm
   }
