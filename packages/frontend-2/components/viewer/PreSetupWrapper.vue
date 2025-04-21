@@ -287,11 +287,10 @@ watch(
       return
     }
 
-    if (missingThread) {
+    // Only show comment dialog if it's a federated view AND we have a missing referenced object
+    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
-    } else {
-      showLimitsDialog.value = false
     }
   },
   { immediate: true }
