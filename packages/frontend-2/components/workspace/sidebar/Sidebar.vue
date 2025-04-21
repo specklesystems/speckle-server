@@ -57,11 +57,7 @@ const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 
 const { isFreePlan } = useWorkspacePlan(props.workspaceSlug)
 
-const isWorkspaceGuest = computed(
-  () => workspace?.value?.slug === Roles.Workspace.Guest
-)
-const isWorkspaceAdmin = computed(
-  () => workspace?.value?.role === Roles.Workspace.Admin
-)
+const isWorkspaceGuest = computed(() => workspace.value?.slug === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const hasDomains = computed(() => workspace?.value?.domains?.length)
 </script>
