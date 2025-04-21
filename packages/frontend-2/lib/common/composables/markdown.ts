@@ -29,30 +29,15 @@ export const useMarkdown = (
     marked(unref(source), {
       mangle: false,
       headerIds: false,
-      renderer: {
-        ...new PlaintextRenderer(),
-        link(href, title, text) {
-          return `<a style="color: red;" href=${href}>${text}</a>`
-        },
-        text(text) {
-          return `<p>${text}</p>`
-        },
-        heading(text, level) {
-          return `<p>${text}</p>`
-        },
-        paragraph(text) {
-          return `<p>${text}</p>`
-        }
-        // plaintext ? new PlaintextRenderer() : undefined
-      }
+      renderer: plaintext ? new PlaintextRenderer() : undefined
     })
   )
   const { purifiedHtml: html } = sanitize
     ? usePurifiedHtml(baseHtml, {
-      key: keySuffix ? `useMarkdown-${keySuffix}` : undefined,
-      debugKey,
-      waitFor
-    })
+        key: keySuffix ? `useMarkdown-${keySuffix}` : undefined,
+        debugKey,
+        waitFor
+      })
     : { purifiedHtml: baseHtml }
 
   return { html }

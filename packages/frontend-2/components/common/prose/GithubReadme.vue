@@ -64,6 +64,7 @@ const proseClasses = ref([
   'prose-h4:h5 prose-h4:mb-4',
   'prose-h5:h6 prose-h5:mb-4 prose-h5:font-medium',
   'prose-h6:h6 prose-h6:mb-4 prose-h6:font-medium prose-h6:text-sm',
+  // 'prose-a:a prose-a:text-primary-focus prose-a:underline',
   'dark:prose-invert'
 ])
 </script>
