@@ -34,7 +34,7 @@
       <WorkspacePlanProjectModelLimitReachedDialog
         v-model:open="showLimitDialog"
         :workspace-name="workspace?.name"
-        :plan="workspace?.plan"
+        :plan="workspace?.plan?.name"
         :workspace-role="workspace?.role"
         :workspace-slug="workspaceSlug"
       />

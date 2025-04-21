@@ -24,7 +24,7 @@ const props = defineProps<{
   open?: boolean
   workspaceName?: string
   workspaceRole?: MaybeNullOrUndefined<string>
-  plan?: WorkspacePlans
+  plan?: MaybeNullOrUndefined<WorkspacePlans>
 }>()
 
 const emit = defineEmits<{
