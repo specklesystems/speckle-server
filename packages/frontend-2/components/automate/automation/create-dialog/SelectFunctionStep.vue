@@ -95,7 +95,7 @@ const {
     workspaceId: props.workspaceId ?? '',
     cursor: null as Nullable<string>,
     filter: {
-      search: search.value?.length ? search.value : '',
+      search: search.value?.length ? search.value : undefined,
       includeFeatured: props.isTestAutomation ? false : true,
       requireRelease: props.isTestAutomation ? false : true
     }
