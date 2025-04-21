@@ -64,7 +64,32 @@ const proseClasses = ref([
   'prose-h4:h5 prose-h4:mb-4',
   'prose-h5:h6 prose-h5:mb-4 prose-h5:font-medium',
   'prose-h6:h6 prose-h6:mb-4 prose-h6:font-medium prose-h6:text-sm',
-  // 'prose-a:a prose-a:text-primary-focus prose-a:underline',
-  'dark:prose-invert'
+
+  // Inline code
+  'prose-code:bg-foundation-2 prose-code:text-foreground prose-code:font-mono prose-code:text-body-xs prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded',
+  'prose-code:border prose-code:border-outline-3',
+
+  // List styling (ordererd- and unordered lists)
+  'prose-ul:list-disc prose-ul:pl-6 prose-ul:my-3',
+  'prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-3',
+  'prose-li:my-1 prose-li:marker:text-foreground-3',
+
+  // Links
+  'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
+
+  // Code blocks
+  // TODO: kinda superimposing inline and code blocks? 🫣
+  'prose-pre:bg-foundation-2 prose-pre:rounded prose-pre:p-4',
+  'prose-pre:overflow-x-auto',
+  'prose-pre:simple-scrollbar',
+
+  // Blockquotes
+  'prose-blockquote:border-l-4 prose-blockquote:border-outline-3 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-foreground-2',
+  'dark:prose-invert',
+
+  // Dark mode
+  'dark:prose-invert',
+  'dark:prose-code:bg-foundation-2 dark:prose-code:border-outline-3',
+  'dark:prose-pre:bg-foundation-2'
 ])
 </script>
