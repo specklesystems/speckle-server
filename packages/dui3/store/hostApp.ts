@@ -233,7 +233,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         idMap
       }
 
-      await patchModel(modelCardId, { sendFilter: newFilter }, false) // we do not necessarily need to updateModel in revit bc we already do it on .NET - otherwise it is leading cleanup on document store bc of deferred action when we switched to the another doc
+      // https://linear.app/speckle/issue/CNX-1213/revit-when-moving-between-documents-cards-can-get-lost-between-them
+      await patchModel(modelCardId, { sendFilter: newFilter }) // we do not necessarily need to updateModel in revit bc we already do it on .NET - otherwise it is leading cleanup on document store bc of deferred action when we switched to the another doc
     }
   )
 
