@@ -22,7 +22,7 @@
         v-if="workspace"
         :icon="Squares2X2Icon"
         :workspace-info="workspace"
-        @show-move-projects-dialog="showMoveProjectsDialog = true"
+        @show-move-projects-dialog="onMoveProject"
         @show-new-project-dialog="openNewProject = true"
         @show-invite-dialog="showInviteDialog = true"
       />
@@ -61,7 +61,7 @@
           :can-create-project="canCreateProject"
           :can-move-project-to-workspace="canMoveProjectToWorkspace"
           @new-project="openNewProject = true"
-          @move-project="showMoveProjectsDialog = true"
+          @move-project="onMoveProject"
         />
       </section>
 
@@ -101,6 +101,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -226,6 +227,17 @@ const clearSearch = () => {
 }
 
 const hasFinalized = ref(false)
+
+const mixpanel = useMixpanel()
+
+const onMoveProject = () => {
+  mixpanel.track('Move Project CTA Clicked', {
+    location: 'workspace',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceSlug
+  })
+  showMoveProjectsDialog.value = true
+}
 
 onResult((queryResult) => {
   if (
