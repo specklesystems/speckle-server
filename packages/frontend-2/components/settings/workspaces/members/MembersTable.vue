@@ -35,7 +35,7 @@
         }
       ]"
       :items="members"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
         hasNoResults ? 'No members found' : 'This workspace has no members'
       "
@@ -120,6 +120,12 @@
         />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="members?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
       v-model:open="showProjectPermissionsDialog"
       :user="targetUser"
@@ -129,9 +135,8 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type Nullable, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
 import {
   WorkspaceSeatType,
   type SettingsWorkspacesMembersActionsMenu_UserFragment
@@ -140,6 +145,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 graphql(`
   fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -171,9 +177,16 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
 
 const { activeUser } = useActiveUser()
 
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
       roles: roleFilter.value
@@ -181,11 +194,18 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         : [Roles.Workspace.Admin, Roles.Workspace.Member],
       seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug
-  })
-)
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
-const workspace = computed(() => searchResult.value?.workspaceBySlug)
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const members = computed(() => {
   const memberArray = workspace.value?.team.items

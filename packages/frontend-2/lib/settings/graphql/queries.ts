@@ -82,6 +82,8 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
         }
+        cursor
+        totalCount
       }
     }
   }

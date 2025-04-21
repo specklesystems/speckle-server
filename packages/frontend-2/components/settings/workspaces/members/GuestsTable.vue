@@ -33,7 +33,7 @@
         }
       ]"
       :items="guests"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
         search.length
           ? `No guests found for '${search}'`
@@ -99,6 +99,12 @@
         <span v-else />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="guests?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
       v-model:open="showProjectPermissionsDialog"
       :user="targetUser"
@@ -112,10 +118,10 @@ import {
   WorkspaceSeatType,
   type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Roles } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
   workspaceSlug: string
@@ -132,18 +138,33 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
-const workspace = computed(() => searchResult.value?.workspaceBySlug)
-
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 50,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: [Roles.Workspace.Guest]
+      roles: [Roles.Workspace.Guest],
+      seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug
-  })
-)
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || '', vars.filter?.seatType || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const guests = computed(() => {
   const guestArray = workspace.value?.team.items
