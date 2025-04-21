@@ -44,7 +44,7 @@
               size="sm"
               color="outline"
               :disabled="isProjectDisabled(project)"
-              @click="onMoveClick(project)"
+              @click="handleProjectClick(project)"
             >
               Move...
             </FormButton>
@@ -94,7 +94,7 @@ const emit = defineEmits<{
   (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
 }>()
 
-const props = defineProps<{
+defineProps<{
   workspace?: WorkspaceMoveProjectManager_WorkspaceFragment
   projectPermissions?: PermissionCheckResult
 }>()
@@ -122,9 +122,6 @@ const {
 })
 
 const showLimitDialog = ref(false)
-const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
-  null
-)
 
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 const moveableProjects = computed(() => userProjects.value)
@@ -148,16 +145,16 @@ const getProjectTooltip = computed(
   }
 )
 
-const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  if (props.workspace?.slug) {
-    limitReachedWorkspace.value = {
-      name: props.workspace.slug
-    } as WorkspaceMoveProjectManager_WorkspaceFragment
+const handleProjectClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  const permission = project.permissions?.canMoveToWorkspace
+  if (permission?.code === 'WorkspaceLimitsReached') {
     showLimitDialog.value = true
     return
   }
 
-  emit('project-selected', project)
+  if (permission?.authorized) {
+    emit('project-selected', project)
+  }
 }
 
 const showLoading = computed(() => loading.value && userProjects.value.length === 0)
