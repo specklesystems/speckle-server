@@ -658,12 +658,11 @@ export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) =>
     slug: workspaceSlug
   })
 
-  const hasSingleAdmin = computed(() => {
-    const admins = result.value?.workspaceBySlug?.team.items || []
-    return admins.length === 1
-  })
+  const isLastAdmin = computed(
+    () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1
+  )
 
   return {
-    hasSingleAdmin
+    isLastAdmin
   }
 }

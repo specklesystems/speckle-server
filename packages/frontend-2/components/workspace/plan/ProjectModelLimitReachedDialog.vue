@@ -16,7 +16,7 @@ import type { MaybeNullOrUndefined, WorkspacePlans } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
+import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -24,13 +24,13 @@ const props = defineProps<{
   workspaceSlug: string
   workspaceName?: string
   workspaceRole?: MaybeNullOrUndefined<string>
-  plan?: WorkspacePlans
+  plan?: MaybeNullOrUndefined<WorkspacePlans>
   type?: 'version' | 'model'
   location?: string
 }>()
 
 const mixpanel = useMixpanel()
-const { modelCount, projectCount } = useWorkspaceLimits(props.workspaceSlug)
+const { modelCount, projectCount } = useWorkspaceUsage(props.workspaceSlug)
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true

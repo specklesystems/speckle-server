@@ -35,7 +35,7 @@
                 color="outline"
                 size="sm"
                 :disabled="!isAdmin"
-                @click="showInviteDialog = true"
+                @click="$emit('show-invite-dialog')"
               >
                 Invite members
               </FormButton>
@@ -44,8 +44,6 @@
         </div>
       </template>
     </HeaderWorkspaceSwitcherHeader>
-
-    <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
   </div>
 </template>
 
@@ -60,7 +58,6 @@ import { formatName } from '~/lib/billing/helpers/plan'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherHeaderWorkspace_Workspace on Workspace {
-    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
@@ -74,13 +71,13 @@ graphql(`
   }
 `)
 
+defineEmits(['show-invite-dialog'])
+
 const props = defineProps<{
   workspace: MaybeNullOrUndefined<HeaderWorkspaceSwitcherHeaderWorkspace_WorkspaceFragment>
 }>()
 
 const { activeWorkspaceSlug } = useNavigation()
-
-const showInviteDialog = ref(false)
 
 const isAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 </script>

@@ -24,7 +24,7 @@
         class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
       >
         <LayoutSidebarMenu>
-          <LayoutSidebarMenuGroup v-if="!isMobile">
+          <LayoutSidebarMenuGroup class="hidden lg:block lg:mb-4">
             <NuxtLink
               :to="exitSettingsRoute"
               class="items-center gap-x-1.5 px-2.5 flex"
@@ -33,80 +33,76 @@
               <p class="text-body-xs font-medium text-foreground">Exit settings</p>
             </NuxtLink>
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup title="User settings">
-            <template #title-icon>
-              <IconAccount class="size-4" />
-            </template>
-            <NuxtLink
-              v-for="sidebarMenuItem in userMenuItems"
-              :key="`user-item-${sidebarMenuItem.route}`"
-              :to="sidebarMenuItem.route"
-              @click="isOpenMobile = false"
-            >
-              <LayoutSidebarMenuGroupItem
-                :label="sidebarMenuItem.title"
-                :active="route.path === sidebarMenuItem.route"
-              />
-            </NuxtLink>
-          </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
-            <template #title-icon>
-              <IconServer class="size-4" />
-            </template>
-            <NuxtLink
-              v-for="sidebarMenuItem in serverMenuItems"
-              :key="`server-item-${sidebarMenuItem.route}`"
-              :to="sidebarMenuItem.route"
-              @click="isOpenMobile = false"
-            >
-              <LayoutSidebarMenuGroupItem
-                :label="sidebarMenuItem.title"
-                :active="route.path === sidebarMenuItem.route"
-              />
-            </NuxtLink>
-          </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup
-            v-if="showWorkspaceSettings"
-            title="Workspace settings"
-          >
-            <template #title-icon>
-              <IconWorkspaces class="size-4" />
-            </template>
-            <template v-if="activeWorkspaceItem">
+
+          <div class="flex flex-col gap-y-2 lg:gap-y-4">
+            <LayoutSidebarMenuGroup title="User settings">
+              <template #title-icon>
+                <IconAccount class="size-4" />
+              </template>
               <NuxtLink
-                v-for="workspaceMenuItem in workspaceMenuItems"
-                :key="`workspace-menu-item-${workspaceMenuItem.name}-${activeWorkspaceItem}`"
+                v-for="sidebarMenuItem in userMenuItems"
+                :key="`user-item-${sidebarMenuItem.route}`"
+                :to="sidebarMenuItem.route"
+                @click="isOpenMobile = false"
+              >
+                <LayoutSidebarMenuGroupItem
+                  :label="sidebarMenuItem.title"
+                  :active="route.path === sidebarMenuItem.route"
+                />
+              </NuxtLink>
+            </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroup v-if="isServerAdmin" title="Server settings">
+              <template #title-icon>
+                <IconServer class="size-4" />
+              </template>
+              <NuxtLink
+                v-for="sidebarMenuItem in serverMenuItems"
+                :key="`server-item-${sidebarMenuItem.route}`"
+                :to="sidebarMenuItem.route"
+                @click="isOpenMobile = false"
+              >
+                <LayoutSidebarMenuGroupItem
+                  :label="sidebarMenuItem.title"
+                  :active="route.path === sidebarMenuItem.route"
+                />
+              </NuxtLink>
+            </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroup
+              v-if="showWorkspaceSettings"
+              title="Workspace settings"
+            >
+              <template #title-icon>
+                <IconWorkspaces class="size-4" />
+              </template>
+
+              <NuxtLink
+                v-for="workspaceMenuItem in filteredWorkspaceMenuItems"
+                :key="`workspace-menu-item-${workspaceMenuItem.name}`"
                 :to="
-                  !isAdmin &&
-                  (workspaceMenuItem.disabled ||
-                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
+                  workspaceMenuItem.disabled || needsSsoSession(workspaceMenuItem.name)
                     ? undefined
-                    : workspaceMenuItem.route(activeWorkspaceItem.slug)
+                    : workspaceMenuItem.route(workspace?.slug)
                 "
                 @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem
-                  v-if="workspaceMenuItem.permission?.includes(activeWorkspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
-                  :active="
-                    route.name?.toString().startsWith(workspaceMenuItem.name) &&
-                    route.params.slug === activeWorkspaceItem.slug
-                  "
+                  :active="route.name?.toString().startsWith(workspaceMenuItem.name)"
                   :tooltip-text="
-                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name)
+                    needsSsoSession(workspaceMenuItem.name)
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
                   :disabled="
-                    !isAdmin &&
+                    !isServerAdmin &&
                     (workspaceMenuItem.disabled ||
-                      needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
+                      needsSsoSession(workspaceMenuItem.name))
                   "
                   class="!pl-8"
                 />
               </NuxtLink>
-            </template>
-          </LayoutSidebarMenuGroup>
+            </LayoutSidebarMenuGroup>
+          </div>
         </LayoutSidebarMenu>
       </LayoutSidebar>
     </div>
@@ -114,6 +110,7 @@
 </template>
 
 <script setup lang="ts">
+import type { WorkspaceRoles } from '@speckle/shared'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
@@ -126,15 +123,11 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceRoles } from '@speckle/shared'
 import {
   projectsRoute,
   settingsWorkspaceRoutes,
   workspaceRoute
 } from '~/lib/common/helpers/route'
-import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useBreakpoints } from '@vueuse/core'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 graphql(`
@@ -143,67 +136,42 @@ graphql(`
     id
     slug
     role
-    name
-    logo
-    plan {
-      status
-      name
-    }
-    creationState {
-      completed
-    }
-  }
-`)
-
-graphql(`
-  fragment SettingsSidebar_User on User {
-    id
-    workspaces {
-      items {
-        ...SettingsSidebar_Workspace
-      }
-    }
   }
 `)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeWorkspaceSlug } = useNavigation()
 const settingsMenuState = useSettingsMenuState()
-const { isAdmin } = useActiveUser()
+const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()
-const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
-  enabled: computed(() => isWorkspacesEnabled.value)
-})
+const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, () => ({
+  enabled: isWorkspacesEnabled.value
+}))
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 
-const workspaceItems = computed(
-  () =>
-    workspaceResult.value?.activeUser?.workspaces.items.filter(
-      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
-    ) || []
+const workspace = computed(() => workspaceResult.value?.activeUser?.activeWorkspace)
+
+const filteredWorkspaceMenuItems = computed(() =>
+  workspaceMenuItems.value.filter(
+    (item) =>
+      !item.permission ||
+      item.permission.includes(workspace.value?.role as WorkspaceRoles)
+  )
 )
-const activeWorkspaceItem = computed(() =>
-  workspaceItems.value.find((item) => item.slug === activeWorkspaceSlug.value)
-)
+
 const wrapperClasses = computed(() => {
   return [
-    'absolute z-40 lg:static h-full flex shrink-0 transition-all',
-    `w-[13rem]`,
+    'absolute z-40 lg:static h-full flex shrink-0 transition-all w-[13rem]',
     isOpenMobile.value ? '' : `-translate-x-[13rem] lg:translate-x-0`
   ]
 })
 
-const needsSsoSession = (
-  workspace: SettingsMenu_WorkspaceFragment,
-  routeName?: string
-) => {
-  return workspace.sso?.provider?.id &&
+const needsSsoSession = (routeName?: string) => {
+  return workspace.value?.sso?.provider?.id &&
     routeName !== settingsWorkspaceRoutes.general.name
-    ? !workspace.sso?.session?.validUntil
+    ? !workspace.value?.sso?.session?.validUntil
     : false
 }
 
