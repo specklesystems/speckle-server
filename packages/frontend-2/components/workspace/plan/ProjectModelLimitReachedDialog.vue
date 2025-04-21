@@ -18,32 +18,37 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { formatName } from '~/lib/billing/helpers/plan'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   workspaceSlug: string
-  open?: boolean
   workspaceName?: string
   workspaceRole?: MaybeNullOrUndefined<string>
   plan?: WorkspacePlans
+  type?: 'version' | 'model'
+  location?: string
 }>()
 
-const emit = defineEmits<{
-  'update:open': [value: boolean]
-}>()
-
+const mixpanel = useMixpanel()
 const { modelCount, projectCount } = useWorkspaceLimits(props.workspaceSlug)
 
-const dialogOpen = computed({
-  get: () => props.open || false,
-  set: (value) => emit('update:open', value)
+const dialogOpen = defineModel<boolean>('open', {
+  required: true
 })
 
 const explorePlansButton: LayoutDialogButton = {
   text: 'Explore plans',
   disabled: props.workspaceRole === Roles.Workspace.Guest,
   disabledMessage: 'As a Guest you cannot access plans and billing',
-  onClick: () =>
-    navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
+  onClick: () => {
+    mixpanel.track('Limit Reached Dialog Upgrade Button Clicked', {
+      type: props.type,
+      location: props.location,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceSlug
+    })
+    return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
+  }
 }
 
 const cancelButton: LayoutDialogButton = {
@@ -55,4 +60,15 @@ const cancelButton: LayoutDialogButton = {
 }
 
 const buttons = computed((): LayoutDialogButton[] => [cancelButton, explorePlansButton])
+
+watch(dialogOpen, (value) => {
+  if (value) {
+    mixpanel.track('Limit Reached Dialog Viewed', {
+      type: props.type,
+      location: props.location,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceSlug
+    })
+  }
+})
 </script>

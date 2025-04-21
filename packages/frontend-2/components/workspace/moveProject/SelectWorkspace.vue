@@ -67,6 +67,7 @@
       :plan="limitReachedWorkspace?.plan?.name"
       :workspace-role="limitReachedWorkspace?.role"
       :workspace-slug="limitReachedWorkspace?.slug || ''"
+      location="move_project_dialog"
     />
   </div>
 </template>
