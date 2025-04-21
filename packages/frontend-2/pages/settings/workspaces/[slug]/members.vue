@@ -29,9 +29,6 @@ graphql(`
   fragment SettingsWorkspacesMembersCounts_Workspace on Workspace {
     id
     role
-    team {
-      totalCount
-    }
     invitedTeam {
       id
     }

@@ -140,7 +140,7 @@ const {
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50,
+    limit: 10,
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
