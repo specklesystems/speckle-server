@@ -1,5 +1,6 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :title="dialogTitle">
+    {{ workspaceSlug }}
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
