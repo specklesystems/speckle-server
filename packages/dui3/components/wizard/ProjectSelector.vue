@@ -22,7 +22,7 @@
             v-else-if="selectedWorkspace"
             :workspaces="workspaces"
             :current-selected-workspace-id="selectedWorkspace.id"
-            @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => selectedWorkspace = workspace"
+            @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => handleWorkspaceSelected(workspace)"
           >
             <template #activator="{ toggle }">
               <button
@@ -151,6 +151,7 @@ import type {
   WorkspaceListWorkspaceItemFragment
 } from 'lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useConfigStore } from '~/store/config'
 
 const { trackEvent } = useMixpanel()
 const { $openUrl } = useNuxtApp()
@@ -183,6 +184,7 @@ const props = withDefaults(
 const searchText = ref<string>()
 const newProjectName = ref<string>()
 const accountStore = useAccountStore()
+const configStore = useConfigStore()
 const { activeAccount } = storeToRefs(accountStore)
 
 const accountId = computed(() => activeAccount.value.accountInfo.id)
@@ -231,11 +233,20 @@ const { result: activeWorkspaceResult, refetch: refetchActiveWorkspace } = useQu
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
 
-const activeWorkspace = computed(
-  () =>
-    activeWorkspaceResult.value?.activeUser
-      ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
-)
+const activeWorkspace = computed(() => {
+  const userSelectedWorkspaceId = configStore.userSelectedWorkspaceId
+  if (userSelectedWorkspaceId) {
+    const previouslySelectedWorkspace = workspaces.value?.find(
+      (w) => w.id === userSelectedWorkspaceId
+    )
+    if (previouslySelectedWorkspace) {
+      return previouslySelectedWorkspace
+    }
+  }
+  // fallback to activeWorkspace query result
+  return activeWorkspaceResult.value?.activeUser
+    ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
+})
 
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
   activeWorkspace.value
@@ -262,6 +273,13 @@ const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
     return
   }
   emit('next', accountId.value, project, selectedWorkspace.value)
+}
+
+const handleWorkspaceSelected = (
+  newSelectedWorkspace: WorkspaceListWorkspaceItemFragment
+) => {
+  selectedWorkspace.value = newSelectedWorkspace
+  configStore.setUserSelectedWorkspace(newSelectedWorkspace.id)
 }
 
 const {
