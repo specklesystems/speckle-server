@@ -157,9 +157,6 @@ graphql(`
       id
       ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
     }
-    projects {
-      totalCount
-    }
     workspaces {
       items {
         id
@@ -180,7 +177,8 @@ const {
   activeWorkspaceData,
   workspaceList: workspaces,
   activeWorkspaceHasExpiredSsoSession,
-  expiredSsoWorkspaceData
+  expiredSsoWorkspaceData,
+  hasProjects
 } = useNavigation()
 const route = useRoute()
 const {
@@ -209,10 +207,6 @@ const displayLogo = computed(() => {
   return activeWorkspaceHasExpiredSsoSession.value
     ? expiredSsoWorkspaceData.value?.logo
     : activeWorkspace.value?.logo
-})
-
-const hasProjects = computed(() => {
-  return activeWorkspace.value?.projects?.totalCount > 0
 })
 
 const onWorkspaceSelect = (slug: string) => {
