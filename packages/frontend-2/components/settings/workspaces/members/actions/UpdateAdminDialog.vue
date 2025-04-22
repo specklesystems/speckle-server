@@ -103,6 +103,10 @@ const needsEditorUpgrade = computed(() => {
   return props.action === 'make' && props.user.seatType === SeatTypes.Viewer
 })
 
+const isUnpaidPaidUpgrade = computed(() => {
+  return isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
+})
+
 const title = computed(() => {
   switch (props.action) {
     case 'make':
@@ -117,7 +121,7 @@ const title = computed(() => {
 const buttonText = computed(() => {
   switch (props.action) {
     case 'make':
-      return needsEditorUpgrade.value ? 'Confirm and pay' : 'Make an admin'
+      return isUnpaidPaidUpgrade.value ? 'Make an admin' : 'Confirm and pay'
     case 'remove':
       return 'Revoke admin access'
     default:
