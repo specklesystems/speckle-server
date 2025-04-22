@@ -2,6 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     :buttons="dialogButtons"
+    prevent-close-on-click-outside
     max-width="md"
     @update:open="isOpen = false"
   >
