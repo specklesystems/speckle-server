@@ -113,7 +113,8 @@ const pageFunction = async ({
   page.setDefaultTimeout(timeout)
   const previewResult = await page.evaluate(async (job: JobPayload) => {
     // ====================
-    // This code runs in the browser context and has no access to the outer scope
+    // This code runs in the browser context and has no access to the outer scope.
+    // Puppeteer and window are available here, but @speckle/shared is not.
     // ====================
     const start = new Date().getTime()
     let loadDone = start
@@ -121,7 +122,7 @@ const pageFunction = async ({
     try {
       await window.load(job)
       loadDone = new Date().getTime()
-      loadDurationSeconds = (loadDone - start) / TIME_MS.second
+      loadDurationSeconds = (loadDone - start) / 1000
       console.log(`Loading completed in ${loadDurationSeconds} seconds`)
     } catch (e) {
       const loadErrored = new Date().getTime()
@@ -133,14 +134,14 @@ const pageFunction = async ({
       return {
         reason: err.message,
         screenshots: {},
-        loadDurationSeconds: (loadErrored - start) / TIME_MS.second,
-        durationSeconds: (loadErrored - start) / TIME_MS.second
+        loadDurationSeconds: (loadErrored - start) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
       }
     }
 
     try {
       const renderResult = await window.takeScreenshot()
-      const renderDurationSeconds = (new Date().getTime() - loadDone) / TIME_MS.second
+      const renderDurationSeconds = (new Date().getTime() - loadDone) / 1000
       console.log(`Render completed in ${renderDurationSeconds} seconds`)
       return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
     } catch (e) {
@@ -153,8 +154,8 @@ const pageFunction = async ({
         reason: err.message,
         screenshots: {},
         loadDurationSeconds,
-        renderDurationSeconds: (loadErrored - loadDone) / TIME_MS.second,
-        durationSeconds: (loadErrored - start) / TIME_MS.second
+        renderDurationSeconds: (loadErrored - loadDone) / 1000,
+        durationSeconds: (loadErrored - start) / 1000
       }
     }
     // ====================
