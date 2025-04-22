@@ -62,7 +62,9 @@
             <div class="flex gap-2">
               <div
                 v-tippy="
-                  disableButton ? 'You must be the owner of the project' : undefined
+                  disableButton
+                    ? 'Only the project owner can move this project into a workspace'
+                    : undefined
                 "
               >
                 <FormButton

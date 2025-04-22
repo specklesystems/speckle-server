@@ -78,7 +78,7 @@
     <WorkspaceMoveProjectManager
       v-if="showMoveProjectDialog"
       v-model:open="showMoveProjectDialog"
-      :project-id="emittedProjectId"
+      :project-id="emittedProjectId || undefined"
     />
   </div>
 </template>
@@ -118,7 +118,7 @@ const filterProjectsToMove = ref(false)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 const showMoveProjectDialog = ref(false)
-const emittedProjectId = ref('')
+const emittedProjectId = ref<Nullable<string>>(null)
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 useUserProjectsUpdatedTracking()
@@ -197,13 +197,13 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 const mixpanel = useMixpanel()
 
 const onMoveProject = (projectId: string, location: string) => {
+  emittedProjectId.value = projectId
   mixpanel.track('Move Project CTA Clicked', {
     location,
     // eslint-disable-next-line camelcase
     workspace_id:
       projects.value?.items.find((p) => p.id === projectId)?.workspace?.id || undefined
   })
-  emittedProjectId.value = projectId
   showMoveProjectDialog.value = true
 }
 

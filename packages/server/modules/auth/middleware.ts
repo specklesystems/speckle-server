@@ -10,7 +10,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
-import { ensureError } from '@speckle/shared'
+import { ensureError, TIME_MS } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
@@ -26,7 +26,7 @@ export const sessionMiddlewareFactory = (): RequestHandler => {
     saveUninitialized: false,
     resave: false,
     cookie: {
-      maxAge: 1000 * 60 * 3, // 3 minutes
+      maxAge: 3 * TIME_MS.minute,
       secure: isSSLServer()
     }
   })

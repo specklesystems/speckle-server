@@ -12,6 +12,7 @@ import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 import { SpeckleControls } from './SpeckleControls.js'
 import { World } from '../../World.js'
 import { AngleDamper } from '../../utils/AngleDamper.js'
+import { TIME_MS } from '@speckle/shared'
 
 const _vectorBuff0 = new Vector3()
 const _changeEvent = { type: 'change' }
@@ -152,7 +153,7 @@ class FlyControls extends SpeckleControls {
         relativeFactor = this.world.getRelativeOffset(closeRelativeFactor)
     }
 
-    const deltaSeconds = delta / 1000
+    const deltaSeconds = delta / TIME_MS.second
     const scaledWalkingSpeed = relativeFactor * walkingSpeed
 
     if (this.keyMap.forward)

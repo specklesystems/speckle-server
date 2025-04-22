@@ -18,6 +18,7 @@ import { modelRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 type LimitType = 'version' | 'comment' | 'federated'
 
@@ -32,6 +33,7 @@ const props = defineProps<{
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const { versionLimitFormatted } = useWorkspaceLimits(props.workspaceSlug)
 const mixpanel = useMixpanel()
+const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true
@@ -105,6 +107,7 @@ const explorePlansButton: LayoutDialogButton = {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceSlug
     })
+    mutateActiveWorkspaceSlug(props.workspaceSlug)
     return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
   }
 }

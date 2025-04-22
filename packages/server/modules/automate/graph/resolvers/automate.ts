@@ -5,7 +5,6 @@ import {
   updateFunction as execEngineUpdateFunction,
   getFunctionFactory,
   getFunctionReleaseFactory,
-  getPublicFunctionsFactory,
   getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
@@ -912,50 +911,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           }
 
           return convertFunctionToGraphQLReturn(fn)
-        },
-        async automateFunctions(_parent, args, ctx) {
-          try {
-            const res = await getPublicFunctionsFactory({
-              logger: ctx.log
-            })({
-              query: {
-                query: args.filter?.search || undefined,
-                cursor: args.cursor || undefined,
-                limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-                functionsWithoutVersions:
-                  args.filter?.functionsWithoutReleases || undefined
-              }
-            })
-
-            if (!res) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            const items = res.items.map(convertFunctionToGraphQLReturn)
-
-            return {
-              cursor: res.cursor,
-              totalCount: res.totalCount,
-              items
-            }
-          } catch (e) {
-            const isNotFound =
-              e instanceof ExecutionEngineFailedResponseError &&
-              e.response.statusMessage === 'FunctionNotFound'
-            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            throw e
-          }
         }
       },
       User: {
