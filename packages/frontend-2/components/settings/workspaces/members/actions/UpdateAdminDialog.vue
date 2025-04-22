@@ -38,7 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
-            :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
+            :billing-interval="intervalIsYearly ? 'year' : 'month'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
