@@ -60,9 +60,6 @@ graphql(`
     ...BillingAlert_Workspace
     id
     role
-    plan {
-      status
-    }
   }
 `)
 
