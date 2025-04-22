@@ -2,7 +2,10 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <LayoutDialog v-model:open="isOpen" :buttons="dialogButtons" max-width="md">
-    <template #header>Invite to Project</template>
+    <template #header>Invite to project</template>
+    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
+      Search existing workspace members or invite entirely new.
+    </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
         <template v-for="(item, index) in fields" :key="item.key">
@@ -24,14 +27,13 @@
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      Project owners without admin rights can only add existing workspace members.
+      As a project owner you can only add existing workspace members to the project. Ask
+      a workspace admin if you need to invite new people to the workspace.
     </p>
     <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      Users not currently in the workspace will be added with a free viewer seat. Read
-      more about
-      <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-        Speckle roles and seats.
-      </NuxtLink>
+      New people you invite will join as workspace guests on a free Viewer seat with
+      access only to this project. Give them an Editor seat later if they need to
+      contribute to this project beyond just viewing and commenting.
     </p>
   </LayoutDialog>
 </template>
@@ -50,7 +52,6 @@ import type {
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {

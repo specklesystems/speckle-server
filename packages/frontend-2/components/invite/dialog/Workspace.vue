@@ -102,10 +102,10 @@ const allowedDomains = computed(() =>
 )
 const infoText = computed(() => {
   if (selectedRole.value === Roles.Workspace.Member) {
-    return 'Members can access all projects in the workspace and act as admins. Their seat type controls whether they can create and edit projects or just view them.'
+    return 'Inviting is free. Members join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to projects beyond viewing and commenting.'
   }
 
-  return `They don't work at ${props.workspace?.name}. They can collaborate on projects but can't create projects, invite others, add people, or be admins.`
+  return `Inviting is free. Guests join your workspace on a free Viewer seat. You can give them an Editor seat later if they need to contribute to a project beyond viewing and commenting.`
 })
 
 const onBack = () => {
