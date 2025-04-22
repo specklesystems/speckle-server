@@ -20,6 +20,7 @@ import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 const props = defineProps<{
   workspaceSlug: string
@@ -32,6 +33,7 @@ const props = defineProps<{
 
 const mixpanel = useMixpanel()
 const { limits } = useWorkspaceLimits(props.workspaceSlug)
+const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true
@@ -48,6 +50,7 @@ const explorePlansButton: LayoutDialogButton = {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceSlug
     })
+    mutateActiveWorkspaceSlug(props.workspaceSlug)
     return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
   }
 }

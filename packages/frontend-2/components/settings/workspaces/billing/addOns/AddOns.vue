@@ -5,7 +5,7 @@
       :subtitle="`${addonPrice} per editor/month`"
       info="Power through with unlimited projects and models in your workspace."
       disclaimer="Only on Starter & Business plans"
-      :buttons="[unlimitedAddOnButton]"
+      :button="unlimitedAddOnButton"
     />
 
     <SettingsWorkspacesBillingAddOnsCard
@@ -13,7 +13,7 @@
       :subtitle="`${currency === Currency.Gbp ? '£' : '$'}500 per region/month`"
       info="Unlock per-project data residency by adding additional data regions to your workspace."
       disclaimer="Only on Business plan"
-      :buttons="[contactButton]"
+      :button="contactButton"
     />
 
     <SettingsWorkspacesBillingAddOnsCard
@@ -21,7 +21,7 @@
       subtitle="Talk to us"
       info="White-glove treatment with private support channel, onboarding calls and more."
       disclaimer="Only on Business plan"
-      :buttons="[contactButton]"
+      :button="contactButton"
     />
 
     <SettingsWorkspacesBillingUpgradeDialog
@@ -73,10 +73,20 @@ const contactButton = computed(() => ({
   }
 }))
 
+const addOnButtonTooltip = computed(() => {
+  if (!isAdmin.value)
+    return 'You must be a workspace admin in order to purchase the add-on'
+  if (hasUnlimitedAddon.value)
+    return 'The add-on is already included in your subscription'
+  if (!isPaidPlan.value) return 'Only available for Starter & Business plans'
+  return undefined
+})
+
 const unlimitedAddOnButton = computed(() => ({
   text: 'Buy add-on',
   id: 'buy-add-on',
   disabled: !isPaidPlan.value || hasUnlimitedAddon.value || !isAdmin.value,
+  disabledMessage: addOnButtonTooltip.value,
   onClick: () => {
     isUpgradeDialogOpen.value = true
 

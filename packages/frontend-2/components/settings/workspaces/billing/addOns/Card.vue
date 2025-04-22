@@ -9,11 +9,7 @@
       <slot name="subtitle" />
     </div>
     <div class="flex items-center gap-x-2">
-      <div
-        v-for="(button, index) in buttons"
-        :key="button.id || index"
-        v-tippy="button.disabledMessage"
-      >
+      <div v-if="button" :key="buttonId" v-tippy="button.disabledMessage">
         <FormButton
           v-bind="button.props || {}"
           :disabled="button.props?.disabled || button.disabled"
@@ -38,7 +34,9 @@ defineProps<{
   title: string
   subtitle?: string
   info?: string
-  buttons?: LayoutDialogButton[]
+  button: LayoutDialogButton
   disclaimer?: string
 }>()
+
+const buttonId = useId()
 </script>

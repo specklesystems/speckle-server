@@ -144,14 +144,20 @@ const { activeWorkspaceSlug } = useNavigation()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()
-const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, () => ({
-  enabled: isWorkspacesEnabled.value
-}))
+const { result: workspaceResult } = useQuery(
+  settingsSidebarQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value as string
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!activeWorkspaceSlug.value
+  })
+)
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isOpenMobile = ref(false)
 
-const workspace = computed(() => workspaceResult.value?.activeUser?.activeWorkspace)
+const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 
 const filteredWorkspaceMenuItems = computed(() =>
   workspaceMenuItems.value.filter(

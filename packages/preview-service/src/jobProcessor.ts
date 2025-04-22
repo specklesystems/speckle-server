@@ -8,6 +8,7 @@ import type {
 } from '@speckle/shared/dist/esm/previews/job.js'
 
 import { AppState } from '@/const.js'
+import { TIME_MS } from '@speckle/shared'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -40,7 +41,7 @@ export const jobProcessor = async ({
 }: JobArgs): Promise<PreviewResultPayload> => {
   const elapsed = (() => {
     const start = new Date().getTime()
-    return () => (new Date().getTime() - start) / 1000
+    return () => (new Date().getTime() - start) / TIME_MS.second
   })()
 
   logger.info('Picked up job {jobId} for {serverUrl}')
@@ -120,7 +121,7 @@ const pageFunction = async ({
     try {
       await window.load(job)
       loadDone = new Date().getTime()
-      loadDurationSeconds = (loadDone - start) / 1000
+      loadDurationSeconds = (loadDone - start) / TIME_MS.second
       console.log(`Loading completed in ${loadDurationSeconds} seconds`)
     } catch (e) {
       const loadErrored = new Date().getTime()
@@ -132,14 +133,14 @@ const pageFunction = async ({
       return {
         reason: err.message,
         screenshots: {},
-        loadDurationSeconds: (loadErrored - start) / 1000,
-        durationSeconds: (loadErrored - start) / 1000
+        loadDurationSeconds: (loadErrored - start) / TIME_MS.second,
+        durationSeconds: (loadErrored - start) / TIME_MS.second
       }
     }
 
     try {
       const renderResult = await window.takeScreenshot()
-      const renderDurationSeconds = (new Date().getTime() - loadDone) / 1000
+      const renderDurationSeconds = (new Date().getTime() - loadDone) / TIME_MS.second
       console.log(`Render completed in ${renderDurationSeconds} seconds`)
       return { ...renderResult, loadDurationSeconds, renderDurationSeconds }
     } catch (e) {
@@ -152,8 +153,8 @@ const pageFunction = async ({
         reason: err.message,
         screenshots: {},
         loadDurationSeconds,
-        renderDurationSeconds: (loadErrored - loadDone) / 1000,
-        durationSeconds: (loadErrored - start) / 1000
+        renderDurationSeconds: (loadErrored - loadDone) / TIME_MS.second,
+        durationSeconds: (loadErrored - start) / TIME_MS.second
       }
     }
     // ====================
