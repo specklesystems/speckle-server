@@ -92,7 +92,7 @@ export const useWorkspacesWizard = () => {
     const shouldComplete =
       wizardState.value.currentStepIndex === steps.length - 1 ||
       (wizardState.value.currentStep === WizardSteps.Pricing &&
-        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
+        wizardState.value.state.plan !== PaidWorkspacePlans.Pro)
 
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
@@ -151,7 +151,7 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            wizardState.value.state.plan === PaidWorkspacePlans.Business
+            wizardState.value.state.plan === PaidWorkspacePlans.Pro
               ? wizardState.value.state.region
               : null
         },
@@ -196,7 +196,7 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
+    if (state.region?.key && state.plan === PaidWorkspacePlans.Pro) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key

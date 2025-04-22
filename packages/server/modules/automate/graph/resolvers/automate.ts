@@ -29,14 +29,16 @@ import {
   updateAutomationFactory,
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
-  upsertAutomationRunFactory
+  upsertAutomationRunFactory,
+  markAutomationDeletedFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatusFactory,
-  validateAndUpdateAutomationFactory
+  validateAndUpdateAutomationFactory,
+  deleteAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -121,6 +123,7 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { commandFactory } from '@/modules/shared/command'
 import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
@@ -705,6 +708,28 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               operationDescription: 'Update an Automation attached to a project'
             }
           )
+        },
+        async delete(parent, input, context) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
+          await authorizeResolver(
+            context.userId,
+            parent.projectId,
+            Roles.Stream.Owner,
+            context.resourceAccessRules
+          )
+
+          const deleteAutomation = commandFactory({
+            db: projectDb,
+            operationFactory: ({ db }) =>
+              deleteAutomationFactory({
+                deleteAutomation: markAutomationDeletedFactory({ db })
+              })
+          })
+
+          return await deleteAutomation({
+            automationId: input.automationId
+          })
         },
         async createRevision(parent, { input }, ctx) {
           const projectId = parent.projectId
