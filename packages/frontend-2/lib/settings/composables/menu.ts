@@ -208,7 +208,7 @@ export const useSettingsMembersActions = (params: {
 
   const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
-  const showUpdateProjectPermissions = computed(() => canModifyUser.value)
+  // const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
     const headerItems: LayoutMenuItem[] = []
@@ -265,14 +265,15 @@ export const useSettingsMembersActions = (params: {
             : 'Admins must be on an Editor seat'
       })
     }
-    if (showUpdateProjectPermissions.value) {
-      mainItems.push({
-        title: 'Manage project access...',
-        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
-        disabled: params.targetUser.value.projectRoles.length === 0,
-        disabledTooltip: 'User is not in any projects'
-      })
-    }
+    // This will return post new workspace plan launch
+    // if (showUpdateProjectPermissions.value) {
+    //   mainItems.push({
+    //     title: 'Manage project access...',
+    //     id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+    //     disabled: params.targetUser.value.projectRoles.length === 0,
+    //     disabledTooltip: 'User is not in any projects'
+    //   })
+    // }
 
     if (showRemoveFromWorkspace.value) {
       footerItems.push({
