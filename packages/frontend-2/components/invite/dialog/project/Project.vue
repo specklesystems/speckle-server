@@ -17,6 +17,7 @@
             :can-invite-new-members="isAdmin || !isInWorkspace"
             :show-project-roles="!isInWorkspace"
             :show-label="index === 0"
+            :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
           />
