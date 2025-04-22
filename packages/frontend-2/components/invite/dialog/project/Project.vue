@@ -1,7 +1,12 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <LayoutDialog v-model:open="isOpen" :buttons="dialogButtons" max-width="md">
+  <LayoutDialog
+    v-model:open="isOpen"
+    prevent-close-on-click-outside
+    :buttons="dialogButtons"
+    max-width="md"
+  >
     <template #header>Invite to project</template>
     <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
       Search existing workspace members or invite entirely new.
@@ -136,7 +141,9 @@ const onSubmit = handleSubmit(async () => {
         : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
-            workspaceRole: Roles.Workspace.Guest
+            workspaceRole: u.project?.id
+              ? Roles.Workspace.Member
+              : Roles.Workspace.Guest
           }
         : {})
     }))
