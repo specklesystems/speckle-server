@@ -13,10 +13,10 @@
             :show-delete="fields.length > 1"
             :can-invite-new-members="isAdmin || !isInWorkspace"
             :show-project-roles="!isInWorkspace"
+            :show-label="index === 0"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
           />
-          <hr v-if="index !== fields.length - 1" class="flex-1 mt-3 border-outline-3" />
         </template>
         <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
           Add another user
