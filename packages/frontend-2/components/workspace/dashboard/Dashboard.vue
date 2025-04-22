@@ -67,7 +67,7 @@ const hasFinalized = ref(false)
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const showBillingAlert = computed(
   () =>
-    workspace?.value?.role === Roles.Workspace.Guest &&
+    workspace?.value?.role !== Roles.Workspace.Guest &&
     (workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
       workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
       workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled)

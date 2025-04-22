@@ -16,7 +16,7 @@
                 show-clear
                 full-width
                 use-label-in-errors
-                show-label
+                :show-label="showLabel"
                 label="Email"
                 :rules="[isEmailOrEmpty]"
               />
@@ -29,7 +29,7 @@
                 show-clear
                 full-width
                 use-label-in-errors
-                show-label
+                :show-label="showLabel"
                 label="Search workspace members"
                 autocomplete="off"
                 :readonly="!!selectedUser"
@@ -94,7 +94,7 @@
           />
         </div>
       </div>
-      <CommonTextLink class="mt-7">
+      <CommonTextLink :class="showLabel && 'mt-7'">
         <TrashIcon
           v-if="showDelete"
           class="size-4 text-foreground-2"
@@ -153,6 +153,7 @@ const props = defineProps<{
   showDelete?: boolean
   canInviteNewMembers?: boolean
   showProjectRoles?: boolean
+  showLabel?: boolean
 }>()
 
 const emit = defineEmits<{

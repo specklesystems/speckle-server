@@ -18,6 +18,9 @@ graphql(`
   fragment UseNavigationWorkspaceList_User on User {
     id
     ...HeaderWorkspaceSwitcherWorkspaceList_User
+    projects {
+      totalCount
+    }
   }
 `)
 
@@ -47,13 +50,13 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
-  const { result: workspacesResult } = useQuery(navigationWorkspaceListQuery, null, {
+  const { result } = useQuery(navigationWorkspaceListQuery, null, {
     enabled: isWorkspacesEnabled.value
   })
 
   // Check for expired SSO sessions
   const expiredSsoSessions = computed(
-    () => workspacesResult.value?.activeUser?.expiredSsoSessions || []
+    () => result.value?.activeUser?.expiredSsoSessions || []
   )
 
   // Check if the current active workspace has an expired SSO session
@@ -62,6 +65,10 @@ export const useNavigation = () => {
       !!expiredSsoSessions.value.find(
         (session) => session.slug === activeWorkspaceSlug.value
       )
+  )
+
+  const hasProjects = computed(
+    () => result.value?.activeUser?.projects?.totalCount ?? 0 > 0
   )
 
   const { result: activeWorkspaceResult, onResult } = useQuery(
@@ -106,8 +113,8 @@ export const useNavigation = () => {
   })
 
   const workspaceList = computed(() =>
-    workspacesResult.value?.activeUser
-      ? workspacesResult.value.activeUser.workspaces.items.filter(
+    result.value?.activeUser
+      ? result.value.activeUser.workspaces.items.filter(
           (workspace) => workspace.creationState?.completed !== false
         )
       : []
@@ -129,6 +136,7 @@ export const useNavigation = () => {
     activeWorkspaceData,
     workspaceList,
     activeWorkspaceHasExpiredSsoSession,
-    expiredSsoWorkspaceData
+    expiredSsoWorkspaceData,
+    hasProjects
   }
 }
