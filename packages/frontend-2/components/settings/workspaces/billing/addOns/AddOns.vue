@@ -78,7 +78,7 @@ const addOnButtonTooltip = computed(() => {
     return 'You must be a workspace admin in order to purchase the add-on'
   if (hasUnlimitedAddon.value) return 'You already have an unlimited add-on'
   if (!isPaidPlan.value) return 'Only available for starter & business plans'
-  return null
+  return undefined
 })
 
 const unlimitedAddOnButton = computed(() => ({
