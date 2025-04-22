@@ -67,7 +67,7 @@
                 @on-click="onWorkspaceSelect(item.slug)"
               />
               <HeaderWorkspaceSwitcherItem
-                v-if="hasProjectsToMove"
+                v-if="hasProjects"
                 :is-active="route.path === projectsRoute"
                 name="Personal projects"
                 tag="LEGACY"
@@ -111,10 +111,7 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import {
-  useActiveUser,
-  useActiveUserProjectsToMove
-} from '~~/lib/auth/composables/activeUser'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   workspaceCreateRoute,
   workspaceRoute,
@@ -160,6 +157,9 @@ graphql(`
       id
       ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
     }
+    projects {
+      totalCount
+    }
     workspaces {
       items {
         id
@@ -188,7 +188,6 @@ const {
   discoverableWorkspacesAndJoinRequestsCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
-const { hasProjectsToMove } = useActiveUserProjectsToMove()
 
 const showDiscoverableWorkspacesModal = ref(false)
 const showInviteDialog = ref(false)
@@ -210,6 +209,10 @@ const displayLogo = computed(() => {
   return activeWorkspaceHasExpiredSsoSession.value
     ? expiredSsoWorkspaceData.value?.logo
     : activeWorkspace.value?.logo
+})
+
+const hasProjects = computed(() => {
+  return activeWorkspace.value?.projects?.totalCount > 0
 })
 
 const onWorkspaceSelect = (slug: string) => {
