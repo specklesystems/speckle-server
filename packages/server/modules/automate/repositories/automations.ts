@@ -1,5 +1,5 @@
 import {
-  DeleteAutomation,
+  MarkAutomationDeleted,
   GetActiveTriggerDefinitions,
   GetAutomation,
   GetAutomationProject,
@@ -315,10 +315,12 @@ export const storeAutomationFactory =
     return newAutomation
   }
 
-export const deleteAutomationFactory =
-  (deps: { db: Knex }): DeleteAutomation =>
+export const markAutomationDeletedFactory =
+  (deps: { db: Knex }): MarkAutomationDeleted =>
   async ({ automationId }) => {
-    await tables.automations(deps.db).where({ id: automationId }).delete()
+    await tables.automations(deps.db).where({ id: automationId }).update({
+      isDeleted: true
+    })
 
     return true
   }
@@ -440,6 +442,7 @@ export const getAutomationsFactory =
       .automations(deps.db)
       .select()
       .whereIn(Automations.col.id, automationIds)
+      .andWhere(Automations.col.isDeleted, false)
 
     if (projectId?.length) {
       q.andWhere(Automations.col.projectId, projectId)

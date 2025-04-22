@@ -30,8 +30,7 @@ import {
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
   upsertAutomationRunFactory,
-  deleteAutomationFactory as repoDeleteAutomationFactory,
-  queryAllAutomationFunctionRunsFactory
+  markAutomationDeletedFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
@@ -124,13 +123,6 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { fullyDeleteBlobFactory } from '@/modules/blobstorage/services/management'
-import {
-  deleteBlobFactory,
-  getBlobMetadataFactory
-} from '@/modules/blobstorage/repositories'
-import { deleteObjectFactory } from '@/modules/blobstorage/repositories/blobs'
-import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { commandFactory } from '@/modules/shared/command'
 import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
@@ -719,9 +711,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         async delete(parent, input, context) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
-          const projectStorage = await getProjectObjectStorage({
-            projectId: parent.projectId
-          })
 
           await authorizeResolver(
             context.userId,
@@ -734,21 +723,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             db: projectDb,
             operationFactory: ({ db }) =>
               deleteAutomationFactory({
-                deleteAutomation: repoDeleteAutomationFactory({ db }),
-                queryAllAutomationFunctionRuns: queryAllAutomationFunctionRunsFactory({
-                  db
-                }),
-                deleteBlob: fullyDeleteBlobFactory({
-                  getBlobMetadata: getBlobMetadataFactory({ db }),
-                  deleteBlob: deleteBlobFactory({ db }),
-                  deleteObject: deleteObjectFactory({ storage: projectStorage })
-                })
+                deleteAutomation: markAutomationDeletedFactory({ db })
               })
           })
 
           return await deleteAutomation({
-            automationId: input.automationId,
-            projectId: parent.projectId
+            automationId: input.automationId
           })
         },
         async createRevision(parent, { input }, ctx) {

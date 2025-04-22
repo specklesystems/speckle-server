@@ -42,11 +42,10 @@ import { validateAutomationName } from '@/modules/automate/utils/automationConfi
 import {
   CreateAutomation,
   CreateStoredAuthCode,
-  DeleteAutomation,
+  MarkAutomationDeleted,
   GetAutomation,
   GetEncryptionKeyPair,
   GetLatestVersionAutomationRuns,
-  QueryAllAutomationFunctionRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
@@ -56,7 +55,6 @@ import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
-import { FullyDeleteBlob } from '@/modules/blobstorage/domain/operations'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
@@ -112,7 +110,8 @@ export const createAutomationFactory =
       enabled,
       projectId,
       executionEngineAutomationId,
-      isTestAutomation: false
+      isTestAutomation: false,
+      isDeleted: false
     })
 
     const automationTokenRecord = await storeAutomationToken({
@@ -199,7 +198,8 @@ export const createTestAutomationFactory =
       enabled: true,
       projectId,
       executionEngineAutomationId: null,
-      isTestAutomation: true
+      isTestAutomation: true,
+      isDeleted: false
     })
 
     await eventEmit({
@@ -244,29 +244,10 @@ export const createTestAutomationFactory =
   }
 
 export const deleteAutomationFactory =
-  (deps: {
-    deleteAutomation: DeleteAutomation
-    queryAllAutomationFunctionRuns: QueryAllAutomationFunctionRuns
-    deleteBlob: FullyDeleteBlob
-  }) =>
-  async (params: { projectId: string; automationId: string }) => {
-    const { projectId, automationId } = params
-
-    // Delete resources associated with automation runs
-    for await (const functionRuns of deps.queryAllAutomationFunctionRuns({
-      automationId
-    })) {
-      for (const { results } of functionRuns) {
-        for (const blobId of results?.values?.blobIds ?? []) {
-          await deps.deleteBlob({ streamId: projectId, blobId })
-        }
-      }
-    }
-
-    // Delete root automation record
-    await deps.deleteAutomation({ automationId })
-
-    return true
+  (deps: { deleteAutomation: MarkAutomationDeleted }) =>
+  async (params: { automationId: string }) => {
+    const { automationId } = params
+    return await deps.deleteAutomation({ automationId })
   }
 
 export type ValidateAndUpdateAutomationDeps = {
