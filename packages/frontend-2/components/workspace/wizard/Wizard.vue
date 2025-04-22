@@ -82,7 +82,7 @@ onResult((result) => {
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
       goToStep(
-        newState.plan === PaidWorkspacePlans.Business
+        newState.plan === PaidWorkspacePlans.Pro
           ? WizardSteps.Region
           : WizardSteps.Pricing
       )
