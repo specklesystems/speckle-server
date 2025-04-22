@@ -74,6 +74,9 @@ export const activeUserWorkspaceExistenceCheckQuery = graphql(`
         items {
           id
           slug
+          creationState {
+            completed
+          }
         }
       }
       discoverableWorkspaces {

@@ -1,17 +1,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const settingsSidebarQuery = graphql(`
-  query SettingsSidebar {
-    activeUser {
-      ...SettingsSidebar_User
-    }
-  }
-`)
-
-export const settingsSidebarAutomateFunctionsQuery = graphql(`
-  query SettingsSidebarAutomateFunctions {
-    activeUser {
-      ...Sidebar_User
+  query SettingsSidebar($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsSidebar_Workspace
     }
   }
 `)
@@ -28,17 +20,7 @@ export const settingsWorkspaceBillingQuery = graphql(`
   query SettingsWorkspaceBilling($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
-      ...SettingsWorkspacesBilling_Workspace
-    }
-  }
-`)
-
-// TODO: Remove old one post-migration
-export const settingsWorkspaceBillingQueryNew = graphql(`
-  query SettingsWorkspaceBillingNew($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      id
-      ...WorkspaceBillingPageNew_Workspace
+      ...WorkspaceBillingPage_Workspace
     }
   }
 `)
@@ -66,25 +48,7 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembers_Workspace
-    }
-  }
-`)
-
-export const settingsWorkspacesMembersTableQuery = graphql(`
-  query SettingsWorkspacesMembersTable($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersTable_Workspace
-      ...SettingsWorkspacesNewMembersTable_Workspace
-    }
-  }
-`)
-
-export const settingsWorkspacesMembersGuestsQuery = graphql(`
-  query SettingsWorkspacesMembersGuests($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersGuestsTable_Workspace
-      ...SettingsWorkspacesMembersNewGuestsTable_Workspace
+      ...SettingsWorkspacesMembersCounts_Workspace
     }
   }
 `)
@@ -109,12 +73,15 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
   query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
     workspaceBySlug(slug: $slug) {
       id
+      role
+      ...SettingsWorkspacesMembersTableHeader_Workspace
       team(filter: $filter, limit: 250) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
-          ...SettingsWorkspacesNewMembersTable_WorkspaceCollaborator
         }
+        cursor
+        totalCount
       }
     }
   }
@@ -126,7 +93,11 @@ export const settingsWorkspacesInvitesSearchQuery = graphql(`
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersInvitesTable_Workspace
+      id
+      ...SettingsWorkspacesMembersTableHeader_Workspace
+      invitedTeam(filter: $invitesFilter) {
+        ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
+      }
     }
   }
 `)
@@ -139,9 +110,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
     $filter: WorkspaceProjectsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      id
-      slug
-      readOnly
+      ...SettingsWorkspacesProjects_Workspace
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection
@@ -154,9 +123,6 @@ export const settingsWorkspacesSecurityQuery = graphql(`
   query SettingsWorkspaceSecurity($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
-    }
-    activeUser {
-      ...SettingsWorkspacesSecurity_User
     }
   }
 `)

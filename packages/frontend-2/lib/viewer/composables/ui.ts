@@ -1,4 +1,4 @@
-import { SpeckleViewer, timeoutAt } from '@speckle/shared'
+import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
 import type {
   TreeNode,
   MeasurementOptions,
@@ -230,7 +230,7 @@ export function useFilterUtilities(
     key: string,
     options?: Partial<{ timeout: number }>
   ) => {
-    const timeout = options?.timeout || 10000
+    const timeout = options?.timeout || 10 * TIME_MS.second
 
     const res = await Promise.race([
       until(viewer.metadata.availableFilters).toMatch(

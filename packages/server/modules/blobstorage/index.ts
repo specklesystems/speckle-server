@@ -304,7 +304,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
       ])(req, res, next)
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
@@ -339,7 +339,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
       await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
@@ -376,7 +376,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
       const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
         db: projectDb
       })
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,
           query: fileName as string

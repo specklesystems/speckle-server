@@ -38,13 +38,16 @@ const props = defineProps<{
   modelId: string
   versionId: string
   selectionDisabled?: boolean
+  selectionDisabledMessage?: string
 }>()
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
 
-const disabledMessage = ref(
-  'Version editing is only allowed to project or version owners'
+const disabledMessage = computed(
+  () =>
+    props.selectionDisabledMessage ||
+    'Version editing is only allowed to project or version owners'
 )
 
 const showActionsMenu = computed({

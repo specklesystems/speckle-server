@@ -1,5 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { trimEnd } from 'lodash'
+import { has, trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import { ensureError, Nullable } from '@speckle/shared'
 
@@ -25,7 +25,11 @@ export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
 }
 
 export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
-  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+  if (!has(process.env, envVarKey)) {
+    return aDefault
+  }
+
+  return ['1', 'true', true].includes(process.env[envVarKey] || 'false')
 }
 
 function mustGetUrlFromEnv(name: string, trimTrailingSlash: boolean = false): URL {
@@ -94,6 +98,10 @@ export function getApolloServerVersion() {
 
 export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
+}
+
+export function getFileImportTimeLimitMinutes() {
+  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
 }
 
 export function getMaximumRequestBodySizeMB() {
@@ -447,7 +455,7 @@ export const knexAsyncStackTracesEnabled = () => {
 }
 
 export const asyncRequestContextEnabled = () => {
-  return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED')
+  return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED', isDevEnv())
 }
 
 export function enableImprovedKnexTelemetryStackTraces() {

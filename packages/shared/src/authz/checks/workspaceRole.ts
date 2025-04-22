@@ -1,29 +1,26 @@
 import { WorkspaceRoles } from '../../core/constants.js'
-import { AuthCheckContext } from '../domain/loaders.js'
-import { isMinimumWorkspaceRole } from '../domain/workspaces/logic.js'
+import { UserContext, WorkspaceContext } from '../domain/context.js'
+import { isMinimumWorkspaceRole } from '../domain/logic/roles.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
 
-export const requireAnyWorkspaceRole =
-  ({ loaders }: AuthCheckContext<'getWorkspaceRole'>) =>
-  async (args: { userId: string; workspaceId: string }): Promise<boolean> => {
-    const { userId, workspaceId } = args
-
+export const hasMinimumWorkspaceRole: AuthPolicyCheck<
+  'getWorkspaceRole',
+  UserContext & WorkspaceContext & { role: WorkspaceRoles }
+> =
+  (loaders) =>
+  async ({ userId, workspaceId, role: requiredWorkspaceRole }) => {
     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
+    if (!userWorkspaceRole) return false
 
-    return userWorkspaceRole !== null
+    return isMinimumWorkspaceRole(userWorkspaceRole, requiredWorkspaceRole)
   }
 
-export const requireMinimumWorkspaceRole =
-  ({ loaders }: AuthCheckContext<'getWorkspaceRole'>) =>
-  async (args: {
-    userId: string
-    workspaceId: string
-    role: WorkspaceRoles
-  }): Promise<boolean> => {
-    const { userId, workspaceId, role: requiredWorkspaceRole } = args
-
+export const hasAnyWorkspaceRole: AuthPolicyCheck<
+  'getWorkspaceRole',
+  { userId: string; workspaceId: string }
+> =
+  (loaders) =>
+  async ({ userId, workspaceId }) => {
     const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
-
-    return userWorkspaceRole
-      ? isMinimumWorkspaceRole(userWorkspaceRole, requiredWorkspaceRole)
-      : false
+    return userWorkspaceRole !== null
   }

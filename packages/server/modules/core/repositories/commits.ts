@@ -337,7 +337,7 @@ const getPaginatedBranchCommitsBaseQueryFactory =
   }
 
 export const getPaginatedBranchCommitsItemsFactory =
-  (deps: { db: Knex }): GetPaginatedBranchCommitsItems =>
+  (deps: { db: Knex; limitsDate?: Date | null }): GetPaginatedBranchCommitsItems =>
   async (params: PaginatedBranchCommitsParams) => {
     const { cursor } = params
 
@@ -348,6 +348,9 @@ export const getPaginatedBranchCommitsItemsFactory =
 
     if (cursor) {
       q.andWhere(Commits.col.createdAt, '<', cursor)
+    }
+    if (deps.limitsDate) {
+      q.andWhere(Commits.col.createdAt, '>', deps.limitsDate)
     }
 
     const rows = await q
@@ -663,7 +666,7 @@ export const legacyGetPaginatedUserCommitsTotalCount =
  * without any joins, and let those be handled by GQL dataloaders
  */
 export const legacyGetPaginatedStreamCommitsPageFactory =
-  (deps: { db: Knex }): LegacyGetPaginatedStreamCommitsPage =>
+  (deps: { db: Knex; limitsDate?: Date | null }): LegacyGetPaginatedStreamCommitsPage =>
   async ({ streamId, limit, cursor, ignoreGlobalsBranch }) => {
     limit = clamp(limit || 25, 0, 100)
     if (!limit) return { commits: [], cursor: null }
@@ -696,6 +699,7 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
     if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
 
     if (cursor) query.andWhere('commits.createdAt', '<', cursor)
+    if (deps.limitsDate) query.andWhere('commits.createdAt', '>', deps.limitsDate)
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 

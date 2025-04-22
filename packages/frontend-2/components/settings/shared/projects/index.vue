@@ -76,9 +76,10 @@
       <template #actions="{ item }">
         <LayoutMenu
           v-model:open="showActionsMenu[item.id]"
-          :items="actionItems"
+          :items="actionItems[item.id]"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="menuId"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -140,10 +141,21 @@ graphql(`
         avatar
       }
     }
+    permissions {
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canRead {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
   disableCreate?: boolean
@@ -152,6 +164,7 @@ defineProps<{
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
+const menuId = useId()
 
 const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
@@ -174,13 +187,37 @@ enum ActionTypes {
 
 const showActionsMenu = ref<Record<string, boolean>>({})
 
-const actionItems: LayoutMenuItem[][] = [
-  [
-    { title: 'View project', id: ActionTypes.ViewProject },
-    { title: 'Edit members', id: ActionTypes.EditMembers },
-    { title: 'Delete project...', id: ActionTypes.DeleteProject }
-  ]
-]
+const actionItems = computed((): { [projectId: string]: LayoutMenuItem[][] } =>
+  (props.projects || []).reduce((ret, project) => {
+    const canRead = project.permissions.canRead
+    const canDelete = project.permissions.canDelete
+    const canReadSettings = project.permissions.canReadSettings
+
+    ret[project.id] = [
+      [
+        {
+          title: 'View project',
+          id: ActionTypes.ViewProject,
+          disabled: !canRead?.authorized,
+          disabledTooltip: canRead?.message
+        },
+        {
+          title: 'Edit members',
+          id: ActionTypes.EditMembers,
+          disabled: !canReadSettings?.authorized,
+          disabledTooltip: canReadSettings?.message
+        },
+        {
+          title: 'Delete project...',
+          id: ActionTypes.DeleteProject,
+          disabled: !canDelete?.authorized,
+          disabledTooltip: canDelete?.message
+        }
+      ]
+    ]
+    return ret
+  }, {} as { [projectId: string]: LayoutMenuItem[][] })
+)
 
 const onActionChosen = (
   actionItem: LayoutMenuItem,

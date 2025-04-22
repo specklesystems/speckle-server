@@ -1,5 +1,5 @@
 import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer.js'
-import { BasitPass } from '../pipeline/Passes/BasitPass.js'
+import { ShadedPass } from '../pipeline/Passes/ShadedPass.js'
 import { GPass } from '../pipeline/Passes/GPass.js'
 import { ArcticViewPipeline } from '../pipeline/Pipelines/ArcticViewPipeline.js'
 import { BasitPipeline } from '../pipeline/Pipelines/BasitViewPipeline.js'
@@ -53,7 +53,7 @@ export class ViewModes extends Extension {
             .getRenderer()
             .pipeline.getPass('BASIT')
             .forEach((pass: GPass) => {
-              ;(pass as BasitPass).applyColorIndices()
+              ;(pass as ShadedPass).applyColorIndices()
             })
         }
       })

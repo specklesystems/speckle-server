@@ -13,7 +13,7 @@ import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer, xor } from '@speckle/shared'
+import { SpeckleViewer, xor, TIME_MS } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -36,11 +36,12 @@ import {
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
 import type { Merge } from 'type-fest'
+import { graphql } from '~/lib/common/generated/gql'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
  */
-const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * 1000
+const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * TIME_MS.second
 /**
  * How often we check for user staleness
  */
@@ -66,6 +67,17 @@ function useCollectMainMetadata() {
   })
 }
 
+graphql(`
+  fragment UseViewerUserActivityBroadcasting_Project on Project {
+    id
+    permissions {
+      canBroadcastActivity {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
 export function useViewerUserActivityBroadcasting(
   options?: Partial<{
     state: InjectableViewerState
@@ -74,13 +86,17 @@ export function useViewerUserActivityBroadcasting(
   const {
     projectId,
     resources: {
-      request: { resourceIdString }
+      request: { resourceIdString },
+      response: { project }
     }
   } = options?.state || useInjectedViewerState()
-  const { isLoggedIn } = useActiveUser()
   const getMainMetadata = useCollectMainMetadata()
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
+
+  const canBroadcast = computed(
+    () => project.value?.permissions.canBroadcastActivity.authorized
+  )
 
   const isSameMessage = (
     previousSerializedMessage: Optional<string>,
@@ -118,7 +134,7 @@ export function useViewerUserActivityBroadcasting(
   }
 
   const invoke = async (message: ViewerUserActivityMessageInput) => {
-    if (!isLoggedIn.value || isEmbedEnabled.value) return false
+    if (!canBroadcast.value || isEmbedEnabled.value) return false
     return await Promise.all([
       invokeMutation(message),
       invokeObservabilityEvent(message)

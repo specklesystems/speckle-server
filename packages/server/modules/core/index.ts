@@ -16,14 +16,16 @@ import roles from '@/modules/core/roles'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
+import {
+  getCachedRolesFactory,
+  registerOrUpdateRole
+} from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
-import { defineModuleLoaders } from '@/modules/core/authz'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -88,8 +90,10 @@ const coreModule: SpeckleModule<{
         getStreamCollaborators: getStreamCollaboratorsFactory({ db })
       })()
     }
-
-    defineModuleLoaders()
+  },
+  async finalize() {
+    // After all roles registered, reset cache
+    await getCachedRolesFactory({ db }).clear()
   },
   async shutdown() {
     await shutdownResultListener()

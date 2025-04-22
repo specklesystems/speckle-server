@@ -1,5 +1,11 @@
 import { validateScopes } from '@/modules/shared'
-import { Roles, Scopes, RoleInfo, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Roles,
+  Scopes,
+  RoleInfo,
+  removeNullOrUndefinedKeys,
+  TIME_MS
+} from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   speckleAutomateUrl,
@@ -17,8 +23,9 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { LRUCache } from 'lru-cache'
 import { ServerInfo } from '@/modules/core/helpers/types'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
-const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 60 * 1000 })
+const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 1 * TIME_MS.minute })
 const getServerInfoFromCache = getServerInfoFromCacheFactory({ cache })
 const storeServerInfoInCache = storeServerInfoInCacheFactory({ cache })
 const getServerInfo = getServerInfoFactory({ db })
@@ -68,7 +75,11 @@ export = {
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
       const update = removeNullOrUndefinedKeys(args.info)
-      await updateServerInfo(update)
+      await withOperationLogging(async () => await updateServerInfo(update), {
+        logger: context.log,
+        operationName: 'updateServerInfo',
+        operationDescription: `Update server info`
+      })
       // we're currently going to ignore, that this should be propagated to all
       // backend instances, and going to rely on the TTL in the cache to propagate the changes
       cache.clear()

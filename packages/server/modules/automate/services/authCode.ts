@@ -6,6 +6,7 @@ import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
 import { get, has, isObjectLike } from 'lodash'
 import { Logger } from 'pino'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
@@ -86,8 +87,8 @@ export const validateStoredAuthCodeFactory =
 
     // Token is valid, confirm user is authorized to access specified resources.
     if (resources?.workspaceId) {
-      emit({
-        eventName: 'workspace.authorized',
+      await emit({
+        eventName: WorkspaceEvents.Authorizing,
         payload: { userId: payload.userId, workspaceId: resources?.workspaceId }
       })
     }

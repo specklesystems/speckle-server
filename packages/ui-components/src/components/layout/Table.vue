@@ -52,6 +52,7 @@
                   size="sm"
                   color="outline"
                   hide-text
+                  :disabled="button.disabled"
                   :class="button.class"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
@@ -97,6 +98,7 @@ export type RowButton<T = unknown> = {
   action: (item: T) => unknown
   class?: string
   tooltip?: string
+  disabled?: boolean
 }
 
 const props = withDefaults(

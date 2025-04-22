@@ -215,9 +215,13 @@ input ProjectTestAutomationCreateInput {
 input AutomateFunctionsFilter {
   search: String
   """
-  By default we skip functions without releases. Set this to true to include them.
+  By default, we include featured ("public") functions. Set this to false to exclude them.
   """
-  functionsWithoutReleases: Boolean
+  includeFeatured: Boolean
+  """
+  By default, we exclude functions without releases. Set this to false to include them.
+  """
+  requireRelease: Boolean
 }
 
 input AutomateFunctionRunStatusReportInput {
@@ -339,11 +343,10 @@ type AutomateMutations {
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
-    @hasStreamRole(role: STREAM_REVIEWER)
   """
   Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
   """
-  automation(id: String!): Automation! @hasStreamRole(role: STREAM_REVIEWER)
+  automation(id: String!): Automation!
 }
 
 input AutomateAuthCodePayloadTest {

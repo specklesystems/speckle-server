@@ -1,10 +1,20 @@
-import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import {
+  createRandomEmail,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
+import {
+  assignToWorkspace,
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
+  BasicTestUser,
+  createTestUser,
+  createTestUsers,
+  login
+} from '@/test/authHelper'
+import {
+  GetProjectInvitableCollaboratorsDocument,
   SetUserActiveWorkspaceDocument,
   UserActiveResourcesDocument
 } from '@/test/graphql/generated/graphql'
@@ -95,5 +105,89 @@ describe('ActiveUserMutations.setActiveWorkspace', () => {
     expect(resB).to.not.haveGraphQLErrors()
 
     expect(resB?.data?.activeUser?.activeWorkspace).to.be.null
+  })
+})
+
+describe('Project.invitableCollaborators', () => {
+  const adminUser: BasicTestUser = {
+    id: '',
+    name: createRandomString(),
+    email: createRandomEmail()
+  }
+  const workspaceMemberA: BasicTestUser = {
+    id: '',
+    name: createRandomString() + 'foo',
+    email: 'baz' + createRandomEmail()
+  }
+  const workspaceMemberB: BasicTestUser = {
+    id: '',
+    name: createRandomString() + 'baz',
+    email: 'bar' + createRandomEmail()
+  }
+  const nonWorkspaceMember: BasicTestUser = {
+    id: '',
+    name: createRandomString(),
+    email: createRandomEmail()
+  }
+
+  const testWorkspace: BasicTestWorkspace = {
+    id: createRandomString(),
+    name: createRandomString(),
+    slug: createRandomString(),
+    ownerId: ''
+  }
+
+  // The project we will run the test suite search against
+  const testProject: BasicTestStream = {
+    id: '',
+    ownerId: '',
+    name: createRandomString(),
+    isPublic: true,
+    workspaceId: ''
+  }
+  // An extra project for test comprehensiveness
+  const testOtherProject: BasicTestStream = {
+    id: '',
+    ownerId: '',
+    name: createRandomString(),
+    isPublic: true,
+    workspaceId: ''
+  }
+
+  before(async () => {
+    await createTestUser(adminUser)
+    await createTestUsers([workspaceMemberA, workspaceMemberB, nonWorkspaceMember])
+
+    await createTestWorkspace(testWorkspace, adminUser, {
+      addPlan: {
+        name: 'unlimited',
+        status: 'valid'
+      }
+    })
+    await assignToWorkspace(testWorkspace, workspaceMemberA)
+    await assignToWorkspace(testWorkspace, workspaceMemberB)
+
+    testProject.workspaceId = testWorkspace.id
+    testOtherProject.workspaceId = testWorkspace.id
+
+    await createTestStream(testProject, adminUser)
+    await createTestStream(testOtherProject, workspaceMemberA)
+  })
+
+  it('should return invitable collaborators', async () => {
+    const session = await login(adminUser)
+
+    const res = await session.execute(GetProjectInvitableCollaboratorsDocument, {
+      projectId: testProject.id
+    })
+    expect(res).not.haveGraphQLErrors()
+
+    const invitable = res.data?.project.invitableCollaborators
+    expect(invitable?.totalCount).to.eq(2)
+    expect(invitable?.items).to.have.length(2)
+    expect(invitable?.items).to.deep.equalInAnyOrder([
+      { id: workspaceMemberA.id, user: { name: workspaceMemberA.name } },
+      { id: workspaceMemberB.id, user: { name: workspaceMemberB.name } }
+    ])
   })
 })

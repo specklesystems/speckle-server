@@ -57,6 +57,8 @@ export type GetComment = (params: {
   userId?: string
 }) => Promise<Optional<ExtendedComment>>
 
+export type GetComments = (params: { ids: string[] }) => Promise<CommentRecord[]>
+
 export type CheckStreamResourceAccess = (
   res: ResourceIdentifier,
   streamId: string

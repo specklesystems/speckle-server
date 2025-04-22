@@ -60,18 +60,29 @@ export const initializeMetrics = (params: {
     help: 'Total number of preview jobs which have been requested and were not successful (failed).'
   })
 
-  previewRequestQueue.on('waiting', () => {
+  const waitingHandler = () => {
     previewJobsRequestWaitingCounter.inc()
-  })
-  previewRequestQueue.on('completed', () => {
+  }
+  previewRequestQueue.removeListener('waiting', waitingHandler)
+  previewRequestQueue.on('waiting', waitingHandler)
+
+  const completedHandler = () => {
     previewJobsRequestCompletedCounter.inc()
-  })
-  previewRequestQueue.on('active', () => {
+  }
+  previewRequestQueue.removeListener('completed', completedHandler)
+  previewRequestQueue.on('completed', completedHandler)
+
+  const activeHandler = () => {
     previewJobsRequestActiveCounter.inc()
-  })
-  previewRequestQueue.on('failed', () => {
+  }
+  previewRequestQueue.removeListener('active', activeHandler)
+  previewRequestQueue.on('active', activeHandler)
+
+  const failedHandler = () => {
     previewJobsRequestFailedCounter.inc()
-  })
+  }
+  previewRequestQueue.removeListener('failed', failedHandler)
+  previewRequestQueue.on('failed', failedHandler)
 
   // ======= Response Queue =======
   registers.forEach((r) =>
@@ -100,12 +111,18 @@ export const initializeMetrics = (params: {
     name: 'speckle_server_preview_jobs_response_failed_count',
     help: 'Total number of preview jobs which have been responded and the response has not been successfully processed.'
   })
-  previewResponseQueue.on('completed', () => {
+
+  const responseCompletedHandler = () => {
     previewJobsResponseCompletedCounter.inc()
-  })
-  previewResponseQueue.on('failed', () => {
+  }
+  previewResponseQueue.removeListener('completed', responseCompletedHandler)
+  previewResponseQueue.on('completed', responseCompletedHandler)
+
+  const responseFailedHandler = () => {
     previewJobsResponseFailedCounter.inc()
-  })
+  }
+  previewResponseQueue.removeListener('failed', responseFailedHandler)
+  previewResponseQueue.on('failed', responseFailedHandler)
 
   // ======= Responses =======
 

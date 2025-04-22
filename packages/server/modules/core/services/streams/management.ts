@@ -131,6 +131,8 @@ export const deleteStreamAndNotifyFactory =
 
     // TODO: this has been around since before my time, we should get rid of it...
     // delay deletion by a bit so we can do auth checks
+    // (essentially: ensure authorizeResolver/authPolicies can retrieve the stream and
+    // validate a user's access in subscription field resolvers. we can do w/o it tho...)
     await wait(250)
 
     // Delete after event so we can do authz
