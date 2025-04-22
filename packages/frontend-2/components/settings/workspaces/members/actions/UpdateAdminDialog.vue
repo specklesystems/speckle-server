@@ -51,7 +51,7 @@
             <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
               You will be charged an adjusted amount for the partial period from today
               until your plan renewal on
-              {{ `${dayjs(currentBillingCycleEnd.value).format('MMMM D, YYYY')}` }}.
+              {{ dayjs(currentBillingCycleEnd).format('MMMM D, YYYY') }}.
             </p>
           </template>
         </CommonCard>
@@ -61,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
