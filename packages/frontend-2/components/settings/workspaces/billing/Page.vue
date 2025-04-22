@@ -6,7 +6,11 @@
       :workspace="workspace"
       hide-settings-links
     />
-
+    <BillingUsageAlert
+      v-if="reachedPlanLimit"
+      :plan-name="workspace?.plan?.name"
+      class="mb-4"
+    />
     <SettingsSectionHeader
       title="Billing and plans"
       text="Get billing information and upgrade your plan"
@@ -55,6 +59,7 @@ import {
   BillingInterval,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
+import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -63,6 +68,13 @@ graphql(`
     subscription {
       currency
       billingInterval
+    }
+    plan {
+      name
+      usage {
+        projectCount
+        modelCount
+      }
     }
     ...BillingAlert_Workspace
   }
@@ -88,5 +100,12 @@ const showBillingAlert = computed(
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+const reachedPlanLimit = computed(() =>
+  workspaceReachedPlanLimit(
+    workspace.value?.plan?.name,
+    workspace.value?.plan?.usage?.projectCount,
+    workspace.value?.plan?.usage?.modelCount
+  )
 )
 </script>
