@@ -186,7 +186,9 @@ const dialogTitle = computed(() => {
     case 'confirmation':
       return 'Confirm move'
     case 'project':
+      return 'Choose project to move'
     case 'workspace':
+      return 'Choose workspace'
     default:
       return 'Ready to move your project? '
   }
