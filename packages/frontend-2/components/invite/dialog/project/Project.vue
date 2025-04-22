@@ -136,9 +136,7 @@ const onSubmit = handleSubmit(async () => {
         : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
-            workspaceRole: u.project?.id
-              ? Roles.Workspace.Member
-              : Roles.Workspace.Guest
+            workspaceRole: Roles.Workspace.Guest
           }
         : {})
     }))
