@@ -57,9 +57,8 @@
       </p>
     </template>
     <InfiniteLoading
-      v-if="moveableProjects?.length && !search?.length"
+      v-if="!search?.length"
       :settings="{ identifier }"
-      class="py-4"
       @infinite="onInfiniteLoad"
     />
     <WorkspacePlanProjectModelLimitReachedDialog
