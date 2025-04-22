@@ -49,11 +49,9 @@
               will not incur any charges.
             </p>
             <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
-              You'll be charged immediately for the partial period from today until your
-              plan renewal on {{ currentBillingCycleEnd }} ({{
-                editorSeatPriceFormatted
-              }}/{{ intervalIsYearly ? 'year' : 'month' }} adjusted for the remaining
-              time).
+              You will be charged an adjusted amount for the partial period from today
+              until your plan renewal on
+              {{ `${dayjs(currentBillingCycleEnd.value).format('MMMM D, YYYY')}` }}.
             </p>
           </template>
         </CommonCard>
