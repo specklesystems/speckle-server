@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
     <BillingAlert v-if="showBillingAlert" :workspace="workspace" />
-    <BillingUsageAlert v-if="reachedPlanLimit" :plan-name="workspace?.plan?.name" />
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-x-2">
         <h1 class="text-heading-sm md:text-heading line-clamp-2">
@@ -51,7 +50,6 @@ import type { WorkspaceDashboardHeader_WorkspaceFragment } from '~~/lib/common/g
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceDashboardHeader_Workspace on Workspace {
@@ -60,13 +58,6 @@ graphql(`
     ...BillingAlert_Workspace
     id
     role
-    plan {
-      name
-      usage {
-        projectCount
-        modelCount
-      }
-    }
   }
 `)
 
@@ -82,12 +73,5 @@ const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspac
 const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
 const isWorkspaceMember = computed(
   () => props.workspace?.role === Roles.Workspace.Member
-)
-const reachedPlanLimit = computed(() =>
-  workspaceReachedPlanLimit(
-    props.workspace?.plan?.name,
-    props.workspace?.plan?.usage?.projectCount,
-    props.workspace?.plan?.usage?.modelCount
-  )
 )
 </script>
