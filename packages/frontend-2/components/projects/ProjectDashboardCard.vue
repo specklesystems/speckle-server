@@ -67,7 +67,7 @@
               v-if="!project.workspace?.id && isWorkspacesEnabled && isOwner"
               size="sm"
               color="outline"
-              @click="$emit('moveProject', project.id)"
+              @click="$emit('moveProject')"
             >
               Move project...
             </FormButton>
@@ -121,7 +121,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { RoleInfo, type StreamRoles } from '@speckle/shared'
 
 defineEmits<{
-  moveProject: [projectId: string]
+  (e: 'moveProject'): void
 }>()
 
 const props = defineProps<{

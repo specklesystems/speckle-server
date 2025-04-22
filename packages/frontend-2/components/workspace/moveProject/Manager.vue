@@ -175,6 +175,12 @@ if (workspaceResult.value?.workspaceBySlug) {
   selectedWorkspace.value = workspaceResult.value.workspaceBySlug
 }
 
+watch(projectResult, (newVal) => {
+  if (newVal?.project) {
+    selectedProject.value = newVal.project
+  }
+})
+
 const dialogTitle = computed(() => {
   switch (activeDialog.value) {
     case 'confirmation':
