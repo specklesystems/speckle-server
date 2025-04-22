@@ -282,8 +282,6 @@ const handleWorkspaceSelected = (
   configStore.setUserSelectedWorkspace(newSelectedWorkspace.id)
 }
 
-const filtersReady = computed(() => selectedWorkspace.value !== undefined)
-
 const {
   result: projectsResult,
   loading,
@@ -302,7 +300,6 @@ const {
     }
   }),
   () => ({
-    enabled: filtersReady.value,
     clientId: accountId.value,
     debounce: 500,
     fetchPolicy: 'network-only'
