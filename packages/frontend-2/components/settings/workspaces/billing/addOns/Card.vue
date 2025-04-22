@@ -9,7 +9,11 @@
       <slot name="subtitle" />
     </div>
     <div class="flex items-center gap-x-2">
-      <div v-if="button" :key="buttonId" v-tippy="button.disabledMessage">
+      <div
+        v-if="button"
+        :key="`${buttonId}-${button.disabled}`"
+        v-tippy="button.disabledMessage"
+      >
         <FormButton
           v-bind="button.props || {}"
           :disabled="button.props?.disabled || button.disabled"
