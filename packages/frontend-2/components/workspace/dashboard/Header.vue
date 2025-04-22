@@ -1,8 +1,6 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="showBillingAlert">
-      <BillingAlert :workspace="workspace" />
-    </div>
+    <BillingAlert v-if="showBillingAlert" :workspace="workspace" />
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-x-2">
         <h1 class="text-heading-sm md:text-heading line-clamp-2">

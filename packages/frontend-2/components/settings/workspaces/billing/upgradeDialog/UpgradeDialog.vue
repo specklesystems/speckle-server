@@ -126,6 +126,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       color: 'primary',
       loading: isLoading.value
     },
+    disabled: showAddonSelect.value
+      ? includeUnlimitedAddon.value === null
+      : isLoading.value,
     onClick: () => {
       if (showAddonSelect.value) {
         showAddonSelect.value = false
