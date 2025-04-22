@@ -33,9 +33,7 @@
       :items="guests"
       :loading="loading"
       :empty-message="
-        search.length
-          ? `No guests found for '${search}'`
-          : 'This workspace has no guests'
+        search.length || seatTypeFilter ? 'No results' : 'This workspace has no guests'
       "
     >
       <template #name="{ item }">

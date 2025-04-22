@@ -35,7 +35,9 @@
       :items="members"
       :loading="loading"
       :empty-message="
-        hasNoResults ? 'No members found' : 'This workspace has no members'
+        search.length || seatTypeFilter || roleFilter
+          ? 'No results'
+          : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -210,8 +212,6 @@ const members = computed(() => {
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
-
-const hasNoResults = computed(() => workspace.value?.team.items.length === 0)
 
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
