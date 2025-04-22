@@ -93,7 +93,11 @@ export const settingsWorkspacesInvitesSearchQuery = graphql(`
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersInvitesTable_Workspace
+      id
+      ...SettingsWorkspacesMembersTableHeader_Workspace
+      invitedTeam(filter: $invitesFilter) {
+        ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
+      }
     }
   }
 `)
