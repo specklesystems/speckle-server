@@ -548,8 +548,8 @@ export const useWorkspaceUpdateSeatType = () => {
     if (result?.data) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'User seat type updated',
-        description: `The user's seat type has been updated to ${input.seatType}`
+        title: 'Seat updated',
+        description: `The user's seat has been updated to ${input.seatType}`
       })
 
       mixpanel.track('Workspace User Seat Type Updated', {
