@@ -27,3 +27,5 @@ export type GetWorkspaceRoleAndSeat = (params: {
 export type GetUserWorkspaceCountFactory = (params: {
   userId: string
 }) => Promise<number>
+
+export type GetTotalWorkspaceCountFactory = () => Promise<number>

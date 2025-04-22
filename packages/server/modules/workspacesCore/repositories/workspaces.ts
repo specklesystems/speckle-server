@@ -1,4 +1,7 @@
-import { GetUserWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
+import {
+  GetTotalWorkspaceCountFactory,
+  GetUserWorkspaceCountFactory
+} from '@/modules/workspacesCore/domain/operations'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
   WorkspaceAcl as WorkspaceAclDb,
@@ -22,4 +25,13 @@ export const getUserWorkspaceCountFactory =
     // knex types are off here
     const [{ count }] = (await q) as unknown as { count: string }[]
     return parseInt(count)
+  }
+
+export const getTotalWorkspaceCountFactory =
+  (deps: { db: Knex }): GetTotalWorkspaceCountFactory =>
+  async () => {
+    const query = tables.workspaces(deps.db).count()
+    const [{ count }] = await query
+
+    return parseInt(count + '')
   }

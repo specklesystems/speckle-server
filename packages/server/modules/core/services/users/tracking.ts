@@ -13,6 +13,7 @@ import {
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { GetUserWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
 import { resolveDistinctId } from '@speckle/shared'
+import { Logger } from 'pino'
 
 export const updateUserMixpanelProfileFactory =
   (deps: {
@@ -21,6 +22,7 @@ export const updateUserMixpanelProfileFactory =
     getUserWorkspaceCount: GetUserWorkspaceCountFactory
     getUserAuthoredCommitCounts: GetUserAuthoredCommitCounts
     getMixpanelClient: typeof getMixpanelClient
+    logger: Logger
   }): UpdateUserMixpanelProfile =>
   async (params) => {
     const mp = deps.getMixpanelClient()
@@ -58,6 +60,7 @@ export const updateUserMixpanelProfileFactory =
 
     const distinctId = resolveDistinctId(user.email)
     mp.people.set(distinctId, properties)
+    deps.logger.info(properties, 'Updated user mp profile')
   }
 
 export const setUserOnboardingChoicesFactory =
