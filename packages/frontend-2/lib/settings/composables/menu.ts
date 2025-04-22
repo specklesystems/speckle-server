@@ -15,6 +15,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
@@ -153,6 +154,10 @@ export const useSettingsMembersActions = (params: {
     workspaceSlug: params.workspaceSlug.value || ''
   })
 
+  const { statusIsExpired, statusIsCanceled } = useWorkspacePlan(
+    params.workspaceSlug.value || ''
+  )
+
   const targetUserRole = computed(() => {
     return params.targetUser.value.role
   })
@@ -241,15 +246,23 @@ export const useSettingsMembersActions = (params: {
     if (showUpgradeEditor.value) {
       headerItems.push({
         title: 'Upgrade to editor...',
-        id: WorkspaceUserActionTypes.UpgradeEditor
+        id: WorkspaceUserActionTypes.UpgradeEditor,
+        disabled: statusIsExpired.value || statusIsCanceled.value,
+        disabledTooltip: 'This workspace has an expired or canceled plan'
       })
     }
     if (showDowngradeEditor.value) {
       headerItems.push({
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
-        disabled: targetUserRole.value === Roles.Workspace.Admin,
-        disabledTooltip: 'Admins must be on an Editor seat'
+        disabled:
+          targetUserRole.value === Roles.Workspace.Admin ||
+          statusIsExpired.value ||
+          statusIsCanceled.value,
+        disabledTooltip:
+          statusIsExpired.value || statusIsCanceled.value
+            ? 'This workspace has an expired or canceled plan'
+            : 'Admins must be on an Editor seat'
       })
     }
     if (showUpdateProjectPermissions.value) {
