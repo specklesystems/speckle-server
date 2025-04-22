@@ -63,14 +63,23 @@
                 }`
               }}
             </FormButton>
-            <FormButton
-              v-if="!project.workspace?.id && isWorkspacesEnabled && isOwner"
-              size="sm"
-              color="outline"
-              @click="$emit('moveProject')"
+            <div
+              v-if="!project.workspace?.id && isWorkspacesEnabled"
+              v-tippy="
+                !isOwner
+                  ? 'Only the project owner can move this project into a workspace'
+                  : undefined
+              "
             >
-              Move project...
-            </FormButton>
+              <FormButton
+                size="sm"
+                color="outline"
+                :disabled="!isOwner"
+                @click="$emit('moveProject')"
+              >
+                Move project...
+              </FormButton>
+            </div>
           </div>
         </div>
       </div>
