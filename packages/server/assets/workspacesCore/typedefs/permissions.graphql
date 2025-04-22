@@ -4,4 +4,5 @@ extend type Workspace {
 
 type WorkspacePermissionChecks {
   canCreateProject: PermissionCheckResult!
+  canMoveProjectToWorkspace(projectId: String): PermissionCheckResult!
 }

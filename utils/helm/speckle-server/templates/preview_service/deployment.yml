@@ -1,4 +1,4 @@
-{{- if .Values.preview_service.deployInCluster }}
+{{- if .Values.preview_service.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,8 +12,10 @@ spec:
     matchLabels:
       app: speckle-preview-service
       project: speckle-server
+  {{- with .Values.preview_service.deploymentStrategy }}
   strategy:
-    type: RollingUpdate
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -32,21 +34,24 @@ spec:
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
-          exec:
-            command:
-              - node
-              - -e
-              # just a dummy output for now, not yet sure how to do liveliness with the new setup.
-              # if there is no job in the queue, the service does nothing, so the prev solution would not work
-              - {{ printf "console.log(%s)" .Values.preview_service.puppeteer.timeoutMilliseconds }}
+          httpGet:
+            path: /liveness
+            port: metrics
+
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: metrics
 
         resources:
+          {{- with .Values.preview_service.requests }}
           requests:
-            cpu: {{ .Values.preview_service.requests.cpu }}
-            memory: {{ .Values.preview_service.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.preview_service.limits }}
           limits:
-            cpu: {{ .Values.preview_service.limits.cpu }}
-            memory: {{ .Values.preview_service.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         securityContext:
           allowPrivilegeEscalation: false
@@ -94,6 +99,15 @@ spec:
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
 
+          {{- if .Values.preview_service.gpu.enabled }}
+          - name: GPU_ENABLED
+            value: {{ .Values.preview_service.gpu.enabled | quote }}
+          {{- end }}
+
+          {{- with .Values.preview_service.additionalEnvVars }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
       {{- end }}
@@ -125,7 +139,4 @@ spec:
         runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
-
-      # Should be > preview generation time ( 1 hour for good measure )
-      terminationGracePeriodSeconds: 3600
 {{- end }}

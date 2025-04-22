@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>{{ title }}</template>
     <CommonAlert
-      v-if="props.isDomainCompliant === false"
+      v-if="props.user.user.workspaceDomainPolicyCompliant === false"
       color="danger"
       hide-icon
       size="xs"
@@ -21,12 +21,12 @@
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
             hide-tooltip
-            :user="user"
+            :user="user.user"
             light-style
             class="bg-foundation"
             no-bg
           />
-          {{ user.name }}
+          {{ user.user.name }}
         </div>
       </CommonCard>
 
@@ -50,25 +50,20 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
-  user: UserItem
+  user: SettingsWorkspacesMembersActionsMenu_UserFragment
   newRole: MaybeNullOrUndefined<string>
-  isDomainCompliant?: MaybeNullOrUndefined<boolean>
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
@@ -78,6 +73,8 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserRole = useWorkspaceUpdateRole()
+
+const isLoading = ref(false)
 
 const title = computed(() => {
   if (!props.newRole) return ''
@@ -93,7 +90,7 @@ const buttonText = computed(() => {
 
 const mainMessage = computed(() => {
   if (!props.newRole) return undefined
-  if (props.isDomainCompliant === false) return undefined
+  if (props.user.user.workspaceDomainPolicyCompliant === false) return undefined
   if (props.newRole === Roles.Workspace.Member) {
     return 'They will be able to access all projects.'
   }
@@ -102,7 +99,7 @@ const mainMessage = computed(() => {
 
 const roleInfo = computed(() => {
   if (!props.newRole) return undefined
-  if (props.isDomainCompliant === false) return undefined
+  if (props.user.user.workspaceDomainPolicyCompliant === false) return undefined
   return WorkspaceRoleDescriptions[
     props.newRole as keyof typeof WorkspaceRoleDescriptions
   ]
@@ -111,14 +108,19 @@ const roleInfo = computed(() => {
 const handleConfirm = async () => {
   if (!props.workspace?.id || !props.newRole) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: props.newRole as string,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: props.newRole as string,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -130,10 +132,11 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: buttonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm,
-    disabled: props.isDomainCompliant === false
+    disabled: props.user.user.workspaceDomainPolicyCompliant === false
   }
 ])
 </script>

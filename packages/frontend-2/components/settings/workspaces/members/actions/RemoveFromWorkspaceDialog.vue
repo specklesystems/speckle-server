@@ -1,17 +1,17 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
-    <template #header>Remove member?</template>
+    <template #header>Remove from workspace?</template>
     <div class="flex flex-col gap-4 mb-4 -mt-1">
       <CommonCard class="bg-foundation-2 text-body-2xs !p-2">
         <div class="flex flex-row gap-x-2 items-center">
           <UserAvatar
             hide-tooltip
-            :user="user"
+            :user="user.user"
             light-style
             class="bg-foundation"
             no-bg
           />
-          {{ user.name }}
+          {{ user.user.name }}
         </div>
       </CommonCard>
 
@@ -26,20 +26,16 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import type { UserItem } from '~/components/settings/workspaces/members/MembersTable.vue'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersActionsMenu_UserFragment,
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
-  user: UserItem
-  workspace?: MaybeNullOrUndefined<
-    | SettingsWorkspacesMembersTable_WorkspaceFragment
-    | SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
-  >
+  user: SettingsWorkspacesMembersActionsMenu_UserFragment
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
@@ -48,19 +44,26 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const isLoading = ref(false)
+
 const updateUserRole = useWorkspaceUpdateRole()
 
 const handleConfirm = async () => {
   if (!props.workspace?.id) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: null,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: null,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -71,6 +74,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: 'Remove',
+    props: {
+      color: 'primary',
+      loading: isLoading.value
+    },
     onClick: handleConfirm
   }
 ])

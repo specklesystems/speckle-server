@@ -1,5 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import {
+  SeatTypes,
   waitForever,
   type MaybeAsync,
   type Optional,
@@ -48,6 +49,7 @@ import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
 import type { ApolloCache } from '@apollo/client/core'
 import { workspaceLastAdminCheckQuery } from '../graphql/queries'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -281,6 +283,7 @@ export const useWorkspaceInviteManager = <
   const route = options?.route || useRoute()
   const goHome = useNavigateToHome()
   const { activeUser } = useActiveUser()
+  const { mutateActiveWorkspaceSlug } = useNavigation()
 
   const loading = ref(false)
 
@@ -335,7 +338,8 @@ export const useWorkspaceInviteManager = <
           // Redirect
           if (accept) {
             if (workspaceSlug) {
-              window.location.href = workspaceRoute(workspaceSlug)
+              navigateTo(workspaceRoute(workspaceSlug))
+              mutateActiveWorkspaceSlug(workspaceSlug)
             } else {
               window.location.reload()
             }
@@ -369,6 +373,8 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
+  const { mutateActiveWorkspaceSlug } = useNavigation()
+
   return async (
     input: WorkspaceCreateInput,
     options?: Partial<{
@@ -420,6 +426,7 @@ export function useCreateWorkspace() {
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
+        mutateActiveWorkspaceSlug(res.data?.workspaceMutations.create.slug)
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
@@ -463,6 +470,20 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'teamByRole',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
+          )
+          modifyObjectField(
+            cache,
+            getCacheId('WorkspaceCollaborator', input.userId),
+            'seatType',
+            () => SeatTypes.Editor
+          )
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -634,12 +655,11 @@ export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) =>
     slug: workspaceSlug
   })
 
-  const hasSingleAdmin = computed(() => {
-    const admins = result.value?.workspaceBySlug?.team.items || []
-    return admins.length === 1
-  })
+  const isLastAdmin = computed(
+    () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1
+  )
 
   return {
-    hasSingleAdmin
+    isLastAdmin
   }
 }

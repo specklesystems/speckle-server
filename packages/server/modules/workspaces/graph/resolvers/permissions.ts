@@ -14,6 +14,15 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canCreateProject)
+    },
+    canMoveProjectToWorkspace: async (parent, args, ctx) => {
+      const canMoveProjectToWorkspace =
+        await ctx.authPolicies.project.canMoveToWorkspace({
+          userId: ctx.userId,
+          projectId: args.projectId ?? undefined,
+          workspaceId: parent.workspaceId
+        })
+      return Authz.toGraphqlResult(canMoveProjectToWorkspace)
     }
   }
 } as Resolvers

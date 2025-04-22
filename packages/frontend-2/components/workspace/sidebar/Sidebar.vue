@@ -1,95 +1,63 @@
 <template>
-  <div class="w-full">
-    <div class="w-full">
-      <LayoutSidebar>
-        <div class="flex flex-col divide-y divide-outline-3">
-          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
-            <BillingAlert
-              :workspace="workspaceInfo"
-              :actions="billingAlertAction"
-              condensed
-            />
-          </div>
-          <div class="px-4 py-2">
-            <WorkspaceSidebarAbout
-              :workspace-info="workspaceInfo"
-              collapsible
-              :is-workspace-admin="isWorkspaceAdmin"
-            />
-          </div>
-          <div v-if="!isWorkspaceGuest" class="px-4 py-2">
-            <WorkspaceSidebarMembers
-              :workspace-info="workspaceInfo"
-              :is-workspace-admin="isWorkspaceAdmin"
-              collapsible
-              @show-invite-dialog="$emit('show-invite-dialog')"
-            />
-          </div>
-          <div v-if="isWorkspaceAdmin && !hasDomains" class="px-4 py-2">
-            <WorkspaceSidebarSecurity :workspace-info="workspaceInfo" />
-          </div>
-        </div>
-      </LayoutSidebar>
+  <LayoutSidebar class="w-full">
+    <div class="flex flex-col divide-y divide-outline-3">
+      <WorkspaceSidebarFreePlanAlert
+        v-if="!isWorkspaceGuest && isFreePlan"
+        :slug="workspaceSlug"
+      />
+      <WorkspaceSidebarAbout
+        :workspace="workspace"
+        :is-workspace-admin="isWorkspaceAdmin"
+      />
+      <WorkspaceSidebarMembers
+        v-if="!isWorkspaceGuest"
+        :workspace="workspace"
+        :is-workspace-admin="isWorkspaceAdmin"
+        collapsible
+      />
+      <WorkspaceSidebarSecurity
+        v-if="isWorkspaceAdmin && !hasDomains"
+        :workspace="workspace"
+      />
     </div>
-  </div>
+  </LayoutSidebar>
 </template>
+
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import { LayoutSidebar, type AlertAction } from '@speckle/ui-components'
-import {
-  WorkspacePlanStatuses,
-  type WorkspaceProjectList_WorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
+import { LayoutSidebar } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
+import { useQuery } from '@vue/apollo-composable'
+import { workspaceSidebarQuery } from '~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
-    ...WorkspaceDashboardAbout_Workspace
-    ...WorkspaceTeam_Workspace
-    ...WorkspaceSecurity_Workspace
+    ...WorkspaceSidebarMembers_Workspace
+    ...WorkspaceSidebarAbout_Workspace
+    ...WorkspaceSidebarSecurity_Workspace
+    id
+    role
     slug
-    plan {
-      status
+    domains {
+      id
     }
   }
 `)
 
-defineEmits<{
-  (e: 'show-invite-dialog'): void
-  (e: 'show-move-projects-dialog'): void
-}>()
-
 const props = defineProps<{
-  workspaceInfo: WorkspaceProjectList_WorkspaceFragment
+  workspaceSlug: string
 }>()
 
-const isWorkspaceGuest = computed(
-  () => props.workspaceInfo.role === Roles.Workspace.Guest
-)
+const { result: workspaceResult } = useQuery(workspaceSidebarQuery, () => ({
+  workspaceSlug: props.workspaceSlug
+}))
 
-const isWorkspaceAdmin = computed(
-  () => props.workspaceInfo.role === Roles.Workspace.Admin
-)
+const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 
-const isInTrial = computed(
-  () =>
-    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
-    !props.workspaceInfo.plan
-)
+const { isFreePlan } = useWorkspacePlan(props.workspaceSlug)
 
-const hasDomains = computed(() => props.workspaceInfo.domains?.length)
-
-const billingAlertAction = computed<Array<AlertAction>>(() => {
-  if (isInTrial.value && isWorkspaceAdmin.value) {
-    return [
-      {
-        title: 'Subscribe',
-        onClick: () =>
-          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
-      }
-    ]
-  }
-  return []
-})
+const isWorkspaceGuest = computed(() => workspace.value?.slug === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+const hasDomains = computed(() => workspace.value?.domains?.length)
 </script>

@@ -21,6 +21,8 @@ export type GetWorkspaceProjectCount = (
   args: WorkspaceContext
 ) => Promise<number | null>
 
+export type GetWorkspaceModelCount = (args: WorkspaceContext) => Promise<number | null>
+
 export type GetWorkspaceSeat = (
   args: UserContext & WorkspaceContext
 ) => Promise<WorkspaceSeatType | null>
@@ -34,3 +36,5 @@ export type GetWorkspaceSsoSession = (
 ) => Promise<WorkspaceSsoSession | null>
 
 export type GetEnv = () => Promise<FeatureFlags>
+
+export type GetAdminOverrideEnabled = () => Promise<boolean>

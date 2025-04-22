@@ -157,7 +157,10 @@ export const createUserFactory =
   }): CreateValidatedUser =>
   async (user, options = undefined) => {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
-    const { skipPropertyValidation = false } = options || {}
+    const {
+      skipPropertyValidation = false,
+      allowPersonalEmail = !FF_NO_PERSONAL_EMAILS_ENABLED
+    } = options || {}
 
     const signUpCtx = user.signUpContext
 
@@ -175,8 +178,7 @@ export const createUserFactory =
     const isBlockedDomain = blockedDomains.includes(
       finalUser.email.split('@')[1]?.toLowerCase()
     )
-    const requireWorkDomain =
-      !user?.signUpContext?.isInvite && FF_NO_PERSONAL_EMAILS_ENABLED
+    const requireWorkDomain = !user?.signUpContext?.isInvite && !allowPersonalEmail
 
     if (requireWorkDomain && isBlockedDomain) throw new BlockedEmailDomainError()
 

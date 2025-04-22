@@ -3,13 +3,14 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
+    class="group rounded-xl bg-foundation border border-outline-3"
+    :class="isLimited ? '' : 'hover:border-outline-5'"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
         <NuxtLink
-          class="text-body-xs font-medium truncate text-foreground pl-1"
-          :href="viewerRoute"
+          class="text-body-xs font-medium truncate text-foreground pl-1 select-none"
+          :href="isLimited ? undefined : viewerRoute"
         >
           {{ message }}
         </NuxtLink>
@@ -19,7 +20,8 @@
           :project-id="projectId"
           :model-id="modelId"
           :version-id="version.id"
-          :selection-disabled="selectionDisabled"
+          :selection-disabled="!isSelectionDisabled.authorized"
+          :selection-disabled-message="isSelectionDisabled.message"
           @select="onSelect"
           @chosen="$emit('chosen', $event)"
           @embed="$emit('embed')"
@@ -35,9 +37,18 @@
             class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
           />
           <template v-else>
-            <NuxtLink :href="viewerRoute" class="h-full w-full">
+            <NuxtLink v-if="!isLimited" :href="viewerRoute" class="h-full w-full">
               <PreviewImage :preview-url="version.previewUrl" />
             </NuxtLink>
+            <div
+              v-else
+              class="h-full w-full diagonal-stripes flex items-center justify-center p-2"
+            >
+              <ViewerResourcesUpgradeLimitAlert
+                class="!bg-foundation !text-foreground-2"
+                limit-type="version"
+              />
+            </div>
             <div
               v-if="
                 isAutomateModuleEnabled &&
@@ -60,14 +71,12 @@
             v-if="isSelectable"
             v-model="checkboxModel"
             v-tippy="
-              selectionDisabled
-                ? `To select this version you must be its or its project's owner`
-                : undefined
+              !isSelectionDisabled.authorized ? isSelectionDisabled.message : undefined
             "
             name="selected"
             hide-label
             :value="true"
-            :disabled="selectionDisabled"
+            :disabled="!isSelectionDisabled.authorized"
           />
           <div class="text-xs text-foreground-2 mr-1 truncate flex-1">
             Created
@@ -96,6 +105,7 @@
 </template>
 <script lang="ts" setup>
 import type {
+  FullPermissionCheckResultFragment,
   PendingFileUploadFragment,
   ProjectModelPageVersionsCardVersionFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -114,6 +124,7 @@ graphql(`
     }
     createdAt
     previewUrl
+    referencedObject
     sourceApplication
     commentThreadCount: commentThreads(limit: 0) {
       totalCount
@@ -122,6 +133,11 @@ graphql(`
     ...ProjectModelPageDialogMoveToVersion
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -140,12 +156,20 @@ const props = defineProps<{
   modelId: string
   selectable?: boolean
   selected?: boolean
-  selectionDisabled?: boolean
+  workspaceSlug?: string
 }>()
 
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const showActionsMenu = ref(false)
+
+// Check if the version is limited due to plan restrictions
+const isLimited = computed(() => {
+  if (isPendingVersionFragment(props.version)) return false
+
+  // If it's a regular version, check if referencedObject is null (indicating plan limits)
+  return props.version.referencedObject === null
+})
 
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)
@@ -179,6 +203,16 @@ const sourceApp = computed(() =>
 
 const isSelectable = computed(
   () => props.selectable && !isPendingVersionFragment(props.version)
+)
+const isSelectionDisabled = computed(
+  (): FullPermissionCheckResultFragment =>
+    isPendingVersionFragment(props.version)
+      ? {
+          authorized: false,
+          message: 'You cannot select a pending version',
+          code: 'PENDING_VERSION_ERROR'
+        }
+      : props.version.permissions.canUpdate
 )
 
 const message = computed(() => {

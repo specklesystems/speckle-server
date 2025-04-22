@@ -197,7 +197,7 @@ export function buildApolloSubscriptionServer(params: {
         try {
           const headers = getHeaders({ connContext, connectionParams })
           const buildCtx = await buildContext({ token })
-          buildCtx.log.info(
+          buildCtx.log.debug(
             {
               userId: buildCtx.userId,
               ws_protocol: webSocket.protocol,
@@ -315,9 +315,9 @@ export async function init() {
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(LoggingExpressMiddleware)
   app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
-  app.use(LoggingExpressMiddleware)
 
   if (asyncRequestContextEnabled()) {
     startupLogger.info('Async request context tracking enabled 👀')

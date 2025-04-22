@@ -79,7 +79,9 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 
       const ttlMs = isNumber(params.ttlMs) ? params.ttlMs : params.ttlMs(...args)
       const cacheKey = key(...args)
-      const logger = (getRequestLogger() || cacheLogger).child({ cacheName: name })
+      const logger = (getRequestLogger() || cacheLogger).child({
+        cacheName: name
+      })
 
       if (skipCache) {
         logger.info("Cache '{cacheName}' skipped for specific args")
@@ -224,3 +226,12 @@ export const inMemoryCacheProviderFactory = (deps?: {
     }
   }
 }
+
+export const appConstantValueCache = new TTLCache<string, unknown>()
+
+/**
+ * Use this for roles, scopes and other constant values that are not supposed to change during the app's lifetime.
+ * This cache gets cleared right after the app starts, to ensure up to date values (roles, scopes et.c)
+ */
+export const appConstantValueCacheProviderFactory = () =>
+  inMemoryCacheProviderFactory({ cache: appConstantValueCache })

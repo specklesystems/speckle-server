@@ -47,7 +47,9 @@ export const updateWorkspacePlanFactory =
       case 'business':
       case 'plus':
       case 'team':
+      case 'teamUnlimited':
       case 'pro':
+      case 'proUnlimited':
         switch (status) {
           case 'trial':
           case 'expired':
@@ -71,6 +73,8 @@ export const updateWorkspacePlanFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'teamUnlimitedInvoiced':
+      case 'proUnlimitedInvoiced':
         switch (status) {
           case 'valid':
             await upsertWorkspacePlan({

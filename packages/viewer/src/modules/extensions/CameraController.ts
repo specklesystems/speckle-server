@@ -705,7 +705,12 @@ export class CameraController extends Extension implements SpeckleCamera {
         break
 
       case '3d':
-      case '3D':
+        this._activeControls.fromPositionAndTarget(
+          new Vector3().copy(this.viewer.World.worldBox.max),
+          canonicalTarget
+        )
+        this.zoomExtents()
+        break
       default: {
         this.enableRotations()
         break

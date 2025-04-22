@@ -26,6 +26,7 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
 import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -220,6 +221,12 @@ export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
   }
 }>
 
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+}) => Promise<void>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
@@ -238,6 +245,55 @@ export type GetWorkspacesProjectsCounts = (params: {
   workspaceIds: string[]
 }) => Promise<{
   [workspaceId: string]: number
+}>
+
+export type GetWorkspaceModelCount = (params: {
+  workspaceId: string
+}) => Promise<number>
+
+export type GetPaginatedWorkspaceProjectsArgs = {
+  workspaceId: string
+  /**
+   * If set, will take the user's workspace role into account when fetching projects.
+   * E.g. guests will only see projects they have explicit access to.
+   */
+  userId?: string
+  cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 25, if unset
+   */
+  limit?: MaybeNullOrUndefined<number>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      /**
+       * Search for projects by name
+       */
+      search: MaybeNullOrUndefined<string>
+      /**
+       * Only get projects that the active user has an explicit role in
+       */
+      withProjectRoleOnly: MaybeNullOrUndefined<boolean>
+    }>
+  >
+}
+
+export type GetPaginatedWorkspaceProjectsItems = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  items: Stream[]
+  cursor: string | null
+}>
+
+export type GetPaginatedWorkspaceProjectsTotalCount = (
+  params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>
+) => Promise<number>
+
+export type GetPaginatedWorkspaceProjects = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  cursor: string | null
+  items: Stream[]
+  totalCount: number
 }>
 
 /** Workspace Project Roles */
@@ -445,3 +501,8 @@ export type SetUserActiveWorkspace = (args: {
   /** Is the user in a "personal project" outside of a workspace? */
   isProjectsActive?: boolean
 }) => Promise<void>
+
+export type IntersectProjectCollaboratorsAndWorkspaceCollaborators = (params: {
+  projectId: string
+  workspaceId: string
+}) => Promise<UserRecord[]>

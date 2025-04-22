@@ -1,13 +1,20 @@
 import {
+  Currency,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import {
+  Workspace,
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
 import {
   Nullable,
   Optional,
   PaidWorkspacePlan,
   PaidWorkspacePlans,
+  PaidWorkspacePlansNew,
+  PaidWorkspacePlansOld,
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
@@ -16,9 +23,20 @@ import {
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
+export { Currency } from '@/modules/gatekeeperCore/domain/billing'
+export { WorkspaceSeat, WorkspaceSeatType }
+export {
+  GetWorkspaceRoleAndSeat,
+  GetWorkspaceRolesAndSeats
+} from '@/modules/workspacesCore/domain/operations'
+
 export type GetWorkspacePlan = (args: {
   workspaceId: string
 }) => Promise<WorkspacePlan | null>
+
+export type GetWorkspacePlansByWorkspaceId = (args: {
+  workspaceIds: string[]
+}) => Promise<Record<string, WorkspacePlan>>
 
 export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
@@ -52,6 +70,7 @@ export type CheckoutSession = SessionInput & {
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   createdAt: Date
   updatedAt: Date
 }
@@ -77,16 +96,6 @@ export type UpdateCheckoutSessionStatus = (args: {
   paymentStatus: SessionPaymentStatus
 }) => Promise<void>
 
-// Remove with FF_WORKSPACES_NEW_PLANS_ENABLED
-export type CreateCheckoutSessionOld = (args: {
-  workspaceId: string
-  workspaceSlug: string
-  seatCount: number
-  guestCount: number
-  workspacePlan: PaidWorkspacePlans
-  billingInterval: WorkspacePlanBillingIntervals
-  isCreateFlow: boolean
-}) => Promise<CheckoutSession>
 export type CreateCheckoutSession = (args: {
   workspaceId: string
   workspaceSlug: string
@@ -94,6 +103,7 @@ export type CreateCheckoutSession = (args: {
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean
+  currency: Currency
 }) => Promise<CheckoutSession>
 
 export type WorkspaceSubscription = {
@@ -102,6 +112,7 @@ export type WorkspaceSubscription = {
   updatedAt: Date
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   subscriptionData: SubscriptionData
 }
 const subscriptionProduct = z.object({
@@ -171,22 +182,47 @@ export type GetSubscriptionData = (args: {
 export type GetWorkspacePlanPriceId = (args: {
   workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | 'starter' | 'plus' | 'business' | 'team' | 'pro'
+export type GbpOnlyPrice = { gbp: string }
+type GbpOnlyProductPrice = {
+  monthly: GbpOnlyPrice
+  yearly: GbpOnlyPrice
+}
+type OldProductPriceIds = Record<
+  PaidWorkspacePlansOld | 'guest',
+  { productId: string } & GbpOnlyProductPrice
+>
 
-export type GetWorkspacePlanProductAndPriceIds = () => Omit<
-  Record<Products, { productId: string; monthly: string; yearly: string }>,
-  'team' | 'pro'
-> & {
-  team?: { productId: string; monthly: string }
-  pro?: { productId: string; monthly: string; yearly: string }
+export type MultiCurrencyPrice = {
+  usd: string
+  gbp: string
+}
+type MultiCurrencyProductPrice = {
+  monthly: MultiCurrencyPrice
+  yearly: MultiCurrencyPrice
 }
 
+export const isMultiCurrencyPrice = (
+  priceIds: GbpOnlyPrice | MultiCurrencyPrice
+): priceIds is MultiCurrencyPrice =>
+  Object.values(Currency)
+    .map((c) => c in priceIds)
+    .every((p) => p === true)
+
+type NewProductPriceIds = Record<
+  PaidWorkspacePlansNew,
+  { productId: string } & MultiCurrencyProductPrice
+>
+
+export type WorkspacePlanProductAndPriceIds = OldProductPriceIds & NewProductPriceIds
+
+export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
   {
@@ -199,20 +235,6 @@ export type ReconcileSubscriptionData = (args: {
   prorationBehavior: 'always_invoice' | 'create_prorations' | 'none'
 }) => Promise<void>
 
-export const WorkspaceSeatType = <const>{
-  Viewer: 'viewer',
-  Editor: 'editor'
-}
-export type WorkspaceSeatType =
-  (typeof WorkspaceSeatType)[keyof typeof WorkspaceSeatType]
-
-export type WorkspaceSeat = {
-  workspaceId: string
-  userId: string
-  type: WorkspaceSeatType
-  createdAt: Date
-  updatedAt: Date
-}
 // Prices
 export type GetRecurringPrices = () => Promise<
   {
@@ -224,26 +246,3 @@ export type GetRecurringPrices = () => Promise<
 >
 
 export type GetWorkspacePlanProductPrices = () => Promise<WorkspacePlanProductPrices>
-
-export type GetWorkspaceRolesAndSeats = (params: {
-  workspaceId: string
-  userIds?: string[]
-}) => Promise<{
-  [userId: string]: {
-    role: WorkspaceAcl
-    seat: Nullable<WorkspaceSeat>
-    userId: string
-  }
-}>
-
-export type GetWorkspaceRoleAndSeat = (params: {
-  workspaceId: string
-  userId: string
-}) => Promise<
-  | {
-      role: WorkspaceAcl
-      seat: Nullable<WorkspaceSeat>
-      userId: string
-    }
-  | undefined
->

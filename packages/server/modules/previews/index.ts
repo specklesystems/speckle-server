@@ -10,7 +10,7 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
-import Redis, { RedisOptions } from 'ioredis'
+import Redis, { type RedisOptions } from 'ioredis'
 import { createBullBoard } from 'bull-board'
 import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
@@ -18,7 +18,7 @@ import { Roles, TIME } from '@speckle/shared'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { previewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -30,6 +30,7 @@ import {
   initializeMetrics,
   PreviewJobDurationStep
 } from '@/modules/previews/observability/metrics'
+import { addRequestQueueListeners } from '@/modules/previews/queues/previews'
 
 const getPreviewQueues = (params: { responseQueueName: string }) => {
   const { responseQueueName } = params
@@ -66,19 +67,15 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
       }
     }
   }
+
+  // previews are requested on this queue
   const previewRequestQueue = new Bull('preview-service-jobs', opts)
-  // these events are published on the job queue, results come back on the response queue
-  previewRequestQueue.on('error', (err) => {
-    logger.error({ err }, 'Preview generation failed')
+  addRequestQueueListeners({
+    logger,
+    previewRequestQueue
   })
-  previewRequestQueue.on('failed', (job, err) => {
-    const jobId = 'jobId' in job.data ? job.data.jobId : undefined
-    logger.error({ err, jobId }, 'Preview job {jobId} failed.')
-  })
-  previewRequestQueue.on('active', (job) => {
-    const jobId = 'jobId' in job.data ? job.data.jobId : undefined
-    logger.info({ jobId }, 'Preview job {jobId} processing started.')
-  })
+
+  // rendered previews are sent back on this queue
   const previewResponseQueue = new Bull(responseQueueName, opts)
   return { previewRequestQueue, previewResponseQueue }
 }
@@ -128,7 +125,17 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
     app.use(previewRouter)
 
     void previewResponseQueue.process(async (payload, done) => {
-      const parsedMessage = previewResultPayload.safeParse(payload.data)
+      const { attemptsMade } = payload
+      const parsedMessage = previewResultPayload
+        .refine((data) => data.jobId.split('.').length === 2, {
+          message: 'jobId must be in the format "projectId.objectId"'
+        })
+        .transform((data) => ({
+          ...data,
+          projectId: data.jobId.split('.')[0],
+          objectId: data.jobId.split('.')[1]
+        }))
+        .safeParse(payload.data)
       if (!parsedMessage.success) {
         logger.error(
           { payload: payload.data, reason: parsedMessage.error },
@@ -141,11 +148,17 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
         done(parsedMessage.error)
         return
       }
-      const [projectId, objectId] = parsedMessage.data.jobId.split('.')
+      const parsedResult = parsedMessage.data
+      const { projectId, objectId } = parsedResult
+      const jobLogger = logger.child({
+        projectId,
+        objectId,
+        responsePriorAttemptsMade: attemptsMade
+      })
 
       const projectDb = await getProjectDbClient({ projectId })
       await consumePreviewResultFactory({
-        logger,
+        logger: jobLogger,
         storePreview: storePreviewFactory({ db: projectDb }),
         upsertObjectPreview: upsertObjectPreviewFactory({ db: projectDb }),
         getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
@@ -154,23 +167,23 @@ export const init: SpeckleModule['init'] = ({ app, isInitial, metricsRegister })
       })({
         projectId,
         objectId,
-        previewResult: parsedMessage.data
+        previewResult: parsedResult
       })
 
       previewJobsProcessedSummary.observe(
-        { status: parsedMessage.data.status, step: PreviewJobDurationStep.TOTAL },
-        parsedMessage.data.result.durationSeconds * TIME.second
+        { status: parsedResult.status, step: PreviewJobDurationStep.TOTAL },
+        parsedResult.result.durationSeconds * TIME.second
       )
-      if (parsedMessage.data.result.loadDurationSeconds) {
+      if (parsedResult.result.loadDurationSeconds) {
         previewJobsProcessedSummary.observe(
-          { status: parsedMessage.data.status, step: PreviewJobDurationStep.LOAD },
-          parsedMessage.data.result.loadDurationSeconds * TIME.second
+          { status: parsedResult.status, step: PreviewJobDurationStep.LOAD },
+          parsedResult.result.loadDurationSeconds * TIME.second
         )
       }
-      if (parsedMessage.data.result.renderDurationSeconds) {
+      if (parsedResult.result.renderDurationSeconds) {
         previewJobsProcessedSummary.observe(
-          { status: parsedMessage.data.status, step: PreviewJobDurationStep.RENDER },
-          parsedMessage.data.result.renderDurationSeconds * TIME.second
+          { status: parsedResult.status, step: PreviewJobDurationStep.RENDER },
+          parsedResult.result.renderDurationSeconds * TIME.second
         )
       }
 

@@ -23,7 +23,9 @@ export type PaidWorkspacePlansOld =
 
 export const PaidWorkspacePlansNew = <const>{
   Team: 'team',
-  Pro: 'pro'
+  TeamUnlimited: 'teamUnlimited',
+  Pro: 'pro',
+  ProUnlimited: 'proUnlimited'
 }
 
 export type PaidWorkspacePlansNew =
@@ -43,6 +45,8 @@ export const UnpaidWorkspacePlans = <const>{
   PlusInvoiced: 'plusInvoiced',
   BusinessInvoiced: 'businessInvoiced',
   // New
+  TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
+  ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
   Unlimited: 'unlimited',
   Academia: 'academia',
   Free: 'free'
@@ -66,11 +70,105 @@ export type WorkspaceGuestSeatType = typeof WorkspaceGuestSeatType
 export const isNewWorkspacePlan = (
   plan: MaybeNullOrUndefined<WorkspacePlans>
 ): boolean => {
-  return (
-    plan === PaidWorkspacePlansNew.Team ||
-    plan === PaidWorkspacePlansNew.Pro ||
-    plan === UnpaidWorkspacePlans.Free
-  )
+  if (!plan) return false
+  switch (plan) {
+    case 'starter':
+    case 'starterInvoiced':
+    case 'plus':
+    case 'plusInvoiced':
+    case 'business':
+    case 'businessInvoiced':
+      return false
+    case 'team':
+    case 'teamUnlimited':
+    case 'teamUnlimitedInvoiced':
+    case 'pro':
+    case 'proUnlimited':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+    case 'free':
+      return true
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const doesPlanIncludeUnlimitedProjectsAddon = (
+  plan: WorkspacePlans
+): boolean => {
+  switch (plan) {
+    case 'teamUnlimited':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'team':
+    case 'pro':
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'free':
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isPaidPlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
 }
 
 /**

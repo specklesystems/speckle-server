@@ -19,10 +19,6 @@ extend type Workspace {
   Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   seatType: WorkspaceSeatType
-  seatsByType: WorkspaceSeatsByType
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "workspace:read")
-    @hasWorkspaceRole(role: ADMIN)
 }
 
 type WorkspaceSeatsByType {

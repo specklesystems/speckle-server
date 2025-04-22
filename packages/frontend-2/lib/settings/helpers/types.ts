@@ -13,7 +13,7 @@ export type GenericSettingsMenuItem = BaseSettingsMenuItem & {
 
 export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
   name: string
-  route: (slug: string) => string
+  route: (slug?: string) => string
 }
 
 export enum WorkspaceUserActionTypes {
@@ -25,7 +25,7 @@ export enum WorkspaceUserActionTypes {
   MakeMember = 'make-member',
   UpgradeEditor = 'upgrade-editor',
   DowngradeEditor = 'downgrade-editor',
-  ResignAdmin = 'resign-admin'
+  UpdateProjectPermissions = 'update-project-permissions'
 }
 
 export type WorkspaceUserUpdateShowOptions = {

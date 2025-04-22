@@ -1,39 +1,43 @@
 import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals,
-  WorkspacePlans
+  PaidWorkspacePlansOld,
+  PaidWorkspacePlansNew,
+  WorkspacePlanBillingIntervals
 } from '@speckle/shared'
-import { OverrideProperties, SetOptional } from 'type-fest'
 
 /**
  * This includes the pricing plans (Stripe products) a customer can sub to
- */
-export type WorkspacePricingProducts = PaidWorkspacePlans | 'guest'
+//  */
+export type WorkspacePricingProducts =
+  | PaidWorkspacePlansNew
+  | PaidWorkspacePlansOld
+  | 'guest'
 
-type WorkspacePlanProductsMetadata<PriceData = string> = OverrideProperties<
-  Record<
-    WorkspacePricingProducts,
-    Record<WorkspacePlanBillingIntervals, PriceData> & {
-      productId: string
-    }
-  >,
-  {
-    // Team has no yearly plan
-    [PaidWorkspacePlans.Team]: {
-      productId: string
-      monthly: PriceData
-    }
-  }
+// type WorkspacePlanProductsMetadata<PriceData = string> = Record<
+//   WorkspacePricingProducts,
+//   Record<WorkspacePlanBillingIntervals, PriceData> & {
+//     productId: string
+//   }
+// >
+
+export const Currency = {
+  usd: 'usd',
+  gbp: 'gbp'
+} as const
+
+type IntervalPrices = Record<
+  WorkspacePlanBillingIntervals,
+  { amount: number; currency: string }
 >
 
-export type WorkspacePlanProductAndPriceIds = SetOptional<
-  WorkspacePlanProductsMetadata<string>,
-  typeof WorkspacePlans.Team | typeof WorkspacePlans.Pro
+export type WorkspacePlanProductPrices = Record<
+  Currency,
+  Record<PaidWorkspacePlansNew, IntervalPrices>
 >
-export type WorkspacePlanProductPrices = SetOptional<
-  WorkspacePlanProductsMetadata<{
-    amount: number
-    currency: string
-  }>,
-  typeof WorkspacePlans.Team | typeof WorkspacePlans.Pro
->
+
+export type Currency = (typeof Currency)[keyof typeof Currency]
+
+// export type WorkspacePlanProductAndPriceIds = WorkspacePlanProductsMetadata<string>
+// export type WorkspacePlanProductPrices = WorkspacePlanProductsMetadata<{
+//   amount: number
+//   currency: string
+// }>

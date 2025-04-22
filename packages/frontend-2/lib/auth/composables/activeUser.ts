@@ -13,6 +13,7 @@ export const activeUserQuery = graphql(`
       email
       emails {
         id
+        email
         verified
       }
       company
@@ -25,6 +26,17 @@ export const activeUserQuery = graphql(`
       verified
       notificationPreferences
       versions(limit: 0) {
+        totalCount
+      }
+    }
+  }
+`)
+
+export const activeUserProjectsToMoveQuery = graphql(`
+  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {
+    activeUser {
+      id
+      projects(filter: $filter) {
         totalCount
       }
     }
@@ -48,6 +60,25 @@ export function useResolveUserDistinctId() {
 
     return resolveMixpanelUserId(user.email)
   }
+}
+
+export function useActiveUserProjectsToMove() {
+  const { result } = useQuery(activeUserProjectsToMoveQuery, () => ({
+    filter: {
+      workspaceId: null,
+      onlyWithRoles: [Roles.Stream.Owner]
+    }
+  }))
+
+  const projectsToMoveCount = computed(
+    () => result.value?.activeUser?.projects?.totalCount
+  )
+
+  const hasProjectsToMove = computed(
+    () => projectsToMoveCount.value && projectsToMoveCount.value > 0
+  )
+
+  return { projectsToMoveCount, hasProjectsToMove }
 }
 
 /**

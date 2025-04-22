@@ -84,7 +84,7 @@ describe('Projects GraphQL @core', () => {
           createProjectNonInWorkspaceRes.data!.projectMutations.create
 
         const userProjectsRes = await apollo.execute(ActiveUserProjectsDocument, {
-          filter: { workspaceId: null }
+          filter: { personalOnly: true }
         })
         expect(userProjectsRes).to.not.haveGraphQLErrors()
 

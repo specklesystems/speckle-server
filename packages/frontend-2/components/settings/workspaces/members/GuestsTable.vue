@@ -22,15 +22,16 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
         { id: 'seat', header: 'Seat', classes: 'col-span-2' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
+        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-2 flex items-center justify-end'
+          classes: 'col-span-1 flex items-center justify-end'
         }
       ]"
       :items="guests"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
         search.length
           ? `No guests found for '${search}'`
@@ -52,108 +53,115 @@
         </div>
       </template>
       <template #seat="{ item }">
-        <SettingsWorkspacesMembersTableSeatType :seat-type="item.seatType" />
+        <SettingsWorkspacesMembersTableSeatType
+          :seat-type="item.seatType"
+          :role="Roles.Workspace.Guest"
+        />
       </template>
       <template #joined="{ item }">
         <span class="text-foreground-2">
           {{ formattedFullDate(item.joinDate) }}
         </span>
       </template>
+      <template #projects="{ item }">
+        <FormButton
+          v-if="
+            item.projectRoles.length > 0 &&
+            isWorkspaceAdmin &&
+            item.role !== Roles.Workspace.Admin
+          "
+          color="subtle"
+          size="sm"
+          class="!font-normal !text-foreground-2 -ml-2"
+          @click="
+            () => {
+              targetUser = item
+              showProjectPermissionsDialog = true
+            }
+          "
+        >
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </FormButton>
+        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </div>
+      </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           v-if="isWorkspaceAdmin"
-          :target-user="{
-            ...item.user,
-            role: item.role,
-            seatType: item.seatType,
-            joinDate: item.joinDate,
-            workspaceDomainPolicyCompliant: item.user.workspaceDomainPolicyCompliant
-          }"
+          :target-user="item"
           :workspace="workspace"
         />
         <span v-else />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="guests?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
+    <SettingsWorkspacesMembersActionsProjectPermissionsDialog
+      v-model:open="showProjectPermissionsDialog"
+      :user="targetUser"
+      :workspace-id="workspace?.id || ''"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
 import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
-
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
-    id
-    role
-    seatType
-    joinDate
-    user {
-      id
-      avatar
-      name
-      workspaceDomainPolicyCompliant(workspaceSlug: $slug)
-    }
-    projectRoles {
-      role
-      project {
-        id
-        name
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {
-    id
-    slug
-    name
-    ...SettingsWorkspacesMembersTableHeader_Workspace
-    ...SettingsSharedDeleteUserDialog_Workspace
-    team(limit: 250) {
-      items {
-        id
-        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
-      }
-    }
-  }
-`)
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersGuestsTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
 const search = ref('')
 const seatTypeFilter = ref<WorkspaceSeatType>()
-
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
-    filter: {
-      search: search.value,
-      roles: [Roles.Workspace.Guest]
-    },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
-  }),
-  () => ({
-    enabled: !!search.value.length || !!seatTypeFilter.value
-  })
+const showProjectPermissionsDialog = ref(false)
+const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undefined>(
+  undefined
 )
 
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
+    filter: {
+      search: search.value,
+      roles: [Roles.Workspace.Guest],
+      seatType: seatTypeFilter.value
+    },
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || '', vars.filter?.seatType || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
+
 const guests = computed(() => {
-  const guestArray =
-    search.value.length || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const guestArray = workspace.value?.team.items
 
   return (guestArray || [])
     .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
@@ -161,5 +169,5 @@ const guests = computed(() => {
     .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 </script>

@@ -94,10 +94,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 3. Workspace join/create redirect
   // Everything past this point is only relevant for workspace enabled instances
-  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  if (!isWorkspacesEnabled.value || !isWorkspaceNewPlansEnabled.value) return
+  if (!isWorkspacesEnabled.value) return
 
   const { data: workspaceExistenceData } = await client
     .query({
