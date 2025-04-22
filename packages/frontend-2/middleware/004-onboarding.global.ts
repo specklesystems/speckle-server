@@ -175,7 +175,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 4.4 If going to a project route, check access
-  if (to.path.startsWith('/projects/')) {
+  if (to.path.startsWith('/projects')) {
     const { data: projectCheckData } = await client
       .query({
         query: projectWorkspaceAccessCheckQuery,
