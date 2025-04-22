@@ -65,8 +65,8 @@ export function useResolveUserDistinctId() {
 export function useActiveUserProjectsToMove() {
   const { result } = useQuery(activeUserProjectsToMoveQuery, () => ({
     filter: {
-      workspaceId: null,
-      personalOnly: true
+      personalOnly: true,
+      onlyWithRoles: [Roles.Stream.Owner]
     }
   }))
 
