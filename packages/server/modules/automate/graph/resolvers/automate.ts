@@ -710,14 +710,24 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           )
         },
         async delete(parent, input, context) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const canDelete = await context.authPolicies.project.automation.canDelete({
+            userId: context.userId,
+            projectId: parent.projectId
+          })
+          if (!canDelete.isOk) {
+            throw mapAuthToServerError(canDelete.error)
+          }
 
-          await authorizeResolver(
-            context.userId,
-            parent.projectId,
-            Roles.Stream.Owner,
-            context.resourceAccessRules
-          )
+          const projectId = parent.projectId
+          const automationId = input.automationId
+
+          const logger = context.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
 
           const deleteAutomation = commandFactory({
             db: projectDb,
@@ -727,9 +737,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               })
           })
 
-          return await deleteAutomation({
-            automationId: input.automationId
-          })
+          return await withOperationLogging(
+            async () => await deleteAutomation({ automationId }),
+            {
+              logger,
+              operationName: 'deleteProjectAutomation',
+              operationDescription: 'Delete an Automation attached to a project'
+            }
+          )
         },
         async createRevision(parent, { input }, ctx) {
           const projectId = parent.projectId

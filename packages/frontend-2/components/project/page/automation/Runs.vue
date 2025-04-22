@@ -4,6 +4,7 @@
       <h2 class="h6 font-medium">Runs</h2>
       <div class="flex items-center gap-2">
         <LayoutMenu
+          v-if="isEditable"
           v-model:open="showActionsMenu"
           :items="actionItems"
           :menu-position="HorizontalDirection.Left"

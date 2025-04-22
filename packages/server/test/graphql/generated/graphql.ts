@@ -457,6 +457,7 @@ export type AutomationCollection = {
 
 export type AutomationPermissionChecks = {
   __typename?: 'AutomationPermissionChecks';
+  canDelete: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
