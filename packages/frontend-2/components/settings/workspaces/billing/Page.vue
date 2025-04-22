@@ -22,20 +22,22 @@
         <SettingsWorkspacesBillingUsage :slug="slug" />
       </section>
 
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Upgrade your plan" subheading />
-        <PricingTable
-          :slug="slug"
-          :workspace-id="workspace?.id"
-          :role="workspace?.role as WorkspaceRoles"
-          :currency="workspace?.subscription?.currency"
-        />
-      </section>
+      <ClientOnly>
+        <section class="flex flex-col gap-y-4 md:gap-y-6">
+          <SettingsSectionHeader title="Upgrade your plan" subheading />
+          <PricingTable
+            :slug="slug"
+            :workspace-id="workspace?.id"
+            :role="workspace?.role as WorkspaceRoles"
+            :currency="workspace?.subscription?.currency"
+          />
+        </section>
 
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
-      </section>
+        <section class="flex flex-col gap-y-4 md:gap-y-6">
+          <SettingsSectionHeader title="Add-ons" subheading />
+          <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
+        </section>
+      </ClientOnly>
     </div>
   </div>
 </template>
