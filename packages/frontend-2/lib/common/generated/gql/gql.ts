@@ -208,7 +208,7 @@ type Documents = {
     "\n  mutation CreateNewRegion($input: CreateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        create(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": typeof types.CreateNewRegionDocument,
     "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": typeof types.UpdateRegionDocument,
     "\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n": typeof types.UseNavigationActiveWorkspace_WorkspaceFragmentDoc,
-    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n": typeof types.UseNavigationWorkspaceList_UserFragmentDoc,
+    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n    projects {\n      totalCount\n    }\n  }\n": typeof types.UseNavigationWorkspaceList_UserFragmentDoc,
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": typeof types.SetActiveWorkspaceDocument,
     "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": typeof types.NavigationActiveWorkspaceDocument,
     "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": typeof types.NavigationWorkspaceListDocument,
@@ -624,7 +624,7 @@ const documents: Documents = {
     "\n  mutation CreateNewRegion($input: CreateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        create(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.CreateNewRegionDocument,
     "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.UpdateRegionDocument,
     "\n  fragment UseNavigationActiveWorkspace_Workspace on Workspace {\n    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace\n    id\n  }\n": types.UseNavigationActiveWorkspace_WorkspaceFragmentDoc,
-    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n": types.UseNavigationWorkspaceList_UserFragmentDoc,
+    "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n    projects {\n      totalCount\n    }\n  }\n": types.UseNavigationWorkspaceList_UserFragmentDoc,
     "\n  mutation SetActiveWorkspace($slug: String, $isProjectsActive: Boolean) {\n    activeUserMutations {\n      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)\n    }\n  }\n": types.SetActiveWorkspaceDocument,
     "\n  query NavigationActiveWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...UseNavigationActiveWorkspace_Workspace\n    }\n  }\n": types.NavigationActiveWorkspaceDocument,
     "\n  query NavigationWorkspaceList {\n    activeUser {\n      id\n      ...UseNavigationWorkspaceList_User\n    }\n  }\n": types.NavigationWorkspaceListDocument,
@@ -1639,7 +1639,7 @@ export function graphql(source: "\n  fragment UseNavigationActiveWorkspace_Works
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n"): (typeof documents)["\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n  }\n"];
+export function graphql(source: "\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n    projects {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment UseNavigationWorkspaceList_User on User {\n    id\n    ...HeaderWorkspaceSwitcherWorkspaceList_User\n    projects {\n      totalCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
