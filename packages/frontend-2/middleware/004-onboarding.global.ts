@@ -156,11 +156,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path === projectsRoute) {
     if (hasLegacyProjects) {
       mutateIsProjectsActive(true)
-    } else {
-      if (hasWorkspaces) {
-        mutateActiveWorkspaceSlug(workspaces[0].slug)
-        navigateTo(workspaceRoute(workspaces[0].slug))
-      }
     }
     return
   }
@@ -175,7 +170,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 4.4 If going to a project route, check access
-  if (to.path.startsWith('/projects')) {
+  if (to.path.startsWith('/projects/')) {
     const { data: projectCheckData } = await client
       .query({
         query: projectWorkspaceAccessCheckQuery,
