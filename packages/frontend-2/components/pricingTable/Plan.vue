@@ -223,8 +223,12 @@ const isCurrentPlan = computed(() => {
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan &&
-    !isYearlyIntervalSelected.value
+    !isYearlyIntervalSelected.value &&
+    (props.currentPlan?.name === props.plan ||
+      (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+        props.plan === WorkspacePlans.Team) ||
+      (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+        props.plan === WorkspacePlans.Pro))
   )
 })
 
@@ -312,6 +316,12 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (
+    props.plan === WorkspacePlans.Free &&
+    props.currentPlan?.name === WorkspacePlans.Free
+  )
+    return undefined
+
   if (!props.canUpgrade) {
     return 'You must be a workspace admin.'
   }

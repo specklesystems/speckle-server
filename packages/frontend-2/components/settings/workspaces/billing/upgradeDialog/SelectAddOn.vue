@@ -30,7 +30,7 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
 const options = computed(() => [
   {
     value: 'yes',
-    title: 'Yes',
+    title: `Yes${props.enableNoOption ? '' : ' (required)'}`,
     subtitle: `Plus ${addOnPrice.value} per editor seat/month`
   },
   {

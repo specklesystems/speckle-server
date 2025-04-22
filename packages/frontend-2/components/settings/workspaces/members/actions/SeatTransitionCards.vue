@@ -61,7 +61,7 @@ const props = defineProps<{
   isGuest: boolean
   hasAvailableSeat: boolean
   seatPrice: string
-  billingInterval: 'monthly' | 'yearly'
+  billingInterval: 'month' | 'year'
 }>()
 
 const editorDescription = computed(() =>

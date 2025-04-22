@@ -38,7 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
-            :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
+            :billing-interval="intervalIsYearly ? 'year' : 'month'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
@@ -49,11 +49,9 @@
               will not incur any charges.
             </p>
             <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
-              You'll be charged immediately for the partial period from today until your
-              plan renewal on {{ currentBillingCycleEnd }} ({{
-                editorSeatPriceFormatted
-              }}/{{ intervalIsYearly ? 'year' : 'month' }} adjusted for the remaining
-              time).
+              You will be charged an adjusted amount for the partial period from today
+              until your plan renewal on
+              {{ dayjs(currentBillingCycleEnd).format('MMMM D, YYYY') }}.
             </p>
           </template>
         </CommonCard>
@@ -63,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
