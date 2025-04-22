@@ -1,11 +1,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const settingsSidebarQuery = graphql(`
-  query SettingsSidebar {
-    activeUser {
-      activeWorkspace {
-        ...SettingsSidebar_Workspace
-      }
+  query SettingsSidebar($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsSidebar_Workspace
     }
   }
 `)
@@ -95,7 +93,11 @@ export const settingsWorkspacesInvitesSearchQuery = graphql(`
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
     workspaceBySlug(slug: $slug) {
-      ...SettingsWorkspacesMembersInvitesTable_Workspace
+      id
+      ...SettingsWorkspacesMembersTableHeader_Workspace
+      invitedTeam(filter: $invitesFilter) {
+        ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
+      }
     }
   }
 `)

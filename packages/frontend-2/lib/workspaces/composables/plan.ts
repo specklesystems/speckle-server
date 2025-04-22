@@ -9,7 +9,6 @@ import {
   isNewWorkspacePlan,
   doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
-import type { WorkspacesPlan_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import {
   WorkspacePlanStatuses,
   BillingInterval
@@ -49,30 +48,22 @@ graphql(`
   }
 `)
 
-export const usePlanState = () =>
-  useState<WorkspacesPlan_WorkspaceFragment | null>('plan', () => null)
-
 export const useWorkspacePlan = (slug: string) => {
-  const planState = usePlanState()
   const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
   const { prices } = useActiveWorkspacePlanPrices()
 
-  const { onResult } = useQuery(
+  const { result } = useQuery(
     workspacePlanQuery,
     () => ({
       slug
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled.value && slug !== planState.value?.slug
+      enabled: isBillingIntegrationEnabled.value
     })
   )
 
-  onResult((result) => {
-    planState.value = result.data?.workspaceBySlug
-  })
-
-  const subscription = computed(() => planState.value?.subscription)
-  const plan = computed(() => planState.value?.plan)
+  const subscription = computed(() => result.value?.workspaceBySlug?.subscription)
+  const plan = computed(() => result.value?.workspaceBySlug?.plan)
   const currency = computed(() => subscription.value?.currency || 'usd')
 
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
@@ -127,14 +118,16 @@ export const useWorkspacePlan = (slug: string) => {
     if (plan.value?.name && isPaidPlanShared(plan.value?.name)) {
       return formatPrice(
         prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
-          WorkspacePlanBillingIntervals.Monthly
+          intervalIsYearly.value
+            ? WorkspacePlanBillingIntervals.Yearly
+            : WorkspacePlanBillingIntervals.Monthly
         ]
       )
     }
 
     return formatPrice({
       amount: 0,
-      currency: 'gbp'
+      currency: currency.value
     })
   })
 

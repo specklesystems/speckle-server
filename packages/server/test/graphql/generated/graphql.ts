@@ -362,8 +362,10 @@ export type AutomateFunctionToken = {
 };
 
 export type AutomateFunctionsFilter = {
-  /** By default we skip functions without releases. Set this to true to include them. */
-  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
+  /** By default, we include featured ("public") functions. Set this to false to exclude them. */
+  includeFeatured?: InputMaybe<Scalars['Boolean']['input']>;
+  /** By default, we exclude functions without releases. Set this to false to include them. */
+  requireRelease?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 

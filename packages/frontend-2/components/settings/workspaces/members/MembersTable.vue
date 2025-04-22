@@ -23,9 +23,9 @@
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
-        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
@@ -35,7 +35,9 @@
       :items="members"
       :loading="loading"
       :empty-message="
-        hasNoResults ? 'No members found' : 'This workspace has no members'
+        search.length || seatTypeFilter || roleFilter
+          ? 'No results'
+          : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -85,7 +87,7 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
-      <template #projects="{ item }">
+      <!-- <template #projects="{ item }">
         <FormButton
           v-if="
             item.projectRoles.length > 0 &&
@@ -109,7 +111,7 @@
           {{ item.projectRoles.length }}
           {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </div>
-      </template>
+      </template> -->
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
@@ -210,10 +212,6 @@ const members = computed(() => {
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
-
-const hasNoResults = computed(() => workspace.value?.team.items.length === 0)
-
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 </script>

@@ -6,7 +6,7 @@
         :project="project"
         :show-workspace-link="showWorkspaceLink"
         :workspace-page="workspacePage"
-        @move-project="(projectId) => $emit('moveProject', projectId)"
+        @move-project="$emit('moveProject', project.id)"
       />
     </div>
   </div>

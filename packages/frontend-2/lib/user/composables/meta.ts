@@ -48,7 +48,7 @@ export function useActiveUserMeta() {
   const meta = computed(() => result.value?.activeUser?.meta)
 
   const hasDismissedNewWorkspaceExplainer = computed(
-    () => meta.value?.newWorkspaceExplainerDismissed
+    () => meta.value?.newWorkspaceExplainerDismissed ?? true
   )
 
   const hasCollapsedLegacyProjectsExplainer = computed(

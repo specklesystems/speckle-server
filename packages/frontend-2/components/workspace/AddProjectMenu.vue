@@ -28,15 +28,15 @@
         Add project
       </FormButton>
     </LayoutMenu>
-    <WorkspaceMoveProjectManager
-      v-model:open="showMoveProjectDialog"
-      :workspace-slug="workspaceSlug"
-    />
     <ProjectsAddDialog
       v-model:open="showNewProjectDialog"
       :workspace-id="workspace?.id"
     />
     <ClientOnly>
+      <WorkspaceMoveProjectManager
+        v-model:open="showMoveProjectDialog"
+        :workspace-slug="workspaceSlug"
+      />
       <WorkspacePlanProjectModelLimitReachedDialog
         v-model:open="showLimitDialog"
         :workspace-name="workspace?.name"

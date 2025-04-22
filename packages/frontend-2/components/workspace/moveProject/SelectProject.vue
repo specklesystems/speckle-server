@@ -51,15 +51,17 @@
           </div>
         </div>
       </div>
-      <p v-else class="py-4 text-body-xs text-foreground-2">
+      <p v-else-if="!search?.length" class="py-4 text-body-xs text-foreground-2">
         You don't have any projects that can be moved into this workspace. Only projects
         you own and that aren't in another workspace can be moved.
       </p>
+      <p v-else class="py-4 text-body-xs text-foreground-2">
+        No projects match your search.
+      </p>
     </template>
     <InfiniteLoading
-      v-if="moveableProjects?.length && !search?.length"
+      v-if="!search?.length"
       :settings="{ identifier }"
-      class="py-4"
       @infinite="onInfiniteLoad"
     />
     <WorkspacePlanProjectModelLimitReachedDialog
