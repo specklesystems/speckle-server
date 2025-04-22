@@ -1,12 +1,10 @@
 <template>
-  <div>
-    <CommonAlert color="info">
-      <template #title>Upgrade your workspace</template>
-      <template #description>
-        {{ description }}
-      </template>
-    </CommonAlert>
-  </div>
+  <CommonAlert color="info">
+    <template #title>Upgrade your workspace</template>
+    <template #description>
+      {{ description }}
+    </template>
+  </CommonAlert>
 </template>
 
 <script setup lang="ts">
