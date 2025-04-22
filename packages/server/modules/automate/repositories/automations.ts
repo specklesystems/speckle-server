@@ -770,7 +770,10 @@ const getProjectAutomationsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetProjectAutomationsParams) => {
     const { projectId, args } = params
 
-    const q = tables.automations(deps.db).where(Automations.col.projectId, projectId)
+    const q = tables
+      .automations(deps.db)
+      .where(Automations.col.projectId, projectId)
+      .andWhere({ isDeleted: false })
 
     if (args.filter?.length) {
       q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)

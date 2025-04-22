@@ -16,7 +16,8 @@
       in other automations, but all previous runs of this automation will be lost.
     </p>
     <p class="text-body-xs text-foreground">
-      Model data will not be changed or deleted.
+      Model data will not be changed or deleted. Some automation data may be retained
+      for auditing or security purposes.
     </p>
   </LayoutDialog>
 </template>
