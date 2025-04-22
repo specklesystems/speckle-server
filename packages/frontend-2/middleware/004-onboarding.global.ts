@@ -111,7 +111,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     (workspaceExistenceData?.activeUser?.workspaceJoinRequests?.totalCount ?? 0) > 0
   // If user has existing projects, we consider these legacy projects, and don't block app access yet
   const hasLegacyProjects =
-    (workspaceExistenceData?.activeUser?.versions?.totalCount ?? 0) > 0
+    (workspaceExistenceData?.activeUser?.projects?.totalCount ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
