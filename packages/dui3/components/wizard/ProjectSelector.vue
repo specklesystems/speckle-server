@@ -43,7 +43,7 @@
             </template>
           </WorkspaceMenu>
         </div>
-        <div class="mt-1 mr-1 px-0.5 shrink-0">
+        <div class="px-0.5 shrink-0">
           <AccountsMenu
             :current-selected-account-id="accountId"
             @select="(e) => selectAccount(e)"
@@ -282,6 +282,19 @@ const handleWorkspaceSelected = (
   configStore.setUserSelectedWorkspace(newSelectedWorkspace.id)
 }
 
+// This is a hack for people who don't have a workspace and have personal projects only.
+const timeoutWait = ref(false)
+
+const filtersReady = computed(
+  () => selectedWorkspace.value !== undefined || timeoutWait.value
+)
+
+onMounted(() => {
+  setTimeout(() => {
+    timeoutWait.value = true
+  }, 1000)
+})
+
 const {
   result: projectsResult,
   loading,
@@ -300,6 +313,7 @@ const {
     }
   }),
   () => ({
+    enabled: filtersReady.value,
     clientId: accountId.value,
     debounce: 500,
     fetchPolicy: 'network-only'
