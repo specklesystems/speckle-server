@@ -86,6 +86,7 @@ import {
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { TIME_MS } from '@speckle/shared'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -454,7 +455,7 @@ export async function startHttp(params: {
   // large timeout to allow large downloads on slow connections to finish
   createTerminus(server, {
     signals: ['SIGTERM', 'SIGINT'],
-    timeout: shutdownTimeoutSeconds() * 1000,
+    timeout: shutdownTimeoutSeconds() * TIME_MS.second,
     beforeShutdown: async () => {
       shutdownLogger.info('Shutting down (signal received)...')
     },
@@ -494,8 +495,8 @@ export async function startHttp(params: {
 
   server.listen(port, bindAddress)
 
-  server.keepAliveTimeout = 61 * 1000
-  server.headersTimeout = 65 * 1000
+  server.keepAliveTimeout = 61 * TIME_MS.second
+  server.headersTimeout = 65 * TIME_MS.second
 
   return { server }
 }
