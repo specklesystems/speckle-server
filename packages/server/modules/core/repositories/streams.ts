@@ -102,9 +102,11 @@ import {
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
   GetStreamsCollaborators,
-  GetStreamsCollaboratorCounts
+  GetStreamsCollaboratorCounts,
+  GetImplicitUserProjectsCountFactory
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
+import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
@@ -1387,4 +1389,33 @@ export const getUserDeletableStreamsFactory =
     )) as { rows: { id: string }[] }
 
     return streams.rows.map((s) => s.id)
+  }
+
+/**
+ * Get count of projects user explicitly or implicitly (through workspaces) has access to
+ */
+export const getImplicitUserProjectsCountFactory =
+  (deps: { db: Knex }): GetImplicitUserProjectsCountFactory =>
+  async (params) => {
+    const q = tables
+      .streams(deps.db)
+      .select<{ count: string }[]>(knex.raw('COUNT(??) as count', [Streams.col.id]))
+      .leftJoin(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          params.userId
+        )
+      })
+      .leftJoin(WorkspaceAcl.name, (j) => {
+        j.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+          WorkspaceAcl.col.userId,
+          params.userId
+        )
+      })
+      .where((w) => {
+        w.whereNotNull(StreamAcl.col.userId).orWhereNotNull(WorkspaceAcl.col.userId)
+      })
+
+    const [{ count }] = await q
+    return parseInt(count)
   }

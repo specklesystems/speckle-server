@@ -97,6 +97,10 @@ export type GetStreamsCollaboratorCounts = (params: {
 
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
+export type GetImplicitUserProjectsCountFactory = (params: {
+  userId: string
+}) => Promise<number>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{

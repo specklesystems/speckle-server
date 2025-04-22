@@ -25,7 +25,17 @@ import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
+import {
+  getImplicitUserProjectsCountFactory,
+  getStreamCollaboratorsFactory
+} from '@/modules/core/repositories/streams'
+import { reportUserEventsFactory } from '@/modules/core/events/userTracking'
+import { coreLogger } from '@/modules/core/logger'
+import { updateUserMixpanelProfileFactory } from '@/modules/core/services/users/tracking'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getUserWorkspaceCountFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { getUserAuthoredCommitCountsFactory } from '@/modules/core/repositories/commits'
+import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -83,11 +93,23 @@ const coreModule: SpeckleModule<{
         stopTestSubs = await startEmittingTestSubs()
       }
 
-      // Setup GQL sub emits
+      // Setup up various eventBus listeners
       reportSubscriptionEventsFactory({
         eventListen: getEventBus().listen,
         publish,
         getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+      })()
+
+      reportUserEventsFactory({
+        eventBus: getEventBus(),
+        logger: coreLogger,
+        updateUserMixpanelProfileFactory: updateUserMixpanelProfileFactory({
+          getUser: getUserFactory({ db }),
+          getImplicitUserProjectsCount: getImplicitUserProjectsCountFactory({ db }),
+          getUserWorkspaceCount: getUserWorkspaceCountFactory({ db }),
+          getUserAuthoredCommitCounts: getUserAuthoredCommitCountsFactory({ db }),
+          getMixpanelClient
+        })
       })()
     }
   },

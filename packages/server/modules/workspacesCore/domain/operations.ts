@@ -23,3 +23,7 @@ export type GetWorkspaceRoleAndSeat = (params: {
     }
   | undefined
 >
+
+export type GetUserWorkspaceCountFactory = (params: {
+  userId: string
+}) => Promise<number>
