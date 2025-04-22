@@ -203,6 +203,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams

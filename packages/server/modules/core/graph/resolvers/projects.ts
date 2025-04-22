@@ -505,7 +505,8 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          sortBy: args.sortBy || undefined
         })
       ])
 
