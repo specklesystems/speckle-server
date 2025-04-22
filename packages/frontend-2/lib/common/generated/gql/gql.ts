@@ -312,7 +312,7 @@ type Documents = {
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": typeof types.DeleteWorkspaceDomainDocument,
     "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": typeof types.SettingsLeaveWorkspaceDocument,
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": typeof types.SettingsBillingCancelCheckoutSessionDocument,
-    "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": typeof types.SettingsSidebarDocument,
+    "\n  query SettingsSidebar($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsSidebar_Workspace\n    }\n  }\n": typeof types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": typeof types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": typeof types.SettingsWorkspaceBillingCustomerPortalDocument,
@@ -728,7 +728,7 @@ const documents: Documents = {
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": types.DeleteWorkspaceDomainDocument,
     "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": types.SettingsLeaveWorkspaceDocument,
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": types.SettingsBillingCancelCheckoutSessionDocument,
-    "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.SettingsSidebarDocument,
+    "\n  query SettingsSidebar($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsSidebar_Workspace\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...WorkspaceBillingPage_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
@@ -2055,7 +2055,7 @@ export function graphql(source: "\n  mutation SettingsBillingCancelCheckoutSessi
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar {\n    activeUser {\n      activeWorkspace {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsSidebar($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsSidebar_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsSidebar_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

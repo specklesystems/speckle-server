@@ -1,11 +1,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const settingsSidebarQuery = graphql(`
-  query SettingsSidebar {
-    activeUser {
-      activeWorkspace {
-        ...SettingsSidebar_Workspace
-      }
+  query SettingsSidebar($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...SettingsSidebar_Workspace
     }
   }
 `)
