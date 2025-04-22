@@ -10,7 +10,7 @@
 
     <SettingsWorkspacesBillingAddOnsCard
       title="Extra data regions"
-      :subtitle="`${currency === Currency.Gbp ? '£' : '$'}500 per region/year`"
+      :subtitle="`${currency === Currency.Gbp ? '£' : '$'}500 per region/month`"
       info="Unlock per-project data residency by adding additional data regions to your workspace."
       disclaimer="Only on Business plan"
       :button="contactButton"
