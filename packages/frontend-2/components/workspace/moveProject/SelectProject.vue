@@ -96,9 +96,10 @@ const emit = defineEmits<{
   (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
 }>()
 
-defineProps<{
+const props = defineProps<{
   workspace?: WorkspaceMoveProjectManager_WorkspaceFragment
   projectPermissions?: PermissionCheckResult
+  workspaceId?: string
 }>()
 
 const {
@@ -113,7 +114,8 @@ const {
     filter: {
       search: search.value?.length ? search.value : null,
       personalOnly: true
-    }
+    },
+    workspaceId: props.workspaceId || ''
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.activeUser?.projects,
@@ -132,7 +134,10 @@ const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
 const isProjectDisabled = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (project.permissions.canMoveToWorkspace.authorized) {
+    if (
+      project.permissions.canMoveToWorkspace.authorized ||
+      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+    ) {
       return false
     }
     return true
@@ -141,7 +146,10 @@ const isProjectDisabled = computed(
 
 const getProjectTooltip = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (project.permissions.canMoveToWorkspace.authorized) {
+    if (
+      project.permissions.canMoveToWorkspace.authorized ||
+      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+    ) {
       return undefined
     }
     if (project.permissions.canMoveToWorkspace.code === 'ProjectNotEnoughPermissions') {

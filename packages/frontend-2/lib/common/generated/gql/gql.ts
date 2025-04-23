@@ -141,7 +141,7 @@ type Documents = {
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": typeof types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": typeof types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_ProjectBase on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_ProjectBaseFragmentDoc,
-    "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
+    "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n      usage {\n        projectCount\n        modelCount\n      }\n    }\n    permissions {\n      canMoveProjectToWorkspace(projectId: $projectId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    projects {\n      totalCount\n    }\n    team {\n      items {\n        user {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceMoveProjectManager_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceMoveProjectSelectWorkspace_User on User {\n    workspaces {\n      items {\n        ...WorkspaceMoveProjectManager_Workspace\n      }\n    }\n    projects(cursor: $cursor, filter: $filter, sortBy: $sortBy) {\n      items {\n        ...WorkspaceMoveProjectManager_Project\n      }\n      cursor\n      totalCount\n    }\n  }\n": typeof types.WorkspaceMoveProjectSelectWorkspace_UserFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n": typeof types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
@@ -382,27 +382,6 @@ type Documents = {
     "\n  mutation DenyWorkspaceJoinRequest($input: DenyWorkspaceJoinRequestInput!) {\n    workspaceJoinRequestMutations {\n      deny(input: $input)\n    }\n  }\n": typeof types.DenyWorkspaceJoinRequestDocument,
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": typeof types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": typeof types.DismissDiscoverableWorkspaceDocument,
-    "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": typeof types.WorkspaceAccessCheckDocument,
-    "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": typeof types.WorkspaceSidebarDocument,
-    "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": typeof types.WorkspaceDashboardDocument,
-    "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n": typeof types.WorkspaceProjectsQueryDocument,
-    "\n  query WorkspaceFunctionsQuery($workspaceSlug: String!) {\n    ...AutomateFunctionsPageHeader_Query\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      name\n      automateFunctions {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n          ...AutomateAutomationCreateDialog_AutomateFunction\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceFunctionsQueryDocument,
-    "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": typeof types.WorkspaceInviteDocument,
-    "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n": typeof types.ValidateWorkspaceSlugDocument,
-    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n": typeof types.WorkspaceSsoByEmailDocument,
-    "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n": typeof types.WorkspaceSsoCheckDocument,
-    "\n  query WorkspaceWizard($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceWizard_Workspace\n    }\n  }\n": typeof types.WorkspaceWizardDocument,
-    "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n": typeof types.WorkspaceWizardRegionDocument,
-    "\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": typeof types.DiscoverableWorkspacesDocument,
-    "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": typeof types.DiscoverableWorkspacesRequestsDocument,
-    "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": typeof types.WorkspacePlanDocument,
-    "\n  query activeWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...ActiveWorkspace_Workspace\n    }\n  }\n": typeof types.ActiveWorkspaceDocument,
-    "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      teamByRole {\n        admins {\n          totalCount\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceLastAdminCheckDocument,
-    "\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": typeof types.WorkspaceLimitsDocument,
-    "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n": typeof types.WorkspaceUsageDocument,
-    "\n  query WorkspaceMoveProjectManagerProject($projectId: String!) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerProjectDocument,
-    "\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerWorkspaceDocument,
-    "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n": typeof types.WorkspaceMoveProjectManagerUserDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceDashboard_Workspace\n        ...WorkspaceDashboardProjectList_Workspace\n      }\n    }\n  }\n": typeof types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": typeof types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LegacyViewerCommitRedirectMetadataDocument,
@@ -557,7 +536,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_ProjectBase on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.WorkspaceMoveProjectManager_ProjectBaseFragmentDoc,
-    "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
+    "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.WorkspaceMoveProjectManager_ProjectFragmentDoc,
     "\n  fragment WorkspaceMoveProjectManager_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    slug\n    plan {\n      name\n      usage {\n        projectCount\n        modelCount\n      }\n    }\n    permissions {\n      canMoveProjectToWorkspace(projectId: $projectId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    projects {\n      totalCount\n    }\n    team {\n      items {\n        user {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.WorkspaceMoveProjectManager_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceMoveProjectSelectWorkspace_User on User {\n    workspaces {\n      items {\n        ...WorkspaceMoveProjectManager_Workspace\n      }\n    }\n    projects(cursor: $cursor, filter: $filter, sortBy: $sortBy) {\n      items {\n        ...WorkspaceMoveProjectManager_Project\n      }\n      cursor\n      totalCount\n    }\n  }\n": types.WorkspaceMoveProjectSelectWorkspace_UserFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
@@ -798,27 +777,6 @@ const documents: Documents = {
     "\n  mutation DenyWorkspaceJoinRequest($input: DenyWorkspaceJoinRequestInput!) {\n    workspaceJoinRequestMutations {\n      deny(input: $input)\n    }\n  }\n": types.DenyWorkspaceJoinRequestDocument,
     "\n  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": types.RequestToJoinWorkspaceDocument,
     "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n": types.DismissDiscoverableWorkspaceDocument,
-    "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
-    "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n": types.WorkspaceSidebarDocument,
-    "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n": types.WorkspaceDashboardDocument,
-    "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
-    "\n  query WorkspaceFunctionsQuery($workspaceSlug: String!) {\n    ...AutomateFunctionsPageHeader_Query\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      name\n      automateFunctions {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n          ...AutomateAutomationCreateDialog_AutomateFunction\n        }\n      }\n    }\n  }\n": types.WorkspaceFunctionsQueryDocument,
-    "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
-    "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n": types.ValidateWorkspaceSlugDocument,
-    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
-    "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
-    "\n  query WorkspaceWizard($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceWizard_Workspace\n    }\n  }\n": types.WorkspaceWizardDocument,
-    "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n": types.WorkspaceWizardRegionDocument,
-    "\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n": types.DiscoverableWorkspacesDocument,
-    "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n": types.DiscoverableWorkspacesRequestsDocument,
-    "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n": types.WorkspacePlanDocument,
-    "\n  query activeWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...ActiveWorkspace_Workspace\n    }\n  }\n": types.ActiveWorkspaceDocument,
-    "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      teamByRole {\n        admins {\n          totalCount\n        }\n      }\n    }\n  }\n": types.WorkspaceLastAdminCheckDocument,
-    "\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n": types.WorkspaceLimitsDocument,
-    "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n": types.WorkspaceUsageDocument,
-    "\n  query WorkspaceMoveProjectManagerProject($projectId: String!) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n": types.WorkspaceMoveProjectManagerProjectDocument,
-    "\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n": types.WorkspaceMoveProjectManagerWorkspaceDocument,
-    "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n": types.WorkspaceMoveProjectManagerUserDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceDashboard_Workspace\n        ...WorkspaceDashboardProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -1371,7 +1329,7 @@ export function graphql(source: "\n  fragment WorkspaceMoveProjectManager_Projec
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceMoveProjectManager_Project on Project {\n    ...WorkspaceMoveProjectManager_ProjectBase\n    permissions {\n      canMoveToWorkspace(workspaceId: $workspaceId) {\n        ...FullPermissionCheckResult\n      }\n    }\n    workspace {\n      id\n      slug\n      permissions {\n        canMoveProjectToWorkspace(projectId: $projectId) {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2332,90 +2290,6 @@ export function graphql(source: "\n  mutation RequestToJoinWorkspace($input: Wor
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {\n    workspaceMutations {\n      dismiss(input: $input)\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSidebar(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceSidebar_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceDashboard(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceDashboard_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceFunctionsQuery($workspaceSlug: String!) {\n    ...AutomateFunctionsPageHeader_Query\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      name\n      automateFunctions {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n          ...AutomateAutomationCreateDialog_AutomateFunction\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceFunctionsQuery($workspaceSlug: String!) {\n    ...AutomateFunctionsPageHeader_Query\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      name\n      automateFunctions {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n          ...AutomateAutomationCreateDialog_AutomateFunction\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n"): (typeof documents)["\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceWizard($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceWizard_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceWizard($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceWizard_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n"): (typeof documents)["\n  query DiscoverableWorkspaces {\n    activeUser {\n      id\n      ...DiscoverableList_Discoverable\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n"): (typeof documents)["\n  query DiscoverableWorkspacesRequests {\n    activeUser {\n      id\n      ...DiscoverableList_Requests\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspacePlan($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacesPlan_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query activeWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...ActiveWorkspace_Workspace\n    }\n  }\n"): (typeof documents)["\n  query activeWorkspace($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...ActiveWorkspace_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      teamByRole {\n        admins {\n          totalCount\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceLastAdminCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      teamByRole {\n        admins {\n          totalCount\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceLimits($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspacePlanLimits_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceUsage($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceUsage_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceMoveProjectManagerProject($projectId: String!) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceMoveProjectManagerProject($projectId: String!) {\n    project(id: $projectId) {\n      ...WorkspaceMoveProjectManager_Project\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceMoveProjectManagerWorkspace(\n    $workspaceSlug: String!\n    $projectId: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceMoveProjectManager_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceMoveProjectManagerUser(\n    $cursor: String\n    $filter: UserProjectsFilter\n    $projectId: String\n    $sortBy: [String!]\n  ) {\n    activeUser {\n      ...WorkspaceMoveProjectSelectWorkspace_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
