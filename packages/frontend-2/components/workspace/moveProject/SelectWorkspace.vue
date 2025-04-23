@@ -92,7 +92,7 @@ graphql(`
         ...WorkspaceMoveProjectManager_Workspace
       }
     }
-    projects(cursor: $cursor, filter: $filter) {
+    projects(cursor: $cursor, filter: $filter, sortBy: $sortBy) {
       items {
         ...WorkspaceMoveProjectManager_Project
       }

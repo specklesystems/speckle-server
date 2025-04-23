@@ -110,6 +110,7 @@ const {
   query: workspaceMoveProjectManagerUserQuery,
   baseVariables: computed(() => ({
     cursor: null as string | null,
+    sortBy: 'role',
     filter: {
       search: search.value?.length ? search.value : null,
       personalOnly: true
