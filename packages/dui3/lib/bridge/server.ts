@@ -13,6 +13,7 @@ import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { Emitter } from 'nanoevents'
+import { useDesktopService } from '~/lib/core/composables/desktopService'
 
 export type SendBatchViaBrowserArgs = {
   modelCardId: string
@@ -62,6 +63,17 @@ export type ReceiveViaBrowserArgs = {
   selectedVersionId: string
 }
 
+export type ReceiveViaDesktopServiceArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  objectId: string
+  accountId: string
+  selectedVersionId: string
+  xmlConverterPath: string
+  endpointVersion: string // i.e. v1, v2...
+}
+
 export type CreateVersionArgs = {
   modelCardId: string
   projectId: string
@@ -70,6 +82,13 @@ export type CreateVersionArgs = {
   referencedObjectId: string
   message?: string
   sourceApplication?: string
+}
+
+export type ArchicadReceiveRequest = {
+  accountId: string
+  projectId: string
+  referencedObject: string
+  xmlConverterPath: string
 }
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
@@ -97,8 +116,59 @@ export class ArchicadBridge {
       this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
       this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs, runMethod)
+    else if (eventName === 'receiveByDesktopService')
+      this.receiveByDesktopService(
+        eventPayload as ReceiveViaDesktopServiceArgs,
+        runMethod
+      )
     // Archicad is not likely to hit here yet!
     else return this.emitter.emit(eventName, eventPayload)
+  }
+
+  private async receiveByDesktopService(
+    eventPayload: ReceiveViaDesktopServiceArgs,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ) {
+    const { pingDesktopService } = useDesktopService()
+
+    // 1 - Ping the desktop service to understand it is running
+    const isDesktopServiceAvailable = await pingDesktopService()
+
+    if (!isDesktopServiceAvailable) {
+      // 1.1 - No - fallback to receiveByBrowser
+      return this.receiveByBrowser(
+        {
+          modelCardId: eventPayload.modelCardId,
+          accountId: eventPayload.accountId,
+          projectId: eventPayload.projectId,
+          modelId: eventPayload.modelId,
+          objectId: eventPayload.objectId,
+          selectedVersionId: eventPayload.selectedVersionId
+        },
+        runMethod
+      )
+    }
+
+    // 1.2 - Yes - continue
+    const body: ArchicadReceiveRequest = {
+      accountId: eventPayload.accountId,
+      projectId: eventPayload.projectId,
+      referencedObject: eventPayload.objectId,
+      xmlConverterPath: eventPayload.xmlConverterPath
+    }
+
+    // 2 - POST the desktop service with formatted endpoint
+    try {
+      const res = await fetch(
+        `http://localhost:29634/${eventPayload.endpointVersion}/archicad-receive`,
+        {
+          method: 'POST',
+          body: JSON.stringify(body)
+        }
+      )
+    } catch (error) {
+      console.log(error) // TODO: throw toast
+    }
   }
 
   private async receiveByBrowser(
