@@ -33,5 +33,5 @@ export const getTotalWorkspaceCountFactory =
     const query = tables.workspaces(deps.db).count()
     const [{ count }] = await query
 
-    return parseInt(count + '')
+    return parseInt(String(count))
   }

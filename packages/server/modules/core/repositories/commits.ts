@@ -717,5 +717,5 @@ export const getTotalVersionCountFactory =
     const query = tables.commits(deps.db).count()
     const [{ count }] = await query
 
-    return parseInt(count + '')
+    return parseInt(String(count))
   }

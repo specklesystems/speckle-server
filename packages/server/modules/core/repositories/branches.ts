@@ -774,5 +774,5 @@ export const getTotalModelCountFactory =
     const query = tables.branches(deps.db).count()
     const [{ count }] = await query
 
-    return parseInt(count + '')
+    return parseInt(String(count))
   }
