@@ -123,9 +123,6 @@ const coreModule: SpeckleModule<{
     }
   },
   async finalize() {
-    // Reload serverInfo
-    await getCachedServerInfoFactory({ db }).clear()
-
     // Update server profile in mp
     await updateServerMixpanelProfileFactory({
       getServerInfo: getCachedServerInfoFactory({ db }),
