@@ -186,10 +186,12 @@ export const migrateWorkspacePlan =
       'Inserting {migratedSeatsCount} new seats for the workspace {workspaceId}'
     )
 
-    await db<WorkspaceSeat>('workspace_seats')
-      .insert(seats)
-      .onConflict(['workspaceId', 'userId'])
-      .merge()
+    if (seats.length) {
+      await db<WorkspaceSeat>('workspace_seats')
+        .insert(seats)
+        .onConflict(['workspaceId', 'userId'])
+        .merge()
+    }
 
     log.debug(
       { migratedSeatsCount: seats.length },
