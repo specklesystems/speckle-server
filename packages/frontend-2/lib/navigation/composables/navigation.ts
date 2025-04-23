@@ -18,7 +18,7 @@ graphql(`
   fragment UseNavigationWorkspaceList_User on User {
     id
     ...HeaderWorkspaceSwitcherWorkspaceList_User
-    projects {
+    projects(filter: $filter) {
       totalCount
     }
   }
@@ -50,9 +50,17 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
-  const { result } = useQuery(navigationWorkspaceListQuery, null, {
-    enabled: isWorkspacesEnabled.value
-  })
+  const { result } = useQuery(
+    navigationWorkspaceListQuery,
+    () => ({
+      filter: {
+        personalOnly: true
+      }
+    }),
+    {
+      enabled: isWorkspacesEnabled.value
+    }
+  )
 
   // Check for expired SSO sessions
   const expiredSsoSessions = computed(

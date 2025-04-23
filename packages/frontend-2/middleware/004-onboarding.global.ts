@@ -100,7 +100,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data: workspaceExistenceData } = await client
     .query({
-      query: activeUserWorkspaceExistenceCheckQuery
+      query: activeUserWorkspaceExistenceCheckQuery,
+      variables: {
+        filter: {
+          personalOnly: true
+        },
+        limit: 0
+      }
     })
     .catch(convertThrowIntoFetchResult)
 
