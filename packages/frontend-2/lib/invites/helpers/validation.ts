@@ -45,3 +45,15 @@ export const canHaveRole =
 
     return true
   }
+
+export const isEmailOrUserId =
+  (params: { userId: MaybeNullOrUndefined<string> }): GenericValidateFunction<string> =>
+  (val) => {
+    const { userId } = params
+
+    if (!val) return true
+    if (userId) return true
+    if (!isValidEmail(val)) return 'Please enter a valid email address or select a user'
+
+    return true
+  }

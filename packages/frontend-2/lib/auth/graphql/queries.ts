@@ -69,6 +69,9 @@ export const activeUserWorkspaceExistenceCheckQuery = graphql(`
       versions(limit: 0) {
         totalCount
       }
+      projects(limit: 0) {
+        totalCount
+      }
       workspaces(limit: 0) {
         totalCount
         items {

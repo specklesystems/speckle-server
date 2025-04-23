@@ -2,14 +2,16 @@
   <div>
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
-        <h1 class="block text-heading-lg md:text-heading-xl">Project collaborators</h1>
+        <h1 class="block text-heading-lg md:text-heading-xl">Collaborators</h1>
         <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
           Invite to project
         </FormButton>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
         <div v-if="project.workspace" class="flex flex-col gap-y-3">
-          <p class="text-body-2xs text-foreground-2 font-medium">General access</p>
+          <p class="text-body-2xs text-foreground-2 font-medium">
+            General project access
+          </p>
           <ProjectPageCollaboratorsGeneralAccessRow
             :name="project.workspace?.name"
             :logo="project.workspace?.logo"

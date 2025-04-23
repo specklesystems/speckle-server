@@ -1,19 +1,19 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
+    <SettingsSectionHeader
+      title="Billing and plans"
+      text="Get billing information and upgrade your plan"
+    />
     <BillingAlert
       v-if="showBillingAlert"
-      class="mb-4"
+      class="mb-6"
       :workspace="workspace"
       hide-settings-links
     />
     <BillingUsageAlert
       v-if="reachedPlanLimit"
       :plan-name="workspace?.plan?.name"
-      class="mb-4"
-    />
-    <SettingsSectionHeader
-      title="Billing and plans"
-      text="Get billing information and upgrade your plan"
+      class="mb-6"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">

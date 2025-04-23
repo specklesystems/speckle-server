@@ -94,8 +94,8 @@ export const onModelVersionCreateFactory =
             throw new AutomateInvalidTriggerError('Specified automation does not exist')
           }
 
-          if (automationRecord.isTestAutomation) {
-            // Do not trigger functions on test automations
+          if (automationRecord.isTestAutomation || automationRecord.isDeleted) {
+            // Do not trigger functions on test automations or deleted automations
             return
           }
 
@@ -358,6 +358,12 @@ export const ensureRunConditionsFactory =
     if (automationWithRevision.isTestAutomation) {
       throw new AutomateInvalidTriggerError(
         'This is a test automation and cannot be triggered outside of local testing'
+      )
+    }
+
+    if (automationWithRevision.isDeleted) {
+      throw new AutomateInvalidTriggerError(
+        'This automation is deleted, cannot trigger it.'
       )
     }
 

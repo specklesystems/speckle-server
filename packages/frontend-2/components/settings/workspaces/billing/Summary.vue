@@ -95,7 +95,7 @@ const nextPaymentHeadingText = computed(() => {
   if (statusIsCanceled.value) return 'Cancelled on'
   if (statusIsCancelationScheduled.value) return 'Cancellation scheduled for'
 
-  return 'Next payment due '
+  return 'Plan renews on '
 })
 
 const showBillingPortalLink = computed(
