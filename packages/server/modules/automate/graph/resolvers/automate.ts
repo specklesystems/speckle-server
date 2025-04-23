@@ -123,8 +123,11 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { commandFactory } from '@/modules/shared/command'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { asOperation } from '@/modules/shared/command'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -710,26 +713,38 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           )
         },
         async delete(parent, input, context) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const canDelete = await context.authPolicies.project.automation.canDelete({
+            userId: context.userId,
+            projectId: parent.projectId
+          })
+          throwIfAuthNotOk(canDelete)
 
-          await authorizeResolver(
-            context.userId,
-            parent.projectId,
-            Roles.Stream.Owner,
-            context.resourceAccessRules
-          )
+          const projectId = parent.projectId
+          const automationId = input.automationId
 
-          const deleteAutomation = commandFactory({
-            db: projectDb,
-            operationFactory: ({ db }) =>
-              deleteAutomationFactory({
+          const logger = context.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
+
+          return await asOperation(
+            async ({ db }) => {
+              const deleteAutomation = deleteAutomationFactory({
                 deleteAutomation: markAutomationDeletedFactory({ db })
               })
-          })
 
-          return await deleteAutomation({
-            automationId: input.automationId
-          })
+              return await deleteAutomation({ automationId })
+            },
+            {
+              logger,
+              name: 'deleteProjectAutomation',
+              description: 'Delete an Automation attached to a project',
+              db: projectDb
+            }
+          )
         },
         async createRevision(parent, { input }, ctx) {
           const projectId = parent.projectId

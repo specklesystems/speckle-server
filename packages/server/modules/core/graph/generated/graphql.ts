@@ -476,6 +476,7 @@ export type AutomationCollection = {
 
 export type AutomationPermissionChecks = {
   __typename?: 'AutomationPermissionChecks';
+  canDelete: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
@@ -6109,6 +6110,7 @@ export type AutomationCollectionResolvers<ContextType = GraphQLContext, ParentTy
 };
 
 export type AutomationPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationPermissionChecks'] = ResolversParentTypes['AutomationPermissionChecks']> = {
+  canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
