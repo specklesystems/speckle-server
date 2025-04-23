@@ -61,7 +61,7 @@ export const authorizableAppMetadataQuery = graphql(`
 `)
 
 export const activeUserWorkspaceExistenceCheckQuery = graphql(`
-  query ActiveUserWorkspaceExistenceCheck {
+  query ActiveUserWorkspaceExistenceCheck($filter: UserProjectsFilter) {
     activeUser {
       id
       verified
@@ -69,7 +69,7 @@ export const activeUserWorkspaceExistenceCheckQuery = graphql(`
       versions(limit: 0) {
         totalCount
       }
-      projects(limit: 0) {
+      projects(filter: $filter) {
         totalCount
       }
       workspaces(limit: 0) {
