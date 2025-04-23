@@ -216,8 +216,6 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         editors: async (parent) => {
           const { workspaceId } = parent
 
-          // Resolve from subscription, if it exists
-          // From workspace_seats, if a sub doesnt exist (free plan)
           const [workspacePlan, subscription] = await Promise.all([
             getWorkspacePlanFactory({ db })({
               workspaceId
