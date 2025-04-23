@@ -12,9 +12,11 @@
           v-on="on"
         />
       </div>
-      <FormButton :disabled="disableCreate" @click="openNewProject = true">
-        Create
-      </FormButton>
+      <div v-tippy="disabledTooltip">
+        <FormButton :disabled="disableCreate" @click="handleCreateProject">
+          Create
+        </FormButton>
+      </div>
     </div>
 
     <LayoutTable
@@ -159,6 +161,12 @@ const props = defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
   disableCreate?: boolean
+  disabledTooltip?: string
+  limitReached?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'project-limit-reached'): void
 }>()
 
 const search = defineModel<string>('search')
@@ -234,5 +242,13 @@ const onActionChosen = (
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const handleCreateProject = () => {
+  if (props.limitReached) {
+    emit('project-limit-reached')
+  } else {
+    openNewProject.value = true
+  }
 }
 </script>
