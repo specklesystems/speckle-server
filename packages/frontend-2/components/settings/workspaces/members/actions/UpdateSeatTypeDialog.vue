@@ -11,7 +11,7 @@
         :is-guest="user.role === Roles.Workspace.Guest"
         :has-available-seat="hasAvailableEditorSeats"
         :seat-price="editorSeatPriceFormatted"
-        :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
+        :billing-interval="intervalIsYearly ? 'year' : 'month'"
       />
 
       <p v-if="billingMessage" class="text-foreground-2 text-body-xs mt-4">
@@ -63,23 +63,20 @@ const {
 const isLoading = ref(false)
 
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
-const annualOrMonthly = computed(() => (intervalIsYearly.value ? 'year' : 'month'))
 
 const billingMessage = computed(() => {
   if (isFreePlan.value) return null
   if (isUpgrading.value) {
     return hasAvailableEditorSeats.value
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `You'll be charged immediately for the partial period from today until your plan renewal on ${dayjs(
+      : `You will be charged an adjusted amount for the partial period from today until your plan renewal on ${dayjs(
           currentBillingCycleEnd.value
-        ).format('DD-MM-YYYY')} (${editorSeatPriceFormatted.value}/${
-          annualOrMonthly.value
-        } adjusted for the remaining time).`
+        ).format('MMMM D, YYYY')}.`
   } else {
     return isPaidPlan.value
       ? `The Editor seat will still be paid for until your plan renews on ${dayjs(
           currentBillingCycleEnd.value
-        ).format('DD-MM-YYYY')}. You can freely reassign it to another person.`
+        ).format('MMMM D, YYYY')}. You can freely reassign it to another person.`
       : null
   }
 })

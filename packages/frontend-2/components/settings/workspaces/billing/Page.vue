@@ -6,7 +6,11 @@
       :workspace="workspace"
       hide-settings-links
     />
-
+    <BillingUsageAlert
+      v-if="reachedPlanLimit"
+      :plan-name="workspace?.plan?.name"
+      class="mb-4"
+    />
     <SettingsSectionHeader
       title="Billing and plans"
       text="Get billing information and upgrade your plan"
@@ -30,6 +34,9 @@
             :workspace-id="workspace?.id"
             :role="workspace?.role as WorkspaceRoles"
             :currency="workspace?.subscription?.currency"
+            :is-yearly-interval-selected="
+              workspace?.subscription?.billingInterval === BillingInterval.Yearly
+            "
           />
         </section>
 
@@ -48,7 +55,11 @@ import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
-import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import {
+  BillingInterval,
+  WorkspacePlanStatuses
+} from '~/lib/common/generated/gql/graphql'
+import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -56,6 +67,14 @@ graphql(`
     role
     subscription {
       currency
+      billingInterval
+    }
+    plan {
+      name
+      usage {
+        projectCount
+        modelCount
+      }
     }
     ...BillingAlert_Workspace
   }
@@ -76,11 +95,17 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-
 const showBillingAlert = computed(
   () =>
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+const reachedPlanLimit = computed(() =>
+  workspaceReachedPlanLimit(
+    workspace.value?.plan?.name,
+    workspace.value?.plan?.usage?.projectCount,
+    workspace.value?.plan?.usage?.modelCount
+  )
 )
 </script>

@@ -359,6 +359,9 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
     }
     // must update the billing interval to the new one
     workspaceSubscription.billingInterval = billingInterval
+    workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
+      workspaceSubscription
+    })
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
       workspaceSubscription.subscriptionData

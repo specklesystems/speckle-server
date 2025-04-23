@@ -1169,10 +1169,9 @@ export const revokeStreamPermissionsFactory =
       .count<{ count: string }[]>()
 
     if (parseInt(streamAclEntriesCount.count) === 1)
-      throw new StreamAccessUpdateError(
-        'Stream has only one ownership link left - cannot revoke permissions.',
-        { info: { streamId, userId } }
-      )
+      throw new StreamAccessUpdateError('A project needs at least one project owner', {
+        info: { streamId, userId }
+      })
 
     const aclEntry = existingPermission
     if (aclEntry?.role === Roles.Stream.Owner) {

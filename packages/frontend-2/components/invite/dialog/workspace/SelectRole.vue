@@ -7,24 +7,20 @@
 <script setup lang="ts">
 import { Roles, type WorkspaceRoles } from '@speckle/shared'
 
-const props = defineProps<{
-  workspaceName: string
-}>()
-
 const selectedRole = defineModel<WorkspaceRoles>('selectedRole', { required: true })
 
 const options = computed(() => [
   {
     value: Roles.Workspace.Member,
-    title: `Someone who works at ${props.workspaceName}`,
+    title: `Someone from my company or organization`,
     subtitle:
-      'Workspace members can create projects, add others, and act as administrators. Add them if they are full-time, part-time, or volunteers.'
+      'They will be invited as a workspace member with default view access on all projects.'
   },
   {
     value: Roles.Workspace.Guest,
-    title: 'An external collaborator, contractor, or guest.',
+    title: 'An external collaborator',
     subtitle:
-      "They don't work at Company.com. They can collaborate on projects but can't create projects, invite others, add people, or be admins."
+      "They will be invited as a workspace guest with access only to the specific projects they're added to."
   }
 ])
 </script>

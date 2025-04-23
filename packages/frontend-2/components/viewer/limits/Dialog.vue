@@ -114,8 +114,12 @@ const explorePlansButton: LayoutDialogButton = {
 
 const buttons = computed((): LayoutDialogButton[] => {
   const buttons: Record<LimitType, LayoutDialogButton[]> = {
-    version: [loadLatestButton(false), explorePlansButton],
-    federated: [loadLatestButton(false), explorePlansButton],
+    version: isEmbedEnabled.value
+      ? [loadLatestButton(false)]
+      : [loadLatestButton(false), explorePlansButton],
+    federated: isEmbedEnabled.value
+      ? [loadLatestButton(false)]
+      : [loadLatestButton(false), explorePlansButton],
     comment: [loadLatestButton(true)]
   }
 

@@ -60,16 +60,15 @@ export type SelectableAccessSelectItem = {
 
 export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelectItem> =
   {
-    [AccessSelectItems.NoAccess]: {
-      id: AccessSelectItems.NoAccess,
-      title: 'No access',
-      description: 'Only invited project members can access the project'
-    },
     [AccessSelectItems.Reviewer]: {
       id: AccessSelectItems.Reviewer,
       title: 'Can view',
-      description:
-        'All workspace members can view and comment on models in the web viewer'
+      description: 'All workspace members can view and comment on the project'
+    },
+    [AccessSelectItems.NoAccess]: {
+      id: AccessSelectItems.NoAccess,
+      title: 'No access',
+      description: 'Only admins and invited project members can access the project'
     }
   }
 

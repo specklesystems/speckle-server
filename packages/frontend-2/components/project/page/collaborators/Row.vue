@@ -146,24 +146,24 @@ const badgeText = computed(() => {
 })
 
 const disabledRoles = computed(() => {
-  if (isTargettingWorkspaceGuest.value) {
-    return [Roles.Stream.Owner]
-  }
-
   if (props.collaborator.seatType === 'viewer') {
     return [Roles.Stream.Owner, Roles.Stream.Contributor]
+  }
+
+  if (isTargettingWorkspaceGuest.value) {
+    return [Roles.Stream.Owner]
   }
 
   return []
 })
 
 const disabledRolesTooltip = computed(() => {
-  if (isTargettingWorkspaceGuest.value) {
-    return 'Workspace guests cannot be project owners'
-  }
-
   if (props.collaborator.seatType === 'viewer') {
     return 'Users with a viewer seat cannot be project owners or contributors'
+  }
+
+  if (isTargettingWorkspaceGuest.value) {
+    return 'Workspace guests cannot be project owners'
   }
 
   return ''

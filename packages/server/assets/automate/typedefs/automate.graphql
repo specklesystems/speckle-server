@@ -314,6 +314,7 @@ extend type ServerInfo {
 type ProjectAutomationMutations {
   create(input: ProjectAutomationCreateInput!): Automation!
   update(input: ProjectAutomationUpdateInput!): Automation!
+  delete(automationId: ID!): Boolean!
   createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
   """
   Trigger an automation with a fake "version created" trigger. The "version created" will
