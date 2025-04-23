@@ -204,7 +204,7 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    */
   cursor?: MaybeNullOrUndefined<string>
   /**
-   * Fields used to sort the result
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
    */
   sortBy?: MaybeNullOrUndefined<string[]>
 }
