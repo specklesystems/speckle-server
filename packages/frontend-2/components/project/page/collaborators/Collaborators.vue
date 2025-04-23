@@ -8,21 +8,35 @@
         </FormButton>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
-        <div v-if="project.workspace" class="flex flex-col gap-y-3">
-          <p class="text-body-2xs text-foreground-2 font-medium">
-            General project access
-          </p>
-          <ProjectPageCollaboratorsGeneralAccessRow
-            :name="project.workspace?.name"
-            :logo="project.workspace?.logo"
-            :can-edit="!!canUpdate?.authorized"
-          />
-        </div>
+        <template v-if="project.workspace">
+          <div class="flex flex-col gap-y-3">
+            <p class="text-body-2xs text-foreground-2 font-medium">
+              General project access
+            </p>
+            <ProjectPageCollaboratorsGeneralAccessRow
+              :name="project.workspace?.name"
+              :logo="project.workspace?.logo"
+              :can-edit="!!canUpdate?.authorized"
+            />
+          </div>
+          <div class="flex flex-col gap-y-3">
+            <p class="text-body-2xs text-foreground-2 font-medium">Workspace admins</p>
+            <div>
+              <ProjectPageCollaboratorsAdminRow
+                v-for="admin in workspaceAdmins"
+                :key="admin.id"
+                :name="admin?.user?.name"
+                :logo="admin?.user?.avatar"
+                :can-edit="!!canUpdate?.authorized"
+              />
+            </div>
+          </div>
+        </template>
         <div class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
-          <div>
+          <div v-if="!filteredCollaborators.length">
             <ProjectPageCollaboratorsRow
-              v-for="collaborator in collaboratorListItems"
+              v-for="collaborator in filteredCollaborators"
               :key="collaborator.id"
               :can-edit="!!canUpdate?.authorized"
               :collaborator="collaborator"
@@ -30,6 +44,11 @@
               @cancel-invite="onCancelInvite"
               @change-role="onCollaboratorRoleChange"
             />
+          </div>
+          <div
+            class="bg-foundation items-center gap-2 py-4 px-3 pl-3.5 border border-outline-3 rounded-lg flex text-body-2xs text-foreground-2"
+          >
+            No members have been added to the project
           </div>
         </div>
       </div>
@@ -71,7 +90,7 @@ graphql(`
 `)
 
 const projectPageCollaboratorsQuery = graphql(`
-  query ProjectPageCollaborators($projectId: String!) {
+  query ProjectPageCollaborators($projectId: String!, $filter: WorkspaceTeamFilter!) {
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
@@ -82,6 +101,16 @@ const projectPageCollaboratorsQuery = graphql(`
         ...ProjectPageTeamInternals_Workspace
         name
         logo
+        team(filter: $filter) {
+          items {
+            id
+            user {
+              id
+              name
+              avatar
+            }
+          }
+        }
       }
     }
   }
@@ -94,7 +123,10 @@ const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
 const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
-  projectId: projectId.value
+  projectId: projectId.value,
+  filter: {
+    roles: [Roles.Workspace.Admin]
+  }
 }))
 
 const showInviteDialog = ref(false)
@@ -108,6 +140,15 @@ const canInvite = computed(() =>
 )
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
+const workspaceAdmins = computed(
+  () => pageResult.value?.project?.workspace?.team?.items || []
+)
+const filteredCollaborators = computed(() => {
+  const adminIds = new Set(workspaceAdmins.value.map((admin) => admin.user?.id))
+  return collaboratorListItems.value.filter((collab) =>
+    collab.user?.id ? !adminIds.has(collab.user.id) : true
+  )
+})
 const updateRole = useUpdateUserRole(project)
 const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
 
