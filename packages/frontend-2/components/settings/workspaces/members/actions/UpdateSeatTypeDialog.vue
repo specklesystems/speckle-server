@@ -37,6 +37,7 @@ import type {
   SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
@@ -49,6 +50,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const mixpanel = useMixpanel()
 const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
   hasAvailableEditorSeats,
@@ -100,6 +102,15 @@ const handleConfirm = async () => {
       seatType: newSeatType,
       workspaceId: props.workspace.id
     })
+
+    if (!hasAvailableEditorSeats.value && isPaidPlan.value) {
+      mixpanel.track('Workspace Seat Purchased', {
+        location: 'upgrade_seat_type_dialog',
+        seatType: 'editor',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspace.id
+      })
+    }
 
     open.value = false
     emit('success')
