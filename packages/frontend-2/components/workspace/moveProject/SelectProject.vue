@@ -143,6 +143,9 @@ const getProjectTooltip = computed(
     if (project.permissions.canMoveToWorkspace.authorized) {
       return undefined
     }
+    if (project.permissions.canMoveToWorkspace.code === 'ProjectNotEnoughPermissions') {
+      return 'Only the project owner can move this project'
+    }
     return project.permissions.canMoveToWorkspace.message
   }
 )
