@@ -96,9 +96,10 @@ const emit = defineEmits<{
   (e: 'project-selected', project: WorkspaceMoveProjectManager_ProjectFragment): void
 }>()
 
-defineProps<{
+const props = defineProps<{
   workspace?: WorkspaceMoveProjectManager_WorkspaceFragment
   projectPermissions?: PermissionCheckResult
+  workspaceId?: string
 }>()
 
 const {
@@ -112,7 +113,8 @@ const {
     filter: {
       search: search.value?.length ? search.value : null,
       personalOnly: true
-    }
+    },
+    workspaceId: props.workspaceId || ''
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.activeUser?.projects,
