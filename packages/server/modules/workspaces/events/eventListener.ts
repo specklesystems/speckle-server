@@ -201,6 +201,7 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       skipProjectRoleUpdatesFor: [project.id],
+      preventRoleDowngrade: true,
       updatedByUserId: invite.inviterId
     })
   }

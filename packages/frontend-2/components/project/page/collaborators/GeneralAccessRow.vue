@@ -4,7 +4,7 @@
   >
     <div class="flex flex-1 items-center gap-x-3.5">
       <WorkspaceAvatar :name="name || ''" :logo="logo" size="sm" />
-      <p class="text-body-xs">Workspace members</p>
+      <p class="text-body-xs">All workspace members</p>
     </div>
     <ProjectPageTeamAccessSelect v-if="canEdit" :model-value="generalAccessRole" />
     <div v-else class="flex items-center justify-end text-body-2xs">

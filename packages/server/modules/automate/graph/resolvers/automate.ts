@@ -29,14 +29,16 @@ import {
   updateAutomationFactory,
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
-  upsertAutomationRunFactory
+  upsertAutomationRunFactory,
+  markAutomationDeletedFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatusFactory,
-  validateAndUpdateAutomationFactory
+  validateAndUpdateAutomationFactory,
+  deleteAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -121,7 +123,11 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { asOperation } from '@/modules/shared/command'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -703,6 +709,40 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               logger,
               operationName: 'updateProjectAutomation',
               operationDescription: 'Update an Automation attached to a project'
+            }
+          )
+        },
+        async delete(parent, input, context) {
+          const canDelete = await context.authPolicies.project.automation.canDelete({
+            userId: context.userId,
+            projectId: parent.projectId
+          })
+          throwIfAuthNotOk(canDelete)
+
+          const projectId = parent.projectId
+          const automationId = input.automationId
+
+          const logger = context.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
+
+          return await asOperation(
+            async ({ db }) => {
+              const deleteAutomation = deleteAutomationFactory({
+                deleteAutomation: markAutomationDeletedFactory({ db })
+              })
+
+              return await deleteAutomation({ automationId })
+            },
+            {
+              logger,
+              name: 'deleteProjectAutomation',
+              description: 'Delete an Automation attached to a project',
+              db: projectDb
             }
           )
         },

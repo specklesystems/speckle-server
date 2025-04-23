@@ -1,15 +1,19 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
-    <BillingAlert
-      v-if="showBillingAlert"
-      class="mb-4"
-      :workspace="workspace"
-      hide-settings-links
-    />
-
     <SettingsSectionHeader
       title="Billing and plans"
       text="Get billing information and upgrade your plan"
+    />
+    <BillingAlert
+      v-if="showBillingAlert"
+      class="mb-6"
+      :workspace="workspace"
+      hide-settings-links
+    />
+    <BillingUsageAlert
+      v-if="reachedPlanLimit"
+      :plan-name="workspace?.plan?.name"
+      class="mb-6"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
@@ -55,6 +59,7 @@ import {
   BillingInterval,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
+import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -63,6 +68,13 @@ graphql(`
     subscription {
       currency
       billingInterval
+    }
+    plan {
+      name
+      usage {
+        projectCount
+        modelCount
+      }
     }
     ...BillingAlert_Workspace
   }
@@ -88,5 +100,12 @@ const showBillingAlert = computed(
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+const reachedPlanLimit = computed(() =>
+  workspaceReachedPlanLimit(
+    workspace.value?.plan?.name,
+    workspace.value?.plan?.usage?.projectCount,
+    workspace.value?.plan?.usage?.modelCount
+  )
 )
 </script>

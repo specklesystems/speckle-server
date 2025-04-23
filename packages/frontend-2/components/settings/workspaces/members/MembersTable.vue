@@ -2,8 +2,10 @@
   <div>
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Workspace members can have a viewer or editor seat. Admins must be editors. Read
-        more about
+        Workspace members can view all projects by default. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can create new
+        projects in the workspace and fully contribute to other projects if given the
+        permission. Read more about
         <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
           Speckle roles and seats.
         </NuxtLink>
