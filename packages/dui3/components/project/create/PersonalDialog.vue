@@ -82,10 +82,7 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
-const isLatest = activeAccount.value.accountInfo.serverInfo.url.includes(
-  'latest.speckle.systems'
-) // TODO: will be removed once we have limits in app.speckle.systems
-const canCreatePersonalProject = ref<boolean>(!isLatest) // TODO: will be removed once we have limits in app.speckle.systems
+const canCreatePersonalProject = ref<boolean>(false)
 
 const { result: canCreatePersonalProjectResult } = useQuery(
   canCreatePersonalProjectQuery,
@@ -93,8 +90,7 @@ const { result: canCreatePersonalProjectResult } = useQuery(
   () => ({
     clientId: accountId.value,
     debounce: 500,
-    fetchPolicy: 'network-only',
-    enabled: isLatest // TODO: will be removed once we have limits in app.speckle.systems
+    fetchPolicy: 'network-only'
   })
 )
 

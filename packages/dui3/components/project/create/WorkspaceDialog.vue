@@ -116,10 +116,7 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
-const isLatest = activeAccount.value.accountInfo.serverInfo.url.includes(
-  'latest.speckle.systems'
-) // TODO: will be removed once we have limits in app.speckle.systems
-const canCreateProjectInWorkspace = ref<boolean>(!isLatest) // TODO: will be removed once we have limits in app.speckle.systems
+const canCreateProjectInWorkspace = ref<boolean>()
 
 const { result: canCreateProjectInWorkspaceResult } = useQuery(
   canCreateProjectInWorkspaceQuery,
@@ -127,8 +124,7 @@ const { result: canCreateProjectInWorkspaceResult } = useQuery(
   () => ({
     clientId: accountId.value,
     debounce: 500,
-    fetchPolicy: 'network-only',
-    enabled: isLatest && !!props.workspace?.id // TODO: will be removed once we have limits in app.speckle.systems
+    fetchPolicy: 'network-only'
   })
 )
 
