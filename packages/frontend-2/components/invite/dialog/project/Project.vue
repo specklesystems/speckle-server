@@ -27,9 +27,22 @@
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
           />
         </template>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-          Add another user
-        </FormButton>
+        <div>
+          <div
+            :key="`add-user-${fields.length}`"
+            v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
+            class="inline-block"
+          >
+            <FormButton
+              color="subtle"
+              :icon-left="PlusIcon"
+              :disabled="disableAddUserButton"
+              @click="addInviteItem"
+            >
+              Add another user
+            </FormButton>
+          </div>
+        </div>
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
@@ -103,6 +116,7 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
+const disableAddUserButton = computed(() => fields.value.length >= 10)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
