@@ -16,10 +16,7 @@ import roles from '@/modules/core/roles'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import {
-  getCachedRolesFactory,
-  registerOrUpdateRole
-} from '@/modules/shared/repositories/roles'
+import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
@@ -126,8 +123,8 @@ const coreModule: SpeckleModule<{
     }
   },
   async finalize() {
-    // After all roles registered, reset cache
-    await getCachedRolesFactory({ db }).clear()
+    // Reload serverInfo
+    await getCachedServerInfoFactory({ db }).clear()
 
     // Update server profile in mp
     await updateServerMixpanelProfileFactory({
