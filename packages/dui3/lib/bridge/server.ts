@@ -166,6 +166,7 @@ export class ArchicadBridge {
           body: JSON.stringify(body)
         }
       )
+      console.log(res)
     } catch (error) {
       console.log(error) // TODO: throw toast
     }
