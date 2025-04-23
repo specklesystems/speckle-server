@@ -21,12 +21,11 @@
       class="mt-6"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
-        { id: 'type', header: 'Type', classes: 'col-span-1' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
-        { id: 'contributors', header: 'Contributors', classes: 'col-span-2 pr-8' },
+        { id: 'contributors', header: 'Project members', classes: 'col-span-2 pr-8' },
         { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
       :items="projects"
@@ -35,12 +34,6 @@
         <NuxtLink :to="projectRoute(item.id)">
           {{ isProject(item) ? item.name : '' }}
         </NuxtLink>
-      </template>
-
-      <template #type="{ item }">
-        <div class="capitalize">
-          {{ isProject(item) ? item.visibility.toLowerCase() : '' }}
-        </div>
       </template>
 
       <template #created="{ item }">
