@@ -6,11 +6,7 @@
         specific projects they're invited to, and their email doesn't need to follow any
         of the allowed email domains that you may have set up. If on a Viewer seat, they
         can view projects on web and comment. If on an Editor seat, they can contribute
-        to projects if given the permission. They can never create new projects. Read
-        more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        to projects if given the permission. They can never create new projects.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -120,7 +116,6 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{

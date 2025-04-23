@@ -5,10 +5,7 @@
         Workspace members can view all projects by default. If on a Viewer seat, they
         can view projects on web and comment. If on an Editor seat, they can create new
         projects in the workspace and fully contribute to other projects if given the
-        permission. Read more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        permission.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -145,7 +142,6 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 

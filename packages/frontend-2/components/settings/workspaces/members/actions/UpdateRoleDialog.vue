@@ -35,14 +35,7 @@
       </p>
 
       <p v-if="roleInfo" class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }} Learn more about
-        <NuxtLink
-          :to="LearnMoreRolesSeatsUrl"
-          target="_blank"
-          class="text-foreground-2 underline"
-        >
-          workspace roles.
-        </NuxtLink>
+        {{ roleInfo }}
       </p>
     </div>
   </LayoutDialog>
@@ -50,7 +43,6 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
