@@ -203,6 +203,7 @@ export const workspaceMoveProjectManagerUserQuery = graphql(`
     $cursor: String
     $filter: UserProjectsFilter
     $projectId: String
+    $sortBy: [String!]
   ) {
     activeUser {
       ...WorkspaceMoveProjectSelectWorkspace_User
