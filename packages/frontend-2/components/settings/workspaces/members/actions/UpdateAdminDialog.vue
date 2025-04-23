@@ -155,6 +155,7 @@ const handleConfirm = async () => {
     if (!isUnpaidPaidUpgrade.value) {
       mixpanel.track('Workspace Seat Purchased', {
         location: 'upgrade_admin_dialog',
+        seatType: 'editor',
         // eslint-disable-next-line camelcase
         workspace_id: props.workspace.id
       })
