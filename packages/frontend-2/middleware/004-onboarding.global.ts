@@ -161,7 +161,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // 4.3 If going to workspace, set it active
-  if (to.path.startsWith('/workspaces/')) {
+  if (
+    to.path.startsWith('/workspaces/') ||
+    to.path.startsWith('/settings/workspaces/')
+  ) {
     const slug = to.params.slug as string
     if (slug && belongsToWorkspace(slug)) {
       mutateActiveWorkspaceSlug(slug)
