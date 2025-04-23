@@ -1,9 +1,5 @@
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BlendPass } from '../Passes/BlendPass.js'
-import { DepthPass } from '../Passes/DepthPass.js'
-import { EdgesPass } from '../Passes/EdgesPass.js'
-import { NormalsPass } from '../Passes/NormalsPass.js'
-import { TAAPass } from '../Passes/TAAPass.js'
 import { AssetType, ObjectLayers } from '../../../IViewer.js'
 import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
@@ -12,32 +8,15 @@ import { StencilMaskPass } from '../Passes/StencilMaskPass.js'
 import { StencilPass } from '../Passes/StencilPass.js'
 import { ViewportPass } from '../Passes/ViewportPass.js'
 import defaultMatcap from '../../../assets/matcap.png'
+import { DefaultPipelineOptions, PipelineOptions } from './Pipeline.js'
+import { EdgesPipeline } from './EdgesPipeline.js'
 
 export class ShadedViewPipeline extends ProgressivePipeline {
-  constructor(speckleRenderer: SpeckleRenderer) {
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: PipelineOptions = DefaultPipelineOptions
+  ) {
     super(speckleRenderer)
-
-    const depthPass = new DepthPass()
-    depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setJitter(true)
-    depthPass.setClearColor(0x000000, 1)
-    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const normalPass = new NormalsPass()
-    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setJitter(true)
-    normalPass.setClearColor(0x000000, 1)
-    normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const depthPassDynamic = new DepthPass()
-    depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassDynamic.setClearColor(0x000000, 1)
-    depthPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const normalPassDynamic = new NormalsPass()
-    normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPassDynamic.setClearColor(0x000000, 1)
-    normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const viewportPass = new ViewportPass()
     viewportPass.setLayers([
@@ -60,27 +39,8 @@ export class ShadedViewPipeline extends ProgressivePipeline {
     const shadowcatcherPass = new GeometryPass()
     shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
 
-    const edgesPass = new EdgesPass()
-    edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
-    edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
-
-    const edgesPassDynamic = new EdgesPass()
-    edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
-    edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
-
-    const taaPass = new TAAPass()
-    taaPass.inputTexture = edgesPass.outputTarget?.texture
-    taaPass.accumulationFrames = this.accumulationFrameCount
-
-    const blendPass = new BlendPass()
-    blendPass.options = { blendAO: false, blendEdges: true }
-    blendPass.setTexture('tEdges', taaPass.outputTarget?.texture)
-    blendPass.accumulationFrames = this.accumulationFrameCount
-
-    const blendPassDynamic = new BlendPass()
-    blendPassDynamic.options = { blendAO: false, blendEdges: true }
-    blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
-    blendPassDynamic.accumulationFrames = this.accumulationFrameCount
+    const postBlendGeometryPass = new GeometryPass()
+    postBlendGeometryPass.setLayers([ObjectLayers.PROPS])
 
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
@@ -94,33 +54,63 @@ export class ShadedViewPipeline extends ProgressivePipeline {
     const overlayPass = new GeometryPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
+    const edgesPipeline = options.edges ? new EdgesPipeline(speckleRenderer) : null
+    let blendPass = null
+    let blendPassDynamic = null
+    if (edgesPipeline) {
+      blendPass = new BlendPass()
+      blendPass.options = { blendAO: false, blendEdges: true }
+      blendPass.setTexture('tEdges', edgesPipeline.outputTexture)
+      blendPass.accumulationFrames = this.accumulationFrameCount
+
+      blendPassDynamic = new BlendPass()
+      blendPassDynamic.options = { blendAO: false, blendEdges: true }
+      blendPassDynamic.setTexture('tEdges', edgesPipeline.outputTextureDynamic)
+      blendPassDynamic.accumulationFrames = this.accumulationFrameCount
+    }
+
+    const depthSubPipelineDynamic =
+      (options.edges ? edgesPipeline?.dynamicPasses : []) || []
+    const depthSubPipelineProgressive =
+      (options.edges ? edgesPipeline?.progressivePasses : []) || []
+    const blendSubpipelineDynamic = options.edges
+      ? blendPassDynamic
+        ? [blendPassDynamic]
+        : []
+      : []
+    const blendSubpipelineProgressive = options.edges
+      ? blendPass
+        ? [blendPass]
+        : []
+      : []
+
     this.dynamicStage.push(
-      depthPassDynamic,
-      normalPassDynamic,
-      edgesPassDynamic,
+      ...depthSubPipelineDynamic,
       stencilPass,
-      viewportPass,
       shadowcatcherPass,
+      viewportPass,
+      ...blendSubpipelineDynamic,
+      postBlendGeometryPass,
       stencilMaskPass,
-      blendPassDynamic,
       overlayPass
     )
     this.progressiveStage.push(
-      depthPass,
-      normalPass,
-      edgesPass,
-      taaPass,
+      ...depthSubPipelineProgressive,
       stencilPass,
+      shadowcatcherPass,
       viewportPass,
+      ...blendSubpipelineProgressive,
+      postBlendGeometryPass,
       stencilMaskPass,
-      blendPass,
       overlayPass
     )
     this.passthroughStage.push(
       stencilPass,
+      shadowcatcherPass,
       viewportPass,
+      ...blendSubpipelineProgressive,
       stencilMaskPass,
-      blendPass,
+      postBlendGeometryPass,
       overlayPass
     )
 

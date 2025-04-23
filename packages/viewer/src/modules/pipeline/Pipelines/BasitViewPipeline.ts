@@ -1,15 +1,33 @@
-import { ObjectLayers, WorldTree } from '../../../index.js'
 import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
-import { Pipeline } from './Pipeline.js'
+import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { ShadedPass } from '../Passes/ShadedPass.js'
 import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
 import { StencilPass } from '../Passes/StencilPass.js'
 import { StencilMaskPass } from '../Passes/StencilMaskPass.js'
+import { PipelineOptions, DefaultPipelineOptions } from './Pipeline.js'
+import { WorldTree } from '../../tree/WorldTree.js'
+import { EdgesPipeline } from './EdgesPipeline.js'
+import { ObjectLayers } from '../../../IViewer.js'
+import { BlendPass } from '../Passes/BlendPass.js'
 
-export class BasitPipeline extends Pipeline {
-  constructor(speckleRenderer: SpeckleRenderer, tree: WorldTree) {
+export class BasitPipeline extends ProgressivePipeline {
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: PipelineOptions = DefaultPipelineOptions,
+    tree: WorldTree
+  ) {
     super(speckleRenderer)
+
+    const edgesPipeline = options.edges ? new EdgesPipeline(speckleRenderer) : null
+    /** We'll just render all objects outlines, not just opaque */
+    edgesPipeline?.depthPass.setVisibility(null)
+    edgesPipeline?.depthPassDynamic.setVisibility(null)
+
+    const depthSubPipelineDynamic =
+      (options.edges ? edgesPipeline?.dynamicPasses : []) || []
+    const depthSubPipelineProgressive =
+      (options.edges ? edgesPipeline?.progressivePasses : []) || []
 
     const basitPass = new ShadedPass(tree, speckleRenderer)
     basitPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.PROPS])
@@ -24,6 +42,23 @@ export class BasitPipeline extends Pipeline {
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
       ObjectLayers.STREAM_CONTENT_TEXT
     ])
+
+    const blendPass = new BlendPass()
+    blendPass.options = { blendAO: false, blendEdges: options.edges }
+    blendPass.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.outputTexture : undefined
+    )
+    blendPass.accumulationFrames = this.accumulationFrameCount
+
+    const blendPassDynamic = new BlendPass()
+    blendPassDynamic.options = { blendAO: false, blendEdges: options.edges }
+    blendPassDynamic.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.outputTextureDynamic : undefined
+    )
+    blendPassDynamic.accumulationFrames = this.accumulationFrameCount
+
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
@@ -36,12 +71,33 @@ export class BasitPipeline extends Pipeline {
     const overlayPass = new GeometryPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
-    this.passList.push(
+    this.dynamicStage.push(
+      ...depthSubPipelineDynamic,
+      stencilPass,
+      basitPass,
+      nonMeshPass,
+      ...(options.edges ? [blendPassDynamic] : []),
+      stencilMaskPass,
+      overlayPass
+    )
+    this.progressiveStage.push(
+      ...depthSubPipelineProgressive,
       stencilPass,
       basitPass,
       nonMeshPass,
       stencilMaskPass,
+      blendPass,
       overlayPass
     )
+    this.passthroughStage.push(
+      stencilPass,
+      basitPass,
+      nonMeshPass,
+      stencilMaskPass,
+      blendPass,
+      overlayPass
+    )
+
+    this.passList = this.dynamicStage
   }
 }

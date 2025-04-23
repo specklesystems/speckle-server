@@ -4,18 +4,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ArcticViewPipeline,
+  BasitPipeline,
   ClearFlags,
   DefaultLightConfiguration,
   DefaultPipeline,
   InputType,
-  MRTEdgesPipeline,
-  MRTPenViewPipeline,
-  MRTShadedViewPipeline,
   NormalsPass,
   ObjectLayers,
   OutputPass,
+  PenViewPipeline,
   Pipeline,
   SectionTool,
+  ShadedViewPipeline,
   SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
@@ -532,81 +532,96 @@ export default class Sandbox {
     })
     this.tabs.pages[0].addSeparator()
 
-    const pipeline = { output: 0 }
+    const pipeline = { output: 0, edges: false }
+    const setPipeline = (value: number) => {
+      switch (value) {
+        case 0:
+          this.viewer.getRenderer().pipeline = new DefaultPipeline(
+            this.viewer.getRenderer(),
+            { edges: pipeline.edges }
+          )
+          break
+        case 1:
+          this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
+            this.viewer.getRenderer(),
+            { edges: pipeline.edges }
+          )
+          break
+        case 2:
+          this.viewer.getRenderer().pipeline = new PenViewPipeline(
+            this.viewer.getRenderer()
+          )
+          break
+        case 3:
+          this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
+            this.viewer.getRenderer(),
+            { edges: pipeline.edges }
+          )
+          break
+        case 4:
+          this.viewer.getRenderer().pipeline = new BasitPipeline(
+            this.viewer.getRenderer(),
+            { edges: pipeline.edges },
+            this.viewer.getWorldTree()
+          )
+          break
+        case 5:
+          this.viewer.getRenderer().pipeline = new TAAPipeline(
+            this.viewer.getRenderer()
+          )
+          break
+        case 6:
+          this.viewer.getRenderer().pipeline = new (class extends Pipeline {
+            constructor(speckleRenderer: SpeckleRenderer) {
+              super(speckleRenderer)
+              const normalPass = new NormalsPass()
+              normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+              normalPass.setClearColor(0x000000, 1)
+              normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+              normalPass.outputTarget = Pipeline.createRenderTarget({
+                minFilter: LinearFilter,
+                magFilter: LinearFilter
+              })
+              normalPass.outputTarget.samples = 4
+
+              const outputPass = new OutputPass()
+              outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
+              outputPass.options = { inputType: InputType.Normals }
+
+              this.passList.push(normalPass, outputPass)
+            }
+          })(this.viewer.getRenderer())
+
+        default:
+          break
+      }
+      this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+    }
     this.tabs.pages[0]
       .addInput(pipeline, 'output', {
         label: 'Pipeline',
         options: {
           DEFAULT: 0,
-          EDGED: 1,
-          SHADED: 2,
-          PEN: 3,
-          ARCTIC: 4,
+          SHADED: 1,
+          PEN: 2,
+          ARCTIC: 3,
+          BASIT: 4,
           TAA: 5,
           DEBUG_NORMALS: 6
         }
       })
       .on('change', (value) => {
-        switch (value.value) {
-          case 0:
-            this.viewer.getRenderer().pipeline = new DefaultPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 1:
-            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 2:
-            this.viewer.getRenderer().pipeline = new MRTShadedViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 3:
-            this.viewer.getRenderer().pipeline = new MRTPenViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 4:
-            this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 5:
-            this.viewer.getRenderer().pipeline = new TAAPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 6:
-            this.viewer.getRenderer().pipeline = new (class extends Pipeline {
-              constructor(speckleRenderer: SpeckleRenderer) {
-                super(speckleRenderer)
-                const normalPass = new NormalsPass()
-                normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-                normalPass.setClearColor(0x000000, 1)
-                normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-                normalPass.outputTarget = Pipeline.createRenderTarget({
-                  minFilter: LinearFilter,
-                  magFilter: LinearFilter
-                })
-                normalPass.outputTarget.samples = 4
-
-                const outputPass = new OutputPass()
-                outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
-                outputPass.options = { inputType: InputType.Normals }
-
-                this.passList.push(normalPass, outputPass)
-              }
-            })(this.viewer.getRenderer())
-
-          default:
-            break
-        }
-        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+        setPipeline(value.value)
       })
-
+    this.tabs.pages[0]
+      .addInput(pipeline, 'edges', {
+        label: 'Show Edges'
+      })
+      .on('change', (value) => {
+        setPipeline(pipeline.output)
+      })
     this.tabs.pages[0].addSeparator()
+
     const colors = this.tabs.pages[0].addButton({
       title: `PM's Colors`
     })

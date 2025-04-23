@@ -97,16 +97,12 @@ import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
 import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
 import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
-import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
 import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
-import { MRTEdgesPipeline } from './modules/pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
 import { RenderTree } from './modules/tree/RenderTree.js'
 import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
-import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
-import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
 import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
 import {
   BaseGPass,
@@ -161,6 +157,7 @@ import {
   EdgesPass,
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
+import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 
 export {
   Viewer,
@@ -255,9 +252,6 @@ export {
   PenViewPipeline,
   ArcticViewPipeline,
   TAAPipeline,
-  MRTEdgesPipeline,
-  MRTShadedViewPipeline,
-  MRTPenViewPipeline,
   BasitPipeline,
   ViewModes,
   ViewMode,

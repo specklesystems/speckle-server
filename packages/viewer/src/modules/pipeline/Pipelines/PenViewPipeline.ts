@@ -1,9 +1,5 @@
 import SpeckleRenderer from '../../SpeckleRenderer.js'
-import { DepthPass } from '../Passes/DepthPass.js'
-import { EdgesPass } from '../Passes/EdgesPass.js'
-import { NormalsPass } from '../Passes/NormalsPass.js'
 import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
-import { TAAPass } from '../Passes/TAAPass.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
@@ -19,49 +15,14 @@ import {
   Scene,
   WebGLRenderer
 } from 'three'
+import { EdgesPipeline } from './EdgesPipeline.js'
 
 export class PenViewPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
-    const depthPass = new DepthPass()
-    depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setVisibility(ObjectVisibility.DEPTH)
-    depthPass.setJitter(true)
-    depthPass.setClearColor(0x000000, 1)
-    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const normalPass = new NormalsPass()
-    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    normalPass.setJitter(true)
-    normalPass.setClearColor(0x000000, 1)
-    normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const depthPassDynamic = new DepthPass()
-    depthPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
-    depthPassDynamic.setClearColor(0x000000, 1)
-    depthPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const normalPassDynamic = new NormalsPass()
-    normalPassDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPassDynamic.setVisibility(ObjectVisibility.OPAQUE)
-    normalPassDynamic.setClearColor(0x000000, 1)
-    normalPassDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-
-    const edgesPass = new EdgesPass()
-    edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
-    edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
-
-    const edgesPassDynamic = new EdgesPass()
-    edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
-    edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
-    edgesPassDynamic.outputTarget = null
-
-    const taaPass = new TAAPass()
-    taaPass.inputTexture = edgesPass.outputTarget?.texture
-    taaPass.accumulationFrames = this.accumulationFrameCount
+    const edgesPipeline = new EdgesPipeline(speckleRenderer)
+    edgesPipeline.edgePassDynamic.outputTarget = null
 
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
@@ -118,29 +79,20 @@ export class PenViewPipeline extends ProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS,
-      ObjectLayers.PROPS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     const outputPass = new OutputPass()
-    outputPass.setTexture('tDiffuse', taaPass.outputTarget?.texture)
+    outputPass.setTexture('tDiffuse', edgesPipeline.outputTexture)
 
     this.dynamicStage.push(
-      depthPassDynamic,
-      normalPassDynamic,
-      edgesPassDynamic,
+      ...edgesPipeline.dynamicPasses,
       stencilPass,
       geometryPass,
       stencilMaskPass,
       overlayPass
     )
     this.progressiveStage.push(
-      depthPass,
-      normalPass,
-      edgesPass,
-      taaPass,
+      ...edgesPipeline.progressivePasses,
       outputPass,
       stencilPass,
       geometryPass,
@@ -157,26 +109,5 @@ export class PenViewPipeline extends ProgressivePipeline {
     )
 
     this.passList = this.dynamicStage
-
-    /** Paper-like background texture */
-    // Assets.getTexture({
-    //   id: 'paper',
-    //   src: paperTex,
-    //   type: AssetType.TEXTURE_8BPP
-    // })
-    //   .then((value: Texture) => {
-    //     value.wrapS = RepeatWrapping
-    //     value.wrapT = RepeatWrapping
-    //     const options = {
-    //       backgroundTexture: value,
-    //       backgroundTextureIntensity: 0.25
-    //     }
-    //     edgesPass.options = options
-    //     edgesPassDynamic.options = options
-    //     this.accumulationFrameIndex = 0
-    //   })
-    //   .catch((reason) => {
-    //     Logger.error(`Matcap texture failed to load ${reason}`)
-    //   })
   }
 }
