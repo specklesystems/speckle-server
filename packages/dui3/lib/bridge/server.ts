@@ -149,11 +149,28 @@ export class ArchicadBridge {
       )
     }
 
+    const accountStore = useAccountStore()
+    const { accounts } = storeToRefs(accountStore)
+    const account = accounts.value.find(
+      (acc) => acc.accountInfo.id === eventPayload.accountId
+    )
+    provideApolloClient((account as DUIAccount).client)
+
+    // useQuery cannot use in outside of VueComponent.
+    const result = await (account as DUIAccount).client.query({
+      query: versionDetailsQuery,
+      variables: {
+        projectId: eventPayload.projectId,
+        versionId: eventPayload.selectedVersionId,
+        modelId: eventPayload.modelId
+      }
+    })
+
     // 1.2 - Yes - continue
     const body: ArchicadReceiveRequest = {
       accountId: eventPayload.accountId,
       projectId: eventPayload.projectId,
-      referencedObject: eventPayload.objectId,
+      referencedObject: result.data.project.model.version.referencedObject,
       xmlConverterPath: eventPayload.xmlConverterPath
     }
 
@@ -163,10 +180,13 @@ export class ArchicadBridge {
         `http://localhost:29364/${eventPayload.endpointVersion}/archicad-receive`,
         {
           method: 'POST',
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
+          headers: { 'Content-Type': 'application/json' }
         }
       )
-      console.log(res)
+      const path = (await res.json()) as unknown
+
+      await runMethod('afterGsmConverter', [path] as unknown as unknown[])
     } catch (error) {
       console.log(error) // TODO: throw toast
     }
