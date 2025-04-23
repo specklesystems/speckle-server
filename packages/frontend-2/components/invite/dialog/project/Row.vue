@@ -56,7 +56,7 @@
                     v-if="showDropdown"
                     ref="menuEl"
                     :style="listboxOptionsStyle"
-                    class="z-50 fixed bg-white shadow-lg rounded-md border border-outline-3"
+                    class="z-50 fixed bg-foundation shadow-lg rounded-md border border-outline-3"
                   >
                     <div
                       v-if="isSearchLoading && !filteredSuggestions.length"

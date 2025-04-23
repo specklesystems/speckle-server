@@ -138,7 +138,12 @@ const onSubmit = handleSubmit(async () => {
         ? isAdmin.value
           ? { email: u.email }
           : { userId: u.userId }
-        : { email: u.email })
+        : { email: u.email }),
+      ...(props.project?.workspace?.id
+        ? {
+            workspaceRole: Roles.Workspace.Guest
+          }
+        : {})
     }))
 
   if (!inputs.length) {
