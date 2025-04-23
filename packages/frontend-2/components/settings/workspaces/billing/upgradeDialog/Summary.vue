@@ -10,7 +10,16 @@
             </template>
           </p>
           <div class="mt-2 flex justify-between items-center">
-            <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
+            <div class="flex items-center gap-x-2">
+              <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
+              <CommonBadge
+                v-if="hasUnlimitedAddon && statusIsCanceled"
+                color-classes="bg-foundation border-blue-200 dark:border-blue-800 border"
+                rounded
+              >
+                Unlimited Projects & Models
+              </CommonBadge>
+            </div>
             <p v-if="!isFreePlan && !statusIsCanceled" class="text-body-2xs">
               {{ currentEditorPrice }} per editor seat/month
             </p>
@@ -28,7 +37,7 @@
             <hr class="my-4 border-outline-2" />
             <div class="mt-2 flex justify-between items-center">
               <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ totalPrice }} per editor seat/month</p>
+              <p class="text-body-2xs">{{ totalPrice }} per per editor seat/month</p>
             </div>
           </template>
         </div>
@@ -77,7 +86,7 @@
       class="text-foreground-2 text-body-2xs my-2"
     >
       The amount you will be charged today will be prorated based on the time remaining
-      in your current billing cycle.
+      in your billing cycle.
     </p>
   </div>
 </template>

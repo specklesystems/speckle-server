@@ -1,12 +1,15 @@
 import type { CheckResponse, RedisCheck } from '@/healthchecks/types'
+import { isRedisReady } from '@/modules/shared/redis/redis'
 
 export const isRedisAlive: RedisCheck = async (params): Promise<CheckResponse> => {
   const { client } = params
+  await isRedisReady(client)
+
   let result: CheckResponse = { isAlive: true }
   try {
     const redisResponse = await client.ping()
     if (redisResponse !== 'PONG') {
-      result = { isAlive: false, err: new Error('Redis did not respond correctly.') }
+      throw new Error('Redis did not respond correctly.')
     }
   } catch (err) {
     result = { isAlive: false, err }

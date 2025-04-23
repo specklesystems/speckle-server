@@ -196,28 +196,39 @@ const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
+const isMatchingTier = computed(() => {
+  return (
+    (props.currentPlan?.name === WorkspacePlans.Team &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.Pro &&
+      props.plan === WorkspacePlans.Pro) ||
+    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+      props.plan === WorkspacePlans.Team) ||
+    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+      props.plan === WorkspacePlans.Pro)
+  )
+})
+
 const isCurrentPlan = computed(() => {
   if (props.plan === WorkspacePlans.Free) {
     return props.currentPlan?.name === props.plan
   }
 
-  const isMatchingTier =
-    (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
-      props.plan === WorkspacePlans.Team) ||
-    (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
-      props.plan === WorkspacePlans.Pro)
-
   return (
     isMatchingInterval.value &&
-    (props.currentPlan?.name === props.plan || isMatchingTier)
+    (props.currentPlan?.name === props.plan || isMatchingTier.value)
   )
 })
 
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan &&
-    !isYearlyIntervalSelected.value
+    !isYearlyIntervalSelected.value &&
+    (props.currentPlan?.name === props.plan ||
+      (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+        props.plan === WorkspacePlans.Team) ||
+      (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+        props.plan === WorkspacePlans.Pro))
   )
 })
 
@@ -234,17 +245,16 @@ const isSelectable = computed(() => {
   // Free CTA has no clickable scenario
   if (props.plan === WorkspacePlans.Free) return false
 
-  // Always enable buttons during expired or canceled state
-  if (
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return true
-
   // Dont allow upgrades during cancelation
   if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
     return false
   }
+
+  // Allow selection if current plan is canceled and plan is upgradeable or the same
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    return canUpgradeToPlan.value || isMatchingTier.value
+  }
+
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
 
@@ -276,20 +286,23 @@ const buttonColor = computed(() => {
 
 const buttonText = computed(() => {
   // Current plan case
-  if (isCurrentPlan.value) {
+  if (
+    isCurrentPlan.value &&
+    props.currentPlan?.status !== WorkspacePlanStatuses.Canceled
+  ) {
     return 'Current plan'
   }
+
   // Allow if current plan is Free, or the current plan is expired/canceled
   if (
     props.currentPlan?.name === WorkspacePlans.Free ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
     return `Subscribe to ${formatName(props.plan)}`
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
-    return `Downgrade to ${props.plan}`
+    return `Downgrade to ${formatName(props.plan)}`
   }
   // Billing interval change and current plan
   if (isAnnualToMonthly.value) {
@@ -303,16 +316,21 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (
+    props.plan === WorkspacePlans.Free &&
+    props.currentPlan?.name === WorkspacePlans.Free
+  )
+    return undefined
+
   if (!props.canUpgrade) {
     return 'You must be a workspace admin.'
   }
 
-  if (
-    isCurrentPlan.value ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
-    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
-  )
-    return undefined
+  if (props.currentPlan?.status === WorkspacePlanStatuses.Canceled) {
+    if (!canUpgradeToPlan.value && !isMatchingTier.value) {
+      return 'You can only resubcribe to the same or higher plan'
+    }
+  }
 
   if (props.currentPlan?.status === WorkspacePlanStatuses.CancelationScheduled) {
     return 'You must renew your subscription first'

@@ -21,11 +21,21 @@ import { canCreateProjectVersionPolicy } from './project/version/canCreate.js'
 import { canUpdateProjectVersionPolicy } from './project/version/canUpdate.js'
 import { canReceiveProjectVersionPolicy } from './project/version/canReceive.js'
 import { canRequestProjectVersionRenderPolicy } from './project/version/canRequestRender.js'
+import { canCreateAutomationPolicy } from './project/automation/canCreate.js'
+import { canUpdateAutomationPolicy } from './project/automation/canUpdate.js'
+import { canReadAutomationPolicy } from './project/automation/canRead.js'
 import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './workspace/canReceiveProjectsUpdatedMessage.js'
 import { canDeleteProjectPolicy } from './project/canDelete.js'
+import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
+    automation: {
+      canCreate: canCreateAutomationPolicy(loaders),
+      canRead: canReadAutomationPolicy(loaders),
+      canUpdate: canUpdateAutomationPolicy(loaders),
+      canDelete: canDeleteAutomationPolicy(loaders)
+    },
     model: {
       canCreate: canCreateModelPolicy(loaders),
       canUpdate: canUpdateModelPolicy(loaders),

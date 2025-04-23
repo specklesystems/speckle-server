@@ -1,3 +1,4 @@
+import { TIME_MS } from '@speckle/shared'
 import { useIntervalFn } from '@vueuse/core'
 import type dayjs from 'dayjs'
 
@@ -9,7 +10,7 @@ export const useReactiveNowDate = (
     updateEvery: number
   }>
 ) => {
-  const { updateEvery = 1000 } = params || {}
+  const { updateEvery = TIME_MS.second } = params || {}
 
   const date = ref(new Date())
 

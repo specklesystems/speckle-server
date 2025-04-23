@@ -1,15 +1,19 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
-    <BillingAlert
-      v-if="showBillingAlert"
-      class="mb-4"
-      :workspace="workspace"
-      hide-settings-links
-    />
-
     <SettingsSectionHeader
       title="Billing and plans"
       text="Get billing information and upgrade your plan"
+    />
+    <BillingAlert
+      v-if="showBillingAlert"
+      class="mb-6"
+      :workspace="workspace"
+      hide-settings-links
+    />
+    <BillingUsageAlert
+      v-if="reachedPlanLimit"
+      :plan-name="workspace?.plan?.name"
+      class="mb-6"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
       <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
@@ -22,20 +26,25 @@
         <SettingsWorkspacesBillingUsage :slug="slug" />
       </section>
 
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Upgrade your plan" subheading />
-        <PricingTable
-          :slug="slug"
-          :workspace-id="workspace?.id"
-          :role="workspace?.role as WorkspaceRoles"
-          :currency="workspace?.subscription?.currency"
-        />
-      </section>
+      <ClientOnly>
+        <section class="flex flex-col gap-y-4 md:gap-y-6">
+          <SettingsSectionHeader title="Upgrade your plan" subheading />
+          <PricingTable
+            :slug="slug"
+            :workspace-id="workspace?.id"
+            :role="workspace?.role as WorkspaceRoles"
+            :currency="workspace?.subscription?.currency"
+            :is-yearly-interval-selected="
+              workspace?.subscription?.billingInterval === BillingInterval.Yearly
+            "
+          />
+        </section>
 
-      <section class="flex flex-col gap-y-4 md:gap-y-6">
-        <SettingsSectionHeader title="Add-ons" subheading />
-        <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
-      </section>
+        <section class="flex flex-col gap-y-4 md:gap-y-6">
+          <SettingsSectionHeader title="Add-ons" subheading />
+          <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
+        </section>
+      </ClientOnly>
     </div>
   </div>
 </template>
@@ -46,7 +55,11 @@ import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
-import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import {
+  BillingInterval,
+  WorkspacePlanStatuses
+} from '~/lib/common/generated/gql/graphql'
+import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -54,6 +67,14 @@ graphql(`
     role
     subscription {
       currency
+      billingInterval
+    }
+    plan {
+      name
+      usage {
+        projectCount
+        modelCount
+      }
     }
     ...BillingAlert_Workspace
   }
@@ -74,11 +95,17 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-
 const showBillingAlert = computed(
   () =>
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+const reachedPlanLimit = computed(() =>
+  workspaceReachedPlanLimit(
+    workspace.value?.plan?.name,
+    workspace.value?.plan?.usage?.projectCount,
+    workspace.value?.plan?.usage?.modelCount
+  )
 )
 </script>

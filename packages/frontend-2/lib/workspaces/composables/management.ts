@@ -1,5 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import {
+  SeatTypes,
   waitForever,
   type MaybeAsync,
   type Optional,
@@ -469,6 +470,20 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'teamByRole',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
+          )
+          modifyObjectField(
+            cache,
+            getCacheId('WorkspaceCollaborator', input.userId),
+            'seatType',
+            () => SeatTypes.Editor
+          )
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -533,8 +548,8 @@ export const useWorkspaceUpdateSeatType = () => {
     if (result?.data) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'User seat type updated',
-        description: `The user's seat type has been updated to ${input.seatType}`
+        title: 'Seat updated',
+        description: `The user's seat has been updated to ${input.seatType}`
       })
 
       mixpanel.track('Workspace User Seat Type Updated', {
@@ -640,12 +655,11 @@ export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) =>
     slug: workspaceSlug
   })
 
-  const hasSingleAdmin = computed(() => {
-    const admins = result.value?.workspaceBySlug?.team.items || []
-    return admins.length === 1
-  })
+  const isLastAdmin = computed(
+    () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1
+  )
 
   return {
-    hasSingleAdmin
+    isLastAdmin
   }
 }

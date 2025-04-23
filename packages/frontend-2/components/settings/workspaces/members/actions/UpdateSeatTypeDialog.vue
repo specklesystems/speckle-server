@@ -11,7 +11,7 @@
         :is-guest="user.role === Roles.Workspace.Guest"
         :has-available-seat="hasAvailableEditorSeats"
         :seat-price="editorSeatPriceFormatted"
-        :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
+        :billing-interval="intervalIsYearly ? 'year' : 'month'"
       />
 
       <p v-if="billingMessage" class="text-foreground-2 text-body-xs mt-4">
@@ -34,13 +34,14 @@ import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import SeatTransitionCards from './SeatTransitionCards.vue'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
@@ -49,6 +50,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { required: true })
 
+const mixpanel = useMixpanel()
 const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
   hasAvailableEditorSeats,
@@ -60,24 +62,23 @@ const {
   isUnlimitedPlan
 } = useWorkspacePlan(props.workspace?.slug || '')
 
+const isLoading = ref(false)
+
 const isUpgrading = computed(() => props.user.seatType === SeatTypes.Viewer)
-const annualOrMonthly = computed(() => (intervalIsYearly.value ? 'year' : 'month'))
 
 const billingMessage = computed(() => {
   if (isFreePlan.value) return null
   if (isUpgrading.value) {
     return hasAvailableEditorSeats.value
       ? 'You have an unused Editor seat that is already paid for, so the change will not incur any charges.'
-      : `You'll be charged immediately for the partial period from today until your plan renewal on ${dayjs(
+      : `You will be charged an adjusted amount for the partial period from today until your plan renewal on ${dayjs(
           currentBillingCycleEnd.value
-        ).format('DD-MM-YYYY')} (${editorSeatPriceFormatted.value}/${
-          annualOrMonthly.value
-        } adjusted for the remaining time).`
+        ).format('MMMM D, YYYY')}.`
   } else {
     return isPaidPlan.value
       ? `The Editor seat will still be paid for until your plan renews on ${dayjs(
           currentBillingCycleEnd.value
-        ).format('DD-MM-YYYY')}. You can freely reassign it to another person.`
+        ).format('MMMM D, YYYY')}. You can freely reassign it to another person.`
       : null
   }
 })
@@ -89,18 +90,33 @@ const title = computed(() => {
 const handleConfirm = async () => {
   if (!props.workspace?.id) return
 
-  const newSeatType: WorkspaceSeatType = isUpgrading.value
-    ? SeatTypes.Editor
-    : SeatTypes.Viewer
+  isLoading.value = true
 
-  await updateUserSeatType({
-    userId: props.user.id,
-    seatType: newSeatType,
-    workspaceId: props.workspace.id
-  })
+  try {
+    const newSeatType: WorkspaceSeatType = isUpgrading.value
+      ? SeatTypes.Editor
+      : SeatTypes.Viewer
 
-  open.value = false
-  emit('success')
+    await updateUserSeatType({
+      userId: props.user.id,
+      seatType: newSeatType,
+      workspaceId: props.workspace.id
+    })
+
+    if (!hasAvailableEditorSeats.value && isPaidPlan.value) {
+      mixpanel.track('Workspace Seat Purchased', {
+        location: 'upgrade_seat_type_dialog',
+        seatType: 'editor',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspace.id
+      })
+    }
+
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -111,12 +127,13 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
   {
     text: isUpgrading.value
-      ? isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
+      ? hasAvailableEditorSeats.value || !isPaidPlan.value
         ? 'Upgrade seat'
         : 'Confirm and pay'
       : 'Downgrade seat',
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm
   }

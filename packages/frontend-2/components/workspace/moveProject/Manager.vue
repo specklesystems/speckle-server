@@ -3,7 +3,7 @@
     <!-- Project Selection -->
     <WorkspaceMoveProjectSelectProject
       v-if="!selectedProject"
-      :workspace-slug="workspaceSlug"
+      :workspace="workspaceResult?.workspaceBySlug"
       :project-permissions="projectResult?.project.permissions.canMoveToWorkspace"
       @project-selected="onProjectSelected"
     />
@@ -28,11 +28,7 @@
     />
     <template #buttons>
       <div class="-my-1 w-full flex justify-end">
-        <FormButton
-          v-if="!selectedProject"
-          color="outline"
-          @click="navigateTo(workspaceCreateRoute())"
-        >
+        <FormButton v-if="!selectedProject" color="outline" @click="open = false">
           Cancel
         </FormButton>
         <FormButton
@@ -84,6 +80,7 @@ graphql(`
     }
     workspace {
       id
+      slug
       permissions {
         canMoveProjectToWorkspace(projectId: $projectId) {
           ...FullPermissionCheckResult
@@ -178,12 +175,20 @@ if (workspaceResult.value?.workspaceBySlug) {
   selectedWorkspace.value = workspaceResult.value.workspaceBySlug
 }
 
+watch(projectResult, (newVal) => {
+  if (newVal?.project) {
+    selectedProject.value = newVal.project
+  }
+})
+
 const dialogTitle = computed(() => {
   switch (activeDialog.value) {
     case 'confirmation':
       return 'Confirm move'
     case 'project':
+      return 'Choose project to move'
     case 'workspace':
+      return 'Choose workspace'
     default:
       return 'Ready to move your project? '
   }

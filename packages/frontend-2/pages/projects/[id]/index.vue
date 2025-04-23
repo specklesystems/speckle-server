@@ -1,12 +1,13 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectsInviteBanner
-        v-if="invite"
-        :invite="invite"
-        :show-project-name="false"
-        @processed="onInviteAccepted"
-      />
+      <div v-if="invite" class="mb-4">
+        <ProjectsInviteBanner
+          :invite="invite"
+          :show-project-name="false"
+          @processed="onInviteAccepted"
+        />
+      </div>
       <ProjectsMoveToWorkspaceAlert
         v-if="shouldShowWorkspaceAlert"
         :disable-button="disableLegacyMoveProjectButton"
@@ -84,6 +85,7 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCopyProjectLink } from '~~/lib/projects/composables/projectManagement'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -145,6 +147,7 @@ const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
 const { isLoggedIn } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const projectId = computed(() => route.params.id as string)
 const token = computed(() => route.query.token as Optional<string>)
@@ -321,6 +324,13 @@ const disableLegacyMoveProjectButton = computed(
   () => !project.value?.permissions.canMoveToWorkspace.authorized
 )
 
+const onMoveProject = () => {
+  mixpanel.track('Move Project CTA Clicked', {
+    location: 'project'
+  })
+  showMoveDialog.value = true
+}
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -329,12 +339,8 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copyProjectLink(projectId.value)
       break
     case ActionTypes.Move:
-      showMoveDialog.value = true
+      onMoveProject()
       break
   }
-}
-
-const onMoveProject = () => {
-  showMoveDialog.value = true
 }
 </script>

@@ -4,8 +4,6 @@ import { canMoveToWorkspacePolicy } from './canMoveToWorkspace.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Project } from '../../domain/projects/types.js'
 import { Roles, SeatTypes } from '../../../core/constants.js'
-import { Workspace } from '../../domain/workspaces/types.js'
-import { WorkspacePlan } from '../../../workspaces/index.js'
 import {
   ProjectNotEnoughPermissionsError,
   ServerNotEnoughPermissionsError,
@@ -14,24 +12,26 @@ import {
   WorkspaceProjectMoveInvalidError,
   WorkspacesNotEnabledError
 } from '../../domain/authErrors.js'
+import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
 
 const buildCanMoveToWorkspace = (
   overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
 ) =>
   canMoveToWorkspacePolicy({
     getEnv: async () => parseFeatureFlags({}),
-    getProject: async () => {
-      return {} as Project
-    },
+    getProject: getProjectFake({
+      id: 'project-id',
+      workspaceId: null
+    }),
     getProjectRole: async () => {
       return Roles.Stream.Owner
     },
     getServerRole: async () => {
       return Roles.Server.User
     },
-    getWorkspace: async () => {
-      return {} as Workspace
-    },
+    getWorkspace: getWorkspaceFake({
+      id: 'workspace-id'
+    }),
     getWorkspaceRole: async () => {
       return Roles.Workspace.Admin
     },
@@ -44,8 +44,11 @@ const buildCanMoveToWorkspace = (
     },
     getWorkspacePlan: async () => {
       return {
-        status: 'valid'
-      } as WorkspacePlan
+        status: 'valid',
+        workspaceId: 'workspace-id',
+        createdAt: new Date(),
+        name: 'team'
+      }
     },
     getWorkspaceLimits: async () => {
       return {
@@ -56,6 +59,12 @@ const buildCanMoveToWorkspace = (
       }
     },
     getWorkspaceProjectCount: async () => {
+      return 0
+    },
+    getWorkspaceModelCount: async () => {
+      return 0
+    },
+    getProjectModelCount: async () => {
       return 0
     },
     ...overrides
@@ -126,7 +135,8 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
       code: WorkspaceNotEnoughPermissionsError.code
     })
   })
-  it('forbids move if target workspace will exceed plan limits', async () => {
+
+  it('forbids move if target workspace will exceed project limits', async () => {
     const result = await buildCanMoveToWorkspace({
       getWorkspaceLimits: async () => {
         return {
@@ -146,6 +156,34 @@ describe('canMoveToWorkspacePolicy returns a function, that', () => {
       payload: { limit: 'projectCount' }
     })
   })
+
+  it('forbids move if target workspace will exceed model limits', async () => {
+    const result = await buildCanMoveToWorkspace({
+      getWorkspaceLimits: async () => {
+        return {
+          projectCount: 10,
+          modelCount: 5,
+          versionsHistory: null,
+          commentHistory: null
+        }
+      },
+      getWorkspaceProjectCount: async () => {
+        return 1
+      },
+      getProjectModelCount: async () => {
+        return 5
+      },
+      getWorkspaceModelCount: async () => {
+        return 1
+      }
+    })(canMoveToWorkspaceArgs())
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceLimitsReachedError.code,
+      payload: { limit: 'modelCount' }
+    })
+  })
+
   it('allows move project if target workspace will be within limits', async () => {
     const result = await buildCanMoveToWorkspace({})(canMoveToWorkspaceArgs())
     expect(result).toBeAuthOKResult()

@@ -11,7 +11,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { isNonNullable, Optional, Authz } from '@speckle/shared'
+import { isNonNullable, Optional, Authz, TIME_MS } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
 import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
@@ -409,7 +409,7 @@ export const moduleAuthLoaders = async (params: {
       // since its the inmemory cache, we dont have to worry about true-myth results being
       // serialized and deserialized as they would be with redis
       cacheProvider: inMemoryCacheProviderFactory({ cache }),
-      ttlMs: 1000 * 60 * 60 // 1 hour (longer than any req will be),
+      ttlMs: 1 * TIME_MS.hour // (longer than any req will be),
     })
     acc[key] = newLoader
 

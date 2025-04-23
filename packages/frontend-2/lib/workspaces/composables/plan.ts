@@ -19,6 +19,7 @@ import { useActiveWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 graphql(`
   fragment WorkspacesPlan_Workspace on Workspace {
     id
+    slug
     plan {
       status
       createdAt
@@ -57,7 +58,7 @@ export const useWorkspacePlan = (slug: string) => {
       slug
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled
+      enabled: isBillingIntegrationEnabled.value
     })
   )
 
@@ -117,14 +118,16 @@ export const useWorkspacePlan = (slug: string) => {
     if (plan.value?.name && isPaidPlanShared(plan.value?.name)) {
       return formatPrice(
         prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
-          WorkspacePlanBillingIntervals.Monthly
+          intervalIsYearly.value
+            ? WorkspacePlanBillingIntervals.Yearly
+            : WorkspacePlanBillingIntervals.Monthly
         ]
       )
     }
 
     return formatPrice({
       amount: 0,
-      currency: 'gbp'
+      currency: currency.value
     })
   })
 
