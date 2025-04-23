@@ -1348,8 +1348,7 @@ export default class Sandbox {
       serverUrl,
       streamId,
       objectId,
-      token,
-      cache: new MemoryDatabase()
+      token
     })
     let count = 0
 
