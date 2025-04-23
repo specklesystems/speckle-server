@@ -142,6 +142,9 @@ extend type Workspace {
   subscription: WorkspaceSubscription
     @hasScope(scope: "workspace:billing")
     @hasWorkspaceRole(role: ADMIN)
+  seats: WorkspaceSubscriptionSeats
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
   # this can only be created if there is an active subscription
   customerPortalUrl: String
     @hasScope(scope: "workspace:billing")
