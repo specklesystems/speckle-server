@@ -19,7 +19,7 @@ import {
   isEmailEnabled
 } from '@/modules/shared/helpers/envHelper'
 import {
-  inMemoryCacheProviderFactory,
+  redisCacheProviderFactory,
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
 import { TIME_MS } from '@speckle/shared'
@@ -77,7 +77,7 @@ export const getCachedServerInfoFactory = wrapFactoryWithCache({
   factory: getServerInfoFactory,
   name: 'modules/core/repositories/server::getServerInfo',
   ttlMs: TIME_MS.hour,
-  cacheProvider: inMemoryCacheProviderFactory()
+  cacheProvider: redisCacheProviderFactory()
 })
 
 export const updateServerInfoFactory =
