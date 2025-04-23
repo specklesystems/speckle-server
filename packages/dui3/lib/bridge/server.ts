@@ -160,7 +160,7 @@ export class ArchicadBridge {
     // 2 - POST the desktop service with formatted endpoint
     try {
       const res = await fetch(
-        `http://localhost:29634/${eventPayload.endpointVersion}/archicad-receive`,
+        `http://localhost:29364/${eventPayload.endpointVersion}/archicad-receive`,
         {
           method: 'POST',
           body: JSON.stringify(body)
