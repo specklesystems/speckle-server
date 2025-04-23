@@ -123,8 +123,11 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { commandFactory } from '@/modules/shared/command'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { asOperation } from '@/modules/shared/command'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -714,9 +717,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             userId: context.userId,
             projectId: parent.projectId
           })
-          if (!canDelete.isOk) {
-            throw mapAuthToServerError(canDelete.error)
-          }
+          throwIfAuthNotOk(canDelete)
 
           const projectId = parent.projectId
           const automationId = input.automationId
@@ -729,20 +730,19 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const projectDb = await getProjectDbClient({ projectId })
 
-          const deleteAutomation = commandFactory({
-            db: projectDb,
-            operationFactory: ({ db }) =>
-              deleteAutomationFactory({
+          return await asOperation(
+            async ({ db }) => {
+              const deleteAutomation = deleteAutomationFactory({
                 deleteAutomation: markAutomationDeletedFactory({ db })
               })
-          })
 
-          return await withOperationLogging(
-            async () => await deleteAutomation({ automationId }),
+              return await deleteAutomation({ automationId })
+            },
             {
               logger,
-              operationName: 'deleteProjectAutomation',
-              operationDescription: 'Delete an Automation attached to a project'
+              name: 'deleteProjectAutomation',
+              description: 'Delete an Automation attached to a project',
+              db: projectDb
             }
           )
         },
