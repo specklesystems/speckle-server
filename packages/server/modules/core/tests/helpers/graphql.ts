@@ -131,9 +131,9 @@ export const usersRetrievalQuery = gql`
 `
 
 export const activeUserProjectsQuery = gql`
-  query ActiveUserProjects($filter: UserProjectsFilter!) {
+  query ActiveUserProjects($filter: UserProjectsFilter!, $sortBy: [String!]) {
     activeUser {
-      projects(filter: $filter) {
+      projects(filter: $filter, sortBy: $sortBy) {
         cursor
         items {
           id

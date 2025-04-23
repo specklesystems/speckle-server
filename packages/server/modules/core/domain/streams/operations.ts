@@ -207,6 +207,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams

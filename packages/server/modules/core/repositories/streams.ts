@@ -771,6 +771,12 @@ const getUserStreamsQueryBaseFactory =
     return query
   }
 
+function addSortByProjectRoleCondition(query: Knex.QueryBuilder) {
+  return query.orderByRaw(
+    `CASE WHEN stream_acl."role" = '${Roles.Stream.Owner}' THEN 1 WHEN stream_acl."role" = '${Roles.Stream.Contributor}' THEN 2 WHEN stream_acl."role" = '${Roles.Stream.Reviewer}' THEN 3 end asc`
+  )
+}
+
 /**
  * Get streams the user is a collaborator on
  */
@@ -799,6 +805,15 @@ export const getUserStreamsPageFactory =
       ])
     }
 
+    if (params.sortBy && params.sortBy?.length > 0) {
+      for (const key of params.sortBy) {
+        if (key === 'role') {
+          addSortByProjectRoleCondition(query)
+          continue
+        }
+        query.orderBy(key, 'asc')
+      }
+    }
     query
       .orderBy(Streams.col.updatedAt, 'desc')
       .orderBy(Streams.col.id, 'desc')
