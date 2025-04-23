@@ -108,10 +108,7 @@ const account = computed(() => {
   ) as DUIAccount
 })
 
-const isLatest = activeAccount.value.accountInfo.serverInfo.url.includes(
-  'latest.speckle.systems'
-) // TODO: will be removed once we have limits in app.speckle.systems
-const canCreateModelInWorkspace = ref<boolean>(!isLatest) // TODO: will be removed once we have limits in app.speckle.systems
+const canCreateModelInWorkspace = ref<boolean>()
 
 const { result: canCreateModelInWorkspaceResult } = useQuery(
   canCreateModelInProjectQuery,
