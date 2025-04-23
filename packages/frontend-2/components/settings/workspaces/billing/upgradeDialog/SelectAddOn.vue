@@ -19,7 +19,6 @@ const props = defineProps<{
   plan: PaidWorkspacePlansNew
   billingInterval: BillingInterval
   enableNoOption: boolean
-  editorSeatCount: number
 }>()
 const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
   'includeUnlimitedAddon',
