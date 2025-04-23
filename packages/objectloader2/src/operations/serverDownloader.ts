@@ -131,12 +131,23 @@ export default class ServerDownloader implements Downloader {
           const item = this.#processJson(id, unparsedObj)
           await this.#options.database.add(item)
           results.add(item)
+          const index = batch.indexOf(item.baseId)
+          if (index > -1) {
+            batch.splice(index, 1)
+          } else {
+             throw new Error(`Item ${id} not found in batch`)
+          }
           count++
           if (count % 1000 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
           }
         }
       }
+    }
+    if (batch.length > 0) {
+      throw new Error(
+        'Items requested where not downloaded: ' + batch.slice(0, 10).join(',')
+      )
     }
   }
 
