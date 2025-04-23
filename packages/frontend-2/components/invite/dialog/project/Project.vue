@@ -135,7 +135,7 @@ const onSubmit = handleSubmit(async () => {
     invites.map((u) => ({
       role: u.projectRole,
       ...(isInWorkspace.value
-        ? isAdmin.value
+        ? isAdmin.value && !u.userId
           ? { email: u.email }
           : { userId: u.userId }
         : { email: u.email }),

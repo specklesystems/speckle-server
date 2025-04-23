@@ -256,7 +256,6 @@ export const workspaceReachedPlanLimit = (
 
   const limits = planConfig.limits
   if (!limits.projectCount || !limits.modelCount) return false
-  if (!projectCount || !modelCount) return false
 
   return projectCount === limits.projectCount || modelCount === limits.modelCount
 }
