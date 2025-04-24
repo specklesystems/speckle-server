@@ -31,6 +31,7 @@
               :key="collaborator.id"
               :can-edit="!!canUpdate?.authorized"
               :collaborator="collaborator"
+              :workspace="project.workspace"
               :loading="loading"
               @cancel-invite="onCancelInvite"
               @change-role="onCollaboratorRoleChange"
@@ -85,6 +86,7 @@ const projectPageCollaboratorsQuery = graphql(`
       workspaceId
       workspace {
         ...ProjectPageTeamInternals_Workspace
+        ...SettingsWorkspacesMembersTableHeader_Workspace
         name
         logo
         team(filter: $filter) {
