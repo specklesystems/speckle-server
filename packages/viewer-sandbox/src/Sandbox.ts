@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ArcticViewPipeline,
-  BasitPipeline,
   ClearFlags,
   DefaultLightConfiguration,
   DefaultPipeline,
@@ -16,6 +15,7 @@ import {
   Pipeline,
   SectionTool,
   ShadedViewPipeline,
+  SolidViewPipeline,
   SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
@@ -542,7 +542,7 @@ export default class Sandbox {
           )
           break
         case 1:
-          this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
+          this.viewer.getRenderer().pipeline = new SolidViewPipeline(
             this.viewer.getRenderer(),
             { edges: pipeline.edges }
           )
@@ -559,7 +559,7 @@ export default class Sandbox {
           )
           break
         case 4:
-          this.viewer.getRenderer().pipeline = new BasitPipeline(
+          this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
             this.viewer.getRenderer(),
             { edges: pipeline.edges },
             this.viewer.getWorldTree()
@@ -603,10 +603,10 @@ export default class Sandbox {
         label: 'Pipeline',
         options: {
           DEFAULT: 0,
-          SHADED: 1,
+          SOLID: 1,
           PEN: 2,
           ARCTIC: 3,
-          BASIT: 4,
+          SHADED: 4,
           TAA: 5,
           DEBUG_NORMALS: 6
         }

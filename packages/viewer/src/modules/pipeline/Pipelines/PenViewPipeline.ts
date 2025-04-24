@@ -16,9 +16,14 @@ import {
   WebGLRenderer
 } from 'three'
 import { EdgesPipeline } from './EdgesPipeline.js'
+import { DefaultPipelineOptions, PipelineOptions } from './Pipeline.js'
 
 export class PenViewPipeline extends ProgressivePipeline {
-  constructor(speckleRenderer: SpeckleRenderer) {
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: PipelineOptions = DefaultPipelineOptions
+  ) {
+    options
     super(speckleRenderer)
 
     const edgesPipeline = new EdgesPipeline(speckleRenderer)

@@ -98,7 +98,7 @@ import TextBatch from './modules/batching/TextBatch.js'
 import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
 import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
 import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
-import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
+import { SolidViewPipeline } from './modules/pipeline/Pipelines/SolidViewPipeline.js'
 import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
 import { RenderTree } from './modules/tree/RenderTree.js'
@@ -147,7 +147,7 @@ import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
 import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
 import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
-import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
 import { WebXrViewer } from './modules/WebXrViewer.js'
@@ -248,11 +248,11 @@ export {
   ProgressivePipeline,
   DefaultPipeline,
   EdgesPipeline,
-  ShadedViewPipeline,
+  SolidViewPipeline,
   PenViewPipeline,
   ArcticViewPipeline,
   TAAPipeline,
-  BasitPipeline,
+  ShadedViewPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
