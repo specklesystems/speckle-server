@@ -1,7 +1,7 @@
 <template>
   <div class="border border-outline-3 rounded-lg divide-y divide-outline-3">
     <div
-      v-if="isSelfServePlan && !statusIsCanceled && isWorkspaceAdmin"
+      v-if="isSelfServePlan && !statusIsCanceled"
       class="px-5 py-8 gap-y-6 flex flex-col sm:items-center sm:flex-row"
     >
       <div
@@ -91,7 +91,6 @@ import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 const props = defineProps<{
   slug: string
-  isWorkspaceAdmin: boolean
 }>()
 
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)

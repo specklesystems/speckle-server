@@ -23,10 +23,7 @@
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Usage" subheading />
-        <SettingsWorkspacesBillingUsage
-          :slug="slug"
-          :is-workspace-admin="isWorkspaceAdmin"
-        />
+        <SettingsWorkspacesBillingUsage :slug="slug" />
       </section>
 
       <ClientOnly>
@@ -55,7 +52,7 @@
 <script lang="ts" setup>
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import { type WorkspaceRoles, Roles, workspaceReachedPlanLimit } from '@speckle/shared'
+import { type WorkspaceRoles, workspaceReachedPlanLimit } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -97,7 +94,6 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showBillingAlert = computed(
   () =>
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
