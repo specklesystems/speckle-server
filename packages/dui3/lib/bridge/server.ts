@@ -186,7 +186,11 @@ export class ArchicadBridge {
       )
       const path = (await res.json()) as unknown
 
-      await runMethod('afterGsmConverter', [path] as unknown as unknown[])
+      await runMethod('afterGsmConverter', [
+        eventPayload.modelCardId,
+        result.data.project.model.version.sourceApplication,
+        path
+      ] as unknown as unknown[])
     } catch (error) {
       console.log(error) // TODO: throw toast
     }
