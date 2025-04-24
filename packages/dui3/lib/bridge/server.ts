@@ -204,7 +204,7 @@ export class ArchicadBridge {
       ] as unknown as unknown[])
     } catch (error) {
       const notification: ToastNotification = {
-        title: 'Load is failed',
+        title: 'Load failed',
         description: error as string,
         type: ToastNotificationType.Danger
       }
