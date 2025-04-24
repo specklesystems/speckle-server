@@ -6,7 +6,6 @@
     <div class="flex gap-x-2 flex-1">
       <span class="truncate text-body-xs">
         {{ collaborator.title }}
-        {{ collaborator.workspaceRole }}
         <span v-if="isYou" class="text-foreground-3 text-body-3xs">(you)</span>
       </span>
       <div>
