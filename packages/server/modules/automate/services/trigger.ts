@@ -47,6 +47,8 @@ import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { getRequestLogger } from '@/observability/components/express/requestContext'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -63,6 +65,7 @@ export const onModelVersionCreateFactory =
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
     const { getAutomation, getAutomationRevision, getTriggers, triggerFunction } = deps
+    const logger = getRequestLogger() || automateLogger
 
     // get triggers where modelId matches
     const triggerDefinitions = await getTriggers({
@@ -111,8 +114,10 @@ export const onModelVersionCreateFactory =
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
-          automateLogger.error(
-            { error, params },
+          logWithErr(
+            logger,
+            error,
+            params,
             'Failure while triggering run onModelVersionCreate'
           )
         }
