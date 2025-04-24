@@ -4,7 +4,10 @@
   >
     <UserAvatar hide-tooltip :user="collaborator.user" />
     <div class="flex gap-x-2 flex-1">
-      <span class="truncate text-body-xs">{{ collaborator.title }}</span>
+      <span class="truncate text-body-xs">
+        {{ collaborator.title }}
+        <span v-if="isYou" class="text-foreground-3 text-body-3xs">(you)</span>
+      </span>
       <div>
         <CommonBadge v-if="badgeText" rounded color="secondary">
           {{ badgeText }}
@@ -142,6 +145,7 @@ const badgeText = computed(() => {
   return null
 })
 
+const isYou = computed(() => props.collaborator.user?.id === activeUser.value?.id)
 const disabledRoles = computed(() => {
   if (props.collaborator.seatType === 'viewer') {
     return [Roles.Stream.Owner, Roles.Stream.Contributor]
