@@ -567,7 +567,8 @@ export default class Sandbox {
           break
         case 5:
           this.viewer.getRenderer().pipeline = new TAAPipeline(
-            this.viewer.getRenderer()
+            this.viewer.getRenderer(),
+            { edges: pipeline.edges }
           )
           break
         case 6:
