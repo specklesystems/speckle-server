@@ -4,7 +4,7 @@
       class="bg-foundation flex gap-2 p-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
     >
       <div class="flex flex-1 flex-col">
-        <button class="flex items-center gap-2 cursor-pointer" @click="toggleAdmins">
+        <button class="flex items-center gap-1 cursor-pointer" @click="toggleAdmins">
           <p class="text-body-xs">Workspace admins</p>
           <ChevronDownIcon
             :class="`h-4 w-4 ${expanded ? '-rotate-180' : 'rotate-0'}`"
@@ -60,7 +60,7 @@ import {
   accessSelectItems
 } from '~~/lib/projects/helpers/components'
 import type { ProjectPageCollaborators_WorkspaceCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { Roles, type StreamRoles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
