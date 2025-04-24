@@ -14,6 +14,8 @@ import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { Emitter } from 'nanoevents'
 import { useDesktopService } from '~/lib/core/composables/desktopService'
+import type { ToastNotification } from '@speckle/ui-components'
+import { ToastNotificationType } from '@speckle/ui-components'
 
 export type SendBatchViaBrowserArgs = {
   modelCardId: string
@@ -134,7 +136,16 @@ export class ArchicadBridge {
     // 1 - Ping the desktop service to understand it is running
     const isDesktopServiceAvailable = await pingDesktopService()
 
+    const hostAppStore = useHostAppStore()
+
     if (!isDesktopServiceAvailable) {
+      const notification: ToastNotification = {
+        title: 'Desktop service unavailable',
+        description:
+          'Falling back to a slower load process because the desktop service is not running.',
+        type: ToastNotificationType.Info
+      }
+      hostAppStore.setNotification(notification)
       // 1.1 - No - fallback to receiveByBrowser
       return this.receiveByBrowser(
         {
@@ -192,7 +203,12 @@ export class ArchicadBridge {
         path
       ] as unknown as unknown[])
     } catch (error) {
-      console.log(error) // TODO: throw toast
+      const notification: ToastNotification = {
+        title: 'Load is failed',
+        description: error as string,
+        type: ToastNotificationType.Danger
+      }
+      hostAppStore.setNotification(notification)
     }
   }
 
