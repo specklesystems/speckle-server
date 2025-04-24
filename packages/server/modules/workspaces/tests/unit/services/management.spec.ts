@@ -807,7 +807,6 @@ describe('Workspace role services', () => {
         ...(context.eventData
           .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
-      delete payload.flags
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)

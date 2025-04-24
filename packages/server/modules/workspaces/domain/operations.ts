@@ -187,10 +187,6 @@ export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 export type UpdateWorkspaceRole = (
   args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
-    /**
      * Only add or upgrade role, prevent downgrades
      */
     preventRoleDowngrade?: boolean
