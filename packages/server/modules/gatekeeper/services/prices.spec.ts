@@ -8,7 +8,6 @@ import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
 import {
   PaidWorkspacePlans,
   PaidWorkspacePlansNew,
-  WorkspaceGuestSeatType,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import { expect } from 'chai'
@@ -16,26 +15,6 @@ import { flatten } from 'lodash'
 import { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
-  [WorkspaceGuestSeatType]: {
-    productId: 'prod_guest',
-    monthly: { gbp: 'price_guest_monthly_gbp' },
-    yearly: { gbp: 'price_guest_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Starter]: {
-    productId: 'prod_starter',
-    monthly: { gbp: 'price_starter_monthly_gbp' },
-    yearly: { gbp: 'price_starter_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Plus]: {
-    productId: 'prod_plus',
-    monthly: { gbp: 'price_plus_monthly_gbp' },
-    yearly: { gbp: 'price_plus_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Business]: {
-    productId: 'prod_business',
-    monthly: { gbp: 'price_business_monthly_gbp' },
-    yearly: { gbp: 'price_business_yearly_gbp' }
-  },
   [PaidWorkspacePlans.Team]: {
     productId: 'prod_team',
     monthly: { gbp: 'price_team_monthly_gbp', usd: 'price_team_monthly_usd' },

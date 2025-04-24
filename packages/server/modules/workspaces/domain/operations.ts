@@ -225,6 +225,14 @@ export type ValidateWorkspaceMemberProjectRole = (params: {
   workspaceId: string
   userId: string
   projectRole: StreamRoles
+  /**
+   * Instead of resolving actual workspace role/seatType, use this one. Useful when checking
+   * if a planned workspace member will have valid access to a project
+   */
+  workspaceAccess?: {
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }
 }) => Promise<void>
 
 /** Workspace Projects */

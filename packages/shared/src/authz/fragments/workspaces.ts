@@ -22,10 +22,7 @@ import {
   ProjectContext,
   WorkspaceContext
 } from '../domain/context.js'
-import {
-  isNewWorkspacePlan,
-  isWorkspacePlanStatusReadOnly
-} from '../../workspaces/helpers/plans.js'
+import { isWorkspacePlanStatusReadOnly } from '../../workspaces/helpers/plans.js'
 import { hasEditorSeat } from '../checks/workspaceSeat.js'
 
 /**
@@ -182,13 +179,11 @@ export const ensureWorkspaceProjectCanBeCreatedFragment: AuthPolicyEnsureFragmen
 
     // Now check editor seat
     if (userId) {
-      if (isNewWorkspacePlan(workspacePlan.name)) {
-        const isEditor = await hasEditorSeat(loaders)({
-          userId,
-          workspaceId
-        })
-        if (!isEditor) return err(new WorkspaceNoEditorSeatError())
-      }
+      const isEditor = await hasEditorSeat(loaders)({
+        userId,
+        workspaceId
+      })
+      if (!isEditor) return err(new WorkspaceNoEditorSeatError())
     }
 
     const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })

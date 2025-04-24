@@ -354,22 +354,19 @@ describe('Workspaces Roles GQL', () => {
           })
         })
 
-        it('should grant default project role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
-          })
-
+        it('should ensure all workspace projects are accessible', async () => {
+          const res = await apollo.execute(
+            GetWorkspaceProjectsDocument,
+            {
+              id: workspace.id
+            },
+            { authUserId: workspaceAdminUser.id, assertNoErrors: true }
+          )
           const projects = res.data?.workspace.projects.items
+          const returnedIds = projects?.map((project) => project.id) || {}
+          const expectedIds = workspaceProjects.map((project) => project.id)
 
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-              return role?.role === Roles.Stream.Reviewer
-            })
-          ).to.be.true
+          expect(expectedIds).to.deep.equalInAnyOrder(returnedIds)
         })
       })
 

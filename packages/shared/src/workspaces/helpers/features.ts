@@ -86,26 +86,6 @@ const baseFeatures = [
 export const WorkspacePaidPlanConfigs: {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
-  [PaidWorkspacePlans.Starter]: {
-    plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Plus]: {
-    plan: PaidWorkspacePlans.Plus,
-    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Business]: {
-    plan: PaidWorkspacePlans.Business,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
-    ],
-    limits: unlimited
-  },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
@@ -116,7 +96,6 @@ export const WorkspacePaidPlanConfigs: {
       commentHistory: { value: 30, unit: 'day' }
     }
   },
-  // New
   [PaidWorkspacePlans.TeamUnlimited]: {
     plan: PaidWorkspacePlans.TeamUnlimited,
     features: [...baseFeatures],
@@ -162,7 +141,6 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [
@@ -183,19 +161,6 @@ export const WorkspaceUnpaidPlanConfigs: {
     ],
     limits: unlimited
   },
-  [UnpaidWorkspacePlans.StarterInvoiced]: {
-    ...WorkspacePaidPlanConfigs.starter,
-    plan: UnpaidWorkspacePlans.StarterInvoiced
-  },
-  [UnpaidWorkspacePlans.PlusInvoiced]: {
-    ...WorkspacePaidPlanConfigs.plus,
-    plan: UnpaidWorkspacePlans.PlusInvoiced
-  },
-  [UnpaidWorkspacePlans.BusinessInvoiced]: {
-    ...WorkspacePaidPlanConfigs.business,
-    plan: UnpaidWorkspacePlans.BusinessInvoiced
-  },
-  // New
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
     ...WorkspacePaidPlanConfigs.teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
