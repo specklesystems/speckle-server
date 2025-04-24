@@ -16,12 +16,7 @@
     </div>
     <template v-if="!collaborator.inviteId">
       <ProjectPageTeamPermissionSelect
-        v-if="
-          canEdit &&
-          activeUser &&
-          collaborator.id !== activeUser.id &&
-          collaborator.workspaceRole !== Roles.Workspace.Admin
-        "
+        v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
         class="shrink-0"
         :model-value="collaborator.role"
         :disabled="loading"
@@ -44,12 +39,7 @@
       </div>
     </template>
     <LayoutMenu
-      v-if="
-        canEdit &&
-        activeUser &&
-        collaborator.id !== activeUser.id &&
-        collaborator.workspaceRole !== Roles.Workspace.Admin
-      "
+      v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
       v-model:open="showActionsMenu"
       :items="actionsItems"
       :menu-position="HorizontalDirection.Left"
@@ -147,6 +137,10 @@ const badgeText = computed(() => {
 
 const isYou = computed(() => props.collaborator.user?.id === activeUser.value?.id)
 const disabledRoles = computed(() => {
+  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return [Roles.Stream.Contributor, Roles.Stream.Reviewer]
+  }
+
   if (props.collaborator.seatType === 'viewer') {
     return [Roles.Stream.Owner, Roles.Stream.Contributor]
   }
@@ -159,6 +153,10 @@ const disabledRoles = computed(() => {
 })
 
 const disabledRolesTooltip = computed(() => {
+  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return 'Admin roles cant be changed'
+  }
+
   if (props.collaborator.seatType === 'viewer') {
     return 'Users with a viewer seat cannot be project owners or contributors'
   }
