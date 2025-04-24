@@ -20,6 +20,9 @@
             <p class="truncate text-body-xs">
               {{ admin.user.name }}
             </p>
+            <CommonBadge v-if="adminIsYou(admin.user.id)" rounded color="secondary">
+              You
+            </CommonBadge>
           </div>
         </div>
       </div>
@@ -57,6 +60,7 @@ import type { ProjectPageCollaborators_WorkspaceCollaboratorFragment } from '~~/
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles, type StreamRoles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment ProjectPageCollaborators_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -74,10 +78,13 @@ defineProps<{
   admins: ProjectPageCollaborators_WorkspaceCollaboratorFragment[]
 }>()
 
+const { activeUser: user } = useActiveUser()
+
 const expanded = ref(false)
 const adminRole = ref<StreamRoles>(Roles.Stream.Owner)
 const generalAccessRole = ref<AccessSelectItems>(AccessSelectItems.Reviewer)
 
+const adminIsYou = (id: string) => id === user.value?.id
 const toggleAdmins = () => {
   expanded.value = !expanded.value
 }
