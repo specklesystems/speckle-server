@@ -65,21 +65,13 @@ export const ViewModeShortcuts = {
     action: 'SetViewModeDefault',
     viewMode: ViewMode.DEFAULT
   },
-  SetViewModeDefaultEdges: {
-    name: 'Rendered + Edges',
-    description: 'Set view mode to Rendered + Edges',
-    modifiers: [ModifierKeys.Shift],
-    key: 'Digit2',
-    action: 'SetViewModeDefaultEdges',
-    viewMode: ViewMode.DEFAULT_EDGES
-  },
-  SetViewModeShaded: {
+  SetViewModeSolid: {
     name: 'Solid',
     description: 'Set view mode to Solid',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit3',
     action: 'SetViewModeShaded',
-    viewMode: ViewMode.SHADED
+    viewMode: ViewMode.SOLID
   },
   SetViewModePen: {
     name: 'Pen',
@@ -97,13 +89,13 @@ export const ViewModeShortcuts = {
     action: 'SetViewModeArctic',
     viewMode: ViewMode.ARCTIC
   },
-  SetViewModeColors: {
+  SetViewModeShaded: {
     name: 'Shaded',
     description: 'Set view mode to Shaded',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit6',
     action: 'SetViewModeColors',
-    viewMode: ViewMode.COLORS
+    viewMode: ViewMode.SHADED
   }
 } as const
 

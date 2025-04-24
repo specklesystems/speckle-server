@@ -49,11 +49,10 @@ const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
 
 registerShortcuts({
   SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),
-  SetViewModeDefaultEdges: () => handleViewModeChange(ViewMode.DEFAULT_EDGES, true),
-  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true),
+  SetViewModeSolid: () => handleViewModeChange(ViewMode.SOLID, true),
   SetViewModePen: () => handleViewModeChange(ViewMode.PEN, true),
   SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true),
-  SetViewModeColors: () => handleViewModeChange(ViewMode.COLORS, true)
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true)
 })
 
 const isActiveMode = (mode: ViewMode) =>
