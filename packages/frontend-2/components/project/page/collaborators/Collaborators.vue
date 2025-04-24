@@ -3,9 +3,11 @@
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
         <h1 class="block text-heading-lg md:text-heading-xl">Collaborators</h1>
-        <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
-          Invite to project
-        </FormButton>
+        <div v-tippy="tooltipText">
+          <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
+            Invite to project
+          </FormButton>
+        </div>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
         <div v-if="project.workspace" class="flex flex-col gap-y-3">
@@ -105,6 +107,13 @@ const canInvite = computed(() =>
   project.value?.workspaceId
     ? isOwner.value || workspace.value?.role === Roles.Workspace.Admin
     : isOwner.value
+)
+const tooltipText = computed(() =>
+  canInvite.value
+    ? undefined
+    : project.value?.workspaceId
+    ? 'Only project owners and workspace admins can manage the project members'
+    : 'Only project owners can manage the project members'
 )
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
