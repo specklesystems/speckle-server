@@ -23,9 +23,9 @@
         </template>
         <div class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
-          <div v-if="filteredCollaborators.length">
+          <div>
             <ProjectPageCollaboratorsRow
-              v-for="collaborator in filteredCollaborators"
+              v-for="collaborator in collaboratorListItems"
               :key="collaborator.id"
               :can-edit="!!canUpdate?.authorized"
               :collaborator="collaborator"
@@ -33,12 +33,6 @@
               @cancel-invite="onCancelInvite"
               @change-role="onCollaboratorRoleChange"
             />
-          </div>
-          <div
-            v-else
-            class="bg-foundation items-center gap-2 py-4 px-3 pl-3.5 border border-outline-3 rounded-lg flex text-body-2xs text-foreground-2"
-          >
-            No members have been added to the project
           </div>
         </div>
       </div>
@@ -128,12 +122,6 @@ const workspace = computed(() => project.value?.workspace)
 const workspaceAdmins = computed(
   () => pageResult.value?.project?.workspace?.team?.items || []
 )
-const filteredCollaborators = computed(() => {
-  const adminIds = new Set(workspaceAdmins.value.map((admin) => admin.user?.id))
-  return collaboratorListItems.value.filter((collab) =>
-    collab.user?.id ? !adminIds.has(collab.user.id) : false
-  )
-})
 const updateRole = useUpdateUserRole(project)
 const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
 
