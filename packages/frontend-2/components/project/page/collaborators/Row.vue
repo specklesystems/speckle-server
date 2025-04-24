@@ -113,8 +113,8 @@ const roleTooltip = computed(() => {
     return null
   }
 
-  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
-    return 'User is workspace admin'
+  if (isYou.value) {
+    return "You can't change your own role"
   }
 
   return null
@@ -154,7 +154,7 @@ const disabledRoles = computed(() => {
 
 const disabledRolesTooltip = computed(() => {
   if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
-    return 'Admin roles cant be changed'
+    return "Admin roles can't be changed"
   }
 
   if (props.collaborator.seatType === 'viewer') {

@@ -34,7 +34,7 @@
         class="shrink-0"
         :model-value="adminRole"
         :disabled-roles="[Roles.Stream.Contributor, Roles.Stream.Reviewer]"
-        disabled-item-tooltip="Admin roles cant be changed"
+        disabled-item-tooltip="Admin roles can't be changed"
       />
       <div v-else class="flex items-center justify-end text-body-2xs">
         {{ accessSelectItems[generalAccessRole].title }}
