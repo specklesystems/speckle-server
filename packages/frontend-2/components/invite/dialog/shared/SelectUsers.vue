@@ -54,9 +54,22 @@
           </CommonTextLink>
         </div>
       </div>
-      <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-        Add another user
-      </FormButton>
+      <div>
+        <div
+          :key="`add-user-${fields.length}`"
+          v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
+          class="inline-block"
+        >
+          <FormButton
+            color="subtle"
+            :icon-left="PlusIcon"
+            :disabled="disableAddUserButton"
+            @click="addInviteItem"
+          >
+            Add another user
+          </FormButton>
+        </div>
+      </div>
     </div>
     <slot />
   </form>
@@ -90,6 +103,8 @@ const {
   push: pushInvite,
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
+
+const disableAddUserButton = computed(() => fields.value.length >= 10)
 
 const addInviteItem = () => {
   pushInvite({
