@@ -19,10 +19,13 @@
             <UserAvatar :user="admin.user" />
             <p class="truncate text-body-xs">
               {{ admin.user.name }}
+              <span
+                v-if="adminIsYou(admin.user.id)"
+                class="text-foreground-3 text-body-3xs"
+              >
+                (you)
+              </span>
             </p>
-            <CommonBadge v-if="adminIsYou(admin.user.id)" rounded color="secondary">
-              You
-            </CommonBadge>
           </div>
         </div>
       </div>
