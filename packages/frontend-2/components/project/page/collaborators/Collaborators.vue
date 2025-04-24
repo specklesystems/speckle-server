@@ -13,28 +13,17 @@
             <p class="text-body-2xs text-foreground-2 font-medium">
               General project access
             </p>
-            <ProjectPageCollaboratorsGeneralAccessRow
+            <ProjectPageCollaboratorsGeneralAccess
               :name="project.workspace?.name"
               :logo="project.workspace?.logo"
               :can-edit="!!canUpdate?.authorized"
+              :admins="workspaceAdmins"
             />
-          </div>
-          <div class="flex flex-col gap-y-3">
-            <p class="text-body-2xs text-foreground-2 font-medium">Workspace admins</p>
-            <div>
-              <ProjectPageCollaboratorsAdminRow
-                v-for="admin in workspaceAdmins"
-                :key="admin.id"
-                :name="admin?.user?.name"
-                :logo="admin?.user?.avatar"
-                :can-edit="!!canUpdate?.authorized"
-              />
-            </div>
           </div>
         </template>
         <div class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
-          <div v-if="!filteredCollaborators.length">
+          <div v-if="filteredCollaborators.length">
             <ProjectPageCollaboratorsRow
               v-for="collaborator in filteredCollaborators"
               :key="collaborator.id"
@@ -46,6 +35,7 @@
             />
           </div>
           <div
+            v-else
             class="bg-foundation items-center gap-2 py-4 px-3 pl-3.5 border border-outline-3 rounded-lg flex text-body-2xs text-foreground-2"
           >
             No members have been added to the project
@@ -103,12 +93,7 @@ const projectPageCollaboratorsQuery = graphql(`
         logo
         team(filter: $filter) {
           items {
-            id
-            user {
-              id
-              name
-              avatar
-            }
+            ...ProjectPageCollaborators_WorkspaceCollaborator
           }
         }
       }
@@ -146,7 +131,7 @@ const workspaceAdmins = computed(
 const filteredCollaborators = computed(() => {
   const adminIds = new Set(workspaceAdmins.value.map((admin) => admin.user?.id))
   return collaboratorListItems.value.filter((collab) =>
-    collab.user?.id ? !adminIds.has(collab.user.id) : true
+    collab.user?.id ? !adminIds.has(collab.user.id) : false
   )
 })
 const updateRole = useUpdateUserRole(project)

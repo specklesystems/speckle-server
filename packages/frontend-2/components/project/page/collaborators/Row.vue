@@ -138,9 +138,6 @@ const badgeText = computed(() => {
   if (props.collaborator.workspaceRole === Roles.Workspace.Guest) {
     return 'Guest'
   }
-  if (props.collaborator.role === Roles.Stream.Owner) {
-    return 'Project owner'
-  }
 
   return null
 })
