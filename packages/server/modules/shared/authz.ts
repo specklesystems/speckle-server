@@ -148,14 +148,15 @@ export const validateStreamRoleBuilderFactory =
 
 export const validateResourceAccess: AuthPipelineFunction = async ({
   context,
-  authResult
+  authResult,
+  params
 }) => {
   const { resourceAccessRules } = context
 
   if (authHasFailed(authResult)) return { context, authResult }
   if (!resourceAccessRules?.length) return authSuccess(context)
 
-  const streamId = context.stream?.id
+  const streamId = context.stream?.id || params?.streamId
   if (!streamId) {
     return authSuccess(context)
   }
@@ -330,6 +331,19 @@ const validateStreamPolicyAccessFactory =
       return authSuccess(context)
     }
 
+    if (result.error.code === Authz.ProjectNotFoundError.code) {
+      return authFailed(
+        context,
+        new NotFoundError(
+          'Project ID is malformed and cannot be found, or the project does not exist',
+          {
+            info: { projectId: params.streamId }
+          }
+        ),
+        true
+      )
+    }
+
     return authFailed(context, new ForbiddenError(result.error.message))
   }
 
@@ -341,7 +355,8 @@ export const streamWritePermissionsPipelineFactory = (): AuthPipelineFunction[] 
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  })
+  }),
+  validateResourceAccess
 ]
 
 export const streamCommentsWritePermissionsPipelineFactory =
@@ -353,7 +368,8 @@ export const streamCommentsWritePermissionsPipelineFactory =
           userId: authData.context.userId,
           projectId: authData.params!.streamId!
         })
-    })
+    }),
+    validateResourceAccess
   ]
 
 export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] => [
@@ -364,7 +380,8 @@ export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] =
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  })
+  }),
+  validateResourceAccess
 ]
 
 export const throwForNotHavingServerRoleFactory =
