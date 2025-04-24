@@ -1978,7 +1978,10 @@ export type PendingStreamCollaborator = {
   id: Scalars['String']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
+  project: Project;
+  /** @deprecated Use project instead */
   projectId: Scalars['String']['output'];
+  /** @deprecated Use project instead */
   projectName: Scalars['String']['output'];
   role: Scalars['String']['output'];
   /** @deprecated Use projectId instead */
@@ -6594,6 +6597,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

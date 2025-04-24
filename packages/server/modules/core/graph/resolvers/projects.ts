@@ -94,6 +94,7 @@ import {
 import { has } from 'lodash'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -558,6 +559,13 @@ export = {
       const { streamId } = parent
       const stream = await ctx.loaders.streams.getStream.load(streamId)
       return stream?.name || ''
+    },
+    async project(parent, _args, ctx) {
+      const project = await ctx.loaders.streams.getStream.load(parent.streamId)
+      if (!project) {
+        throw new StreamNotFoundError(null, { info: { streamId: parent.streamId } })
+      }
+      return project
     }
   },
   Subscription: {

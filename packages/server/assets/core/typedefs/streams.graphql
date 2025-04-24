@@ -146,8 +146,9 @@ type StreamCollaborator {
 type PendingStreamCollaborator {
   id: String!
   inviteId: String!
-  projectId: String!
-  projectName: String!
+  project: Project!
+  projectId: String! @deprecated(reason: "Use project instead")
+  projectName: String! @deprecated(reason: "Use project instead")
   streamId: String! @deprecated(reason: "Use projectId instead")
   streamName: String! @deprecated(reason: "Use projectName instead")
   """
