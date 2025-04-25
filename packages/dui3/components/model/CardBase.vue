@@ -19,7 +19,7 @@
             "
             hide-text
             class=""
-            :disabled="noWriteAccess"
+            :disabled="!canEdit"
             @click.stop="$emit('manual-publish-or-load')"
           ></FormButton>
         </div>
@@ -96,7 +96,7 @@
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
     <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
-    <div v-if="!noWriteAccess" class="px-1">
+    <div v-if="canEdit" class="px-1">
       <slot></slot>
     </div>
 
@@ -120,7 +120,7 @@
         }}
       </div>
     </div>
-    <div v-if="!noWriteAccess">
+    <div v-if="canEdit">
       <!-- Card States: Expiry, errors, new version created, etc. -->
       <slot name="states"></slot>
       <div class="relative">
@@ -182,7 +182,7 @@
           modelCardId: modelCard.modelCardId,
           dismissible: false,
           level: 'danger',
-          text: 'You do not have write access: you cannot update this model. Contact the project owner!'
+          text: disabledMessage
         }"
       />
     </div>
@@ -219,20 +219,20 @@ const props = withDefaults(
   defineProps<{
     modelCard: IModelCard
     project: ProjectModelGroup
-    readonly?: boolean
+    canEdit?: boolean
   }>(),
   {
-    readonly: false
+    canEdit: false
   }
 )
-
-const isSender = computed(() => {
-  return props.modelCard.typeDiscriminator.includes('SenderModelCard')
-})
 
 defineEmits<{
   (e: 'manual-publish-or-load'): void
 }>()
+
+const isSender = computed(() => {
+  return props.modelCard.typeDiscriminator.includes('SenderModelCard')
+})
 
 const buttonTooltip = computed(() => {
   return props.modelCard.progress
@@ -244,6 +244,12 @@ const buttonTooltip = computed(() => {
 
 const projectAccount = computed(() =>
   accStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
+
+const disabledMessage = computed(() =>
+  isSender.value
+    ? 'Publish is not permitted by your role on this project.'
+    : 'Load is not permitted by your role on this project.'
 )
 
 const clientId = projectAccount.value.accountInfo.id
@@ -345,7 +351,7 @@ defineExpose({
 })
 
 const cardBgColor = computed(() => {
-  // if (props.modelCard.error || noWriteAccess.value)
+  // if (props.modelCard.error || !canEdit.value)
   //   return 'bg-red-500/10 hover:bg-red-500/20'
   // if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   // if (
@@ -364,10 +370,6 @@ const cardBgColor = computed(() => {
   // )
   //   return 'bg-orange-500/10'
   return 'bg-foundation xxxhover:bg-highlight-1'
-})
-
-const noWriteAccess = computed(() => {
-  return props.readonly && isSender.value
 })
 
 const { onResult: onModelViewingResult } = useSubscription(

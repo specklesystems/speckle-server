@@ -3,7 +3,7 @@
     ref="cardBase"
     :model-card="modelCard"
     :project="project"
-    :readonly="readonly"
+    :can-edit="canEdit"
     @manual-publish-or-load="sendOrCancel"
   >
     <div class="flex max-[275px]:w-full overflow-hidden my-2">
@@ -82,7 +82,7 @@ const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
-  readonly: boolean
+  canEdit: boolean
 }>()
 
 const store = useHostAppStore()
@@ -92,7 +92,7 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const sendOrCancel = () => {
-  if (props.readonly) {
+  if (props.canEdit) {
     return
   }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
@@ -197,6 +197,6 @@ const latestVersionNotification = computed(() => {
 })
 
 const noWriteAccess = computed(() => {
-  return props.readonly
+  return props.canEdit
 })
 </script>
