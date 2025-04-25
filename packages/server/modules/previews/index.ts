@@ -119,7 +119,7 @@ const scheduleRetryFailedPreviews = async ({
   const cronExpression = '*/5 * * * *' // every 5 minutes
   return scheduleExecution(
     cronExpression,
-    'FileImportExpiry',
+    'PreviewResurrection',
     async (_scheduledTime, { logger }) => {
       previewResurrectionHandlers = await Promise.all(
         previewResurrectionHandlers.map(async ({ handler, cursor }) => {
