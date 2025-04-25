@@ -9,10 +9,11 @@
         <div class="flex flex-col">
           <CommonBadge
             v-if="!project.workspace?.id && isWorkspacesEnabled && isOwner"
+            v-tippy="'As the project owner you can move this project to a workspace'"
             class="mb-2 max-w-max"
             rounded
           >
-            Project to move
+            Ready to move
           </CommonBadge>
           <NuxtLink
             :to="projectRoute(project.id)"
