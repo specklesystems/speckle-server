@@ -119,7 +119,7 @@
           :project="project"
           :disable-no-write-access-projects="disableNoWriteAccessProjects"
           :is-sender="isSender"
-          :workspace-admin="activeWorkspace.role === 'workspace:admin'"
+          :workspace-admin="isWorkspaceAdmin"
           @click="handleProjectCardClick(project)"
         />
         <FormButton
@@ -249,6 +249,10 @@ const activeWorkspace = computed(() => {
     ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
 })
 
+const isWorkspaceAdmin = computed(
+  () => activeWorkspace.value.role === 'workspace:admin'
+)
+
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
   activeWorkspace.value
 )
@@ -268,7 +272,7 @@ watch(
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   // TODO: error
   if (
-    props.disableNoWriteAccessProjects &&
+    !isWorkspaceAdmin.value &&
     (!project.role || project.role === 'stream:reviewer')
   ) {
     return

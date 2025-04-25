@@ -152,8 +152,12 @@ const isProjectReadOnly = computed(() => {
   if (!projectDetails.value) return true
 
   if (
-    projectDetails.value?.role === null ||
-    projectDetails.value?.role === 'stream:reviewer'
+    !(
+      projectDetails.value.workspace?.role &&
+      projectDetails.value.workspace?.role === 'workspace:admin'
+    ) &&
+    (projectDetails.value?.role === null ||
+      projectDetails.value?.role === 'stream:reviewer')
   )
     return true
   return false
