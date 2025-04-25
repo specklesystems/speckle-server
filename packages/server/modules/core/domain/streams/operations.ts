@@ -193,6 +193,12 @@ export type BaseUserStreamsQueryParams = {
   personalOnly?: MaybeNullOrUndefined<boolean>
 
   /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: MaybeNullOrUndefined<boolean>
+
+  /**
    * Only with active sso session
    */
   onlyWithActiveSsoSession?: boolean
