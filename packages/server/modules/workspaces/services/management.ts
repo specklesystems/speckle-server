@@ -423,7 +423,8 @@ export const updateWorkspaceRoleFactory =
     userId,
     role: nextWorkspaceRole,
     preventRoleDowngrade,
-    updatedByUserId
+    updatedByUserId,
+    skipProjectRoleUpdatesFor
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 
@@ -494,7 +495,10 @@ export const updateWorkspaceRoleFactory =
           workspaceId,
           role: nextWorkspaceRole
         },
-        updatedByUserId
+        updatedByUserId,
+        flags: {
+          skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
+        }
       }
     })
   }

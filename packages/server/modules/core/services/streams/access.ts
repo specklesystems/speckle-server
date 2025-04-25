@@ -230,7 +230,7 @@ export const addOrUpdateStreamCollaboratorFactory =
 export const setStreamCollaboratorFactory =
   (
     deps: DependenciesOf<typeof addOrUpdateStreamCollaboratorFactory> &
-      DependenciesOf<typeof removeStreamCollaboratorFactory> & {}
+      DependenciesOf<typeof removeStreamCollaboratorFactory>
   ): SetStreamCollaborator =>
   async (params, options) => {
     const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory(deps)

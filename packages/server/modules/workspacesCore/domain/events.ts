@@ -35,6 +35,7 @@ type WorkspaceRoleDeletedPayload = {
 type WorkspaceRoleUpdatedPayload = {
   acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
   updatedByUserId: string
+  flags?: { skipProjectRoleUpdatesFor: string[] }
 }
 type WorkspaceSeatUpdatedPayload = {
   seat: WorkspaceSeat

@@ -717,15 +717,19 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
+      const deletedByUserId = cryptoRandomString({ length: 10 })
       await deleteWorkspaceRole({
         userId,
         workspaceId,
-        deletedByUserId: cryptoRandomString({ length: 10 })
+        deletedByUserId
       })
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal({ acl: role })
+      expect(context.eventData.payload).to.deep.equal({
+        acl: role,
+        updatedByUserId: deletedByUserId
+      })
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -830,7 +834,10 @@ describe('Workspace role services', () => {
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(payload).to.deep.equal({
         acl: role,
-        updatedByUserId: workspaceOwnerId
+        updatedByUserId: workspaceOwnerId,
+        flags: {
+          skipProjectRoleUpdatesFor: []
+        }
       })
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {

@@ -209,7 +209,8 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       preventRoleDowngrade: true,
-      updatedByUserId: invite.inviterId
+      updatedByUserId: invite.inviterId,
+      skipProjectRoleUpdatesFor: [project.id]
     })
 
     // Automatically promote user to project owner if workspace admin
@@ -424,20 +425,36 @@ export const onWorkspaceSeatUpdatedFactory =
 
 export const onWorkspaceRoleUpdatedFactory =
   (deps: {
+    getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     setStreamCollaborator: SetStreamCollaborator
     getWorkspaceUserSeat: GetWorkspaceUserSeat
     getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
     getWorkspaceCollaborators: GetWorkspaceCollaborators
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
   }) =>
   async ({
     acl,
-    updatedByUserId
+    updatedByUserId,
+    flags
   }: {
     acl: { userId: string; role: WorkspaceRoles; workspaceId: string }
+    flags?: {
+      skipProjectRoleUpdatesFor: string[]
+    }
     updatedByUserId: string
   }) => {
     const { userId, role, workspaceId } = acl
+
+    const workspace = await deps.getWorkspaceWithPlan({ workspaceId })
+    if (!workspace) return
+
+    // Until we kill old plan code, we need to do full project role assignment for them
+    const isOldPlan = !workspace.plan || !isNewPlanType(workspace.plan.name)
+    const { default: defaultProjectRoles } =
+      await deps.getWorkspaceRoleToDefaultProjectRoleMapping({
+        workspaceId
+      })
 
     const seatType = await deps.getWorkspaceUserSeat({ workspaceId, userId })
     if (!seatType) return
@@ -463,7 +480,13 @@ export const onWorkspaceRoleUpdatedFactory =
       })
       await Promise.all(
         projectsPage.map(async ({ id: projectId, role: originalProjectRole }) => {
-          if (!originalProjectRole) {
+          if (isOldPlan && flags?.skipProjectRoleUpdatesFor.includes(projectId)) {
+            // Skip assignment (used during invite flow)
+            // TODO: Can we refactor this special case away?
+            return
+          }
+
+          if (!originalProjectRole && !isOldPlan) {
             return
           }
 
@@ -472,30 +495,34 @@ export const onWorkspaceRoleUpdatedFactory =
            * been written to DB. So we must ensure the updates we make here are valid
            */
 
-          let nextUserRole: StreamRoles
-          switch (role) {
-            case Roles.Workspace.Admin: {
-              // Set workspace owner as project owner
-              nextUserRole = Roles.Stream.Owner
-              break
-            }
-            case Roles.Workspace.Guest: {
-              // If workspace guest is project owner
-              if (originalProjectRole !== Roles.Stream.Owner) {
-                return
+          let nextUserRole: StreamRoles | null
+          if (isOldPlan) {
+            nextUserRole = defaultProjectRoles[role]
+          } else {
+            switch (role) {
+              case Roles.Workspace.Admin: {
+                // Set workspace owner as project owner
+                nextUserRole = Roles.Stream.Owner
+                break
               }
+              case Roles.Workspace.Guest: {
+                // If workspace guest is project owner
+                if (originalProjectRole !== Roles.Stream.Owner) {
+                  return
+                }
 
-              // If workspace guest has an editor seat
-              if (seatType.type !== WorkspaceSeatType.Editor) {
-                return
+                // If workspace guest has an editor seat
+                if (seatType.type !== WorkspaceSeatType.Editor) {
+                  return
+                }
+
+                // Demote to contributor
+                nextUserRole = Roles.Stream.Contributor
+                break
               }
-
-              // Demote to contributor
-              nextUserRole = Roles.Stream.Contributor
-              break
+              default:
+                return
             }
-            default:
-              return
           }
 
           // If downgraded from owner & last owner, transfer ownership to a workspace admin
@@ -893,7 +920,12 @@ export const initializeEventListenersFactory =
               }),
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
               getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
-              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db })
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
+              getWorkspaceRoleToDefaultProjectRoleMapping:
+                getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                  getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+                })
             })
             return await onWorkspaceRoleUpdated(payload)
           },
