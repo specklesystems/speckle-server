@@ -1,5 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    :buttons="dialogButtons"
+    @update:open="(v) => !v && emit('cancel')"
+  >
     <template #header>{{ title }}</template>
     <div class="flex flex-col mb-4">
       <p class="text-body-sm mb-4">
