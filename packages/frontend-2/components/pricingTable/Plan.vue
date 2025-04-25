@@ -68,6 +68,20 @@
         :description="featureMetadata.description"
       />
     </ul>
+    <div v-if="displayAddons.length > 0" class="mt-8">
+      <h5 class="text-body-2xs mb-2 text-foreground-2">Available add-ons</h5>
+      <div class="flex flex-col gap-y-2">
+        <PricingTableAddon
+          v-for="addon in displayAddons"
+          :key="addon.title"
+          :title="addon.title"
+          :base-plan="props.plan === WorkspacePlans.Team ? 'team' : 'pro'"
+          :currency="props.currency"
+          :tooltip="addon.tooltip"
+          :fixed-price="addon.fixedPrice"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -362,6 +376,35 @@ const badgeText = computed(() =>
     ? 'Current plan'
     : ''
 )
+
+const displayAddons = computed(() => {
+  if (props.plan === WorkspacePlans.Team) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can set it up in the next step.'
+      }
+    ]
+  } else if (props.plan === WorkspacePlans.Pro) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can set it up in the next step.'
+      },
+      {
+        title: 'Extra data regions',
+        fixedPrice: '$500 per region / month',
+        tooltip: 'Available upon request.'
+      },
+      {
+        title: 'Priority support',
+        fixedPrice: 'Contact us for pricing',
+        tooltip: 'Available upon request.'
+      }
+    ]
+  }
+  return []
+})
 
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return
