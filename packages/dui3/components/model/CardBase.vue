@@ -19,7 +19,7 @@
             "
             hide-text
             class=""
-            :disabled="!canEdit"
+            :disabled="!canDoOperation"
             @click.stop="$emit('manual-publish-or-load')"
           ></FormButton>
         </div>
@@ -96,7 +96,7 @@
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
     <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
-    <div v-if="canEdit" class="px-1">
+    <div v-if="canDoOperation" class="px-1">
       <slot></slot>
     </div>
 
@@ -120,7 +120,7 @@
         }}
       </div>
     </div>
-    <div v-if="canEdit">
+    <div v-if="canDoOperation">
       <!-- Card States: Expiry, errors, new version created, etc. -->
       <slot name="states"></slot>
       <div class="relative">
@@ -215,16 +215,12 @@ const store = useHostAppStore()
 const accStore = useAccountStore()
 const { trackEvent } = useMixpanel()
 
-const props = withDefaults(
-  defineProps<{
-    modelCard: IModelCard
-    project: ProjectModelGroup
-    canEdit?: boolean
-  }>(),
-  {
-    canEdit: false
-  }
-)
+const props = defineProps<{
+  modelCard: IModelCard
+  project: ProjectModelGroup
+  canEdit: boolean
+  isProjectReviewer: boolean
+}>()
 
 defineEmits<{
   (e: 'manual-publish-or-load'): void
@@ -233,6 +229,8 @@ defineEmits<{
 const isSender = computed(() => {
   return props.modelCard.typeDiscriminator.includes('SenderModelCard')
 })
+
+const canDoOperation = computed(() => !props.isProjectReviewer && props.canEdit)
 
 const buttonTooltip = computed(() => {
   return props.modelCard.progress
@@ -351,7 +349,7 @@ defineExpose({
 })
 
 const cardBgColor = computed(() => {
-  // if (props.modelCard.error || !canEdit.value)
+  // if (props.modelCard.error || !canDoOperation.value)
   //   return 'bg-red-500/10 hover:bg-red-500/20'
   // if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   // if (

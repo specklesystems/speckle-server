@@ -57,6 +57,7 @@
         :model-card="model"
         :project="project"
         :can-edit="canEdit"
+        :is-project-reviewer="isProjectReviewer"
       />
       <ModelReceiver
         v-for="model in project.receivers"
@@ -64,6 +65,7 @@
         :model-card="model"
         :project="project"
         :can-edit="canEdit"
+        :is-project-reviewer="isProjectReviewer"
       />
     </div>
   </div>
@@ -154,6 +156,14 @@ const isWorkspaceAdmin = computed(() => {
   return (
     projectDetails.value.workspace?.role &&
     projectDetails.value.workspace?.role === 'workspace:admin'
+  )
+})
+
+const isProjectReviewer = computed(() => {
+  if (!projectDetails.value) return true
+  return (
+    projectDetails.value.role === null ||
+    projectDetails.value.role === 'stream:reviewer'
   )
 })
 
