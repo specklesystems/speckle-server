@@ -15,8 +15,9 @@
         v-if="currentStep === WizardSteps.Details"
         :disable-slug-edit="!!workspaceId"
       />
-      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
+      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
+      <WorkspaceWizardStepAddOns v-else-if="currentStep === WizardSteps.AddOns" />
       <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
     </template>
   </div>
