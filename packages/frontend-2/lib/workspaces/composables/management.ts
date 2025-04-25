@@ -525,11 +525,16 @@ export const useWorkspaceUpdateSeatType = () => {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (input: {
-    userId: string
-    workspaceId: string
-    seatType: WorkspaceSeatType
-  }) => {
+  return async (
+    input: {
+      userId: string
+      workspaceId: string
+      seatType: WorkspaceSeatType
+    },
+    options?: { hideNotifications: boolean }
+  ) => {
+    const { hideNotifications } = options ?? {}
+
     const result = await mutate(
       { input },
       {
@@ -546,11 +551,13 @@ export const useWorkspaceUpdateSeatType = () => {
     ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Seat updated',
-        description: `The user's seat has been updated to ${input.seatType}`
-      })
+      if (!hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Seat updated',
+          description: `The user's seat has been updated to ${input.seatType}`
+        })
+      }
 
       mixpanel.track('Workspace User Seat Type Updated', {
         newSeatType: input.seatType,
