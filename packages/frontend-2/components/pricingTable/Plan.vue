@@ -392,17 +392,17 @@ const displayAddons = computed(() => {
     return [
       {
         title: 'Unlimited projects and models',
-        tooltip: 'You can set it up in the next step.'
+        tooltip: 'Can be added later from Billing settings'
       },
       {
         title: 'Extra data regions',
         fixedPrice: '$500 per region / month',
-        tooltip: 'Available upon request.'
+        tooltip: 'Available upon request'
       },
       {
         title: 'Priority support',
         fixedPrice: 'Contact us for pricing',
-        tooltip: 'Available upon request.'
+        tooltip: 'Available upon request'
       }
     ]
   }
