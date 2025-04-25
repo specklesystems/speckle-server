@@ -68,7 +68,7 @@
         :description="featureMetadata.description"
       />
     </ul>
-    <div v-if="displayAddons.length > 0" class="mt-8">
+    <div v-if="showAddons && displayAddons.length > 0" class="mt-auto lg:h-72 pt-8">
       <h5 class="text-body-2xs mb-2 text-foreground-2">Available add-ons</h5>
       <div class="flex flex-col gap-y-2">
         <PricingTableAddon
@@ -76,6 +76,7 @@
           :key="addon.title"
           :title="addon.title"
           :base-plan="props.plan === WorkspacePlans.Team ? 'team' : 'pro'"
+          :is-yearly-interval-selected="isYearlyIntervalSelected"
           :currency="props.currency"
           :tooltip="addon.tooltip"
           :fixed-price="addon.fixedPrice"
@@ -114,7 +115,9 @@ const props = defineProps<{
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
   currency?: Currency
+  showAddons?: boolean
 }>()
+
 const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
   default: false
 })
