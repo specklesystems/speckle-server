@@ -30,7 +30,7 @@
         </span>
       </div>
     </template>
-    <template v-else-if="canEdit">
+    <template v-else>
       <div class="flex items-end sm:items-center shrink-0 gap-3">
         <span class="shrink-0 text-body-2xs">
           {{ roleSelectItems[collaborator.role].title }}
