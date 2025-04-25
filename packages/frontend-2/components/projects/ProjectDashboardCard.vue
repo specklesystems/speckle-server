@@ -77,7 +77,7 @@
                 :disabled="!isOwner"
                 @click="$emit('moveProject')"
               >
-                Move project...
+                Move project
               </FormButton>
             </div>
           </div>
