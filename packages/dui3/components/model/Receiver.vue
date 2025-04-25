@@ -3,7 +3,7 @@
     :model-card="modelCard"
     :project="project"
     :can-edit="canEdit"
-    :is-project-reviewer="isProjectReviewer"
+    :is-explicit-project-reviewer="isExplicitProjectReviewer"
     @manual-publish-or-load="handleMainButtonClick"
   >
     <div class="flex max-[275px]:w-full items-center space-x-2 my-2">
@@ -105,7 +105,7 @@ const props = defineProps<{
   modelCard: IReceiverModelCard
   project: ProjectModelGroup
   canEdit: boolean
-  isProjectReviewer: boolean
+  isExplicitProjectReviewer: boolean
 }>()
 
 const store = useHostAppStore()

@@ -271,10 +271,7 @@ watch(
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   // TODO: error
-  if (
-    !isWorkspaceAdmin.value &&
-    (!project.role || project.role === 'stream:reviewer')
-  ) {
+  if (!isWorkspaceAdmin.value && project.role === 'stream:reviewer') {
     return
   }
   emit('next', accountId.value, project, selectedWorkspace.value)
