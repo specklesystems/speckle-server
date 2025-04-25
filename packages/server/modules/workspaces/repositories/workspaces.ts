@@ -364,7 +364,7 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, roles, seatType } = filter || {}
+    const { search, roles, seatType, excludeUserIds } = filter || {}
 
     if (seatType) {
       query
@@ -384,6 +384,12 @@ export const getWorkspaceCollaboratorsFactory =
     if (roles) {
       query.andWhere((builder) => {
         builder.whereIn(DbWorkspaceAcl.col.role, roles)
+      })
+    }
+
+    if (excludeUserIds?.length) {
+      query.andWhere((w) => {
+        w.whereNotIn(Users.col.id, excludeUserIds)
       })
     }
 

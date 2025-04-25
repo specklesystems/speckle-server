@@ -3,7 +3,8 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
-  createTestWorkspace
+  createTestWorkspace,
+  unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
   ProjectImplicitRoleCheck,
@@ -26,7 +27,8 @@ import {
   GetUserWorkspaceAccessDocument,
   GetUserWorkspaceProjectsWithAccessChecksDocument,
   GetWorkspaceDocument,
-  UpdateWorkspaceRoleDocument
+  UpdateWorkspaceRoleDocument,
+  UpdateWorkspaceSeatTypeDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -43,7 +45,7 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-describe('Workspaces Roles GQL', () => {
+describe('Workspaces Roles/Seats GQL', () => {
   let apollo: TestApolloServer
 
   const serverAdminUser: BasicTestUser = {
@@ -526,6 +528,66 @@ describe('Workspaces Roles GQL', () => {
       })
     })
 
+    describe('doing single seat type changes', () => {
+      it('cant change workspace admin to viewer', async () => {
+        const res = await apollo.execute(UpdateWorkspaceSeatTypeDocument, {
+          input: {
+            userId: workspaceAdminUser.id,
+            workspaceId: workspace.id,
+            seatType: WorkspaceSeatType.Viewer
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('cannot have a seat of type')
+      })
+
+      it('changing member editor to viewer, should downgrade all explicit roles to reviewer', async () => {
+        await apollo.execute(
+          UpdateWorkspaceSeatTypeDocument,
+          {
+            input: {
+              userId: workspaceMemberUser.id,
+              workspaceId: workspace.id,
+              seatType: WorkspaceSeatType.Viewer
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const { projects, checkProject } = await getProjects({
+          user: workspaceMemberUser
+        })
+
+        expect(projects.length).to.eq(4)
+        expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectC).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+      })
+
+      it('changing guest editor to viewer, should downgrade all explicit roles to reviewer', async () => {
+        await apollo.execute(
+          UpdateWorkspaceSeatTypeDocument,
+          {
+            input: {
+              userId: workspaceGuestUser.id,
+              workspaceId: workspace.id,
+              seatType: WorkspaceSeatType.Viewer
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const { projects, checkProject } = await getProjects({
+          user: workspaceGuestUser
+        })
+
+        expect(projects.length).to.eq(2)
+        expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+      })
+    })
+
     describe('doing single role changes', () => {
       describe('when changing workspace admin', () => {
         describe('to workspace member', () => {
@@ -831,7 +893,7 @@ describe('Workspaces Roles GQL', () => {
     })
   })
 
-  describe('doing composite role changes', () => {
+  describe('doing composite role/seat changes', () => {
     const testWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
@@ -886,7 +948,7 @@ describe('Workspaces Roles GQL', () => {
       ])
     })
 
-    it('downgrading admin->guest if last owner, sets new last owner from workspace admins', async () => {
+    it('downgrading admin->guest if last owner, sets new owner from workspace admins', async () => {
       // User             Workspace Role    Project Role
       // serverAdminUser       Admin             None
       // workspaceAdminUser    Admin             Owner
@@ -927,12 +989,60 @@ describe('Workspaces Roles GQL', () => {
       expect(checkProjectForAdmin(project).isExplicitOwner).to.be.ok
     })
 
-    it('leaving workspace as last owner of a workspace project throws', async () => {
+    it('downgrading member to viewer if last owner, sets new owner from workspace admins', async () => {
+      // User             Workspace Role    Project Role
+      // workspaceAdminUser       Admin             None
+      // workspaceMemberUser      Member            Owner
+      //
+      // Action: `workspaceAdminUser` downgraded to workspace guest
+
+      // ensure serverAdmin is no longer admin, so there's only 1 - workspaceAdmin
+      await unassignFromWorkspace(testWorkspace, serverAdminUser)
+
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Composite Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceMemberUser)
+      const apollo = await testApolloServer({
+        authUserId: workspaceAdminUser.id
+      })
+
+      const downgrade = await apollo.execute(UpdateWorkspaceSeatTypeDocument, {
+        input: {
+          userId: workspaceMemberUser.id,
+          workspaceId: testWorkspace.id,
+          seatType: WorkspaceSeatType.Viewer
+        }
+      })
+      expect(downgrade).to.not.haveGraphQLErrors()
+
+      const { workspace, checkProject } = await getWorkspaceProjects({
+        user: workspaceMemberUser,
+        workspace: testWorkspace
+      })
+      expect(workspace?.role).to.eq(Roles.Workspace.Member)
+      expect(workspace?.seatType).to.eq(WorkspaceSeatType.Viewer)
+      expect(checkProject(project).isExplicitReviewer).to.be.ok
+
+      const { checkProject: checkProjectForAdmin } = await getUserProjects({
+        user: workspaceAdminUser
+      })
+      expect(checkProjectForAdmin(project).isExplicitOwner).to.be.ok
+    })
+
+    it('leaving workspace as last owner of a workspace, sets new owner from workspace admins', async () => {
       // User             Workspace Role    Project Role
       // workspaceAdminUser    Admin             None
       // workspaceMemberUser   Member            Owner
       //
       // Action: `workspaceMemberUser` leaves workspace
+
+      // ensure serverAdmin is no longer admin, so there's only 1 - workspaceAdmin
+      await unassignFromWorkspace(testWorkspace, serverAdminUser)
 
       const project: BasicTestStream = {
         id: '',
@@ -949,14 +1059,23 @@ describe('Workspaces Roles GQL', () => {
       const leave = await apollo.execute(ActiveUserLeaveWorkspaceDocument, {
         id: testWorkspace.id
       })
-      expect(leave).to.haveGraphQLErrors('A project needs at least one project owner')
+      expect(leave).to.not.haveGraphQLErrors()
 
-      const { workspace, checkProject } = await getWorkspaceProjects({
+      const { workspace } = await getUserWorkspace({
         user: workspaceMemberUser,
         workspace: testWorkspace
       })
-      expect(workspace.role).to.equal(Roles.Workspace.Member)
-      expect(checkProject(project).isOwner).to.be.ok
+      expect(workspace?.role).to.not.be.ok
+
+      const { checkProject } = await getUserProjects({
+        user: workspaceMemberUser
+      })
+      expect(checkProject(project).hasExplicitRole).to.be.not.ok
+
+      const { checkProject: checkProjectForAdmin } = await getUserProjects({
+        user: workspaceAdminUser
+      })
+      expect(checkProjectForAdmin(project).isExplicitOwner).to.be.ok
     })
 
     it('leaving workspace w/o owner roles works fine and removes all roles', async () => {
@@ -998,12 +1117,15 @@ describe('Workspaces Roles GQL', () => {
       expect(workspace?.role).to.be.not.ok
     })
 
-    it('removing a workspace member that is the last owner of a workspace project throws', async () => {
+    it('removing a workspace member that is the last owner of a workspace project sets new owner from workspace admins', async () => {
       // User             Workspace Role    Project Role
       // workspaceAdminUser    Admin             None
       // workspaceMemberUser   Member            Owner
       //
       // Action: `workspaceAdminUser` removes `workspaceMemberUser` from the workspace
+
+      // ensure serverAdmin is no longer admin, so there's only 1 - workspaceAdmin
+      await unassignFromWorkspace(testWorkspace, serverAdminUser)
 
       const project: BasicTestStream = {
         id: '',
@@ -1024,14 +1146,24 @@ describe('Workspaces Roles GQL', () => {
           workspaceId: testWorkspace.id
         }
       })
-      expect(remove).to.haveGraphQLErrors('A project needs at least one project owner')
+      expect(remove).to.not.haveGraphQLErrors()
+      expect(remove.data?.workspaceMutations.updateRole).to.be.ok
 
-      const { workspace, checkProject } = await getWorkspaceProjects({
+      const { checkProject } = await getUserProjects({
+        user: workspaceMemberUser
+      })
+      expect(checkProject(project).hasExplicitRole).to.be.not.ok
+
+      const { workspace } = await getUserWorkspace({
         user: workspaceMemberUser,
         workspace: testWorkspace
       })
-      expect(workspace.role).to.equal(Roles.Workspace.Member)
-      expect(checkProject(project).isOwner).to.be.ok
+      expect(workspace?.role).to.be.not.ok
+
+      const { checkProject: checkProjectForAdmin } = await getUserProjects({
+        user: workspaceAdminUser
+      })
+      expect(checkProjectForAdmin(project).isExplicitOwner).to.be.ok
     })
 
     it('removing a workspace member that is not the last owner of a workspace project works fine and removes all roles', async () => {

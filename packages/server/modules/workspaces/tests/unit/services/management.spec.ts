@@ -693,7 +693,11 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+      const deletedRole = await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceRoles.length).to.equal(0)
       expect(deletedRole).to.deep.equal(role)
@@ -713,7 +717,11 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
@@ -734,7 +742,13 @@ describe('Workspace role services', () => {
         workspaceRoles: [role]
       })
 
-      await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+      await expectToThrow(() =>
+        deleteWorkspaceRole({
+          userId,
+          workspaceId,
+          deletedByUserId: cryptoRandomString({ length: 10 })
+        })
+      )
     })
     it('deletes workspace project roles', async () => {
       const userId = cryptoRandomString({ length: 10 })
@@ -757,7 +771,11 @@ describe('Workspace role services', () => {
         ]
       })
 
-      await deleteWorkspaceRole({ userId, workspaceId })
+      await deleteWorkspaceRole({
+        userId,
+        workspaceId,
+        deletedByUserId: cryptoRandomString({ length: 10 })
+      })
 
       expect(context.workspaceProjectRoles.length).to.equal(0)
     })
