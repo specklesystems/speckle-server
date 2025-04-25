@@ -13,7 +13,7 @@
         size="sm"
         color="subtle"
         class="block text-foreground-2 hover:text-foreground overflow-hidden max-w-full !justify-start"
-        :disabled="!!modelCard.progress || noWriteAccess"
+        :disabled="!!modelCard.progress || !props.canEdit"
         full-width
         @click.stop="openFilterDialog = true"
       >
@@ -92,7 +92,7 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const sendOrCancel = () => {
-  if (props.canEdit) {
+  if (!props.canEdit) {
     return
   }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
@@ -194,9 +194,5 @@ const latestVersionNotification = computed(() => {
     action: () => cardBase.value?.viewModel()
   }
   return notification
-})
-
-const noWriteAccess = computed(() => {
-  return props.canEdit
 })
 </script>
