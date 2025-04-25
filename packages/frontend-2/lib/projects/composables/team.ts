@@ -1,5 +1,5 @@
 import { Roles } from '@speckle/shared'
-import type { Nullable, ServerRoles } from '@speckle/shared'
+import type { Nullable, ServerRoles, WorkspaceRoles } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
@@ -83,7 +83,7 @@ export function useTeamInternals(
         role: collaborator.role,
         inviteId: null,
         serverRole: collaborator.user.role as ServerRoles,
-        workspaceRole: collaborator.workspaceRole,
+        workspaceRole: collaborator.workspaceRole as WorkspaceRoles,
         seatType: collaborator.seatType
       })
     }
