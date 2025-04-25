@@ -133,8 +133,7 @@ watch(dialogOpen, (value) => {
       location: 'viewer',
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceSlug,
-      // eslint-disable-next-line camelcase
-      limit_type: props.limitType
+      limitType: props.limitType
     })
   }
 })
