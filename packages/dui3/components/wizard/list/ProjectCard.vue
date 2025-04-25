@@ -2,14 +2,14 @@
   <div
     v-tippy="cardTippy"
     :class="`group relative bg-foundation-2 rounded px-2 py-1  transition ${
-      disabled
-        ? 'cursor-not-allowed italic bg-neutral-500/5'
-        : 'cursor-pointer hover:text-primary hover:bg-primary-muted hover:shadow-md'
+      hasAccess
+        ? 'cursor-pointer hover:text-primary hover:bg-primary-muted hover:shadow-md'
+        : 'cursor-not-allowed italic bg-neutral-500/5'
     } `"
   >
     <div
       :class="`text-heading-sm text-ellipsis truncate ${
-        disabled ? 'text-foreground-2' : ''
+        hasAccess ? '' : 'text-foreground-2'
       }`"
     >
       {{ project.name }}
@@ -36,7 +36,7 @@ const updatedAgo = computed(() => {
   return dayjs(props.project.updatedAt).from(dayjs())
 })
 
-const cardTippy = computed(() => (disabled.value ? disabledMessage.value : ''))
+const cardTippy = computed(() => (!hasAccess.value ? disabledMessage.value : ''))
 
 const disabledMessage = computed(() =>
   props.isSender
@@ -44,19 +44,16 @@ const disabledMessage = computed(() =>
     : "Your role on this project doesn't give you permission to load."
 )
 
-const disabled = computed(() => {
-  return (
-    !props.workspaceAdmin &&
-    (!props.project.role || props.project.role === 'stream:reviewer')
-  )
-})
+const hasAccess = computed(
+  () =>
+    props.workspaceAdmin ||
+    (props.project.role !== null && props.project.role !== 'stream:reviewer')
+)
 
 const projectRole = computed(() => {
-  if (props.workspaceAdmin) {
+  if (hasAccess.value) {
     return 'Can edit'
-  } else if (!props.project.role || props.project.role === 'stream:reviewer') {
-    return 'Can view'
   }
-  return 'Can edit'
+  return 'Can view'
 })
 </script>
