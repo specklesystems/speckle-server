@@ -788,6 +788,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             )
           }
 
+          context.clearCache()
+
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
             userId: context.userId
@@ -967,6 +969,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               operationDescription: 'Leave workspace'
             }
           )
+
+          context.clearCache()
+
           return true
         },
         updateCreationState: async (_parent, args, context) => {
@@ -1393,7 +1398,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             projectId,
             streamId: projectId //legacy
           })
-          return await withOperationLogging(
+          const ret = await withOperationLogging(
             async () =>
               await updateStreamRoleAndNotify(
                 args.input,
@@ -1406,6 +1411,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               operationDescription: 'Update workspace project role'
             }
           )
+
+          context.clearCache()
+
+          return ret
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args

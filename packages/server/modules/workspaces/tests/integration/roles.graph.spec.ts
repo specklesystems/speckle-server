@@ -1,11 +1,20 @@
-import { db } from '@/db/knex'
+import { Streams } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import {
+  ProjectImplicitRoleCheck,
+  projectImplicitRoleCheck
+} from '@/modules/workspaces/tests/helpers/rolesGraphql'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import {
+  WorkspaceAcl,
+  Workspaces,
+  WorkspaceSeats
+} from '@/modules/workspacesCore/helpers/db'
 import {
   BasicTestUser,
   createAuthTokenForUser,
@@ -13,9 +22,10 @@ import {
 } from '@/test/authHelper'
 import {
   ActiveUserLeaveWorkspaceDocument,
+  GetUserProjectsWithAccessChecksDocument,
+  GetUserWorkspaceAccessDocument,
+  GetUserWorkspaceProjectsWithAccessChecksDocument,
   GetWorkspaceDocument,
-  GetWorkspaceProjectsDocument,
-  GetWorkspaceTeamDocument,
   UpdateWorkspaceRoleDocument
 } from '@/test/graphql/generated/graphql'
 import {
@@ -24,13 +34,14 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import {
+  addToStream,
+  BasicTestStream,
+  createTestStream
+} from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { isUndefined } from 'lodash'
-
-const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
@@ -64,6 +75,75 @@ describe('Workspaces Roles GQL', () => {
     })
   })
 
+  const getWorkspaceProjects = async (params: {
+    user: BasicTestUser
+    workspace: BasicTestWorkspace
+  }) => {
+    const res = await apollo.execute(
+      GetUserWorkspaceProjectsWithAccessChecksDocument,
+      {
+        id: params.workspace.id
+      },
+      { authUserId: params.user.id, assertNoErrors: true }
+    )
+
+    const projects = res.data?.workspace.projects.items || []
+    expect(res.data?.workspace, 'Could not retrieve workspace for user').to.be.ok
+
+    return {
+      projects,
+      workspace: res.data!.workspace,
+      checkProject: (project: BasicTestStream) => {
+        return projectImplicitRoleCheck(projects.find((p) => p.id === project.id))
+      },
+      checkAllProjects: (check: (project: ProjectImplicitRoleCheck) => boolean) => {
+        return projects.map(projectImplicitRoleCheck).every(check)
+      }
+    }
+  }
+
+  const getUserProjects = async (params: { user: BasicTestUser }) => {
+    const res = await apollo.execute(
+      GetUserProjectsWithAccessChecksDocument,
+      {
+        filter: {
+          includeImplicitAccess: true
+        }
+      },
+      { authUserId: params.user.id, assertNoErrors: true }
+    )
+
+    const projects = res.data?.activeUser?.projects.items || []
+
+    return {
+      projects,
+      checkProject: (project: BasicTestStream) => {
+        return projectImplicitRoleCheck(projects.find((p) => p.id === project.id))
+      },
+      checkAllProjects: (check: (project: ProjectImplicitRoleCheck) => boolean) => {
+        return projects.map(projectImplicitRoleCheck).every(check)
+      }
+    }
+  }
+
+  const getUserWorkspace = async (params: {
+    user: BasicTestUser
+    workspace: BasicTestWorkspace
+  }) => {
+    const res = await apollo.execute(
+      GetUserWorkspaceAccessDocument,
+      {
+        id: params.workspace.id
+      },
+      { authUserId: params.user.id }
+    )
+    const workspace = res.data?.workspace
+
+    return {
+      workspace
+    }
+  }
+
   describe('single role changes in a workspace without projects', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
@@ -73,18 +153,27 @@ describe('Workspaces Roles GQL', () => {
     }
 
     before(async () => {
-      await createTestWorkspace(workspace, serverAdminUser)
+      await createTestWorkspace(workspace, serverAdminUser, {
+        addPlan: {
+          name: 'team',
+          status: 'valid'
+        }
+      })
     })
 
     describe('update workspace role', () => {
       after(async () => {
-        await apollo.execute(UpdateWorkspaceRoleDocument, {
-          input: {
-            userId: serverMemberUser.id,
-            workspaceId: workspace.id,
-            role: null
-          }
-        })
+        await apollo.execute(
+          UpdateWorkspaceRoleDocument,
+          {
+            input: {
+              userId: serverMemberUser.id,
+              workspaceId: workspace.id,
+              role: null
+            }
+          },
+          { assertNoErrors: true }
+        )
       })
 
       it('should create a role if none exists', async () => {
@@ -150,13 +239,17 @@ describe('Workspaces Roles GQL', () => {
 
     describe('delete workspace role', () => {
       before(async () => {
-        await apollo.execute(UpdateWorkspaceRoleDocument, {
-          input: {
-            userId: serverMemberUser.id,
-            workspaceId: workspace.id,
-            role: Roles.Workspace.Member
-          }
-        })
+        await apollo.execute(
+          UpdateWorkspaceRoleDocument,
+          {
+            input: {
+              userId: serverMemberUser.id,
+              workspaceId: workspace.id,
+              role: Roles.Workspace.Member
+            }
+          },
+          { assertNoErrors: true }
+        )
       })
 
       it('should delete the specified role', async () => {
@@ -188,7 +281,8 @@ describe('Workspaces Roles GQL', () => {
     })
   })
 
-  describe('single role changes in a workspace with projects', () => {
+  // TODO: Viewer vs Editor
+  describe('in a workspace with projects', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
@@ -212,6 +306,18 @@ describe('Workspaces Roles GQL', () => {
       id: '',
       name: 'John "Middle Child" Speckle',
       email: 'john-guest-speckle@example.org'
+    }
+
+    const workspaceMemberViewerUser: BasicTestUser = {
+      id: '',
+      name: 'John "Member" Viewer Speckel',
+      email: 'john-member-speckle-viewer@example.org'
+    }
+
+    const workspaceGuestViewerUser: BasicTestUser = {
+      id: '',
+      name: 'John "Middle Child" Viewer Speckle',
+      email: 'john-guest-speckle-viewer@example.org'
     }
 
     const workspaceProjectA: BasicTestStream = {
@@ -253,17 +359,53 @@ describe('Workspaces Roles GQL', () => {
       await createTestUsers([
         workspaceAdminUser,
         workspaceMemberUser,
-        workspaceGuestUser
+        workspaceGuestUser,
+        workspaceMemberViewerUser,
+        workspaceGuestViewerUser
       ])
     })
 
     beforeEach(async () => {
-      await createTestWorkspace(workspace, serverAdminUser)
+      await createTestWorkspace(workspace, serverAdminUser, {
+        addPlan: {
+          name: 'team',
+          status: 'valid'
+        }
+      })
+
       await Promise.all([
-        assignToWorkspace(workspace, workspaceAdminUser, Roles.Workspace.Admin),
-        assignToWorkspace(workspace, workspaceMemberUser, Roles.Workspace.Member),
-        assignToWorkspace(workspace, workspaceGuestUser, Roles.Workspace.Guest)
+        assignToWorkspace(
+          workspace,
+          workspaceAdminUser,
+          Roles.Workspace.Admin,
+          WorkspaceSeatType.Editor
+        ),
+        assignToWorkspace(
+          workspace,
+          workspaceMemberUser,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        ),
+        assignToWorkspace(
+          workspace,
+          workspaceGuestUser,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Editor
+        ),
+        assignToWorkspace(
+          workspace,
+          workspaceMemberViewerUser,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Viewer
+        ),
+        assignToWorkspace(
+          workspace,
+          workspaceGuestViewerUser,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Viewer
+        )
       ])
+
       for (const project of workspaceProjects) {
         project.workspaceId = workspace.id
         await createTestStream(project, serverAdminUser)
@@ -272,478 +414,667 @@ describe('Workspaces Roles GQL', () => {
       /**
        * Initial workspace roles:
        *
-       * workspaceAdminUser   Admin
-       * workspaceMemberUser  Member
-       * workspaceGuestUser   Guest
+       * workspaceAdminUser   Admin (Editor)
+       * workspaceMemberUser  Member (Editor)
+       * workspaceGuestUser   Guest (Editor)
+       * workspaceMemberViewerUser  Member (Viewer)
+       * workspaceGuestViewerUser   Guest (Viewer)
        *
-       * Initial workspace project roles:
+       * Initial explicit workspace project roles:
        *
-       * |                     | Project A   | Project B   | Project C | Project D |
-       * |---------------------|-------------|-------------|-----------|-----------|
-       * | workspaceAdminUser  | Owner       | Owner       | Owner     | Owner     |
-       * | workspaceMemberUser | Owner       | Contributor | Reviewer  | None      |
-       * | workspaceGuestUser  | Contributor | Reviewer    | None      | None      |
+       * |                           | Project A   | Project B   | Project C | Project D |
+       * |---------------------------|-------------|-------------|-----------|-----------|
+       * | workspaceAdminUser        | Owner       | None        | None      | None      |
+       * | workspaceMemberUser       | Owner       | Contributor | Reviewer  | None      |
+       * | workspaceGuestUser        | Contributor | Reviewer    | None      | None      |
+       * | workspaceMemberViewerUser | Reviewer    | None        | None      | None      |
+       * | workspaceGuestViewerUser  | None        | Reviewer    | None      | None      |
        */
 
       await Promise.all([
         // A
-        grantStreamPermissions({
-          streamId: workspaceProjectA.id,
-          userId: workspaceAdminUser.id,
-          role: Roles.Stream.Owner
-        }),
-        grantStreamPermissions({
-          streamId: workspaceProjectA.id,
-          userId: workspaceMemberUser.id,
-          role: Roles.Stream.Owner
-        }),
-        grantStreamPermissions({
-          streamId: workspaceProjectA.id,
-          userId: workspaceGuestUser.id,
-          role: Roles.Stream.Contributor
-        }),
+        addToStream(workspaceProjectA, workspaceAdminUser, Roles.Stream.Owner),
+        addToStream(workspaceProjectA, workspaceMemberUser, Roles.Stream.Owner),
+        addToStream(workspaceProjectA, workspaceGuestUser, Roles.Stream.Contributor),
+        addToStream(
+          workspaceProjectA,
+          workspaceMemberViewerUser,
+          Roles.Stream.Reviewer
+        ),
         // B
-        grantStreamPermissions({
-          streamId: workspaceProjectB.id,
-          userId: workspaceAdminUser.id,
-          role: Roles.Stream.Owner
-        }),
-        grantStreamPermissions({
-          streamId: workspaceProjectB.id,
-          userId: workspaceMemberUser.id,
-          role: Roles.Stream.Contributor
-        }),
-        grantStreamPermissions({
-          streamId: workspaceProjectB.id,
-          userId: workspaceGuestUser.id,
-          role: Roles.Stream.Reviewer
-        }),
+        addToStream(workspaceProjectB, workspaceMemberUser, Roles.Stream.Contributor),
+        addToStream(workspaceProjectB, workspaceGuestUser, Roles.Stream.Reviewer),
+        addToStream(workspaceProjectB, workspaceGuestViewerUser, Roles.Stream.Reviewer),
         // C
-        grantStreamPermissions({
-          streamId: workspaceProjectC.id,
-          userId: workspaceAdminUser.id,
-          role: Roles.Stream.Owner
-        }),
-        grantStreamPermissions({
-          streamId: workspaceProjectC.id,
-          userId: workspaceMemberUser.id,
-          role: Roles.Stream.Reviewer
-        }),
-        // D
-        grantStreamPermissions({
-          streamId: workspaceProjectD.id,
-          userId: workspaceAdminUser.id,
-          role: Roles.Stream.Owner
-        })
+        addToStream(workspaceProjectC, workspaceMemberUser, Roles.Stream.Reviewer)
       ])
     })
 
     afterEach(async () => {
-      await truncateTables(['workspaces', 'streams'])
+      await truncateTables([
+        Workspaces.name,
+        Streams.name,
+        WorkspaceAcl.name,
+        WorkspaceSeats.name
+      ])
     })
 
-    describe('when changing workspace admin', () => {
-      describe('to workspace member', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceAdminUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Member
-            }
-          })
+    const getProjects = async (params: { user: BasicTestUser }) =>
+      getWorkspaceProjects({ user: params.user, workspace })
+
+    describe('retrieving projects', () => {
+      it('workspaceAdminUser is implicit owner of all of them and explicit owner in one', async () => {
+        const { projects, checkProject, checkAllProjects } = await getProjects({
+          user: workspaceAdminUser
         })
 
-        it('should grant default project role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
-          })
-
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-              return role?.role === Roles.Stream.Reviewer
-            })
-          ).to.be.true
-        })
+        expect(projects.length).to.eq(4)
+        expect(checkAllProjects((p) => p.isOwner)).to.be.ok
+        expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+        expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
       })
 
-      describe('to workspace guest', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceAdminUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Guest
-            }
-          })
+      it('workspaceMemberUser is implicit reviewer in all of them, and also has explicit roles in some', async () => {
+        const { projects, checkAllProjects, checkProject } = await getProjects({
+          user: workspaceMemberUser
         })
 
-        it('should drop all workspace project roles', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
-          })
-
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceAdminUser.id)
-              return isUndefined(role)
-            })
-          ).to.be.true
-        })
-      })
-    })
-
-    describe('when changing workspace member', () => {
-      describe('to workspace admin', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceMemberUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Admin
-            }
-          })
-        })
-
-        it('should grant project owner role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
-          })
-
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceMemberUser.id)
-              return role?.role === Roles.Stream.Owner
-            })
-          ).to.be.true
-        })
+        expect(projects.length).to.eq(4)
+        expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
+        expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+        expect(checkProject(workspaceProjectB).isExplicitContributor).to.be.ok
+        expect(checkProject(workspaceProjectC).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
       })
 
-      describe('to workspace guest', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceMemberUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Guest
-            }
-          })
+      it('workspaceGuestUser only has explicit roles in 2 projects', async () => {
+        const { projects, checkProject } = await getProjects({
+          user: workspaceGuestUser
         })
 
-        it('should drop all workspace project roles', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
-          })
+        expect(projects.length).to.eq(2)
+        expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
+        expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+      })
 
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceMemberUser.id)
-              return isUndefined(role)
-            })
-          ).to.be.true
+      it('workspaceMemberViewerUser is only explicit reviewer in 1 project, and has implicit roles elsewhere', async () => {
+        const { projects, checkAllProjects, checkProject } = await getProjects({
+          user: workspaceMemberViewerUser
         })
+        expect(projects.length).to.eq(4)
+        expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
+        expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+      })
+
+      it('workspaceGuestViewerUser is only explicit reviewer in 1 project', async () => {
+        const { projects, checkProject } = await getProjects({
+          user: workspaceGuestViewerUser
+        })
+
+        expect(projects.length).to.eq(1)
+        expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectA).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
       })
     })
 
-    describe('when changing workspace guest', () => {
-      describe('to workspace admin', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceGuestUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Admin
-            }
+    describe('doing single role changes', () => {
+      describe('when changing workspace admin', () => {
+        describe('to workspace member', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceAdminUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Member
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should still remain explicit owner and be implicit reviewer elsewhere', async () => {
+            const { projects, checkAllProjects, checkProject } = await getProjects({
+              user: workspaceAdminUser
+            })
+
+            expect(projects.length).to.eq(4)
+            expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
           })
         })
 
-        it('should grant project owner role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
+        describe('to workspace guest', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceAdminUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Guest
+                }
+              },
+              { assertNoErrors: true }
+            )
           })
 
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceGuestUser.id)
-              return role?.role === Roles.Stream.Owner
+          it('should only have 1 project access, and not owner, but contributor', async () => {
+            const { projects, checkProject } = await getProjects({
+              user: workspaceAdminUser
             })
-          ).to.be.true
+
+            expect(projects.length).to.eq(1)
+            expect(checkProject(workspaceProjectA).isOwner).to.not.be.ok
+            expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
+            expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
         })
       })
 
-      describe('to workspace member', () => {
-        beforeEach(async () => {
-          await apollo.execute(UpdateWorkspaceRoleDocument, {
-            input: {
-              userId: workspaceGuestUser.id,
-              workspaceId: workspace.id,
-              role: Roles.Workspace.Member
-            }
+      describe('when changing workspace member', () => {
+        describe('to workspace admin', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceMemberUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Admin
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should get implicit owner role everywhere and explicit upgraded to owner', async () => {
+            const { projects, checkProject, checkAllProjects } = await getProjects({
+              user: workspaceMemberUser
+            })
+
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isOwner)).to.be.ok
+            expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectC).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.not.be.ok
           })
         })
 
-        it('should grant default project role for all workspace projects', async () => {
-          const res = await apollo.execute(GetWorkspaceProjectsDocument, {
-            id: workspace.id
+        describe('to workspace guest', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceMemberUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Guest
+                }
+              },
+              { assertNoErrors: true }
+            )
           })
 
-          const projects = res.data?.workspace.projects.items
-
-          expect(res).to.not.haveGraphQLErrors()
-          expect(projects).to.exist
-          expect(
-            projects?.every((project) => {
-              const team = project.team
-              const role = team.find((acl) => acl.id === workspaceGuestUser.id)
-              // TODO: This is a workspace setting
-              return role?.role === Roles.Stream.Reviewer
+          it('no implicit access and all explicit downgraded to contributor or less', async () => {
+            const { projects, checkProject } = await getProjects({
+              user: workspaceMemberUser
             })
-          ).to.be.true
+
+            expect(projects.length).to.eq(3)
+            expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
+            expect(checkProject(workspaceProjectB).isExplicitContributor).to.be.ok
+            expect(checkProject(workspaceProjectC).isExplicitReviewer).to.be.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
+        })
+      })
+
+      describe('when changing workspace guest', () => {
+        describe('to workspace admin', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceGuestUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Admin
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should upgrade explicit role to owner, and have implicit owner everywhere', async () => {
+            const { projects, checkProject, checkAllProjects } = await getProjects({
+              user: workspaceGuestUser
+            })
+
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isOwner)).to.be.ok
+            expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
+        })
+
+        describe('to workspace member', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceGuestUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Member
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should retain same explicit access and get full implicit acccess', async () => {
+            const { projects, checkProject, checkAllProjects } = await getProjects({
+              user: workspaceGuestUser
+            })
+
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
+            expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
+            expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
+        })
+      })
+
+      describe('when changing workspace member viewer', () => {
+        describe('to workspace admin', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceMemberViewerUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Admin
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should get editor seat, implicit owner role everywhere and explicit upgraded to owner', async () => {
+            const { workspace, projects, checkProject, checkAllProjects } =
+              await getProjects({
+                user: workspaceMemberViewerUser
+              })
+
+            expect(workspace.seatType).to.eq(WorkspaceSeatType.Editor)
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isOwner)).to.be.ok
+            expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectB).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.not.be.ok
+          })
+        })
+
+        describe('to workspace guest', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceMemberViewerUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Guest
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('retain viewer seat, no implicit access and all explicit at reviewer or less', async () => {
+            const { projects, checkProject, workspace } = await getProjects({
+              user: workspaceMemberViewerUser
+            })
+
+            expect(workspace.seatType).to.eq(WorkspaceSeatType.Viewer)
+            expect(projects.length).to.eq(1)
+            expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
+          })
+        })
+      })
+
+      describe('when changing workspace guest viewer', () => {
+        describe('to workspace admin', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceGuestViewerUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Admin
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should upgrade seatType to editor, explicit role to owner, and have implicit owner everywhere', async () => {
+            const { workspace, projects, checkProject, checkAllProjects } =
+              await getProjects({
+                user: workspaceGuestViewerUser
+              })
+
+            expect(workspace.seatType).to.eq(WorkspaceSeatType.Editor)
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isOwner)).to.be.ok
+            expect(checkProject(workspaceProjectA).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
+        })
+
+        describe('to workspace member', () => {
+          beforeEach(async () => {
+            await apollo.execute(
+              UpdateWorkspaceRoleDocument,
+              {
+                input: {
+                  userId: workspaceGuestViewerUser.id,
+                  workspaceId: workspace.id,
+                  role: Roles.Workspace.Member
+                }
+              },
+              { assertNoErrors: true }
+            )
+          })
+
+          it('should retain viewer seat, same explicit access and get full implicit acccess', async () => {
+            const { workspace, projects, checkProject, checkAllProjects } =
+              await getProjects({
+                user: workspaceGuestViewerUser
+              })
+
+            expect(workspace.seatType).to.eq(WorkspaceSeatType.Viewer)
+            expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
+            expect(checkProject(workspaceProjectA).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+            expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+          })
         })
       })
     })
   })
 
-  describe('composite role changes in a workspace with projects', () => {
-    let workspaceMemberApollo: TestApolloServer
-
-    const workspace: BasicTestWorkspace = {
+  describe('doing composite role changes', () => {
+    const testWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      slug: cryptoRandomString({ length: 10 }),
-      name: 'Test Workspace w/ Projects'
+      slug: '',
+      name: 'Test Composite Role Change Workspace'
     }
 
-    const workspaceProject: BasicTestStream = {
+    const workspaceAdminUser: BasicTestUser = {
       id: '',
-      ownerId: '',
-      name: 'Test Project',
-      isPublic: true
+      name: 'Composite John "Owner" Specke',
+      email: 'composite-john-owner-speckle@example.org'
+    }
+
+    const workspaceMemberUser: BasicTestUser = {
+      id: '',
+      name: 'Composite John "Member" Speckel',
+      email: 'composite-john-member-speckle@example.org'
     }
 
     before(async () => {
-      const token = await createAuthTokenForUser(serverMemberUser.id, AllScopes)
-      workspaceMemberApollo = await testApolloServer({
-        context: await createTestContext({
-          auth: true,
-          userId: serverMemberUser.id,
-          token,
-          role: serverMemberUser.role,
-          scopes: AllScopes
-        })
-      })
+      await createTestUsers([workspaceAdminUser, workspaceMemberUser])
     })
 
     beforeEach(async () => {
-      await createTestWorkspace(workspace, serverAdminUser)
-      workspaceProject.workspaceId = workspace.id
-      await createTestStream(workspaceProject, serverAdminUser)
+      await createTestWorkspace(testWorkspace, serverAdminUser, {
+        addPlan: {
+          name: 'team',
+          status: 'valid'
+        }
+      })
+
+      await assignToWorkspace(
+        testWorkspace,
+        workspaceAdminUser,
+        Roles.Workspace.Admin,
+        WorkspaceSeatType.Editor
+      )
+      await assignToWorkspace(
+        testWorkspace,
+        workspaceMemberUser,
+        Roles.Workspace.Member,
+        WorkspaceSeatType.Editor
+      )
     })
 
     afterEach(async () => {
-      await truncateTables(['workspaces', 'streams'])
+      await truncateTables([
+        Workspaces.name,
+        Streams.name,
+        WorkspaceAcl.name,
+        WorkspaceSeats.name
+      ])
     })
 
-    describe('when leaving the workspace as the last owner of a workspace project', () => {
+    it('downgrading admin->guest if last owner, sets new last owner from workspace admins', async () => {
       // User             Workspace Role    Project Role
-      // serverAdminUser    Admin             Reviewer
-      // serverMemberUser   Admin             Owner
+      // serverAdminUser       Admin             None
+      // workspaceAdminUser    Admin             Owner
       //
-      // Action: `serverMemberUser` leaves workspace
+      // Action: `workspaceAdminUser` downgraded to workspace guest
 
-      beforeEach(async () => {
-        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Admin)
-        await grantStreamPermissions({
-          streamId: workspaceProject.id,
-          userId: serverAdminUser.id,
-          role: Roles.Stream.Reviewer
-        })
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Composite Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceAdminUser)
+      const apollo = await testApolloServer({
+        authUserId: serverAdminUser.id
       })
 
-      it('should throw and preserve all roles', async () => {
-        const res = await workspaceMemberApollo.execute(
-          ActiveUserLeaveWorkspaceDocument,
-          { id: workspace.id }
-        )
-
-        const { data: workspaceTeamData } = await apollo.execute(
-          GetWorkspaceTeamDocument,
-          { workspaceId: workspace.id }
-        )
-        const { data: workspaceProjectsData } = await apollo.execute(
-          GetWorkspaceProjectsDocument,
-          { id: workspace.id }
-        )
-
-        const teamRoles = workspaceTeamData?.workspace.team.items
-        const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
-
-        expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
-        expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
-        expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
+      const remove = await apollo.execute(UpdateWorkspaceRoleDocument, {
+        input: {
+          userId: workspaceAdminUser.id,
+          role: Roles.Workspace.Guest,
+          workspaceId: testWorkspace.id
+        }
       })
+      expect(remove).to.not.haveGraphQLErrors()
+
+      const { workspace, checkProject } = await getWorkspaceProjects({
+        user: workspaceAdminUser,
+        workspace: testWorkspace
+      })
+      expect(workspace?.role).to.eq(Roles.Workspace.Guest)
+      expect(checkProject(project).isExplicitContributor).to.be.ok
+
+      const { checkProject: checkProjectForAdmin } = await getUserProjects({
+        user: serverAdminUser
+      })
+      expect(checkProjectForAdmin(project).isExplicitOwner).to.be.ok
     })
 
-    describe('when removing a workspace member that is the last owner of a workspace project', () => {
+    it('leaving workspace as last owner of a workspace project throws', async () => {
       // User             Workspace Role    Project Role
-      // serverAdminUser    Admin             Reviewer
-      // serverMemberUser   Admin             Owner
+      // workspaceAdminUser    Admin             None
+      // workspaceMemberUser   Member            Owner
       //
-      // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
+      // Action: `workspaceMemberUser` leaves workspace
 
-      beforeEach(async () => {
-        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Admin)
-        await grantStreamPermissions({
-          streamId: workspaceProject.id,
-          userId: serverAdminUser.id,
-          role: Roles.Stream.Reviewer
-        })
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Leave Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceMemberUser)
+      const apollo = await testApolloServer({
+        authUserId: workspaceMemberUser.id
       })
 
-      it('should throw and preserve all roles', async () => {
-        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-          input: {
-            userId: serverMemberUser.id,
-            role: null,
-            workspaceId: workspace.id
-          }
-        })
-
-        const { data: workspaceTeamData } = await apollo.execute(
-          GetWorkspaceTeamDocument,
-          { workspaceId: workspace.id }
-        )
-        const { data: workspaceProjectsData } = await apollo.execute(
-          GetWorkspaceProjectsDocument,
-          { id: workspace.id }
-        )
-
-        const teamRoles = workspaceTeamData?.workspace.team.items
-        const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
-
-        expect(res).to.haveGraphQLErrors('Could not revoke permissions for last admin')
-        expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
-        expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be.true
+      const leave = await apollo.execute(ActiveUserLeaveWorkspaceDocument, {
+        id: testWorkspace.id
       })
+      expect(leave).to.haveGraphQLErrors('A project needs at least one project owner')
+
+      const { workspace, checkProject } = await getWorkspaceProjects({
+        user: workspaceMemberUser,
+        workspace: testWorkspace
+      })
+      expect(workspace.role).to.equal(Roles.Workspace.Member)
+      expect(checkProject(project).isOwner).to.be.ok
     })
 
-    describe('when leaving a workspace without any project owner roles', () => {
+    it('leaving workspace w/o owner roles works fine and removes all roles', async () => {
       // User             Workspace Role    Project Role
-      // serverAdminUser    Admin             Owner
-      // serverMemberUser   Member            Reviewer
+      // workspaceAdminUser    Admin             Owner
+      // workspaceMemberUser   Member            Reviewer
       //
-      // Action: `serverMemberUser` leaves workspace
+      // Action: `workspaceMemberUser` leaves workspace
 
-      beforeEach(async () => {
-        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Member)
-        await grantStreamPermissions({
-          streamId: workspaceProject.id,
-          userId: serverMemberUser.id,
-          role: Roles.Stream.Reviewer
-        })
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Leave Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceAdminUser)
+      await addToStream(project, workspaceMemberUser, Roles.Stream.Reviewer)
+
+      const apollo = await testApolloServer({
+        authUserId: workspaceMemberUser.id
       })
 
-      it('should remove all workspace and project roles for user', async () => {
-        const res = await workspaceMemberApollo.execute(
-          ActiveUserLeaveWorkspaceDocument,
-          { id: workspace.id }
-        )
-
-        const { data: workspaceTeamData } = await apollo.execute(
-          GetWorkspaceTeamDocument,
-          { workspaceId: workspace.id }
-        )
-        const { data: workspaceProjectsData } = await apollo.execute(
-          GetWorkspaceProjectsDocument,
-          { id: workspace.id }
-        )
-
-        const teamRoles = workspaceTeamData?.workspace.team.items
-        const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.false
-        expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be
-          .false
+      const leave = await apollo.execute(ActiveUserLeaveWorkspaceDocument, {
+        id: testWorkspace.id
       })
+      expect(leave).to.not.haveGraphQLErrors()
+      expect(leave.data?.workspaceMutations.leave).to.be.ok
+
+      const { checkProject } = await getUserProjects({
+        user: workspaceMemberUser
+      })
+      expect(checkProject(project).hasExplicitRole).to.be.not.ok
+
+      const { workspace } = await getUserWorkspace({
+        user: workspaceMemberUser,
+        workspace: testWorkspace
+      })
+      expect(workspace?.role).to.be.not.ok
     })
 
-    describe('when removing a workspace member that has no workspace project owner roles', () => {
+    it('removing a workspace member that is the last owner of a workspace project throws', async () => {
       // User             Workspace Role    Project Role
-      // serverAdminUser    Admin             Owner
-      // serverMemberUser   Member            Reviewer
+      // workspaceAdminUser    Admin             None
+      // workspaceMemberUser   Member            Owner
       //
-      // Action: `serverAdminUser` removes `serverMemberUser` from the workspace
+      // Action: `workspaceAdminUser` removes `workspaceMemberUser` from the workspace
 
-      beforeEach(async () => {
-        await assignToWorkspace(workspace, serverMemberUser, Roles.Workspace.Member)
-        await grantStreamPermissions({
-          streamId: workspaceProject.id,
-          userId: serverMemberUser.id,
-          role: Roles.Stream.Reviewer
-        })
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Remove Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceMemberUser)
+      const apollo = await testApolloServer({
+        authUserId: workspaceAdminUser.id
       })
 
-      it('should remove all workspace and project roles for removed member', async () => {
-        const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
-          input: {
-            userId: serverMemberUser.id,
-            role: null,
-            workspaceId: workspace.id
-          }
-        })
-
-        const { data: workspaceTeamData } = await apollo.execute(
-          GetWorkspaceTeamDocument,
-          { workspaceId: workspace.id }
-        )
-        const { data: workspaceProjectsData } = await apollo.execute(
-          GetWorkspaceProjectsDocument,
-          { id: workspace.id }
-        )
-
-        const teamRoles = workspaceTeamData?.workspace.team.items
-        const projectRoles = workspaceProjectsData?.workspace.projects.items[0].team
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(teamRoles).to.exist
-        expect(teamRoles?.some((role) => role.id === serverMemberUser.id)).to.be.false
-        expect(projectRoles).to.exist
-        expect(projectRoles?.some((role) => role.id === serverMemberUser.id)).to.be
-          .false
+      const remove = await apollo.execute(UpdateWorkspaceRoleDocument, {
+        input: {
+          userId: workspaceMemberUser.id,
+          role: null,
+          workspaceId: testWorkspace.id
+        }
       })
+      expect(remove).to.haveGraphQLErrors('A project needs at least one project owner')
+
+      const { workspace, checkProject } = await getWorkspaceProjects({
+        user: workspaceMemberUser,
+        workspace: testWorkspace
+      })
+      expect(workspace.role).to.equal(Roles.Workspace.Member)
+      expect(checkProject(project).isOwner).to.be.ok
+    })
+
+    it('removing a workspace member that is not the last owner of a workspace project works fine and removes all roles', async () => {
+      // User             Workspace Role    Project Role
+      // workspaceAdminUser    Admin             Owner
+      // workspaceMemberUser   Member            Reviewer
+      //
+      // Action: `workspaceAdminUser` removes `workspaceMemberUser` from the workspace
+
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Remove Project',
+        isPublic: false,
+        workspaceId: testWorkspace.id
+      }
+      await createTestStream(project, workspaceAdminUser)
+      await addToStream(project, workspaceMemberUser, Roles.Stream.Reviewer)
+
+      const apollo = await testApolloServer({
+        authUserId: workspaceAdminUser.id
+      })
+
+      const remove = await apollo.execute(UpdateWorkspaceRoleDocument, {
+        input: {
+          userId: workspaceMemberUser.id,
+          role: null,
+          workspaceId: testWorkspace.id
+        }
+      })
+      expect(remove).to.not.haveGraphQLErrors()
+      expect(remove.data?.workspaceMutations.updateRole).to.be.ok
+
+      const { checkProject } = await getUserProjects({
+        user: workspaceMemberUser
+      })
+      expect(checkProject(project).hasExplicitRole).to.be.not.ok
+
+      const { workspace } = await getUserWorkspace({
+        user: workspaceMemberUser,
+        workspace: testWorkspace
+      })
+      expect(workspace?.role).to.be.not.ok
     })
   })
 })

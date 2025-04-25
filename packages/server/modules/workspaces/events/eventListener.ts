@@ -1,6 +1,7 @@
 import {
   deleteProjectRoleFactory,
   getStreamFactory,
+  getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
   revokeStreamPermissionsFactory,
@@ -10,6 +11,7 @@ import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspace,
+  GetWorkspaceCollaborators,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   GetWorkspaceSeatTypeToProjectRoleMapping,
@@ -28,7 +30,12 @@ import { logger, moduleLogger } from '@/observability/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { Roles, throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
+import {
+  Roles,
+  StreamRoles,
+  throwUncoveredError,
+  WorkspaceRoles
+} from '@speckle/shared'
 import {
   DeleteProjectRole,
   UpsertProjectRole
@@ -37,6 +44,7 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
@@ -56,6 +64,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import {
   GetStream,
+  GetStreamsCollaboratorCounts,
   SetStreamCollaborator
 } from '@/modules/core/domain/streams/operations'
 import {
@@ -342,6 +351,8 @@ export const onWorkspaceRoleUpdatedFactory =
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     setStreamCollaborator: SetStreamCollaborator
     getWorkspaceUserSeat: GetWorkspaceUserSeat
+    getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
+    getWorkspaceCollaborators: GetWorkspaceCollaborators
   }) =>
   async ({
     acl,
@@ -355,34 +366,43 @@ export const onWorkspaceRoleUpdatedFactory =
     const seatType = await deps.getWorkspaceUserSeat({ workspaceId, userId })
     if (!seatType) return
 
+    // Resolve a fallback admin
+    const [admin] = await deps.getWorkspaceCollaborators({
+      workspaceId,
+      limit: 1,
+      filter: {
+        roles: [Roles.Workspace.Admin]
+      }
+    })
+
     // Enforce project roles based on workspace role and seat type, if project role exists
     for await (const projectsPage of deps.queryAllWorkspaceProjects({
       workspaceId,
       userId
     })) {
+      const projectsOldOwnerCounts = await deps.getStreamsCollaboratorCounts({
+        streamIds: projectsPage.map((p) => p.id),
+        type: Roles.Stream.Owner
+      })
       await Promise.all(
         projectsPage.map(async ({ id: projectId, role: originalProjectRole }) => {
           if (!originalProjectRole) {
             return
           }
 
+          /**
+           * We cant really throw here, because by this point the workspace role has already
+           * been written to DB. So we must ensure the updates we make here are valid
+           */
+
+          let nextUserRole: StreamRoles
           switch (role) {
             case Roles.Workspace.Admin: {
               // Set workspace owner as project owner
-              await deps.setStreamCollaborator(
-                {
-                  streamId: projectId,
-                  userId,
-                  role: Roles.Stream.Owner,
-                  setByUserId: updatedByUserId
-                },
-                { trackProjectUpdate: false, skipAuthorization: true }
-              )
+              nextUserRole = Roles.Stream.Owner
               break
             }
             case Roles.Workspace.Guest: {
-              // TODO: What happens if we attempt to demote the last project owner?
-
               // If workspace guest is project owner
               if (originalProjectRole !== Roles.Stream.Owner) {
                 return
@@ -394,18 +414,41 @@ export const onWorkspaceRoleUpdatedFactory =
               }
 
               // Demote to contributor
-              await deps.setStreamCollaborator(
-                {
-                  streamId: projectId,
-                  userId,
-                  role: Roles.Stream.Contributor,
-                  setByUserId: updatedByUserId
-                },
-                { trackProjectUpdate: false, skipAuthorization: true }
-              )
+              nextUserRole = Roles.Stream.Contributor
               break
             }
+            default:
+              return
           }
+
+          // If downgraded from owner & last owner, transfer ownership to a workspace admin
+          const isNoLongerOwner =
+            originalProjectRole === Roles.Stream.Owner &&
+            nextUserRole !== Roles.Stream.Owner
+          const wasLastOwner =
+            projectsOldOwnerCounts[projectId]?.[Roles.Stream.Owner] === 1
+          if (isNoLongerOwner && wasLastOwner) {
+            await deps.setStreamCollaborator(
+              {
+                streamId: projectId,
+                userId: admin.id,
+                role: Roles.Stream.Owner,
+                setByUserId: updatedByUserId
+              },
+              { trackProjectUpdate: false, skipAuthorization: true }
+            )
+          }
+
+          // Do actual role change for changed user
+          await deps.setStreamCollaborator(
+            {
+              streamId: projectId,
+              userId,
+              role: nextUserRole,
+              setByUserId: updatedByUserId
+            },
+            { trackProjectUpdate: false, skipAuthorization: true }
+          )
         })
       )
     }
@@ -754,7 +797,9 @@ export const initializeEventListenersFactory =
                   db: trx
                 })
               }),
-              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db })
             })
             return await onWorkspaceRoleUpdated(payload)
           },
