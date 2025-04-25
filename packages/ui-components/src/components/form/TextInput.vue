@@ -376,9 +376,9 @@ const sizeClasses = computed((): string => {
     case 'sm':
       return 'h-6 text-body sm:text-body-sm'
     case 'lg':
-      return 'h-10 text-body sm:text-body-sm'
+      return 'h-10 text-body sm:text-[13px]'
     case 'xl':
-      return 'h-14 text-body sm:text-body-sm'
+      return 'h-14 text-body sm:text-sm'
     case 'base':
     default:
       return 'h-8 text-body sm:text-body-sm'
