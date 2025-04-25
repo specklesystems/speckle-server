@@ -22,7 +22,10 @@ export const DefaultPipelineOptions = {
 
 export abstract class Pipeline {
   protected speckleRenderer: SpeckleRenderer
-  protected options: PipelineOptions
+  protected _options: Required<PipelineOptions> = Object.assign(
+    {},
+    DefaultPipelineOptions
+  )
   protected passList: Array<GPass> = []
 
   protected drawingSize: Vector2 = new Vector2()
@@ -31,12 +34,20 @@ export abstract class Pipeline {
   protected jitterIndex: number = 0
   protected jitterOffsets: number[][] = this.generateHaltonJiters(16)
 
+  public get options(): PipelineOptions {
+    return this._options
+  }
+
+  public set options(value: PipelineOptions) {
+    Object.assign(this.options, value)
+  }
+
   constructor(
     renderer: SpeckleRenderer,
     options: PipelineOptions = DefaultPipelineOptions
   ) {
     this.speckleRenderer = renderer
-    this.options = Object.assign({}, options)
+    this.options = options
   }
 
   public get passes(): Array<GPass> {

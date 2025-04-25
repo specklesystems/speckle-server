@@ -10,6 +10,7 @@ uniform float uNormalMultiplier;
 uniform float uNormalBias;
 uniform float uOutlineThickness;
 uniform float uOutlineDensity;
+uniform vec3 uOutlineColor;
 uniform vec2 size;
 
 uniform float cameraNear;
@@ -28,8 +29,8 @@ float getDepth( const in ivec2 screenPosition ) {
     vec2 cUv = vec2(0.5/size.x, 0.5/size.y);
     return unpackRGBAToDepth( texture2D( tDepth, vec2(screenPosition)/size + cUv ) );
   #endif
-
 }
+
 
 
 vec3 SobelSample(sampler2D t, vec2 uv, vec3 offset){
@@ -76,9 +77,8 @@ float DetectSilho(ivec2 fragCoord, ivec2 dir, float tolerance)
     // and expected (as if x0..3 where on the same
     // plane) depth values.
     // -------------------------------------------
-    
     float x0 = abs(getDepth(fragCoord + dir*-2));
-    float x1 = abs(getDepth(fragCoord + dir*-1));
+    float x1 = abs(getDepth(fragCoord + dir*-1 ));
     float x2 = abs(getDepth(fragCoord + dir* 0));
     float x3 = abs(getDepth(fragCoord + dir* 1));
     
@@ -169,18 +169,11 @@ void main() {
 
   // Combine the three edges by taking the minimum
   float maxOutline = saturate(max(sobelIdEdge, max(depthEdge, normalEdge)));
-  // Invert
-	float sobelOutline = 1. - maxOutline * uOutlineDensity;
+	float sobelOutline = maxOutline * uOutlineDensity;
 
-  vec4 background = vec4(1.);
-  float backgroundIntensity = 1.;
-
-  #ifdef TEXTURE_BACKGROUND
-    background = texture2D(tBackground, vUv);
-    backgroundIntensity = tBackgroundIntensity;
-  #endif
   
-  vec3 color = mix(vec3(sobelOutline), background.rgb * backgroundIntensity + (1. - backgroundIntensity), 1. - maxOutline);
+  vec3 color = mix(vec3(1., 1., 1.), uOutlineColor, sobelOutline);
+  // vec3 color = vec3(depthEdge, normalEdge, sobelIdEdge);
 	gl_FragColor = vec4(color, 1.);
 
 }`

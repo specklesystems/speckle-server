@@ -7,6 +7,7 @@ import {
   ClearFlags,
   DefaultLightConfiguration,
   DefaultPipeline,
+  GPass,
   InputType,
   NormalsPass,
   ObjectLayers,
@@ -532,7 +533,13 @@ export default class Sandbox {
     })
     this.tabs.pages[0].addSeparator()
 
-    const pipeline = { output: 0, edges: false }
+    const pipeline = {
+      output: 0,
+      edges: false,
+      outlineThickness: 1,
+      outlineColor: 0xff0000,
+      outlineDensity: 0.75
+    }
     const setPipeline = (value: number) => {
       switch (value) {
         case 0:
@@ -614,12 +621,55 @@ export default class Sandbox {
       .on('change', (value) => {
         setPipeline(value.value)
       })
+
     this.tabs.pages[0]
       .addInput(pipeline, 'edges', {
         label: 'Show Edges'
       })
       .on('change', (value) => {
         setPipeline(pipeline.output)
+      })
+
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineThickness', {
+        label: 'Outline Thickness',
+        min: 0.5,
+        max: 5,
+        step: 0.25
+      })
+      .on('change', (value) => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineColor', {
+        label: 'Outline Color',
+        view: 'color'
+      })
+      .on('change', (value) => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineDensity', {
+        label: 'Outline Density',
+        min: 0.01,
+        max: 1,
+        step: 0.01
+      })
+      .on('change', (value) => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
       })
     this.tabs.pages[0].addSeparator()
 
