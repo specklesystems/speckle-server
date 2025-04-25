@@ -3,21 +3,26 @@
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
         <h1 class="block text-heading-lg md:text-heading-xl">Collaborators</h1>
-        <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
-          Invite to project
-        </FormButton>
+        <div v-tippy="tooltipText">
+          <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
+            Invite to project
+          </FormButton>
+        </div>
       </div>
       <div class="flex flex-col mt-6 gap-y-6">
-        <div v-if="project.workspace" class="flex flex-col gap-y-3">
-          <p class="text-body-2xs text-foreground-2 font-medium">
-            General project access
-          </p>
-          <ProjectPageCollaboratorsGeneralAccessRow
-            :name="project.workspace?.name"
-            :logo="project.workspace?.logo"
-            :can-edit="!!canUpdate?.authorized"
-          />
-        </div>
+        <template v-if="project.workspace">
+          <div class="flex flex-col gap-y-3">
+            <p class="text-body-2xs text-foreground-2 font-medium">
+              General project access
+            </p>
+            <ProjectPageCollaboratorsGeneralAccess
+              :name="project.workspace?.name"
+              :logo="project.workspace?.logo"
+              :can-edit="!!canUpdate?.authorized"
+              :admins="workspaceAdmins"
+            />
+          </div>
+        </template>
         <div class="flex flex-col gap-y-3">
           <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
           <div>
@@ -71,7 +76,7 @@ graphql(`
 `)
 
 const projectPageCollaboratorsQuery = graphql(`
-  query ProjectPageCollaborators($projectId: String!) {
+  query ProjectPageCollaborators($projectId: String!, $filter: WorkspaceTeamFilter!) {
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
@@ -82,6 +87,11 @@ const projectPageCollaboratorsQuery = graphql(`
         ...ProjectPageTeamInternals_Workspace
         name
         logo
+        team(filter: $filter) {
+          items {
+            ...ProjectPageCollaborators_WorkspaceCollaborator
+          }
+        }
       }
     }
   }
@@ -94,7 +104,10 @@ const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 const cancelInvite = useCancelProjectInvite()
 const { result: pageResult } = useQuery(projectPageCollaboratorsQuery, () => ({
-  projectId: projectId.value
+  projectId: projectId.value,
+  filter: {
+    roles: [Roles.Workspace.Admin]
+  }
 }))
 
 const showInviteDialog = ref(false)
@@ -106,8 +119,18 @@ const canInvite = computed(() =>
     ? isOwner.value || workspace.value?.role === Roles.Workspace.Admin
     : isOwner.value
 )
+const tooltipText = computed(() =>
+  canInvite.value
+    ? undefined
+    : project.value?.workspaceId
+    ? 'Only project owners and workspace admins can manage the project members'
+    : 'Only project owners can manage the project members'
+)
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => project.value?.workspace)
+const workspaceAdmins = computed(
+  () => pageResult.value?.project?.workspace?.team?.items || []
+)
 const updateRole = useUpdateUserRole(project)
 const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
 

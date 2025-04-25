@@ -4,7 +4,10 @@
   >
     <UserAvatar hide-tooltip :user="collaborator.user" />
     <div class="flex gap-x-2 flex-1">
-      <span class="truncate text-body-xs">{{ collaborator.title }}</span>
+      <span class="truncate text-body-xs">
+        {{ collaborator.title }}
+        <span v-if="isYou" class="text-foreground-3 text-body-3xs">(you)</span>
+      </span>
       <div>
         <CommonBadge v-if="badgeText" rounded color="secondary">
           {{ badgeText }}
@@ -13,12 +16,7 @@
     </div>
     <template v-if="!collaborator.inviteId">
       <ProjectPageTeamPermissionSelect
-        v-if="
-          canEdit &&
-          activeUser &&
-          collaborator.id !== activeUser.id &&
-          collaborator.workspaceRole !== Roles.Workspace.Admin
-        "
+        v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
         class="shrink-0"
         :model-value="collaborator.role"
         :disabled="loading"
@@ -41,12 +39,7 @@
       </div>
     </template>
     <LayoutMenu
-      v-if="
-        canEdit &&
-        activeUser &&
-        collaborator.id !== activeUser.id &&
-        collaborator.workspaceRole !== Roles.Workspace.Admin
-      "
+      v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
       v-model:open="showActionsMenu"
       :items="actionsItems"
       :menu-position="HorizontalDirection.Left"
@@ -120,8 +113,8 @@ const roleTooltip = computed(() => {
     return null
   }
 
-  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
-    return 'User is workspace admin'
+  if (isYou.value) {
+    return "You can't change your own role"
   }
 
   return null
@@ -138,14 +131,16 @@ const badgeText = computed(() => {
   if (props.collaborator.workspaceRole === Roles.Workspace.Guest) {
     return 'Guest'
   }
-  if (props.collaborator.role === Roles.Stream.Owner) {
-    return 'Project owner'
-  }
 
   return null
 })
 
+const isYou = computed(() => props.collaborator.user?.id === activeUser.value?.id)
 const disabledRoles = computed(() => {
+  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return [Roles.Stream.Contributor, Roles.Stream.Reviewer]
+  }
+
   if (props.collaborator.seatType === 'viewer') {
     return [Roles.Stream.Owner, Roles.Stream.Contributor]
   }
@@ -158,6 +153,10 @@ const disabledRoles = computed(() => {
 })
 
 const disabledRolesTooltip = computed(() => {
+  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+    return "Admin roles can't be changed"
+  }
+
   if (props.collaborator.seatType === 'viewer') {
     return 'Users with a viewer seat cannot be project owners or contributors'
   }

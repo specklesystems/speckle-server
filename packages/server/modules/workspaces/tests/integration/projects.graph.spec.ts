@@ -268,7 +268,8 @@ describe('Workspace project GQL CRUD', () => {
   describe('when querying projects', () => {
     const PAGE_SIZE = 5
     const PAGE_COUNT = 3
-    const TOTAL_COUNT = PAGE_COUNT * PAGE_SIZE
+    const TOTAL_WS_PROJECT_COUNT = PAGE_COUNT * PAGE_SIZE
+
     const GUEST_PROJECT_COUNT = PAGE_SIZE + 1
     const NON_WORKSPACE_PROJECT_COUNT = 5
 
@@ -290,7 +291,7 @@ describe('Workspace project GQL CRUD', () => {
       email: '',
       name: 'Query Workspace Member'
     }
-    let projects: BasicTestStream[]
+    let wsProjects: BasicTestStream[]
     let nonWorkspaceProjects: BasicTestStream[]
     let apollo: TestApolloServer
 
@@ -313,8 +314,8 @@ describe('Workspace project GQL CRUD', () => {
           WorkspaceSeatType.Editor
         ]
       ])
-      projects = times(
-        TOTAL_COUNT,
+      wsProjects = times(
+        TOTAL_WS_PROJECT_COUNT,
         (i): BasicTestStream => ({
           id: '',
           ownerId: '',
@@ -335,14 +336,14 @@ describe('Workspace project GQL CRUD', () => {
 
       // CREATE CONCURRENTLY TO TEST COMPOSITE CURSOR (same updatedAt)
       await Promise.all([
-        ...projects.map((project) => createTestStream(project, workspaceAdmin)),
+        ...wsProjects.map((project) => createTestStream(project, workspaceAdmin)),
         ...nonWorkspaceProjects.map((project) =>
           createTestStream(project, workspaceGuest)
         )
       ])
 
       // ONLY ADD EXPLICIT PROJECT ASSIGNMENTS TO GUEST
-      const projectsToAssign = projects.slice(0, GUEST_PROJECT_COUNT)
+      const projectsToAssign = wsProjects.slice(0, GUEST_PROJECT_COUNT)
       await Promise.all(
         projectsToAssign.map((project) =>
           addToStream(project, workspaceGuest, Roles.Stream.Contributor)
@@ -353,7 +354,7 @@ describe('Workspace project GQL CRUD', () => {
         // Add explicit single assignment to workspaceMember to 1st non-workspace project
         addToStream(nonWorkspaceProjects[0], workspaceMember, Roles.Stream.Contributor),
         // Add explicit single assignment to workspaceMember to 1st workspace project
-        addToStream(projects[0], workspaceMember, Roles.Stream.Contributor)
+        addToStream(wsProjects[0], workspaceMember, Roles.Stream.Contributor)
       ])
 
       apollo = await testApolloServer({
@@ -374,9 +375,9 @@ describe('Workspace project GQL CRUD', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         const collection = res.data?.workspace.projects
-        expect(collection?.items.length).to.equal(TOTAL_COUNT)
+        expect(collection?.items.length).to.equal(TOTAL_WS_PROJECT_COUNT)
         expect(collection?.cursor).to.be.ok
-        expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+        expect(collection?.totalCount).to.eq(TOTAL_WS_PROJECT_COUNT)
 
         // validate sorting
         const projects = collection?.items || []
@@ -415,9 +416,9 @@ describe('Workspace project GQL CRUD', () => {
           if (adminOverrideEnabled) {
             expect(res).to.not.haveGraphQLErrors()
             const collection = res.data?.workspace.projects
-            expect(collection?.items.length).to.equal(TOTAL_COUNT)
+            expect(collection?.items.length).to.equal(TOTAL_WS_PROJECT_COUNT)
             expect(collection?.cursor).to.be.ok
-            expect(collection?.totalCount).to.eq(TOTAL_COUNT)
+            expect(collection?.totalCount).to.eq(TOTAL_WS_PROJECT_COUNT)
           } else {
             expect(res).to.haveGraphQLErrors()
             const collection = res.data?.workspace.projects
@@ -451,7 +452,7 @@ describe('Workspace project GQL CRUD', () => {
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace.projects.items.length).to.equal(1)
         expect(res.data?.workspace.projects.cursor).to.be.ok
-        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_WS_PROJECT_COUNT)
       })
 
       it('should only return totalCount if limit === 0', async () => {
@@ -463,7 +464,7 @@ describe('Workspace project GQL CRUD', () => {
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace.projects.items.length).to.equal(0)
         expect(res.data?.workspace.projects.cursor).to.be.null
-        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+        expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_WS_PROJECT_COUNT)
       })
 
       it('should respect pagination', async () => {
@@ -478,7 +479,9 @@ describe('Workspace project GQL CRUD', () => {
           newCursor = res.data?.workspace.projects.cursor || null
 
           expect(res).to.not.haveGraphQLErrors()
-          expect(res.data?.workspace.projects.totalCount).to.equal(TOTAL_COUNT)
+          expect(res.data?.workspace.projects.totalCount).to.equal(
+            TOTAL_WS_PROJECT_COUNT
+          )
 
           if (page <= PAGE_COUNT) {
             expect(res.data?.workspace.projects.items.length).to.equal(PAGE_SIZE)
@@ -523,7 +526,7 @@ describe('Workspace project GQL CRUD', () => {
         const collection = res.data?.workspace.projects
         expect(collection).to.be.ok
         expect(collection?.items.length).to.equal(1)
-        expect(collection?.items[0].id).to.equal(projects[0].id)
+        expect(collection?.items[0].id).to.equal(wsProjects[0].id)
         expect(collection?.totalCount).to.equal(1)
       })
     })
@@ -541,8 +544,8 @@ describe('Workspace project GQL CRUD', () => {
 
       // projects at the end have no explicit project assignments,
       // and first X ones are explicitly assigned to guest user
-      const implicitProject = () => projects.at(-1)!
-      const explicitGuestProject = () => projects.at(0)!
+      const implicitProject = () => wsProjects.at(-1)!
+      const explicitGuestProject = () => wsProjects.at(0)!
 
       it('it should be accessible to workspace member', async () => {
         const apollo = await testApolloServer({
@@ -665,7 +668,30 @@ describe('Workspace project GQL CRUD', () => {
         expect([
           memberCollection!.items[0].id,
           memberCollection!.items[1].id
-        ]).to.deep.equalInAnyOrder([nonWorkspaceProjects[0].id, projects[0].id])
+        ]).to.deep.equalInAnyOrder([nonWorkspaceProjects[0].id, wsProjects[0].id])
+      })
+
+      it('should return all projects user is explicitly or implicitly assigned to, if flag set', async () => {
+        const apolloMember = await testApolloServer({
+          authUserId: workspaceMember.id
+        })
+        const memberRes = await apolloMember.execute(
+          ActiveUserProjectsWorkspaceDocument,
+          { limit: 999, filter: { includeImplicitAccess: true } },
+          { assertNoErrors: true }
+        )
+        const memberCollection = memberRes.data?.activeUser?.projects
+
+        // 1 non-workspace assignment + all workspace projects
+        const expectedMemberCount = TOTAL_WS_PROJECT_COUNT + 1
+
+        expect(memberCollection).to.be.ok
+        expect(memberCollection!.totalCount).to.equal(expectedMemberCount)
+        expect(memberCollection!.items.length).to.equal(expectedMemberCount)
+        expect(memberCollection!.items.map((i) => i.id)).to.deep.equalInAnyOrder([
+          nonWorkspaceProjects[0].id,
+          ...wsProjects.map((p) => p.id)
+        ])
       })
 
       it('should only return workspace projects if filter set', async () => {

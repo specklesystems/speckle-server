@@ -8,7 +8,6 @@
       v-model="commentValue"
       prompt="Press enter to reply"
       autofocus
-      max-height="150px"
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />

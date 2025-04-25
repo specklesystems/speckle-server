@@ -38,7 +38,7 @@ graphql(`
 graphql(`
   fragment ProjectPageTeamInternals_Workspace on Workspace {
     id
-    team {
+    team(filter: $filter) {
       items {
         id
         role
