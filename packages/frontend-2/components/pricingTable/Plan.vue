@@ -385,7 +385,7 @@ const displayAddons = computed(() => {
     return [
       {
         title: 'Unlimited projects and models',
-        tooltip: 'You can set it up in the next step.'
+        tooltip: 'Can be added later from Billing settings'
       }
     ]
   } else if (props.plan === WorkspacePlans.Pro) {
