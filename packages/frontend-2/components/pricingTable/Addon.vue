@@ -44,10 +44,8 @@ const text = computed(() => {
     return props.fixedPrice
   }
 
-  const intervalText = props.isYearlyIntervalSelected ? 'billed yearly' : 'per month'
-
   return addonPrice.value
-    ? `${addonPrice.value} per editor seat / ${intervalText}`
+    ? `${addonPrice.value} per editor seat / month`
     : 'Contact us for pricing'
 })
 </script>
