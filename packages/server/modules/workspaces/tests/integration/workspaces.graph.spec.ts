@@ -29,7 +29,8 @@ import {
   DeleteWorkspaceDomainDocument,
   CreateWorkspaceProjectDocument,
   DismissWorkspaceDocument,
-  GetActiveUserDiscoverableWorkspacesDocument
+  GetActiveUserDiscoverableWorkspacesDocument,
+  GetWorkspaceWithMembersByRoleDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -48,11 +49,49 @@ import {
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { itEach } from '@/test/assertionHelper'
+import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
+import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
+  createUserEmail: createUserEmailFactory({ db }),
+  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+  findEmail: findEmailFactory({ db }),
+  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+  }),
+  requestNewEmailVerification: requestNewEmailVerificationFactory({
+    findEmail: findEmailFactory({ db }),
+    getUser: getUserFactory({ db }),
+    getServerInfo: getServerInfoFactory({ db }),
+    deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+    sendEmail,
+    renderEmail
+  })
+})
 
 describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -314,6 +353,94 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.workspace.team.cursor).to.exist
       })
 
+      it('should respect seatType filter', async () => {
+        const admin = await createTestUser({
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        const workspace = {
+          id: createRandomString(),
+          ownerId: admin.id,
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 })
+        }
+        await createTestWorkspace(workspace, admin)
+        const otherWorkspace = {
+          id: createRandomString(),
+          ownerId: admin.id,
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 })
+        }
+        await createTestWorkspace(otherWorkspace, admin)
+
+        const session = await login(admin)
+
+        const memberEditor = {
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail()
+        }
+        await createTestUser(memberEditor)
+        await assignToWorkspace(workspace, memberEditor, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: workspace.id,
+          userId: memberEditor.id,
+          type: 'editor',
+          assignedByUserId: admin.id
+        })
+        // Assign the same user editor to another workspace
+        await assignToWorkspace(otherWorkspace, memberEditor, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: otherWorkspace.id,
+          userId: memberEditor.id,
+          type: 'editor',
+          assignedByUserId: admin.id
+        })
+
+        const memberViewer = {
+          id: createRandomString(),
+          name: createRandomString(),
+          email: createRandomEmail()
+        }
+        await createTestUser(memberViewer)
+        await assignToWorkspace(workspace, memberViewer, 'workspace:member')
+        await assignWorkspaceSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          eventEmit: async () => {}
+        })({
+          workspaceId: workspace.id,
+          userId: memberViewer.id,
+          type: 'viewer',
+          assignedByUserId: admin.id
+        })
+
+        const res = await session.execute(GetWorkspaceTeamDocument, {
+          workspaceId: workspace.id,
+          filter: {
+            seatType: 'editor'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace.team.items.length).to.equal(2)
+        expect(res.data?.workspace.team.items.length).to.equal(2)
+        const team = res.data?.workspace.team.items
+        expect(team?.[1].user.name).to.eq(admin.name)
+        expect(team?.[0].user.name).to.eq(memberEditor.name)
+      })
+
       it('should respect team pagination', async () => {
         const resA = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
           workspaceId: largeWorkspace.id,
@@ -359,14 +486,20 @@ describe('Workspaces GQL CRUD', () => {
       })
 
       it('should return workspace team projectRoles', async () => {
-        const createRes = await apollo.execute(CreateWorkspaceDocument, {
-          input: { name: createRandomString() }
+        // create workspace w/ infinite limits (otherwise test fails)
+        const workspace: BasicTestWorkspace = {
+          name: createRandomString(),
+          id: '',
+          ownerId: '',
+          slug: ''
+        }
+        await createTestWorkspace(workspace, testMemberUser, {
+          addPlan: {
+            name: 'teamUnlimited',
+            status: 'valid'
+          }
         })
-        expect(createRes).to.not.haveGraphQLErrors()
-        const workspaceId = createRes.data!.workspaceMutations.create.id
-        const workspace = (await getWorkspaceFactory({ db })({
-          workspaceId
-        })) as unknown as BasicTestWorkspace
+        const workspaceId = workspace.id
 
         const member = {
           id: createRandomString(),
@@ -460,13 +593,6 @@ describe('Workspaces GQL CRUD', () => {
             project: {
               id: project1Id,
               name: project1Name
-            }
-          },
-          {
-            role: Roles.Stream.Contributor,
-            project: {
-              id: project2Id,
-              name: project2Name
             }
           }
         ])
@@ -667,6 +793,99 @@ describe('Workspaces GQL CRUD', () => {
         expect(res2.data?.workspace?.projects.totalCount).to.equal(0)
       })
     })
+
+    describe('workspace.membersByRole', () => {
+      it('should return admins and members and guests in the workspace', async () => {
+        const user = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true
+        })
+        const workspace = {
+          id: createRandomString(),
+          name: createRandomString(),
+          slug: cryptoRandomString({ length: 10 }),
+          ownerId: user.id
+        }
+        await createTestWorkspace(workspace, user, {
+          addPlan: { name: 'pro', status: 'valid' }
+        })
+        const guest1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          guest1,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Viewer
+        )
+        const guest2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          guest2,
+          Roles.Workspace.Guest,
+          WorkspaceSeatType.Viewer
+        )
+
+        const member1 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member1,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+        const member2 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member2,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+        const member3 = await createTestUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          role: Roles.Server.User,
+          verified: true
+        })
+        await assignToWorkspace(
+          workspace,
+          member3,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+
+        const session = await login(user)
+
+        const res = await session.execute(GetWorkspaceWithMembersByRoleDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const roles = res.data?.workspace.teamByRole
+        expect(roles?.guests?.totalCount).to.eq(2)
+        expect(roles?.members?.totalCount).to.eq(3)
+        expect(roles?.admins?.totalCount).to.eq(1)
+      })
+    })
   })
 
   describe('management operations', () => {
@@ -687,6 +906,107 @@ describe('Workspaces GQL CRUD', () => {
         expect(getRes.data?.workspace).to.exist
         expect(getRes.data?.workspace?.name).to.equal(workspaceName)
         expect(getRes.data?.workspace?.slug).to.equal(workspaceSlug)
+      })
+
+      describe('when attempting to enable domain discoverability', () => {
+        const guyWithNoVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with no verified emails',
+          email: 'guy-with-no-verified-emails@bozo1.org',
+          verified: false
+        }
+
+        const guyWithMultipleVerifiedEmails: BasicTestUser = {
+          id: '',
+          name: 'Guy with multiple verified emails',
+          email: 'guy-with-multiple-verified-emails@bozo2.org',
+          verified: true
+        }
+
+        const guyWithOneVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one verified email',
+          email: 'guy-with-one-verified-email@bozo3.org',
+          verified: true
+        }
+
+        const guyWithOneBlockedVerifiedEmail: BasicTestUser = {
+          id: '',
+          name: 'Guy with one blocked verified email',
+          email: 'guy-with-one-blocked-verified-email@gmail.com',
+          verified: true,
+          allowPersonalEmail: true
+        }
+
+        const getDomain = (user: BasicTestUser) => user.email.split('@')[1]
+
+        before(async () => {
+          await createTestUsers([
+            guyWithNoVerifiedEmails,
+            guyWithMultipleVerifiedEmails,
+            guyWithOneVerifiedEmail,
+            guyWithOneBlockedVerifiedEmail
+          ])
+
+          await Promise.all([
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo22.org',
+                verified: true
+              }
+            }),
+            validateAndCreateUserEmail({
+              userEmail: {
+                userId: guyWithMultipleVerifiedEmails.id,
+                email: 'guy-with-multiple-verified-emails@bozo23.org',
+                verified: true
+              }
+            })
+          ])
+        })
+
+        itEach(
+          [guyWithOneVerifiedEmail, guyWithMultipleVerifiedEmails],
+          (user) => `${user.name} can create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
+
+            expect(createRes).to.not.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create.id).to.be.ok
+            expect(createRes.data!.workspaceMutations.create.discoverabilityEnabled).to
+              .be.true
+          }
+        )
+
+        itEach(
+          [guyWithNoVerifiedEmails, guyWithOneBlockedVerifiedEmail],
+          (user) => `${user.name} can not create with enabled domain discoverability`,
+          async (user) => {
+            const apollo = await testApolloServer({
+              authUserId: user.id
+            })
+            const createRes = await apollo.execute(CreateWorkspaceDocument, {
+              input: {
+                name: `${user.name} Domain Discoverability Workspace`,
+                slug: cryptoRandomString({ length: 10 }),
+                enableDomainDiscoverabilityForDomain: getDomain(user)
+              }
+            })
+
+            expect(createRes).to.haveGraphQLErrors()
+            expect(createRes.data?.workspaceMutations.create).to.not.be.ok
+          }
+        )
       })
     })
 
@@ -734,7 +1054,7 @@ describe('Workspaces GQL CRUD', () => {
           authorId: ''
         }
 
-        createTestCommit(testVersion, {
+        await createTestCommit(testVersion, {
           owner: testAdminUser,
           stream: workspaceProject
         })
@@ -765,7 +1085,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(deleteRes).to.not.haveGraphQLErrors()
-        expect(getRes).to.haveGraphQLErrors('Workspace not found')
+        expect(getRes).to.haveGraphQLErrors({ code: WorkspaceNotFoundError.code })
       })
 
       it('should throw if non-workspace-admin triggers delete', async () => {
@@ -889,31 +1209,6 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         expect(updateRes).to.haveGraphQLErrors('too long')
-      })
-
-      it('should require default project role to be a valid role', async () => {
-        const resA = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:contributor'
-          }
-        })
-        const resB = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:reviewer'
-          }
-        })
-        const resC = await apollo.execute(UpdateWorkspaceDocument, {
-          input: {
-            id: workspace.id,
-            defaultProjectRole: 'stream:collaborator'
-          }
-        })
-
-        expect(resA).to.not.haveGraphQLErrors()
-        expect(resB).to.not.haveGraphQLErrors()
-        expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
       })
     })
 

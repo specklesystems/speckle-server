@@ -12,10 +12,14 @@ const isDisableAllFFsMode = () =>
 const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
-const parseFeatureFlags = () => {
+export const parseFeatureFlags = (
+  input: // | Record<string, string | undefined>
+  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>
+): FeatureFlags => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  const res = parseEnv(process.env, {
+  const res = parseEnv(input, {
+    // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
       description:
@@ -32,22 +36,6 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       description:
         'Enables the workspaces module. Requires FF_GATEKEEPER_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
-      defaults: { _: false }
-    },
-    // This is expected to be a temporary flag, to be removed once the new plans are stable
-    // See https://linear.app/speckle/initiative/new-pricing-and-packaging-f3c6c8ada825/overview
-    FF_WORKSPACES_NEW_PLANS_ENABLED: {
-      schema: z.boolean(),
-      description:
-        'Enables the new (under development as of Q1 2025) plans for workspaces. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
-      defaults: { _: false }
-    },
-    // This is expected to be a temporary flag, to be removed once the new plans are stable
-    // See https://linear.app/speckle/initiative/new-pricing-and-packaging-f3c6c8ada825/overview
-    FF_GATEKEEPER_FORCE_FREE_PLAN: {
-      schema: z.boolean(),
-      description:
-        'Enables free plans for workspaces. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, ee https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
       defaults: { _: false }
     },
     FF_GATEKEEPER_MODULE_ENABLED: {
@@ -81,13 +69,7 @@ const parseFeatureFlags = () => {
         'Enables workspaces multi region DB support. Requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled.  See https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme',
       defaults: { _: false }
     },
-    // Development. Intention is to evaluate the performance of the .Net parser and remove this flag once the parser is stable.
-    // See https://linear.app/speckle/project/ifc-ecaffd5eb1c2/overview
-    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
-      schema: z.boolean(),
-      description: 'Toggles IFC parsing with experimental .Net parser',
-      defaults: { _: false }
-    },
+    // Forces onboarding for all users
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
       description: 'Forces onboarding flow for all users',
@@ -104,6 +86,11 @@ const parseFeatureFlags = () => {
       description:
         "Enables endpoint(s) for updating a project's region. Requires FF_WORKSPACES_MULTI_REGION_ENABLED to be true (which indirectly requires FF_GATEKEEPER_MODULE_ENABLED and FF_WORKSPACES_MODULE_ENABLED to be true. This requires a valid Speckle Enterprise Edition license in order to be enabled, see https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme",
       defaults: { _: false }
+    },
+    // Enable limits on personal projects
+    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { _: false }
     }
   })
 
@@ -117,23 +104,24 @@ const parseFeatureFlags = () => {
   return res
 }
 
-let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
+let parsedFlags: FeatureFlags | undefined
 
-export function getFeatureFlags(): {
+export type FeatureFlags = {
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
-  FF_WORKSPACES_NEW_PLANS_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
-  FF_GATEKEEPER_FORCE_FREE_PLAN: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-} {
-  if (!parsedFlags) parsedFlags = parseFeatureFlags()
+  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+}
+
+export function getFeatureFlags(): FeatureFlags {
+  //@ts-expect-error this way, the parse function typing is a lot better
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
   return parsedFlags
 }

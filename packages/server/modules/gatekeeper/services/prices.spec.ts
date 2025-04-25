@@ -2,206 +2,163 @@ import {
   getFreshWorkspacePlanProductPricesFactory,
   getWorkspacePlanProductPricesFactory
 } from '@/modules/gatekeeper/services/prices'
-import {
-  WorkspacePlanProductAndPriceIds,
-  WorkspacePricingProducts
-} from '@/modules/gatekeeperCore/domain/billing'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { Currency } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
 import {
   PaidWorkspacePlans,
   PaidWorkspacePlansNew,
-  WorkspaceGuestSeatType
+  WorkspaceGuestSeatType,
+  WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 import { expect } from 'chai'
-import { flatten, get } from 'lodash'
-
-const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
+import { flatten } from 'lodash'
+import { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   [WorkspaceGuestSeatType]: {
     productId: 'prod_guest',
-    monthly: 'price_guest_monthly',
-    yearly: 'price_guest_yearly'
+    monthly: { gbp: 'price_guest_monthly_gbp' },
+    yearly: { gbp: 'price_guest_yearly_gbp' }
   },
   [PaidWorkspacePlans.Starter]: {
     productId: 'prod_starter',
-    monthly: 'price_starter_monthly',
-    yearly: 'price_starter_yearly'
+    monthly: { gbp: 'price_starter_monthly_gbp' },
+    yearly: { gbp: 'price_starter_yearly_gbp' }
   },
   [PaidWorkspacePlans.Plus]: {
     productId: 'prod_plus',
-    monthly: 'price_plus_monthly',
-    yearly: 'price_plus_yearly'
+    monthly: { gbp: 'price_plus_monthly_gbp' },
+    yearly: { gbp: 'price_plus_yearly_gbp' }
   },
   [PaidWorkspacePlans.Business]: {
     productId: 'prod_business',
-    monthly: 'price_business_monthly',
-    yearly: 'price_business_yearly'
-  },
-  viewer: {
-    productId: 'prod_viewer',
-    monthly: 'price_viewer_monthly',
-    yearly: 'price_viewer_yearly'
+    monthly: { gbp: 'price_business_monthly_gbp' },
+    yearly: { gbp: 'price_business_yearly_gbp' }
   },
   [PaidWorkspacePlans.Team]: {
     productId: 'prod_team',
-    monthly: 'price_team_monthly'
+    monthly: { gbp: 'price_team_monthly_gbp', usd: 'price_team_monthly_usd' },
+    yearly: { gbp: 'price_team_yearly_gbp', usd: 'price_team_yearly_usd' }
+  },
+  [PaidWorkspacePlans.TeamUnlimited]: {
+    productId: 'prod_team_unlimited',
+    monthly: {
+      gbp: 'price_team_unlimited_monthly_gbp',
+      usd: 'price_team_unlimited_monthly_usd'
+    },
+    yearly: {
+      gbp: 'price_team_unlimited_yearly_gbp',
+      usd: 'price_team_unlimited_yearly_usd'
+    }
   },
   [PaidWorkspacePlans.Pro]: {
     productId: 'prod_pro',
-    monthly: 'price_pro_monthly',
-    yearly: 'price_pro_yearly'
+    monthly: { gbp: 'price_pro_monthly_gbp', usd: 'price_pro_monthly_usd' },
+    yearly: { gbp: 'price_pro_yearly_gbp', usd: 'price_pro_yearly_usd' }
+  },
+  [PaidWorkspacePlans.ProUnlimited]: {
+    productId: 'prod_pro_unlimited',
+    monthly: {
+      gbp: 'price_pro_unlimited_monthly_gbp',
+      usd: 'price_pro_unlimited_monthly_usd'
+    },
+    yearly: {
+      gbp: 'price_pro_unlimited_yearly_gbp',
+      usd: 'price_pro_unlimited_yearly_usd'
+    }
   }
 }
 
-describe('getFreshWorkspacePlanProductPricesFactory', () => {
-  it('returns prices', async () => {
-    const sut = getFreshWorkspacePlanProductPricesFactory({
-      getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
-      getRecurringPrices: async () => {
-        // Convert testProductAndPriceIds
-        const pricePairs = Object.values(testProductAndPriceIds).map((planIds) => {
-          const { productId, monthly } = planIds
-          return [
-            {
-              id: monthly,
-              productId,
-              unitAmount: 100,
-              currency: 'usd'
-            },
-            ...('yearly' in planIds
-              ? [
-                  {
-                    id: planIds.yearly,
-                    productId,
-                    unitAmount: 100,
-                    currency: 'usd'
-                  }
-                ]
-              : [])
-          ]
-        })
-
-        return flatten(pricePairs)
+const fakeGetRecurringPrices = async () => {
+  const pricePairs = Object.values(PaidWorkspacePlansNew).map((plan) => {
+    const { productId, monthly, yearly } = testProductAndPriceIds[plan]
+    return [
+      {
+        id: monthly.gbp,
+        productId,
+        unitAmount: 1,
+        currency: 'gbp'
+      },
+      {
+        id: monthly.usd,
+        productId,
+        unitAmount: 2,
+        currency: 'usd'
+      },
+      {
+        id: yearly.usd,
+        productId,
+        unitAmount: 3,
+        currency: 'usd'
+      },
+      {
+        id: yearly.gbp,
+        productId,
+        unitAmount: 4,
+        currency: 'gbp'
       }
-    })
+    ]
+  })
+  return flatten(pricePairs)
+}
 
-    const result = await sut()
+describe('prices @gatekeeper', () => {
+  describe('getFreshWorkspacePlanProductPricesFactory', () => {
+    it('returns prices', async () => {
+      const sut = getFreshWorkspacePlanProductPricesFactory({
+        getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
+        getRecurringPrices: fakeGetRecurringPrices
+      })
 
-    expect(result).to.be.ok
-    const plans = [
-      ...Object.values(PaidWorkspacePlans),
-      WorkspaceGuestSeatType
-    ] as WorkspacePricingProducts[]
+      const result = await sut()
 
-    for (const plan of plans) {
-      const planResult = get(result, plan) as (typeof result)[keyof typeof result]
-
-      if (
-        !FF_WORKSPACES_NEW_PLANS_ENABLED &&
-        (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
-      ) {
-        if (planResult) {
-          throw new Error('New plans should not appear w/ FF on')
-        } else {
-          continue
+      expect(result).to.be.ok
+      for (const currency of Object.values(Currency)) {
+        const newPlans = result[currency]
+        for (const newPaidPlan of Object.values(PaidWorkspacePlansNew)) {
+          const plan = newPlans[newPaidPlan]
+          for (const interval of Object.values(WorkspacePlanBillingIntervals)) {
+            const price = plan[interval]
+            expect(price.amount).to.be.ok
+            expect(price.currency).to.equal(currency)
+          }
         }
       }
-
-      expect(planResult).to.be.ok
-      expect(planResult!.productId).to.be.ok
-      expect(planResult!.monthly.amount).to.be.ok
-      expect(planResult!.monthly.currency).to.eq('USD')
-      expect(planResult!.monthly.currency).to.be.ok
-      if ('yearly' in planResult!) {
-        const yearly = planResult.yearly as { amount: number; currency: string }
-        expect(yearly.amount).to.be.ok
-        expect(yearly.currency).to.be.ok
-      }
-    }
-  })
-
-  it('throws if price not found', async () => {
-    const sut = getFreshWorkspacePlanProductPricesFactory({
-      getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
-      getRecurringPrices: async () => []
     })
 
-    const e = await expectToThrow(sut)
-    expect(e.message).to.match(/Price .* not found for plan .*/)
+    it('throws if price not found', async () => {
+      const sut = getFreshWorkspacePlanProductPricesFactory({
+        getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
+        getRecurringPrices: async () => []
+      })
+
+      const e = await expectToThrow(sut)
+      expect(e.message).to.match(/.* price not found for .* plan/)
+    })
   })
 
-  it('throws if yearly price not found, where it should be', async () => {
-    const sut = getFreshWorkspacePlanProductPricesFactory({
-      getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
-      getRecurringPrices: async () => {
-        const allPriceIds = flatten(
-          Object.values(testProductAndPriceIds).map((planIds) => [
-            planIds.monthly,
-            ...('yearly' in planIds ? [planIds.yearly] : [])
-          ])
-        ).filter((i) => i !== 'price_business_yearly')
+  describe('getWorkspacePlanProductPricesFactory', () => {
+    it('returns prices in a cached manner', async () => {
+      let invoked = 0
+      const sut = getWorkspacePlanProductPricesFactory({
+        getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
+        getRecurringPrices: async () => {
+          invoked++
+          return fakeGetRecurringPrices()
+        },
+        // Unit test, so we want a fresh cache every time
+        cacheProvider: mockRedisCacheProviderFactory({ createNewCache: true })
+      })
 
-        return allPriceIds.map((id) => ({
-          id,
-          productId: 'whatever',
-          unitAmount: 100,
-          currency: 'usd'
-        }))
-      }
+      const result = await sut()
+      expect(result).to.be.ok
+
+      const result2 = await sut()
+      expect(result2).to.be.ok
+      expect(result2).to.deep.equal(result)
+
+      expect(invoked).to.equal(1)
     })
-
-    const e = await expectToThrow(sut)
-    expect(e.message).to.match(/Price .* not found for plan .*/)
-  })
-})
-
-describe('getWorkspacePlanProductPricesFactory', () => {
-  it('returns prices in a cached manner', async () => {
-    let invoked = 0
-    const sut = getWorkspacePlanProductPricesFactory({
-      getWorkspacePlanProductAndPriceIds: () => testProductAndPriceIds,
-      getRecurringPrices: async () => {
-        invoked++
-
-        // Convert testProductAndPriceIds
-        const pricePairs = Object.values(testProductAndPriceIds).map((planIds) => {
-          const { productId, monthly } = planIds
-          return [
-            {
-              id: monthly,
-              productId,
-              unitAmount: 100,
-              currency: 'usd'
-            },
-            ...('yearly' in planIds
-              ? [
-                  {
-                    id: planIds.yearly,
-                    productId,
-                    unitAmount: 100,
-                    currency: 'usd'
-                  }
-                ]
-              : [])
-          ]
-        })
-
-        return flatten(pricePairs)
-      },
-      // Unit test, so we want a fresh cache every time
-      cacheProvider: mockRedisCacheProviderFactory({ createNewCache: true })
-    })
-
-    const result = await sut()
-    expect(result).to.be.ok
-
-    const result2 = await sut()
-    expect(result2).to.be.ok
-    expect(result2).to.deep.equal(result)
-
-    expect(invoked).to.equal(1)
   })
 })

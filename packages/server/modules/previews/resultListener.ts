@@ -10,6 +10,7 @@ import crypto from 'crypto'
 import { StorePreview, UpsertObjectPreview } from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
+import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 
@@ -70,15 +71,22 @@ export const consumePreviewResultFactory =
   }) => {
     const streamId = projectId
     const lastUpdate = new Date()
-    const priority = 0
-    const previewStatus = 2
+    const priority = PreviewPriority.LOW
     const log = logger.child({
-      ...previewResult,
-      projectId: streamId
+      jobId: previewResult.jobId,
+      status: previewResult.status,
+      durationSeconds: previewResult.result.durationSeconds,
+      projectId: streamId,
+      streamId, // for legacy reasons
+      objectId
     })
+
+    const previewMessage =
+      'Consumed preview generation {status} message payload for {jobId}.'
 
     switch (previewResult.status) {
       case 'error':
+        log.error({ reason: previewResult.reason }, previewMessage)
         await upsertObjectPreview({
           objectPreview: {
             objectId,
@@ -86,16 +94,13 @@ export const consumePreviewResultFactory =
             lastUpdate,
             preview: { err: previewResult.reason },
             priority,
-            previewStatus
+            previewStatus: PreviewStatus.ERROR
           }
         })
-
-        log.error('Preview generation failed for {jobId}.')
-        // store preview error in the db
         break
 
       case 'success':
-        log.info('Consumed preview generation {status} message payload for {jobId}.')
+        log.info(previewMessage)
         const preview: Record<string, string> = {}
         const allImgsArr: Buffer[] = []
         let i = 0
@@ -138,7 +143,7 @@ export const consumePreviewResultFactory =
             lastUpdate,
             preview,
             priority,
-            previewStatus
+            previewStatus: PreviewStatus.DONE
           }
         })
         const commits = await getObjectCommitsWithStreamIds([objectId], {

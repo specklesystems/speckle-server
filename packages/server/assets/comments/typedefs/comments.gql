@@ -139,11 +139,11 @@ type Comment {
   authorId: String!
   archived: Boolean!
   screenshot: String
-  text: SmartTextEditorValue!
+  text: SmartTextEditorValue
   """
   Plain-text version of the comment text, ideal for previews
   """
-  rawText: String!
+  rawText: String
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """

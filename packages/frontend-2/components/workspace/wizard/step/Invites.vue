@@ -28,11 +28,15 @@
           </FormButton>
         </div>
       </div>
-
+      <div v-if="verifiedDomain" class="flex flex-col gap-2 w-full">
+        <FormCheckbox
+          v-model="enableDomainDiscoverabilityModel"
+          name="enableDomainDiscoverability"
+          :label="`Allow users with the @${verifiedDomain} domain to request to join workspace`"
+        />
+      </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <FormButton size="lg" submit full-width>
-          {{ nextButtonText }}
-        </FormButton>
+        <FormButton size="lg" submit full-width>{{ nextButtonText }}</FormButton>
         <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
           Back
         </FormButton>
@@ -47,11 +51,14 @@ import { PlusIcon } from '@heroicons/vue/24/outline'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { useForm, useFieldArray } from 'vee-validate'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
+import { isUndefined } from 'lodash-es'
 
 interface InviteForm {
   fields: string[]
 }
 
+const { domains } = useVerifiedUserEmailDomains()
 const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<InviteForm>({
@@ -61,9 +68,27 @@ const { handleSubmit } = useForm<InviteForm>({
 })
 const { fields, push } = useFieldArray<string>('fields')
 
+const enableDomainDiscoverabilityModel = computed(() => {
+  if (!verifiedDomain.value) return false
+
+  return !isUndefined(state.value.enableDomainDiscoverabilityForDomain)
+    ? state.value.enableDomainDiscoverabilityForDomain !== null
+      ? true
+      : undefined
+    : true
+})
+
 const nextButtonText = computed(() =>
-  fields.value.filter((field) => !!field.value).length > 0 ? 'Continue' : 'Skip'
+  fields.value.filter((field) => !!field.value).length > 0
+    ? 'Continue'
+    : 'Continue without inviting'
 )
+
+const verifiedDomain = computed(() => {
+  // only support enabling domain discoverability if there's one verified unblocked domain
+  if (domains.value.length === 0) return undefined
+  return domains.value[0]
+})
 
 const onAddInvite = () => {
   push('')
@@ -75,6 +100,12 @@ const onSubmit = handleSubmit(() => {
     .map((field) => field.value)
 
   state.value.invites = validInvites
+
+  if (enableDomainDiscoverabilityModel.value && verifiedDomain.value) {
+    state.value.enableDomainDiscoverabilityForDomain = verifiedDomain.value
+  } else {
+    state.value.enableDomainDiscoverabilityForDomain = null
+  }
 
   mixpanel.track('Workspace Invites Step Completed', {
     inviteCount: validInvites

@@ -246,8 +246,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
             upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            ensureValidWorkspaceRoleSeat: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('User not found')
@@ -263,8 +270,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
             upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            ensureValidWorkspaceRoleSeat: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal(WorkspaceNotFoundError.defaultMessage)
@@ -288,8 +302,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => undefined,
             upsertWorkspaceRole: async () => Promise.resolve(),
-            emit: async () => Promise.resolve()
-          })({ workspaceId: createRandomString(), userId: createRandomString() })
+            emit: async () => Promise.resolve(),
+            ensureValidWorkspaceRoleSeat: async () => {
+              throw new Error('Should not happen')
+            }
+          })({
+            workspaceId: createRandomString(),
+            userId: createRandomString(),
+            approvedByUserId: createRandomString()
+          })
         )
 
         expect(err.message).to.equal('Workspace join request not found')
@@ -347,8 +368,15 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => request,
             upsertWorkspaceRole,
-            emit: async () => Promise.resolve()
-          })({ workspaceId: workspace.id, userId: user.id })
+            emit: async () => Promise.resolve(),
+            ensureValidWorkspaceRoleSeat: async () => ({
+              type: 'editor',
+              workspaceId: workspace.id,
+              userId: user.id,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })
+          })({ workspaceId: workspace.id, userId: user.id, approvedByUserId: user.id })
         ).to.equal(true)
 
         expect(

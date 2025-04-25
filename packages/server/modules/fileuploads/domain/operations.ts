@@ -7,3 +7,11 @@ export type GetFileInfo = (args: {
 }) => Promise<Optional<FileUploadRecord>>
 
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
+
+export type GarbageCollectPendingUploadedFiles = (args: {
+  timeoutThresholdSeconds: number
+}) => Promise<FileUploadRecord[]>
+
+export type NotifyChangeInFileStatus = (params: {
+  file: FileUploadRecord
+}) => Promise<void>

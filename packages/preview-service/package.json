@@ -27,6 +27,7 @@
     "build": "tsc -p ./tsconfig.build.json"
   },
   "dependencies": {
+    "@godaddy/terminus": "^4.12.1",
     "@speckle/shared": "workspace:^",
     "bull": "^4.16.4",
     "dotenv": "^16.4.7",
@@ -35,6 +36,7 @@
     "pino": "^8.7.0",
     "pino-http": "^8.6.1",
     "pino-pretty": "^9.1.1",
+    "prom-client": "^14.0.1",
     "puppeteer": "^23.9.0",
     "znv": "^0.4.0",
     "zod": "^3.23.8"

@@ -1,5 +1,34 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const projectPageTeamDialogFragment = graphql(`
+  fragment ProjectPageTeamDialog on Project {
+    id
+    name
+    role
+    allowPublicComments
+    visibility
+    team {
+      id
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    invitedTeam {
+      id
+      title
+      inviteId
+      role
+      user {
+        ...LimitedUserAvatar
+        role
+      }
+    }
+    ...ProjectsPageTeamDialogManagePermissions_Project
+  }
+`)
+
 export const projectDashboardItemNoModelsFragment = graphql(`
   fragment ProjectDashboardItemNoModels on Project {
     id
@@ -79,6 +108,14 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     automationsStatus {
       ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
     }
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -89,6 +126,26 @@ export const projectUpdatableMetadataFragment = graphql(`
     description
     visibility
     allowPublicComments
+    permissions {
+      canRead {
+        ...FullPermissionCheckResult
+      }
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canUpdateAllowPublicComments {
+        ...FullPermissionCheckResult
+      }
+      canReadSettings {
+        ...FullPermissionCheckResult
+      }
+      canReadWebhooks {
+        ...FullPermissionCheckResult
+      }
+      canLeave {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 

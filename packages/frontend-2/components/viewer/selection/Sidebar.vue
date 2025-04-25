@@ -1,44 +1,42 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title><div class="select-none">Selection info</div></template>
+      <template #title>Selection info</template>
       <template #actions>
-        <FormButton size="sm" text color="outline" @click.stop="hideOrShowSelection">
-          <div
-            v-if="!isHidden"
-            class="flex items-center gap-1 text-foreground hover:text-primary"
-          >
-            <EyeSlashIcon class="h-4 w-4" />
-            Hide
-          </div>
-          <div v-else class="flex items-center gap-1 text-primary">
-            <EyeSlashIcon class="h-4 w-4" />
-            Hidden
-          </div>
-        </FormButton>
-        <FormButton size="sm" text @click.stop="isolateOrUnisolateSelection">
-          <div class="flex items-center gap-1">
-            <div
-              v-if="!isIsolated"
-              class="flex items-center gap-1 text-foreground hover:text-primary"
+        <div class="flex flex-col divide-y divide-outline-3">
+          <div class="flex py-1.5 pl-3 pr-1.5 gap-x-1.5 items-center">
+            <FormButton
+              size="sm"
+              color="outline"
+              :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+              @click.stop="hideOrShowSelection"
             >
-              <FunnelIconOutline class="h-4 w-4" />
-              Isolate
-            </div>
-            <div v-else class="flex items-center gap-1 text-primary">
-              <FunnelIcon class="h-4 w-4" />
-              Isolated
+              {{ isHidden ? 'Hidden' : 'Hide' }}
+            </FormButton>
+            <FormButton
+              size="sm"
+              color="outline"
+              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+              @click.stop="isolateOrUnisolateSelection"
+            >
+              {{ isIsolated ? 'Isolated' : 'Isolate' }}
+            </FormButton>
+            <div class="flex justify-end w-full">
+              <div v-tippy="`Open selection in new window`" class="max-w-max">
+                <FormButton
+                  size="sm"
+                  color="subtle"
+                  :to="selectionLink"
+                  target="_blank"
+                >
+                  <span class="sr-only">Open selection in new window</span>
+                  <ArrowTopRightOnSquareIcon class="w-4" />
+                </FormButton>
+              </div>
             </div>
           </div>
-        </FormButton>
-        <div class="flex justify-end w-full">
-          <div v-tippy="`Open selection in new window`" class="max-w-max">
-            <FormButton size="sm" text :to="selectionLink" target="_blank">
-              <span class="sr-only">Open selection in new window</span>
-              <ArrowTopRightOnSquareIcon
-                class="w-4 text-foreground hover:text-primary"
-              />
-            </FormButton>
+          <div class="text-foreground-2 text-body-3xs py-1.5 px-3">
+            Hold "shift" to select multiple objects
           </div>
         </div>
       </template>
@@ -54,15 +52,10 @@
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
           <FormButton size="sm" text full-width @click="itemCount += 10">
-            View More ({{ objects.length - itemCount }})
+            View more ({{ objects.length - itemCount }})
           </FormButton>
         </div>
       </div>
-      <template v-if="!isSmallerOrEqualSm" #footer>
-        <div class="text-foreground-2 text-body-2xs select-none">
-          Hold "shift" to select multiple objects
-        </div>
-      </template>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
   <div v-else />
@@ -70,6 +63,7 @@
 <script setup lang="ts">
 import {
   EyeSlashIcon,
+  EyeIcon,
   FunnelIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'

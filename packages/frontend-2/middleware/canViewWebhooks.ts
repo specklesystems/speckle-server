@@ -1,8 +1,20 @@
-import { Roles } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { projectSettingsRoute } from '~~/lib/common/helpers/route'
-import { projectRoleCheckQuery } from '~~/lib/projects/graphql/queries'
+import { projectRoute } from '~~/lib/common/helpers/route'
+
+const canViewProjectWebhooksQuery = graphql(`
+  query CanViewProjectWebhooks($projectId: String!) {
+    project(id: $projectId) {
+      id
+      permissions {
+        canReadWebhooks {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
 
 /**
  * Apply this to a page to prevent unauthenticated access to webhooks and ensure the user is the owner
@@ -14,16 +26,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   const { data } = await client
     .query({
-      query: projectRoleCheckQuery,
-      variables: { id: projectId }
+      query: canViewProjectWebhooksQuery,
+      variables: { projectId }
     })
     .catch(convertThrowIntoFetchResult)
 
-  // Check if the user is the owner of the project
-  const isOwner = data?.project.role === Roles.Stream.Owner
+  if (!data?.project) {
+    return navigateTo(projectRoute(projectId))
+  }
 
-  if (!isOwner) {
-    return navigateTo(projectSettingsRoute(projectId))
+  const canReadWebhooks = data.project.permissions.canReadWebhooks.authorized
+  if (!canReadWebhooks) {
+    return navigateTo(projectRoute(projectId))
   }
 
   return undefined

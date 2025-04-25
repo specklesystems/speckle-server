@@ -3,8 +3,8 @@ import {
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowAnonymousUsersOnPublicStreams,
-  streamWritePermissionsPipelineFactory,
-  streamReadPermissionsPipelineFactory
+  streamReadPermissionsPipelineFactory,
+  streamCommentsWritePermissionsPipelineFactory
 } from '@/modules/shared/authz'
 import crs from 'crypto-random-string'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
@@ -24,7 +24,6 @@ import {
   getBlobMetadataCollectionFactory,
   deleteBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { db } from '@/db/knex'
 import {
   uploadFileStreamFactory,
   getFileStreamFactory,
@@ -34,12 +33,7 @@ import {
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import {
-  adminOverrideEnabled,
-  createS3Bucket
-} from '@/modules/shared/helpers/envHelper'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { createS3Bucket } from '@/modules/shared/helpers/envHelper'
 import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
@@ -96,26 +90,15 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
 
 export const init: SpeckleModule['init'] = async ({ app }) => {
   await ensureConditions()
-  const createStreamWritePermissions = () =>
-    streamWritePermissionsPipelineFactory({
-      getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db })
-    })
-  const createStreamReadPermissions = () =>
-    streamReadPermissionsPipelineFactory({
-      adminOverrideEnabled,
-      getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db })
-    })
 
   app.post(
     '/api/stream/:streamId/blob',
     async (req, res, next) => {
-      await authMiddlewareCreator([
-        ...createStreamWritePermissions(),
-        // todo should we add public comments upload escape hatch?
-        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
-      ])(req, res, next)
+      await authMiddlewareCreator(streamCommentsWritePermissionsPipelineFactory())(
+        req,
+        res,
+        next
+      )
     },
     async (req, res) => {
       const streamId = req.params.streamId
@@ -269,7 +252,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     '/api/stream/:streamId/blob/diff',
     async (req, res, next) => {
       await authMiddlewareCreator([
-        ...createStreamReadPermissions(),
+        ...streamReadPermissionsPipelineFactory(),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
@@ -297,14 +280,14 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
       await authMiddlewareCreator([
-        ...createStreamReadPermissions(),
+        ...streamReadPermissionsPipelineFactory(),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
       ])(req, res, next)
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
@@ -336,27 +319,29 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
-      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
+      await authMiddlewareCreator(streamCommentsWritePermissionsPipelineFactory())(
+        req,
+        res,
+        next
+      )
     },
     async (req, res) => {
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const streamId = req.params.streamId
         const [projectDb, projectStorage] = await Promise.all([
           getProjectDbClient({ projectId: streamId }),
           getProjectObjectStorage({ projectId: streamId })
         ])
 
-        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
         const deleteBlob = fullyDeleteBlobFactory({
-          getBlobMetadata,
-          deleteBlob: deleteBlobFactory({ db: projectDb })
+          getBlobMetadata: getBlobMetadataFactory({ db: projectDb }),
+          deleteBlob: deleteBlobFactory({ db: projectDb }),
+          deleteObject: deleteObjectFactory({ storage: projectStorage })
         })
-        const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
         await deleteBlob({
           streamId: req.params.streamId,
-          blobId: req.params.blobId,
-          deleteObject
+          blobId: req.params.blobId
         })
         res.status(204).send()
       })
@@ -366,7 +351,11 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
   app.get(
     '/api/stream/:streamId/blobs',
     async (req, res, next) => {
-      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
+      await authMiddlewareCreator(streamReadPermissionsPipelineFactory())(
+        req,
+        res,
+        next
+      )
     },
     async (req, res) => {
       let fileName = req.query.fileName
@@ -378,7 +367,7 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
       const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
         db: projectDb
       })
-      errorHandler(req, res, async (req, res) => {
+      await errorHandler(req, res, async (req, res) => {
         const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,
           query: fileName as string

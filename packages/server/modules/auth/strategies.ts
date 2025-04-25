@@ -12,6 +12,7 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 const setupStrategiesFactory =
   (deps: {
@@ -22,6 +23,7 @@ const setupStrategiesFactory =
     oidcStrategyBuilder: AuthStrategyBuilder
     createAuthorizationCode: CreateAuthorizationCode
     getUser: LegacyGetUser
+    emitEvent: EventBusEmit
   }) =>
   async (app: Express) => {
     passport.serializeUser((user, done) => done(null, user))

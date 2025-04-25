@@ -1,98 +1,142 @@
 <template>
-  <LayoutSidebarMenuGroup
-    :title="collapsible ? 'Members' : undefined"
-    :collapsible="collapsible"
-    :icon="iconName"
-    :icon-click="iconClick"
-    :icon-text="iconText"
-    :tag="workspaceInfo.team.totalCount.toString() || undefined"
-    no-hover
-  >
-    <div class="flex lg:flex-col items-center lg:items-start gap-y-3 pb-0 lg:pb-4 mt-1">
-      <div class="flex gap-y-3 flex-col w-full">
-        <UserAvatarGroup
-          :overlap="false"
-          :users="team.map((teamMember) => teamMember.user)"
-          :max-avatars="isDesktop ? 5 : 3"
-          class="shrink-0"
-        />
-        <div class="w-full flex items-center gap-x-2">
-          <button
-            v-if="adminWorkspacesJoinRequestsCount && isWorkspaceAdmin"
-            class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-            @click="
-              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
-            "
-          >
-            {{ adminWorkspacesJoinRequestsCount }} join
-            {{ adminWorkspacesJoinRequestsCount > 1 ? 'requests' : 'request' }}
-          </button>
-          <button
-            v-if="invitedTeamCount && isWorkspaceAdmin"
-            class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-            @click="
-              navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))
-            "
-          >
-            {{ invitedTeamCount }} pending
-          </button>
-        </div>
-      </div>
-      <FormButton
-        v-if="isWorkspaceAdmin"
-        color="outline"
-        size="sm"
-        @click="$emit('show-invite-dialog')"
+  <div class="lg:px-4 lg:py-2">
+    <LayoutSidebarMenuGroup
+      :title="collapsible ? 'Members' : undefined"
+      :collapsible="collapsible"
+      :icon="iconName"
+      :icon-click="iconClick"
+      :icon-text="iconText"
+      no-hover
+    >
+      <div
+        class="flex lg:flex-col items-center lg:items-start gap-y-3 pb-0 lg:pb-4 mt-1"
       >
-        Invite your team
-      </FormButton>
-    </div>
-  </LayoutSidebarMenuGroup>
+        <div class="flex gap-y-3 flex-col w-full">
+          <UserAvatarGroup
+            :overlap="false"
+            :users="team.map((teamMember) => teamMember.user)"
+            :max-avatars="5"
+            class="shrink-0"
+            :on-hidden-count-click="
+              () => {
+                navigateTo(settingsWorkspaceRoutes.members.route(workspace?.slug || ''))
+              }
+            "
+          />
+          <div
+            v-if="
+              isWorkspaceAdmin && (adminWorkspacesJoinRequestsCount || invitedTeamCount)
+            "
+            class="w-full flex items-center gap-x-2"
+          >
+            <button
+              v-if="adminWorkspacesJoinRequestsCount"
+              class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
+              @click="
+                navigateTo(
+                  settingsWorkspaceRoutes.membersRequests.route(workspace?.slug || '')
+                )
+              "
+            >
+              {{ adminWorkspacesJoinRequestsCount }} join
+              {{ adminWorkspacesJoinRequestsCount > 1 ? 'requests' : 'request' }}
+            </button>
+            <button
+              v-if="invitedTeamCount"
+              class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
+              @click="
+                navigateTo(
+                  settingsWorkspaceRoutes.membersInvites.route(workspace?.slug || '')
+                )
+              "
+            >
+              {{ invitedTeamCount }} pending
+            </button>
+          </div>
+        </div>
+        <FormButton
+          v-if="isWorkspaceAdmin"
+          color="outline"
+          size="sm"
+          @click="showInviteDialog = true"
+        >
+          Invite your team
+        </FormButton>
+      </div>
+    </LayoutSidebarMenuGroup>
+    <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
+  </div>
 </template>
+
 <script setup lang="ts">
 import {
-  type WorkspaceTeam_WorkspaceFragment,
+  type WorkspaceSidebarMembers_WorkspaceFragment,
   WorkspaceJoinRequestStatus
 } from '~/lib/common/generated/gql/graphql'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useBreakpoints } from '@vueuse/core'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
-defineEmits<{
-  (e: 'show-invite-dialog'): void
-}>()
+graphql(`
+  fragment WorkspaceSidebarMembers_Workspace on Workspace {
+    ...InviteDialogWorkspace_Workspace
+    id
+    slug
+    team {
+      totalCount
+      items {
+        id
+        user {
+          id
+          name
+          ...LimitedUserAvatar
+        }
+      }
+    }
+    invitedTeam(filter: $invitesFilter) {
+      id
+      role
+      email
+    }
+    adminWorkspacesJoinRequests {
+      totalCount
+      items {
+        status
+        id
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
-  workspaceInfo: WorkspaceTeam_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<WorkspaceSidebarMembers_WorkspaceFragment>
   collapsible?: boolean
   isWorkspaceAdmin?: boolean
+  isWorkspaceGuest?: boolean
 }>()
 
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isDesktop = breakpoints.greaterOrEqual('lg')
+const showInviteDialog = ref(false)
 
-const team = computed(() => props.workspaceInfo.team.items || [])
+const team = computed(() => props.workspace?.team.items || [])
 
-const iconName = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
-  return 'edit'
-})
+const iconName = computed(() => (props.isWorkspaceAdmin ? 'edit' : 'view'))
 
 const iconClick = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
+  if (props.isWorkspaceGuest) return undefined
   return () =>
-    navigateTo(settingsWorkspaceRoutes.members.route(props.workspaceInfo.slug))
+    navigateTo(settingsWorkspaceRoutes.members.route(props.workspace?.slug || ''))
 })
 
 const iconText = computed(() => {
-  if (!props.isWorkspaceAdmin) return undefined
-  return 'Manage members'
+  if (props.isWorkspaceAdmin) return 'Manage members'
+  return 'View members'
 })
 
-const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)
+const invitedTeamCount = computed(() => props.workspace?.invitedTeam?.length ?? 0)
+
 const adminWorkspacesJoinRequestsCount = computed(
   () =>
-    props.workspaceInfo?.adminWorkspacesJoinRequests?.items.filter(
+    props.workspace?.adminWorkspacesJoinRequests?.items.filter(
       (request) => request.status === WorkspaceJoinRequestStatus.Pending
     ).length
 )

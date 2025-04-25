@@ -38,6 +38,7 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import { authorizeResolver } from '@/modules/shared'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -72,38 +73,21 @@ export const authorizeProjectCommentsAccessFactory =
     if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
       success = true
 
+    // TODO: Until we do canCommentCreate & canCommentRead, fallback:
+    if (authCtx.userId && (!requireProjectRole || project.allowPublicComments)) {
+      try {
+        await authorizeResolver(authCtx.userId, projectId, Roles.Stream.Reviewer, null)
+        success = true
+      } catch {
+        // suppress
+      }
+    }
+
     if (!success) {
       throw new StreamInvalidAccessError('You are not authorized')
     }
 
     return project
-  }
-
-export const authorizeCommentAccessFactory =
-  (
-    deps: {
-      getComment: GetComment
-    } & AuthorizeProjectCommentsAccessDeps
-  ) =>
-  async (params: {
-    authCtx: AuthContext
-    commentId: string
-    requireProjectRole?: boolean
-  }) => {
-    const { authCtx, commentId, requireProjectRole } = params
-    const comment = await deps.getComment({
-      id: commentId,
-      userId: authCtx.userId
-    })
-    if (!comment) {
-      throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
-    }
-
-    return authorizeProjectCommentsAccessFactory(deps)({
-      projectId: comment.streamId,
-      authCtx,
-      requireProjectRole
-    })
   }
 
 export const createCommentThreadAndNotifyFactory =
@@ -300,10 +284,7 @@ export const archiveCommentAndNotifyFactory =
     }
 
     const stream = await deps.getStream({ streamId: comment.streamId, userId })
-    if (
-      !stream ||
-      (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)
-    ) {
+    if (!stream) {
       throw new CommentUpdateError(
         'You do not have permissions to archive this comment'
       )

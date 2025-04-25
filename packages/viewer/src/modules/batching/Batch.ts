@@ -74,3 +74,7 @@ export const AllBatchUpdateRange = {
 
 export const INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
 export const INSTANCE_GRADIENT_BUFFER_STRIDE = 1
+let BATCH_INDEX_COUNTER = 0
+export const getNextBatchIndex = () => {
+  return ++BATCH_INDEX_COUNTER
+}

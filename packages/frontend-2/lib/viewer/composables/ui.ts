@@ -1,4 +1,4 @@
-import { SpeckleViewer, timeoutAt } from '@speckle/shared'
+import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
 import type {
   TreeNode,
   MeasurementOptions,
@@ -26,7 +26,6 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
-import { SnowPipeline } from '~/lib/viewer/pipelines/snow/SnowPipeline'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -231,7 +230,7 @@ export function useFilterUtilities(
     key: string,
     options?: Partial<{ timeout: number }>
   ) => {
-    const timeout = options?.timeout || 10000
+    const timeout = options?.timeout || 10 * TIME_MS.second
 
     const res = await Promise.race([
       until(viewer.metadata.availableFilters).toMatch(
@@ -498,16 +497,9 @@ export function useViewModeUtilities() {
     }
   }
 
-  const letItSnow = () => {
-    const snowPipeline = new SnowPipeline(instance.getRenderer())
-    instance.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
-  }
-
   return {
     currentViewMode,
-    setViewMode,
-    letItSnow
+    setViewMode
   }
 }
 
