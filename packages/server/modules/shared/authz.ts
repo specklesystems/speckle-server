@@ -373,7 +373,7 @@ export const streamCommentsWritePermissionsPipelineFactory =
   ]
 
 export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] => [
-  validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateScope({ requiredScope: Scopes.Streams.Read }),
   validateStreamPolicyAccessFactory({
     policyInvoker: async ({ authData, policies }) =>
       policies.project.canRead({
