@@ -1,6 +1,8 @@
 import type { ObjectPreview } from '@/modules/previews/domain/types'
 import type { Nullable, Optional, PartialBy } from '@speckle/shared'
 import type { Request, Response } from 'express'
+import type { PreviewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
+import type { Logger } from '@/observability/logging'
 
 export type GetObjectPreviewInfo = (params: {
   streamId: string
@@ -64,3 +66,22 @@ export type SendObjectPreview = (
 export type CheckStreamPermissions = (
   req: Request
 ) => Promise<{ hasPermissions: boolean; httpErrorCode: number }>
+
+export type ConsumePreviewResult = ({
+  projectId,
+  objectId,
+  previewResult
+}: {
+  projectId: string
+  objectId: string
+  previewResult: PreviewResultPayload
+}) => Promise<void>
+
+export type BuildConsumePreviewResult = (deps: {
+  logger: Logger
+  projectId: string
+}) => Promise<ConsumePreviewResult>
+
+export type BuildUpsertObjectPreview = (params: {
+  projectId: string
+}) => Promise<UpsertObjectPreview>

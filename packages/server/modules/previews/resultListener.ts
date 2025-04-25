@@ -3,14 +3,22 @@ import { MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { PreviewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
-import { StorePreview, UpsertObjectPreview } from '@/modules/previews/domain/operations'
+import {
+  BuildConsumePreviewResult,
+  ConsumePreviewResult,
+  StorePreview,
+  UpsertObjectPreview
+} from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
+import {
+  storePreviewFactory,
+  upsertObjectPreviewFactory
+} from '@/modules/previews/repository/previews'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 
@@ -48,6 +56,19 @@ export const messageProcessor = async (msg: MessageType) => {
   )
 }
 
+export const buildConsumePreviewResult: BuildConsumePreviewResult = async (deps) => {
+  const { logger, projectId } = deps
+  const projectDb = await getProjectDbClient({ projectId })
+  return consumePreviewResultFactory({
+    logger,
+    storePreview: storePreviewFactory({ db: projectDb }),
+    upsertObjectPreview: upsertObjectPreviewFactory({ db: projectDb }),
+    getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({
+      db: projectDb
+    })
+  })
+}
+
 export const consumePreviewResultFactory =
   ({
     logger,
@@ -59,25 +80,16 @@ export const consumePreviewResultFactory =
     upsertObjectPreview: UpsertObjectPreview
     storePreview: StorePreview
     getObjectCommitsWithStreamIds: GetObjectCommitsWithStreamIds
-  }) =>
-  async ({
-    projectId,
-    objectId,
-    previewResult
-  }: {
-    projectId: string
-    objectId: string
-    previewResult: PreviewResultPayload
-  }) => {
-    const streamId = projectId
+  }): ConsumePreviewResult =>
+  async ({ projectId, objectId, previewResult }) => {
     const lastUpdate = new Date()
     const priority = PreviewPriority.LOW
     const log = logger.child({
       jobId: previewResult.jobId,
       status: previewResult.status,
       durationSeconds: previewResult.result.durationSeconds,
-      projectId: streamId,
-      streamId, // for legacy reasons
+      projectId,
+      streamId: projectId, // for legacy reasons
       objectId
     })
 
@@ -90,7 +102,7 @@ export const consumePreviewResultFactory =
         await upsertObjectPreview({
           objectPreview: {
             objectId,
-            streamId,
+            streamId: projectId,
             lastUpdate,
             preview: { err: previewResult.reason },
             priority,
@@ -139,7 +151,7 @@ export const consumePreviewResultFactory =
         await upsertObjectPreview({
           objectPreview: {
             objectId,
-            streamId,
+            streamId: projectId,
             lastUpdate,
             preview,
             priority,
@@ -147,7 +159,7 @@ export const consumePreviewResultFactory =
           }
         })
         const commits = await getObjectCommitsWithStreamIds([objectId], {
-          streamIds: [streamId]
+          streamIds: [projectId]
         })
         if (!commits.length) break
 
