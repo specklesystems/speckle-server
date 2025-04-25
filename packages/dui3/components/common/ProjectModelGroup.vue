@@ -57,7 +57,7 @@
         :model-card="model"
         :project="project"
         :can-edit="canEdit"
-        :is-project-reviewer="isProjectReviewer"
+        :is-explicit-project-reviewer="isExplicitProjectReviewer"
       />
       <ModelReceiver
         v-for="model in project.receivers"
@@ -65,7 +65,7 @@
         :model-card="model"
         :project="project"
         :can-edit="canEdit"
-        :is-project-reviewer="isProjectReviewer"
+        :is-explicit-project-reviewer="isExplicitProjectReviewer"
       />
     </div>
   </div>
@@ -159,21 +159,15 @@ const isWorkspaceAdmin = computed(() => {
   )
 })
 
-const isProjectReviewer = computed(() => {
+const isExplicitProjectReviewer = computed(() => {
   if (!projectDetails.value) return true
-  return (
-    projectDetails.value.role === null ||
-    projectDetails.value.role === 'stream:reviewer'
-  )
+  return projectDetails.value.role === 'stream:reviewer'
 })
 
 const canEdit = computed(() => {
   if (!projectDetails.value) return false
   if (isWorkspaceAdmin.value) return true
-  return (
-    projectDetails.value.role !== null &&
-    projectDetails.value.role !== 'stream:reviewer'
-  )
+  return projectDetails.value.role !== 'stream:reviewer'
 })
 
 const isWorkspaceReadOnly = computed(() => {

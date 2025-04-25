@@ -219,7 +219,7 @@ const props = defineProps<{
   modelCard: IModelCard
   project: ProjectModelGroup
   canEdit: boolean
-  isProjectReviewer: boolean
+  isExplicitProjectReviewer: boolean
 }>()
 
 defineEmits<{
@@ -230,7 +230,7 @@ const isSender = computed(() => {
   return props.modelCard.typeDiscriminator.includes('SenderModelCard')
 })
 
-const canDoOperation = computed(() => !props.isProjectReviewer && props.canEdit)
+const canDoOperation = computed(() => !props.isExplicitProjectReviewer && props.canEdit)
 
 const buttonTooltip = computed(() => {
   return props.modelCard.progress
