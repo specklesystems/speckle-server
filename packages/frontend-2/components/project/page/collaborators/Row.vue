@@ -179,7 +179,9 @@ const disabledRolesTooltip = computed(() => {
   }
 
   if (props.collaborator.seatType === 'viewer') {
-    return 'Users with a viewer seat cannot be project owners or contributors'
+    if (isPending.value || !props.canEdit) {
+      return 'Users with a viewer seat cannot be project owners or contributors'
+    }
   }
 
   if (isWorkspaceGuest.value) {
