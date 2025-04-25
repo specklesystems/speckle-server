@@ -97,6 +97,10 @@ export type GetStreamsCollaboratorCounts = (params: {
 
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
+export type GetImplicitUserProjectsCountFactory = (params: {
+  userId: string
+}) => Promise<number>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{
@@ -189,6 +193,12 @@ export type BaseUserStreamsQueryParams = {
   personalOnly?: MaybeNullOrUndefined<boolean>
 
   /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: MaybeNullOrUndefined<boolean>
+
+  /**
    * Only with active sso session
    */
   onlyWithActiveSsoSession?: boolean
@@ -203,6 +213,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams

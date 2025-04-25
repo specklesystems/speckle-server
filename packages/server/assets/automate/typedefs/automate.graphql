@@ -215,9 +215,13 @@ input ProjectTestAutomationCreateInput {
 input AutomateFunctionsFilter {
   search: String
   """
-  By default we skip functions without releases. Set this to true to include them.
+  By default, we include featured ("public") functions. Set this to false to exclude them.
   """
-  functionsWithoutReleases: Boolean
+  includeFeatured: Boolean
+  """
+  By default, we exclude functions without releases. Set this to false to include them.
+  """
+  requireRelease: Boolean
 }
 
 input AutomateFunctionRunStatusReportInput {
@@ -310,6 +314,7 @@ extend type ServerInfo {
 type ProjectAutomationMutations {
   create(input: ProjectAutomationCreateInput!): Automation!
   update(input: ProjectAutomationUpdateInput!): Automation!
+  delete(automationId: ID!): Boolean!
   createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
   """
   Trigger an automation with a fake "version created" trigger. The "version created" will

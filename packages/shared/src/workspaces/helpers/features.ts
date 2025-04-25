@@ -6,6 +6,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePlans
 } from './plans.js'
+import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
 
 /**
  * WORKSPACE FEATURES
@@ -218,4 +219,43 @@ export const WorkspaceUnpaidPlanConfigs: {
 export const WorkspacePlanConfigs = {
   ...WorkspacePaidPlanConfigs,
   ...WorkspaceUnpaidPlanConfigs
+}
+
+/**
+ * Checks if a workspace exceeds its plan limits for projects and models
+ */
+export const workspaceExceedsPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+  if (!projectCount || !modelCount) return false
+
+  return projectCount > limits.projectCount || modelCount > limits.modelCount
+}
+
+/**
+ * Checks if a workspace reached its plan limits for projects and models
+ */
+export const workspaceReachedPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+
+  return projectCount === limits.projectCount || modelCount === limits.modelCount
 }

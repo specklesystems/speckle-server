@@ -68,6 +68,7 @@
           v-model:selected-function="selectedFunction"
           :preselected-function="validatedPreselectedFunction"
           :page-size="2"
+          :is-test-automation="true"
           :workspace-id="workspaceId"
         />
       </template>

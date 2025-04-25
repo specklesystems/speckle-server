@@ -1,8 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <LayoutDialog v-model:open="isOpen" :buttons="dialogButtons" max-width="md">
-    <template #header>Invite to Project</template>
+  <LayoutDialog
+    v-model:open="isOpen"
+    prevent-close-on-click-outside
+    :buttons="dialogButtons"
+    max-width="md"
+  >
+    <template #header>Invite to project</template>
+    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
+      Search existing workspace members or invite entirely new.
+    </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
         <template v-for="(item, index) in fields" :key="item.key">
@@ -13,16 +21,39 @@
             :show-delete="fields.length > 1"
             :can-invite-new-members="isAdmin || !isInWorkspace"
             :show-project-roles="!isInWorkspace"
+            :show-label="index === 0"
+            :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
           />
-          <hr v-if="index !== fields.length - 1" class="flex-1 mt-3 border-outline-3" />
         </template>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-          Add another user
-        </FormButton>
+        <div>
+          <div
+            :key="`add-user-${fields.length}`"
+            v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
+            class="inline-block"
+          >
+            <FormButton
+              color="subtle"
+              :icon-left="PlusIcon"
+              :disabled="disableAddUserButton"
+              @click="addInviteItem"
+            >
+              Add another user
+            </FormButton>
+          </div>
+        </div>
       </div>
     </form>
+    <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      As a project owner you can only add existing workspace members to the project. Ask
+      a workspace admin if you need to invite new people to the workspace.
+    </p>
+    <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      New people you invite will join as workspace guests on a free Viewer seat with
+      access only to this project. Give them an Editor seat later if they need to
+      contribute to this project beyond just viewing and commenting.
+    </p>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -85,6 +116,7 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
+const disableAddUserButton = computed(() => fields.value.length >= 10)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -116,17 +148,22 @@ const onSubmit = handleSubmit(async () => {
   const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
     invites.map((u) => ({
       role: u.projectRole,
-      ...(isAdmin.value ? { email: u.email } : { userId: u.userId }),
+      ...(isInWorkspace.value
+        ? isAdmin.value && !u.userId
+          ? { email: u.email }
+          : { userId: u.userId }
+        : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
-            workspaceRole: u.project?.id
-              ? Roles.Workspace.Member
-              : Roles.Workspace.Guest
+            workspaceRole: Roles.Workspace.Guest
           }
         : {})
     }))
 
-  if (!inputs.length) return
+  if (!inputs.length) {
+    isOpen.value = false
+    return
+  }
 
   await createInvite(props.project.id, inputs)
 

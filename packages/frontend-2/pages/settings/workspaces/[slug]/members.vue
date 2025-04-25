@@ -21,31 +21,22 @@ import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
-import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment SettingsWorkspacesMembers_Workspace on Workspace {
+  fragment SettingsWorkspacesMembersCounts_Workspace on Workspace {
     id
     role
-    team {
-      items {
-        id
-        role
-      }
-    }
     invitedTeam {
-      user {
-        id
-      }
+      id
     }
     adminWorkspacesJoinRequests {
       items {
         id
         status
       }
-      totalCount
     }
   }
 `)
@@ -78,6 +69,7 @@ const joinRequestCount = computed(
       (item) => item.status === WorkspaceJoinRequestStatus.Pending
     ).length
 )
+
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberTotalCount.value },
   { title: 'Guests', id: 'guests', count: guestCount.value },

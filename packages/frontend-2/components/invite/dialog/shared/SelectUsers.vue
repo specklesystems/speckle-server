@@ -1,8 +1,6 @@
 <template>
   <form>
-    <div class="flex flex-col gap-y-3 text-foreground">
-      <slot />
-
+    <div class="flex flex-col gap-y-3 text-foreground mb-3">
       <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
         <div class="flex flex-col gap-y-3 flex-1">
           <div class="flex flex-row gap-x-3">
@@ -56,10 +54,24 @@
           </CommonTextLink>
         </div>
       </div>
-      <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-        Add another user
-      </FormButton>
+      <div>
+        <div
+          :key="`add-user-${fields.length}`"
+          v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
+          class="inline-block"
+        >
+          <FormButton
+            color="subtle"
+            :icon-left="PlusIcon"
+            :disabled="disableAddUserButton"
+            @click="addInviteItem"
+          >
+            Add another user
+          </FormButton>
+        </div>
+      </div>
     </div>
+    <slot />
   </form>
 </template>
 <script setup lang="ts">
@@ -91,6 +103,8 @@ const {
   push: pushInvite,
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
+
+const disableAddUserButton = computed(() => fields.value.length >= 10)
 
 const addInviteItem = () => {
   pushInvite({

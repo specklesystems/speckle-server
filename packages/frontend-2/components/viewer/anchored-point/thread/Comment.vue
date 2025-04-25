@@ -66,5 +66,5 @@ const createdAt = computed(() => {
   }
 })
 
-const isLimited = computed(() => !props.comment.rawText)
+const isLimited = computed(() => !props.comment.text)
 </script>

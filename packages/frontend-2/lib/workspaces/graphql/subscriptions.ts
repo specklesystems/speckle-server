@@ -10,7 +10,8 @@ export const onWorkspaceUpdatedSubscription = graphql(`
       id
       workspace {
         id
-        ...WorkspaceProjectList_Workspace
+        ...WorkspaceDashboard_Workspace
+        ...WorkspaceDashboardProjectList_Workspace
       }
     }
   }

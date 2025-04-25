@@ -44,37 +44,34 @@
               size="sm"
               color="outline"
               :disabled="isProjectDisabled(project)"
-              @click="onMoveClick(project)"
+              @click="handleProjectClick(project)"
             >
               Move...
             </FormButton>
           </div>
         </div>
       </div>
-      <p v-else class="py-4 text-body-xs text-foreground-2">
+      <p v-else-if="!search?.length" class="py-4 text-body-xs text-foreground-2">
         You don't have any projects that can be moved into this workspace. Only projects
         you own and that aren't in another workspace can be moved.
       </p>
+      <p v-else class="py-4 text-body-xs text-foreground-2">
+        No projects match your search.
+      </p>
     </template>
     <InfiniteLoading
-      v-if="moveableProjects?.length && !search?.length"
+      v-if="!search?.length"
       :settings="{ identifier }"
-      class="py-4"
       @infinite="onInfiniteLoad"
     />
-    <WorkspacePlanLimitReachedDialog
+    <WorkspacePlanProjectModelLimitReachedDialog
       v-model:open="showLimitDialog"
-      subtitle="Upgrade your plan to move project"
-    >
-      <template v-if="limitReachedWorkspace">
-        <p class="text-body-xs text-foreground-2">
-          The workspace
-          <span class="font-bold">{{ limitReachedWorkspace.name }}</span>
-          is on a {{ formatName(limitReachedWorkspace.plan?.name) }} plan with a limit
-          of 1 project and 5 models. Upgrade the workspace to add more projects.
-        </p>
-      </template>
-    </WorkspacePlanLimitReachedDialog>
+      :workspace-name="workspace?.name"
+      :plan="workspace?.plan?.name"
+      :workspace-role="workspace?.role"
+      :workspace-slug="workspace?.slug || ''"
+      location="move_project_dialog"
+    />
   </div>
 </template>
 
@@ -91,7 +88,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceMoveProjectManagerUserQuery } from '~/lib/workspaces/graphql/queries'
-import { formatName } from '~/lib/billing/helpers/plan'
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
@@ -101,8 +97,9 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  workspaceSlug?: string
+  workspace?: WorkspaceMoveProjectManager_WorkspaceFragment
   projectPermissions?: PermissionCheckResult
+  workspaceId?: string
 }>()
 
 const {
@@ -113,10 +110,12 @@ const {
   query: workspaceMoveProjectManagerUserQuery,
   baseVariables: computed(() => ({
     cursor: null as string | null,
+    sortBy: 'role',
     filter: {
       search: search.value?.length ? search.value : null,
       personalOnly: true
-    }
+    },
+    workspaceId: props.workspaceId || ''
   })),
   resolveKey: (vars) => [vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.activeUser?.projects,
@@ -128,9 +127,6 @@ const {
 })
 
 const showLimitDialog = ref(false)
-const limitReachedWorkspace = ref<WorkspaceMoveProjectManager_WorkspaceFragment | null>(
-  null
-)
 
 const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
 const moveableProjects = computed(() => userProjects.value)
@@ -138,7 +134,10 @@ const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
 
 const isProjectDisabled = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (project.permissions.canMoveToWorkspace.authorized) {
+    if (
+      project.permissions.canMoveToWorkspace.authorized ||
+      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+    ) {
       return false
     }
     return true
@@ -147,23 +146,29 @@ const isProjectDisabled = computed(
 
 const getProjectTooltip = computed(
   () => (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-    if (project.permissions.canMoveToWorkspace.authorized) {
+    if (
+      project.permissions.canMoveToWorkspace.authorized ||
+      project.permissions.canMoveToWorkspace.code === 'WorkspaceLimitsReached'
+    ) {
       return undefined
+    }
+    if (project.permissions.canMoveToWorkspace.code === 'ProjectNotEnoughPermissions') {
+      return 'Only the project owner can move this project'
     }
     return project.permissions.canMoveToWorkspace.message
   }
 )
 
-const onMoveClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
-  if (props.workspaceSlug) {
-    limitReachedWorkspace.value = {
-      name: props.workspaceSlug
-    } as WorkspaceMoveProjectManager_WorkspaceFragment
+const handleProjectClick = (project: WorkspaceMoveProjectManager_ProjectFragment) => {
+  const permission = project.permissions?.canMoveToWorkspace
+  if (permission?.code === 'WorkspaceLimitsReached') {
     showLimitDialog.value = true
     return
   }
 
-  emit('project-selected', project)
+  if (permission?.authorized) {
+    emit('project-selected', project)
+  }
 }
 
 const showLoading = computed(() => loading.value && userProjects.value.length === 0)

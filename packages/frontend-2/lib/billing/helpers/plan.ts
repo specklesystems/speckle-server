@@ -1,4 +1,5 @@
 import { WorkspacePlans } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const formatPrice = (price?: { amount: number; currency: string }) => {
   if (!price) return ''
@@ -13,7 +14,7 @@ export const formatPrice = (price?: { amount: number; currency: string }) => {
 }
 
 // Internal plan names dont match the names we use in the product
-export const formatName = (plan?: WorkspacePlans) => {
+export const formatName = (plan?: MaybeNullOrUndefined<WorkspacePlans>) => {
   if (!plan) return ''
 
   const formattedPlanNames: Record<WorkspacePlans, string> = {

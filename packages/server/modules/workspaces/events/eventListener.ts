@@ -166,6 +166,8 @@ export const onInviteFinalizedFactory =
     getStream: GetStream
     logger: typeof logger
     updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
+    getWorkspaceRole: GetWorkspaceRoleForUser
+    upsertProjectRole: UpsertProjectRole
   }) =>
   async (
     payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Finalized]
@@ -201,8 +203,22 @@ export const onInviteFinalizedFactory =
       userId: targetUserId,
       workspaceId: project.workspaceId,
       skipProjectRoleUpdatesFor: [project.id],
+      preventRoleDowngrade: true,
       updatedByUserId: invite.inviterId
     })
+
+    // Automatically promote user to project owner if workspace admin
+    const finalWorkspaceRole = await deps.getWorkspaceRole({
+      userId: targetUserId,
+      workspaceId: project.workspaceId
+    })
+    if (finalWorkspaceRole?.role === Roles.Workspace.Admin) {
+      await deps.upsertProjectRole({
+        projectId: project.id,
+        userId: targetUserId,
+        role: Roles.Stream.Owner
+      })
+    }
   }
 
 export const onWorkspaceAuthorizedFactory =
@@ -667,7 +683,9 @@ export const initializeEventListenersFactory =
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
             ensureValidWorkspaceRoleSeat
-          })
+          }),
+          getWorkspaceRole: getWorkspaceRoleForUserFactory({ db }),
+          upsertProjectRole: upsertProjectRoleFactory({ db })
         })
         await onInviteFinalized(payload)
       }),

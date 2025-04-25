@@ -20,6 +20,14 @@ export default {
           projectId: parent.projectId
         })
       return Authz.toGraphqlResult(canUpdateAutomation)
+    },
+    canDelete: async (parent, _args, context) => {
+      const canDeleteAutomation =
+        await context.authPolicies.project.automation.canDelete({
+          userId: context.userId,
+          projectId: parent.projectId
+        })
+      return Authz.toGraphqlResult(canDeleteAutomation)
     }
   },
   ProjectPermissionChecks: {

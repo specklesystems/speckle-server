@@ -369,7 +369,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() - TIME_MS.day)
       })
     })
 
@@ -589,7 +589,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         getWorkspaceSsoSession: async () => ({
           providerId: 'ssoSessionId',
           userId: 'userId',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+          validUntil: new Date(Date.now() - TIME_MS.day)
         })
       })
 
@@ -862,7 +862,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
         getWorkspaceSsoSession: async () => ({
           providerId: 'ssoSessionId',
           userId: 'userId',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+          validUntil: new Date(Date.now() - TIME_MS.day)
         })
       })
 

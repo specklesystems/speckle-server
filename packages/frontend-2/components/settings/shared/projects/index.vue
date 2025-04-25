@@ -12,21 +12,22 @@
           v-on="on"
         />
       </div>
-      <FormButton :disabled="disableCreate" @click="openNewProject = true">
-        Create
-      </FormButton>
+      <div v-tippy="disabledTooltip">
+        <FormButton :disabled="disableCreate" @click="handleCreateProject">
+          Create
+        </FormButton>
+      </div>
     </div>
 
     <LayoutTable
       class="mt-6"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
-        { id: 'type', header: 'Type', classes: 'col-span-1' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
-        { id: 'contributors', header: 'Contributors', classes: 'col-span-2 pr-8' },
+        { id: 'contributors', header: 'Project members', classes: 'col-span-2 pr-8' },
         { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
       :items="projects"
@@ -35,12 +36,6 @@
         <NuxtLink :to="projectRoute(item.id)">
           {{ isProject(item) ? item.name : '' }}
         </NuxtLink>
-      </template>
-
-      <template #type="{ item }">
-        <div class="capitalize">
-          {{ isProject(item) ? item.visibility.toLowerCase() : '' }}
-        </div>
       </template>
 
       <template #created="{ item }">
@@ -79,6 +74,7 @@
           :items="actionItems[item.id]"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          :menu-id="menuId"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
@@ -158,11 +154,18 @@ const props = defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
   disableCreate?: boolean
+  disabledTooltip?: string
+  limitReached?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'project-limit-reached'): void
 }>()
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
+const menuId = useId()
 
 const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
@@ -232,5 +235,13 @@ const onActionChosen = (
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const handleCreateProject = () => {
+  if (props.limitReached) {
+    emit('project-limit-reached')
+  } else {
+    openNewProject.value = true
+  }
 }
 </script>

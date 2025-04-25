@@ -13,7 +13,7 @@ export type GenericSettingsMenuItem = BaseSettingsMenuItem & {
 
 export type WorkspaceSettingsMenuItem = BaseSettingsMenuItem & {
   name: string
-  route: (slug: string) => string
+  route: (slug?: string) => string
 }
 
 export enum WorkspaceUserActionTypes {

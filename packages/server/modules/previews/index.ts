@@ -13,12 +13,12 @@ import {
   getServerOrigin,
   previewServiceShouldUsePrivateObjectsServerUrl
 } from '@/modules/shared/helpers/envHelper'
-import Bull, { type Queue } from 'bull'
+import Bull, { type Queue, type QueueOptions } from 'bull'
 import Redis, { type RedisOptions } from 'ioredis'
 import { createBullBoard } from 'bull-board'
 import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { Roles, TIME } from '@speckle/shared'
+import { ensureError, Roles, TIME } from '@speckle/shared'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
@@ -133,14 +133,18 @@ const scheduleRetryFailedPreviews = async ({
     }
   )
 }
+import { isRedisReady } from '@/modules/shared/redis/redis'
 
-const getPreviewQueues = (params: { responseQueueName: string }) => {
+const JobQueueName = 'preview-service-jobs'
+const ResponseQueueNamePrefix = 'preview-service-results'
+
+const getPreviewQueues = async (params: { responseQueueName: string }) => {
   const { responseQueueName } = params
   let client: Redis
   let subscriber: Redis
   const redisUrl = getPreviewServiceRedisUrl() ?? getRedisUrl()
 
-  const opts = {
+  const opts: QueueOptions = {
     // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
     createClient(type: string, redisOpts: RedisOptions) {
       switch (type) {
@@ -171,7 +175,8 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
   }
 
   // previews are requested on this queue
-  const previewRequestQueue = new Bull('preview-service-jobs', opts)
+  const previewRequestQueue = new Bull(JobQueueName, opts)
+  await isRedisReady(previewRequestQueue.client)
   addRequestQueueListeners({
     logger,
     previewRequestQueue
@@ -179,10 +184,10 @@ const getPreviewQueues = (params: { responseQueueName: string }) => {
 
   // rendered previews are sent back on this queue
   const previewResponseQueue = new Bull(responseQueueName, opts)
+
+  await isRedisReady(previewResponseQueue.client)
   return { previewRequestQueue, previewResponseQueue }
 }
-
-const ResponseQueueNamePrefix = 'preview-service-results'
 
 export const init: SpeckleModule['init'] = async ({
   app,
@@ -205,9 +210,21 @@ export const init: SpeckleModule['init'] = async ({
       new URL(getServerOrigin()).hostname
     }`
 
-    const { previewRequestQueue, previewResponseQueue } = getPreviewQueues({
-      responseQueueName
-    })
+    let previewRequestQueue: Bull.Queue
+    let previewResponseQueue: Bull.Queue
+
+    try {
+      ;({ previewRequestQueue, previewResponseQueue } = await getPreviewQueues({
+        responseQueueName
+      }))
+    } catch (e) {
+      const err = ensureError(e, 'Unknown error when creating preview queues')
+      moduleLogger.error(
+        { err },
+        'Could not create preview queues. Disabling previews.'
+      )
+      return
+    }
 
     scheduledTasks = [
       ...(FF_RETRY_ERRORED_PREVIEWS_ENABLED
