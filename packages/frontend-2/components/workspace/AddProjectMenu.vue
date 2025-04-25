@@ -36,6 +36,7 @@
       <WorkspaceMoveProjectManager
         v-model:open="showMoveProjectDialog"
         :workspace-slug="workspaceSlug"
+        :workspace-id="workspace?.id"
       />
       <WorkspacePlanProjectModelLimitReachedDialog
         v-model:open="showLimitDialog"

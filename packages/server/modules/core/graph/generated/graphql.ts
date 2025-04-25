@@ -2330,6 +2330,8 @@ export type ProjectCollaborator = {
   /** The collaborator's workspace seat type for the workspace this project is in */
   seatType?: Maybe<WorkspaceSeatType>;
   user: LimitedUser;
+  /** The collaborator's workspace role for the workspace this project is in, if any */
+  workspaceRole?: Maybe<Scalars['String']['output']>;
 };
 
 export type ProjectCollection = {
@@ -4019,6 +4021,7 @@ export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<UserProjectsFilter>;
   limit?: Scalars['Int']['input'];
+  sortBy?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 
@@ -4166,6 +4169,11 @@ export type UserProjectCollection = {
 };
 
 export type UserProjectsFilter = {
+  /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: InputMaybe<Scalars['Boolean']['input']>;
   /** Only include projects where user has the specified roles */
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Only include personal projects (not in any workspace) */
@@ -4503,6 +4511,7 @@ export type Workspace = {
   role?: Maybe<Scalars['String']['output']>;
   /** Active user's seat type for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   seatType?: Maybe<WorkspaceSeatType>;
+  seats?: Maybe<WorkspaceSubscriptionSeats>;
   slug: Scalars['String']['output'];
   /** Information about the workspace's SSO configuration and the current user's SSO session, if present */
   sso?: Maybe<WorkspaceSso>;
@@ -6712,6 +6721,7 @@ export type ProjectCollaboratorResolvers<ContextType = GraphQLContext, ParentTyp
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   seatType?: Resolver<Maybe<ResolversTypes['WorkspaceSeatType']>, ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  workspaceRole?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7431,6 +7441,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   readOnly?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   seatType?: Resolver<Maybe<ResolversTypes['WorkspaceSeatType']>, ParentType, ContextType>;
+  seats?: Resolver<Maybe<ResolversTypes['WorkspaceSubscriptionSeats']>, ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sso?: Resolver<Maybe<ResolversTypes['WorkspaceSso']>, ParentType, ContextType>;
   subscription?: Resolver<Maybe<ResolversTypes['WorkspaceSubscription']>, ParentType, ContextType>;

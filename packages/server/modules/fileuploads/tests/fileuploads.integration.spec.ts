@@ -431,7 +431,7 @@ describe('FileUploads @fileuploads integration', () => {
 
       expect(response.statusCode).to.equal(403)
       expect(response.body).to.deep.equal({
-        error: 'You do not have the required stream role'
+        error: 'You do not have access to the project'
       })
 
       const gqlResponse = await sendRequest(userOneToken, {

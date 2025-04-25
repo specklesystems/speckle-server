@@ -6,7 +6,7 @@ import {
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
   isPaidPlan as isPaidPlanShared,
-  isNewWorkspacePlan,
+  isSelfServeAvailablePlan,
   doesPlanIncludeUnlimitedProjectsAddon
 } from '@speckle/shared'
 import {
@@ -30,20 +30,20 @@ graphql(`
         modelCount
       }
     }
+    seats {
+      editors {
+        assigned
+        available
+      }
+      viewers {
+        assigned
+        available
+      }
+    }
     subscription {
       billingInterval
       currentBillingCycleEnd
       currency
-      seats {
-        editors {
-          assigned
-          available
-        }
-        viewers {
-          assigned
-          available
-        }
-      }
     }
   }
 `)
@@ -78,9 +78,10 @@ export const useWorkspacePlan = (slug: string) => {
   const isPaidPlan = computed(
     () => plan.value?.name && isPaidPlanShared(plan.value?.name)
   )
-  const isNewPlan = computed(
-    () => plan.value?.name && isNewWorkspacePlan(plan.value?.name)
-  )
+  const isSelfServePlan = computed(() => {
+    if (!plan.value?.name) return false
+    return isSelfServeAvailablePlan(plan.value.name)
+  })
   const hasUnlimitedAddon = computed(() => {
     if (!plan.value?.name) return false
     return doesPlanIncludeUnlimitedProjectsAddon(plan.value.name)
@@ -107,7 +108,7 @@ export const useWorkspacePlan = (slug: string) => {
   )
 
   // Seat information
-  const seats = computed(() => subscription.value?.seats)
+  const seats = computed(() => result.value?.workspaceBySlug?.seats)
   const hasAvailableEditorSeats = computed(() => {
     if (seats.value?.editors.available && seats.value?.editors.assigned) {
       return seats.value?.editors.available - seats.value?.editors.assigned > 0
@@ -147,8 +148,8 @@ export const useWorkspacePlan = (slug: string) => {
     isUnlimitedPlan,
     isBusinessPlan,
     isPaidPlan,
-    isNewPlan,
     currency,
-    hasUnlimitedAddon
+    hasUnlimitedAddon,
+    isSelfServePlan
   }
 }

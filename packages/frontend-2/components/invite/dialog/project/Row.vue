@@ -98,14 +98,10 @@
           />
         </div>
       </div>
-      <CommonTextLink :class="showLabel && 'mt-7'">
-        <TrashIcon
-          v-if="showDelete"
-          class="size-4 text-foreground-2"
-          @click="$emit('remove')"
-        />
-        <div v-else class="size-4" />
+      <CommonTextLink v-if="showDelete" :class="showLabel && 'mt-7'">
+        <TrashIcon class="size-4 text-foreground-2" @click="$emit('remove')" />
       </CommonTextLink>
+      <div v-else class="size-4" />
     </div>
   </div>
 </template>

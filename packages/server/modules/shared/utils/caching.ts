@@ -102,7 +102,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 
       const result = await resolver(...args)
       await cacheProvider.set(cacheKey, result, { ttlMs })
-      logger.info("Cache '{cacheName}' upserted for specific args")
+      logger[logLevel]("Cache '{cacheName}' upserted for specific args")
 
       return result
     }

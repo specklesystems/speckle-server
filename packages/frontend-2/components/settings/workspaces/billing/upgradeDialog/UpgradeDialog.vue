@@ -18,6 +18,7 @@
       :slug="slug"
       :plan="finalNewPlan"
       :billing-interval="billingInterval"
+      :editor-seat-count="editorSeatCount"
     />
   </LayoutDialog>
 </template>
@@ -54,9 +55,8 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
 )
 
 const { upgradePlan, redirectToCheckout } = useBillingActions()
-const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
-  props.slug
-)
+const { hasUnlimitedAddon, plan, subscription, statusIsCanceled, seats } =
+  useWorkspacePlan(props.slug)
 const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
@@ -107,6 +107,8 @@ const finalNewPlan = computed(() => {
 
   return props.plan
 })
+
+const editorSeatCount = computed(() => seats.value?.editors.assigned || 0)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {

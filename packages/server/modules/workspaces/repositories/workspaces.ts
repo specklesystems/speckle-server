@@ -31,6 +31,7 @@ import {
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
+  GetWorkspacesRolesForUsers,
   QueryWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
@@ -269,6 +270,26 @@ export const getWorkspaceRoleForUserFactory =
         .where({ userId, workspaceId })
         .first()) ?? null
     )
+  }
+
+export const getWorkspacesRolesForUsersFactory =
+  (deps: { db: Knex }): GetWorkspacesRolesForUsers =>
+  async (reqs) => {
+    const query = tables.workspacesAcl(deps.db).whereIn(
+      [DbWorkspaceAcl.col.userId, DbWorkspaceAcl.col.workspaceId],
+      reqs.map(({ userId, workspaceId }) => [userId, workspaceId])
+    )
+    const results = await query
+
+    return results.reduce((acc, acl) => {
+      const { userId, workspaceId } = acl
+      if (!acc[workspaceId]) {
+        acc[workspaceId] = {}
+      }
+
+      acc[workspaceId][userId] = acl
+      return acc
+    }, {} as Awaited<ReturnType<GetWorkspacesRolesForUsers>>)
   }
 
 export const getWorkspaceRolesForUserFactory =

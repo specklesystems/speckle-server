@@ -59,8 +59,9 @@
 
           <div class="mt-2 flex justify-between items-center">
             <h3 class="text-body">{{ formatName(props.plan) }}</h3>
-            <p class="text-body-2xs">{{ newEditorPrice }} per editor seat/month</p>
+            <p class="text-body-2xs">{{ newEditorPrice }} per editor seat / month</p>
           </div>
+
           <template v-if="newPlanHasUnlimitedAddon">
             <div class="mt-2 flex justify-between items-center">
               <CommonBadge
@@ -69,12 +70,42 @@
               >
                 Unlimited Projects & Models
               </CommonBadge>
-              <p class="text-body-2xs">{{ newAddonPrice }} per editor seat/month</p>
+              <p class="text-body-2xs">{{ newAddonPrice }} per editor seat / month</p>
             </div>
+            <template v-if="!isFreePlan">
+              <hr class="my-4 border-outline-2" />
+              <div class="flex justify-between items-center">
+                <h3 class="text-body">Total</h3>
+                <p class="text-body-2xs">
+                  {{ newTotalPriceFormatted }} per editor seat / month
+                </p>
+              </div>
+            </template>
+          </template>
+
+          <template v-if="isFreePlan">
             <hr class="my-4 border-outline-2" />
-            <div class="mt-2 flex justify-between items-center">
-              <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ newTotalPrice }} per editor seat/month</p>
+            <div class="flex flex-col gap-y-2">
+              <div class="flex justify-between items-center">
+                <h3 class="text-body">Total</h3>
+                <p class="text-body-2xs">
+                  {{ newTotalPriceFormatted }} x {{ editorSeatCount }} per editor seat{{
+                    editorSeatCount === 1 ? '' : 's'
+                  }}
+                  / month
+                </p>
+              </div>
+              <div class="flex justify-end">
+                <p class="text-body-2xs font-semibold">
+                  {{
+                    formatPrice({
+                      amount: newTotalPrice * editorSeatCount,
+                      currency
+                    })
+                  }}
+                  / month
+                </p>
+              </div>
             </div>
           </template>
         </div>
@@ -111,6 +142,7 @@ const props = defineProps<{
   slug: string
   plan: PaidWorkspacePlansNew
   billingInterval: BillingInterval
+  editorSeatCount: number
 }>()
 
 const {
@@ -204,13 +236,16 @@ const totalPrice = computed(() => {
 const newTotalPrice = computed(() => {
   const planPrice =
     prices.value?.[currency.value]?.[props.plan]?.[props.billingInterval]
-  if (!planPrice) return null
+  if (!planPrice) return 0
 
+  return props.billingInterval === BillingInterval.Yearly
+    ? planPrice.amount / 12
+    : planPrice.amount
+})
+
+const newTotalPriceFormatted = computed(() => {
   return formatPrice({
-    amount:
-      props.billingInterval === BillingInterval.Yearly
-        ? planPrice.amount / 12
-        : planPrice.amount,
+    amount: newTotalPrice.value,
     currency: currency.value
   })
 })

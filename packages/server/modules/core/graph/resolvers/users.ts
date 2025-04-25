@@ -47,6 +47,9 @@ import {
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
+import { asOperation } from '@/modules/shared/command'
+import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
+import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -332,19 +335,35 @@ export = {
       )
 
       // If onboarding was marked complete successfully and we have onboarding data
-      if (success && args.input && getMailchimpStatus()) {
+      if (success && args.input) {
+        const choices = args.input
         try {
-          const user = await getUser(userId)
-          const { listId } = getMailchimpOnboardingIds()
+          await asOperation(
+            async () => {
+              const setUserOnboardingChoices = setUserOnboardingChoicesFactory({
+                getUser: getUserFactory({ db }),
+                updateMailchimpMemberTags,
+                getMixpanelClient,
+                getMailchimpStatus,
+                getMailchimpOnboardingIds
+              })
 
-          await updateMailchimpMemberTags(user, listId, {
-            role: args.input?.role || undefined,
-            plans: args.input?.plans || undefined,
-            source: args.input?.source || undefined
-          })
-        } catch (error) {
-          // Log but don't fail the request
-          ctx.log.warn({ err: error }, 'Failed to update Mailchimp tags')
+              return await setUserOnboardingChoices({
+                userId,
+                choices: {
+                  role: choices.role || undefined,
+                  plans: choices.plans || undefined,
+                  source: choices.source || undefined
+                }
+              })
+            },
+            {
+              logger: ctx.log,
+              name: 'Set user onboarding choices'
+            }
+          )
+        } catch {
+          // Suppress, already logged by asOperation
         }
       }
 
