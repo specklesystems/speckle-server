@@ -6,7 +6,7 @@
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"
-      prompt="Press enter to reply"
+      prompt="Press Enter to reply"
       autofocus
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
