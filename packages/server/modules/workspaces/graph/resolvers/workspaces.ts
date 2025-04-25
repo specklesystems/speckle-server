@@ -1501,8 +1501,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
         role: async (parent, _args, ctx) => {
-          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
-          return workspace?.role || null
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: ctx.userId!,
+            workspaceId: parent.id
+          })
+          return acl?.role || null
         },
         team: async (parent, args) => {
           const roles = args.filter?.roles?.map((r) => {
@@ -1751,6 +1754,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }
 
           return parent.email
+        }
+      },
+      ProjectCollaborator: {
+        workspaceRole: async (parent, _args, ctx) => {
+          const project = await ctx.loaders.streams.getStream.load(parent.projectId)
+          if (!project?.workspaceId) return null
+
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: parent.user.id,
+            workspaceId: project.workspaceId
+          })
+          return acl?.role || null
         }
       },
       User: {
