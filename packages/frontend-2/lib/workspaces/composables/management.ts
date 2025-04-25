@@ -163,7 +163,6 @@ export const useProcessWorkspaceInvite = () => {
           update: async (cache, { data, errors }) => {
             if (errors?.length) return
 
-            if (options?.callback) await options.callback()
             const accepted = data?.workspaceMutations.invites.use
 
             if (accepted) {
@@ -205,6 +204,8 @@ export const useProcessWorkspaceInvite = () => {
             cache.evict({
               id: getCacheId('PendingWorkspaceCollaborator', inviteId)
             })
+
+            if (options?.callback) await options.callback()
           }
         }
       ).catch(convertThrowIntoFetchResult)) || {}
@@ -333,19 +334,19 @@ export const useWorkspaceInviteManager = <
       },
       {
         callback: async () => {
-          if (preventRedirect) return
-
-          // Redirect
-          if (accept) {
-            if (workspaceSlug) {
-              navigateTo(workspaceRoute(workspaceSlug))
-              mutateActiveWorkspaceSlug(workspaceSlug)
+          if (!preventRedirect) {
+            // Redirect
+            if (accept) {
+              if (workspaceSlug) {
+                navigateTo(workspaceRoute(workspaceSlug))
+                mutateActiveWorkspaceSlug(workspaceSlug)
+              } else {
+                window.location.reload()
+              }
+              await waitForever() // to prevent UI changes while reload is happening
             } else {
-              window.location.reload()
+              await goHome()
             }
-            await waitForever() // to prevent UI changes while reload is happening
-          } else {
-            await goHome()
           }
         },
         preventErrorToasts
