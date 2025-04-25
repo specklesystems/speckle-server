@@ -85,7 +85,6 @@ const projectPageCollaboratorsQuery = graphql(`
       ...ProjectPageCollaborators_Project
       workspaceId
       workspace {
-        ...ProjectPageTeamInternals_Workspace
         ...SettingsWorkspacesMembersTableHeader_Workspace
         name
         logo
@@ -134,7 +133,7 @@ const workspaceAdmins = computed(
   () => pageResult.value?.project?.workspace?.team?.items || []
 )
 const updateRole = useUpdateUserRole(project)
-const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
+const { collaboratorListItems, isOwner } = useTeamInternals(project)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true

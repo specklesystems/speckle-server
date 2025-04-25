@@ -209,7 +209,10 @@ const onActionChosen = (
 }
 
 const onRoleChange = (newRole: StreamRoles) => {
-  if (props.collaborator.seatType === SeatTypes.Viewer) {
+  if (
+    props.collaborator.seatType === SeatTypes.Viewer &&
+    newRole !== Roles.Stream.Reviewer
+  ) {
     showUpgradeSeatDialog.value = true
     return
   }
