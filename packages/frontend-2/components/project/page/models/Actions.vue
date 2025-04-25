@@ -55,6 +55,17 @@ graphql(`
   fragment ProjectPageModelsActions on Model {
     id
     name
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+      canCreateVersion {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -86,7 +97,6 @@ const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
-  canEdit?: boolean
   menuPosition?: HorizontalDirection
 }>()
 
@@ -100,7 +110,10 @@ const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
 const embedDialogOpen = ref(false)
 
-const isMain = computed(() => props.model.name === 'main')
+const canEdit = computed(() => props.model.permissions.canUpdate)
+const canDelete = computed(() => props.model.permissions.canDelete)
+const canCreateVersion = computed(() => props.model.permissions.canCreateVersion)
+
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ...(isLoggedIn.value
     ? [
@@ -108,8 +121,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Edit model...',
             id: ActionTypes.Rename,
-            disabled: !props.canEdit,
-            disabledTooltip: 'Insufficient permissions'
+            disabled: !canEdit.value.authorized,
+            disabledTooltip: canEdit.value.message || 'Insufficient permissions'
           }
         ]
       ]
@@ -119,12 +132,17 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       title: 'View versions',
       id: ActionTypes.ViewVersions
     },
-    {
-      title: 'Upload new version...',
-      id: ActionTypes.UploadVersion,
-      disabled: !props.canEdit,
-      disabledTooltip: 'Insufficient permissions'
-    }
+    ...(isLoggedIn.value
+      ? [
+          {
+            title: 'Upload new version...',
+            id: ActionTypes.UploadVersion,
+            disabled: !canCreateVersion.value.authorized,
+            disabledTooltip:
+              canCreateVersion.value.message || 'Insufficient permissions'
+          }
+        ]
+      : [])
   ],
   [
     { title: 'Copy link', id: ActionTypes.Share },
@@ -137,8 +155,9 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Delete...',
             id: ActionTypes.Delete,
-            disabled: isMain.value || !props.canEdit,
-            disabledTooltip: 'Insufficient permissions'
+            // TODO:
+            disabled: !canDelete.value.authorized,
+            disabledTooltip: canDelete.value.message || 'Insufficient permissions'
           }
         ]
       ]

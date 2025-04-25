@@ -102,9 +102,11 @@ import {
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
   GetStreamsCollaborators,
-  GetStreamsCollaboratorCounts
+  GetStreamsCollaboratorCounts,
+  GetImplicitUserProjectsCountFactory
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
+import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
@@ -699,19 +701,42 @@ const getUserStreamsQueryBaseFactory =
     streamIdWhitelist,
     workspaceId,
     onlyWithActiveSsoSession,
-    personalOnly
+    personalOnly,
+    includeImplicitAccess
   }: BaseUserStreamsQueryParams) => {
-    const query = tables
-      .streamAcl(deps.db)
-      .where(StreamAcl.col.userId, userId)
-      .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+    const query = tables.streams(deps.db).leftJoin(StreamAcl.name, (j1) => {
+      j1.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+        StreamAcl.col.userId,
+        userId
+      )
+    })
 
-    // select * from stream_acl sa
-    // join streams s on s.id = sa."resourceId"
-    // left join workspace_sso_providers wp on wp."workspaceId" = s."workspaceId"
-    // left join user_sso_sessions us on (us."userId" = sa."userId" and us."providerId" = wp."providerId")
-    // where sa."userId" = '7f1f8aa286'
-    // and ((wp."providerId" is not null and us."validUntil" > now()) or wp."providerId" is null)
+    if (includeImplicitAccess) {
+      /**
+       * implicit access rules:
+       * 1. user must have an explicit stream role OR
+       * 2. user must be a non-guest member of the project's workspace
+       */
+      query
+        .leftJoin(WorkspaceAcl.name, (j2) => {
+          j2.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+            WorkspaceAcl.col.userId,
+            userId
+          )
+        })
+        .andWhere((w1) => {
+          w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere(
+              WorkspaceAcl.col.role,
+              '!=',
+              Roles.Workspace.Guest
+            )
+          })
+        })
+    } else {
+      // expect explicit stream role
+      query.whereNotNull(StreamAcl.col.role)
+    }
 
     if (onlyWithActiveSsoSession) {
       query
@@ -769,6 +794,12 @@ const getUserStreamsQueryBaseFactory =
     return query
   }
 
+function addSortByProjectRoleCondition(query: Knex.QueryBuilder) {
+  return query.orderByRaw(
+    `CASE WHEN stream_acl."role" = '${Roles.Stream.Owner}' THEN 1 WHEN stream_acl."role" = '${Roles.Stream.Contributor}' THEN 2 WHEN stream_acl."role" = '${Roles.Stream.Reviewer}' THEN 3 end asc`
+  )
+}
+
 /**
  * Get streams the user is a collaborator on
  */
@@ -797,6 +828,15 @@ export const getUserStreamsPageFactory =
       ])
     }
 
+    if (params.sortBy && params.sortBy?.length > 0) {
+      for (const key of params.sortBy) {
+        if (key === 'role') {
+          addSortByProjectRoleCondition(query)
+          continue
+        }
+        query.orderBy(key, 'asc')
+      }
+    }
     query
       .orderBy(Streams.col.updatedAt, 'desc')
       .orderBy(Streams.col.id, 'desc')
@@ -1167,10 +1207,9 @@ export const revokeStreamPermissionsFactory =
       .count<{ count: string }[]>()
 
     if (parseInt(streamAclEntriesCount.count) === 1)
-      throw new StreamAccessUpdateError(
-        'Stream has only one ownership link left - cannot revoke permissions.',
-        { info: { streamId, userId } }
-      )
+      throw new StreamAccessUpdateError('A project needs at least one project owner', {
+        info: { streamId, userId }
+      })
 
     const aclEntry = existingPermission
     if (aclEntry?.role === Roles.Stream.Owner) {
@@ -1387,4 +1426,33 @@ export const getUserDeletableStreamsFactory =
     )) as { rows: { id: string }[] }
 
     return streams.rows.map((s) => s.id)
+  }
+
+/**
+ * Get count of projects user explicitly or implicitly (through workspaces) has access to
+ */
+export const getImplicitUserProjectsCountFactory =
+  (deps: { db: Knex }): GetImplicitUserProjectsCountFactory =>
+  async (params) => {
+    const q = tables
+      .streams(deps.db)
+      .select<{ count: string }[]>(knex.raw('COUNT(??) as count', [Streams.col.id]))
+      .leftJoin(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          params.userId
+        )
+      })
+      .leftJoin(WorkspaceAcl.name, (j) => {
+        j.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+          WorkspaceAcl.col.userId,
+          params.userId
+        )
+      })
+      .where((w) => {
+        w.whereNotNull(StreamAcl.col.userId).orWhereNotNull(WorkspaceAcl.col.userId)
+      })
+
+    const [{ count }] = await q
+    return parseInt(count)
   }

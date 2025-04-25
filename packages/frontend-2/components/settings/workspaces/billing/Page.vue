@@ -2,94 +2,90 @@
   <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0 flex flex-col gap-y-2 md:gap-y-4">
     <SettingsSectionHeader
       title="Billing and plans"
-      text="Update your payment information or switch plans according to your needs"
+      text="Get billing information and upgrade your plan"
     />
-    <CommonAlert v-if="!isNewPlan" color="danger">
-      <template #title>You are on an old plan</template>
-      <template #description>
-        <p>If you are a server admin use the buttons below to upgrade</p>
-      </template>
-    </CommonAlert>
+    <BillingAlert
+      v-if="showBillingAlert"
+      class="mb-6"
+      :workspace="workspace"
+      hide-settings-links
+    />
+    <BillingUsageAlert
+      v-if="reachedPlanLimit"
+      :plan-name="workspace?.plan?.name"
+      class="mb-6"
+    />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
-      <section v-if="isServerAdmin" class="flex flex-col gap-y-4 md:gap-y-6">
-        <div class="flex gap-x-4">
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Free)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 free 𝖕𝖑𝖆𝖓
-          </FormButton>
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Team)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 Starter 𝖕𝖑𝖆𝖓
-          </FormButton>
-          <FormButton
-            size="lg"
-            class="!bg-pink-500 !border-pink-700 mb-4"
-            @click="handleUpgradeClick(WorkspacePlans.Pro)"
-          >
-            𝕮𝖍𝖆𝖓𝖌𝖊 𝖙𝖔 Business 𝖕𝖑𝖆𝖓
-          </FormButton>
-        </div>
+      <section v-if="!isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Summary" subheading />
+        <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
       </section>
-      <template v-if="isNewPlan">
-        <section v-if="isPurchasablePlan" class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Summary" subheading />
-          <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
-        </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Usage" subheading />
-          <SettingsWorkspacesBillingUsage :slug="slug" />
-        </section>
+      <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <SettingsSectionHeader title="Usage" subheading />
+        <SettingsWorkspacesBillingUsage
+          :slug="slug"
+          :is-workspace-admin="isWorkspaceAdmin"
+        />
+      </section>
 
+      <ClientOnly>
         <section class="flex flex-col gap-y-4 md:gap-y-6">
           <SettingsSectionHeader title="Upgrade your plan" subheading />
           <PricingTable
             :slug="slug"
             :workspace-id="workspace?.id"
             :role="workspace?.role as WorkspaceRoles"
+            :currency="workspace?.subscription?.currency"
+            :is-yearly-interval-selected="
+              workspace?.subscription?.billingInterval === BillingInterval.Yearly
+            "
           />
         </section>
 
         <section class="flex flex-col gap-y-4 md:gap-y-6">
           <SettingsSectionHeader title="Add-ons" subheading />
-          <SettingsWorkspacesBillingAddOns :slug="slug" />
+          <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
         </section>
-      </template>
+      </ClientOnly>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
+import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import {
-  WorkspacePlans,
-  PaidWorkspacePlanStatuses,
-  type WorkspaceRoles
-} from '@speckle/shared'
+import { type WorkspaceRoles, Roles, workspaceReachedPlanLimit } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
+import {
+  BillingInterval,
+  WorkspacePlanStatuses
+} from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
     id
     role
+    subscription {
+      currency
+      billingInterval
+    }
+    plan {
+      name
+      usage {
+        projectCount
+        modelCount
+      }
+    }
+    ...BillingAlert_Workspace
   }
 `)
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
-const { isAdmin: isServerAdmin } = useActiveUser()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isPurchasablePlan, isNewPlan } = useWorkspacePlan(slug.value)
-const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
+const { isFreePlan } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -101,19 +97,18 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-
-// Temporary hack to change workspace plans to the new free plan
-const handleUpgradeClick = (plan: WorkspacePlans) => {
-  if (!workspaceResult.value?.workspaceBySlug.id) return
-  mutateWorkspacePlan({
-    input: {
-      workspaceId: workspaceResult.value.workspaceBySlug.id,
-      plan,
-      status: PaidWorkspacePlanStatuses.Valid
-    }
-  })
-
-  // Reload to show the new plan, will be gone soon
-  window.location.reload()
-}
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+const showBillingAlert = computed(
+  () =>
+    workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+    workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
+    workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
+)
+const reachedPlanLimit = computed(() =>
+  workspaceReachedPlanLimit(
+    workspace.value?.plan?.name,
+    workspace.value?.plan?.usage?.projectCount,
+    workspace.value?.plan?.usage?.modelCount
+  )
+)
 </script>

@@ -2,20 +2,20 @@
   <div
     v-tippy="cardTippy"
     :class="`group relative bg-foundation-2 rounded px-2 py-1  transition ${
-      disabled
-        ? 'cursor-not-allowed italic bg-neutral-500/5'
-        : 'cursor-pointer hover:text-primary hover:bg-primary-muted hover:shadow-md'
+      hasAccess
+        ? 'cursor-pointer hover:text-primary hover:bg-primary-muted hover:shadow-md'
+        : 'cursor-not-allowed italic bg-neutral-500/5'
     } `"
   >
     <div
       :class="`text-heading-sm text-ellipsis truncate ${
-        disabled ? 'text-foreground-2' : ''
+        hasAccess ? '' : 'text-foreground-2'
       }`"
     >
       {{ project.name }}
     </div>
     <div class="text-body-3xs text-foreground-2">
-      {{ project.role?.split(':')[1] }}, updated {{ updatedAgo }}
+      {{ projectRole }}, updated {{ updatedAgo }}
     </div>
   </div>
 </template>
@@ -27,23 +27,33 @@ const props = withDefaults(
     project: ProjectListProjectItemFragment
     isSender: boolean
     disableNoWriteAccessProjects?: boolean
+    workspaceAdmin?: boolean
   }>(),
-  { disableNoWriteAccessProjects: false }
+  { disableNoWriteAccessProjects: false, workspaceAdmin: false }
 )
 
 const updatedAgo = computed(() => {
   return dayjs(props.project.updatedAt).from(dayjs())
 })
 
-const cardTippy = computed(() => (disabled.value ? disabledMessage.value : ''))
+const cardTippy = computed(() => (!hasAccess.value ? disabledMessage.value : ''))
 
 const disabledMessage = computed(() =>
   props.isSender
-    ? 'You do not have write access to this project.'
-    : 'You do not have read access to this project.'
+    ? "Your role on this project doesn't give you permission to publish."
+    : "Your role on this project doesn't give you permission to load."
 )
 
-const disabled = computed(() => {
-  return !props.project.role || props.project.role === 'stream:reviewer'
+const hasAccess = computed(
+  () =>
+    props.workspaceAdmin ||
+    (props.project.role !== null && props.project.role !== 'stream:reviewer')
+)
+
+const projectRole = computed(() => {
+  if (hasAccess.value) {
+    return 'Can edit'
+  }
+  return 'Can view'
 })
 </script>

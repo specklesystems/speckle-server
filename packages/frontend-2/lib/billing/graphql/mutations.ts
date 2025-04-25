@@ -22,11 +22,3 @@ export const billingUpgradePlanMuation = graphql(`
     }
   }
 `)
-
-export const adminUpdateWorkspacePlanMutation = graphql(`
-  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {
-    admin {
-      updateWorkspacePlan(input: $input)
-    }
-  }
-`)

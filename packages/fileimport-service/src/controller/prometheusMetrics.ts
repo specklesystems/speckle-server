@@ -5,6 +5,7 @@ import { Knex } from 'knex'
 import { Pool } from 'tarn'
 import { isObject } from 'lodash-es'
 import { IncomingMessage } from 'http'
+import { TIME_MS } from '@speckle/shared'
 
 let metricQueryDuration: Summary<string> | null = null
 let metricQueryErrors: Counter<string> | null = null
@@ -100,7 +101,7 @@ const initDBPrometheusMetricsFactory =
     db.on('query-response', (_data, obj) => {
       if (!isObject(obj) || !('__knexQueryUid' in obj)) return
       const queryId = String(obj.__knexQueryUid)
-      const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
+      const durationSec = (Date.now() - queryStartTime[queryId]) / TIME_MS.second
       delete queryStartTime[queryId]
       if (metricQueryDuration && !isNaN(durationSec))
         metricQueryDuration.observe(durationSec)
@@ -109,7 +110,7 @@ const initDBPrometheusMetricsFactory =
     db.on('query-error', (_err, querySpec) => {
       if (!isObject(querySpec) || !('__knexQueryUid' in querySpec)) return
       const queryId = String(querySpec.__knexQueryUid)
-      const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
+      const durationSec = (Date.now() - queryStartTime[queryId]) / TIME_MS.second
       delete queryStartTime[queryId]
 
       if (metricQueryDuration && !isNaN(durationSec))

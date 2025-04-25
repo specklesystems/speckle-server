@@ -5,37 +5,44 @@
       class="grid grid-cols-1 lg:grid-cols-3 divide-y divide-outline-3 lg:divide-y-0 lg:divide-x"
     >
       <div class="p-5 pt-4 flex flex-col">
-        <h3 class="text-body-xs text-foreground-2 pb-4">Current plan</h3>
-        <p class="text-heading-lg text-foreground capitalize">
-          {{ formatName(plan?.name) }}
+        <h3 class="text-body-xs text-foreground-2 pb-4">
+          {{ statusIsCanceled ? 'Plan' : 'Current plan' }}
+        </h3>
+        <p class="flex gap-x-2">
+          <span class="text-heading-lg text-foreground">
+            {{ formatName(plan?.name) }}
+          </span>
+          <span v-if="hasUnlimitedAddon" class="text-body-xs text-foreground-2">
+            including add-ons:
+          </span>
+        </p>
+        <div v-if="hasUnlimitedAddon" class="mt-1">
+          <CommonBadge rounded color="secondary">
+            Unlimited Projects & Models
+          </CommonBadge>
+        </div>
+      </div>
+
+      <div class="p-5 pt-4 flex flex-col">
+        <h3 class="text-body-xs text-foreground-2 pb-4">Billing period</h3>
+        <p class="text-heading-lg text-foreground inline-block">
+          <span v-if="isPaidPlan && billingInterval && !statusIsCanceled">
+            {{ intervalIsYearly ? 'Yearly' : 'Monthly' }}
+          </span>
+          <span v-else>Not applicable</span>
         </p>
       </div>
 
       <div class="p-5 pt-4 flex flex-col">
         <h3 class="text-body-xs text-foreground-2 pb-4">
-          <template v-if="isPurchasablePlan">
-            <span class="capitalize">{{ billingInterval }}</span>
-            bill
-          </template>
-          <template v-else>Bill</template>
+          {{ nextPaymentHeadingText }}
         </h3>
-        <p class="text-heading-lg text-foreground inline-block">
-          TODO
-          <span v-if="isPurchasablePlan">per {{ billingInterval }}</span>
-        </p>
-        <NuxtLink
-          v-if="showBillingPortalLink"
-          class="text-body-xs text-foreground-2 underline hover:text-foreground cursor-pointer mt-1"
-          @click="billingPortalRedirect(workspaceId)"
-        >
-          View cost breakdown
-        </NuxtLink>
-      </div>
-
-      <div class="p-5 pt-4 flex flex-col">
-        <h3 class="text-body-xs text-foreground-2 pb-4">Billing period</h3>
         <p class="text-heading-lg text-foreground capitalize">
-          {{ isPurchasablePlan ? billingInterval : 'Not applicable' }}
+          {{
+            currentBillingCycleEnd
+              ? dayjs(currentBillingCycleEnd).format('MMMM D, YYYY')
+              : 'Not applicable'
+          }}
         </p>
       </div>
     </div>
@@ -63,6 +70,7 @@ import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { type MaybeNullOrUndefined, WorkspacePlanStatuses } from '@speckle/shared'
 import { formatName } from '~/lib/billing/helpers/plan'
+import dayjs from 'dayjs'
 
 defineProps<{
   workspaceId?: MaybeNullOrUndefined<string>
@@ -72,7 +80,23 @@ const { billingPortalRedirect } = useBillingActions()
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const { plan, isPurchasablePlan, billingInterval } = useWorkspacePlan(slug.value)
+const {
+  plan,
+  isPaidPlan,
+  intervalIsYearly,
+  currentBillingCycleEnd,
+  statusIsCanceled,
+  statusIsCancelationScheduled,
+  hasUnlimitedAddon,
+  billingInterval
+} = useWorkspacePlan(slug.value)
+
+const nextPaymentHeadingText = computed(() => {
+  if (statusIsCanceled.value) return 'Cancelled on'
+  if (statusIsCancelationScheduled.value) return 'Cancellation scheduled for'
+
+  return 'Plan renews on '
+})
 
 const showBillingPortalLink = computed(
   () =>

@@ -56,6 +56,7 @@ import {
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { TIME_MS } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -355,7 +356,7 @@ describe('FileUploads @fileuploads integration', () => {
         userId: userOneId,
         name: 'test token',
         scopes: [Scopes.Streams.Read],
-        lifespan: 3600
+        lifespan: TIME_MS.hour
       })
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
@@ -430,7 +431,7 @@ describe('FileUploads @fileuploads integration', () => {
 
       expect(response.statusCode).to.equal(403)
       expect(response.body).to.deep.equal({
-        error: 'You do not have the required stream role'
+        error: 'You do not have access to the project'
       })
 
       const gqlResponse = await sendRequest(userOneToken, {

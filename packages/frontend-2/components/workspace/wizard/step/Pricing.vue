@@ -5,8 +5,8 @@
         <PricingTablePlan
           v-for="plan in plans"
           :key="plan"
+          v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
           :plan="plan"
-          :yearly-interval-selected="isYearlySelected"
           can-upgrade
           @on-yearly-interval-selected="onYearlyIntervalSelected"
         >
@@ -17,9 +17,9 @@
               @click="onCtaClick(plan)"
             >
               {{
-                plan === WorkspacePlans.Free && !isYearlySelected
+                plan === WorkspacePlans.Free
                   ? 'Get started for free'
-                  : `Subscribe to ${startCase(plan)}`
+                  : `Subscribe to ${formatName(plan)}`
               }}
             </FormButton>
           </template>
@@ -39,12 +39,14 @@ import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { WorkspacePlans, type PaidWorkspacePlans } from '@speckle/shared'
-import { startCase } from 'lodash'
+import { formatName } from '~/lib/billing/helpers/plan'
 
 const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 
-const isYearlySelected = ref(false)
+const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
+  default: false
+})
 
 const plans = computed(() => [
   WorkspacePlans.Free,
@@ -54,9 +56,10 @@ const plans = computed(() => [
 
 const onCtaClick = (plan: WorkspacePlans) => {
   state.value.plan = plan as unknown as PaidWorkspacePlans
-  state.value.billingInterval = isYearlySelected.value
-    ? BillingInterval.Yearly
-    : BillingInterval.Monthly
+  state.value.billingInterval =
+    isYearlyIntervalSelected.value && plan !== WorkspacePlans.Free
+      ? BillingInterval.Yearly
+      : BillingInterval.Monthly
 
   mixpanel.track('Workspace Pricing Step Completed', {
     plan: state.value.plan,
@@ -67,13 +70,13 @@ const onCtaClick = (plan: WorkspacePlans) => {
 }
 
 const onYearlyIntervalSelected = (newValue: boolean) => {
-  isYearlySelected.value = newValue
+  isYearlyIntervalSelected.value = newValue
 }
 
 watch(
   () => state.value.billingInterval,
   (newVal) => {
-    isYearlySelected.value = newVal === BillingInterval.Yearly
+    isYearlyIntervalSelected.value = newVal === BillingInterval.Yearly
   },
   { immediate: true }
 )

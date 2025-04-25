@@ -33,10 +33,7 @@ import {
   BasicTestBranch,
   createTestBranches
 } from '@/test/speckle-helpers/branchHelper'
-import {
-  createTestCommits,
-  createTestObject
-} from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -156,6 +153,7 @@ describe('Workspaces Billing', () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
+              currency: 'usd',
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
@@ -206,6 +204,7 @@ describe('Workspaces Billing', () => {
               createdAt: new Date(),
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
+              currency: 'usd',
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
@@ -291,50 +290,34 @@ describe('Workspaces Billing', () => {
         }
         await createTestStream(project, user)
 
-        const models: BasicTestBranch[] = [
-          {
-            id: '',
-            streamId: project.id,
-            authorId: user.id,
-            name: createRandomString()
-          },
-          {
-            id: '',
-            streamId: project.id,
-            authorId: user.id,
-            name: createRandomString()
-          },
-          {
-            id: '',
-            streamId: project.id,
-            authorId: user.id,
-            name: createRandomString()
-          }
-        ]
+        const modelWithVersions: BasicTestBranch = {
+          id: '',
+          streamId: project.id,
+          authorId: user.id,
+          name: createRandomString()
+        }
+        const modelWithoutVersions: BasicTestBranch = {
+          id: '',
+          streamId: project.id,
+          authorId: user.id,
+          name: createRandomString()
+        }
         await createTestBranches(
-          models.map((branch) => ({
+          [modelWithVersions, modelWithoutVersions].map((branch) => ({
             owner: user,
             stream: project,
             branch
           }))
         )
+
         const objectId = await createTestObject({ projectId: project.id })
-        await createTestCommits([
-          {
-            id: '',
-            authorId: user.id,
-            objectId,
-            streamId: project.id,
-            branchName: models[0].name
-          },
-          {
-            id: '',
-            authorId: user.id,
-            objectId,
-            streamId: project.id,
-            branchName: models[1].name
-          }
-        ])
+        await createTestCommit({
+          id: '',
+          authorId: user.id,
+          objectId,
+          streamId: project.id,
+          branchName: modelWithVersions.name
+        })
 
         const session = await login(user)
 

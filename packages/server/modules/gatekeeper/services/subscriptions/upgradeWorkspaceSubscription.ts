@@ -18,7 +18,11 @@ import {
   WorkspacePlanUpgradeError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { isNewPlanType, isOldPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import {
+  isNewPaidPlanType,
+  isNewPlanType,
+  isOldPaidPlanType
+} from '@/modules/gatekeeper/helpers/plans'
 import { calculateNewBillingCycleEnd } from '@/modules/gatekeeper/services/subscriptions/calculateNewBillingCycleEnd'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
@@ -195,7 +199,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
           productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
           priceId: getWorkspacePlanPriceId({
             workspacePlan: 'guest',
-            billingInterval
+            billingInterval,
+            currency: workspaceSubscription.currency
           }),
           subscriptionItemId: undefined
         })
@@ -216,7 +221,8 @@ export const upgradeWorkspaceSubscriptionFactoryOld =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })
@@ -295,7 +301,7 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
         throwUncoveredError(workspacePlan)
     }
 
-    if (!isNewPlanType(workspacePlan.name) || !isNewPlanType(targetPlan)) {
+    if (!isNewPlanType(workspacePlan.name) || !isNewPaidPlanType(targetPlan)) {
       throw new UnsupportedWorkspacePlanError(null, {
         info: { currentPlan: workspacePlan.name, targetPlan }
       })
@@ -351,6 +357,11 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       default:
         throwUncoveredError(billingInterval)
     }
+    // must update the billing interval to the new one
+    workspaceSubscription.billingInterval = billingInterval
+    workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
+      workspaceSubscription
+    })
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
       workspaceSubscription.subscriptionData
@@ -383,7 +394,8 @@ export const upgradeWorkspaceSubscriptionFactoryNew =
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPriceId({
         workspacePlan: targetPlan,
-        billingInterval
+        billingInterval,
+        currency: workspaceSubscription.currency
       }),
       subscriptionItemId: undefined
     })

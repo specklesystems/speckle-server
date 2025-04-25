@@ -2,6 +2,8 @@
   <ModelCardBase
     :model-card="modelCard"
     :project="project"
+    :can-edit="canEdit"
+    :is-explicit-project-reviewer="isExplicitProjectReviewer"
     @manual-publish-or-load="handleMainButtonClick"
   >
     <div class="flex max-[275px]:w-full items-center space-x-2 my-2">
@@ -18,7 +20,7 @@
         color="subtle"
         class="block text-foreground-2 hover:text-foreground overflow-hidden max-w-full !justify-start"
         full-width
-        :disabled="!!modelCard.progress"
+        :disabled="!!modelCard.progress || noReadAccess"
         @click.stop="openVersionsDialog = true"
       >
         <span>
@@ -102,6 +104,8 @@ const accountStore = useAccountStore()
 const props = defineProps<{
   modelCard: IReceiverModelCard
   project: ProjectModelGroup
+  canEdit: boolean
+  isExplicitProjectReviewer: boolean
 }>()
 
 const store = useHostAppStore()
@@ -265,6 +269,10 @@ const latestVersionCreatedAt = computed(() => {
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   createdAgoUpdater.value
   return dayjs(props.modelCard.latestVersionCreatedAt).from(dayjs())
+})
+
+const noReadAccess = computed(() => {
+  return props.canEdit
 })
 
 onMounted(() => {

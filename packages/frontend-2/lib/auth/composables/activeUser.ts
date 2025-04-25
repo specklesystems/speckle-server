@@ -32,6 +32,17 @@ export const activeUserQuery = graphql(`
   }
 `)
 
+export const activeUserProjectsToMoveQuery = graphql(`
+  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {
+    activeUser {
+      id
+      projects(filter: $filter) {
+        totalCount
+      }
+    }
+  }
+`)
+
 /**
  * Lightweight composable to read user id from cache imperatively (useful for logging)
  */
@@ -49,6 +60,25 @@ export function useResolveUserDistinctId() {
 
     return resolveMixpanelUserId(user.email)
   }
+}
+
+export function useActiveUserProjectsToMove() {
+  const { result } = useQuery(activeUserProjectsToMoveQuery, () => ({
+    filter: {
+      personalOnly: true,
+      onlyWithRoles: [Roles.Stream.Owner]
+    }
+  }))
+
+  const projectsToMoveCount = computed(
+    () => result.value?.activeUser?.projects?.totalCount
+  )
+
+  const hasProjectsToMove = computed(
+    () => projectsToMoveCount.value && projectsToMoveCount.value > 0
+  )
+
+  return { projectsToMoveCount, hasProjectsToMove }
 }
 
 /**
