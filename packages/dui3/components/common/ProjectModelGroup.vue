@@ -56,13 +56,14 @@
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
-        :readonly="isProjectReadOnly || isWorkspaceReadOnly"
+        :can-edit="canEdit"
       />
       <ModelReceiver
         v-for="model in project.receivers"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
+        :can-edit="canEdit"
       />
     </div>
   </div>
@@ -148,19 +149,21 @@ watch(projectDetails, (newValue) => {
   projectIsAccesible.value = newValue !== undefined
 })
 
-const isProjectReadOnly = computed(() => {
-  if (!projectDetails.value) return true
-
-  if (
-    !(
-      projectDetails.value.workspace?.role &&
-      projectDetails.value.workspace?.role === 'workspace:admin'
-    ) &&
-    (projectDetails.value?.role === null ||
-      projectDetails.value?.role === 'stream:reviewer')
+const isWorkspaceAdmin = computed(() => {
+  if (!projectDetails.value) return false
+  return (
+    projectDetails.value.workspace?.role &&
+    projectDetails.value.workspace?.role === 'workspace:admin'
   )
-    return true
-  return false
+})
+
+const canEdit = computed(() => {
+  if (!projectDetails.value) return false
+  if (isWorkspaceAdmin.value) return true
+  return (
+    projectDetails.value.role !== null &&
+    projectDetails.value.role !== 'stream:reviewer'
+  )
 })
 
 const isWorkspaceReadOnly = computed(() => {
