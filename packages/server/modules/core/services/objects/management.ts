@@ -181,6 +181,7 @@ export const createObjectsFactory =
         {
           batchIndex: index + 1,
           totalCountOfBatches: batches.length,
+          countStoredObjects: objsToInsert.length,
           elapsedTimeMs: t1 - t0
         },
         'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'
