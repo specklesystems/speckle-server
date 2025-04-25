@@ -18,6 +18,9 @@ graphql(`
   fragment UseNavigationWorkspaceList_User on User {
     id
     ...HeaderWorkspaceSwitcherWorkspaceList_User
+    projects(filter: $filter) {
+      totalCount
+    }
   }
 `)
 
@@ -47,13 +50,21 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
-  const { result: workspacesResult } = useQuery(navigationWorkspaceListQuery, null, {
-    enabled: isWorkspacesEnabled.value
-  })
+  const { result } = useQuery(
+    navigationWorkspaceListQuery,
+    () => ({
+      filter: {
+        personalOnly: true
+      }
+    }),
+    {
+      enabled: isWorkspacesEnabled.value
+    }
+  )
 
   // Check for expired SSO sessions
   const expiredSsoSessions = computed(
-    () => workspacesResult.value?.activeUser?.expiredSsoSessions || []
+    () => result.value?.activeUser?.expiredSsoSessions || []
   )
 
   // Check if the current active workspace has an expired SSO session
@@ -62,6 +73,10 @@ export const useNavigation = () => {
       !!expiredSsoSessions.value.find(
         (session) => session.slug === activeWorkspaceSlug.value
       )
+  )
+
+  const hasProjects = computed(
+    () => result.value?.activeUser?.projects?.totalCount ?? 0 > 0
   )
 
   const { result: activeWorkspaceResult, onResult } = useQuery(
@@ -78,7 +93,7 @@ export const useNavigation = () => {
   )
 
   // Set state and mutate
-  const mutateActiveWorkspaceSlug = async (newVal: string) => {
+  const mutateActiveWorkspaceSlug = async (newVal: string | null) => {
     state.value.activeWorkspaceSlug = newVal
     state.value.isProjectsActive = false
     await mutate({ slug: newVal, isProjectsActive: false })
@@ -106,8 +121,8 @@ export const useNavigation = () => {
   })
 
   const workspaceList = computed(() =>
-    workspacesResult.value?.activeUser
-      ? workspacesResult.value.activeUser.workspaces.items.filter(
+    result.value?.activeUser
+      ? result.value.activeUser.workspaces.items.filter(
           (workspace) => workspace.creationState?.completed !== false
         )
       : []
@@ -129,6 +144,7 @@ export const useNavigation = () => {
     activeWorkspaceData,
     workspaceList,
     activeWorkspaceHasExpiredSsoSession,
-    expiredSsoWorkspaceData
+    expiredSsoWorkspaceData,
+    hasProjects
   }
 }

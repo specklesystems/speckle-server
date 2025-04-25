@@ -4,25 +4,22 @@ import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/
 import request from 'request'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export const getRouter = () => {
   const app = Router()
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     async (req, res, next) => {
-      await authMiddlewareCreator(
-        streamWritePermissionsPipelineFactory({
-          getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db })
-        })
-      )(req, res, next)
+      await authMiddlewareCreator(streamWritePermissionsPipelineFactory())(
+        req,
+        res,
+        next
+      )
     },
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
@@ -73,18 +70,26 @@ export const getRouter = () => {
         `http://127.0.0.1:${getPort()}/api/stream/${req.params.streamId}/blob`,
         async (err, response, body) => {
           if (err) {
-            res.log.error(err, 'Error while uploading blob.')
+            req.log.error(err, 'Error while uploading blob.')
             res.status(500).send(err.message)
             return
           }
           if (response.statusCode === 201) {
             const { uploadResults } = JSON.parse(body)
-            await saveFileUploads({
-              userId: req.context.userId!,
-              streamId: req.params.streamId,
-              branchName,
-              uploadResults
-            })
+            await withOperationLogging(
+              async () =>
+                await saveFileUploads({
+                  userId: req.context.userId!,
+                  streamId: req.params.streamId,
+                  branchName,
+                  uploadResults
+                }),
+              {
+                logger: req.log,
+                operationName: 'uploadFile',
+                operationDescription: 'Upload a file to a stream'
+              }
+            )
           } else {
             res.log.error(
               {

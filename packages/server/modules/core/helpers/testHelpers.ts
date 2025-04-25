@@ -8,6 +8,9 @@ export function createRandomPassword(length?: number) {
   return crs({ length: length ?? 10 })
 }
 
+/**
+ * @deprecated use the one in shared
+ */
 export function createRandomString(length?: number) {
   return crs({ length: length ?? 10 })
 }

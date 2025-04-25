@@ -1,7 +1,7 @@
 <template>
   <WorkspaceWizardStep
     title="Create a workspace"
-    description="Workspaces are environments where you can safely collaborate with your team and manage guests."
+    description="A workspace is a shared space for your projects and collaborators"
   >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput

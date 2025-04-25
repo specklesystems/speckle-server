@@ -17,7 +17,7 @@
       <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
         {{ connector.description }}
       </p>
-      <div class="space-x-1 mt-2">
+      <div class="flex gap-1 mt-2">
         <FormButton
           color="outline"
           size="sm"

@@ -221,6 +221,12 @@ export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
   }
 }>
 
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+}) => Promise<void>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {

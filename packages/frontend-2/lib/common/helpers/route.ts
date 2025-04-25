@@ -41,39 +41,39 @@ export const settingsServerRoutes = {
 export const settingsWorkspaceRoutes = {
   general: {
     name: 'settings-workspaces-slug-general',
-    route: (slug: string) => `/settings/workspaces/${slug}/general`
+    route: (slug?: string) => `/settings/workspaces/${slug}/general`
   },
   members: {
     name: 'settings-workspaces-slug-members',
-    route: (slug: string) => `/settings/workspaces/${slug}/members`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members`
   },
   membersGuests: {
     name: 'settings-workspaces-slug-members-guests',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/guests`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/guests`
   },
   membersInvites: {
     name: 'settings-workspaces-slug-members-invites',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/invites`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/invites`
   },
   membersRequests: {
     name: 'settings-workspaces-slug-members-requests',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/requests`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/requests`
   },
   projects: {
     name: 'settings-workspaces-slug-projects',
-    route: (slug: string) => `/settings/workspaces/${slug}/projects`
+    route: (slug?: string) => `/settings/workspaces/${slug}/projects`
   },
   security: {
     name: 'settings-workspaces-slug-security',
-    route: (slug: string) => `/settings/workspaces/${slug}/security`
+    route: (slug?: string) => `/settings/workspaces/${slug}/security`
   },
   billing: {
     name: 'settings-workspaces-slug-billing',
-    route: (slug: string) => `/settings/workspaces/${slug}/billing`
+    route: (slug?: string) => `/settings/workspaces/${slug}/billing`
   },
   regions: {
     name: 'settings-workspaces-slug-regions',
-    route: (slug: string) => `/settings/workspaces/${slug}/regions`
+    route: (slug?: string) => `/settings/workspaces/${slug}/regions`
   }
 }
 
@@ -129,7 +129,7 @@ export const publicAutomateFunctionsRoute = '/functions'
 export const automateFunctionRoute = (functionId: string) =>
   `${publicAutomateFunctionsRoute}/${functionId}`
 
-export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
+export const workspaceRoute = (slug?: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
 export const workspaceCreateRoute = (slug?: string) =>
@@ -213,3 +213,4 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
 // Link to Workspace roles and seats documentation
 // TODO: Add link when ready
 export const LearnMoreRolesSeatsUrl = 'https://speckle.guide/'
+export const LearnMoreMoveProjectsUrl = 'https://speckle.systems/pricing'

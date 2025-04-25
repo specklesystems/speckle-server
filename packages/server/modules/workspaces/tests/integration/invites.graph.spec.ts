@@ -49,7 +49,10 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
-import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceInvalidRoleError,
+  WorkspaceProtectedError
+} from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
@@ -186,9 +189,7 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors(
-          'Attempting to invite into a non-existant workspace'
-        )
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -226,7 +227,9 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -269,7 +272,9 @@ describe('Workspaces Invites GQL', () => {
           }))
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })
 
@@ -467,6 +472,13 @@ describe('Workspaces Invites GQL', () => {
         ownerId: ''
       }
 
+      const myProjectInviteTargetWorkspaceWithNewPlan: BasicTestWorkspace = {
+        name: 'My Project Invite Target Workspace w/ New Plan #1',
+        id: '',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+
       const myProjectInviteTargetBasicProject: BasicTestStream = {
         name: 'My Project Invite Target Basic Project #1',
         id: '',
@@ -476,6 +488,13 @@ describe('Workspaces Invites GQL', () => {
 
       const myProjectInviteTargetWorkspaceProject: BasicTestStream = {
         name: 'My Project Invite Target Workspace Project #1',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
+      const myProjectInviteTargetWorkspaceNewPlanProject: BasicTestStream = {
+        name: 'My Project Invite Target Workspace New Plan Project #1',
         id: '',
         ownerId: '',
         isPublic: false
@@ -495,7 +514,19 @@ describe('Workspaces Invites GQL', () => {
 
       before(async () => {
         await createTestUsers([workspaceMemberWithNoProjectAccess, workspaceGuest])
-        await createTestWorkspaces([[myProjectInviteTargetWorkspace, me]])
+        await createTestWorkspaces([
+          [myProjectInviteTargetWorkspace, me],
+          [
+            myProjectInviteTargetWorkspaceWithNewPlan,
+            me,
+            {
+              addPlan: {
+                name: 'teamUnlimited',
+                status: 'valid'
+              }
+            }
+          ]
+        ])
         await assignToWorkspaces([
           [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
           [
@@ -503,13 +534,21 @@ describe('Workspaces Invites GQL', () => {
             workspaceMemberWithNoProjectAccess,
             Roles.Workspace.Member
           ],
-          [myProjectInviteTargetWorkspace, workspaceGuest, Roles.Workspace.Guest]
+          [myProjectInviteTargetWorkspace, workspaceGuest, Roles.Workspace.Guest],
+          [
+            myProjectInviteTargetWorkspaceWithNewPlan,
+            workspaceGuest,
+            Roles.Workspace.Guest
+          ]
         ])
 
+        myProjectInviteTargetWorkspaceNewPlanProject.workspaceId =
+          myProjectInviteTargetWorkspaceWithNewPlan.id
         myProjectInviteTargetWorkspaceProject.workspaceId =
           myProjectInviteTargetWorkspace.id
         await createTestStreams([
           [myProjectInviteTargetWorkspaceProject, me],
+          [myProjectInviteTargetWorkspaceNewPlanProject, me],
           [myProjectInviteTargetBasicProject, me]
         ])
 
@@ -624,9 +663,22 @@ describe('Workspaces Invites GQL', () => {
           ]
         })
 
-        expect(res).to.haveGraphQLErrors(
-          'Workspace guests cannot be owners of workspace projects'
-        )
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
+      })
+
+      it("can't invite someone with a viewer seat to be a contributor", async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          inputs: [
+            {
+              userId: workspaceGuest.id,
+              role: Roles.Stream.Contributor
+            }
+          ]
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
@@ -739,7 +791,9 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.cancel).to.not.be.ok
 
         const invite = await findInviteFactory({ db })({

@@ -62,7 +62,7 @@ export default class BatchingQueue<T> implements Queue<T> {
         }
         /*console.log(
           'queue is waiting ' +
-            interval / 1000 +
+            interval / TIME_MS.second +
             ' with queue size of ' +
             this.#queue.length
         )*/

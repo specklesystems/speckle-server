@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
-export const SETTLING_TIME = 10000 // plenty long enough
+import { TIME_MS } from '@speckle/shared'
+
+export const SETTLING_TIME = 10 * TIME_MS.second // plenty long enough
 const MIN_DECAY_MILLISECONDS = 0.001
 export const DECAY_MILLISECONDS = 50
 

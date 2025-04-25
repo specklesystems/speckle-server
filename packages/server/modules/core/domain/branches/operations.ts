@@ -218,3 +218,5 @@ export type VerifyUserEmail = ({
   email,
   code
 }: Pick<EmailVerification, 'email' | 'code'>) => Promise<void>
+
+export type GetTotalModelCount = () => Promise<number>

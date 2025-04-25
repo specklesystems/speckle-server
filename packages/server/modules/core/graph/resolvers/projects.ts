@@ -12,7 +12,12 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import {
+  isResourceAllowed,
+  throwIfNewResourceNotAllowed,
+  throwIfResourceAccessNotAllowed,
+  toProjectIdWhitelist
+} from '@/modules/core/helpers/token'
 import {
   createBranchFactory,
   getBatchedStreamBranchesFactory,
@@ -88,6 +93,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -197,29 +203,68 @@ export = {
   },
   ProjectMutations: {
     async batchDelete(_parent, args, ctx) {
-      const results = await Promise.all(
+      await Promise.all(
         args.ids.map(async (id) => {
-          const projectDb = await getProjectDbClient({ projectId: id })
-          const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-            deleteStream: deleteStreamFactory({
-              db: projectDb
-            }),
-            emitEvent: getEventBus().emit,
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-            getStream: getStreamFactory({ db: projectDb })
+          throwIfResourceAccessNotAllowed({
+            resourceId: id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
           })
-          return deleteStreamAndNotify(id, ctx.userId!)
+
+          const canDelete = await ctx.authPolicies.project.canDelete({
+            projectId: id,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canDelete)
         })
+      )
+
+      const results = await withOperationLogging(
+        async () =>
+          await Promise.all(
+            args.ids.map(async (id) => {
+              const projectDb = await getProjectDbClient({ projectId: id })
+              const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+                deleteStream: deleteStreamFactory({
+                  db: projectDb
+                }),
+                emitEvent: getEventBus().emit,
+                deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+                getStream: getStreamFactory({ db: projectDb })
+              })
+              return deleteStreamAndNotify(id, ctx.userId!)
+            })
+          ),
+        {
+          logger: ctx.log,
+          operationName: 'projectBatchDelete',
+          operationDescription: `Delete multiple projects`
+        }
       )
       return results.every((res) => res === true)
     },
-    async delete(_parent, { id: projectId }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        projectId,
-        Roles.Stream.Owner,
+    async delete(
+      _parent,
+      { id: projectId },
+      { userId, resourceAccessRules, authPolicies, log: ctxLogger }
+    ) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules
-      )
+      })
+
+      const logger = ctxLogger.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canDelete = await authPolicies.project.canDelete({
+        projectId,
+        userId
+      })
+      throwIfAuthNotOk(canDelete)
+
       const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
@@ -229,29 +274,72 @@ export = {
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
         getStream: getStreamFactory({ db: projectDb })
       })
-      return await deleteStreamAndNotify(projectId, userId!)
+      return await withOperationLogging(
+        async () => await deleteStreamAndNotify(projectId, userId!),
+        {
+          logger,
+          operationName: 'projectDelete',
+          operationDescription: `Delete a project`
+        }
+      )
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
-      return await createOnboardingStream({
-        targetUserId: userId!,
-        targetUserResourceAccessRules: resourceAccessRules,
-        logger: log
-      })
-    },
-    async update(_parent, { update }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        update.id,
-        Roles.Stream.Owner,
-        resourceAccessRules
+      return await withOperationLogging(
+        async () =>
+          await createOnboardingStream({
+            targetUserId: userId!,
+            targetUserResourceAccessRules: resourceAccessRules,
+            logger: log
+          }),
+        {
+          logger: log,
+          operationName: 'createOnboardingProject',
+          operationDescription: `Create a project for onboarding`
+        }
       )
-      const projectDB = await getProjectDbClient({ projectId: update.id })
+    },
+    async update(
+      _parent,
+      { update },
+      { userId, resourceAccessRules, authPolicies, clearCache, log: ctxLogger }
+    ) {
+      const projectId = update.id
+      throwIfResourceAccessNotAllowed({
+        resourceId: update.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules
+      })
+
+      const logger = ctxLogger.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canUpdate = await authPolicies.project.canUpdate({
+        projectId,
+        userId
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const projectDB = await getProjectDbClient({ projectId })
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
         emitEvent: getEventBus().emit
       })
-      return await updateStreamAndNotify(update, userId!)
+      const res = await withOperationLogging(
+        async () => await updateStreamAndNotify(update, userId!),
+        {
+          logger,
+          operationName: 'projectUpdate',
+          operationDescription: `Update a project`
+        }
+      )
+
+      // Reset loader cache
+      await clearCache()
+
+      return res
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
@@ -260,6 +348,12 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      const logger = context.log
+
+      throwIfNewResourceNotAllowed({
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
       const canCreate = await context.authPolicies.project.canCreatePersonal({
         userId: context.userId
       })
@@ -278,31 +372,94 @@ export = {
         emitEvent: getEventBus().emit
       })
 
-      const project = await createNewProject({
-        ...(args.input || {}),
-        ownerId: context.userId!,
-        regionKey
-      })
+      const project = await withOperationLogging(
+        async () =>
+          await createNewProject({
+            ...(args.input || {}),
+            ownerId: context.userId!,
+            regionKey
+          }),
+        {
+          logger,
+          operationName: 'projectCreate',
+          operationDescription: `Create a new project`
+        }
+      )
 
       return project
     },
     async updateRole(_parent, args, ctx) {
+      const projectId = args.input.projectId
       await authorizeResolver(
         ctx.userId,
-        args.input.projectId,
+        projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      return await updateStreamRoleAndNotify(
-        args.input,
-        ctx.userId!,
-        ctx.resourceAccessRules
+
+      const logger = ctx.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const ret = await withOperationLogging(
+        async () =>
+          await updateStreamRoleAndNotify(
+            args.input,
+            ctx.userId!,
+            ctx.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'projectUpdateRole',
+          operationDescription: `Update a project role`
+        }
       )
+
+      // Reset loader cache
+      ctx.clearCache()
+
+      return ret
     },
     async leave(_parent, args, context) {
+      const projectId = args.id
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      const canLeave = await context.authPolicies.project.canLeave({
+        projectId,
+        userId: context.userId
+      })
+      throwIfAuthNotOk(canLeave)
+
       const { id } = args
       const { userId } = context
-      await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
+      await withOperationLogging(
+        async () =>
+          await removeStreamCollaborator(
+            id,
+            userId!,
+            userId!,
+            context.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'projectLeave',
+          operationDescription: `Leave a project`
+        }
+      )
+
+      // Reset loader cache
+      context.clearCache()
+
       return true
     },
     invites: () => ({})
@@ -326,7 +483,8 @@ export = {
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -336,7 +494,8 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreams({
           userId: ctx.userId!,
@@ -348,7 +507,9 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          sortBy: args.sortBy || undefined,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         })
       ])
 
@@ -425,12 +586,19 @@ export = {
         ProjectSubscriptions.ProjectUpdated,
         async (payload, args, ctx) => {
           if (args.id !== payload.projectUpdated.id) return false
-          await authorizeResolver(
-            ctx.userId,
-            payload.projectUpdated.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payload.projectUpdated.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canRead = await ctx.authPolicies.project.canRead({
+            projectId: payload.projectUpdated.id,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canRead)
+
           return true
         }
       )

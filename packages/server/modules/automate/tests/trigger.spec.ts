@@ -49,7 +49,7 @@ import {
   updateAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { Automate } from '@speckle/shared'
+import { Automate, TIME_MS } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
@@ -389,6 +389,7 @@ const createAppToken = createAppTokenFactory({
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
           isTestAutomation: false,
+          isDeleted: false,
           userId
         }
         const automationToken = {
@@ -490,6 +491,7 @@ const createAppToken = createAppTokenFactory({
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
           isTestAutomation: false,
+          isDeleted: false,
           userId
         }
         const automationToken = {
@@ -532,7 +534,7 @@ const createAppToken = createAppTokenFactory({
             expect(payload.source).to.equal(RunTriggerSource.Manual)
             eventFired = true
           },
-          { timeout: 1000 }
+          { timeout: TIME_MS.second }
         )
         const executionEngineRunId = cryptoRandomString({ length: 10 })
         const { automationRunId } = await triggerAutomationRevisionRunFactory({
@@ -610,6 +612,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -653,6 +656,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 active: false,
@@ -696,6 +700,7 @@ const createAppToken = createAppTokenFactory({
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -746,6 +751,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -795,6 +801,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -845,6 +852,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -908,6 +916,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: false,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -969,6 +978,7 @@ const createAppToken = createAppTokenFactory({
               executionEngineAutomationId: null,
               userId: cryptoRandomString({ length: 10 }),
               isTestAutomation: true,
+              isDeleted: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -1382,7 +1392,7 @@ const createAppToken = createAppTokenFactory({
               expect(payload.functionRun.id).to.equal(functionRunId)
               eventFired = true
             },
-            { timeout: 1000 }
+            { timeout: TIME_MS.second }
           )
           await expect(report(params)).to.eventually.be.true
 

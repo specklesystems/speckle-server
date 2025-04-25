@@ -18,6 +18,7 @@ import {
   updateAndValidateRegionFactory
 } from '@/modules/multiregion/services/management'
 import { initializeRegion as initializeBlobStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export default {
   ServerMultiRegionConfiguration: {
@@ -36,7 +37,10 @@ export default {
     }
   },
   ServerRegionMutations: {
-    create: async (_parent, args) => {
+    create: async (_parent, args, ctx) => {
+      const logger = ctx.log.child({
+        multiRegionKey: args.input.key
+      })
       const createAndValidateNewRegion = createAndValidateNewRegionFactory({
         getFreeRegionKeys: getFreeRegionKeysFactory({
           getAvailableRegionKeys: getAvailableRegionKeysFactory({
@@ -51,15 +55,32 @@ export default {
           initializeBlobStorage
         })
       })
-      return await createAndValidateNewRegion({ region: args.input })
+      return await withOperationLogging(
+        async () => await createAndValidateNewRegion({ region: args.input }),
+        {
+          logger,
+          operationName: 'createRegion',
+          operationDescription: 'Create a new region'
+        }
+      )
     },
-    update: async (_parent, args) => {
+    update: async (_parent, args, ctx) => {
+      const logger = ctx.log.child({
+        multiRegionKey: args.input.key
+      })
       const updateAndValidateRegion = updateAndValidateRegionFactory({
         getRegion: getRegionFactory({ db }),
         updateRegion: updateRegionFactory({ db })
       })
 
-      return await updateAndValidateRegion({ input: args.input })
+      return await withOperationLogging(
+        async () => await updateAndValidateRegion({ input: args.input }),
+        {
+          logger,
+          operationName: 'updateRegion',
+          operationDescription: 'Update a region'
+        }
+      )
     }
   },
   ServerRegionItem: {

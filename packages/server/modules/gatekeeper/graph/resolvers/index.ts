@@ -1,7 +1,7 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
-import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
+import { Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory,
@@ -34,7 +34,6 @@ import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import {
   CreateCheckoutSession,
-  CreateCheckoutSessionOld,
   WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
@@ -42,16 +41,8 @@ import { LogicError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { getWorkspacePlanProductPricesFactory } from '@/modules/gatekeeper/services/prices'
 import { extendLoggerComponent } from '@/observability/logging'
-import { OperationName, OperationStatus } from '@/observability/domain/fields'
-import { logWithErr } from '@/observability/utils/logLevels'
-import {
-  createCheckoutSessionFactoryNew,
-  createCheckoutSessionFactoryOld
-} from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
-import {
-  startCheckoutSessionFactoryNew,
-  startCheckoutSessionFactoryOld
-} from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
+import { createCheckoutSessionFactory } from '@/modules/gatekeeper/clients/checkout/createCheckoutSession'
+import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import {
   upgradeWorkspaceSubscriptionFactoryNew,
   upgradeWorkspaceSubscriptionFactoryOld
@@ -68,6 +59,7 @@ import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -157,6 +149,19 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspaceId: parent.id
           })
         },
+        planPrices: async (parent) => {
+          const getWorkspacePlanPrices = getWorkspacePlanProductPricesFactory({
+            getRecurringPrices: getRecurringPricesFactory({
+              stripe: getStripeClient()
+            }),
+            getWorkspacePlanProductAndPriceIds
+          })
+          const prices = await getWorkspacePlanPrices()
+          const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
+            workspaceId: parent.id
+          })
+          return prices[workspaceSubscription?.currency ?? 'usd']
+        },
         seatType: async (parent, _args, context) => {
           if (!context.userId) return null
 
@@ -167,6 +172,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Editor
+        },
+        seats: async (parent) => {
+          return { workspaceId: parent.id }
         }
       },
       WorkspacePlan: {
@@ -206,11 +214,16 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       WorkspaceSubscriptionSeats: {
         editors: async (parent) => {
-          const { workspaceId, subscriptionData } = parent
+          const { workspaceId } = parent
 
-          const workspacePlan = await getWorkspacePlanFactory({ db })({
-            workspaceId
-          })
+          const [workspacePlan, subscription] = await Promise.all([
+            getWorkspacePlanFactory({ db })({
+              workspaceId
+            }),
+            getWorkspaceSubscriptionFactory({ db })({
+              workspaceId
+            })
+          ])
 
           if (!workspacePlan) {
             return {
@@ -219,17 +232,53 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }
           }
 
+          const assigned = await countSeatsByTypeInWorkspaceFactory({ db })({
+            workspaceId,
+            type: 'editor'
+          })
+          let available = 0
+
+          // If we have a stripe sub, use that to resolve available
+          if (subscription) {
+            let purchased = 0
+            switch (workspacePlan.name) {
+              case 'unlimited':
+              case 'academia':
+              case 'business':
+              case 'businessInvoiced':
+              case 'free':
+              case 'plus':
+              case 'plusInvoiced':
+              case 'starter':
+              case 'starterInvoiced':
+              case 'proUnlimitedInvoiced':
+              case 'teamUnlimitedInvoiced':
+                // not stripe paid plans and old plans do not have seats available
+                break
+              case 'team':
+              case 'teamUnlimited':
+              case 'pro':
+              case 'proUnlimited':
+                purchased = getTotalSeatsCountByPlanFactory({
+                  getWorkspacePlanProductId
+                })({
+                  workspacePlan: workspacePlan.name,
+                  subscriptionData: subscription.subscriptionData
+                })
+                break
+              default:
+                throwUncoveredError(workspacePlan)
+            }
+
+            available = purchased - assigned > 0 ? purchased - assigned : 0
+          }
+
           return {
-            assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
-              workspaceId,
-              type: 'editor'
-            }),
-            available: getTotalSeatsCountByPlanFactory({ getWorkspacePlanProductId })({
-              workspacePlan,
-              subscriptionData
-            })
+            assigned,
+            available
           }
         },
+
         viewers: async ({ workspaceId }) => {
           return {
             assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
@@ -259,12 +308,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }),
             getWorkspacePlanProductAndPriceIds
           })
-          const prices = await getWorkspacePlanPrices.fresh()
-          return Object.entries(prices).map(([plan, price]) => ({
-            id: plan,
-            monthly: price.monthly,
-            yearly: 'yearly' in price ? price.yearly : null
-          }))
+          const prices = await getWorkspacePlanPrices()
+          return prices
         }
       },
       ProjectCollaborator: {
@@ -295,12 +340,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
             eventEmit: getEventBus().emit
           })
-          await assignSeat({
-            workspaceId,
-            userId,
-            type: seatType,
-            assignedByUserId: ctx.userId!
-          })
+          await withOperationLogging(
+            async () =>
+              await assignSeat({
+                workspaceId,
+                userId,
+                type: seatType,
+                assignedByUserId: ctx.userId!
+              }),
+            {
+              logger: ctx.log,
+              operationName: 'updateWorkspaceSeatType',
+              operationDescription: 'Updating seat type'
+            }
+          )
 
           return ctx.loaders.workspaces!.getWorkspace.load(workspaceId)
         }
@@ -315,16 +368,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          await deleteCheckoutSessionFactory({ db })({ checkoutSessionId: sessionId })
+          await withOperationLogging(
+            async () =>
+              await deleteCheckoutSessionFactory({ db })({
+                checkoutSessionId: sessionId
+              }),
+            {
+              logger: ctx.log,
+              operationName: 'cancelCheckoutSession',
+              operationDescription:
+                'Checkout session cancelled; so checkout session is being deleted'
+            }
+          )
           return true
         },
         createCheckoutSession: async (_parent, args, ctx) => {
-          let logger = extendLoggerComponent(
-            ctx.log,
-            'gatekeeper',
-            'resolvers',
-            'createCheckoutSession'
-          ).child(OperationName('createCheckoutSession'))
+          let logger = extendLoggerComponent(ctx.log, 'gatekeeper', 'resolvers')
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
           logger = logger.child({ workspaceId, workspacePlan })
@@ -338,64 +397,44 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             Roles.Workspace.Admin,
             ctx.resourceAccessRules
           )
-          const createCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
-            ? createCheckoutSessionFactoryNew({
-                stripe: getStripeClient(),
-                frontendOrigin: getFrontendOrigin(),
-                getWorkspacePlanPrice: getWorkspacePlanPriceId
-              })
-            : createCheckoutSessionFactoryOld({
-                stripe: getStripeClient(),
-                frontendOrigin: getFrontendOrigin(),
-                getWorkspacePlanPrice: getWorkspacePlanPriceId
-              })
-          const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
-          const startCheckoutSession = (await shouldUseNewCheckoutFlow(workspaceId))
-            ? startCheckoutSessionFactoryNew({
-                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-                getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
-                createCheckoutSession: createCheckoutSession as CreateCheckoutSession,
-                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-              })
-            : startCheckoutSessionFactoryOld({
-                getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-                getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                countRole,
-                createCheckoutSession:
-                  createCheckoutSession as CreateCheckoutSessionOld,
-                saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-                deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-              })
+          const isNewFlow = await shouldUseNewCheckoutFlow(workspaceId)
+          if (!isNewFlow)
+            throw new Error('Checkout for old plans is not supported any more')
+          const createCheckoutSession = createCheckoutSessionFactory({
+            stripe: getStripeClient(),
+            frontendOrigin: getFrontendOrigin(),
+            getWorkspacePlanPrice: getWorkspacePlanPriceId
+          })
+          const startCheckoutSession = startCheckoutSessionFactory({
+            getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
+            createCheckoutSession: createCheckoutSession as CreateCheckoutSession,
+            saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+            deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+          })
 
-          try {
-            logger.info(OperationStatus.start, '[{operationName} ({operationStatus})]')
-            const session = await startCheckoutSession({
-              workspacePlan,
-              workspaceId,
-              workspaceSlug: workspace.slug,
-              isCreateFlow: isCreateFlow || false,
-              billingInterval
-            })
-            logger.info(
-              { ...OperationStatus.success, sessionId: session.id },
-              '[{operationName} ({operationStatus})]'
-            )
-            return session
-          } catch (err) {
-            const e = ensureError(err, 'Unknown error creating checkout session')
-            logWithErr(
+          return await withOperationLogging(
+            async () =>
+              await startCheckoutSession({
+                workspacePlan,
+                workspaceId,
+                workspaceSlug: workspace.slug,
+                isCreateFlow: isCreateFlow || false,
+                billingInterval,
+                currency: args.input.currency ?? 'usd'
+              }),
+            {
               logger,
-              e,
-              { ...OperationStatus.failure },
-              '[{operationName} ({operationStatus})]'
-            )
-            throw e
-          }
+              operationName: 'startCheckoutSession',
+              operationDescription: 'Starting checkout session'
+            }
+          )
         },
         upgradePlan: async (_parent, args, ctx) => {
+          let logger = extendLoggerComponent(ctx.log, 'gatekeeper', 'resolvers')
           const { workspaceId, workspacePlan, billingInterval } = args.input
+          logger = logger.child({ workspaceId, workspacePlan })
 
           await authorizeResolver(
             ctx.userId,
@@ -440,11 +479,20 @@ export = FF_GATEKEEPER_MODULE_ENABLED
                     db
                   })
                 })
-          await upgradeWorkspaceSubscription({
-            workspaceId,
-            targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
-            billingInterval
-          })
+          await withOperationLogging(
+            async () =>
+              await upgradeWorkspaceSubscription({
+                workspaceId,
+                targetPlan: workspacePlan, // This should not be casted and the cast will be removed once we will not support old plans anymore
+                billingInterval
+              }),
+            {
+              logger,
+              operationName: 'upgradeWorkspaceSubscription',
+              operationDescription: 'Upgrading workspace subscription'
+            }
+          )
+
           return true
         }
       }

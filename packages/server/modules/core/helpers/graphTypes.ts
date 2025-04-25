@@ -130,6 +130,8 @@ export type StreamCollaboratorGraphQLReturn = {
 
 export type ServerInfoGraphQLReturn = ServerInfo
 
+export type UserMetaGraphQLReturn = { userId: string }
+
 export type ProjectCollaboratorGraphQLReturn = {
   id: string
   user: LimitedUserRecord
@@ -142,3 +144,13 @@ export type ProjectPermissionChecksGraphQLReturn = {
 }
 
 export type RootPermissionChecksGraphQLReturn = GraphQLEmptyReturn
+
+export type ModelPermissionChecksGraphQLReturn = {
+  modelId: string
+  projectId: string
+}
+
+export type VersionPermissionChecksGraphQLReturn = {
+  versionId: string
+  projectId: string
+}

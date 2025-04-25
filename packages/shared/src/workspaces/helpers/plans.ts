@@ -94,6 +94,83 @@ export const isNewWorkspacePlan = (
   }
 }
 
+export const doesPlanIncludeUnlimitedProjectsAddon = (
+  plan: WorkspacePlans
+): boolean => {
+  switch (plan) {
+    case 'teamUnlimited':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'team':
+    case 'pro':
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'free':
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isPaidPlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'starter':
+    case 'plus':
+    case 'business':
+    case 'starterInvoiced':
+    case 'plusInvoiced':
+    case 'businessInvoiced':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
 /**
  * BILLING INTERVALS
  */

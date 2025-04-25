@@ -30,122 +30,94 @@
           class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
         >
           <LayoutSidebarMenu>
-            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled && isMobile">
+            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
               <HeaderWorkspaceSwitcher />
             </LayoutSidebarMenuGroup>
 
-            <LayoutSidebarMenuGroup>
-              <template v-if="!isWorkspacesEnabled">
-                <NuxtLink :to="projectsRoute" @click="isOpenMobile = false">
+            <div class="flex flex-col gap-y-2 lg:gap-y-4">
+              <LayoutSidebarMenuGroup>
+                <NuxtLink :to="projectsLink" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Projects"
-                    :active="isActive(projectsRoute)"
+                    :active="
+                      route.name === 'workspaces-slug' || isActive(projectsRoute)
+                    "
                   >
                     <template #icon>
                       <IconProjects class="size-4 text-foreground-2" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-              </template>
 
-              <NuxtLink
-                v-if="activeWorkspaceSlug"
-                :to="workspaceRoute(activeWorkspaceSlug)"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  label="Home"
-                  :active="route.name === 'workspaces-slug'"
+                <NuxtLink :to="connectorsRoute" @click="isOpenMobile = false">
+                  <LayoutSidebarMenuGroupItem
+                    label="Connectors"
+                    :active="isActive(connectorsRoute)"
+                  >
+                    <template #icon>
+                      <IconConnectors class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
+                  <LayoutSidebarMenuGroupItem
+                    label="Tutorials"
+                    :active="isActive(tutorialsRoute)"
+                  >
+                    <template #icon>
+                      <IconTutorials class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </LayoutSidebarMenuGroup>
+
+              <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <NuxtLink
+                  to="https://speckle.community/"
+                  target="_blank"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <HomeIcon class="size-4 stroke-[1.5px]" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem label="Community forum" external>
+                    <template #icon>
+                      <IconCommunity class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
-              <NuxtLink
-                v-else-if="isProjectsActive"
-                :to="projectsRoute"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  label="Projects"
-                  :active="isActive(projectsRoute)"
+                <div @click="openFeedbackDialog">
+                  <LayoutSidebarMenuGroupItem label="Give us feedback">
+                    <template #icon>
+                      <IconFeedback class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </div>
+
+                <NuxtLink
+                  to="https://speckle.guide/"
+                  target="_blank"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <IconProjects class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem label="Documentation" external>
+                    <template #icon>
+                      <IconDocumentation class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
-              <NuxtLink :to="connectorsRoute" @click="isOpenMobile = false">
-                <LayoutSidebarMenuGroupItem
-                  label="Connectors"
-                  :active="isActive(connectorsRoute)"
+                <NuxtLink
+                  to="https://speckle.community/c/making-speckle/changelog"
+                  target="_blank"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <IconConnectors class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
-              <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
-                <LayoutSidebarMenuGroupItem
-                  label="Tutorials"
-                  :active="isActive(tutorialsRoute)"
-                >
-                  <template #icon>
-                    <IconTutorials class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-            </LayoutSidebarMenuGroup>
-
-            <LayoutSidebarMenuGroup title="Resources" collapsible>
-              <NuxtLink
-                to="https://speckle.community/"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Community forum" external>
-                  <template #icon>
-                    <IconCommunity class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
-              <div @click="openFeedbackDialog">
-                <LayoutSidebarMenuGroupItem label="Give us feedback">
-                  <template #icon>
-                    <IconFeedback class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </div>
-
-              <NuxtLink
-                to="https://speckle.guide/"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Documentation" external>
-                  <template #icon>
-                    <IconDocumentation class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
-              <NuxtLink
-                to="https://speckle.community/c/making-speckle/changelog"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Changelog" external>
-                  <template #icon>
-                    <IconChangelog class="size-4 text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-            </LayoutSidebarMenuGroup>
+                  <LayoutSidebarMenuGroupItem label="Changelog" external>
+                    <template #icon>
+                      <IconChangelog class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </LayoutSidebarMenuGroup>
+            </div>
           </LayoutSidebarMenu>
         </LayoutSidebar>
       </div>
@@ -170,21 +142,23 @@ import {
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useBreakpoints } from '@vueuse/core'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('lg')
+const { activeWorkspaceSlug } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
 
+const projectsLink = computed(() => {
+  return isWorkspacesEnabled.value
+    ? activeWorkspaceSlug.value
+      ? workspaceRoute(activeWorkspaceSlug.value)
+      : projectsRoute
+    : projectsRoute
+})
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }

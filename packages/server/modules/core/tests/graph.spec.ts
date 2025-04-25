@@ -5,7 +5,7 @@ import request from 'supertest'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { generateManyObjects } from '@/test/helpers'
 
-import { Roles, Scopes } from '@speckle/shared'
+import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
 import {
@@ -1129,8 +1129,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
-        expect(res.body.errors[0].message).to.equal('Branch not found')
+        expect(res.body.errors[0].extensions.code).to.equal('NOT_FOUND_ERROR')
 
         const res1 = await sendRequest(userC.token, {
           query:
@@ -1139,10 +1138,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res1).to.be.json
         expect(res1.body.errors).to.exist
-        expect(res1.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
-        expect(res1.body.errors[0].message).to.equal(
-          'Only the branch creator or stream owners are allowed to delete branches'
-        )
+        expect(res1.body.errors[0].extensions.code).to.equal('FORBIDDEN')
 
         const res2 = await sendRequest(userA.token, {
           query:
@@ -1961,7 +1957,7 @@ describe('GraphQL API Core @core-api', () => {
           tokenInput: {
             scopes: [Scopes.Streams.Read],
             name: 'thisWillNotBeCreated',
-            lifespan: 1000000
+            lifespan: 1_000 * TIME_MS.second
           }
         }
       })
