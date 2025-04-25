@@ -309,7 +309,8 @@ const {
       workspaceId:
         selectedWorkspace.value?.id === 'personalProject'
           ? null
-          : selectedWorkspace.value?.id
+          : selectedWorkspace.value?.id,
+      includeImplicitAccess: true
     }
   }),
   () => ({
