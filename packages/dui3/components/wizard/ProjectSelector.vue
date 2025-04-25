@@ -119,6 +119,7 @@
           :project="project"
           :disable-no-write-access-projects="disableNoWriteAccessProjects"
           :is-sender="isSender"
+          :workspace-admin="activeWorkspace.role === 'workspace:admin'"
           @click="handleProjectCardClick(project)"
         />
         <FormButton

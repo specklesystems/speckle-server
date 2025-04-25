@@ -15,7 +15,7 @@
       {{ project.name }}
     </div>
     <div class="text-body-3xs text-foreground-2">
-      {{ project.role?.split(':')[1] }}, updated {{ updatedAgo }}
+      {{ projectRole }}, updated {{ updatedAgo }}
     </div>
   </div>
 </template>
@@ -27,8 +27,9 @@ const props = withDefaults(
     project: ProjectListProjectItemFragment
     isSender: boolean
     disableNoWriteAccessProjects?: boolean
+    workspaceAdmin?: boolean
   }>(),
-  { disableNoWriteAccessProjects: false }
+  { disableNoWriteAccessProjects: false, workspaceAdmin: false }
 )
 
 const updatedAgo = computed(() => {
@@ -39,11 +40,23 @@ const cardTippy = computed(() => (disabled.value ? disabledMessage.value : ''))
 
 const disabledMessage = computed(() =>
   props.isSender
-    ? 'You do not have write access to this project.'
-    : 'You do not have read access to this project.'
+    ? "Your role on this project doesn't give you permission to publish."
+    : "Your role on this project doesn't give you permission to load."
 )
 
 const disabled = computed(() => {
-  return !props.project.role || props.project.role === 'stream:reviewer'
+  return (
+    !props.workspaceAdmin &&
+    (!props.project.role || props.project.role === 'stream:reviewer')
+  )
+})
+
+const projectRole = computed(() => {
+  if (props.workspaceAdmin) {
+    return 'Can edit'
+  } else if (!props.project.role || props.project.role === 'stream:reviewer') {
+    return 'Can view'
+  }
+  return 'Can edit'
 })
 </script>
