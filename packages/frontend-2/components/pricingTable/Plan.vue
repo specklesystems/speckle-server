@@ -385,14 +385,14 @@ const displayAddons = computed(() => {
     return [
       {
         title: 'Unlimited projects and models',
-        tooltip: 'Can be added later from Billing settings'
+        tooltip: 'You can purchase this in the next step'
       }
     ]
   } else if (props.plan === WorkspacePlans.Pro) {
     return [
       {
         title: 'Unlimited projects and models',
-        tooltip: 'Can be added later from Billing settings'
+        tooltip: 'You can purchase this in the next step'
       },
       {
         title: 'Extra data regions',
