@@ -701,19 +701,42 @@ const getUserStreamsQueryBaseFactory =
     streamIdWhitelist,
     workspaceId,
     onlyWithActiveSsoSession,
-    personalOnly
+    personalOnly,
+    includeImplicitAccess
   }: BaseUserStreamsQueryParams) => {
-    const query = tables
-      .streamAcl(deps.db)
-      .where(StreamAcl.col.userId, userId)
-      .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+    const query = tables.streams(deps.db).leftJoin(StreamAcl.name, (j1) => {
+      j1.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+        StreamAcl.col.userId,
+        userId
+      )
+    })
 
-    // select * from stream_acl sa
-    // join streams s on s.id = sa."resourceId"
-    // left join workspace_sso_providers wp on wp."workspaceId" = s."workspaceId"
-    // left join user_sso_sessions us on (us."userId" = sa."userId" and us."providerId" = wp."providerId")
-    // where sa."userId" = '7f1f8aa286'
-    // and ((wp."providerId" is not null and us."validUntil" > now()) or wp."providerId" is null)
+    if (includeImplicitAccess) {
+      /**
+       * implicit access rules:
+       * 1. user must have an explicit stream role OR
+       * 2. user must be a non-guest member of the project's workspace
+       */
+      query
+        .leftJoin(WorkspaceAcl.name, (j2) => {
+          j2.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+            WorkspaceAcl.col.userId,
+            userId
+          )
+        })
+        .andWhere((w1) => {
+          w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere(
+              WorkspaceAcl.col.role,
+              '!=',
+              Roles.Workspace.Guest
+            )
+          })
+        })
+    } else {
+      // expect explicit stream role
+      query.whereNotNull(StreamAcl.col.role)
+    }
 
     if (onlyWithActiveSsoSession) {
       query
