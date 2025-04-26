@@ -49,6 +49,10 @@
       "name": "⬇️ objectloader"
     },
     {
+      "path": "packages/objectloader2",
+      "name": "⬇️ objectloader2"
+    },
+    {
       "path": "packages/objectsender",
       "name": "⬆️ objectsender"
     },

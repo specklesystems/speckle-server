@@ -98,7 +98,7 @@ const icon = computed(() => {
 })
 
 const containerClasses = computed(() => {
-  const classParts: string[] = ['rounded-lg text-foreground border border-outline-2']
+  const classParts: string[] = ['rounded-lg text-foreground border']
 
   switch (props.size) {
     case '2xs':
@@ -113,19 +113,19 @@ const containerClasses = computed(() => {
 
   switch (props.color) {
     case 'success':
-      classParts.push('bg-success-lightest')
+      classParts.push('bg-success-lightest border-outline-2')
       break
     case 'info':
-      classParts.push('bg-info-lightest')
+      classParts.push('bg-foundation-2 border-outline-3')
       break
     case 'danger':
-      classParts.push('bg-danger-lightest')
+      classParts.push('bg-danger-lightest border-outline-2')
       break
     case 'warning':
-      classParts.push('bg-warning-lightest')
+      classParts.push('bg-warning-lightest border-outline-2')
       break
     case 'neutral':
-      classParts.push('bg-foundation')
+      classParts.push('bg-foundation border-outline-2')
       break
   }
 
@@ -203,7 +203,7 @@ const titleClasses = computed(() => {
 })
 
 const descriptionClasses = computed(() => {
-  const classParts: string[] = []
+  const classParts: string[] = ['whitespace-normal']
 
   switch (props.size) {
     case '2xs':

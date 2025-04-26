@@ -21,15 +21,21 @@
         class="truncate text-body-2xs text-foreground dark:text-foreground-2 flex flex-col"
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
-        <CommonTiptapTextEditor
-          v-if="comment.text.doc"
-          :model-value="comment.text.doc"
-          :schema-options="{ multiLine: false }"
-          :project-id="projectId"
-          disable-invitation-cta
-          readonly
-          @created="emit('mounted')"
-        />
+        <template v-if="isLimited">
+          <ViewerResourcesUpgradeLimitAlert limit-type="comment" />
+        </template>
+        <template v-else>
+          <CommonTiptapTextEditor
+            v-if="comment?.text?.doc"
+            :model-value="comment.text.doc"
+            :schema-options="{ multiLine: false }"
+            :project-id="projectId"
+            disable-invitation-cta
+            readonly
+            @created="emit('mounted')"
+          />
+        </template>
+
         <ViewerAnchoredPointThreadCommentAttachments
           :attachments="comment"
           :project-id="projectId"
@@ -59,4 +65,6 @@ const createdAt = computed(() => {
     relative: formattedRelativeDate(props.comment.createdAt, { capitalize: true })
   }
 })
+
+const isLimited = computed(() => !props.comment.text)
 </script>

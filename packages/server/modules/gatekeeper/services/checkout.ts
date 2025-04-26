@@ -66,18 +66,7 @@ export const completeCheckoutSessionFactory =
     const subscriptionData = await getSubscriptionData({
       subscriptionId
     })
-    const currentBillingCycleEnd = new Date()
-    switch (checkoutSession.billingInterval) {
-      case 'monthly':
-        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 1)
-        break
-      case 'yearly':
-        currentBillingCycleEnd.setMonth(currentBillingCycleEnd.getMonth() + 12)
-        break
-
-      default:
-        throwUncoveredError(checkoutSession.billingInterval)
-    }
+    const currentBillingCycleEnd = subscriptionData.currentPeriodEnd
 
     const workspaceSubscription = {
       createdAt: new Date(),
@@ -85,6 +74,7 @@ export const completeCheckoutSessionFactory =
       currentBillingCycleEnd,
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,
+      currency: checkoutSession.currency,
       subscriptionData
     }
 

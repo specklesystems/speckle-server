@@ -21,7 +21,7 @@ export type UpdateBlob = (params: {
 
 export type DeleteBlob = (params: { id: string; streamId?: string }) => Promise<number>
 
-export type DeleteBlobAndAssociatedObject = (params: {
+export type FullyDeleteBlob = (params: {
   blobId: string
   streamId: string
 }) => Promise<void>

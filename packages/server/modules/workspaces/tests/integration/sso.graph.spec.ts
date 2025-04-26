@@ -155,19 +155,25 @@ describe('Workspace SSO', () => {
           const resA = await memberApollo.execute(GetWorkspaceDocument, {
             workspaceId: testWorkspaceWithSso.id
           })
+          expect(resA).to.haveGraphQLErrors({ message: 'gql-sso-workspace' })
+          expect(resA).to.haveGraphQLErrors({
+            code: 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+          })
+
           const resB = await memberApollo.execute(GetWorkspaceProjectsDocument, {
             id: testWorkspaceWithSso.id
           })
+          expect(resB).to.haveGraphQLErrors({ message: 'gql-sso-workspace' })
+          expect(resB).to.haveGraphQLErrors({
+            code: 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+          })
+
           const resC = await memberApollo.execute(GetProjectDocument, {
             id: testWorkspaceWithSsoProjectId
           })
-
-          for (const res of [resA, resB, resC]) {
-            expect(res).to.haveGraphQLErrors({ message: 'gql-sso-workspace' })
-            expect(res).to.haveGraphQLErrors({
-              code: 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
-            })
-          }
+          expect(resC).to.haveGraphQLErrors({
+            message: 'SSO session is expired or it does not exist'
+          })
         })
 
         it('should allow limited access to workspace memberships', async () => {

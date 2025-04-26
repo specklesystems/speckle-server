@@ -98,7 +98,7 @@ export default (app: express.Express) => {
           }
         } else {
           boundLogger.info(
-            { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
+            { megaBytesWritten: gzipStream.bytesWritten / 1_000_000 },
             'Downloaded object (size: {megaBytesWritten} MB)'
           )
         }

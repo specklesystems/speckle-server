@@ -1,54 +1,70 @@
 <template>
-  <CommonCard class="w-full bg-foundation">
-    <div class="flex gap-4">
-      <div>
-        <WorkspaceAvatar :name="workspace.name" :logo="workspace.logo" size="xl" />
-      </div>
-      <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
-        <div class="flex flex-col flex-1">
-          <h6 class="text-heading-sm">{{ workspace.name }}</h6>
-          <p class="text-body-2xs text-foreground-2">
-            {{ workspace.team?.totalCount }}
-            {{ workspace.team?.totalCount === 1 ? 'member' : 'members' }}
-          </p>
+  <WorkspaceCard :logo="workspace.logo ?? ''" :name="workspace.name">
+    <template #text>
+      <div class="flex flex-col gap-y-1">
+        <div class="text-body-2xs line-clamp-3">
+          {{ workspace.description }}
         </div>
-        <FormButton
-          v-if="workspace.requestStatus"
-          color="outline"
-          size="sm"
-          disabled
-          class="capitalize"
-        >
-          {{ workspace.requestStatus }}
-        </FormButton>
-        <FormButton
-          v-else
-          color="outline"
-          size="sm"
-          @click="() => onRequest(workspace.id)"
-        >
+        <div class="text-body-2xs">{{ workspace.team?.totalCount }} members</div>
+      </div>
+    </template>
+    <template #actions>
+      <FormButton
+        v-if="workspace.requestStatus"
+        color="outline"
+        size="sm"
+        disabled
+        class="capitalize"
+      >
+        {{ workspace.requestStatus }}
+      </FormButton>
+      <div v-else class="flex flex-col gap-2 items-end">
+        <FormButton color="outline" size="sm" @click="onRequest">
           Request to join
         </FormButton>
+        <FormButton
+          v-if="showDismissButton"
+          color="subtle"
+          size="sm"
+          @click="onDismiss"
+        >
+          Dismiss
+        </FormButton>
       </div>
-    </div>
-  </CommonCard>
+    </template>
+  </WorkspaceCard>
 </template>
 
 <script setup lang="ts">
-import type { LimitedWorkspace } from '~/lib/common/generated/gql/graphql'
+import type { LimitedWorkspace } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type WorkspaceWithStatus = LimitedWorkspace & {
   requestStatus: string | null
 }
 
-defineProps<{
+const props = defineProps<{
   workspace: WorkspaceWithStatus
+  showDismissButton?: boolean
+  location?: string
 }>()
 
-const { processRequest } = useDiscoverableWorkspaces()
+const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
+  useDiscoverableWorkspaces()
+const mixpanel = useMixpanel()
 
-const onRequest = (workspaceId: string) => {
-  processRequest(true, workspaceId)
+const onRequest = () => {
+  requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')
+}
+
+const onDismiss = async () => {
+  await dismissDiscoverableWorkspace(props.workspace.id)
+  mixpanel.track('Workspace Discovery Banner Dismissed', {
+    workspaceId: props.workspace.id,
+    location: 'discovery_card',
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspace.id
+  })
 }
 </script>

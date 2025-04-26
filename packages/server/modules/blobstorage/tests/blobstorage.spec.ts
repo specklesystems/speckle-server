@@ -339,7 +339,6 @@ describe('Blob storage @blobstorage', () => {
     const blobId = blob.id
     const { objectKey } = await getBlobMetadata({ streamId, blobId })
     expect(objectKey).to.equal(blob.objectKey)
-
     await deleteBlob({ streamId, blobId })
     try {
       await getBlobMetadata({ streamId, blobId })

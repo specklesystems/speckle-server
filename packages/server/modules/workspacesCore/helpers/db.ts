@@ -8,7 +8,6 @@ export const Workspaces = buildTableHelper('workspaces', [
   'createdAt',
   'updatedAt',
   'logo',
-  'defaultProjectRole',
   'domainBasedMembershipProtectionEnabled',
   'discoverabilityEnabled'
 ])
@@ -34,6 +33,14 @@ export const WorkspaceJoinRequests = buildTableHelper('workspace_join_requests',
   'workspaceId',
   'userId',
   'status',
+  'createdAt',
+  'updatedAt'
+])
+
+export const WorkspaceSeats = buildTableHelper('workspace_seats', [
+  'workspaceId',
+  'userId',
+  'type',
   'createdAt',
   'updatedAt'
 ])

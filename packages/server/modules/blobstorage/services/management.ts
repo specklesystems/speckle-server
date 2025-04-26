@@ -1,6 +1,6 @@
 import type {
   DeleteBlob,
-  DeleteBlobAndAssociatedObject,
+  FullyDeleteBlob,
   GetBlobMetadata,
   StoreFileStream,
   UpdateBlob,
@@ -151,8 +151,8 @@ export const fullyDeleteBlobFactory =
   (deps: {
     getBlobMetadata: GetBlobMetadata
     deleteBlob: DeleteBlob
-    deleteObject: (params: ObjectKeyPayload) => MaybeAsync<void>
-  }): DeleteBlobAndAssociatedObject =>
+    deleteObject: DeleteObjectFromStorage
+  }): FullyDeleteBlob =>
   async ({ streamId, blobId }) => {
     const { objectKey } = await deps.getBlobMetadata({
       streamId,

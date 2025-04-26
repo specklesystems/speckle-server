@@ -30,7 +30,6 @@
   <div v-else />
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
@@ -38,6 +37,11 @@ import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
 graphql(`
   fragment ProjectPageAutomationPage_Automation on Automation {
     id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
     ...ProjectPageAutomationHeader_Automation
     ...ProjectPageAutomationFunctions_Automation
     ...ProjectPageAutomationRuns_Automation
@@ -71,7 +75,6 @@ const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
 const workspaceId = computed(() => project.value?.workspaceId ?? undefined)
 const isEditable = computed(() => {
-  const allowedRoles: string[] = [Roles.Stream.Owner]
-  return allowedRoles.includes(result.value?.project.role ?? '')
+  return result?.value?.project?.automation?.permissions?.canUpdate.authorized ?? false
 })
 </script>

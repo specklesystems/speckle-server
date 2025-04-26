@@ -23,6 +23,14 @@
           hide-description
           :hide-items="[Roles.Workspace.Guest]"
         />
+        <FormSelectSeatType
+          v-if="showSeatFilter"
+          v-model="seatType"
+          fully-control-value
+          clearable
+          class="!min-w-40"
+          hide-description
+        />
       </div>
       <template v-if="showInviteButton">
         <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
@@ -45,11 +53,17 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type MaybeNullOrUndefined,
+  type WorkspaceSeatType
+} from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
     id
+    slug
     role
     ...InviteDialogWorkspace_Workspace
   }
@@ -60,10 +74,12 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
   showInviteButton?: boolean
+  showSeatFilter?: boolean
 }>()
 
 const search = defineModel<string>('search')
 const role = defineModel<WorkspaceRoles>('role')
+const seatType = defineModel<WorkspaceSeatType>('seatType')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const isInviteDialogOpen = ref(false)
 

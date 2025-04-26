@@ -11,6 +11,8 @@ import {
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 import { SpeckleControls } from './SpeckleControls.js'
 import { World } from '../../World.js'
+import { AngleDamper } from '../../utils/AngleDamper.js'
+import { TIME_MS } from '@speckle/shared'
 
 const _vectorBuff0 = new Vector3()
 const _changeEvent = { type: 'change' }
@@ -50,9 +52,9 @@ class FlyControls extends SpeckleControls {
   }
   protected contextMenuTriggered = false
 
-  protected eulerXDamper: Damper = new Damper()
-  protected eulerYDamper: Damper = new Damper()
-  protected eulerZDamper: Damper = new Damper()
+  protected eulerXDamper: AngleDamper = new AngleDamper()
+  protected eulerYDamper: AngleDamper = new AngleDamper()
+  protected eulerZDamper: AngleDamper = new AngleDamper()
   protected positionXDamper: Damper = new Damper()
   protected positionYDamper: Damper = new Damper()
   protected positionZDamper: Damper = new Damper()
@@ -151,7 +153,7 @@ class FlyControls extends SpeckleControls {
         relativeFactor = this.world.getRelativeOffset(closeRelativeFactor)
     }
 
-    const deltaSeconds = delta / 1000
+    const deltaSeconds = delta / TIME_MS.second
     const scaledWalkingSpeed = relativeFactor * walkingSpeed
 
     if (this.keyMap.forward)
@@ -350,7 +352,6 @@ class FlyControls extends SpeckleControls {
     const q = new Quaternion()
     const t = new Quaternion().setFromRotationMatrix(this._basisTransform)
     q.setFromEuler(euler).premultiply(t)
-
     this._targetCamera.quaternion.slerp(q, 0.999)
   }
 

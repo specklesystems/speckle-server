@@ -6,7 +6,7 @@ import {
   RequestObjectPreview,
   StoreObjectPreview
 } from '@/modules/previews/domain/operations'
-import { Roles, Scopes } from '@speckle/shared'
+import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 export const createObjectPreviewFactory =
@@ -28,13 +28,24 @@ export const createObjectPreviewFactory =
     // there is always an owner, this is safe
     const userId = owners[0].id
 
+    // use the database as a lock to prevent multiple jobs being created
+    try {
+      await storeObjectPreview({
+        streamId,
+        objectId,
+        priority
+      })
+    } catch {
+      return false
+    }
+
     // we're running the preview generation in the name of a project owner
     const token = await createAppToken({
       appId: DefaultAppIds.Web,
       name: `preview-${streamId}@${objectId}`,
       userId,
       scopes: [Scopes.Streams.Read],
-      lifespan: 120 * 60 * 1000, // for now, lets make this valid for 2 hours
+      lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {
           id: streamId,
@@ -46,6 +57,7 @@ export const createObjectPreviewFactory =
       `/projects/${streamId}/models/${objectId}`,
       serverOrigin
     ).toString()
+
     await requestObjectPreview({ jobId: `${streamId}.${objectId}`, token, url })
-    await storeObjectPreview({ streamId, objectId, priority })
+    return true
   }
