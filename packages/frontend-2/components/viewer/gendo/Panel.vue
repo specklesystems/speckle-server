@@ -29,7 +29,7 @@
           <CommonAlert v-if="!activeUser" color="danger" size="2xs">
             <template #title>Sign in required</template>
           </CommonAlert>
-          <CommonAlert v-else-if="!canContribute" color="danger" size="2xs">
+          <CommonAlert v-else-if="!canContribute?.authorized" color="danger" size="2xs">
             <template #title>You do not have permission</template>
           </CommonAlert>
           <CommonAlert v-else-if="!limits" color="neutral" size="2xs">
@@ -117,7 +117,18 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
-import { canModifyModels } from '~/lib/projects/helpers/permissions'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment ViewerGendoPanel_Project on Project {
+    id
+    permissions {
+      canRequestRender {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const {
   projectId,
@@ -149,9 +160,7 @@ const suggestedPrompts = ref<string[]>([
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
-const canContribute = computed(() =>
-  project.value ? canModifyModels(project.value) : false
-)
+const canContribute = computed(() => project.value?.permissions.canRequestRender)
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
@@ -168,7 +177,7 @@ const textAreaDisabled = computed(() => {
     isLoading.value ||
     timeOutWait.value ||
     isOutOfCredits.value ||
-    !canContribute.value ||
+    !canContribute.value?.authorized ||
     !activeUser.value ||
     !limits.value
   )
@@ -180,7 +189,8 @@ const buttonDisabled = computed(() => {
 
 const tooltipMessage = computed(() => {
   if (!activeUser.value) return 'You must be logged in'
-  if (!canContribute.value) return 'Project permissions required'
+  if (!canContribute.value?.authorized)
+    return canContribute.value?.message || 'Project permissions required'
   if (isOutOfCredits.value) return 'No credits remaining'
   if (!limits.value) return 'No credits available'
   return undefined

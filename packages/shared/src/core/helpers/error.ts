@@ -27,8 +27,13 @@ export function throwUncoveredError(e: never): never {
   throw createUncoveredError(e)
 }
 
-export function createUncoveredError(e: never) {
-  return new Error(`Uncovered error case ${e}.`)
+export class UncoveredError extends Error {}
+
+export function createUncoveredError(e: unknown) {
+  let errorRepr = e
+
+  if (typeof e === 'object') errorRepr = JSON.stringify(e)
+  return new UncoveredError(`Uncovered error case ${errorRepr}.`)
 }
 
 /**

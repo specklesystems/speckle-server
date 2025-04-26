@@ -35,7 +35,7 @@ export const onOperationHandlerFactory = (deps: {
     }
 
     const logger = ctx.log || subscriptionLogger
-    logger.info(
+    logger.debug(
       {
         graphql_operation_name: baseParams.operationName,
         userId: baseParams.context.userId,
@@ -48,7 +48,7 @@ export const onOperationHandlerFactory = (deps: {
     )
 
     baseParams.formatResponse = (val: SubscriptionResponse) => {
-      ctx.loaders.clearAll()
+      ctx.clearCache()
       logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
       metricSubscriptionTotalResponses.inc({
         subscriptionType: baseParams.operationName,
@@ -57,7 +57,7 @@ export const onOperationHandlerFactory = (deps: {
       return val
     }
     baseParams.formatError = (e: Error) => {
-      ctx.loaders.clearAll()
+      ctx.clearCache()
       logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
 
       metricSubscriptionTotalResponses.inc({

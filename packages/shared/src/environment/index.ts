@@ -6,10 +6,13 @@ const isDisableAllFFsMode = () =>
 const isEnableAllFFsMode = () =>
   ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
-const parseFeatureFlags = () => {
+export const parseFeatureFlags = (
+  input: // | Record<string, string | undefined>
+  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>
+): FeatureFlags => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  const res = parseEnv(process.env, {
+  const res = parseEnv(input, {
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -24,14 +27,6 @@ const parseFeatureFlags = () => {
     FF_WORKSPACES_MODULE_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
-    },
-    FF_WORKSPACES_NEW_PLANS_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    FF_GATEKEEPER_FORCE_FREE_PLAN: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
     },
     FF_GATEKEEPER_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -56,11 +51,6 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Toggles IFC parsing with experimental .Net parser
-    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Forces onboarding for all users
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
@@ -80,6 +70,11 @@ const parseFeatureFlags = () => {
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Enable limits on personal projects
+    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
     }
   })
 
@@ -93,24 +88,25 @@ const parseFeatureFlags = () => {
   return res
 }
 
-let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
+let parsedFlags: FeatureFlags | undefined
 
-export function getFeatureFlags(): {
+export type FeatureFlags = {
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
-  FF_WORKSPACES_NEW_PLANS_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
-  FF_GATEKEEPER_FORCE_FREE_PLAN: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-} {
-  if (!parsedFlags) parsedFlags = parseFeatureFlags()
+  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+}
+
+export function getFeatureFlags(): FeatureFlags {
+  //@ts-expect-error this way, the parse function typing is a lot better
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
   return parsedFlags
 }

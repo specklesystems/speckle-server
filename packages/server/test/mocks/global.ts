@@ -27,3 +27,29 @@ export const MultiRegionConfigMock = mockRequireModule<
 export const StripeClientMock = mockRequireModule<
   typeof import('@/modules/gatekeeper/clients/stripe')
 >(['@/modules/gatekeeper/clients/stripe'])
+
+export const EnvHelperMock = mockRequireModule<
+  typeof import('@/modules/shared/helpers/envHelper')
+>(
+  [
+    '@/modules/shared/helpers/envHelper',
+    require.resolve('../../modules/shared/helpers/envHelper')
+  ],
+  ['@/modules/shared/index']
+)
+
+export const StreamsRepositoryMock = mockRequireModule<
+  typeof import('@/modules/core/repositories/streams')
+>(['@/modules/core/repositories/streams'])
+
+export const mockAdminOverride = () => {
+  const enable = (enabled: boolean) => {
+    EnvHelperMock.mockFunction('adminOverrideEnabled', () => enabled)
+  }
+
+  const disable = () => {
+    EnvHelperMock.resetMockedFunction('adminOverrideEnabled')
+  }
+
+  return { enable, disable }
+}

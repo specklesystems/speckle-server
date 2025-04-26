@@ -3,6 +3,7 @@ import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import { createTestUser, login } from '@/test/authHelper'
 import {
+  DismissWorkspaceDocument,
   GetActiveUserWithWorkspaceJoinRequestsDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
@@ -47,6 +48,15 @@ describe('WorkspaceJoinRequests GQL', () => {
         discoverabilityEnabled: true
       }
       await createTestWorkspace(workspace1, admin, { domain: 'example.org' })
+
+      const dismissedWorkspace = {
+        id: createRandomString(),
+        name: 'should not be visible',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(dismissedWorkspace, admin, { domain: 'example.org' })
 
       const workspace2 = {
         id: createRandomString(),
@@ -99,6 +109,23 @@ describe('WorkspaceJoinRequests GQL', () => {
       })
       expect(joinReq2).to.not.haveGraphQLErrors()
 
+      // User requests to join dismissedWorkspace
+      const joinReqDismissed = await sessionUser2.execute(
+        RequestToJoinWorkspaceDocument,
+        {
+          input: {
+            workspaceId: dismissedWorkspace.id
+          }
+        }
+      )
+      expect(joinReqDismissed).to.not.haveGraphQLErrors()
+      const dismissReq = await sessionUser2.execute(DismissWorkspaceDocument, {
+        input: {
+          workspaceId: dismissedWorkspace.id
+        }
+      })
+      expect(dismissReq).to.not.haveGraphQLErrors()
+
       const sessionAdmin = await login(admin)
       const workspace1Res = await sessionAdmin.execute(
         GetWorkspaceWithJoinRequestsDocument,
@@ -135,6 +162,19 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(items2[0].status).to.equal('pending')
       expect(items2[0].workspace.id).to.equal(workspace2.id)
       expect(items2[0].user.id).to.equal(user2.id)
+
+      const workspaceDismissedRes = await sessionAdmin.execute(
+        GetWorkspaceWithJoinRequestsDocument,
+        {
+          workspaceId: dismissedWorkspace.id
+        }
+      )
+      expect(workspaceDismissedRes).to.not.haveGraphQLErrors()
+      const { items: itemsDismissed, totalCount: totalCountDismissed } =
+        workspaceDismissedRes.data!.workspace!.adminWorkspacesJoinRequests!
+
+      expect(totalCountDismissed).to.equal(0)
+      expect(itemsDismissed).to.have.length(0)
     })
   })
 
@@ -172,6 +212,15 @@ describe('WorkspaceJoinRequests GQL', () => {
       }
       await createTestWorkspace(workspace2, admin, { domain: 'example.org' })
 
+      const workspaceDismissed = {
+        id: createRandomString(),
+        name: 'should not see',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspaceDismissed, admin, { domain: 'example.org' })
+
       const sessionUser = await login(user)
 
       // User requests to join workspace1
@@ -189,6 +238,23 @@ describe('WorkspaceJoinRequests GQL', () => {
         }
       })
       expect(joinReq2).to.not.haveGraphQLErrors()
+
+      // User requests to join workspaceDismissed
+      const joinReqDismissed = await sessionUser.execute(
+        RequestToJoinWorkspaceDocument,
+        {
+          input: {
+            workspaceId: workspaceDismissed.id
+          }
+        }
+      )
+      expect(joinReqDismissed).to.not.haveGraphQLErrors()
+      const dismissReq = await sessionUser.execute(DismissWorkspaceDocument, {
+        input: {
+          workspaceId: workspaceDismissed.id
+        }
+      })
+      expect(dismissReq).to.not.haveGraphQLErrors()
 
       const res = await sessionUser.execute(
         GetActiveUserWithWorkspaceJoinRequestsDocument,

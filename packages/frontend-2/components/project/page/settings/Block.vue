@@ -36,12 +36,9 @@
       class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-foundation px-4 sm:px-6 py-2 border-t border-outline-2"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
-        <ExclamationCircleIcon
-          v-tippy="disabledMessage"
-          class="h-5 w-5 text-foreground-2"
-        />
+        <ExclamationCircleIcon class="h-5 w-5 text-foreground-2" />
         <span class="text-foreground-2">
-          You must be a project owner to edit project details
+          {{ disabledMessage }}
         </span>
       </div>
       <div v-else></div>
@@ -53,10 +50,17 @@
 </template>
 <script setup lang="ts">
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
 
-defineProps<{
+const props = defineProps<{
   title: string
   background?: boolean
-  disabledMessage?: string
+  authCheck: FullPermissionCheckResultFragment | undefined
 }>()
+
+const disabledMessage = computed(() =>
+  !props.authCheck?.authorized
+    ? props.authCheck?.message || "You don't have access to edit these details"
+    : undefined
+)
 </script>

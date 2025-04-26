@@ -1,13 +1,26 @@
 import { setActiveWorkspaceMutation } from '~/lib/navigation/graphql/mutations'
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import { headerWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
+import {
+  navigationActiveWorkspaceQuery,
+  navigationWorkspaceListQuery
+} from '~/lib/navigation/graphql/queries'
 import { graphql } from '~/lib/common/generated/gql'
-import type { UseNavigation_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { UseNavigationActiveWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
-  fragment UseNavigation_Workspace on Workspace {
-    ...HeaderWorkspaceSwitcher_Workspace
+  fragment UseNavigationActiveWorkspace_Workspace on Workspace {
+    ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace
     id
+  }
+`)
+
+graphql(`
+  fragment UseNavigationWorkspaceList_User on User {
+    id
+    ...HeaderWorkspaceSwitcherWorkspaceList_User
+    projects(filter: $filter) {
+      totalCount
+    }
   }
 `)
 
@@ -15,7 +28,7 @@ export const useNavigationState = () =>
   useState<{
     activeWorkspaceSlug: string | null
     isProjectsActive: boolean
-    cachedWorkspaceData: UseNavigation_WorkspaceFragment | null
+    cachedWorkspaceData: UseNavigationActiveWorkspace_WorkspaceFragment | null
   }>('navigation-state', () => ({
     activeWorkspaceSlug: null,
     isProjectsActive: false,
@@ -25,33 +38,62 @@ export const useNavigationState = () =>
 export const useNavigation = () => {
   const state = useNavigationState()
   const { mutate } = useMutation(setActiveWorkspaceMutation)
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const activeWorkspaceSlug = computed({
     get: () => state.value.activeWorkspaceSlug,
     set: (newVal) => (state.value.activeWorkspaceSlug = newVal)
   })
 
-  const {
-    result,
-    loading: workspaceLoading,
-    onResult
-  } = useQuery(
-    headerWorkspaceSwitcherQuery,
-    () => ({
-      slug: activeWorkspaceSlug.value || ''
-    }),
-    () => ({
-      enabled: !!activeWorkspaceSlug.value
-    })
-  )
-
   const isProjectsActive = computed({
     get: () => state.value.isProjectsActive,
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
+  const { result } = useQuery(
+    navigationWorkspaceListQuery,
+    () => ({
+      filter: {
+        personalOnly: true
+      }
+    }),
+    {
+      enabled: isWorkspacesEnabled.value
+    }
+  )
+
+  // Check for expired SSO sessions
+  const expiredSsoSessions = computed(
+    () => result.value?.activeUser?.expiredSsoSessions || []
+  )
+
+  // Check if the current active workspace has an expired SSO session
+  const activeWorkspaceHasExpiredSsoSession = computed(
+    () =>
+      !!expiredSsoSessions.value.find(
+        (session) => session.slug === activeWorkspaceSlug.value
+      )
+  )
+
+  const hasProjects = computed(
+    () => result.value?.activeUser?.projects?.totalCount ?? 0 > 0
+  )
+
+  const { result: activeWorkspaceResult, onResult } = useQuery(
+    navigationActiveWorkspaceQuery,
+    () => ({
+      slug: activeWorkspaceSlug.value || ''
+    }),
+    () => ({
+      enabled:
+        !!activeWorkspaceSlug.value &&
+        isWorkspacesEnabled.value &&
+        !activeWorkspaceHasExpiredSsoSession.value
+    })
+  )
+
   // Set state and mutate
-  const mutateActiveWorkspaceSlug = async (newVal: string) => {
+  const mutateActiveWorkspaceSlug = async (newVal: string | null) => {
     state.value.activeWorkspaceSlug = newVal
     state.value.isProjectsActive = false
     await mutate({ slug: newVal, isProjectsActive: false })
@@ -64,10 +106,27 @@ export const useNavigation = () => {
     await mutate({ isProjectsActive: state.value.isProjectsActive, slug: null })
   }
 
+  // Active workspace where SSO session is expired
+  const expiredSsoWorkspaceData = computed(() =>
+    expiredSsoSessions.value.find(
+      (session) => session.slug === activeWorkspaceSlug.value
+    )
+  )
+
   // Use the cached data or the current result
-  const workspaceData = computed(() => {
-    return result.value?.workspaceBySlug || state.value.cachedWorkspaceData
+  const activeWorkspaceData = computed(() => {
+    return (
+      activeWorkspaceResult.value?.workspaceBySlug || state.value.cachedWorkspaceData
+    )
   })
+
+  const workspaceList = computed(() =>
+    result.value?.activeUser
+      ? result.value.activeUser.workspaces.items.filter(
+          (workspace) => workspace.creationState?.completed !== false
+        )
+      : []
+  )
 
   // Save data in the state, the prevent flickering when the component remount in between navigation
   onResult((result) => {
@@ -82,7 +141,10 @@ export const useNavigation = () => {
     isProjectsActive,
     mutateActiveWorkspaceSlug,
     mutateIsProjectsActive,
-    workspaceData,
-    workspaceLoading
+    activeWorkspaceData,
+    workspaceList,
+    activeWorkspaceHasExpiredSsoSession,
+    expiredSsoWorkspaceData,
+    hasProjects
   }
 }

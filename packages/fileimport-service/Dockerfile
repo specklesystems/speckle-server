@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS dotnet-build-stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble@sha256:59d7b5f3bff2318735c6f2dd95bb6a05908665f72dd25bfaf934ba78b3c4eae9 AS dotnet-build-stage
 WORKDIR /app
 COPY packages/fileimport-service/src/ifc-dotnet .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
@@ -20,12 +20,15 @@ RUN apt-get update -y \
      --no-install-recommends \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
+    && chmod +x ./nodesource_setup.sh \
+    && ./nodesource_setup.sh \
+    && rm ./nodesource_setup.sh \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     nodejs=18.20.5-1nodesource1 \
+     nodejs=22.14.0-1nodesource1 \
     && npm install -g corepack@0.30.0 \
     && corepack enable \
     && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
@@ -74,4 +77,5 @@ ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dot
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js" ]
+CMD ["bin/www.js"]

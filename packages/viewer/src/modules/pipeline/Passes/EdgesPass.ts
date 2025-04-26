@@ -15,7 +15,7 @@ import { speckleEdgesGeneratorFrag } from '../../materials/shaders/speckle-edges
 import { speckleEdgesGeneratorVert } from '../../materials/shaders/speckle-edges-generator-vert.js'
 import { Pipeline } from '../Pipelines/Pipeline.js'
 
-export interface EdgePassOptions extends PassOptions {
+export interface EdgesPassOptions extends PassOptions {
   depthMultiplier?: number
   depthBias?: number
   normalMultiplier?: number
@@ -26,7 +26,7 @@ export interface EdgePassOptions extends PassOptions {
   backgroundTextureIntensity: number
 }
 
-export const DefaultEdgePassOptions: Required<EdgePassOptions> = {
+export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
   depthMultiplier: 1,
   depthBias: 0.001,
   normalMultiplier: 1,
@@ -37,13 +37,16 @@ export const DefaultEdgePassOptions: Required<EdgePassOptions> = {
   backgroundTextureIntensity: 0
 }
 
-export class EdgePass extends BaseGPass {
+export class EdgesPass extends BaseGPass {
   public edgesMaterial: ShaderMaterial
   private fsQuad: FullScreenQuad
 
-  public _options: Required<EdgePassOptions> = Object.assign({}, DefaultEdgePassOptions)
+  public _options: Required<EdgesPassOptions> = Object.assign(
+    {},
+    DefaultEdgesPassOptions
+  )
 
-  public set options(value: EdgePassOptions) {
+  public set options(value: EdgesPassOptions) {
     super.options = value
     this.setBackground(
       this._options.backgroundTexture,
@@ -65,6 +68,7 @@ export class EdgePass extends BaseGPass {
       uniforms: {
         tDepth: { value: null },
         tNormal: { value: null },
+        tId: { value: null },
         size: { value: new Vector2(512, 512) },
 
         uDepthMultiplier: { value: this._options.depthMultiplier },

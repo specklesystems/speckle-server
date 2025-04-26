@@ -8,6 +8,7 @@ import {
   ScheduleExecution
 } from '@/modules/core/domain/scheduledTasks/operations'
 import { enterNewRequestContext } from '@/observability/utils/requestContext'
+import { TIME_MS } from '@speckle/shared'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
@@ -26,21 +27,24 @@ export const scheduledCallbackWrapper = async (
 
   // if couldn't acquire it, stop execution
   if (!lock) {
-    boundLogger.warn('Could not acquire task lock for {taskName}, stopping execution.')
+    boundLogger.info('Could not acquire task lock for {taskName}, stopping execution.')
     return
   }
   try {
     // else continue executing the callback...
-    boundLogger.info(
+    boundLogger.debug(
       { scheduledTime },
       'Executing scheduled function {taskName} at {scheduledTime}'
     )
     await callback(scheduledTime, { logger: boundLogger })
     // update lock as succeeded
     const finishDate = new Date()
-    boundLogger.info(
-      { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
-      'Finished scheduled function {taskName} execution in {durationSeconds} seconds'
+    boundLogger.debug(
+      {
+        durationSeconds:
+          (finishDate.getTime() - scheduledTime.getTime()) / TIME_MS.second
+      },
+      'Finished scheduled function {taskName} execution succeeded in {durationSeconds} seconds'
     )
   } catch (error) {
     boundLogger.error(
@@ -48,7 +52,7 @@ export const scheduledCallbackWrapper = async (
       'The triggered task execution {taskName} failed at {scheduledTime}'
     )
   } finally {
-    releaseTaskLock(lock)
+    await releaseTaskLock(lock)
   }
 }
 
@@ -64,7 +68,7 @@ export const scheduleExecutionFactory =
     cronExpression: string,
     taskName: string,
     callback: (scheduledTime: Date, context: { logger: Logger }) => Promise<void>,
-    lockTimeout = 60 * 1000
+    lockTimeout = 1 * TIME_MS.minute
   ): cron.ScheduledTask => {
     const expressionValid = cron.validate(cronExpression)
     if (!expressionValid)

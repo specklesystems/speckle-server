@@ -1,6 +1,5 @@
 /**
  * Helper constants for log fields.
- * Intended to be used as values when logging.
  */
 
 /**
@@ -29,3 +28,9 @@ export const OperationStatus = {
 export const OperationName = (name: string) => ({
   operationName: name
 })
+
+export const stripeEventId = (id: string) => ({
+  stripeEventId: id
+})
+
+export const OperationLogLinePrefix = '[{operationName} ({operationStatus})]'

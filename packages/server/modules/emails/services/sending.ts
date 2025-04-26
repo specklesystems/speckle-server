@@ -1,9 +1,12 @@
+import { emailLogger } from '@/observability/logging'
 import { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 import { resolveMixpanelUserId } from '@speckle/shared'
-import { emailLogger } from '@/observability/logging'
-import { loggerWithMaybeContext } from '@/observability/utils/requestContext'
+import {
+  getRequestLogger,
+  loggerWithMaybeContext
+} from '@/observability/components/express/requestContext'
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'
 /**
@@ -16,6 +19,7 @@ export const sendEmail: SendEmail = async ({
   text,
   html
 }: SendEmailParams): Promise<boolean> => {
+  const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const transporter = getTransporter()
   const logger = loggerWithMaybeContext({ logger: emailLogger })
   if (!transporter) {

@@ -26,6 +26,7 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
 import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -33,10 +34,7 @@ export type UpsertWorkspaceArgs = {
   workspace: Omit<
     SetOptional<
       NullableKeysToOptional<Workspace>,
-      | 'domainBasedMembershipProtectionEnabled'
-      | 'discoverabilityEnabled'
-      | 'defaultProjectRole'
-      | 'slug'
+      'domainBasedMembershipProtectionEnabled' | 'discoverabilityEnabled' | 'slug'
     >,
     'domains'
   >
@@ -125,6 +123,7 @@ export type GetWorkspaceCollaboratorsArgs = {
      * Optionally filter by user name or email
      */
     search?: string
+    seatType?: WorkspaceSeatType
   }
 }
 
@@ -181,6 +180,19 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+export type GetWorkspacesRolesForUsers = (
+  reqs: Array<{
+    userId: string
+    workspaceId: string
+  }>
+) => Promise<{
+  [workspaceId: string]:
+    | {
+        [userId: string]: WorkspaceAcl | undefined
+      }
+    | undefined
+}>
+
 /** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
@@ -200,18 +212,33 @@ export type UpdateWorkspaceRole = (
   }
 ) => Promise<void>
 
-export type GetWorkspaceRolesAllowedProjectRolesFactory = (params: {
+export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
 }) => Promise<{
-  defaultProjectRole: (args: {
-    workspaceRole: WorkspaceRoles
-    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-  }) => StreamRoles | null
-  allowedProjectRoles: (args: {
-    workspaceRole: WorkspaceRoles
-    seatType: MaybeNullOrUndefined<WorkspaceSeatType>
-  }) => StreamRoles[]
+  allowed: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles[]
+  }
+  default: {
+    [workspaceRole in WorkspaceRoles]: StreamRoles | null
+  }
 }>
+
+export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
+  workspaceId: string
+}) => Promise<{
+  allowed: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles[]
+  }
+  default: {
+    [workspaceSeatType in WorkspaceSeatType]: StreamRoles
+  }
+}>
+
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+}) => Promise<void>
 
 /** Workspace Projects */
 
@@ -226,6 +253,61 @@ type QueryAllWorkspaceProjectsArgs = {
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
 ) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
+
+export type GetWorkspacesProjectsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
+  [workspaceId: string]: number
+}>
+
+export type GetWorkspaceModelCount = (params: {
+  workspaceId: string
+}) => Promise<number>
+
+export type GetPaginatedWorkspaceProjectsArgs = {
+  workspaceId: string
+  /**
+   * If set, will take the user's workspace role into account when fetching projects.
+   * E.g. guests will only see projects they have explicit access to.
+   */
+  userId?: string
+  cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 25, if unset
+   */
+  limit?: MaybeNullOrUndefined<number>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      /**
+       * Search for projects by name
+       */
+      search: MaybeNullOrUndefined<string>
+      /**
+       * Only get projects that the active user has an explicit role in
+       */
+      withProjectRoleOnly: MaybeNullOrUndefined<boolean>
+    }>
+  >
+}
+
+export type GetPaginatedWorkspaceProjectsItems = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  items: Stream[]
+  cursor: string | null
+}>
+
+export type GetPaginatedWorkspaceProjectsTotalCount = (
+  params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>
+) => Promise<number>
+
+export type GetPaginatedWorkspaceProjects = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  cursor: string | null
+  items: Stream[]
+  totalCount: number
+}>
 
 /** Workspace Project Roles */
 
@@ -257,7 +339,9 @@ export type UpdateWorkspaceProjectRole = (
 
 /** Events */
 
-export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
+export type EmitWorkspaceEvent = <
+  TEvent extends WorkspaceEvents & keyof EventBusPayloads
+>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
 }) => Promise<void>
@@ -411,6 +495,7 @@ export type EnsureValidWorkspaceRoleSeat = (params: {
   workspaceId: string
   userId: string
   role: WorkspaceRoles
+  updatedByUserId: string
 }) => Promise<WorkspaceSeat>
 
 export type CopyProjectComments = (params: {
@@ -429,3 +514,8 @@ export type SetUserActiveWorkspace = (args: {
   /** Is the user in a "personal project" outside of a workspace? */
   isProjectsActive?: boolean
 }) => Promise<void>
+
+export type IntersectProjectCollaboratorsAndWorkspaceCollaborators = (params: {
+  projectId: string
+  workspaceId: string
+}) => Promise<UserRecord[]>

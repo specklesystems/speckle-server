@@ -3,12 +3,17 @@ import {
   discoverableWorkspacesQuery,
   discoverableWorkspacesRequestsQuery
 } from '../graphql/queries'
-import { dashboardRequestToJoinWorkspaceMutation } from '~/lib/dashboard/graphql/mutations'
+import {
+  dismissDiscoverableWorkspaceMutation,
+  requestToJoinWorkspaceMutation
+} from '~/lib/workspaces/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type { CacheObjectReference } from '~~/lib/common/helpers/graphql'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  getCacheId
 } from '~~/lib/common/helpers/graphql'
 
 graphql(`
@@ -60,16 +65,18 @@ export const useDiscoverableWorkspaces = () => {
     undefined,
     { enabled: isWorkspacesEnabled }
   )
-  const {
-    result: requestsResult,
-    refetch,
-    loading: joinRequestsLoading
-  } = useQuery(discoverableWorkspacesRequestsQuery, undefined, {
-    enabled: isWorkspacesEnabled
-  })
+  const { result: requestsResult, loading: joinRequestsLoading } = useQuery(
+    discoverableWorkspacesRequestsQuery,
+    undefined,
+    {
+      enabled: isWorkspacesEnabled
+    }
+  )
 
-  const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
+  const { mutate: requestToJoin } = useMutation(requestToJoinWorkspaceMutation)
+  const { mutate: dismissWorkspace } = useMutation(dismissDiscoverableWorkspaceMutation)
 
+  const { activeUser } = useActiveUser()
   const mixpanel = useMixpanel()
   const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
@@ -84,10 +91,12 @@ export const useDiscoverableWorkspaces = () => {
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
     const joinRequests =
-      workspaceJoinRequests.value?.items?.map((request) => ({
-        ...request.workspace,
-        requestStatus: request.status
-      })) || []
+      workspaceJoinRequests.value?.items
+        ?.filter((r) => r.status !== 'approved')
+        ?.map((request) => ({
+          ...request.workspace,
+          requestStatus: request.status
+        })) || []
 
     const discoverable =
       discoverableWorkspaces.value?.map((workspace) => ({
@@ -120,43 +129,111 @@ export const useDiscoverableWorkspaces = () => {
   )
 
   const discoverableWorkspacesAndJoinRequestsCount = computed(
-    () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
+    () => discoverableWorkspacesAndJoinRequests.value?.length || 0
   )
 
-  const processRequest = async (accept: boolean, workspaceId: string) => {
+  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
     const cache = apollo.cache
+    const activeUserId = activeUser.value?.id
 
-    if (accept) {
-      const result = await requestToJoin({
-        input: { workspaceId }
-      }).catch(convertThrowIntoFetchResult)
+    if (!activeUserId) return
 
-      if (result?.data) {
-        cache.evict({
-          id: getCacheId('LimitedWorkspace', workspaceId)
-        })
-        refetch()
+    const result = await requestToJoin({
+      input: { workspaceId }
+    }).catch(convertThrowIntoFetchResult)
 
-        mixpanel.track('Workspace Join Request Sent', {
-          workspaceId,
-          location: 'onboarding',
-          // eslint-disable-next-line camelcase
-          workspace_id: workspaceId
-        })
+    if (result?.data) {
+      cache.modify({
+        id: getCacheId('User', activeUserId),
+        fields: {
+          discoverableWorkspaces(existingRefs = [], { readField }) {
+            return existingRefs.filter(
+              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
+                const id = readField('id', ref)
+                return id !== workspaceId
+              }
+            )
+          },
+          workspaceJoinRequests(existingRefs = []) {
+            // Add the workspace to join requests with Pending status
+            const workspace = discoverableWorkspaces.value?.find(
+              (w) => w.id === workspaceId
+            )
+            if (workspace) {
+              return {
+                ...existingRefs,
+                items: [
+                  ...(existingRefs?.items || []),
+                  {
+                    id: workspaceId,
+                    status: 'Pending',
+                    workspace
+                  }
+                ]
+              }
+            }
+            return existingRefs
+          }
+        }
+      })
 
-        triggerNotification({
-          title: 'Request sent',
-          description: 'Your request to join the workspace has been sent.',
-          type: ToastNotificationType.Success
-        })
-      } else {
-        const errorMessage = getFirstErrorMessage(result?.errors)
-        triggerNotification({
-          title: 'Failed to send request',
-          description: errorMessage,
-          type: ToastNotificationType.Danger
-        })
-      }
+      mixpanel.track('Workspace Join Request Sent', {
+        workspaceId,
+        location,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+
+      triggerNotification({
+        title: 'Request sent',
+        description: 'Your request to join the workspace has been sent.',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        title: 'Failed to send request',
+        description: errorMessage,
+        type: ToastNotificationType.Danger
+      })
+    }
+  }
+
+  const dismissDiscoverableWorkspace = async (workspaceId: string) => {
+    const result = await dismissWorkspace({
+      input: { workspaceId }
+    }).catch(convertThrowIntoFetchResult)
+    const cache = apollo.cache
+    const activeUserId = activeUser.value?.id
+
+    if (!activeUserId) return
+
+    if (result?.data) {
+      triggerNotification({
+        title: 'Discoverable workspace dismissed',
+        type: ToastNotificationType.Info
+      })
+
+      cache.modify({
+        id: getCacheId('User', activeUserId),
+        fields: {
+          discoverableWorkspaces(existingRefs = [], { readField }) {
+            return existingRefs.filter(
+              (ref: CacheObjectReference<'LimitedWorkspace'>) => {
+                const id = readField('id', ref)
+                return id !== workspaceId
+              }
+            )
+          }
+        }
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        title: 'Failed to dismiss workspace',
+        description: errorMessage,
+        type: ToastNotificationType.Danger
+      })
     }
   }
 
@@ -172,10 +249,10 @@ export const useDiscoverableWorkspaces = () => {
     discoverableWorkspacesCount,
     discoverableWorkspacesAndJoinRequestsCount,
     discoverableWorkspaces,
+    dismissDiscoverableWorkspace,
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
-    processRequest,
-    loading,
-    refetch
+    requestToJoinWorkspace,
+    loading
   }
 }
