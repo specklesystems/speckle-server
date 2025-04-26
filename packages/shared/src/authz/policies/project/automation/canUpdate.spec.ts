@@ -18,7 +18,7 @@ const buildCanUpdatePolicy = (
   overrides?: Partial<Parameters<typeof canUpdateAutomationPolicy>[0]>
 ) =>
   canUpdateAutomationPolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
