@@ -19,28 +19,12 @@
                   isEmailOrEmpty,
                   canHaveRole({
                     allowedDomains: props.allowedDomains,
-                    workspaceRole: props.targetRole
+                    workspaceRole: targetRole
                   })
                 ]"
-                :help="
-                  item.value.matchesDomainPolicy === false
-                    ? 'This email does not match the set domain policy, and can only be invited as a guest'
-                    : undefined
-                "
+                @paste="handlePaste($event, index)"
               />
             </div>
-            <FormSelectWorkspaceRoles
-              v-if="props.showWorkspaceRoles"
-              v-model="item.value.workspaceRole"
-              label="Select role"
-              :name="`project-role-${item.key}`"
-              class="sm:w-44"
-              mount-menu-on-body
-              :allow-unset="false"
-              :show-label="index === 0"
-              :disabled-items="getDisabledWorkspaceItems(item.value.email)"
-              disabled-item-tooltip="This email does not match the set domain policy, and can only be invited as a guest"
-            />
           </div>
         </div>
         <div class="relative w-4">
@@ -84,12 +68,12 @@ import type {
 import { emptyInviteWorkspaceItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
-import { canHaveRole, matchesDomainPolicy } from '~/lib/invites/helpers/validation'
+import { canHaveRole } from '~/lib/invites/helpers/validation'
+import { parsePastedEmails } from '~/lib/invites/helpers/helpers'
 
 const props = defineProps<{
   invites: InviteWorkspaceItem[]
   allowedDomains: MaybeNullOrUndefined<string[]>
-  showWorkspaceRoles?: boolean
   targetRole?: WorkspaceRoles
 }>()
 
@@ -104,7 +88,7 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
 
-const disableAddUserButton = computed(() => fields.value.length >= 10)
+const disableAddUserButton = computed(() => fields.value.length >= 200)
 
 const addInviteItem = () => {
   pushInvite({
@@ -118,10 +102,29 @@ const removeInviteItem = (index: number) => {
   removeInvite(index)
 }
 
-const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] => {
-  return !matchesDomainPolicy(email, props.allowedDomains)
-    ? [Roles.Workspace.Admin, Roles.Workspace.Member]
-    : []
+const handlePaste = (event: ClipboardEvent, index: number) => {
+  const pastedText = event.clipboardData?.getData('text')
+
+  if (pastedText && pastedText.includes(',')) {
+    event.preventDefault()
+    const validEmails = parsePastedEmails(pastedText)
+
+    if (validEmails.length > 0) {
+      fields.value[index].value.email = validEmails[0]
+      validEmails.shift()
+
+      if (validEmails.length > 0) {
+        validEmails.forEach((email) => {
+          pushInvite({
+            ...emptyInviteWorkspaceItem,
+            email,
+            workspaceRole: Roles.Workspace.Member,
+            projectRole: Roles.Stream.Contributor
+          })
+        })
+      }
+    }
+  }
 }
 
 const submitForm = handleSubmit(() => {

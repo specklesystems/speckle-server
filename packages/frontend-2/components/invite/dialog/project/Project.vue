@@ -25,6 +25,7 @@
             :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
           />
         </template>
         <div>
@@ -116,7 +117,7 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
-const disableAddUserButton = computed(() => fields.value.length >= 10)
+const disableAddUserButton = computed(() => fields.value.length >= 200)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -137,6 +138,22 @@ const addInviteItem = () => {
   pushInvite({
     ...emptyInviteProjectItem,
     project: { id: props.project.id, name: props.project.name }
+  })
+}
+
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Contributor
+    })
   })
 }
 

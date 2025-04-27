@@ -19,6 +19,7 @@
                 :show-label="showLabel"
                 label="Email"
                 :rules="[isEmailOrEmpty]"
+                @paste="handlePaste"
               />
               <FormTextInput
                 v-else
@@ -44,6 +45,7 @@
                 @focus="showSuggestions"
                 @click="showSuggestions"
                 @clear="handleClear"
+                @paste="handlePaste"
               />
               <Transition
                 v-if="isMounted"
@@ -121,6 +123,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
 import { isEmailOrUserId } from '~~/lib/invites/helpers/validation'
+import { parsePastedEmails } from '~~/lib/invites/helpers/helpers'
 
 type SelectedUser = {
   id: string
@@ -161,6 +164,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: InviteProjectItem): void
   (e: 'remove'): void
+  (e: 'add-multiple-emails', emails: string[]): void
 }>()
 
 const isMounted = useMounted()
@@ -287,6 +291,36 @@ const selectSuggestion = (user: SelectedUser) => {
 const showSuggestions = () => {
   isMenuOpen.value = true
 }
+
+const handlePaste = (event: ClipboardEvent) => {
+  const pastedText = event.clipboardData?.getData('text')
+
+  if (pastedText && pastedText.includes(',')) {
+    event.preventDefault()
+
+    const validEmails = parsePastedEmails(pastedText)
+
+    if (validEmails.length > 0) {
+      input.value = validEmails[0]
+
+      if (props.isInWorkspace && props.canInviteNewMembers) {
+        handleInput(validEmails[0])
+      } else if (!props.isInWorkspace) {
+        email.value = validEmails[0]
+      }
+
+      validEmails.shift()
+
+      if (validEmails.length > 0) {
+        emit('add-multiple-emails', validEmails)
+      }
+    }
+  }
+}
+
+onMounted(() => {
+  input.value = props.modelValue.email
+})
 
 onClickOutside(
   menuEl,
