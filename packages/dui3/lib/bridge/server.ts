@@ -195,6 +195,12 @@ export class ArchicadBridge {
           headers: { 'Content-Type': 'application/json' }
         }
       )
+
+      if (!res.ok) {
+        const errorText = await res.text() // Try to read any error message from the server
+        throw new Error(`${res.status}: ${errorText}`)
+      }
+
       const path = (await res.json()) as unknown
 
       await runMethod('afterGsmConverter', [
