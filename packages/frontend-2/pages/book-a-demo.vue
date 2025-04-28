@@ -27,7 +27,7 @@
         </div>
       </template>
       <div v-else class="w-full max-w-5xl">
-        <div class="bg-foundation-page">
+        <div class="bg-foundation-page rounded-xl border-outline-2 border shadow">
           <iframe
             src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2_p9mPs9Mi1NfAPKqUA3GVauvG_Sw114KlgA37JsGAwhXeGyLC8CSa-bzfQ6VXewwpGdVVcnV5?gv=true"
             style="border: 0; background: #fafafa"
