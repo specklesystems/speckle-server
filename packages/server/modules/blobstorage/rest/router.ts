@@ -2,7 +2,7 @@ import {
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowAnonymousUsersOnPublicStreams,
-  streamWritePermissionsPipelineFactory,
+  streamCommentsWritePermissionsPipelineFactory,
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
@@ -19,8 +19,6 @@ import {
   getFileStreamFactory,
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Router } from 'express'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import {
@@ -34,29 +32,19 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 
 export const blobStorageRouterFactory = (): Router => {
-  const createStreamWritePermissions = () =>
-    streamWritePermissionsPipelineFactory({
-      getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db })
-    })
-  const createStreamReadPermissions = () =>
-    streamReadPermissionsPipelineFactory({
-      adminOverrideEnabled,
-      getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db })
-    })
-
   const processNewFileStream = processNewFileStreamFactory()
 
   const app = Router()
 
   app.post(
     '/api/stream/:streamId/blob',
-    authMiddlewareCreator([
-      ...createStreamWritePermissions(),
-      // todo should we add public comments upload escape hatch?
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator(
+        streamCommentsWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
+    },
     async (req, res) => {
       const streamId = req.params.streamId
       const userId = req.context.userId
@@ -88,12 +76,16 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.post(
     '/api/stream/:streamId/blob/diff',
-    authMiddlewareCreator([
-      ...createStreamReadPermissions(),
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-      allowAnonymousUsersOnPublicStreams
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator([
+        ...streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        }),
+        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+        allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+        allowAnonymousUsersOnPublicStreams
+      ])(req, res, next)
+    },
     async (req, res) => {
       if (!isArray(req.body)) {
         throw new UserInputError('An array of blob IDs expected in the body.')
@@ -112,12 +104,16 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
-    authMiddlewareCreator([
-      ...createStreamReadPermissions(),
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-      allowAnonymousUsersOnPublicStreams
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator([
+        ...streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        }),
+        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+        allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+        allowAnonymousUsersOnPublicStreams
+      ])(req, res, next)
+    },
     async (req, res) => {
       const streamId = req.params.streamId
       const [projectDb, projectStorage] = await Promise.all([
@@ -148,7 +144,13 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    authMiddlewareCreator(createStreamReadPermissions()),
+    async (req, res, next) => {
+      await authMiddlewareCreator(
+        streamCommentsWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
+    },
     async (req, res) => {
       const streamId = req.params.streamId
       const [projectDb, projectStorage] = await Promise.all([
@@ -174,7 +176,13 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.get(
     '/api/stream/:streamId/blobs',
-    authMiddlewareCreator(createStreamReadPermissions()),
+    async (req, res, next) => {
+      await authMiddlewareCreator(
+        streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
+    },
     async (req, res) => {
       let fileName = req.query.fileName //filename can be undefined or null, and that returns all blobs
       if (isArray(fileName)) {
