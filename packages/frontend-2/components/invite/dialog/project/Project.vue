@@ -29,20 +29,9 @@
           />
         </template>
         <div>
-          <div
-            :key="`add-user-${fields.length}`"
-            v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
-            class="inline-block"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="PlusIcon"
-              :disabled="disableAddUserButton"
-              @click="addInviteItem"
-            >
-              Add another user
-            </FormButton>
-          </div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            Add another user
+          </FormButton>
         </div>
       </div>
     </form>
@@ -103,7 +92,7 @@ const { handleSubmit } = useForm<InviteProjectForm>({
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -117,7 +106,6 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
-const disableAddUserButton = computed(() => fields.value.length >= 200)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -152,7 +140,7 @@ const addMultipleEmails = (emails: string[]) => {
       ...emptyInviteProjectItem,
       project: { id: props.project.id, name: props.project.name },
       email,
-      projectRole: Roles.Stream.Contributor
+      projectRole: Roles.Stream.Reviewer
     })
   })
 }

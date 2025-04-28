@@ -94,7 +94,7 @@
             :name="`fields.${index}.projectRole`"
             class="w-40"
             mount-menu-on-body
-            show-label
+            :show-label="showLabel"
             :allow-unset="false"
             :hidden-items="[Roles.Stream.Owner]"
           />

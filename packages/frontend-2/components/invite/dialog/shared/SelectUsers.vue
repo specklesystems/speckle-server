@@ -39,20 +39,9 @@
         </div>
       </div>
       <div>
-        <div
-          :key="`add-user-${fields.length}`"
-          v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
-          class="inline-block"
-        >
-          <FormButton
-            color="subtle"
-            :icon-left="PlusIcon"
-            :disabled="disableAddUserButton"
-            @click="addInviteItem"
-          >
-            Add another user
-          </FormButton>
-        </div>
+        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+          Add another user
+        </FormButton>
       </div>
     </div>
     <slot />
@@ -88,13 +77,11 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteWorkspaceItem>('fields')
 
-const disableAddUserButton = computed(() => fields.value.length >= 200)
-
 const addInviteItem = () => {
   pushInvite({
     ...emptyInviteWorkspaceItem,
-    workspaceRole: Roles.Workspace.Member,
-    projectRole: Roles.Stream.Contributor
+    workspaceRole: props.targetRole || Roles.Workspace.Guest,
+    projectRole: Roles.Stream.Reviewer
   })
 }
 
@@ -119,7 +106,7 @@ const handlePaste = (event: ClipboardEvent, index: number) => {
             ...emptyInviteWorkspaceItem,
             email,
             workspaceRole: Roles.Workspace.Member,
-            projectRole: Roles.Stream.Contributor
+            projectRole: Roles.Stream.Reviewer
           })
         })
       }
