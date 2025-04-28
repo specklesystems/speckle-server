@@ -47,6 +47,8 @@ import {
 } from '@/modules/blobstorage/repositories/blobs'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -94,11 +96,11 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
   app.post(
     '/api/stream/:streamId/blob',
     async (req, res, next) => {
-      await authMiddlewareCreator(streamCommentsWritePermissionsPipelineFactory())(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(
+        streamCommentsWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
     },
     async (req, res) => {
       const streamId = req.params.streamId
@@ -252,7 +254,9 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     '/api/stream/:streamId/blob/diff',
     async (req, res, next) => {
       await authMiddlewareCreator([
-        ...streamReadPermissionsPipelineFactory(),
+        ...streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        }),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
@@ -280,7 +284,9 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
       await authMiddlewareCreator([
-        ...streamReadPermissionsPipelineFactory(),
+        ...streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        }),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
@@ -319,11 +325,11 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
-      await authMiddlewareCreator(streamCommentsWritePermissionsPipelineFactory())(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(
+        streamCommentsWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
     },
     async (req, res) => {
       await errorHandler(req, res, async (req, res) => {
@@ -351,11 +357,11 @@ export const init: SpeckleModule['init'] = async ({ app }) => {
   app.get(
     '/api/stream/:streamId/blobs',
     async (req, res, next) => {
-      await authMiddlewareCreator(streamReadPermissionsPipelineFactory())(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(
+        streamReadPermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
     },
     async (req, res) => {
       let fileName = req.query.fileName
