@@ -60,6 +60,7 @@
 <script setup lang="ts">
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { workspaceJoinRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type BookDemoSelect = 'yes' | 'no'
 
@@ -69,6 +70,7 @@ definePageMeta({
 })
 
 const { logout } = useAuthManager()
+const mixpanel = useMixpanel()
 
 const bookDemoSelected = ref<BookDemoSelect | undefined>(undefined)
 const showEmbed = ref(false)
@@ -89,7 +91,9 @@ const options = computed(() => [
 const onCtaClick = () => {
   if (bookDemoSelected.value === 'yes') {
     showEmbed.value = true
+    mixpanel.track('Book a Demo Selected')
   } else {
+    mixpanel.track('Book a Demo Skipped')
     navigateTo(workspaceJoinRoute)
   }
 }
