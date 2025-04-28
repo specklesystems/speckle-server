@@ -107,6 +107,10 @@ export const useWorkspacesWizard = () => {
       }
     }
 
+    if (wizardState.value.currentStep === WizardSteps.Region) {
+      shouldComplete = true
+    }
+
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
       wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
@@ -209,7 +213,11 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key && state.plan === PaidWorkspacePlans.Pro) {
+    if (
+      state.region?.key &&
+      (state.plan === PaidWorkspacePlans.Pro ||
+        state.plan === PaidWorkspacePlans.ProUnlimited)
+    ) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key

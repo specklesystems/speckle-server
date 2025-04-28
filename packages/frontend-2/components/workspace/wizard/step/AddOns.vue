@@ -72,12 +72,18 @@ const options = computed(() => [
 ])
 
 const onCtaClick = () => {
-  if (includeUnlimitedAddon.value) {
-    state.value.plan =
-      state.value.plan === WorkspacePlans.Team
+  const isTeamPlan =
+    state.value.plan === WorkspacePlans.Team ||
+    state.value.plan === WorkspacePlans.TeamUnlimited
+
+  state.value.plan =
+    includeUnlimitedAddon.value === 'yes'
+      ? isTeamPlan
         ? WorkspacePlans.TeamUnlimited
         : WorkspacePlans.ProUnlimited
-  }
+      : isTeamPlan
+      ? WorkspacePlans.Team
+      : WorkspacePlans.Pro
 
   mixpanel.track('Workspace Unlimited Addon Step Completed', {
     plan: state.value.plan,
