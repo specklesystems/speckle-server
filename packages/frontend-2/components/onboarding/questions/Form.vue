@@ -15,7 +15,7 @@
           link
           color="subtle"
           full-width
-          @click="setUserOnboardingComplete()"
+          @click="onSkip"
         >
           Skip
         </FormButton>
@@ -28,7 +28,7 @@
 import { useForm } from 'vee-validate'
 import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { homeRoute, workspaceJoinRoute } from '~/lib/common/helpers/route'
+import { homeRoute, bookDemoRoute } from '~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 const isOnboardingForced = useIsOnboardingForced()
@@ -55,9 +55,14 @@ const onSubmit = handleSubmit(async () => {
     source: values.source
   })
   if (isWorkspacesEnabled.value && hasDiscoverableWorkspaces.value) {
-    navigateTo(workspaceJoinRoute)
+    navigateTo(bookDemoRoute)
   } else {
     navigateTo(homeRoute)
   }
 })
+
+const onSkip = () => {
+  setUserOnboardingComplete()
+  navigateTo(isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
+}
 </script>
