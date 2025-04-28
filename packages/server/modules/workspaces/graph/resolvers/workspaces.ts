@@ -395,9 +395,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { projectId } = args
 
           const inviteCount = args.inputs.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > 200 && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              'Maximum 200 invites can be sent at once by non admins'
             )
           }
 
@@ -1168,9 +1168,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { workspaceId } = args
 
           const inviteCount = args.input.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > 200 && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              'Maximum 200 invites can be sent at once by non admins'
             )
           }
 
