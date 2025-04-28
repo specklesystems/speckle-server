@@ -1,6 +1,6 @@
 <template>
   <div class="flex w-full">
-    <main class="flex-1 h-full overflow-y-auto simple-scrollbar pt-4 lg:pt-6 pb-16">
+    <main class="flex-1 h-full overflow-y-auto simple-scrollbar pt-4 md:pt-6">
       <div class="container mx-auto px-6 md:px-8">
         <WorkspaceInviteWrapper
           v-if="token"
