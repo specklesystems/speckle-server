@@ -20,7 +20,7 @@ export const scheduledCallbackWrapper = async (
 ) => {
   const taskId = crs({ length: 10 })
   const boundLogger = logger.child({ taskName, taskId })
-  enterNewRequestContext({ taskId, taskName })
+  enterNewRequestContext({ taskId, taskName, logger: boundLogger })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
   const lock = await acquireLock({ taskName, lockExpiresAt })

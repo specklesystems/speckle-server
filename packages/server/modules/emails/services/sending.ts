@@ -21,7 +21,6 @@ export const sendEmail: SendEmail = async ({
 }: SendEmailParams): Promise<boolean> => {
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const transporter = getTransporter()
-  const logger = loggerWithMaybeContext({ logger: emailLogger })
   if (!transporter) {
     logger.warn('No email transport present. Cannot send emails. Skipping send...')
     return false
