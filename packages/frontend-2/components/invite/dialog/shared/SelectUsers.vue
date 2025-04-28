@@ -105,7 +105,7 @@ const removeInviteItem = (index: number) => {
 const handlePaste = (event: ClipboardEvent, index: number) => {
   const pastedText = event.clipboardData?.getData('text')
 
-  if (pastedText && pastedText.includes(',')) {
+  if (pastedText && /[\s,;]/.test(pastedText)) {
     event.preventDefault()
     const validEmails = parsePastedEmails(pastedText)
 

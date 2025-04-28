@@ -295,7 +295,7 @@ const showSuggestions = () => {
 const handlePaste = (event: ClipboardEvent) => {
   const pastedText = event.clipboardData?.getData('text')
 
-  if (pastedText && pastedText.includes(',')) {
+  if (pastedText && /[\s,;]/.test(pastedText)) {
     event.preventDefault()
 
     const validEmails = parsePastedEmails(pastedText)
