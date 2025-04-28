@@ -537,7 +537,7 @@ export default class Sandbox {
       output: 0,
       edges: false,
       outlineThickness: 1,
-      outlineColor: 0xff0000,
+      outlineColor: 0x323232,
       outlineDensity: 0.75
     }
     const setPipeline = (value: number) => {

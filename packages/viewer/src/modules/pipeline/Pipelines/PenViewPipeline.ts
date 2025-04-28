@@ -28,6 +28,8 @@ export class PenViewPipeline extends ProgressivePipeline {
 
     const edgesPipeline = new EdgesPipeline(speckleRenderer)
     edgesPipeline.edgePassDynamic.outputTarget = null
+    edgesPipeline.edgePass.options = { backgroundColor: 0x000000 }
+    edgesPipeline.edgePassDynamic.options = { backgroundColor: 0x000000 }
 
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
@@ -96,6 +98,7 @@ export class PenViewPipeline extends ProgressivePipeline {
       stencilMaskPass,
       overlayPass
     )
+
     this.progressiveStage.push(
       ...edgesPipeline.progressivePasses,
       outputPass,

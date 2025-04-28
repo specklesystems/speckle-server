@@ -11,6 +11,7 @@ uniform float uNormalBias;
 uniform float uOutlineThickness;
 uniform float uOutlineDensity;
 uniform vec3 uOutlineColor;
+uniform vec3 uBackgroundColor;
 uniform vec2 size;
 
 uniform float cameraNear;
@@ -149,13 +150,6 @@ vec3 SobelSampleNormal(vec2 uv){
 }
 
 
-
-#ifdef TEXTURE_BACKGROUND
-  uniform sampler2D tBackground;
-  uniform float tBackgroundIntensity;
-#endif
-
-
 void main() {
 	// Depth edge
   float depthEdge = DepthEdge(ivec2(gl_FragCoord), uDepthBias) * uDepthMultiplier; 
@@ -172,8 +166,9 @@ void main() {
 	float sobelOutline = maxOutline * uOutlineDensity;
 
   
-  vec3 color = mix(vec3(1., 1., 1.), uOutlineColor, sobelOutline);
-  // vec3 color = vec3(depthEdge, normalEdge, sobelIdEdge);
-	gl_FragColor = vec4(color, 1.);
+  vec3 color = mix(uBackgroundColor, uOutlineColor, sobelOutline);
+  float alpha = mix(0., uOutlineDensity, sobelOutline);
+  // vec3 color = vec3(depthEdge, normalEdge, sobelIdEdge); // Debug
+	gl_FragColor = vec4(color, alpha);
 
 }`

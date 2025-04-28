@@ -24,6 +24,7 @@ export interface EdgesPassOptions extends PassOptions {
   outlineThickness?: number
   outlineDensity?: number
   outlineColor?: number
+  backgroundColor?: number
 }
 
 export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
@@ -33,7 +34,8 @@ export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
   normalBias: 15,
   outlineThickness: 1,
   outlineDensity: 0.75,
-  outlineColor: 0x000000
+  outlineColor: 0x323232,
+  backgroundColor: 0xfffffff
 }
 
 export class EdgesPass extends BaseGPass {
@@ -55,6 +57,9 @@ export class EdgesPass extends BaseGPass {
     this.edgesMaterial.uniforms.uOutlineDensity.value = this._options.outlineDensity
     this.edgesMaterial.uniforms.uOutlineColor.value = new Color(
       this._options.outlineColor
+    )
+    this.edgesMaterial.uniforms.uBackgroundColor.value = new Color(
+      this._options.backgroundColor
     )
   }
 
@@ -82,6 +87,7 @@ export class EdgesPass extends BaseGPass {
         uOutlineThickness: { value: this._options.outlineThickness },
         uOutlineDensity: { value: this._options.outlineDensity },
         uOutlineColor: { value: new Color(this._options.outlineColor) },
+        uBackgroundColor: { value: new Color(this._options.backgroundColor) },
 
         cameraNear: { value: 1 },
         cameraFar: { value: 100 },
