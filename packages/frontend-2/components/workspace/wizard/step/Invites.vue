@@ -21,6 +21,7 @@
           use-label-in-errors
           label="Email"
           :rules="[isEmailOrEmpty]"
+          @blur="field.value = field.value?.trim()"
         />
         <div>
           <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
