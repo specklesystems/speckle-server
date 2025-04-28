@@ -263,9 +263,9 @@ export = {
       const { input: paramsArray } = args
 
       const inviteCount = paramsArray.length
-      if (inviteCount > 10 && context.role !== Roles.Server.Admin) {
+      if (inviteCount > 200 && context.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
+          'Maximum 200 invites can be sent at once by non admins'
         )
       }
       const logger = context.log.child({
