@@ -40,9 +40,22 @@
         </div>
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
-        <FormButton v-if="!showEmbed" size="lg" submit full-width @click="onCtaClick">
-          Continue
-        </FormButton>
+        <div
+          v-if="!showEmbed"
+          :key="`book-a-demo-cta-${bookDemoSelected}`"
+          v-tippy="!bookDemoSelected ? 'Please select an option' : ''"
+          class="w-full"
+        >
+          <FormButton
+            size="lg"
+            submit
+            full-width
+            :disabled="!bookDemoSelected"
+            @click="onCtaClick"
+          >
+            Continue
+          </FormButton>
+        </div>
         <FormButton
           v-else
           color="subtle"
