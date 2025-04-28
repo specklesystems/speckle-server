@@ -107,6 +107,10 @@ export const useWorkspacesWizard = () => {
       }
     }
 
+    if (wizardState.value.currentStep === WizardSteps.Region) {
+      shouldComplete = true
+    }
+
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
       wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
