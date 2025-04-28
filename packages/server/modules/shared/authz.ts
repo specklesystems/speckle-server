@@ -309,20 +309,27 @@ export const authPipelineCreator = (
 
 const validateStreamPolicyAccessFactory =
   (deps: {
+    getStream: StreamGetter
     policyInvoker: (params: {
       authData: AuthData
       policies: Authz.AuthPolicies
     }) => Promise<Authz.AuthPolicyResult>
   }): AuthPipelineFunction =>
   async (authData) => {
-    const { context, params, authResult } = authData
+    const { context, params } = authData
 
-    if (authHasFailed(authResult)) return { context, authResult }
     if (!params?.streamId)
       return authFailed(
         context,
         new ContextError("The context doesn't have a streamId")
       )
+
+    // A bit inefficient, but subsequent pipelines rely on context adjustments made by this step...
+    context.stream =
+      (await deps.getStream({
+        streamId: params.streamId,
+        userId: context.userId
+      })) || undefined
 
     const authLoaders = await moduleAuthLoaders({ dataLoaders: undefined })
     const policies = Authz.authPoliciesFactory(authLoaders.loaders)
@@ -347,9 +354,12 @@ const validateStreamPolicyAccessFactory =
     return authFailed(context, new ForbiddenError(result.error.message))
   }
 
-export const streamWritePermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
   validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.version.canCreate({
         userId: authData.context.userId,
@@ -359,22 +369,27 @@ export const streamWritePermissionsPipelineFactory = (): AuthPipelineFunction[] 
   validateResourceAccess
 ]
 
-export const streamCommentsWritePermissionsPipelineFactory =
-  (): AuthPipelineFunction[] => [
-    validateScope({ requiredScope: Scopes.Streams.Write }),
-    validateStreamPolicyAccessFactory({
-      policyInvoker: async ({ authData, policies }) =>
-        policies.project.comment.canCreate({
-          userId: authData.context.userId,
-          projectId: authData.params!.streamId!
-        })
-    }),
-    validateResourceAccess
-  ]
+export const streamCommentsWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.comment.canCreate({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  }),
+  validateResourceAccess
+]
 
-export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamReadPermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Read }),
   validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.canRead({
         userId: authData.context.userId,
