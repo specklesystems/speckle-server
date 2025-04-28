@@ -309,27 +309,21 @@ export const authPipelineCreator = (
 
 const validateStreamPolicyAccessFactory =
   (deps: {
-    getStream: StreamGetter
     policyInvoker: (params: {
       authData: AuthData
       policies: Authz.AuthPolicies
     }) => Promise<Authz.AuthPolicyResult>
   }): AuthPipelineFunction =>
   async (authData) => {
-    const { context, params } = authData
+    const { context, params, authResult } = authData
+
+    if (authHasFailed(authResult)) return { context, authResult }
 
     if (!params?.streamId)
       return authFailed(
         context,
         new ContextError("The context doesn't have a streamId")
       )
-
-    // A bit inefficient, but subsequent pipelines rely on context adjustments made by this step...
-    context.stream =
-      (await deps.getStream({
-        streamId: params.streamId,
-        userId: context.userId
-      })) || undefined
 
     const authLoaders = await moduleAuthLoaders({ dataLoaders: undefined })
     const policies = Authz.authPoliciesFactory(authLoaders.loaders)
@@ -358,6 +352,8 @@ export const streamWritePermissionsPipelineFactory = (deps: {
   getStream: StreamGetter
 }): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
     ...deps,
     policyInvoker: async ({ authData, policies }) =>
@@ -365,14 +361,15 @@ export const streamWritePermissionsPipelineFactory = (deps: {
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
 export const streamCommentsWritePermissionsPipelineFactory = (deps: {
   getStream: StreamGetter
 }): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
     ...deps,
     policyInvoker: async ({ authData, policies }) =>
@@ -380,14 +377,15 @@ export const streamCommentsWritePermissionsPipelineFactory = (deps: {
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
 export const streamReadPermissionsPipelineFactory = (deps: {
   getStream: StreamGetter
 }): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Read }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
     ...deps,
     policyInvoker: async ({ authData, policies }) =>
@@ -395,8 +393,7 @@ export const streamReadPermissionsPipelineFactory = (deps: {
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
 export const throwForNotHavingServerRoleFactory =
