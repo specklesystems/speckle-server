@@ -6,6 +6,7 @@ import type { Logger } from '@/observability/logging'
 import type { DoneCallback, Job } from 'bull'
 import type { BuildConsumePreviewResult } from '@/modules/previews/domain/operations'
 import { DatabaseError } from 'pg'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 const parseMessage = (data: string) =>
   previewResultPayload
@@ -64,9 +65,10 @@ export const responseHandlerFactory = (deps: {
       const err = ensureError(e, 'Unknown error when consuming preview result')
 
       if (
-        err instanceof DatabaseError &&
-        err.constraint === 'object_preview_streamid_foreign' &&
-        err.detail?.includes('is not present in table "streams".')
+        err instanceof StreamNotFoundError ||
+        (err instanceof DatabaseError &&
+          err.constraint === 'object_preview_streamid_foreign' &&
+          err.detail?.includes('is not present in table "streams".'))
       ) {
         jobLogger.warn(
           { err },
