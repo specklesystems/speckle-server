@@ -21,7 +21,7 @@ export type InviteResult = {
 export type CreateAndSendInvite = (
   params: CreateInviteParams,
   inviterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-) => Promise<InviteResult>
+) => Promise<void>
 
 export type FinalizeInvite = (params: {
   finalizerUserId: string

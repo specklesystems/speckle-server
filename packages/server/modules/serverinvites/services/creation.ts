@@ -19,6 +19,7 @@ import {
   BuildInviteEmailContents,
   CollectAndValidateResourceTargets,
   CreateAndSendInvite,
+  FinalizeInvite,
   ResendInviteEmail
 } from '@/modules/serverinvites/services/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -100,6 +101,7 @@ export const createAndSendInviteFactory =
     emitEvent: EventBusEmit
     getUser: GetUser
     getServerInfo: GetServerInfo
+    finalizeInvite: FinalizeInvite
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -181,10 +183,10 @@ export const createAndSendInviteFactory =
       }
     })
 
-    return {
-      inviteId: invite.id,
-      token: invite.token
-    }
+    // return {
+    //   inviteId: invite.id,
+    //   token: invite.token
+    // }
   }
 
 /**
