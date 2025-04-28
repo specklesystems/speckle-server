@@ -5,7 +5,6 @@ import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUp
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -21,12 +20,13 @@ export const fileuploadRouterFactory = (): Router => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(
-      streamWritePermissionsPipelineFactory({
-        getRoles: getRolesFactory({ db }),
-        getStream: getStreamFactory({ db })
-      })
-    ),
+    async (req, res, next) => {
+      await authMiddlewareCreator(
+        streamWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
+    },
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       const streamId = req.params.streamId
