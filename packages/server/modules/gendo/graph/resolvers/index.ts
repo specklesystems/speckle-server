@@ -37,6 +37,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const upsertUserCredits = upsertUserCreditsFactory({ db })
 const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
@@ -79,6 +80,7 @@ export = FF_GENDOAI_MODULE_ENABLED
       },
       VersionMutations: {
         async requestGendoAIRender(__parent, args, ctx) {
+          const projectId = args.input.projectId
           await throwIfRateLimited({
             action: 'GENDO_AI_RENDER_REQUEST',
             source: ctx.userId as string
@@ -86,14 +88,18 @@ export = FF_GENDOAI_MODULE_ENABLED
 
           await authorizeResolver(
             ctx.userId,
-            args.input.projectId,
+            projectId,
             Roles.Stream.Reviewer,
             ctx.resourceAccessRules
           )
 
+          const logger = ctx.log.child({
+            projectId,
+            streamId: projectId //legacy
+          })
+
           const userId = ctx.userId!
 
-          const projectId = args.input.projectId
           const [projectDb, projectStorage] = await Promise.all([
             getProjectDbClient({
               projectId
@@ -125,10 +131,18 @@ export = FF_GENDOAI_MODULE_ENABLED
             publish
           })
 
-          await createRenderRequest({
-            ...args.input,
-            userId
-          })
+          await withOperationLogging(
+            async () =>
+              await createRenderRequest({
+                ...args.input,
+                userId
+              }),
+            {
+              logger,
+              operationName: 'createGendoRenderRequest',
+              operationDescription: 'Request GendoAI to generate a render'
+            }
+          )
 
           return true
         }

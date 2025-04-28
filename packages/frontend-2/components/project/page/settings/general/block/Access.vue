@@ -1,9 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock
-    background
-    title="Access"
-    :disabled-message="disabled ? 'You must be a project owner' : undefined"
-  >
+  <ProjectPageSettingsBlock background title="Access" :auth-check="canUpdate">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         Choose how you want to share this project with others.
@@ -12,16 +8,16 @@
     <FormRadioGroup
       v-model="selectedOption"
       :options="radioOptions"
-      :disabled="disabled"
+      :disabled="!canUpdate.authorized"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>
 </template>
 
 <script setup lang="ts">
-import { LockClosedIcon, LinkIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
+import { LockClosedIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockAccess_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -29,49 +25,48 @@ graphql(`
   fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {
     id
     visibility
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockAccess_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'update-visibility', v: ProjectVisibility): void
+  (e: 'update-visibility', v: SimpleProjectVisibility): void
 }>()
 
-const selectedOption = ref(props.project.visibility || ProjectVisibility.Private)
+const selectedOption = ref(props.project.visibility || SimpleProjectVisibility.Private)
 
 const radioOptions = computed(() => [
   {
-    value: ProjectVisibility.Public,
-    title: 'Discoverable',
-    introduction: 'Project is visible to everyone',
-    icon: GlobeAltIcon
-  },
-  {
-    value: ProjectVisibility.Unlisted,
+    value: SimpleProjectVisibility.Unlisted,
     title: 'Link shareable',
     introduction: 'Anyone with the link can view',
     icon: LinkIcon
   },
   {
-    value: ProjectVisibility.Private,
+    value: SimpleProjectVisibility.Private,
     title: 'Private',
     introduction: 'Only collaborators can access',
     icon: LockClosedIcon
   }
 ])
+const canUpdate = computed(() => props.project.permissions.canUpdate)
 
 watch(
   () => props.project.visibility,
   (newVal) => {
-    selectedOption.value = newVal ?? ProjectVisibility.Private
+    selectedOption.value = newVal ?? SimpleProjectVisibility.Private
   }
 )
 
-const emitUpdate = (value: ProjectVisibility) => {
+const emitUpdate = (value: SimpleProjectVisibility) => {
   emit('update-visibility', value)
 }
 </script>

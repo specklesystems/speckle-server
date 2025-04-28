@@ -80,7 +80,6 @@ export const buildAutomationCreate = (
       })),
     storeAutomation: storeAutomationFactory({ db: dbClient }),
     storeAutomationToken: storeAutomationTokenFactory({ db: dbClient }),
-    validateStreamAccess,
     eventEmit: getEventBus().emit
   })
 

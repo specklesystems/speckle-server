@@ -1,19 +1,18 @@
 <template>
   <div>
     <Portal to="primary-actions"></Portal>
-    <ProjectsDashboardHeader
-      :projects-invites="projectsPanelResult?.activeUser"
-      :workspaces-invites="workspacesResult?.activeUser"
-    />
-
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
+      <ProjectsMoveToWorkspaceAlert
+        v-if="isWorkspacesEnabled"
+        @move-project="(id) => onMoveProject(id, 'projects')"
+      />
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
         <h1 class="text-heading-lg">Projects</h1>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <div class="flex flex-col sm:flex-row gap-2">
+      <div class="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
+        <div class="flex flex-col md:flex-row gap-2">
           <FormTextInput
             name="modelsearch"
             :show-label="false"
@@ -33,8 +32,19 @@
             fixed-height
             clearable
           />
+          <div v-if="!showEmptyState && isWorkspacesEnabled" class="md:mt-1">
+            <FormCheckbox
+              id="projects-to-move"
+              v-model="filterProjectsToMove"
+              label-classes="!font-normal select-none"
+              name="Projects to move"
+            />
+          </div>
         </div>
-        <FormButton v-if="!isGuest" @click="openNewProject = true">
+        <FormButton
+          v-if="canCreatePersonalProject?.authorized"
+          @click="openNewProject = true"
+        >
           New project
         </FormButton>
       </div>
@@ -49,11 +59,15 @@
 
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
-      :is-guest="isGuest"
+      :can-create-project="canCreatePersonalProject?.authorized"
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
+      <ProjectsDashboardFilled
+        :projects="projects"
+        show-workspace-link
+        @move-project="(id) => onMoveProject(id, 'project_card')"
+      />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"
@@ -61,24 +75,37 @@
     </template>
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
     <ProjectsAddDialog v-model:open="openNewProject" />
+    <WorkspaceMoveProjectManager
+      v-if="showMoveProjectDialog"
+      v-model:open="showMoveProjectDialog"
+      :project-id="emittedProjectId || undefined"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import {
-  projectsDashboardQuery,
-  projectsDashboardWorkspaceQuery
-} from '~~/lib/projects/graphql/queries'
+import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
     numberOfHidden
+  }
+`)
+
+graphql(`
+  fragment ProjectsDashboard_User on User {
+    permissions {
+      canCreatePersonalProject {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -87,11 +114,13 @@ const logger = useLogger()
 const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
+const filterProjectsToMove = ref(false)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
+const showMoveProjectDialog = ref(false)
+const emittedProjectId = ref<Nullable<string>>(null)
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { isGuest } = useActiveUser()
 useUserProjectsUpdatedTracking()
 
 const {
@@ -110,24 +139,24 @@ const {
 } = useQuery(projectsDashboardQuery, () => ({
   filter: {
     search: (search.value || '').trim() || null,
-    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
+    onlyWithRoles: filterProjectsToMove.value
+      ? ['stream:owner']
+      : selectedRoles.value?.length
+      ? selectedRoles.value
+      : null,
+    personalOnly: isWorkspacesEnabled.value
   },
   cursor: null as Nullable<string>
 }))
-
-const { result: workspacesResult } = useQuery(
-  projectsDashboardWorkspaceQuery,
-  undefined,
-  () => ({
-    enabled: isWorkspacesEnabled.value
-  })
-)
 
 onProjectsResult((res) => {
   cursor.value = res.data?.activeUser?.projects.cursor || null
   infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
 })
 
+const canCreatePersonalProject = computed(
+  () => projectsPanelResult.value?.activeUser?.permissions?.canCreatePersonalProject
+)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
   const isFiltering =
@@ -163,6 +192,19 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) {
     state.complete()
   }
+}
+
+const mixpanel = useMixpanel()
+
+const onMoveProject = (projectId: string, location: string) => {
+  emittedProjectId.value = projectId
+  mixpanel.track('Move Project CTA Clicked', {
+    location,
+    // eslint-disable-next-line camelcase
+    workspace_id:
+      projects.value?.items.find((p) => p.id === projectId)?.workspace?.id || undefined
+  })
+  showMoveProjectDialog.value = true
 }
 
 watch(search, (newVal) => {

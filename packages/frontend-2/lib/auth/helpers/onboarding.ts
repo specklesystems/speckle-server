@@ -13,12 +13,14 @@ export const RoleTitleMap: Record<OnboardingRole, string> = {
 
 export const PlanTitleMap: Record<OnboardingPlan, string> = {
   [OnboardingPlan.Exploring]: 'Just checking things out',
-  [OnboardingPlan.DataExchange]: 'Exchange data between applications',
+  [OnboardingPlan.DataExchange]: 'Design coordination (cross-app data exchange)',
   [OnboardingPlan.Analytics]:
-    'Data analytics, visualisation and reporting (eg PowerBI)',
-  [OnboardingPlan.Collaboration]: 'Collaborate with my team and share 3D models online',
+    'Business intelligence (data analytics and visualisation)',
+  [OnboardingPlan.Collaboration]:
+    'Online collaboration (sharing and discussing 3D models online)',
   [OnboardingPlan.DataWarehouse]: 'Data warehouse and common data environment (CDE)',
   [OnboardingPlan.Development]: 'Develop custom functionalities and apps',
+  [OnboardingPlan.Automation]: 'Automation (pre-made or custom automations)',
   [OnboardingPlan.Other]: 'Other'
 }
 

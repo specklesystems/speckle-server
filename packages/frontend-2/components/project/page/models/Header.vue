@@ -1,10 +1,10 @@
 <template>
   <div>
     <div
-      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4"
+      class="flex flex-col space-y-2 xl:space-y-0 xl:flex-row xl:justify-between xl:items-center mb-4 mt-3"
     >
       <div class="flex justify-between items-center flex-wrap xl:flex-nowrap">
-        <h1 class="block text-heading-xl">Models</h1>
+        <h1 class="block text-heading-lg md:text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
             color="outline"
@@ -15,10 +15,14 @@
             View all in 3D
           </FormButton>
           <FormButton
-            v-if="canContribute"
-            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
+            v-tippy="
+              canCreateModel?.authorized
+                ? undefined
+                : canCreateModel?.message ||
+                  'You do not have permission to create models'
+            "
+            :disabled="!canCreateModel?.authorized"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :disabled="project?.workspace?.readOnly"
             @click="showNewDialog = true"
           >
             New model
@@ -75,19 +79,35 @@
           >
             View all in 3D
           </FormButton>
-          <FormButton
-            v-if="canContribute"
-            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
-            class="hidden lg:inline-flex shrink-0"
-            :disabled="project?.workspace?.readOnly"
-            @click="showNewDialog = true"
+          <div
+            v-tippy="
+              canCreateModel?.authorized || limitReached
+                ? undefined
+                : canCreateModel?.message ||
+                  'You do not have permission to create models'
+            "
           >
-            New model
-          </FormButton>
+            <FormButton
+              :disabled="!canCreateModel?.authorized || limitReached"
+              class="hidden lg:inline-flex shrink-0"
+              @click="handleCreateModelClick"
+            >
+              New model
+            </FormButton>
+          </div>
         </div>
       </div>
     </div>
     <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="projectId" />
+    <WorkspacePlanProjectModelLimitReachedDialog
+      v-model:open="showLimitDialog"
+      :workspace-name="project?.workspace?.name"
+      :plan="project?.workspace?.plan?.name"
+      :workspace-role="project?.workspace?.role"
+      :workspace-slug="project?.workspace?.slug || ''"
+      location="models"
+      limit-type="model"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -101,7 +121,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{
@@ -128,7 +147,18 @@ graphql(`
     }
     workspace {
       id
+      role
+      slug
+      name
       readOnly
+      plan {
+        name
+      }
+    }
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -160,10 +190,9 @@ const onViewAllClick = () => {
   })
 }
 
-const canContribute = computed(() =>
-  props.project ? canModifyModels(props.project) : false
-)
+const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const showNewDialog = ref(false)
+const showLimitDialog = ref(false)
 
 const debouncedSearch = computed({
   get: () => props.search,
@@ -199,6 +228,10 @@ const allModelsRoute = computed(() => {
 
 const team = computed(() => props.project?.team.map((t) => t.user) || [])
 
+const limitReached = computed(() => {
+  return canCreateModel.value?.code === 'WorkspaceLimitsReached'
+})
+
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = localSearch.value.trim()
 }, 500)
@@ -206,6 +239,14 @@ const updateDebouncedSearch = debounce(() => {
 const updateSearchImmediately = (val?: string) => {
   updateDebouncedSearch.cancel()
   debouncedSearch.value = (val ?? localSearch.value).trim()
+}
+
+const handleCreateModelClick = () => {
+  if (limitReached.value) {
+    showLimitDialog.value = true
+  } else {
+    showNewDialog.value = true
+  }
 }
 
 watch(debouncedSearch, (newVal) => {

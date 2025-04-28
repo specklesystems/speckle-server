@@ -117,7 +117,8 @@ function generateTestObject() {
         .map(() => new RandomFoo())
     ]),
     '@(10)chunkedArr': times(100, () => 42),
-    some: new RandomJoe()
+    some: new RandomJoe(),
+    nothing: null
   })
 }
 

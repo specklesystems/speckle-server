@@ -31,21 +31,17 @@ const buildMjmlBody = ({
     expiresInDays === 0
       ? `<strong>today</strong>`
       : `in <strong>${expiresInDays} days</strong>`
-  const bodyStart = `<mj-text>
+  const bodyStart = `<mj-text align="center" line-height="2">
 Hi ${workspaceAdmin.name}!
 <br/>
 <br/>
 The trial for your workspace <span style="font-variant: small-caps; font-weight: bold;">${workspace.name}</span> expires ${expireMessage}.
 <br/>
-<br/>
 Upgrade to a paid plan before the trial expires to keep using your workspace. You can compare plans and get an overview of your estimated billing from your workspace's billing settings.
-<br/>
-<br/>
-
 </mj-text>
   `
-  const bodyEnd = `<mj-text>
-<span style="font-weight: bold;">Have questions or feedback?</span> Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
+  const bodyEnd = `<mj-text align="center" padding-bottom="0px" line-height="2">
+<span style="font-weight: bold;">Have questions or feedback?</span><br/>Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
   </mj-text>`
   return { bodyStart, bodyEnd }
 }

@@ -1,7 +1,6 @@
 <template>
   <div>
-    <SettingsWorkspacesBillingPageNew v-if="isWorkspaceNewPlansEnabled" />
-    <SettingsWorkspacesBillingPage v-else />
+    <SettingsWorkspacesBillingPage />
   </div>
 </template>
 
@@ -13,6 +12,4 @@ definePageMeta({
 useHead({
   title: 'Settings | Workspace - Billing'
 })
-
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 </script>

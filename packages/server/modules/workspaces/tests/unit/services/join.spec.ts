@@ -30,8 +30,7 @@ const createTestWorkspaceWithDomains = (
     logo: null,
     domains: [],
     discoverabilityEnabled: false,
-    domainBasedMembershipProtectionEnabled: false,
-    defaultProjectRole: Roles.Stream.Contributor
+    domainBasedMembershipProtectionEnabled: false
   }
   if (arg) assign(workspace, arg)
   return workspace
@@ -53,6 +52,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -75,6 +77,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -98,6 +103,9 @@ describe('Workspace join services', () => {
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
+          },
+          ensureValidWorkspaceRoleSeat: async () => {
+            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -122,7 +130,14 @@ describe('Workspace join services', () => {
         },
         emitWorkspaceEvent: async ({ eventName }) => {
           firedEvents.push(eventName)
-        }
+        },
+        ensureValidWorkspaceRoleSeat: async () => ({
+          type: 'editor',
+          workspaceId,
+          userId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
       })({ userId, workspaceId })
 
       expect(storedWorkspaceRole!.userId).to.equal(userId)

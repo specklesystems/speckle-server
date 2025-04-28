@@ -5,6 +5,10 @@ import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmail
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  createWorkspaceSeatFactory,
+  getWorkspaceUserSeatFactory
+} from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { commandFactory } from '@/modules/shared/command'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -31,8 +35,10 @@ import {
   approveWorkspaceJoinRequestFactory,
   denyWorkspaceJoinRequestFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
+import { ensureValidWorkspaceRoleSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const eventBus = getEventBus()
 
@@ -122,7 +128,14 @@ export default FF_WORKSPACES_MODULE_ENABLED
         workspaceJoinRequestMutations: () => ({})
       },
       WorkspaceJoinRequestMutations: {
-        approve: async (_parent, args) => {
+        approve: async (_parent, args, ctx) => {
+          const workspaceId = args.input.workspaceId
+          const targetUserId = args.input.userId
+          const logger = ctx.log.child({
+            workspaceId,
+            targetUserId
+          })
+
           const approveWorkspaceJoinRequest =
             commandFactory<ApproveWorkspaceJoinRequest>({
               db,
@@ -148,16 +161,36 @@ export default FF_WORKSPACES_MODULE_ENABLED
                     db
                   }),
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                  emit
+                  emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: emit
+                  })
                 })
               }
             })
-          return await approveWorkspaceJoinRequest({
-            userId: args.input.userId,
-            workspaceId: args.input.workspaceId
-          })
+          return await withOperationLogging(
+            async () =>
+              await approveWorkspaceJoinRequest({
+                userId: targetUserId,
+                workspaceId,
+                approvedByUserId: ctx.userId!
+              }),
+            {
+              logger,
+              operationName: 'approveWorkspaceJoinRequest',
+              operationDescription: 'Approve workspace join request'
+            }
+          )
         },
-        deny: async (_parent, args) => {
+        deny: async (_parent, args, ctx) => {
+          const workspaceId = args.input.workspaceId
+          const targetUserId = args.input.userId
+          const logger = ctx.log.child({
+            workspaceId,
+            targetUserId
+          })
           const denyWorkspaceJoinRequest = commandFactory<DenyWorkspaceJoinRequest>({
             db,
             operationFactory: ({ db }) => {
@@ -185,10 +218,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
             }
           })
 
-          return await denyWorkspaceJoinRequest({
-            userId: args.input.userId,
-            workspaceId: args.input.workspaceId
-          })
+          return await withOperationLogging(
+            async () =>
+              await denyWorkspaceJoinRequest({
+                userId: args.input.userId,
+                workspaceId: args.input.workspaceId
+              }),
+            {
+              logger,
+              operationName: 'denyWorkspaceJoinRequest',
+              operationDescription: 'Deny workspace join request'
+            }
+          )
         }
       }
     } as Resolvers)

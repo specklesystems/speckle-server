@@ -14,7 +14,7 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { isNonNullable, Scopes } from '@speckle/shared'
+import { isNonNullable, Scopes, TIME_MS } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import {
   getFunctionFactory,
@@ -311,7 +311,7 @@ const initializeEventListeners = () => {
           functionType: fn?.isFeatured ? 'public' : 'private',
           functionRunId: functionRun.id,
           status: functionRun.status,
-          durationInSeconds: functionRun.elapsed / 1000,
+          durationInSeconds: functionRun.elapsed / TIME_MS.second,
           durationInMilliseconds: functionRun.elapsed,
           /* eslint-disable-next-line camelcase */
           workspace_id: project?.workspaceId
@@ -368,7 +368,7 @@ const initializeEventListeners = () => {
 }
 
 const automateModule: SpeckleModule = {
-  async init(app, isInitial) {
+  async init({ app, isInitial }) {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     moduleLogger.info('⚙️  Init automate module')
 

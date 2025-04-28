@@ -13,6 +13,14 @@ enum ProjectVisibility {
 }
 
 """
+Visibility without the "discoverable" option
+"""
+enum SimpleProjectVisibility {
+  PRIVATE
+  UNLISTED
+}
+
+"""
 Any values left null will be ignored, so only set the properties that you want updated
 """
 input ProjectUpdateInput {
@@ -72,13 +80,11 @@ type ProjectInviteMutations {
   """
   create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   """
   Batch invite to project
   """
   batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
 
   """
   Accept or decline a project invite
@@ -88,9 +94,7 @@ type ProjectInviteMutations {
   """
   Cancel a pending stream invite. Can only be invoked by a project owner.
   """
-  cancel(projectId: ID!, inviteId: String!): Project!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
 }
 
 type ProjectMutations {
@@ -150,6 +154,7 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
+    sortBy: [String!]
   ): UserProjectCollection! @isOwner
 }
 
@@ -170,7 +175,7 @@ type Project {
   id: ID!
   name: String!
   description: String
-  visibility: ProjectVisibility!
+  visibility: SimpleProjectVisibility!
   allowPublicComments: Boolean!
   """
   Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
@@ -199,7 +204,22 @@ input UserProjectsFilter {
   Only include projects where user has the specified roles
   """
   onlyWithRoles: [String!]
+
+  """
+  Only include projects in the specified workspace
+  """
   workspaceId: ID
+
+  """
+  Only include personal projects (not in any workspace)
+  """
+  personalOnly: Boolean
+
+  """
+  If set to true, will also include streams that the user may not have an explicit role on,
+  but has implicit access to because of workspaces
+  """
+  includeImplicitAccess: Boolean
 }
 
 enum UserProjectsUpdatedMessageType {

@@ -1,5 +1,5 @@
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import * as Observability from '@speckle/shared/dist/esm/observability/index'
+import * as Observability from '@speckle/shared/observability'
 import {
   prettify,
   type AbstractLoggerHandler,
@@ -14,15 +14,17 @@ export function useAppErrorState() {
     inErrorState: ref(false),
     errorRpm: Observability.simpleRpmCounter()
   }))
-  const logger = useLogger()
+  const nuxtApp = useNuxtApp()
 
   return {
     isErrorState: computed(() => state.inErrorState.value),
     registerError: () => {
       const epm = state.errorRpm.hit()
+      const logger = nuxtApp.$logger
 
       if (!state.inErrorState.value && epm >= ENTER_STATE_AT_ERRORS_PER_MIN) {
-        logger.fatal(
+        // optional chaining, cause logger may not exist super early in startup
+        logger?.fatal(
           `Too many errors (${epm} errors per minute), entering app error state!`
         )
         state.inErrorState.value = true

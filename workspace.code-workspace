@@ -22,7 +22,11 @@
     },
     {
       "path": "packages/preview-service",
-      "name": "🖼️ preview-service"
+      "name": "🏃 preview-service"
+    },
+    {
+      "path": "packages/preview-frontend",
+      "name": "🖼️ preview-frontend"
     },
     {
       "path": "packages/viewer",
@@ -43,6 +47,10 @@
     {
       "path": "packages/objectloader",
       "name": "⬇️ objectloader"
+    },
+    {
+      "path": "packages/objectloader2",
+      "name": "⬇️ objectloader2"
     },
     {
       "path": "packages/objectsender",

@@ -81,3 +81,27 @@ export const batchDeleteProjectsMutation = gql`
     }
   }
 `
+
+export const updateProjectRoleMutation = gql`
+  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {
+    projectMutations {
+      updateRole(input: $input) {
+        ...BasicProjectFields
+      }
+    }
+  }
+
+  ${basicProjectFieldsFragment}
+`
+
+export const getProjectCollaboratorsQuery = gql`
+  query GetProjectCollaborators($projectId: String!) {
+    project(id: $projectId) {
+      id
+      team {
+        id
+        role
+      }
+    }
+  }
+`

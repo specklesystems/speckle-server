@@ -57,6 +57,7 @@ export default class SpeckleConverter {
     InstanceProxy: this.InstanceProxyToNode.bind(this),
     RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
     ColorProxy: this.ColorProxyToNode.bind(this),
+    Region: this.RegionToNode.bind(this),
     Parameter: null
   }
 
@@ -900,6 +901,33 @@ export default class SpeckleConverter {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.vertexNormals = await this.dechunk(obj.vertexNormals)
+  }
+
+  private async RegionToNode(obj: SpeckleObject, node: TreeNode) {
+    try {
+      if (!obj) return
+
+      let displayValue = this.getDisplayValue(obj)
+
+      if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+      if (!displayValue) return
+
+      const ref = await this.resolveReference(displayValue as SpeckleObject)
+      const nestedNode: TreeNode = this.tree.parse({
+        id: node.model.instanced
+          ? this.getCompoundId(ref.id, this.instanceCounter++)
+          : this.getNodeId(ref),
+        raw: ref,
+        atomic: false,
+        children: [],
+        ...(node.model.instanced && { instanced: node.model.instanced })
+      })
+      await this.convertToNode(ref, nestedNode)
+      this.tree.addNode(nestedNode, node)
+    } catch (e) {
+      Logger.warn(`Failed to convert Region id: ${obj.id}`)
+      throw e
+    }
   }
 
   private async TextToNode(_obj: SpeckleObject, _node: TreeNode) {

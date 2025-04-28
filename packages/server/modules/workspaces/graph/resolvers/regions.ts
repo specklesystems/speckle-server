@@ -2,24 +2,13 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getDb, getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import {
-  copyProjectAutomationsFactory,
-  copyProjectCommentsFactory,
-  copyProjectBlobs,
-  copyProjectModelsFactory,
-  copyProjectObjectsFactory,
-  copyProjectsFactory,
-  copyProjectVersionsFactory,
-  copyProjectWebhooksFactory,
-  copyWorkspaceFactory
-} from '@/modules/workspaces/repositories/projectRegions'
 import {
   getWorkspaceFactory,
   upsertWorkspaceFactory
@@ -28,32 +17,13 @@ import {
   assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
-import {
-  updateProjectRegionFactory,
-  validateProjectRegionCopyFactory
-} from '@/modules/workspaces/services/projectRegions'
 import { Roles } from '@speckle/shared'
-import { getProjectFactory } from '@/modules/core/repositories/projects'
-import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
-import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
-import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
-import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
-import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
-import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
-import {
-  getProjectObjectStorage,
-  getRegionObjectStorage
-} from '@/modules/multiregion/utils/blobStorageSelector'
-import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
-import {
-  deleteRegionKeyFromCacheFactory,
-  upsertProjectRegionKeyFactory
-} from '@/modules/multiregion/repositories/projectRegion'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { scheduleJob } from '@/modules/multiregion/services/queue'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -66,14 +36,22 @@ export default {
   },
   WorkspaceMutations: {
     setDefaultRegion: async (_parent, args, ctx) => {
+      const workspaceId = args.workspaceId
+      const regionKey = args.regionKey
+
       await authorizeResolver(
         ctx.userId,
-        args.workspaceId,
+        workspaceId,
         Roles.Workspace.Admin,
         ctx.resourceAccessRules
       )
 
-      const regionDb = await getDb({ regionKey: args.regionKey })
+      const logger = ctx.log.child({
+        workspaceId,
+        regionKey
+      })
+
+      const regionDb = await getDb({ regionKey })
 
       const assignRegion = assignWorkspaceRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
@@ -87,75 +65,77 @@ export default {
         getWorkspace: getWorkspaceFactory({ db }),
         insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
       })
-      await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
+      await withOperationLogging(
+        async () => await assignRegion({ workspaceId, regionKey }),
+        {
+          logger,
+          operationName: 'assignWorkspaceRegion',
+          operationDescription: 'Assign a region to a workspace'
+        }
+      )
+
+      // Move existing workspace projects to new target region
+      if (FF_MOVE_PROJECT_REGION_ENABLED) {
+        const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+          getStreams: legacyGetStreamsFactory({ db })
+        })
+        for await (const projects of queryAllWorkspaceProjects({
+          workspaceId
+        })) {
+          await Promise.all(
+            projects.map((project) =>
+              scheduleJob({
+                type: 'move-project-region',
+                payload: {
+                  projectId: project.id,
+                  regionKey
+                }
+              })
+            )
+          )
+        }
+      }
 
       return await ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
     }
   },
   WorkspaceProjectMutations: {
     moveToRegion: async (_parent, args, context) => {
-      if (!FF_MOVE_PROJECT_REGION_ENABLED && !isTestEnv()) {
+      if (!FF_MOVE_PROJECT_REGION_ENABLED) {
         throw new WorkspacesNotYetImplementedError()
       }
 
+      const projectId = args.projectId
+      const regionKey = args.regionKey
+
       await authorizeResolver(
         context.userId,
-        args.projectId,
+        projectId,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
 
-      const sourceDb = await getProjectDbClient({ projectId: args.projectId })
-      const sourceObjectStorage = await getProjectObjectStorage({
-        projectId: args.projectId
-      })
-      const targetDb = await (await getDb({ regionKey: args.regionKey })).transaction()
-      const targetObjectStorage = await getRegionObjectStorage({
-        regionKey: args.regionKey
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        regionKey
       })
 
-      const updateProjectRegion = updateProjectRegionFactory({
-        getProject: getProjectFactory({ db: sourceDb }),
-        getAvailableRegions: getAvailableRegionsFactory({
-          getRegions: getRegionsFactory({ db }),
-          canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db })
-          })
-        }),
-        copyWorkspace: copyWorkspaceFactory({ sourceDb, targetDb }),
-        copyProjects: copyProjectsFactory({ sourceDb, targetDb }),
-        copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
-        copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
-        copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
-        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
-        copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb }),
-        copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb }),
-        copyProjectBlobs: copyProjectBlobs({
-          sourceDb,
-          sourceObjectStorage,
-          targetDb,
-          targetObjectStorage
-        }),
-        validateProjectRegionCopy: validateProjectRegionCopyFactory({
-          countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
-          countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
-          countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
-          countProjectAutomations: getProjectAutomationsTotalCountFactory({
-            db: sourceDb
+      return await withOperationLogging(
+        async () =>
+          await scheduleJob({
+            type: 'move-project-region',
+            payload: {
+              projectId,
+              regionKey
+            }
           }),
-          countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
-          getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
-        }),
-        updateProjectRegionKey: updateProjectRegionKeyFactory({
-          upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
-          cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
-            redis: getGenericRedis()
-          }),
-          emitEvent: getEventBus().emit
-        })
-      })
-
-      return await withTransaction(updateProjectRegion(args), targetDb)
+        {
+          logger,
+          operationName: 'workspaceProjectMoveToRegion',
+          operationDescription: 'Move a workspace project to a different region'
+        }
+      )
     }
   }
 } as Resolvers

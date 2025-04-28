@@ -10,6 +10,7 @@ import {
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 type GetObjectChildrenQueryParams = Parameters<
   ReturnType<typeof getObjectChildrenQueryFactory>
@@ -93,6 +94,8 @@ export = {
   },
   Mutation: {
     async objectCreate(_parent, args, context) {
+      const projectId = args.objectInput.streamId
+
       await authorizeResolver(
         context.userId,
         args.objectInput.streamId,
@@ -100,20 +103,33 @@ export = {
         context.resourceAccessRules
       )
 
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
       await coreModule.executeHooks?.('onCreateObjectRequest', {
-        projectId: args.objectInput.streamId
+        projectId
       })
 
       const projectDB = await getProjectDbClient({
-        projectId: args.objectInput.streamId
+        projectId
       })
       const createObjects = createObjectsFactory({
         storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db: projectDB })
       })
-      const ids = await createObjects({
-        streamId: args.objectInput.streamId,
-        objects: args.objectInput.objects.filter(isNonNullable)
-      })
+      const ids = await withOperationLogging(
+        async () =>
+          await createObjects({
+            streamId: projectId,
+            objects: args.objectInput.objects.filter(isNonNullable)
+          }),
+        {
+          logger,
+          operationName: 'objectCreate',
+          operationDescription: `Create one or more new objects`
+        }
+      )
       return ids
     }
   }

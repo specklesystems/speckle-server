@@ -22,7 +22,9 @@
     </div>
     <div class="text-sm" :class="labelPosition === 'left' ? 'w-1/2' : 'ml-2'">
       <label :for="finalId" :class="{ 'sr-only': hideLabel }">
-        <span class="text-body-xs text-foreground font-medium">{{ title }}</span>
+        <span class="text-body-xs text-foreground font-medium" :class="labelClasses">
+          {{ title }}
+        </span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
         <p v-if="descriptionText" :id="descriptionId" :class="descriptionClasses">
           {{ descriptionText }}
@@ -76,6 +78,13 @@ const props = defineProps({
    * Set label text
    */
   label: {
+    type: String as PropType<Optional<string>>,
+    default: undefined
+  },
+  /**
+   * Set label classes
+   */
+  labelClasses: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },

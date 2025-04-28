@@ -5,9 +5,9 @@ import {
   wrapFactoryWithCache,
   wrapWithCache
 } from '@/modules/shared/utils/caching'
-import { describeEach } from '@/test/assertionHelper'
+import { describeEach, itEach } from '@/test/assertionHelper'
 import TTLCache from '@isaacs/ttlcache'
-import { wait } from '@speckle/shared'
+import { TIME_MS, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import Redis from 'ioredis'
 import MockRedis from 'ioredis-mock'
@@ -71,7 +71,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const case1Args = <const>[1, 2]
@@ -102,7 +102,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const args = <const>[5, 50]
@@ -125,7 +125,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const args = <const>[5, 50]
@@ -163,6 +163,41 @@ describe('wrapWithCache', () => {
         expect(invoked).to.equal(2)
       })
 
+      itEach(
+        [{ cachePromises: true }, { cachePromises: false }],
+        ({ cachePromises }) =>
+          cachePromises
+            ? 'should cache promises'
+            : 'should invoke resolver many times without promise caching',
+        async ({ cachePromises }) => {
+          let invoked = 0
+
+          const addCached = wrapWithCache({
+            resolver: actOnInvoke(add, () => {
+              invoked++
+            }),
+            cacheProvider,
+            name: 'add',
+            ttlMs: TIME_MS.second,
+            options: {
+              cachePromises
+            }
+          })
+
+          const args = <const>[5, 50]
+          const allResponses = await Promise.all([
+            addCached(...args),
+            addCached(...args),
+            addCached(...args),
+            addCached(...args)
+          ])
+
+          const firstBatchExpectedInvoked = cachePromises ? 1 : 4
+          expect(allResponses.every((r) => r === 55)).to.be.true
+          expect(invoked).to.equal(firstBatchExpectedInvoked)
+        }
+      )
+
       describe('when caching a factory', () => {
         it('should allow caching factory results w/ different deps', async () => {
           const addInvoked: Record<string, number> = {}
@@ -171,7 +206,7 @@ describe('wrapWithCache', () => {
           const multiplyAddCachedFactory = wrapFactoryWithCache({
             name: 'multiplyAdd',
             factory: multiplyAddFactory,
-            ttlMs: 1000,
+            ttlMs: TIME_MS.second,
             cacheProvider
           })
 

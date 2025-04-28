@@ -37,6 +37,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
 
     return data.users?.items || []
   },
+  allowSpaces: true,
   render: () => {
     let component: VueRenderer
     let popup: Instance[]

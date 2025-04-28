@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { beforeEachContext } from '@/test/hooks'
-import { ensureError, Roles } from '@speckle/shared'
+import { ensureError, Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
   legacyGetPaginatedUsersFactory,
@@ -146,7 +146,7 @@ describe('User admin @user-services', () => {
 
     const users = await getUsers(2000000)
     expect(users).to.have.lengthOf(200)
-  }).timeout(10000)
+  }).timeout(10 * TIME_MS.second)
 
   it('Get users offset is applied', async () => {
     const users = await getUsers(200, 200)
