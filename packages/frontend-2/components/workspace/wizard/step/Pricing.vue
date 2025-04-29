@@ -8,6 +8,7 @@
           v-model:is-yearly-interval-selected="isYearlyIntervalSelected"
           :plan="plan"
           can-upgrade
+          show-addons
           @on-yearly-interval-selected="onYearlyIntervalSelected"
         >
           <template #cta>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="bg-foundation flex gap-2 p-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
+      class="bg-foundation flex gap-2 p-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg items-start"
     >
       <div class="flex flex-1 flex-col">
         <button class="flex items-center gap-1 cursor-pointer" @click="toggleAdmins">
@@ -36,8 +36,8 @@
         :disabled-roles="[Roles.Stream.Contributor, Roles.Stream.Reviewer]"
         disabled-item-tooltip="Admin roles can't be changed"
       />
-      <div v-else class="flex items-center justify-end text-body-2xs">
-        {{ accessSelectItems[generalAccessRole].title }}
+      <div v-else class="flex items-center justify-end text-body-2xs pt-1">
+        {{ roleSelectItems[Roles.Stream.Owner].title }}
       </div>
     </div>
     <div
@@ -57,7 +57,8 @@
 <script lang="ts" setup>
 import {
   AccessSelectItems,
-  accessSelectItems
+  accessSelectItems,
+  roleSelectItems
 } from '~~/lib/projects/helpers/components'
 import type { ProjectPageCollaborators_WorkspaceCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'

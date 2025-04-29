@@ -16,7 +16,7 @@ export type ProjectCollaboratorListItem = {
   role: string
   inviteId: Nullable<string>
   serverRole: Nullable<ServerRoles>
-  workspaceRole: Nullable<WorkspaceRoles>
+  workspaceRole: MaybeNullOrUndefined<WorkspaceRoles>
   seatType: MaybeNullOrUndefined<WorkspaceSeatType>
 }
 

@@ -1,6 +1,6 @@
 import {
-  deleteProjectRoleFactory,
   getStreamFactory,
+  getStreamsCollaboratorCountsFactory,
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
   revokeStreamPermissionsFactory,
@@ -10,6 +10,7 @@ import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspace,
+  GetWorkspaceCollaborators,
   GetWorkspaceRoleForUser,
   GetWorkspaceSeatTypeToProjectRoleMapping,
   QueryAllWorkspaceProjects,
@@ -27,15 +28,18 @@ import { logger, moduleLogger } from '@/observability/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { Roles, throwUncoveredError } from '@speckle/shared'
 import {
-  DeleteProjectRole,
-  UpsertProjectRole
-} from '@/modules/core/domain/projects/operations'
+  Roles,
+  StreamRoles,
+  throwUncoveredError,
+  WorkspaceRoles
+} from '@speckle/shared'
+import { UpsertProjectRole } from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
@@ -55,6 +59,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import {
   GetStream,
+  GetStreamsCollaboratorCounts,
   SetStreamCollaborator
 } from '@/modules/core/domain/streams/operations'
 import {
@@ -78,7 +83,7 @@ import {
   GetWorkspaceSubscription,
   GetWorkspaceWithPlan
 } from '@/modules/gatekeeper/domain/billing'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
@@ -94,7 +99,10 @@ import {
   getWorkspaceRoleAndSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { DeleteWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
+import {
+  DeleteWorkspaceSeat,
+  GetWorkspaceUserSeat
+} from '@/modules/gatekeeper/domain/operations'
 import {
   isStreamCollaboratorFactory,
   setStreamCollaboratorFactory,
@@ -147,7 +155,6 @@ export const onInviteFinalizedFactory =
       role: workspaceRole,
       userId: targetUserId,
       workspaceId: project.workspaceId,
-      skipProjectRoleUpdatesFor: [project.id],
       preventRoleDowngrade: true,
       updatedByUserId: invite.inviterId
     })
@@ -201,35 +208,74 @@ export const onWorkspaceAuthorizedFactory =
   }
 
 export const onWorkspaceRoleDeletedFactory =
-  ({
-    queryAllWorkspaceProjects,
-    deleteProjectRole,
-    deleteWorkspaceSeat
-  }: {
+  (deps: {
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
-    deleteProjectRole: DeleteProjectRole
     deleteWorkspaceSeat: DeleteWorkspaceSeat
+    getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
+    getWorkspaceCollaborators: GetWorkspaceCollaborators
+    setStreamCollaborator: SetStreamCollaborator
   }) =>
-  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+  async ({
+    acl: { userId, workspaceId },
+    updatedByUserId
+  }: {
+    acl: { userId: string; workspaceId: string }
+    updatedByUserId: string
+  }) => {
+    // Resolve a fallback admin
+    const [admin] = await deps.getWorkspaceCollaborators({
+      workspaceId,
+      limit: 1,
+      filter: {
+        roles: [Roles.Workspace.Admin],
+        excludeUserIds: [userId]
+      }
+    })
+
     // Delete roles for all workspace projects
-    for await (const projectsPage of queryAllWorkspaceProjects({
-      workspaceId
+    for await (const projectsPage of deps.queryAllWorkspaceProjects({
+      workspaceId,
+      userId
     })) {
+      const projectsOldOwnerCounts = await deps.getStreamsCollaboratorCounts({
+        streamIds: projectsPage.map((p) => p.id),
+        type: Roles.Stream.Owner
+      })
       await Promise.all(
-        projectsPage.map(({ id: projectId }) =>
-          deleteProjectRole({ projectId, userId })
-        )
+        projectsPage.map(async ({ id: projectId, role: originalProjectRole }) => {
+          // If downgraded from owner & last owner, transfer ownership to a workspace admin
+          const isNoLongerOwner = originalProjectRole === Roles.Stream.Owner
+          const wasLastOwner =
+            projectsOldOwnerCounts[projectId]?.[Roles.Stream.Owner] === 1
+          if (isNoLongerOwner && wasLastOwner) {
+            await deps.setStreamCollaborator(
+              {
+                streamId: projectId,
+                userId: admin.id,
+                role: Roles.Stream.Owner,
+                setByUserId: updatedByUserId
+              },
+              { trackProjectUpdate: false, skipAuthorization: true }
+            )
+          }
+
+          // Do actual role change for changed user
+          await deps.setStreamCollaborator(
+            {
+              streamId: projectId,
+              userId,
+              role: null,
+              setByUserId: updatedByUserId
+            },
+            { trackProjectUpdate: false, skipAuthorization: true }
+          )
+        })
       )
     }
 
     // Delete seat
-    await deleteWorkspaceSeat({ userId, workspaceId })
+    await deps.deleteWorkspaceSeat({ userId, workspaceId })
   }
-
-/**
- * // TODO: What if last admin removed?
- * - Do we still need on RoleUpdated? To change project roles? AKA guest can't be owner
- */
 
 export const onWorkspaceSeatUpdatedFactory =
   (deps: {
@@ -238,6 +284,8 @@ export const onWorkspaceSeatUpdatedFactory =
     setStreamCollaborator: SetStreamCollaborator
     getWorkspaceWithPlan: GetWorkspaceWithPlan
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
+    getWorkspaceCollaborators: GetWorkspaceCollaborators
   }) =>
   async (params: EventPayload<typeof WorkspaceEvents.SeatUpdated>) => {
     const { seat, updatedByUserId } = params.payload
@@ -254,11 +302,25 @@ export const onWorkspaceSeatUpdatedFactory =
         workspaceId
       })
 
+    // Resolve a fallback admin
+    const [admin] = await deps.getWorkspaceCollaborators({
+      workspaceId,
+      limit: 1,
+      filter: {
+        roles: [Roles.Workspace.Admin],
+        excludeUserIds: [userId]
+      }
+    })
+
     // Ensure project roles are valid on seat type switch
     for await (const projectsPage of deps.queryAllWorkspaceProjects({
       workspaceId,
       userId
     })) {
+      const projectsOldOwnerCounts = await deps.getStreamsCollaboratorCounts({
+        streamIds: projectsPage.map((p) => p.id),
+        type: Roles.Stream.Owner
+      })
       await Promise.all(
         projectsPage.map(async ({ id: projectId, role: originalProjectRole }) => {
           const disallowedProjectRole =
@@ -266,12 +328,145 @@ export const onWorkspaceSeatUpdatedFactory =
             !allowedProjectRoles[seatType].includes(originalProjectRole)
           if (!disallowedProjectRole) return
 
-          const newRole = defaultProjectRoles[seatType]
+          const nextUserRole = defaultProjectRoles[seatType]
+
+          // If downgraded from owner & last owner, transfer ownership to a workspace admin
+          const isNoLongerOwner =
+            originalProjectRole === Roles.Stream.Owner &&
+            nextUserRole !== Roles.Stream.Owner
+          const wasLastOwner =
+            projectsOldOwnerCounts[projectId]?.[Roles.Stream.Owner] === 1
+          if (isNoLongerOwner && wasLastOwner) {
+            await deps.setStreamCollaborator(
+              {
+                streamId: projectId,
+                userId: admin.id,
+                role: Roles.Stream.Owner,
+                setByUserId: updatedByUserId
+              },
+              { trackProjectUpdate: false, skipAuthorization: true }
+            )
+          }
+
+          // Do actual role change for changed user
           await deps.setStreamCollaborator(
             {
               streamId: projectId,
               userId,
-              role: newRole,
+              role: nextUserRole,
+              setByUserId: updatedByUserId
+            },
+            { trackProjectUpdate: false, skipAuthorization: true }
+          )
+        })
+      )
+    }
+  }
+
+export const onWorkspaceRoleUpdatedFactory =
+  (deps: {
+    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    setStreamCollaborator: SetStreamCollaborator
+    getWorkspaceUserSeat: GetWorkspaceUserSeat
+    getStreamsCollaboratorCounts: GetStreamsCollaboratorCounts
+    getWorkspaceCollaborators: GetWorkspaceCollaborators
+    getWorkspaceWithPlan: GetWorkspaceWithPlan
+  }) =>
+  async ({
+    acl,
+    updatedByUserId
+  }: {
+    acl: { userId: string; role: WorkspaceRoles; workspaceId: string }
+    updatedByUserId: string
+  }) => {
+    const { userId, role, workspaceId } = acl
+
+    const workspace = await deps.getWorkspaceWithPlan({ workspaceId })
+    if (!workspace) return
+
+    const seatType = await deps.getWorkspaceUserSeat({ workspaceId, userId })
+    if (!seatType) return
+
+    // Resolve a fallback admin
+    const [admin] = await deps.getWorkspaceCollaborators({
+      workspaceId,
+      limit: 1,
+      filter: {
+        roles: [Roles.Workspace.Admin],
+        excludeUserIds: [userId]
+      }
+    })
+
+    // Enforce project roles based on workspace role and seat type, if project role exists
+    for await (const projectsPage of deps.queryAllWorkspaceProjects({
+      workspaceId,
+      userId
+    })) {
+      const projectsOldOwnerCounts = await deps.getStreamsCollaboratorCounts({
+        streamIds: projectsPage.map((p) => p.id),
+        type: Roles.Stream.Owner
+      })
+      await Promise.all(
+        projectsPage.map(async ({ id: projectId, role: originalProjectRole }) => {
+          if (!originalProjectRole) {
+            return
+          }
+
+          /**
+           * We cant really throw here, because by this point the workspace role has already
+           * been written to DB. So we must ensure the updates we make here are valid
+           */
+
+          let nextUserRole: StreamRoles
+          switch (role) {
+            case Roles.Workspace.Admin: {
+              // Set workspace owner as project owner
+              nextUserRole = Roles.Stream.Owner
+              break
+            }
+            case Roles.Workspace.Guest: {
+              // If workspace guest is project owner
+              if (originalProjectRole !== Roles.Stream.Owner) {
+                return
+              }
+
+              // If workspace guest has an editor seat
+              if (seatType.type !== WorkspaceSeatType.Editor) {
+                return
+              }
+
+              // Demote to contributor
+              nextUserRole = Roles.Stream.Contributor
+              break
+            }
+            default:
+              return
+          }
+
+          // If downgraded from owner & last owner, transfer ownership to a workspace admin
+          const isNoLongerOwner =
+            originalProjectRole === Roles.Stream.Owner &&
+            nextUserRole !== Roles.Stream.Owner
+          const wasLastOwner =
+            projectsOldOwnerCounts[projectId]?.[Roles.Stream.Owner] === 1
+          if (isNoLongerOwner && wasLastOwner) {
+            await deps.setStreamCollaborator(
+              {
+                streamId: projectId,
+                userId: admin.id,
+                role: Roles.Stream.Owner,
+                setByUserId: updatedByUserId
+              },
+              { trackProjectUpdate: false, skipAuthorization: true }
+            )
+          }
+
+          // Do actual role change for changed user
+          await deps.setStreamCollaborator(
+            {
+              streamId: projectId,
+              userId,
+              role: nextUserRole,
               setByUserId: updatedByUserId
             },
             { trackProjectUpdate: false, skipAuthorization: true }
@@ -575,11 +770,61 @@ export const initializeEventListenersFactory =
               queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
                 getStreams
               }),
-              deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
-              deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx })
+              deleteWorkspaceSeat: deleteWorkspaceSeatFactory({ db: trx }),
+              getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+              setStreamCollaborator: setStreamCollaboratorFactory({
+                getUser: getUserFactory({ db }),
+                validateStreamAccess: validateStreamAccessFactory({
+                  authorizeResolver
+                }),
+                emitEvent: eventBus.emit,
+                grantStreamPermissions: grantStreamPermissionsFactory({
+                  db: trx
+                }),
+                isStreamCollaborator: isStreamCollaboratorFactory({
+                  getStream: getStreamFactory({ db })
+                }),
+                revokeStreamPermissions: revokeStreamPermissionsFactory({
+                  db: trx
+                })
+              })
             })
 
-            return await onWorkspaceRoleDeleted(payload.acl)
+            return await onWorkspaceRoleDeleted(payload)
+          },
+          { db }
+        )
+      }),
+      eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
+        await withTransaction(
+          async ({ db: trx }) => {
+            const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams
+              }),
+              setStreamCollaborator: setStreamCollaboratorFactory({
+                getUser: getUserFactory({ db }),
+                validateStreamAccess: validateStreamAccessFactory({
+                  authorizeResolver
+                }),
+                emitEvent: eventBus.emit,
+                grantStreamPermissions: grantStreamPermissionsFactory({
+                  db: trx
+                }),
+                isStreamCollaborator: isStreamCollaboratorFactory({
+                  getStream: getStreamFactory({ db })
+                }),
+                revokeStreamPermissions: revokeStreamPermissionsFactory({
+                  db: trx
+                })
+              }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+              getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
+            })
+            return await onWorkspaceRoleUpdated(payload)
           },
           { db }
         )
@@ -606,7 +851,9 @@ export const initializeEventListenersFactory =
               getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
               getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
               getWorkspaceSeatTypeToProjectRoleMapping:
-                getWorkspaceSeatTypeToProjectRoleMappingFactory()
+                getWorkspaceSeatTypeToProjectRoleMappingFactory(),
+              getStreamsCollaboratorCounts: getStreamsCollaboratorCountsFactory({ db }),
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db })
             })
 
             return await onWorkspaceSeatUpdated(payload)

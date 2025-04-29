@@ -312,7 +312,7 @@ export const validateWorkspaceMemberProjectRoleFactory =
     if (!allowedRoles.includes(projectRole)) {
       // User's workspace role does not allow the requested project role
       throw new WorkspaceInvalidRoleError(
-        `User's workspace seat type '${seatType}' does not allow project role '${projectRole}'.`
+        `User's workspace seat type '${seatType}' and workspace role '${workspaceRole}' does not allow project role '${projectRole}'.`
       )
     }
   }

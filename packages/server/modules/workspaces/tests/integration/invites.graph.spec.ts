@@ -249,17 +249,17 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
-      it('batch inviting fails if more than 10 invites', async () => {
+      it('batch inviting fails if more than 200 invites', async () => {
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: myFirstWorkspace.id,
-          input: times(11, () => ({
+          input: times(201, () => ({
             email: `asdasasd${Math.random()}@example.org`,
             role: WorkspaceRole.Member
           }))
         })
 
         expect(res).to.haveGraphQLErrors(
-          'Maximum 10 invites can be sent at once by non admins'
+          'Maximum 200 invites can be sent at once by non admins'
         )
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })

@@ -318,6 +318,7 @@ const validateStreamPolicyAccessFactory =
     const { context, params, authResult } = authData
 
     if (authHasFailed(authResult)) return { context, authResult }
+
     if (!params?.streamId)
       return authFailed(
         context,
@@ -347,41 +348,52 @@ const validateStreamPolicyAccessFactory =
     return authFailed(context, new ForbiddenError(result.error.message))
   }
 
-export const streamWritePermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.version.canCreate({
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
-export const streamCommentsWritePermissionsPipelineFactory =
-  (): AuthPipelineFunction[] => [
-    validateScope({ requiredScope: Scopes.Streams.Write }),
-    validateStreamPolicyAccessFactory({
-      policyInvoker: async ({ authData, policies }) =>
-        policies.project.comment.canCreate({
-          userId: authData.context.userId,
-          projectId: authData.params!.streamId!
-        })
-    }),
-    validateResourceAccess
-  ]
-
-export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamCommentsWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.comment.canCreate({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
+]
+
+export const streamReadPermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Streams.Read }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
+  validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.canRead({
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
 export const throwForNotHavingServerRoleFactory =

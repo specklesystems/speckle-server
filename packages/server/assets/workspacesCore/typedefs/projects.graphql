@@ -9,3 +9,10 @@ extend type Project {
     limit: Int! = 25
   ): WorkspaceCollaboratorCollection!
 }
+
+extend type ProjectCollaborator {
+  """
+  The collaborator's workspace role for the workspace this project is in, if any
+  """
+  workspaceRole: String
+}

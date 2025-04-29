@@ -1144,7 +1144,7 @@ export const grantStreamPermissionsFactory =
         .count()
       if (parseInt(countObj.count as string) === 1)
         throw new StreamAccessUpdateError(
-          'Could not revoke permissions for last admin',
+          'A project needs at least one project owner',
           {
             info: { streamId, userId }
           }
@@ -1222,7 +1222,7 @@ export const revokeStreamPermissionsFactory =
         .count()
       if (parseInt(countObj.count as string) === 1)
         throw new StreamAccessUpdateError(
-          'Could not revoke permissions for last admin',
+          'A project needs at least one project owner',
           {
             info: { streamId, userId }
           }

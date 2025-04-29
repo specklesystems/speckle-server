@@ -31,8 +31,8 @@ const props = defineProps<{
   workspaceName?: string
   workspaceRole?: MaybeNullOrUndefined<string>
   plan?: WorkspacePlans
-  type?: 'version' | 'model'
-  location?: string
+  type?: 'project' | 'model'
+  location: string
 }>()
 
 const mixpanel = useMixpanel()
@@ -80,7 +80,8 @@ watch(dialogOpen, (value) => {
       type: props.type,
       location: props.location,
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceSlug
+      workspace_id: props.workspaceSlug,
+      limitType: props.type || 'project/model'
     })
   }
 })

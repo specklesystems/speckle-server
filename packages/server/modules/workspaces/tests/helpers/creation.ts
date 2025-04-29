@@ -337,7 +337,8 @@ export const unassignFromWorkspace = async (
 
   await deleteWorkspaceRole({
     userId: user.id,
-    workspaceId: workspace.id
+    workspaceId: workspace.id,
+    deletedByUserId: workspace.ownerId
   })
 }
 

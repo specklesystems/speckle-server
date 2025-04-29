@@ -154,14 +154,14 @@ const iconClasses = computed(() => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'text-2xs !leading-tight'
+      return 'text-body sm:text-body-2xs'
     case 'lg':
-      return 'text-sm'
+      return 'text-body sm:text-sm'
     case 'xl':
-      return 'text-base'
+      return 'text-body sm:text-base'
     case 'base':
     default:
-      return 'text-body-xs'
+      return 'text-body sm:text-body-xs'
   }
 })
 

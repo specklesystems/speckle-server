@@ -31,6 +31,7 @@
               :key="collaborator.id"
               :can-edit="!!canUpdate?.authorized"
               :collaborator="collaborator"
+              :workspace="project.workspace"
               :loading="loading"
               @cancel-invite="onCancelInvite"
               @change-role="onCollaboratorRoleChange"
@@ -84,7 +85,7 @@ const projectPageCollaboratorsQuery = graphql(`
       ...ProjectPageCollaborators_Project
       workspaceId
       workspace {
-        ...ProjectPageTeamInternals_Workspace
+        ...SettingsWorkspacesMembersTableHeader_Workspace
         name
         logo
         team(filter: $filter) {
@@ -132,7 +133,7 @@ const workspaceAdmins = computed(
   () => pageResult.value?.project?.workspace?.team?.items || []
 )
 const updateRole = useUpdateUserRole(project)
-const { collaboratorListItems, isOwner } = useTeamInternals(project, workspace)
+const { collaboratorListItems, isOwner } = useTeamInternals(project)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true

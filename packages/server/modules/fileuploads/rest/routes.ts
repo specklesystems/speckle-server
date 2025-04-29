@@ -9,17 +9,19 @@ import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
 
 export const getRouter = () => {
   const app = Router()
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     async (req, res, next) => {
-      await authMiddlewareCreator(streamWritePermissionsPipelineFactory())(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(
+        streamWritePermissionsPipelineFactory({
+          getStream: getStreamFactory({ db })
+        })
+      )(req, res, next)
     },
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
