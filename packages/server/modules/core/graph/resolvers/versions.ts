@@ -3,7 +3,11 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getFeatureFlags,
+  getServerOrigin,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -14,11 +18,7 @@ import {
   markCommitReceivedAndNotifyFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   createCommitFactory,
   deleteCommitsFactory,
@@ -78,6 +78,10 @@ const getTypeFromPath = (info: GraphQLResolveInfo): 'Model' | 'Project' | null =
   }
   return null
 }
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Project: {
@@ -305,10 +309,10 @@ export = {
       )
     },
     async create(_parent, args, ctx) {
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'COMMIT_CREATE',
+        source: ctx.userId!
+      })
 
       const projectId = args.input.projectId
       const modelId = args.input.modelId

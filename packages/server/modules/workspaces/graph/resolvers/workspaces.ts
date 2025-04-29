@@ -41,7 +41,10 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import {
+  getFeatureFlags,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
@@ -149,11 +152,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { asOperation, commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
@@ -313,6 +312,9 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_MOVE_PROJECT_REGION_ENABLED } =
   getFeatureFlags()
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -1347,13 +1349,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceProjectMutations: {
         create: async (_parent, args, context) => {
-          const rateLimitResult = await getRateLimitResult(
-            'STREAM_CREATE',
-            context.userId!
-          )
-          if (isRateLimitBreached(rateLimitResult)) {
-            throw new RateLimitError(rateLimitResult)
-          }
+          await throwIfRateLimited({
+            action: 'STREAM_CREATE',
+            source: context.userId!
+          })
 
           const logger = context.log
 
