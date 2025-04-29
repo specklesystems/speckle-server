@@ -4,7 +4,6 @@ import {
   Roles,
   type StreamRoles,
   type WorkspaceRoles,
-  type ServerRoles,
   type MaybeNullOrUndefined
 } from '@speckle/shared'
 
@@ -47,30 +46,14 @@ export const canHaveRole =
     return true
   }
 
-export const isRequiredIfDependencyExists =
-  (dependency: () => string) => (val?: string) =>
-    !dependency() || !!val || 'This field is required'
+export const isEmailOrUserId =
+  (params: { userId: MaybeNullOrUndefined<string> }): GenericValidateFunction<string> =>
+  (val) => {
+    const { userId } = params
 
-export const canBeServerGuest =
-  ({
-    workspaceRole,
-    projectRole
-  }: {
-    workspaceRole?: WorkspaceRoles
-    projectRole?: StreamRoles
-  }) =>
-  (val?: ServerRoles) => {
-    if (val === Roles.Server.Guest) {
-      if (projectRole === Roles.Stream.Owner) {
-        return 'A guest user cannot be a stream owner'
-      }
-      if (workspaceRole === Roles.Workspace.Admin) {
-        return 'A guest user cannot be a workspace admin'
-      }
-      if (workspaceRole === Roles.Workspace.Member) {
-        return 'A guest user cannot be a workspace member'
-      }
-    }
+    if (!val) return true
+    if (userId) return true
+    if (!isValidEmail(val)) return 'Please enter a valid email address or select a user'
 
     return true
   }

@@ -11,6 +11,12 @@ export default {
       modelId: parent.id
     })
   },
+  Version: {
+    permissions: (parent) => ({
+      projectId: parent.streamId,
+      versionId: parent.id
+    })
+  },
   User: {
     permissions: () => ({})
   },
@@ -44,6 +50,13 @@ export default {
       })
       return Authz.toGraphqlResult(canUpdate)
     },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canDelete)
+    },
     canUpdateAllowPublicComments: async (parent, _args, ctx) => {
       const canUpdateAllowPublicComments =
         await ctx.authPolicies.project.canUpdateAllowPublicComments({
@@ -72,6 +85,13 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canLeave)
+    },
+    canRequestRender: async (parent, _args, ctx) => {
+      const canRequestRender = await ctx.authPolicies.project.version.canRequestRender({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canRequestRender)
     }
   },
   ModelPermissionChecks: {
@@ -89,6 +109,30 @@ export default {
         modelId: parent.modelId
       })
       return Authz.toGraphqlResult(canDelete)
+    },
+    canCreateVersion: async (parent, _args, ctx) => {
+      const canCreate = await ctx.authPolicies.project.version.canCreate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canCreate)
+    }
+  },
+  VersionPermissionChecks: {
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.version.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId,
+        versionId: parent.versionId
+      })
+      return Authz.toGraphqlResult(canUpdate)
+    },
+    canReceive: async (parent, _args, ctx) => {
+      const canReceive = await ctx.authPolicies.project.version.canReceive({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReceive)
     }
   },
   RootPermissionChecks: {

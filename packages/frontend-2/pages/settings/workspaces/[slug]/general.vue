@@ -229,7 +229,8 @@ const canDeleteWorkspace = computed(
 const deleteWorkspaceTooltip = computed(() => {
   if (needsSsoLogin.value)
     return 'You cannot delete a workspace that requires SSO without an active session'
-  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!canDeleteWorkspace.value)
+    return 'You cannot delete a workspace with an active plan. Please cancel your plan before deleting.'
   if (!isAdmin.value) return 'Only admins can delete workspaces'
   return undefined
 })

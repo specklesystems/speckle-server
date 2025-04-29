@@ -1,15 +1,18 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectsInviteBanner
-        v-if="invite"
-        :invite="invite"
-        :show-project-name="false"
-        @processed="onInviteAccepted"
-      />
+      <div v-if="invite" class="mb-4">
+        <ProjectsInviteBanner
+          :invite="invite"
+          :show-project-name="false"
+          @processed="onInviteAccepted"
+        />
+      </div>
       <ProjectsMoveToWorkspaceAlert
-        v-if="isWorkspacesEnabled && !project.workspace"
+        v-if="shouldShowWorkspaceAlert"
+        :disable-button="disableLegacyMoveProjectButton"
         :project-id="project.id"
+        @move-project="onMoveProject"
       />
 
       <div
@@ -62,11 +65,11 @@
       </LayoutTabsHorizontal>
     </div>
 
-    <ProjectsMoveToWorkspaceDialog
-      v-if="project"
+    <WorkspaceMoveProjectManager
+      v-if="project && isWorkspacesEnabled"
       v-model:open="showMoveDialog"
-      :project="project"
       event-source="project-page"
+      :project-id="projectId"
     />
   </div>
 </template>
@@ -82,6 +85,7 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCopyProjectLink } from '~~/lib/projects/composables/projectManagement'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -103,11 +107,14 @@ graphql(`
       canUpdate {
         ...FullPermissionCheckResult
       }
+      canMoveToWorkspace {
+        ...FullPermissionCheckResult
+      }
     }
     ...ProjectPageTeamInternals_Project
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectsMoveToWorkspaceDialog_Project
+    ...WorkspaceMoveProjectManager_ProjectBase
     ...ProjectPageSettingsTab_Project
   }
 `)
@@ -139,6 +146,8 @@ enum ActionTypes {
 const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
+const { isLoggedIn } = useActiveUser()
+const mixpanel = useMixpanel()
 
 const projectId = computed(() => route.params.id as string)
 const token = computed(() => route.query.token as Optional<string>)
@@ -303,6 +312,25 @@ const activePageTab = computed({
   }
 })
 
+const shouldShowWorkspaceAlert = computed(
+  () =>
+    isWorkspacesEnabled.value &&
+    isLoggedIn.value &&
+    !project.value?.workspace &&
+    hasRole.value
+)
+
+const disableLegacyMoveProjectButton = computed(
+  () => !project.value?.permissions.canMoveToWorkspace.authorized
+)
+
+const onMoveProject = () => {
+  mixpanel.track('Move Project CTA Clicked', {
+    location: 'project'
+  })
+  showMoveDialog.value = true
+}
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -311,7 +339,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copyProjectLink(projectId.value)
       break
     case ActionTypes.Move:
-      showMoveDialog.value = true
+      onMoveProject()
       break
   }
 }

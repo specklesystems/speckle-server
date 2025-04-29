@@ -19,10 +19,7 @@
       v-else
       class="w-full h-48 flex items-center justify-center diagonal-stripes px-3 pb-8"
     >
-      <ViewerResourcesUpgradeLimitAlert
-        class="!bg-foundation"
-        text="Upgrade to see comments older than (count) days."
-      />
+      <ViewerResourcesUpgradeLimitAlert limit-type="comment" />
     </div>
     <div class="flex items-center w-full px-3 h-8 -mt-10">
       <UserAvatarGroup

@@ -21,8 +21,11 @@ export enum GeometryAttributes {
 
 export interface GeometryData {
   attributes:
-    | (Record<GeometryAttributes.POSITION, number[]> &
-        Partial<Record<GeometryAttributes, number[]>>)
+    | ({
+        [GeometryAttributes.POSITION]: number[]
+      } & Partial<
+        Record<Exclude<GeometryAttributes, GeometryAttributes.POSITION>, number[]>
+      >)
     | null
   bakeTransform: Matrix4 | null
   transform: Matrix4 | null

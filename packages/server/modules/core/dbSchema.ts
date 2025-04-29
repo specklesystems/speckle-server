@@ -293,6 +293,8 @@ export const UsersMeta = buildMetaTableHelper(
     'onboardingStreamId',
     'activeWorkspace',
     'isProjectsActive',
+    'newWorkspaceExplainerDismissed',
+    'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
     'bar'
@@ -591,7 +593,8 @@ export const Automations = buildTableHelper('automations', [
   'updatedAt',
   'userId',
   'executionEngineAutomationId',
-  'isTestAutomation'
+  'isTestAutomation',
+  'isDeleted'
 ])
 
 export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [

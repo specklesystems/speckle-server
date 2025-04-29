@@ -6,9 +6,8 @@
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"
-      prompt="Press enter to reply"
+      prompt="Press Enter to reply"
       autofocus
-      max-height="150px"
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />

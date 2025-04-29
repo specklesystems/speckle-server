@@ -25,10 +25,7 @@
         >
           {{ thread.rawText }}
         </div>
-        <ViewerResourcesUpgradeLimitAlert
-          v-else
-          text="Upgrade to see comments older than (count) days."
-        />
+        <ViewerResourcesUpgradeLimitAlert v-else limit-type="comment" />
         <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
           <div
             v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"

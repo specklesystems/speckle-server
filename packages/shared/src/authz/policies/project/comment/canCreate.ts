@@ -5,10 +5,13 @@ import { ensureMinimumServerRoleFragment } from '../../../fragments/server.js'
 import { Loaders } from '../../../domain/loaders.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
@@ -31,6 +34,9 @@ export const canCreateProjectCommentPolicy: AuthPolicy<
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>

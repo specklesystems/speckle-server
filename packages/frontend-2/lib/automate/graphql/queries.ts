@@ -42,22 +42,3 @@ export const projectAutomationCreationPublicKeysQuery = graphql(`
     }
   }
 `)
-
-export const automateFunctionsPagePaginationQuery = graphql(`
-  query AutomateFunctionsPagePagination($search: String, $cursor: String) {
-    ...AutomateFunctionsPageItems_Query
-  }
-`)
-
-export const activeUserFunctionsQuery = graphql(`
-  query ActiveUserFunctions {
-    activeUser {
-      automateFunctions(limit: 2) {
-        items {
-          id
-          ...AutomationsFunctionsCard_AutomateFunction
-        }
-      }
-    }
-  }
-`)

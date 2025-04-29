@@ -2,10 +2,13 @@ import { err, ok } from 'true-myth/result'
 import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspaceNotEnoughPermissionsError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { MaybeUserContext, ProjectContext } from '../../domain/context.js'
@@ -28,9 +31,12 @@ export const canReadProjectWebhooksPolicy: AuthPolicy<
     | typeof ProjectNotFoundError
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
+    | typeof ServerNotEnoughPermissionsError
     | typeof ProjectNoAccessError
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
   >
 > =
   (loaders) =>

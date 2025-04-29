@@ -1,3 +1,4 @@
+import { TIME_MS } from '@speckle/shared'
 import {
   Load,
   LoadArgs,
@@ -41,7 +42,10 @@ const init = async (): Promise<Viewer> => {
 }
 
 const load: Load = async ({ url, token }: LoadArgs) => {
-  if (!viewer) viewer = await init()
+  if (!viewer) {
+    viewer = await init()
+    viewer.resize()
+  }
   /** Create a loader for the speckle stream */
   const resourceUrls = await UrlHelper.getResourceUrls(url, token)
   for (const resourceUrl of resourceUrls) {
@@ -70,7 +74,7 @@ const takeScreenshot: TakeScreenshot = async () => {
 
   viewer.resize()
   const cameraController = viewer.getExtension(CameraController)
-  cameraController.setCameraView([], false, 0.95)
+  cameraController.setCameraView([], false)
   await waitForAnimation(100)
 
   for (let i = 0; i < 24; i++) {
@@ -80,7 +84,7 @@ const takeScreenshot: TakeScreenshot = async () => {
     ret.screenshots[i + ''] = await viewer.screenshot()
     console.log(`Screenshot taken at ${i}`)
   }
-  ret.durationSeconds = (Date.now() - t0) / 1000
+  ret.durationSeconds = (Date.now() - t0) / TIME_MS.second
   return ret
 }
 window.takeScreenshot = takeScreenshot

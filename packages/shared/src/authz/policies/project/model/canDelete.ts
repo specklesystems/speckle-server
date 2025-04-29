@@ -18,7 +18,10 @@ import {
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceNoAccessError,
-  WorkspaceSsoSessionNoAccessError
+  WorkspaceSsoSessionNoAccessError,
+  ProjectNotEnoughPermissionsError,
+  WorkspaceNotEnoughPermissionsError,
+  ServerNotEnoughPermissionsError
 } from '../../../domain/authErrors.js'
 import { Roles } from '../../../../core/constants.js'
 
@@ -42,6 +45,9 @@ export const canDeleteModelPolicy: AuthPolicy<
     | typeof WorkspaceSsoSessionNoAccessError
     | typeof ModelNotFoundError
     | typeof ReservedModelNotDeletableError
+    | typeof WorkspaceNotEnoughPermissionsError
+    | typeof ProjectNotEnoughPermissionsError
+    | typeof ServerNotEnoughPermissionsError
   >
 > =
   (loaders) =>

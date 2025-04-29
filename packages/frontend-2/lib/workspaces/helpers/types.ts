@@ -46,5 +46,6 @@ export enum WizardSteps {
   Details = 'Details',
   Invites = 'Invites',
   Pricing = 'Pricing',
-  Region = 'Region'
+  Region = 'Region',
+  AddOns = 'AddOns'
 }

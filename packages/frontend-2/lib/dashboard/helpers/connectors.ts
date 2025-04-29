@@ -126,7 +126,14 @@ export const connectorItems: ConnectorItem[] = [
     image: '/images/connectors/teklastructures.png',
     categories: [ConnectorCategory.NextGen, ConnectorCategory.Structural]
   },
-
+  {
+    title: 'Blender',
+    slug: 'blender',
+    description: 'Load models into Blender to boost design coordination workflows.',
+    image: '/images/connectors/blender.png',
+    url: 'https://www.speckle.systems/connectors/blender',
+    categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling]
+  },
   // Non-available connectors
   {
     title: 'Excel',
@@ -134,14 +141,6 @@ export const connectorItems: ConnectorItem[] = [
     description: "Create geometry, schedules and analyse your geometry's metadata.",
     image: '/images/connectors/excel.png',
     categories: [ConnectorCategory.BusinessIntelligence],
-    isComingSoon: true
-  },
-  {
-    title: 'Blender',
-    slug: 'blender',
-    description: 'Load models into Blender to boost design coordination workflows.',
-    image: '/images/connectors/blender.png',
-    categories: [ConnectorCategory.Visualisation, ConnectorCategory.CADAndModeling],
     isComingSoon: true
   },
   {

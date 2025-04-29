@@ -151,9 +151,14 @@ export class NodeRenderView {
   }
 
   public computeAABB() {
-    this._aabb = new Box3()
-    if (this._renderData.geometry.attributes)
+    if (!this._aabb) this._aabb = new Box3()
+
+    if (
+      this._renderData.geometry.attributes &&
+      this._renderData.geometry.attributes.POSITION.length
+    ) {
       this._aabb.setFromArray(this._renderData.geometry.attributes.POSITION)
+    }
   }
 
   private getGeometryType(): GeometryType {

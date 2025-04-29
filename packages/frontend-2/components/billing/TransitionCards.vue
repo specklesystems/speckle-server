@@ -12,7 +12,7 @@
 
     <!-- New State -->
     <CommonCard
-      class="!p-2 !pr-3 !border-blue-300 !bg-blue-50 dark:!border-blue-800 dark:!bg-blue-950"
+      class="!p-2 !pr-3 !border-blue-200 !bg-blue-50 dark:!border-blue-800 dark:!bg-blue-950"
     >
       <slot name="new-state" />
     </CommonCard>

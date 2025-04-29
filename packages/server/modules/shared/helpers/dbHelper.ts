@@ -3,7 +3,7 @@ import { Knex } from 'knex'
 import { isString } from 'lodash'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { isNonNullable } from '@speckle/shared'
+import { isNonNullable, MaybeAsync } from '@speckle/shared'
 
 export type BatchedSelectOptions = {
   /**
@@ -107,17 +107,21 @@ export const numberOfFreeConnections = (knex: Knex) => {
 }
 
 export const withTransaction = async <T>(
-  callback: Promise<T> | T,
-  trx: Knex.Transaction
-): Promise<T> => {
+  operation: (args: { db: Knex; trx: Knex }) => MaybeAsync<T>,
+  params: {
+    db: Knex
+  }
+) => {
+  const { db } = params
+  const trx = await db.transaction()
+
   try {
-    return await callback
+    // db and trx are just aliases, you can use whichever is more convenient
+    const result = await operation({ db: trx, trx })
+    await trx.commit()
+    return result
   } catch (e) {
     await trx.rollback()
     throw e
-  } finally {
-    if (trx.isTransaction && !trx.isCompleted()) {
-      await trx.commit()
-    }
   }
 }

@@ -5,11 +5,13 @@ import { getProjectFake } from '../../../../tests/fakes.js'
 import { canUpdateModelPolicy } from './canUpdate.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 const buildSUT = (overrides?: Partial<Parameters<typeof canUpdateModelPolicy>[0]>) =>
   canUpdateModelPolicy({
@@ -50,7 +52,7 @@ const buildWorkspaceSUT = (
     getWorkspaceSsoSession: async () => ({
       userId: 'user-id',
       providerId: 'provider-id',
-      validUntil: new Date()
+      validUntil: new Date(Date.now() + TIME_MS.day)
     }),
     ...overrides
   })
@@ -96,6 +98,19 @@ describe('canUpdateProject', () => {
     })
   })
 
+  it('returns error if no project role', async () => {
+    const sut = buildSUT({
+      getProjectRole: async () => null
+    })
+    const result = await sut({
+      userId: 'user-id',
+      projectId: 'project-id'
+    })
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('returns error if not at least contributor', async () => {
     const sut = buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
@@ -105,7 +120,7 @@ describe('canUpdateProject', () => {
       projectId: 'project-id'
     })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -150,7 +165,7 @@ describe('canUpdateProject', () => {
         projectId: 'project-id'
       })
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
@@ -184,7 +199,7 @@ describe('canUpdateProject', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(new Date().getTime() - 1000)
+          validUntil: new Date(new Date().getTime() - TIME_MS.second)
         })
       })
       const result = await sut({

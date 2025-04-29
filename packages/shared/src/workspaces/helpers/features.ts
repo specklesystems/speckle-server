@@ -6,6 +6,7 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePlans
 } from './plans.js'
+import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
 
 /**
  * WORKSPACE FEATURES
@@ -27,23 +28,24 @@ export type WorkspacePlanFeatures =
 export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.AutomateBeta]: {
     displayName: 'Automate beta access',
-    description: 'Some automate text'
+    description: 'Run custom automations on every new model version'
   },
   [WorkspacePlanFeatures.DomainDiscoverability]: {
     displayName: 'Domain discoverability',
-    description: 'Some domain discoverability text'
+    description:
+      'Allow people to discover your workspace if they use a verified company email'
   },
   [WorkspacePlanFeatures.DomainSecurity]: {
-    displayName: 'Domain security',
+    displayName: 'Domain protection',
     description: 'Require workspace members to use a verified company email'
   },
   [WorkspacePlanFeatures.SSO]: {
     displayName: 'Single Sign-On (SSO)',
-    description: 'Require workspace members to log in with your SSO provider'
+    description: 'Require workspace members to authenticate with your SSO provider'
   },
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
-    description: 'Store the workspace data in a custom region'
+    description: 'Store your data in EU, UK, North America, or Asia Pacific'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -66,7 +68,8 @@ export type WorkspacePlanPriceStructure = {
 const unlimited: WorkspaceLimits = {
   projectCount: null,
   modelCount: null,
-  versionsHistory: null
+  versionsHistory: null,
+  commentHistory: null
 }
 
 export type WorkspacePlanConfig<Plan extends WorkspacePlans = WorkspacePlans> = {
@@ -109,7 +112,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 5,
       modelCount: 25,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
   // New
@@ -119,7 +123,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: { value: 30, unit: 'day' }
+      versionsHistory: { value: 30, unit: 'day' },
+      commentHistory: { value: 30, unit: 'day' }
     }
   },
   [PaidWorkspacePlans.Pro]: {
@@ -133,7 +138,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: 10,
       modelCount: 50,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   },
   [PaidWorkspacePlans.ProUnlimited]: {
@@ -147,7 +153,8 @@ export const WorkspacePaidPlanConfigs: {
     limits: {
       projectCount: null,
       modelCount: null,
-      versionsHistory: null
+      versionsHistory: null,
+      commentHistory: null
     }
   }
 }
@@ -203,7 +210,8 @@ export const WorkspaceUnpaidPlanConfigs: {
     limits: {
       projectCount: 1,
       modelCount: 5,
-      versionsHistory: { value: 7, unit: 'day' }
+      versionsHistory: { value: 7, unit: 'day' },
+      commentHistory: { value: 7, unit: 'day' }
     }
   }
 }
@@ -211,4 +219,43 @@ export const WorkspaceUnpaidPlanConfigs: {
 export const WorkspacePlanConfigs = {
   ...WorkspacePaidPlanConfigs,
   ...WorkspaceUnpaidPlanConfigs
+}
+
+/**
+ * Checks if a workspace exceeds its plan limits for projects and models
+ */
+export const workspaceExceedsPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+  if (!projectCount || !modelCount) return false
+
+  return projectCount > limits.projectCount || modelCount > limits.modelCount
+}
+
+/**
+ * Checks if a workspace reached its plan limits for projects and models
+ */
+export const workspaceReachedPlanLimit = (
+  plan: MaybeNullOrUndefined<WorkspacePlans>,
+  projectCount: MaybeNullOrUndefined<number>,
+  modelCount: MaybeNullOrUndefined<number>
+): boolean => {
+  if (!plan) return false
+
+  const planConfig = WorkspacePlanConfigs[plan]
+  if (!planConfig) return false
+
+  const limits = planConfig.limits
+  if (!limits.projectCount || !limits.modelCount) return false
+
+  return projectCount === limits.projectCount || modelCount === limits.modelCount
 }

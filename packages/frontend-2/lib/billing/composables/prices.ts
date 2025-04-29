@@ -1,35 +1,77 @@
-import { WorkspacePlanBillingIntervals, type PaidWorkspacePlans } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
+import type { CurrencyBasedPrices, Price } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment PricesPrice on Price {
+    amount
+    currencySymbol
+    currency
+  }
+`)
+
+graphql(`
+  fragment PricesWorkspacePlanPrice on WorkspacePlanPrice {
+    monthly {
+      ...PricesPrice
+    }
+    yearly {
+      ...PricesPrice
+    }
+  }
+`)
+
+graphql(`
+  fragment PricesWorkspacePaidPlanPrices on WorkspacePaidPlanPrices {
+    team {
+      ...PricesWorkspacePlanPrice
+    }
+    teamUnlimited {
+      ...PricesWorkspacePlanPrice
+    }
+    pro {
+      ...PricesWorkspacePlanPrice
+    }
+    proUnlimited {
+      ...PricesWorkspacePlanPrice
+    }
+  }
+`)
+
+graphql(`
+  fragment PricesCurrencyBasedPrices on CurrencyBasedPrices {
+    gbp {
+      ...PricesWorkspacePaidPlanPrices
+    }
+    usd {
+      ...PricesWorkspacePaidPlanPrices
+    }
+  }
+`)
 
 const workspacePlanPricesQuery = graphql(`
   query UseWorkspacePlanPrices {
     serverInfo {
       workspaces {
         planPrices {
-          id
-          monthly {
-            amount
-            currencySymbol
-          }
-          yearly {
-            amount
-            currencySymbol
-          }
+          ...PricesCurrencyBasedPrices
         }
       }
     }
   }
 `)
 
-type WorkspacePlanPrices = {
-  [plan in PaidWorkspacePlans]: {
-    [interval in WorkspacePlanBillingIntervals]?: {
-      amount: number
-      currencySymbol: string
+const activeWorkspacePlanPricesQuery = graphql(`
+  query UseActiveWorkspacePlanPrices {
+    activeUser {
+      activeWorkspace {
+        planPrices {
+          ...PricesWorkspacePaidPlanPrices
+        }
+      }
     }
   }
-}
+`)
 
 export const useWorkspacePlanPrices = () => {
   const isBillingEnabled = useIsBillingIntegrationEnabled()
@@ -37,20 +79,96 @@ export const useWorkspacePlanPrices = () => {
     enabled: isBillingEnabled.value
   }))
 
-  const prices = computed(() => {
-    const base = result.value?.serverInfo?.workspaces?.planPrices
-    if (!base) return undefined
-
-    return Object.fromEntries(
-      base.map(({ id, monthly, yearly }) => [
-        id,
-        {
-          ...(monthly ? { [WorkspacePlanBillingIntervals.Monthly]: monthly } : {}),
-          ...(yearly ? { [WorkspacePlanBillingIntervals.Yearly]: yearly } : {})
-        }
-      ])
-    ) as WorkspacePlanPrices
-  })
+  const prices = computed(() => result.value?.serverInfo?.workspaces?.planPrices)
 
   return { prices }
+}
+
+export const useActiveWorkspacePlanPrices = () => {
+  const isBillingEnabled = useIsBillingIntegrationEnabled()
+  const { result } = useQuery(activeWorkspacePlanPricesQuery, undefined, () => ({
+    enabled: isBillingEnabled.value
+  }))
+
+  const prices = computed(() => result.value?.activeUser?.activeWorkspace?.planPrices)
+
+  return { prices }
+}
+
+export const useWorkspaceAddonPrices = () => {
+  const { prices } = useWorkspacePlanPrices()
+  const isBillingEnabled = useIsBillingIntegrationEnabled()
+
+  const calculateAddonPrice = (unlimitedPrice: Price, basePrice: Price): Price => ({
+    amount: unlimitedPrice.amount - basePrice.amount,
+    currency: unlimitedPrice.currency,
+    currencySymbol: unlimitedPrice.currencySymbol
+  })
+
+  const addonPrices = computed(() => {
+    if (!prices.value || !isBillingEnabled.value) return undefined
+
+    const gbpTeam = {
+      monthly: calculateAddonPrice(
+        prices.value.gbp?.teamUnlimited?.monthly,
+        prices.value.gbp?.team?.monthly
+      ),
+      yearly: calculateAddonPrice(
+        prices.value.gbp?.teamUnlimited?.yearly,
+        prices.value.gbp?.team?.yearly
+      )
+    }
+
+    const gbpPro = {
+      monthly: calculateAddonPrice(
+        prices.value.gbp?.proUnlimited?.monthly,
+        prices.value.gbp?.pro?.monthly
+      ),
+      yearly: calculateAddonPrice(
+        prices.value.gbp?.proUnlimited?.yearly,
+        prices.value.gbp?.pro?.yearly
+      )
+    }
+
+    const usdTeam = {
+      monthly: calculateAddonPrice(
+        prices.value.usd?.teamUnlimited?.monthly,
+        prices.value.usd?.team?.monthly
+      ),
+      yearly: calculateAddonPrice(
+        prices.value.usd?.teamUnlimited?.yearly,
+        prices.value.usd?.team?.yearly
+      )
+    }
+
+    const usdPro = {
+      monthly: calculateAddonPrice(
+        prices.value.usd?.proUnlimited?.monthly,
+        prices.value.usd?.pro?.monthly
+      ),
+      yearly: calculateAddonPrice(
+        prices.value.usd?.proUnlimited?.yearly,
+        prices.value.usd?.pro?.yearly
+      )
+    }
+
+    return {
+      gbp: {
+        free: gbpTeam,
+        team: gbpTeam,
+        teamUnlimited: gbpTeam,
+        pro: gbpPro,
+        proUnlimited: gbpPro
+      },
+      usd: {
+        free: usdTeam,
+        team: usdTeam,
+        teamUnlimited: usdTeam,
+        pro: usdPro,
+        proUnlimited: usdPro
+      }
+    } as CurrencyBasedPrices
+  })
+
+  return { addonPrices }
 }

@@ -7,7 +7,12 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, login } from '@/test/authHelper'
+import {
+  BasicTestUser,
+  createTestUser,
+  createTestUsers,
+  login
+} from '@/test/authHelper'
 import {
   GetProjectInvitableCollaboratorsDocument,
   SetUserActiveWorkspaceDocument,
@@ -16,7 +21,6 @@ import {
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -105,61 +109,76 @@ describe('ActiveUserMutations.setActiveWorkspace', () => {
 })
 
 describe('Project.invitableCollaborators', () => {
+  const adminUser: BasicTestUser = {
+    id: '',
+    name: createRandomString(),
+    email: createRandomEmail()
+  }
+  const workspaceMemberA: BasicTestUser = {
+    id: '',
+    name: createRandomString() + 'foo',
+    email: 'baz' + createRandomEmail()
+  }
+  const workspaceMemberB: BasicTestUser = {
+    id: '',
+    name: createRandomString() + 'baz',
+    email: 'bar' + createRandomEmail()
+  }
+  const nonWorkspaceMember: BasicTestUser = {
+    id: '',
+    name: createRandomString(),
+    email: createRandomEmail()
+  }
+
+  const testWorkspace: BasicTestWorkspace = {
+    id: createRandomString(),
+    name: createRandomString(),
+    slug: createRandomString(),
+    ownerId: ''
+  }
+
+  // The project we will run the test suite search against
+  const testProject: BasicTestStream = {
+    id: '',
+    ownerId: '',
+    name: createRandomString(),
+    isPublic: true,
+    workspaceId: ''
+  }
+  // An extra project for test comprehensiveness
+  const testOtherProject: BasicTestStream = {
+    id: '',
+    ownerId: '',
+    name: createRandomString(),
+    isPublic: true,
+    workspaceId: ''
+  }
+
+  before(async () => {
+    await createTestUser(adminUser)
+    await createTestUsers([workspaceMemberA, workspaceMemberB, nonWorkspaceMember])
+
+    await createTestWorkspace(testWorkspace, adminUser, {
+      addPlan: {
+        name: 'unlimited',
+        status: 'valid'
+      }
+    })
+    await assignToWorkspace(testWorkspace, workspaceMemberA)
+    await assignToWorkspace(testWorkspace, workspaceMemberB)
+
+    testProject.workspaceId = testWorkspace.id
+    testOtherProject.workspaceId = testWorkspace.id
+
+    await createTestStream(testProject, adminUser)
+    await createTestStream(testOtherProject, workspaceMemberA)
+  })
+
   it('should return invitable collaborators', async () => {
-    const admin = await createTestUser({
-      name: createRandomString(),
-      email: createRandomEmail(),
-      role: Roles.Server.User,
-      verified: true
-    })
-    const workspace = {
-      id: createRandomString(),
-      name: createRandomString(),
-      slug: createRandomString(),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace, admin)
-
-    const member = await createTestUser({
-      name: createRandomString(),
-      email: createRandomEmail(),
-      role: Roles.Server.User,
-      verified: true
-    })
-    await assignToWorkspace(workspace, member, Roles.Workspace.Member)
-
-    // Non workspace member
-    await createTestUser({
-      name: createRandomString(),
-      email: createRandomEmail(),
-      role: Roles.Server.User,
-      verified: true
-    })
-
-    const projectMember = await createTestUser({
-      name: createRandomString(),
-      email: createRandomEmail(),
-      role: Roles.Server.User,
-      verified: true
-    })
-
-    const project = {
-      id: createRandomString(),
-      workspaceId: workspace.id
-    }
-    await createTestStream(project, projectMember)
-
-    // User in another project should still be invitable
-    const otherProject = {
-      id: createRandomString(),
-      workspaceId: workspace.id
-    }
-    await createTestStream(otherProject, admin)
-
-    const session = await login(admin)
+    const session = await login(adminUser)
 
     const res = await session.execute(GetProjectInvitableCollaboratorsDocument, {
-      projectId: project.id
+      projectId: testProject.id
     })
     expect(res).not.haveGraphQLErrors()
 
@@ -167,8 +186,8 @@ describe('Project.invitableCollaborators', () => {
     expect(invitable?.totalCount).to.eq(2)
     expect(invitable?.items).to.have.length(2)
     expect(invitable?.items).to.deep.equalInAnyOrder([
-      { id: admin.id, user: { name: admin.name } },
-      { id: member.id, user: { name: member.name } }
+      { id: workspaceMemberA.id, user: { name: workspaceMemberA.name } },
+      { id: workspaceMemberB.id, user: { name: workspaceMemberB.name } }
     ])
   })
 })

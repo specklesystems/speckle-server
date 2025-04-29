@@ -66,9 +66,9 @@ export class InvalidWorkspacePlanUpgradeError extends BaseError {
   static statusCode = 403
 }
 
-export class InvalidBillingIntervalError extends BaseError {
-  static defaultMessage = 'Invalid billing interval'
-  static code = 'INVALID_BILLING_INTERVAL'
+export class PriceLookupError extends BaseError {
+  static defaultMessage = 'An error occurred while looking up prices'
+  static code = 'PRICE_LOOKUP_ERROR'
   static statusCode = 400
 }
 

@@ -339,6 +339,7 @@ describe('billing repositories @gatekeeper', () => {
           updatedAt: new Date(),
           url: 'https://example.com',
           workspaceId,
+          currency: 'usd',
           workspacePlan: 'business'
         } as const
 
@@ -362,6 +363,7 @@ describe('billing repositories @gatekeeper', () => {
           updatedAt: new Date(),
           url: 'https://example.com',
           workspaceId,
+          currency: 'usd',
           workspacePlan: 'business'
         } as const
 
@@ -394,6 +396,7 @@ describe('billing repositories @gatekeeper', () => {
           updatedAt: new Date(),
           url: 'https://example.com',
           workspaceId,
+          currency: 'usd',
           workspacePlan: 'business'
         } as const
 
@@ -435,6 +438,7 @@ describe('billing repositories @gatekeeper', () => {
           updatedAt: new Date(),
           url: 'https://example.com',
           workspaceId,
+          currency: 'usd',
           workspacePlan: 'business'
         } as const
 

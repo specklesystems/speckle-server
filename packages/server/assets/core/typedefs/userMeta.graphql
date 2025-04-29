@@ -1,0 +1,17 @@
+type UserMeta {
+  newWorkspaceExplainerDismissed: Boolean!
+  legacyProjectsExplainerCollapsed: Boolean!
+}
+
+type UserMetaMutations {
+  setNewWorkspaceExplainerDismissed(value: Boolean!): Boolean!
+  setLegacyProjectsExplainerCollapsed(value: Boolean!): Boolean!
+}
+
+extend type User {
+  meta: UserMeta! @isOwner
+}
+
+extend type ActiveUserMutations {
+  meta: UserMetaMutations!
+}

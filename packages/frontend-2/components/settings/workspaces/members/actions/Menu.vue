@@ -24,7 +24,7 @@
       :workspace="workspace"
       :new-role="newRole"
       :is-active-user-target-user="isActiveUserTargetUser"
-      :is-only-admin="hasSingleAdmin"
+      :is-only-admin="isLastAdmin"
       :is-domain-compliant="targetUser.user.workspaceDomainPolicyCompliant"
       @success="onDialogSuccess"
     />
@@ -55,11 +55,10 @@
       @success="onDialogSuccess"
     />
 
-    <SettingsWorkspacesMembersActionsLeaveWorkspaceDialog
+    <SettingsWorkspacesGeneralLeaveDialog
       v-if="dialogToShow.leaveWorkspace"
       v-model:open="showDialog"
       :workspace="workspace"
-      :is-only-admin="hasSingleAdmin"
     />
 
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
@@ -81,7 +80,7 @@ import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { useSettingsMembersActions } from '~/lib/settings/composables/menu'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
 import { graphql } from '~/lib/common/generated/gql'
@@ -104,14 +103,14 @@ graphql(`
 
 const props = defineProps<{
   targetUser: SettingsWorkspacesMembersActionsMenu_UserFragment
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const showMenu = ref(false)
 const showDialog = ref(false)
 const dialogType = ref<WorkspaceUserActionTypes>()
 
-const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+const { isLastAdmin } = useWorkspaceLastAdminCheck({
   workspaceSlug: props.workspace?.slug || ''
 })
 

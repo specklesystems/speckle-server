@@ -348,7 +348,7 @@ describe('Streams @core-streams', () => {
           throw new Error('This should have thrown')
         })
         .catch((err) => {
-          expect(err.message).to.include('cannot revoke permissions.')
+          expect(err.message).to.include('A project needs at least one project owner')
         })
     })
 

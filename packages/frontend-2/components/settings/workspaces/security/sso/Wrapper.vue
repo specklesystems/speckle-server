@@ -29,7 +29,7 @@
         </div>
 
         <FormButton v-else :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
-          Upgrade to Plus
+          Upgrade to Business
         </FormButton>
       </div>
 
@@ -37,7 +37,7 @@
         v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
         class="bg-foundation"
       >
-        SSO access requires an active Plus or Business subscription.
+        SSO access requires an active Business subscription.
       </CommonCard>
 
       <!-- Existing Provider Configuration -->

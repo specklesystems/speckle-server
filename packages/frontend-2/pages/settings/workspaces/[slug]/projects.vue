@@ -13,7 +13,14 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="result?.workspaceBySlug.id"
-        :disable-create="!canCreateProject?.authorized"
+        :disable-create="disableCreate"
+        :disabled-tooltip="
+          canCreateProject?.code === 'WorkspaceLimitsReached'
+            ? undefined
+            : canCreateProject?.message
+        "
+        :limit-reached="canCreateProject?.code === 'WorkspaceLimitsReached'"
+        @project-limit-reached="handleProjectLimitReached"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -22,6 +29,14 @@
         @infinite="onInfiniteLoad"
       />
     </div>
+    <WorkspacePlanProjectModelLimitReachedDialog
+      v-model:open="showLimitDialog"
+      :workspace-name="workspace?.name"
+      :plan="workspace?.plan?.name"
+      :workspace-role="workspace?.role"
+      :workspace-slug="workspace?.slug || ''"
+      location="move_project_dialog"
+    />
   </section>
 </template>
 
@@ -44,7 +59,12 @@ graphql(`
 graphql(`
   fragment SettingsWorkspacesProjects_Workspace on Workspace {
     id
+    name
     slug
+    plan {
+      name
+    }
+    role
     permissions {
       canCreateProject {
         ...FullPermissionCheckResult
@@ -67,6 +87,8 @@ const search = ref('')
 
 const slug = computed(() => (route.params.slug as string) || '')
 
+const showLimitDialog = ref(false)
+
 const {
   identifier,
   onInfiniteLoad,
@@ -87,11 +109,20 @@ const {
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
-
+const workspace = computed(() => result.value?.workspaceBySlug)
 const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
 const canCreateProject = computed(
   () => result.value?.workspaceBySlug.permissions.canCreateProject
 )
+const disableCreate = computed(
+  () =>
+    !canCreateProject.value?.authorized &&
+    canCreateProject.value?.code !== 'WorkspaceLimitsReached'
+)
+
+const handleProjectLimitReached = () => {
+  showLimitDialog.value = true
+}
 
 useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

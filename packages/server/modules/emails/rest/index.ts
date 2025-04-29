@@ -9,9 +9,11 @@ import {
 } from '@/modules/emails/repositories'
 import { db } from '@/db/knex'
 import { markUserAsVerifiedFactory } from '@/modules/core/repositories/users'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export = (app: Express) => {
   app.get('/auth/verifyemail', async (req, res) => {
+    const logger = req.log
     try {
       const finalizeEmailVerification = finalizeEmailVerificationFactory({
         getPendingToken: getPendingTokenFactory({ db }),
@@ -19,7 +21,14 @@ export = (app: Express) => {
         deleteVerifications: deleteVerificationsFactory({ db })
       })
 
-      await finalizeEmailVerification(req.query.t as Optional<string>)
+      await withOperationLogging(
+        async () => await finalizeEmailVerification(req.query.t as Optional<string>),
+        {
+          logger,
+          operationName: 'finalizeEmailVerification',
+          operationDescription: 'Finalize email verification'
+        }
+      )
       return res.redirect(
         new URL('/?emailverifiedstatus=true', getFrontendOrigin()).toString()
       )
@@ -28,7 +37,7 @@ export = (app: Express) => {
         error instanceof EmailVerificationFinalizationError
           ? error.message
           : 'Email verification unexpectedly failed'
-      req.log.info({ err: error }, 'Email verification failed.')
+      logger.info({ err: error }, 'Email verification failed.')
 
       return res.redirect(
         new URL(`/?emailverifiederror=${msg}`, getFrontendOrigin()).toString()

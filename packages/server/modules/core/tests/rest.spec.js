@@ -73,6 +73,7 @@ const {
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const cryptoRandomString = require('crypto-random-string')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -499,6 +500,20 @@ describe('Upload/Download Routes @api-rest', () => {
           done(err)
         }
       })
+  })
+
+  it('Should return nothing if the object is not found', async () => {
+    const objectIds = []
+    objectIds.push(cryptoRandomString({ length: 10 })) // random string that does not exist
+
+    const res = await request(app)
+      .post(`/api/getobjects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Accept', 'text/plain')
+      .send({ objects: JSON.stringify(objectIds) })
+      .buffer()
+    expect(res).to.have.status(200)
+    expect(res.text).to.equal('') // empty response, as the object is not found
   })
 
   it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {

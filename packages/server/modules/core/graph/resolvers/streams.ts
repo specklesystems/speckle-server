@@ -74,6 +74,7 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -417,59 +418,129 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const { id } = await createStreamReturnRecord({
-        ...args.stream,
-        ownerId: context.userId!,
-        ownerResourceAccessRules: context.resourceAccessRules
-      })
+      const { id } = await withOperationLogging(
+        async () =>
+          await createStreamReturnRecord({
+            ...args.stream,
+            ownerId: context.userId!,
+            ownerResourceAccessRules: context.resourceAccessRules
+          }),
+        {
+          logger: context.log,
+          operationName: 'createStream',
+          operationDescription: `Create a new Stream`
+        }
+      )
 
       return id
     },
 
     async streamUpdate(_, args, context) {
+      const projectId = args.stream.id
       await authorizeResolver(
         context.userId,
         args.stream.id,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      await updateStreamAndNotify(args.stream, context.userId!)
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      await withOperationLogging(
+        async () => await updateStreamAndNotify(args.stream, context.userId!),
+        {
+          logger,
+          operationName: 'updateStream',
+          operationDescription: `Update a Stream`
+        }
+      )
       return true
     },
 
     async streamDelete(_, args, context) {
+      const projectId = args.id
       await authorizeResolver(
         context.userId,
         args.id,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      return await deleteStreamAndNotify(args.id, context.userId!)
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      return await withOperationLogging(
+        async () => await deleteStreamAndNotify(args.id, context.userId!),
+        {
+          logger,
+          operationName: 'deleteStream',
+          operationDescription: `Delete a Stream`
+        }
+      )
     },
 
     async streamsDelete(_, args, context) {
-      const results = await Promise.all(
-        (args.ids || []).map(async (id) => {
-          return await deleteStreamAndNotify(id, context.userId!)
-        })
+      const logger = context.log
+
+      const results = await withOperationLogging(
+        async () =>
+          await Promise.all(
+            (args.ids || []).map(async (id) => {
+              return await deleteStreamAndNotify(id, context.userId!)
+            })
+          ),
+        {
+          logger,
+          operationName: 'deleteStreams',
+          operationDescription: `Delete one or more Streams`
+        }
       )
       return results.every((res) => res === true)
     },
 
     async streamUpdatePermission(_, args, context) {
-      const result = await updateStreamRoleAndNotify(
-        args.permissionParams,
-        context.userId!,
-        context.resourceAccessRules
+      const projectId = args.permissionParams.streamId
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+      const result = await withOperationLogging(
+        async () =>
+          await updateStreamRoleAndNotify(
+            args.permissionParams,
+            context.userId!,
+            context.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'updateStreamPermission',
+          operationDescription: `Update a Stream Permission`
+        }
       )
       return !!result
     },
 
     async streamRevokePermission(_, args, context) {
-      const result = await updateStreamRoleAndNotify(
-        args.permissionParams,
-        context.userId!,
-        context.resourceAccessRules
+      const projectId = args.permissionParams.streamId
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+      const result = await withOperationLogging(
+        async () =>
+          await updateStreamRoleAndNotify(
+            args.permissionParams,
+            context.userId!,
+            context.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'revokeStreamPermission',
+          operationDescription: `Revoke a Stream Permission`
+        }
       )
       return !!result
     },
@@ -477,13 +548,25 @@ export = {
     async streamFavorite(_parent, args, ctx) {
       const { streamId, favorited } = args
       const { userId, resourceAccessRules } = ctx
-
-      const stream = await favoriteStream({
-        userId: userId!,
-        streamId,
-        favorited,
-        userResourceAccessRules: resourceAccessRules
+      const logger = ctx.log.child({
+        projectId: streamId,
+        streamId //legacy
       })
+
+      const stream = await withOperationLogging(
+        async () =>
+          await favoriteStream({
+            userId: userId!,
+            streamId,
+            favorited,
+            userResourceAccessRules: resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'favoriteStream',
+          operationDescription: `Favorite a Stream`
+        }
+      )
 
       return stream
     },
@@ -492,11 +575,24 @@ export = {
       const { streamId } = args
       const { userId } = ctx
 
-      await removeStreamCollaborator(
-        streamId,
-        userId!,
-        userId!,
-        ctx.resourceAccessRules
+      const logger = ctx.log.child({
+        projectId: streamId,
+        streamId //legacy
+      })
+
+      await withOperationLogging(
+        async () =>
+          await removeStreamCollaborator(
+            streamId,
+            userId!,
+            userId!,
+            ctx.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'leaveStream',
+          operationDescription: `Leave a Stream`
+        }
       )
 
       return true

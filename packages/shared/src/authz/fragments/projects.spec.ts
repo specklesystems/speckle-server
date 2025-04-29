@@ -10,14 +10,17 @@ import { Roles } from '../../core/constants.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ProjectNotFoundError,
   ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { getProjectFake } from '../../tests/fakes.js'
+import { TIME_MS } from '../../core/index.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
@@ -58,7 +61,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -89,6 +92,20 @@ describe('ensureMinimumProjectRoleFragment', () => {
     })
   })
 
+  it('fails if user does not have a project role', async () => {
+    const result = await buildSUT({
+      getProjectRole: async () => null
+    })({
+      userId: 'userId',
+      projectId: 'projectId',
+      role: Roles.Stream.Reviewer
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNoAccessError.code
+    })
+  })
+
   it('fails if user does not have minimum project role', async () => {
     const result = await buildSUT({
       getProjectRole: async () => Roles.Stream.Reviewer
@@ -99,7 +116,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -137,21 +154,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
-      })
-    })
-
-    it('fails if user does not have a workspace role at all', async () => {
-      const result = await buildWorkspaceSUT({
-        getWorkspaceRole: async () => null
-      })({
-        userId: 'userId',
-        projectId: 'projectId',
-        role: Roles.Stream.Reviewer
-      })
-
-      expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
   })
@@ -264,7 +267,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -366,7 +369,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() - TIME_MS.day)
       })
     })
 
@@ -424,7 +427,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Member,
       ...overrides
@@ -515,7 +518,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -586,7 +589,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         getWorkspaceSsoSession: async () => ({
           providerId: 'ssoSessionId',
           userId: 'userId',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+          validUntil: new Date(Date.now() - TIME_MS.day)
         })
       })
 
@@ -644,7 +647,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       getWorkspaceSsoSession: async () => ({
         providerId: 'ssoSessionId',
         userId: 'userId',
-        validUntil: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       ...overrides
@@ -700,7 +703,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ServerNoAccessError.code
+      code: ServerNotEnoughPermissionsError.code
     })
   })
 
@@ -761,7 +764,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -791,7 +794,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
@@ -859,7 +862,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
         getWorkspaceSsoSession: async () => ({
           providerId: 'ssoSessionId',
           userId: 'userId',
-          validUntil: new Date(Date.now() - 1000 * 60 * 60 * 24)
+          validUntil: new Date(Date.now() - TIME_MS.day)
         })
       })
 

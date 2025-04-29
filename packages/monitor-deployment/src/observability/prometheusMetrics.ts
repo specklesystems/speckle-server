@@ -27,6 +27,7 @@ import { init as subscriptionsEnabled } from '@/observability/metrics/subscripti
 import { init as tablesize } from '@/observability/metrics/tableSize.js'
 import { init as users } from '@/observability/metrics/users.js'
 import { init as webhooks } from '@/observability/metrics/webhooks.js'
+import { TIME_MS } from '@speckle/shared'
 
 let prometheusInitialized = false
 
@@ -162,7 +163,8 @@ export function initPrometheusMetrics() {
     prometheusClient.collectDefaultMetrics()
     const monitoringMetrics = initMonitoringMetrics({
       register: prometheusClient.register,
-      collectionPeriodMilliseconds: databaseMonitorCollectionPeriodSeconds() * 1000,
+      collectionPeriodMilliseconds:
+        databaseMonitorCollectionPeriodSeconds() * TIME_MS.second,
       config: {
         getDbClients,
         prefix: 'speckle'

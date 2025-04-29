@@ -17,7 +17,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { graphql } from '~/lib/common/generated/gql'
 import type {
   AutomateAutomationCreateDialog_AutomateFunctionFragment,
   AutomationsFunctionsCard_AutomateFunctionFragment
@@ -28,20 +27,6 @@ defineEmits<{
   createAutomationFrom: [fn: CreateAutomationSelectableFunction]
   clearSearch: []
 }>()
-
-graphql(`
-  fragment AutomateFunctionsPageItems_Query on Query {
-    automateFunctions(limit: 6, filter: { search: $search }, cursor: $cursor) {
-      totalCount
-      items {
-        id
-        ...AutomationsFunctionsCard_AutomateFunction
-        ...AutomateAutomationCreateDialog_AutomateFunction
-      }
-      cursor
-    }
-  }
-`)
 
 const props = defineProps<{
   functions?: (AutomationsFunctionsCard_AutomateFunctionFragment &

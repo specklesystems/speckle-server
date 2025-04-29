@@ -15,9 +15,10 @@ export interface InviteServerForm {
 // Project
 export type InviteProjectItem = {
   email: string
-  serverRole: ServerRoles
+  userId?: string
   projectRole?: StreamRoles
   project?: FormSelectProjects_ProjectFragment
+  serverRole?: ServerRoles
 }
 
 export interface InviteProjectForm {

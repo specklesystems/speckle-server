@@ -4,7 +4,8 @@ import {
   type Nullable,
   timeoutAt,
   WaitIntervalUntilCanceledError,
-  TimeoutError
+  TimeoutError,
+  TIME_MS
 } from '@speckle/shared'
 import { until } from '@vueuse/core'
 import type { CSSProperties } from 'vue'
@@ -19,7 +20,7 @@ export default defineComponent({
   props: {
     duration: {
       type: Number,
-      default: 1000
+      default: TIME_MS.second
     },
     debug: {
       type: Boolean,
@@ -167,7 +168,10 @@ export default defineComponent({
       try {
         await Promise.race([
           until(transitioning).toBe(false),
-          timeoutAt(props.duration + 1000, 'Waiting for transition to finish timed out')
+          timeoutAt(
+            props.duration + TIME_MS.second,
+            'Waiting for transition to finish timed out'
+          )
         ])
       } catch (e) {
         if (!(e instanceof TimeoutError)) {

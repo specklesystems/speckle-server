@@ -85,15 +85,13 @@ export const resolveStatusFromFunctionRunStatuses = (
   return AutomationRunStatuses.succeeded
 }
 
-export type ReportFunctionRunStatusDeps = {
-  getAutomationFunctionRunRecord: GetFunctionRun
-  upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
-  automationRunUpdater: UpdateAutomationRun
-  emitEvent: EventBusEmit
-}
-
 export const reportFunctionRunStatusFactory =
-  (deps: ReportFunctionRunStatusDeps) =>
+  (deps: {
+    getAutomationFunctionRunRecord: GetFunctionRun
+    upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
+    automationRunUpdater: UpdateAutomationRun
+    emitEvent: EventBusEmit
+  }) =>
   async (
     params: Pick<
       AutomationFunctionRunRecord,

@@ -103,10 +103,13 @@ describe('Blobs integration @blobstorage', () => {
     slug: ''
   }
 
-  const createStreamForTest = async (streamOwner: BasicTestUser) => {
+  const createStreamForTest = async (
+    streamOwner: BasicTestUser,
+    isPublic: boolean = false
+  ) => {
     const stream: Partial<BasicTestStream> = {
       name: faker.company.name(),
-      isPublic: false,
+      isPublic,
       workspaceId: workspace.id
     }
     await createTestStream(stream, streamOwner)
@@ -214,6 +217,40 @@ describe('Blobs integration @blobstorage', () => {
     const blob = await request(app)
       .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
       .set('Authorization', `Bearer ${token}`)
+    expect(blob.status).to.equal(200)
+    expect(blob.headers['content-disposition']).to.equal(
+      'attachment; filename="dummy.blob"'
+    )
+    expect(blob.body.toString()).to.equal('a'.repeat(10))
+  })
+
+  it('cannot get uploaded blob data to a non-public project without valid token', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(10, 'a'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const blob = await request(app)
+      .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${cryptoRandomString({ length: 10 })}`)
+    expect(blob.status).to.equal(403)
+  })
+
+  it('anonymously gets uploaded blob data for a public project', async () => {
+    const streamId = await createStreamForTest(user, true)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(10, 'a'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const blob = await request(app).get(
+      `/api/stream/${streamId}/blob/${uploadResult.blobId}`
+    )
     expect(blob.status).to.equal(200)
     expect(blob.headers['content-disposition']).to.equal(
       'attachment; filename="dummy.blob"'

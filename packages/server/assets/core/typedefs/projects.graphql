@@ -13,7 +13,7 @@ enum ProjectVisibility {
 }
 
 """
-Visbility without the "discoverable" option
+Visibility without the "discoverable" option
 """
 enum SimpleProjectVisibility {
   PRIVATE
@@ -80,13 +80,11 @@ type ProjectInviteMutations {
   """
   create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   """
   Batch invite to project
   """
   batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
 
   """
   Accept or decline a project invite
@@ -96,9 +94,7 @@ type ProjectInviteMutations {
   """
   Cancel a pending stream invite. Can only be invoked by a project owner.
   """
-  cancel(projectId: ID!, inviteId: String!): Project!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
 }
 
 type ProjectMutations {
@@ -158,6 +154,7 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
+    sortBy: [String!]
   ): UserProjectCollection! @isOwner
 }
 
@@ -217,6 +214,12 @@ input UserProjectsFilter {
   Only include personal projects (not in any workspace)
   """
   personalOnly: Boolean
+
+  """
+  If set to true, will also include streams that the user may not have an explicit role on,
+  but has implicit access to because of workspaces
+  """
+  includeImplicitAccess: Boolean
 }
 
 enum UserProjectsUpdatedMessageType {

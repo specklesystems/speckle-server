@@ -6,7 +6,7 @@ import type {
 import { CameraEvent, ViewerEvent } from '@speckle/viewer'
 import { isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { TimeoutError, timeoutAt } from '@speckle/shared'
+import { TIME_MS, TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
@@ -328,7 +328,7 @@ export function useOnViewerLoadComplete(
         ? Promise.race([
             until(viewerBusy).toBe(false),
             timeoutAt(
-              1000,
+              TIME_MS.second,
               'Waiting for viewer business to be over post-LoadComplete timed out'
             )
           ])

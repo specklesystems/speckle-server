@@ -5,7 +5,11 @@ import {
   ensureMinimumServerRoleFragment
 } from './server.js'
 import { Roles } from '../../core/constants.js'
-import { ServerNoAccessError, ServerNoSessionError } from '../domain/authErrors.js'
+import {
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError
+} from '../domain/authErrors.js'
 
 describe('ensureMinimumServerRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumServerRoleFragment>) =>
@@ -28,9 +32,29 @@ describe('ensureMinimumServerRoleFragment', () => {
     })
   })
 
-  it('returns err when user does not have minimum server role', async () => {
+  it('returns err when user does not have a valid role at all', async () => {
+    const sut = buildSUT({
+      getServerRole: async () => null
+    })
+    const result = await sut({ userId: 'userId', role: Roles.Server.Guest })
+    expect(result).toBeAuthErrorResult({
+      code: ServerNoAccessError.code
+    })
+  })
+
+  it('returns err when user does have the required role or above', async () => {
     const sut = buildSUT()
     const result = await sut({ userId: 'userId', role: Roles.Server.Admin })
+    expect(result).toBeAuthErrorResult({
+      code: ServerNotEnoughPermissionsError.code
+    })
+  })
+
+  it('returns no access err even if asking for non-lowest role, but one is not found at all', async () => {
+    const sut = buildSUT({
+      getServerRole: async () => null
+    })
+    const result = await sut({ userId: 'userId', role: Roles.Server.User })
     expect(result).toBeAuthErrorResult({
       code: ServerNoAccessError.code
     })

@@ -91,10 +91,12 @@ export const useDiscoverableWorkspaces = () => {
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
     const joinRequests =
-      workspaceJoinRequests.value?.items?.map((request) => ({
-        ...request.workspace,
-        requestStatus: request.status
-      })) || []
+      workspaceJoinRequests.value?.items
+        ?.filter((r) => r.status !== 'approved')
+        ?.map((request) => ({
+          ...request.workspace,
+          requestStatus: request.status
+        })) || []
 
     const discoverable =
       discoverableWorkspaces.value?.map((workspace) => ({
@@ -127,10 +129,10 @@ export const useDiscoverableWorkspaces = () => {
   )
 
   const discoverableWorkspacesAndJoinRequestsCount = computed(
-    () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
+    () => discoverableWorkspacesAndJoinRequests.value?.length || 0
   )
 
-  const requestToJoinWorkspace = async (workspaceId: string) => {
+  const requestToJoinWorkspace = async (workspaceId: string, location: string) => {
     const cache = apollo.cache
     const activeUserId = activeUser.value?.id
 
@@ -151,13 +153,33 @@ export const useDiscoverableWorkspaces = () => {
                 return id !== workspaceId
               }
             )
+          },
+          workspaceJoinRequests(existingRefs = []) {
+            // Add the workspace to join requests with Pending status
+            const workspace = discoverableWorkspaces.value?.find(
+              (w) => w.id === workspaceId
+            )
+            if (workspace) {
+              return {
+                ...existingRefs,
+                items: [
+                  ...(existingRefs?.items || []),
+                  {
+                    id: workspaceId,
+                    status: 'Pending',
+                    workspace
+                  }
+                ]
+              }
+            }
+            return existingRefs
           }
         }
       })
 
       mixpanel.track('Workspace Join Request Sent', {
         workspaceId,
-        location: 'onboarding',
+        location,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })

@@ -57,7 +57,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import ObjectLoader2, { MemoryDatabase } from '@speckle/objectloader2'
+import ObjectLoader2 from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -307,24 +307,26 @@ export default class Sandbox {
         objects.push(batchObject)
       }
     }
+    const unionBox: Box3 = new Box3()
+    objects.forEach((obj: BatchObject) => {
+      unionBox.union(obj.renderView.aabb || new Box3())
+    })
+    const origin = unionBox.getCenter(new Vector3())
+    objects.forEach((obj: BatchObject) => {
+      obj.pivot = origin
+    })
     const position = { value: { x: 0, y: 0, z: 0 } }
     const rotation = { value: { x: 0, y: 0, z: 0 } }
     const scale = { value: { x: 1, y: 1, z: 1 } }
     this.objectControls
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value)
-          // obj.position = new Vector3(
-          //   position.value.x,
-          //   position.value.y,
-          //   position.value.z
-          // )
+          obj.position = new Vector3(
+            position.value.x,
+            position.value.y,
+            position.value.z
+          )
         })
         this.viewer.requestRender()
       })
@@ -337,13 +339,7 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
           obj.euler = new Euler(
             rotation.value.x,
             rotation.value.y,
@@ -362,13 +358,8 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb || new Box3())
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.scale = new Vector3(scale.value.x, scale.value.y, scale.value.z)
         })
         this.viewer.requestRender()
       })

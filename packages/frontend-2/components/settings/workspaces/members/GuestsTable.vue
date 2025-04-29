@@ -2,11 +2,11 @@
   <div class="pb-24">
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Guests are external collaborators. They can't create or add others to workspace
-        projects. Read more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        The guest role is meant for external collaborators. Guests can access only the
+        specific projects they're invited to, and their email doesn't need to follow any
+        of the allowed email domains that you may have set up. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can contribute
+        to projects if given the permission. They can never create new projects.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -31,11 +31,9 @@
         }
       ]"
       :items="guests"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
-        search.length
-          ? `No guests found for '${search}'`
-          : 'This workspace has no guests'
+        search.length || seatTypeFilter ? 'No results' : 'This workspace has no guests'
       "
     >
       <template #name="{ item }">
@@ -97,6 +95,12 @@
         <span v-else />
       </template>
     </LayoutTable>
+    <InfiniteLoading
+      v-if="guests?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
+    />
     <SettingsWorkspacesMembersActionsProjectPermissionsDialog
       v-model:open="showProjectPermissionsDialog"
       :user="targetUser"
@@ -108,16 +112,13 @@
 <script setup lang="ts">
 import {
   WorkspaceSeatType,
-  type SettingsWorkspacesMembersActionsMenu_UserFragment,
-  type SettingsWorkspacesMembersTable_WorkspaceFragment
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
@@ -128,26 +129,36 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: [Roles.Workspace.Guest]
+      roles: [Roles.Workspace.Guest],
+      seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug,
-    workspaceId: props.workspace?.id || ''
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || '', vars.filter?.seatType || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
   }),
-  () => ({
-    enabled: !!search.value.length || !!seatTypeFilter.value
-  })
-)
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const guests = computed(() => {
-  const guestArray =
-    search.value.length || seatTypeFilter.value
-      ? searchResult.value?.workspaceBySlug?.team.items
-      : props.workspace?.team.items
+  const guestArray = workspace.value?.team.items
 
   return (guestArray || [])
     .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
@@ -155,5 +166,5 @@ const guests = computed(() => {
     .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 </script>

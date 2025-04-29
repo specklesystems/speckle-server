@@ -240,6 +240,11 @@ export const projectAutomationsTabQuery = graphql(`
         }
         ...AutomateFunctionCreateDialog_Workspace
       }
+      permissions {
+        canCreateAutomation {
+          ...FullPermissionCheckResult
+        }
+      }
       ...FormSelectProjects_Project
     }
     ...AutomateFunctionsPageHeader_Query

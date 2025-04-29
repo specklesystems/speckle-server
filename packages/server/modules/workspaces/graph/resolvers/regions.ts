@@ -23,6 +23,7 @@ import { scheduleJob } from '@/modules/multiregion/services/queue'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -35,14 +36,22 @@ export default {
   },
   WorkspaceMutations: {
     setDefaultRegion: async (_parent, args, ctx) => {
+      const workspaceId = args.workspaceId
+      const regionKey = args.regionKey
+
       await authorizeResolver(
         ctx.userId,
-        args.workspaceId,
+        workspaceId,
         Roles.Workspace.Admin,
         ctx.resourceAccessRules
       )
 
-      const regionDb = await getDb({ regionKey: args.regionKey })
+      const logger = ctx.log.child({
+        workspaceId,
+        regionKey
+      })
+
+      const regionDb = await getDb({ regionKey })
 
       const assignRegion = assignWorkspaceRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
@@ -56,7 +65,14 @@ export default {
         getWorkspace: getWorkspaceFactory({ db }),
         insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
       })
-      await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
+      await withOperationLogging(
+        async () => await assignRegion({ workspaceId, regionKey }),
+        {
+          logger,
+          operationName: 'assignWorkspaceRegion',
+          operationDescription: 'Assign a region to a workspace'
+        }
+      )
 
       // Move existing workspace projects to new target region
       if (FF_MOVE_PROJECT_REGION_ENABLED) {
@@ -64,7 +80,7 @@ export default {
           getStreams: legacyGetStreamsFactory({ db })
         })
         for await (const projects of queryAllWorkspaceProjects({
-          workspaceId: args.workspaceId
+          workspaceId
         })) {
           await Promise.all(
             projects.map((project) =>
@@ -72,7 +88,7 @@ export default {
                 type: 'move-project-region',
                 payload: {
                   projectId: project.id,
-                  regionKey: args.regionKey
+                  regionKey
                 }
               })
             )
@@ -89,20 +105,37 @@ export default {
         throw new WorkspacesNotYetImplementedError()
       }
 
+      const projectId = args.projectId
+      const regionKey = args.regionKey
+
       await authorizeResolver(
         context.userId,
-        args.projectId,
+        projectId,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
 
-      return await scheduleJob({
-        type: 'move-project-region',
-        payload: {
-          projectId: args.projectId,
-          regionKey: args.regionKey
-        }
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId, //legacy
+        regionKey
       })
+
+      return await withOperationLogging(
+        async () =>
+          await scheduleJob({
+            type: 'move-project-region',
+            payload: {
+              projectId,
+              regionKey
+            }
+          }),
+        {
+          logger,
+          operationName: 'workspaceProjectMoveToRegion',
+          operationDescription: 'Move a workspace project to a different region'
+        }
+      )
     }
   }
 } as Resolvers

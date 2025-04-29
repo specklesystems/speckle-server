@@ -15,7 +15,7 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
-import { Roles } from '@speckle/shared'
+import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
 export const createNewProjectFactory =
@@ -65,7 +65,7 @@ export const createNewProjectFactory =
             const replicatedProject = await getProject({ projectId })
             if (!replicatedProject) throw new StreamNotFoundError()
           },
-          { maxAttempts: 10, delay: isTestEnv() ? 1000 : undefined }
+          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
         )
       } catch (err) {
         if (err instanceof StreamNotFoundError) {

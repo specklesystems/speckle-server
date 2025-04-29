@@ -13,6 +13,8 @@
         v-for="workspace in discoverableWorkspacesAndJoinRequests"
         :key="workspace.id"
         :workspace="workspace"
+        show-dismiss-button
+        location="workspace_switcher"
       />
     </div>
   </LayoutDialog>

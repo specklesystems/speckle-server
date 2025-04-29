@@ -32,6 +32,7 @@ export class BatchObject {
   public pivot_Low: Vector3 = new Vector3()
   public translation: Vector3 = new Vector3()
   public scaleValue: Vector3 = new Vector3(1, 1, 1)
+  public pivotValue: Vector3 = new Vector3()
 
   protected static matBuff0: Matrix4 = new Matrix4()
   protected static matBuff1: Matrix4 = new Matrix4()
@@ -68,31 +69,23 @@ export class BatchObject {
     return this._localOrigin
   }
 
+  public set pivot(value: Vector3 | null) {
+    if (!value) {
+      this.pivotValue.copy(this._localOrigin)
+    } else this.pivotValue.copy(value)
+    Geometry.DoubleToHighLowVector(this.pivotValue, this.pivot_Low, this.pivot_High)
+  }
+
   public set position(value: Vector3) {
-    this.transformTRS(
-      new Vector3().subVectors(value, this._localOrigin),
-      this.eulerValue,
-      this.scaleValue,
-      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
-    )
+    this.transformTRS(value, this.eulerValue, this.scaleValue, this.pivotValue)
   }
 
   public set euler(euler: Euler) {
-    this.transformTRS(
-      this.translation,
-      euler,
-      this.scaleValue,
-      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
-    )
+    this.transformTRS(this.translation, euler, this.scaleValue, this.pivotValue)
   }
 
   public set scale(scale: Vector3) {
-    this.transformTRS(
-      this.translation,
-      this.eulerValue,
-      scale,
-      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
-    )
+    this.transformTRS(this.translation, this.eulerValue, scale, this.pivotValue)
   }
 
   public constructor(renderView: NodeRenderView, batchIndex: number) {
@@ -102,6 +95,7 @@ export class BatchObject {
     this.transformInv = new Matrix4().identity()
 
     this._localOrigin = this._renderView.aabb.getCenter(new Vector3())
+    this.pivotValue.copy(this._localOrigin)
     Geometry.DoubleToHighLowVector(
       new Vector3(this._localOrigin.x, this._localOrigin.y, this._localOrigin.z),
       this.pivot_Low,
@@ -179,9 +173,27 @@ export class BatchObject {
     }
 
     this.transform.identity()
+    this.transform.multiply(T)
     this.transform.multiply(R)
     this.transform.multiply(S)
-    this.transform.premultiply(T)
+
+    const mat = new Matrix4().multiplyMatrices(
+      new Matrix4().makeTranslation(
+        BatchObject.pivotBuff.x,
+        BatchObject.pivotBuff.y,
+        BatchObject.pivotBuff.z
+      ),
+      this.transform
+    )
+
+    mat.multiply(
+      new Matrix4().makeTranslation(
+        -BatchObject.pivotBuff.x,
+        -BatchObject.pivotBuff.y,
+        -BatchObject.pivotBuff.z
+      )
+    )
+    this.transform.copy(mat)
 
     this.transformInv.copy(this.transform)
     this.transformInv.invert()
@@ -189,6 +201,7 @@ export class BatchObject {
     this.translation.copy(BatchObject.translationBuff)
     this.quaternion.setFromEuler(BatchObject.eulerBuff)
     this.scaleValue.copy(BatchObject.scaleBuff)
+    this.pivotValue.copy(BatchObject.pivotBuff)
 
     Geometry.DoubleToHighLowVector(
       BatchObject.pivotBuff,

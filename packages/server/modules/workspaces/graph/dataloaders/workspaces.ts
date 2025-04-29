@@ -3,9 +3,11 @@ import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper
 import {
   getWorkspaceDomainsFactory,
   getWorkspacesFactory,
-  getWorkspacesProjectsCountsFactory
+  getWorkspacesProjectsCountsFactory,
+  getWorkspacesRolesForUsersFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
+  WorkspaceAcl,
   WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -23,6 +25,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getWorkspaces = getWorkspacesFactory({ db })
     const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
     const getWorkspacesProjectsCounts = getWorkspacesProjectsCountsFactory({ db })
+    const getWorkspacesRolesForUsers = getWorkspacesRolesForUsersFactory({ db })
 
     return {
       workspaces: {
@@ -46,7 +49,25 @@ const dataLoadersDefinition = defineRequestDataloaders(
             workspaceIds: ids.slice()
           })
           return ids.map((id) => results[id])
-        })
+        }),
+        /**
+         * Get workspace role
+         */
+        getWorkspaceRole: createLoader<
+          { userId: string; workspaceId: string },
+          WorkspaceAcl | null,
+          string
+        >(
+          async (idPairs) => {
+            const results = await getWorkspacesRolesForUsers(idPairs.slice())
+            return idPairs.map(({ userId, workspaceId }) => {
+              return results[workspaceId]?.[userId] || null
+            })
+          },
+          {
+            cacheKeyFn: (args) => `${args.userId}-${args.workspaceId}`
+          }
+        )
       },
       workspaceDomains: {
         /**

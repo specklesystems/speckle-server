@@ -4,6 +4,7 @@ import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import {
   ProjectNoAccessError,
+  ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   ServerNoSessionError,
   WorkspaceNoAccessError,
@@ -11,6 +12,7 @@ import {
 } from '../../domain/authErrors.js'
 import { canReadProjectWebhooksPolicy } from './canReadWebhooks.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 
 describe('canReadProjectWebhooksPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>) =>
@@ -54,7 +56,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -139,7 +141,7 @@ describe('canReadProjectWebhooksPolicy', () => {
     })
 
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: ProjectNotEnoughPermissionsError.code
     })
   })
 
@@ -155,9 +157,9 @@ describe('canReadProjectWebhooksPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails w/o workspace & project role', async () => {
+    it('fails w/o workspace role, even w/ project role', async () => {
       const sut = buildWorkspaceSUT({
-        getProjectRole: async () => null,
+        getProjectRole: async () => Roles.Stream.Owner,
         getWorkspaceRole: async () => null
       })
 
@@ -171,7 +173,23 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
     })
 
-    it('fails if workspace guest, even w/ explicit project role', async () => {
+    it('fails w/o workspace & project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => null,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
+    it('fails if workspace guest, even w/ explicit project role, when its too low', async () => {
       const sut = buildWorkspaceSUT({
         getProjectRole: async () => Roles.Stream.Reviewer,
         getWorkspaceRole: async () => Roles.Workspace.Guest
@@ -183,7 +201,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
 
@@ -263,7 +281,7 @@ describe('canReadProjectWebhooksPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
+        code: ProjectNotEnoughPermissionsError.code
       })
     })
   })

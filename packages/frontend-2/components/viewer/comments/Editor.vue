@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div class="flex flex-col w-full max-h-28 overflow-y-auto simple-scrollbar pr-1">
+  <div class="flex flex-col w-full max-h-32 overflow-y-auto simple-scrollbar pr-1">
     <FormFileUploadZone
       ref="uploadZone"
       v-slot="{ isDraggingFiles }"

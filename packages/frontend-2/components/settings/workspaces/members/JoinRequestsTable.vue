@@ -13,7 +13,7 @@
         }
       ]"
       :items="joinRequests"
-      empty-message="There are no pending join requests"
+      empty-message="There are no join requests"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">

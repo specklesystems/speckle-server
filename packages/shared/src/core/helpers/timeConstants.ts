@@ -1,4 +1,7 @@
-/* Time with seconds as the base unit
+import { mapValues } from '#lodash'
+
+/*
+ * Time with seconds as the base unit
  */
 export const TIME = {
   second: 1,
@@ -8,3 +11,8 @@ export const TIME = {
   week: 7 * 24 * 60 * 60,
   month: 28 * 24 * 60 * 60
 }
+
+/**
+ * Time with milliseconds as the base unit
+ */
+export const TIME_MS = mapValues(TIME, (value) => value * 1000)

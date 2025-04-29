@@ -15,5 +15,11 @@ if [[ "${CIRCLE_BRANCH}" == "main" ]]; then
     exit 0
 fi
 
+# if branch name truncated contains an underscore, we should exit
+if [[ "${BRANCH_NAME_TRUNCATED}" =~ "_" ]]; then
+    echo "Branch name contains an underscore, exiting"
+    exit 1
+fi
+
 echo "${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}.${CIRCLE_BUILD_NUM}-${COMMIT_SHA1_TRUNCATED}"
 exit 0

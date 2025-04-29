@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest'
 import {
-  ServerNoAccessError,
   ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
@@ -135,7 +135,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
       })(canCreateArgs())
 
       expect(result).toBeAuthErrorResult({
-        code: ServerNoAccessError.code
+        code: ServerNotEnoughPermissionsError.code
       })
     })
   })
@@ -477,7 +477,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {
             projectCount: null,
             modelCount: null,
-            versionsHistory: null
+            versionsHistory: null,
+            commentHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -517,7 +518,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {
             projectCount: 10,
             modelCount: 50,
-            versionsHistory: null
+            versionsHistory: null,
+            commentHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -559,7 +561,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {
             projectCount: 10,
             modelCount: 50,
-            versionsHistory: null
+            versionsHistory: null,
+            commentHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {
@@ -599,7 +602,8 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {
             projectCount: 10,
             modelCount: 50,
-            versionsHistory: null
+            versionsHistory: null,
+            commentHistory: null
           }
         },
         getWorkspaceProjectCount: async () => {

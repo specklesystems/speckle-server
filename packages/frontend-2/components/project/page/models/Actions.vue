@@ -39,7 +39,6 @@
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
 import type {
-  FullPermissionCheckResultFragment,
   ProjectPageModelsActionsFragment,
   ProjectPageModelsActions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -56,6 +55,17 @@ graphql(`
   fragment ProjectPageModelsActions on Model {
     id
     name
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+      canDelete {
+        ...FullPermissionCheckResult
+      }
+      canCreateVersion {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -87,8 +97,6 @@ const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
   project: ProjectPageModelsActions_ProjectFragment
-  canEdit?: FullPermissionCheckResultFragment
-  canDelete?: FullPermissionCheckResultFragment
   menuPosition?: HorizontalDirection
 }>()
 
@@ -102,6 +110,10 @@ const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
 const embedDialogOpen = ref(false)
 
+const canEdit = computed(() => props.model.permissions.canUpdate)
+const canDelete = computed(() => props.model.permissions.canDelete)
+const canCreateVersion = computed(() => props.model.permissions.canCreateVersion)
+
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ...(isLoggedIn.value
     ? [
@@ -109,8 +121,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Edit model...',
             id: ActionTypes.Rename,
-            disabled: !props.canEdit?.authorized,
-            disabledTooltip: props.canEdit?.message || 'Insufficient permissions'
+            disabled: !canEdit.value.authorized,
+            disabledTooltip: canEdit.value.message || 'Insufficient permissions'
           }
         ]
       ]
@@ -125,8 +137,9 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
           {
             title: 'Upload new version...',
             id: ActionTypes.UploadVersion,
-            disabled: !props.canEdit?.authorized,
-            disabledTooltip: props.canEdit?.message || 'Insufficient permissions'
+            disabled: !canCreateVersion.value.authorized,
+            disabledTooltip:
+              canCreateVersion.value.message || 'Insufficient permissions'
           }
         ]
       : [])
@@ -143,8 +156,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
             title: 'Delete...',
             id: ActionTypes.Delete,
             // TODO:
-            disabled: !props.canDelete?.authorized,
-            disabledTooltip: props.canDelete?.message || 'Insufficient permissions'
+            disabled: !canDelete.value.authorized,
+            disabledTooltip: canDelete.value.message || 'Insufficient permissions'
           }
         ]
       ]

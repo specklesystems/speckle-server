@@ -68,6 +68,17 @@ export const throwIfResourceAccessNotAllowed = (params: {
   }
 }
 
+export const throwIfNewResourceNotAllowed = (params: {
+  resourceType: TokenResourceIdentifierType
+  resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+}) => {
+  if (!isNewResourceAllowed(params)) {
+    throw new ForbiddenError(
+      `You are not authorized to create a new ${params.resourceType} resource.`
+    )
+  }
+}
+
 export const isNewResourceAllowed = (params: {
   resourceType: TokenResourceIdentifierType
   resourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>

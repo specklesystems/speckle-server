@@ -78,7 +78,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full text-foreground transition-all text-body-sm',
+      'block w-full text-foreground transition-all',
       coreInputClasses.value
     ]
 

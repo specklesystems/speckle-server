@@ -234,6 +234,12 @@ export default defineNuxtConfig({
         to: 'https://www.speckle.systems/connectors',
         statusCode: 301
       }
+    },
+    '/workspaces': {
+      redirect: {
+        to: '/workspaces/actions/create',
+        statusCode: 301
+      }
     }
   },
 

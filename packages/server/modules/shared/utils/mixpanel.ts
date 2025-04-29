@@ -41,6 +41,8 @@ export function getClient() {
   return client
 }
 
+export const getMixpanelClient = getClient
+
 /**
  * Mixpanel tracking helper. An abstraction layer over the client that makes it a bit nicer to work with.
  */

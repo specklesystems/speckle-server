@@ -37,6 +37,7 @@ export const createTestWorkspaceSubscription = (
     updatedAt: new Date(),
     currentBillingCycleEnd: new Date(),
     subscriptionData: createTestSubscriptionData(),
+    currency: 'usd',
     workspaceId: cryptoRandomString({ length: 10 })
   }
   return assign(defaultValues, overrides)

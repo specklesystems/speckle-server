@@ -5,16 +5,89 @@ export const getWorkspacePlanPrices = gql`
     serverInfo {
       workspaces {
         planPrices {
-          id
-          monthly {
-            amount
-            currency
-            currencySymbol
+          usd {
+            team {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            teamUnlimited {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            pro {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            proUnlimited {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
           }
-          yearly {
-            amount
-            currency
-            currencySymbol
+          gbp {
+            team {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            teamUnlimited {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            pro {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
+            proUnlimited {
+              monthly {
+                amount
+                currency
+              }
+              yearly {
+                amount
+                currency
+              }
+            }
           }
         }
       }

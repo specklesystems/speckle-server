@@ -13,9 +13,11 @@
           class="bg-foundation relative w-full h-full select-none rounded-md border shadow"
           :class="[
             selected === option.value ? 'border-outline-4' : 'border-outline-2',
-            disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-outline-1'
+            disabled || option.disabled
+              ? 'opacity-60 cursor-not-allowed'
+              : 'hover:border-outline-1'
           ]"
-          :disabled="disabled"
+          :disabled="disabled || option.disabled"
           @click="selectItem(option.value)"
         >
           <div class="p-4 flex flex-col space-y-2 h-full">
@@ -90,6 +92,7 @@ type OptionType = {
   introduction?: string
   icon?: ConcreteComponent
   help?: string
+  disabled?: boolean
 }
 
 const props = withDefaults(

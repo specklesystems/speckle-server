@@ -1,4 +1,4 @@
-import { timeoutAt } from '@speckle/shared'
+import { TIME_MS, timeoutAt } from '@speckle/shared'
 import { until } from '@vueuse/core'
 import DOMPurify from 'dompurify'
 
@@ -46,7 +46,7 @@ export function usePurifiedHtml(
 
     await Promise.race([
       until(waitFor).toBe(true),
-      timeoutAt(10000, 'Waiting for HTML purification trigger timed out')
+      timeoutAt(10 * TIME_MS.second, 'Waiting for HTML purification trigger timed out')
     ])
     await asyncData.refresh()
   })

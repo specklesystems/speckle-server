@@ -18,6 +18,7 @@ import { Loaders } from '../domain/loaders.js'
 import { Roles, WorkspaceRoles } from '../../core/constants.js'
 import {
   MaybeUserContext,
+  MaybeWorkspaceContext,
   ProjectContext,
   WorkspaceContext
 } from '../domain/context.js'
@@ -36,10 +37,17 @@ export const ensureWorkspaceRoleAndSessionFragment: AuthPolicyEnsureFragment<
   | 'getWorkspaceSsoSession'
   | 'getWorkspace',
   { userId: string; workspaceId: string; role?: WorkspaceRoles },
-  InstanceType<typeof WorkspaceSsoSessionNoAccessError | typeof WorkspaceNoAccessError>
+  InstanceType<
+    | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceNotEnoughPermissionsError
+  >
 > =
   (loaders) =>
   async ({ userId, workspaceId, role }) => {
+    const testedRole = role ?? Roles.Workspace.Guest
+    const testingForMinimumRole = testedRole === Roles.Workspace.Guest
+
     // Get workspace, so we can resolve its slug for error scenarios
     const workspace = await loaders.getWorkspace({ workspaceId })
     // hides the fact, that the workspace does not exist
@@ -48,9 +56,14 @@ export const ensureWorkspaceRoleAndSessionFragment: AuthPolicyEnsureFragment<
     const hasMinimumRole = await hasMinimumWorkspaceRole(loaders)({
       userId,
       workspaceId,
-      role: role ?? Roles.Workspace.Guest
+      role: testedRole
     })
-    if (!hasMinimumRole) return err(new WorkspaceNoAccessError())
+    if (!hasMinimumRole)
+      return err(
+        testingForMinimumRole
+          ? new WorkspaceNoAccessError()
+          : new WorkspaceNotEnoughPermissionsError()
+      )
 
     const hasMinimumMemberRole = await hasMinimumWorkspaceRole(loaders)({
       userId,
@@ -192,7 +205,13 @@ export const ensureWorkspaceProjectCanBeCreatedFragment: AuthPolicyEnsureFragmen
 
     return currentProjectCount < workspaceLimits.projectCount
       ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'projectCount' } }))
+      : err(
+          new WorkspaceLimitsReachedError({
+            message:
+              'You have reached the maximum number of projects for your plan. Upgrade to increase it.',
+            payload: { limit: 'projectCount' }
+          })
+        )
   }
 
 /**
@@ -205,7 +224,14 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
   | typeof Loaders.getWorkspaceLimits
   | typeof Loaders.getProject
   | typeof Loaders.getWorkspaceModelCount,
-  ProjectContext & MaybeUserContext,
+  ProjectContext &
+    MaybeWorkspaceContext &
+    MaybeUserContext & {
+      /**
+       * How many models we're testing being added. Defaults to 1
+       */
+      addedModelCount?: number
+    },
   InstanceType<
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceReadOnlyError
@@ -214,11 +240,13 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
   >
 > =
   (loaders) =>
-  async ({ projectId, userId }) => {
+  async ({ projectId, userId, addedModelCount, workspaceId }) => {
+    addedModelCount = addedModelCount ?? 1
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
 
-    const { workspaceId } = project
+    // Project may not be attached to a workspace yet, then we use the specified workspaceId
+    workspaceId = workspaceId || project.workspaceId || undefined
     if (!workspaceId) return ok()
 
     if (userId) {
@@ -249,7 +277,15 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
 
     if (currentModelCount === null) return err(new WorkspaceNoAccessError())
 
-    return currentModelCount < workspaceLimits.modelCount
+    return currentModelCount + addedModelCount <= workspaceLimits.modelCount
       ? ok()
-      : err(new WorkspaceLimitsReachedError({ payload: { limit: 'modelCount' } }))
+      : err(
+          new WorkspaceLimitsReachedError({
+            message:
+              'You have reached the maximum number of models for your plan. Upgrade to increase it.',
+            payload: {
+              limit: 'modelCount'
+            }
+          })
+        )
   }

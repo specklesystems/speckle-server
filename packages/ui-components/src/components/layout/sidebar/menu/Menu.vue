@@ -1,5 +1,5 @@
 <template>
-  <nav class="flex flex-col space-y-4">
+  <nav class="flex flex-col">
     <slot></slot>
   </nav>
 </template>

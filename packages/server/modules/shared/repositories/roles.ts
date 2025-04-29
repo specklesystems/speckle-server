@@ -7,6 +7,7 @@ import {
   appConstantValueCacheProviderFactory,
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
+import { TIME_MS } from '@speckle/shared'
 
 let roles: UserRole[]
 
@@ -46,5 +47,5 @@ export const getCachedRolesFactory = wrapFactoryWithCache({
   factory: getRolesFactory,
   name: 'modules/shared/repositories/roles::getCachedRolesFactory',
   cacheProvider: appConstantValueCacheProviderFactory(),
-  ttlMs: 60 * 60 * 1000 // 1 hour
+  ttlMs: 1 * TIME_MS.hour
 })

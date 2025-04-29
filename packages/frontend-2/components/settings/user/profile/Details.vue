@@ -47,6 +47,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
+import { TIME_MS } from '@speckle/shared'
 
 graphql(`
   fragment SettingsUserProfileDetails_User on User {
@@ -78,7 +79,7 @@ const save = handleSubmit(async () => {
 
   await mutate(input)
 })
-const debouncedSave = debounce(save, 1000)
+const debouncedSave = debounce(save, TIME_MS.second)
 
 watch(
   () => props.user,

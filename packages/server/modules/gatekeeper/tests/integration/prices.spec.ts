@@ -1,8 +1,9 @@
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetWorkspacePlanPricesDocument } from '@/test/graphql/generated/graphql'
 import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
-import { PaidWorkspacePlans, WorkspaceGuestSeatType } from '@speckle/shared'
+import { PaidWorkspacePlansNew } from '@speckle/shared'
 import { expect } from 'chai'
+import { Currency } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -20,17 +21,18 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
     it('returns prices', async () => {
       const res = await getPrices()
 
-      const expectedPlans = [
-        ...Object.values(PaidWorkspacePlans),
-        WorkspaceGuestSeatType
-      ]
+      const expectedPlans = [...Object.values(PaidWorkspacePlansNew)]
 
       expect(res).to.not.haveGraphQLErrors()
 
       const prices = res.data?.serverInfo.workspaces.planPrices
-      expect(prices).to.be.ok
-      expect(prices).to.have.lengthOf(expectedPlans.length)
-      expect(prices!.map((p) => p.id)).to.deep.equalInAnyOrder(expectedPlans)
+      expect(prices).to.not.be.null
+      if (!prices) throw new Error('This cannot be')
+      for (const currency of Object.values(Currency)) {
+        const p = prices[currency]
+        expect(Object.keys(p)).to.have.lengthOf(expectedPlans.length)
+        expect(Object.keys(p)).to.deep.equalInAnyOrder(expectedPlans)
+      }
     })
   }
 )

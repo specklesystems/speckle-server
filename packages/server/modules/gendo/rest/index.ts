@@ -16,6 +16,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getGendoAIKey } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 export default function (app: express.Express) {
   // const responseToken = getGendoAIResponseKey()
@@ -47,6 +48,12 @@ export default function (app: express.Express) {
       const gendoGenerationId = payload.generationId
 
       const projectId = req.params.projectId
+      const logger = req.log.child({
+        projectId,
+        gendoGenerationId,
+        gendoResponseStatus: status
+      })
+
       const [projectDb, projectStorage] = await Promise.all([
         getProjectDbClient({ projectId }),
         getProjectObjectStorage({ projectId })
@@ -64,11 +71,20 @@ export default function (app: express.Express) {
         publish
       })
 
-      await updateRenderRequest({
-        gendoGenerationId,
-        responseImage,
-        status
-      })
+      await withOperationLogging(
+        async () =>
+          await updateRenderRequest({
+            gendoGenerationId,
+            responseImage,
+            status
+          }),
+        {
+          logger,
+          operationName: 'updateGendoRenderRequest',
+          operationDescription:
+            'Handle response from GendoAI and update a render request'
+        }
+      )
 
       res.status(200).send('Speckle says thank you 💖')
     }

@@ -1,4 +1,4 @@
-import { clamp } from 'lodash'
+import { clamp, isString } from 'lodash'
 import { BaseError } from '~~/lib/core/errors/base'
 import type {
   UploadableFileItem,
@@ -193,6 +193,18 @@ export function uploadFiles(params: {
     }
   })
 
+  const getErrorMessage = (fallbackMessage: string) => {
+    if (req.response?.error && isString(req.response.error)) {
+      return req.response.error
+    }
+
+    if (req.status === 403) {
+      return 'You do not have permissions to do this'
+    }
+
+    return fallbackMessage
+  }
+
   req.addEventListener('load', () => {
     const uploadResults =
       (req.response as Optional<PostBlobResponse>)?.uploadResults || []
@@ -201,7 +213,7 @@ export function uploadFiles(params: {
 
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
-        uploadError: 'Unable to resolve upload results',
+        uploadError: getErrorMessage('Unable to resolve upload results'),
         uploadStatus: BlobUploadStatus.Failure,
         formKey: uploadFile.id
       }
@@ -218,7 +230,7 @@ export function uploadFiles(params: {
 
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
-        uploadError: 'Upload request failed unexpectedly',
+        uploadError: getErrorMessage('Upload request failed unexpectedly'),
         uploadStatus: BlobUploadStatus.Failure,
         formKey: uploadFile.id
       }
