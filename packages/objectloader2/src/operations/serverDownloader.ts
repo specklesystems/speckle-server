@@ -135,7 +135,7 @@ export default class ServerDownloader implements Downloader {
           if (index > -1) {
             batch.splice(index, 1)
           } else {
-             throw new Error(`Item ${id} not found in batch`)
+            throw new Error(`Item ${id} not found in batch`)
           }
           count++
           if (count % 1000 === 0) {
