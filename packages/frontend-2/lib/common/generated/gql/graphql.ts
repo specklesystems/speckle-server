@@ -1955,7 +1955,10 @@ export type PendingStreamCollaborator = {
   id: Scalars['String']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
+  project: Project;
+  /** @deprecated Use project instead */
   projectId: Scalars['String']['output'];
+  /** @deprecated Use project instead */
   projectName: Scalars['String']['output'];
   role: Scalars['String']['output'];
   /** @deprecated Use projectId instead */
@@ -8266,6 +8269,7 @@ export type PendingStreamCollaboratorFieldArgs = {
   id: {},
   inviteId: {},
   invitedBy: {},
+  project: {},
   projectId: {},
   projectName: {},
   role: {},
