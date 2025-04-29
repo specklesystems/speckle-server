@@ -166,7 +166,22 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               items: times(count, () => store.get('AutomateRun'))
             } as any
           },
-          currentRevision: () => store.get('AutomationRevision') as any
+          currentRevision: () => store.get('AutomationRevision') as any,
+          permissions: () => ({})
+        },
+        AutomationPermissionChecks: {
+          canDelete: () => ({
+            code: 'OK',
+            authorized: true
+          }),
+          canRead: () => ({
+            code: 'OK',
+            authorized: true
+          }),
+          canUpdate: () => ({
+            code: 'OK',
+            authorized: true
+          })
         },
         AutomationRevision: {
           triggerDefinitions: async (parent) => {
@@ -358,6 +373,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                   type: 'boolean'
                 },
                 Integer: {
+                  default: 2,
                   description: faker.lorem.sentence(5),
                   type: 'integer'
                 },
