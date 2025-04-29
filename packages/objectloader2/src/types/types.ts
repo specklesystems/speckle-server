@@ -12,7 +12,18 @@ export interface Item {
 
 export interface Base {
   id: string
+  speckle_type: string
   __closure?: Record<string, number>
+}
+
+export interface Reference {
+  speckle_type: string
+  referencedId: string
+  __closure?: Record<string, number>
+}
+
+export interface DataChunk extends Base {
+  data?: Base[]
 }
 
 export function isBase(maybeBase?: unknown): maybeBase is Base {
@@ -21,5 +32,29 @@ export function isBase(maybeBase?: unknown): maybeBase is Base {
     typeof maybeBase === 'object' &&
     'id' in maybeBase &&
     typeof maybeBase.id === 'string'
+  )
+}
+
+export function isReference(maybeRef?: unknown): maybeRef is Reference {
+  return (
+    maybeRef !== null &&
+    typeof maybeRef === 'object' &&
+    'referencedId' in maybeRef &&
+    typeof maybeRef.referencedId === 'string'
+  )
+}
+
+export function isScalar(
+  value: unknown
+): value is string | number | boolean | bigint | symbol | undefined {
+  const type = typeof value
+  return (
+    value === null ||
+    type === 'string' ||
+    type === 'number' ||
+    type === 'boolean' ||
+    type === 'bigint' ||
+    type === 'symbol' ||
+    type === 'undefined'
   )
 }

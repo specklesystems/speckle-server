@@ -1335,7 +1335,12 @@ export default class Sandbox {
       options: { enableCaching: true }
     })*/
 
-    const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
+    const loader = new ObjectLoader2({
+      serverUrl,
+      streamId,
+      objectId,
+      token
+    })
     let count = 0
 
     for await (const {} of loader.getObjectIterator()) {
