@@ -17,6 +17,7 @@ export default class ObjectLoader2 {
   #downloader: Downloader
 
   #deferments: DefermentManager
+  #found: Map<string, boolean> = new Map()
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -54,6 +55,7 @@ export default class ObjectLoader2 {
       this.#downloader.disposeAsync(),
       this.#gathered.dispose()
     ])
+    this.#found.clear()
   }
 
   async getRootObject(): Promise<Item | undefined> {
@@ -68,6 +70,9 @@ export default class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
+    if (!this.#found.has(params.id)) {
+      return await this.#deferments.defer({ id: params.id })
+    }
     const item = await this.#database.getItem({ id: params.id })
     if (item) {
       return item.base
@@ -106,6 +111,7 @@ export default class ObjectLoader2 {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
       this.#deferments.undefer(item)
+      this.#found.set(item.baseId, true)
       yield item.base
       count++
       if (count >= total) {
