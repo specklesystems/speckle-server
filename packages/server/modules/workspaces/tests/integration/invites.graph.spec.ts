@@ -559,7 +559,9 @@ describe('Workspaces Invites GQL', () => {
           Roles.Stream.Owner,
           me.id
         )
+      })
 
+      beforeEach(async () => {
         // Remove all project access from workspaceMemberWithNoProjectAccess
         await Promise.all([
           leaveStream(
@@ -712,7 +714,7 @@ describe('Workspaces Invites GQL', () => {
           userId: workspaceMemberWithNoProjectAccess.id,
           workspaceId: myProjectInviteTargetWorkspace.id,
           streamId: myProjectInviteTargetWorkspaceProject.id,
-          expectedProjectRole: Roles.Stream.Owner
+          expectedProjectRole: Roles.Stream.Reviewer
         })
       })
 

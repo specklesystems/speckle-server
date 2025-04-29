@@ -35,6 +35,11 @@ export type FinalizeInvite = (params: {
    * If the invite is accepted, the email will be attached to the user account as well in a verified state.
    */
   allowAttachingNewEmail?: boolean
+  /**
+   * Allow someone else besides the target user to finalize the invite. Used in auto-accept flows. The finalizerUserId
+   * must be the target of the invite, but this different one will be used in reporting/activityStream actions
+   */
+  trueFinalizerId?: string
 }) => Promise<void>
 
 export type ResendInviteEmail = (params: {
@@ -80,6 +85,9 @@ export enum InviteFinalizationAction {
  */
 export type ValidateResourceInviteBeforeFinalization = (params: {
   invite: ServerInviteRecord
+  /**
+   * Not necessarily the invite target, can also be the inviter in case of auto-accept
+   */
   finalizerUserId: string
   finalizerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   action: InviteFinalizationAction

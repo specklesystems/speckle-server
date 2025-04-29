@@ -92,7 +92,8 @@ export const createAndSendInviteFactory =
     buildInviteEmailContents,
     emitEvent,
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite
   }: {
     findUserByTarget: FindUserByTarget
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
@@ -166,6 +167,19 @@ export const createAndSendInviteFactory =
       invite,
       targetUser ? [targetUser.email, buildUserTarget(targetUser.id)!] : []
     )
+
+    const autoAccept = finalPrimaryResource.autoAccept
+    if (autoAccept && targetUser?.id) {
+      await finalizeInvite({
+        finalizerUserId: targetUser.id,
+        finalizerResourceAccessLimits: inviterResourceAccessLimits,
+        accept: true,
+        token: invite.token,
+        resourceType: finalPrimaryResource.resourceType,
+        trueFinalizerId: inviterId
+      })
+      return
+    }
 
     // generate and send email
     await sendInviteEmail({
