@@ -1991,6 +1991,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
@@ -6609,6 +6610,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  workspaceSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
