@@ -196,7 +196,8 @@ describe('Workspace GQL Subscriptions', () => {
 
         before(async () => {
           await createTestWorkspace(myTeamWorkspace, me, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           })
         })
 
