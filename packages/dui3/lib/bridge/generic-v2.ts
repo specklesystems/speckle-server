@@ -78,27 +78,38 @@ export class GenericBridge extends BaseBridge {
     }
   }
 
-  async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
+  async runMethod(
+    methodName: string,
+    args: unknown[],
+    shouldTimeout: boolean = true
+  ): Promise<unknown> {
     const requestId = (Math.random() + 1).toString(36).substring(2) + '_' + methodName
     const preserializedArgs = args.map((a) => JSON.stringify(a))
 
     this.bridge.RunMethod(methodName, requestId, JSON.stringify(preserializedArgs))
 
-    return this.registerPromise(methodName, requestId)
+    return this.registerPromise(methodName, requestId, shouldTimeout)
   }
 
-  private async registerPromise(methodName: string, requestId: string) {
+  private async registerPromise(
+    methodName: string,
+    requestId: string,
+    shouldTimeout: boolean = true
+  ) {
     return new Promise((resolve, reject) => {
       this.requests[requestId] = {
         methodName,
         resolve,
         reject,
-        rejectTimerId: window.setTimeout(() => {
-          reject(
-            `.NET response timed out for call to ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
-          )
-          delete this.requests[requestId]
-        }, this.TIMEOUT_MS)
+        rejectTimerId: window.setTimeout(
+          () => {
+            reject(
+              `.NET response timed out for call to ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
+            )
+            delete this.requests[requestId]
+          },
+          shouldTimeout ? this.TIMEOUT_MS : 3600000
+        )
       }
     })
   }
