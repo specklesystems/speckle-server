@@ -43,6 +43,8 @@ import {
   PaidWorkspacePlans,
   Roles,
   WorkspacePlan,
+  WorkspacePlans,
+  WorkspacePlanStatuses,
   WorkspaceRoles
 } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -93,7 +95,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { isBoolean } from 'lodash'
+import { isBoolean, isString } from 'lodash'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -123,7 +125,7 @@ export const createTestWorkspace = async (
   owner: BasicTestUser,
   options?: {
     domain?: string
-    addPlan?: Partial<Pick<WorkspacePlan, 'name' | 'status'>> | boolean
+    addPlan?: Partial<Pick<WorkspacePlan, 'name' | 'status'>> | boolean | WorkspacePlans
     addSubscription?: boolean
     regionKey?: string
   }
@@ -189,9 +191,17 @@ export const createTestWorkspace = async (
   }
 
   if (addPlan || useRegion) {
-    const planName =
-      (!isBoolean(addPlan) ? addPlan.name : undefined) || PaidWorkspacePlans.Team
-    const planStatus = (!isBoolean(addPlan) ? addPlan.status : undefined) || 'valid'
+    let planName: WorkspacePlans
+    let planStatus: WorkspacePlanStatuses
+    if (isBoolean(addPlan)) {
+      planName = PaidWorkspacePlans.Team
+      planStatus = WorkspacePlanStatuses.Valid
+    } else {
+      planName = (isString(addPlan) ? addPlan : addPlan.name) || PaidWorkspacePlans.Team
+      planStatus =
+        (isString(addPlan) ? WorkspacePlanStatuses.Valid : addPlan.status) ||
+        WorkspacePlanStatuses.Valid
+    }
 
     await upsertWorkspacePlan({
       workspacePlan: {
