@@ -105,7 +105,6 @@ export default class ObjectLoader2 {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
-      count++
       this.#deferments.undefer(item)
       yield item.base
       count++
