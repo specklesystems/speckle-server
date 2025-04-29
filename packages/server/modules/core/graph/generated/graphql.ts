@@ -1978,10 +1978,7 @@ export type PendingStreamCollaborator = {
   id: Scalars['String']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
-  project: Project;
-  /** @deprecated Use project instead */
   projectId: Scalars['String']['output'];
-  /** @deprecated Use project instead */
   projectName: Scalars['String']['output'];
   role: Scalars['String']['output'];
   /** @deprecated Use projectId instead */
@@ -1994,6 +1991,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
@@ -6604,7 +6602,6 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
-  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6613,6 +6610,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  workspaceSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

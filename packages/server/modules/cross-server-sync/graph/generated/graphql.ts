@@ -1958,10 +1958,7 @@ export type PendingStreamCollaborator = {
   id: Scalars['String']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
-  project: Project;
-  /** @deprecated Use project instead */
   projectId: Scalars['String']['output'];
-  /** @deprecated Use project instead */
   projectName: Scalars['String']['output'];
   role: Scalars['String']['output'];
   /** @deprecated Use projectId instead */
@@ -1974,6 +1971,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
