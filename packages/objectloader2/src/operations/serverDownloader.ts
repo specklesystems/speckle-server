@@ -70,6 +70,9 @@ export default class ServerDownloader implements Downloader {
   add(id: string): void {
     this.#getPool().add(id)
   }
+  addRange(value: string[]): void {
+    this.#getPool().addRange(value)
+  }
 
   async disposeAsync(): Promise<void> {
     await this.#downloadQueue?.disposeAsync()

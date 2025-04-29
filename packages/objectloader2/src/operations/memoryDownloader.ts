@@ -35,4 +35,10 @@ export class MemoryDownloader implements Downloader {
     }
     throw new Error('Method not implemented.')
   }
+
+  addRange(ids: string[]): void {
+    ids.forEach((id) => {
+      this.add(id)
+    })
+  }
 }

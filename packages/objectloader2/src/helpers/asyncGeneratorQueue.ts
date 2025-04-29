@@ -16,6 +16,11 @@ export default class AsyncGeneratorQueue<T> implements Queue<T> {
     }
   }
 
+  addRange(value: T[]): void {
+    // Otherwise, add to the buffer
+    this.#buffer.push(...value)
+  }
+
   async *consume(): AsyncGenerator<T> {
     while (
       !this.#finished ||

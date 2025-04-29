@@ -36,6 +36,12 @@ export default class BatchingQueue implements Queue<Item> {
     this.#queue.enqueue(item.baseId, item)
   }
 
+  addRange(items: Item[]): void {
+    items.forEach((item) => {
+      this.add(item)
+    })
+  }
+
   get(id: string): Item | undefined {
     return this.#queue.get(id)
   }

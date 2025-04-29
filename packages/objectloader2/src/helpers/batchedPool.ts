@@ -22,6 +22,10 @@ export default class BatchedPool<T> {
   add(item: T): void {
     this.#queue.push(item)
   }
+  addRange(value: T[]): void {
+    // Otherwise, add to the buffer
+    this.#queue.push(...value)
+  }
 
   getBatch(batchSize: number): T[] {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))

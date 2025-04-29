@@ -104,11 +104,28 @@ export default class IndexedDatabase implements Cache {
       await this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
         const gets = batch.map((key) => this.#cacheDB!.objects.get(key))
         const cachedData = await Promise.all(gets)
-        for (let i = 0; i < cachedData.length; i++) {
-          if (cachedData[i]) {
-            foundItems.add(cachedData[i]!)
+        while (cachedData.length > 0) {
+          //find
+          const undefIndex = cachedData.findIndex((item) => item === undefined)
+          if (undefIndex > 0) {
+            const found = cachedData.splice(0, undefIndex) as Item[]
+            batch.splice(0, undefIndex)
+            foundItems.addRange(found)
           } else {
-            notFoundItems.add(batch[i])
+            // all found
+            foundItems.addRange(cachedData as Item[])
+            break
+          }
+          //find to the next defined item
+          const defIndex = cachedData.findIndex((item) => item !== undefined)
+          if (defIndex > 0) {
+            const notFound = batch.splice(0, defIndex)
+            cachedData.splice(0, undefIndex)
+            notFoundItems.addRange(notFound)
+          } else {
+            // all not found
+            notFoundItems.addRange(batch)
+            break
           }
         }
       })

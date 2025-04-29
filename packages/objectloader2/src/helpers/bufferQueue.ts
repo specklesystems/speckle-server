@@ -6,6 +6,10 @@ export default class BufferQueue<T> implements Queue<T> {
     this.#buffer.push(value)
   }
 
+  addRange(value: T[]): void {
+    this.#buffer.push(...value)
+  }
+
   values(): T[] {
     return this.#buffer
   }
