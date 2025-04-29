@@ -53,6 +53,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import {
   ProjectInviteResourceType,
+  ServerInviteLimit,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
 import {
@@ -293,9 +294,9 @@ export = {
       const { input: paramsArray } = args
 
       const inviteCount = paramsArray.length
-      if (inviteCount > 10 && context.role !== Roles.Server.Admin) {
+      if (inviteCount > ServerInviteLimit && context.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
+          `Maximum ${ServerInviteLimit} invites can be sent at once by non admins`
         )
       }
       const logger = context.log.child({
@@ -558,9 +559,9 @@ export = {
       const { projectId } = args
 
       const inviteCount = args.input.length
-      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+      if (inviteCount > ServerInviteLimit && ctx.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
+          `Maximum ${ServerInviteLimit} invites can be sent at once by non admins`
         )
       }
 

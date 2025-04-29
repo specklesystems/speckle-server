@@ -222,6 +222,7 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
+import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -484,9 +485,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { projectId } = args
 
           const inviteCount = args.inputs.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > WorkspaceInvitesLimit && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              `Maximum ${WorkspaceInvitesLimit} invites can be sent at once by non admins`
             )
           }
 
@@ -1257,9 +1258,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { workspaceId } = args
 
           const inviteCount = args.input.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > WorkspaceInvitesLimit && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              `Maximum ${WorkspaceInvitesLimit} invites can be sent at once by non admins`
             )
           }
 

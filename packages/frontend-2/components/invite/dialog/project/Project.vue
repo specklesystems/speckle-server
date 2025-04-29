@@ -25,23 +25,13 @@
             :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
           />
         </template>
         <div>
-          <div
-            :key="`add-user-${fields.length}`"
-            v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
-            class="inline-block"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="PlusIcon"
-              :disabled="disableAddUserButton"
-              @click="addInviteItem"
-            >
-              Add another user
-            </FormButton>
-          </div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            Add another user
+          </FormButton>
         </div>
       </div>
     </form>
@@ -102,7 +92,7 @@ const { handleSubmit } = useForm<InviteProjectForm>({
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -116,7 +106,6 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
-const disableAddUserButton = computed(() => fields.value.length >= 10)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -137,6 +126,22 @@ const addInviteItem = () => {
   pushInvite({
     ...emptyInviteProjectItem,
     project: { id: props.project.id, name: props.project.name }
+  })
+}
+
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Reviewer
+    })
   })
 }
 
