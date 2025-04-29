@@ -21,7 +21,9 @@ import {
   SpeckleRenderer,
   SpeckleStandardMaterial,
   TAAPipeline,
-  TreeNode
+  TreeNode,
+  ViewMode,
+  ViewModes
 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -541,79 +543,53 @@ export default class Sandbox {
       outlineDensity: 0.75
     }
     const setPipeline = (value: number) => {
-      switch (value) {
-        case 0:
-          this.viewer.getRenderer().pipeline = new DefaultPipeline(
-            this.viewer.getRenderer(),
-            { edges: pipeline.edges }
-          )
-          break
-        case 1:
-          this.viewer.getRenderer().pipeline = new SolidViewPipeline(
-            this.viewer.getRenderer(),
-            { edges: pipeline.edges }
-          )
-          break
-        case 2:
-          this.viewer.getRenderer().pipeline = new PenViewPipeline(
-            this.viewer.getRenderer()
-          )
-          break
-        case 3:
-          this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
-            this.viewer.getRenderer(),
-            { edges: pipeline.edges }
-          )
-          break
-        case 4:
-          this.viewer.getRenderer().pipeline = new ShadedViewPipeline(
-            this.viewer.getRenderer(),
-            { edges: pipeline.edges },
-            this.viewer.getWorldTree()
-          )
-          break
-        case 5:
-          this.viewer.getRenderer().pipeline = new TAAPipeline(
-            this.viewer.getRenderer(),
-            { edges: pipeline.edges }
-          )
-          break
-        case 6:
-          this.viewer.getRenderer().pipeline = new (class extends Pipeline {
-            constructor(speckleRenderer: SpeckleRenderer) {
-              super(speckleRenderer)
-              const normalPass = new NormalsPass()
-              normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-              normalPass.setClearColor(0x000000, 1)
-              normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
-              normalPass.outputTarget = Pipeline.createRenderTarget({
-                minFilter: LinearFilter,
-                magFilter: LinearFilter
-              })
-              normalPass.outputTarget.samples = 4
+      const viewModes = this.viewer.getExtension(ViewModes)
+      if (value in ViewMode) {
+        viewModes.setViewMode(value, pipeline)
+      } else
+        switch (value) {
+          case 5:
+            this.viewer.getRenderer().pipeline = new TAAPipeline(
+              this.viewer.getRenderer(),
+              { edges: pipeline.edges }
+            )
+            break
+          case 6:
+            this.viewer.getRenderer().pipeline = new (class extends Pipeline {
+              constructor(speckleRenderer: SpeckleRenderer) {
+                super(speckleRenderer)
+                const normalPass = new NormalsPass()
+                normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+                normalPass.setClearColor(0x000000, 1)
+                normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+                normalPass.outputTarget = Pipeline.createRenderTarget({
+                  minFilter: LinearFilter,
+                  magFilter: LinearFilter
+                })
+                normalPass.outputTarget.samples = 4
 
-              const outputPass = new OutputPass()
-              outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
-              outputPass.options = { inputType: InputType.Normals }
+                const outputPass = new OutputPass()
+                outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
+                outputPass.options = { inputType: InputType.Normals }
 
-              this.passList.push(normalPass, outputPass)
-            }
-          })(this.viewer.getRenderer())
-
-        default:
-          break
-      }
+                this.passList.push(normalPass, outputPass)
+              }
+            })(this.viewer.getRenderer())
+            break
+          default:
+            break
+        }
       this.viewer.requestRender(UpdateFlags.RENDER_RESET)
     }
     this.tabs.pages[0]
       .addInput(pipeline, 'output', {
         label: 'Pipeline',
         options: {
-          DEFAULT: 0,
-          SOLID: 1,
-          PEN: 2,
-          ARCTIC: 3,
-          SHADED: 4,
+          DEFAULT: ViewMode.DEFAULT,
+          SOLID: ViewMode.SOLID,
+          PEN: ViewMode.PEN,
+          ARCTIC: ViewMode.ARCTIC,
+          SHADED: ViewMode.SHADED,
           TAA: 5,
           DEBUG_NORMALS: 6
         }

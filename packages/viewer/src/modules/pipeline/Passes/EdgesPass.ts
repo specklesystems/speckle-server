@@ -49,17 +49,23 @@ export class EdgesPass extends BaseGPass {
 
   public set options(value: EdgesPassOptions) {
     super.options = value
-    this.edgesMaterial.uniforms.uDepthMultiplier.value = this._options.depthMultiplier
-    this.edgesMaterial.uniforms.uDepthBias.value = this._options.depthBias
-    this.edgesMaterial.uniforms.uNormalMultiplier.value = this._options.normalMultiplier
-    this.edgesMaterial.uniforms.uNormalBias.value = this._options.normalBias
-    this.edgesMaterial.uniforms.uOutlineThickness.value = this._options.outlineThickness
-    this.edgesMaterial.uniforms.uOutlineDensity.value = this._options.outlineDensity
+    this.edgesMaterial.uniforms.uDepthMultiplier.value =
+      this._options.depthMultiplier ?? DefaultEdgesPassOptions.depthMultiplier
+    this.edgesMaterial.uniforms.uDepthBias.value =
+      this._options.depthBias ?? DefaultEdgesPassOptions.depthBias
+    this.edgesMaterial.uniforms.uNormalMultiplier.value =
+      this._options.normalMultiplier ?? DefaultEdgesPassOptions.normalMultiplier
+    this.edgesMaterial.uniforms.uNormalBias.value =
+      this._options.normalBias ?? DefaultEdgesPassOptions.normalBias
+    this.edgesMaterial.uniforms.uOutlineThickness.value =
+      this._options.outlineThickness ?? DefaultEdgesPassOptions.outlineThickness
+    this.edgesMaterial.uniforms.uOutlineDensity.value =
+      this._options.outlineDensity ?? DefaultEdgesPassOptions.outlineDensity
     this.edgesMaterial.uniforms.uOutlineColor.value = new Color(
-      this._options.outlineColor
+      this._options.outlineColor ?? DefaultEdgesPassOptions.outlineColor
     )
     this.edgesMaterial.uniforms.uBackgroundColor.value = new Color(
-      this._options.backgroundColor
+      this._options.backgroundColor ?? DefaultEdgesPassOptions.backgroundColor
     )
   }
 

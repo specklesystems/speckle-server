@@ -8,6 +8,19 @@ import { DepthNormalIdPass } from '../Passes/DepthNormalIdPass.js'
 import { Texture } from 'three'
 import { DepthPass } from '../Passes/DepthPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
+import { BasePipelineOptions } from './Pipeline.js'
+
+export interface EdgesPipelineOptions extends BasePipelineOptions {
+  outlineThickness?: number
+  outlineColor?: number
+  outlineOpacity?: number
+}
+
+export const DefaultEdgesPipelineOptions = {
+  outlineThickness: 1,
+  outlineDensity: 0.75,
+  outlineColor: 0x323232
+}
 
 export class EdgesPipeline extends ProgressivePipeline {
   public depthPass: DepthNormalIdPass | DepthPass
@@ -17,18 +30,21 @@ export class EdgesPipeline extends ProgressivePipeline {
   public outputTexture?: Texture
   public outputTextureDynamic?: Texture
 
-  constructor(speckleRenderer: SpeckleRenderer) {
-    super(speckleRenderer)
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: EdgesPipelineOptions = DefaultEdgesPipelineOptions
+  ) {
+    super(speckleRenderer, options)
 
     const isMRTCapable =
       speckleRenderer.renderer.capabilities.isWebGL2 ||
       speckleRenderer.renderer.context.getExtension('WEBGL_draw_buffers') !== null
 
-    if (isMRTCapable) this.MRTPipeline()
-    else this.SRTPipeline()
+    if (isMRTCapable) this.MRTPipeline(options)
+    else this.SRTPipeline(options)
   }
 
-  protected MRTPipeline() {
+  protected MRTPipeline(options: EdgesPipelineOptions) {
     const depthNormalIdPass = new DepthNormalIdPass()
     depthNormalIdPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthNormalIdPass.setJitter(true)
@@ -44,11 +60,21 @@ export class EdgesPipeline extends ProgressivePipeline {
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
     edgesPass.setTexture('tNormal', depthNormalIdPass.normalTexture)
     edgesPass.setTexture('tId', depthNormalIdPass.idTexture)
+    edgesPass.options = {
+      outlineThickness: options.outlineThickness,
+      outlineDensity: options.outlineOpacity,
+      outlineColor: options.outlineColor
+    }
 
     const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassNormalIdDynamic.depthTexture)
     edgesPassDynamic.setTexture('tNormal', depthPassNormalIdDynamic.normalTexture)
     edgesPassDynamic.setTexture('tId', depthPassNormalIdDynamic.idTexture)
+    edgesPassDynamic.options = {
+      outlineThickness: options.outlineThickness,
+      outlineDensity: options.outlineOpacity,
+      outlineColor: options.outlineColor
+    }
 
     const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture
@@ -67,7 +93,7 @@ export class EdgesPipeline extends ProgressivePipeline {
     this.outputTextureDynamic = edgesPassDynamic.outputTarget?.texture
   }
 
-  protected SRTPipeline() {
+  protected SRTPipeline(options: EdgesPipelineOptions) {
     const depthPass = new DepthPass()
     depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPass.setVisibility(ObjectVisibility.DEPTH)
@@ -97,10 +123,20 @@ export class EdgesPipeline extends ProgressivePipeline {
     const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthPass.outputTarget?.texture)
     edgesPass.setTexture('tNormal', normalPass.outputTarget?.texture)
+    edgesPass.options = {
+      outlineThickness: options.outlineThickness,
+      outlineDensity: options.outlineOpacity,
+      outlineColor: options.outlineColor
+    }
 
     const edgesPassDynamic = new EdgesPass()
     edgesPassDynamic.setTexture('tDepth', depthPassDynamic.outputTarget?.texture)
     edgesPassDynamic.setTexture('tNormal', normalPassDynamic.outputTarget?.texture)
+    edgesPassDynamic.options = {
+      outlineThickness: options.outlineThickness,
+      outlineDensity: options.outlineOpacity,
+      outlineColor: options.outlineColor
+    }
 
     const taaPass = new TAAPass()
     taaPass.inputTexture = edgesPass.outputTarget?.texture

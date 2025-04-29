@@ -8,10 +8,8 @@ import { PenViewPipeline } from '../pipeline/Pipelines/PenViewPipeline.js'
 import { SolidViewPipeline } from '../pipeline/Pipelines/SolidViewPipeline.js'
 import { Extension } from './Extension.js'
 import { FilteringExtension, FilteringState } from './FilteringExtension.js'
-import {
-  DefaultPipelineOptions,
-  PipelineOptions
-} from '../pipeline/Pipelines/Pipeline.js'
+import { PipelineOptions } from '../pipeline/Pipelines/Pipeline.js'
+import { EdgesPipelineOptions } from '../pipeline/Pipelines/EdgesPipeline.js'
 
 export enum ViewMode {
   DEFAULT,
@@ -29,9 +27,16 @@ export interface ViewModeEventPayload {
   [ViewModeEvent.Changed]: ViewMode
 }
 
+export type ViewModeOptions = PipelineOptions & EdgesPipelineOptions
+
 export class ViewModes extends Extension {
   public get inject() {
     return [FilteringExtension]
+  }
+
+  protected _viewMode: ViewMode
+  public get viewMode(): ViewMode {
+    return this._viewMode
   }
 
   public constructor(
@@ -65,10 +70,17 @@ export class ViewModes extends Extension {
     super.on(eventType, listener)
   }
 
-  public setViewMode(
-    viewMode: ViewMode,
-    options: PipelineOptions = DefaultPipelineOptions
-  ) {
+  public setViewMode(viewMode: ViewMode, options: ViewModeOptions) {
+    /** Edges on/off require pipeline rebuild */
+    if (viewMode !== this._viewMode || options.edges !== undefined) {
+      this._viewMode = viewMode
+      this.updateViewModes(viewMode, options)
+    } else {
+      this.updateViewModeOptions(options)
+    }
+  }
+
+  protected updateViewModes(viewMode: ViewMode, options: ViewModeOptions) {
     const renderer = this.viewer.getRenderer()
     switch (viewMode) {
       case ViewMode.DEFAULT:
@@ -92,7 +104,14 @@ export class ViewModes extends Extension {
         break
     }
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
-
     this.emit(ViewModeEvent.Changed, viewMode)
+  }
+
+  protected updateViewModeOptions(options: ViewModeOptions) {
+    const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+    edgesPasses.forEach((pass: GPass) => {
+      pass.options = options
+    })
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 }
