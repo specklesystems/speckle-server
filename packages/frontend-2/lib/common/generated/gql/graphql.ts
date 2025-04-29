@@ -990,18 +990,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspaceCollaborator = {
-  __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar?: Maybe<Scalars['String']['output']>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollection = {
-  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<DiscoverableWorkspaceCollaborator>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1206,6 +1194,13 @@ export type LimitedUserWorkspaceRoleArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type LimitedUserCollection = {
+  __typename?: 'LimitedUserCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int']['output'];
+};
+
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
@@ -1220,7 +1215,7 @@ export type LimitedWorkspace = {
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
-  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+  team?: Maybe<LimitedUserCollection>;
 };
 
 
@@ -6723,9 +6718,9 @@ export type LinkableCommentFragment = { __typename?: 'Comment', id: string, view
 
 export type ActiveWorkspace_WorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, logo?: string | null, role?: string | null, slug: string };
 
-export type DiscoverableList_DiscoverableFragment = { __typename?: 'User', discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, description?: string | null, slug: string, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar?: string | null }> } | null }> };
+export type DiscoverableList_DiscoverableFragment = { __typename?: 'User', discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, description?: string | null, slug: string, team?: { __typename?: 'LimitedUserCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', avatar?: string | null }> } | null }> };
 
-export type DiscoverableList_RequestsFragment = { __typename?: 'User', workspaceJoinRequests?: { __typename?: 'LimitedWorkspaceJoinRequestCollection', items: Array<{ __typename?: 'LimitedWorkspaceJoinRequest', id: string, status: WorkspaceJoinRequestStatus, workspace: { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, slug: string, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar?: string | null }> } | null } }> } | null };
+export type DiscoverableList_RequestsFragment = { __typename?: 'User', workspaceJoinRequests?: { __typename?: 'LimitedWorkspaceJoinRequestCollection', items: Array<{ __typename?: 'LimitedWorkspaceJoinRequest', id: string, status: WorkspaceJoinRequestStatus, workspace: { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, slug: string, team?: { __typename?: 'LimitedUserCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', avatar?: string | null }> } | null } }> } | null };
 
 export type WorkspacePlanLimits_WorkspaceFragment = { __typename?: 'Workspace', id: string, slug: string, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans } | null };
 
@@ -6939,12 +6934,12 @@ export type WorkspaceWizardRegionQuery = { __typename?: 'Query', serverInfo: { _
 export type DiscoverableWorkspacesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DiscoverableWorkspacesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, description?: string | null, slug: string, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar?: string | null }> } | null }> } | null };
+export type DiscoverableWorkspacesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, description?: string | null, slug: string, team?: { __typename?: 'LimitedUserCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', avatar?: string | null }> } | null }> } | null };
 
 export type DiscoverableWorkspacesRequestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DiscoverableWorkspacesRequestsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, workspaceJoinRequests?: { __typename?: 'LimitedWorkspaceJoinRequestCollection', items: Array<{ __typename?: 'LimitedWorkspaceJoinRequest', id: string, status: WorkspaceJoinRequestStatus, workspace: { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, slug: string, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar?: string | null }> } | null } }> } | null } | null };
+export type DiscoverableWorkspacesRequestsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, workspaceJoinRequests?: { __typename?: 'LimitedWorkspaceJoinRequestCollection', items: Array<{ __typename?: 'LimitedWorkspaceJoinRequest', id: string, status: WorkspaceJoinRequestStatus, workspace: { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, slug: string, team?: { __typename?: 'LimitedUserCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', avatar?: string | null }> } | null } }> } | null } | null };
 
 export type WorkspacePlanQueryVariables = Exact<{
   slug: Scalars['String']['input'];
@@ -7580,13 +7575,12 @@ export type AllObjectTypes = {
   CommitCollection: CommitCollection,
   CountOnlyCollection: CountOnlyCollection,
   CurrencyBasedPrices: CurrencyBasedPrices,
-  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaborator,
-  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollection,
   FileUpload: FileUpload,
   GendoAIRender: GendoAiRender,
   GendoAIRenderCollection: GendoAiRenderCollection,
   LegacyCommentViewerData: LegacyCommentViewerData,
   LimitedUser: LimitedUser,
+  LimitedUserCollection: LimitedUserCollection,
   LimitedWorkspace: LimitedWorkspace,
   LimitedWorkspaceJoinRequest: LimitedWorkspaceJoinRequest,
   LimitedWorkspaceJoinRequestCollection: LimitedWorkspaceJoinRequestCollection,
@@ -8037,14 +8031,6 @@ export type CurrencyBasedPricesFieldArgs = {
   gbp: {},
   usd: {},
 }
-export type DiscoverableWorkspaceCollaboratorFieldArgs = {
-  avatar: {},
-}
-export type DiscoverableWorkspaceCollaboratorCollectionFieldArgs = {
-  cursor: {},
-  items: {},
-  totalCount: {},
-}
 export type FileUploadFieldArgs = {
   branchName: {},
   convertedCommitId: {},
@@ -8105,6 +8091,11 @@ export type LimitedUserFieldArgs = {
   verified: {},
   workspaceDomainPolicyCompliant: LimitedUserWorkspaceDomainPolicyCompliantArgs,
   workspaceRole: LimitedUserWorkspaceRoleArgs,
+}
+export type LimitedUserCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
 }
 export type LimitedWorkspaceFieldArgs = {
   description: {},
@@ -9162,13 +9153,12 @@ export type AllObjectFieldArgTypes = {
   CommitCollection: CommitCollectionFieldArgs,
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
   CurrencyBasedPrices: CurrencyBasedPricesFieldArgs,
-  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaboratorFieldArgs,
-  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollectionFieldArgs,
   FileUpload: FileUploadFieldArgs,
   GendoAIRender: GendoAiRenderFieldArgs,
   GendoAIRenderCollection: GendoAiRenderCollectionFieldArgs,
   LegacyCommentViewerData: LegacyCommentViewerDataFieldArgs,
   LimitedUser: LimitedUserFieldArgs,
+  LimitedUserCollection: LimitedUserCollectionFieldArgs,
   LimitedWorkspace: LimitedWorkspaceFieldArgs,
   LimitedWorkspaceJoinRequest: LimitedWorkspaceJoinRequestFieldArgs,
   LimitedWorkspaceJoinRequestCollection: LimitedWorkspaceJoinRequestCollectionFieldArgs,
