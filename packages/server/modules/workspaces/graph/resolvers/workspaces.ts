@@ -148,7 +148,6 @@ import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/stream
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { asOperation, commandFactory } from '@/modules/shared/command'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -728,37 +727,35 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
 
           if (!role) {
-            // this is currently not working with the command factory
-            // TODO: include the onWorkspaceRoleDeletedFactory listener service
-            await withOperationLogging(
-              async () =>
-                await withTransaction(
-                  async ({ db: trx }) => {
-                    const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-                      deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
-                      getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-                      emitWorkspaceEvent: getEventBus().emit
-                    })
+            await asOperation(
+              async ({ db, emit }) => {
+                const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+                  deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  emitWorkspaceEvent: emit
+                })
 
-                    return await deleteWorkspaceRole({ workspaceId, userId })
-                  },
-                  { db }
-                ),
+                return await deleteWorkspaceRole({
+                  workspaceId,
+                  userId,
+                  deletedByUserId: context.userId!
+                })
+              },
               {
                 logger,
-                operationName: 'deleteWorkspaceRole',
-                operationDescription: 'Delete workspace role'
+                name: 'deleteWorkspaceRole',
+                description: 'Delete workspace role',
+                transaction: true
               }
             )
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
             }
-            const updateWorkspaceRole = commandFactory({
-              db,
-              eventBus,
-              operationFactory: ({ trx, emit }) =>
-                updateWorkspaceRoleFactory({
+
+            await asOperation(
+              async ({ db: trx, emit }) => {
+                const updateWorkspaceRole = updateWorkspaceRoleFactory({
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
                   getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
                   findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
@@ -772,22 +769,24 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     eventEmit: emit
                   })
                 })
-            })
-            await withOperationLogging(
-              async () =>
-                await updateWorkspaceRole({
+
+                return await updateWorkspaceRole({
                   userId,
                   workspaceId,
                   role,
                   updatedByUserId: context.userId!
-                }),
+                })
+              },
               {
                 logger,
-                operationName: 'updateWorkspaceRole',
-                operationDescription: 'Update workspace role'
+                name: 'updateWorkspaceRole',
+                description: 'Update workspace role',
+                transaction: true
               }
             )
           }
+
+          context.clearCache()
 
           return await getWorkspaceFactory({ db })({
             workspaceId: args.input.workspaceId,
@@ -943,31 +942,30 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const logger = context.log.child({
             workspaceId
           })
-          // this is currently not working with the command factory
-          // TODO: include the onWorkspaceRoleDeletedFactory listener service
-          await withOperationLogging(
-            async () =>
-              await withTransaction(
-                async ({ db: trx }) => {
-                  const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-                    deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
-                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-                    emitWorkspaceEvent: getEventBus().emit
-                  })
+          await asOperation(
+            async ({ db, emit }) => {
+              const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+                deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                emitWorkspaceEvent: emit
+              })
 
-                  return await deleteWorkspaceRole({
-                    workspaceId,
-                    userId: context.userId!
-                  })
-                },
-                { db }
-              ),
+              return await deleteWorkspaceRole({
+                workspaceId,
+                userId: context.userId!,
+                deletedByUserId: context.userId!
+              })
+            },
             {
               logger,
-              operationName: 'leaveWorkspace',
-              operationDescription: 'Leave workspace'
+              name: 'leaveWorkspace',
+              description: 'Leave workspace',
+              transaction: true
             }
           )
+
+          context.clearCache()
+
           return true
         },
         updateCreationState: async (_parent, args, context) => {
@@ -1394,7 +1392,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             projectId,
             streamId: projectId //legacy
           })
-          return await withOperationLogging(
+          const ret = await withOperationLogging(
             async () =>
               await updateStreamRoleAndNotify(
                 args.input,
@@ -1407,6 +1405,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               operationDescription: 'Update workspace project role'
             }
           )
+
+          context.clearCache()
+
+          return ret
         },
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args

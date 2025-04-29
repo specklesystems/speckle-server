@@ -124,6 +124,10 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     search?: string
     seatType?: WorkspaceSeatType
+    /**
+     * Optionally filter by user id
+     */
+    excludeUserIds?: string[]
   }
 }
 
