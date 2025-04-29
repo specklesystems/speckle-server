@@ -19,14 +19,17 @@
       </div>
     </template>
     <div class="flex flex-col items-center justify-center p-4 relative">
-      <h1 class="text-heading-xl text-foreground mb-6 font-normal">Book a demo</h1>
+      <h1 class="text-heading-xl text-foreground mb-3">
+        <template v-if="!showEmbed">Book an intro call</template>
+        <template v-else>Find a time</template>
+      </h1>
       <template v-if="!showEmbed">
-        <p class="text-body-sm text-foreground mb-6">Would you like to book a demo?</p>
-        <div class="flex flex-col gap-3 w-full md:max-w-96">
+        <p class="text-body-sm text-foreground-2">We'd love to help you get started</p>
+        <div class="flex flex-col gap-3 w-full md:max-w-96 mt-8">
           <FormRadioGroup v-model="bookDemoSelected" :options="options" is-stacked />
         </div>
       </template>
-      <div v-else class="w-full">
+      <div v-else class="w-full mt-8">
         <CalWidget />
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
@@ -46,14 +49,8 @@
             Continue
           </FormButton>
         </div>
-        <FormButton
-          v-else
-          color="subtle"
-          size="lg"
-          full-width
-          @click="navigateTo(workspaceJoinRoute)"
-        >
-          Skip
+        <FormButton v-else size="lg" full-width @click="navigateTo(workspaceJoinRoute)">
+          Continue
         </FormButton>
       </div>
     </div>
@@ -81,13 +78,13 @@ const showEmbed = ref(false)
 const options = computed(() => [
   {
     value: 'yes',
-    title: `Yes`,
-    subtitle: 'Some copy here to convince them'
+    title: `Yes, let's talk`,
+    subtitle: 'Find a time in the next step'
   },
   {
     value: 'no',
-    title: 'No',
-    subtitle: 'Some sad copy here'
+    title: 'No, maybe later',
+    subtitle: 'You can also book a time later'
   }
 ])
 

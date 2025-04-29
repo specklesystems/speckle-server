@@ -94,7 +94,7 @@
                 </div>
 
                 <CalPopUp>
-                  <LayoutSidebarMenuGroupItem label="Book a demo">
+                  <LayoutSidebarMenuGroupItem label="Book an intro call">
                     <template #icon>
                       <CalendarDaysIcon class="size-5 text-foreground-2" />
                     </template>
