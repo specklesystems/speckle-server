@@ -99,7 +99,13 @@ export default class ObjectLoader2 {
       notFoundItems: this.#downloader
     })
     let count = 0
+    const t0 = performance.now()
+    console.log('About to start  ' + (performance.now() - t0) / 1000)
     for await (const item of this.#gathered.consume()) {
+      if (count % 1000 === 0) {
+        console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
+      }
+      count++
       this.#deferments.undefer(item)
       yield item.base
       count++
@@ -108,6 +114,7 @@ export default class ObjectLoader2 {
       }
     }
     await processPromise
+    console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {

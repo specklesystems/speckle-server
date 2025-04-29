@@ -25,7 +25,7 @@ export default class IndexedDatabase implements Cache {
 
   #cacheDB?: ObjectStore
 
-  #writeQueue: BatchingQueue<Item> | undefined
+  #writeQueue: BatchingQueue | undefined
 
   // #count: number = 0
 
@@ -43,7 +43,7 @@ export default class IndexedDatabase implements Cache {
   async add(item: Item): Promise<void> {
     if (!this.#writeQueue) {
       await this.#setupCacheDb()
-      this.#writeQueue = new BatchingQueue<Item>({
+      this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize ?? 10000,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
         processFunction: (batch: Item[]) =>
