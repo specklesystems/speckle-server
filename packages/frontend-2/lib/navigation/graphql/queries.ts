@@ -9,10 +9,32 @@ export const navigationActiveWorkspaceQuery = graphql(`
 `)
 
 export const navigationWorkspaceListQuery = graphql(`
-  query NavigationWorkspaceList {
+  query NavigationWorkspaceList($filter: UserProjectsFilter) {
     activeUser {
       id
       ...UseNavigationWorkspaceList_User
+    }
+  }
+`)
+
+export const navigationProjectInvitesQuery = graphql(`
+  query NavigationProjectInvites {
+    activeUser {
+      id
+      projectInvites {
+        ...HeaderNavNotificationsProjectInvite_PendingStreamCollaborator
+      }
+    }
+  }
+`)
+
+export const navigationWorkspaceInvitesQuery = graphql(`
+  query NavigationWorkspaceInvites {
+    activeUser {
+      id
+      workspaceInvites {
+        ...HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaborator
+      }
     }
   }
 `)

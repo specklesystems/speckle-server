@@ -222,7 +222,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
   ]
 
   modes.forEach(({ isMultiRegion }) => {
-    describe(`W/${!isMultiRegion ? 'o' : ''} multiregion`, () => {
+    describe(`W/${!isMultiRegion ? 'o' : ''} @multiregion`, () => {
       const myMainWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',

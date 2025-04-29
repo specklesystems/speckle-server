@@ -1,127 +1,72 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <LayoutDialog v-model:open="isOpen" :buttons="dialogButtons" max-width="md">
-    <template #header>Invite to Project</template>
-    <template v-if="isInWorkspace && invitableWorkspaceMembers.length">
-      <InviteDialogProjectWorkspaceMembers :project="props.project" />
-      <hr v-if="isAdmin" class="border-outline-3 mb-3 mt-5" />
-    </template>
-    <template v-else-if="isInWorkspace && !isAdmin">
-      <p class="text-body-xs text-foreground">
-        All workspace members are already in this project.
-      </p>
-    </template>
-    <template v-if="isAdmin || !isInWorkspace">
-      <form @submit="onSubmit">
-        <div class="flex flex-col gap-y-3 text-foreground">
-          <div v-for="(item, index) in fields" :key="item.key" class="flex flex-col">
-            <div class="flex flex-1 gap-x-3">
-              <div class="flex flex-col gap-y-3 flex-1">
-                <div class="flex items-start gap-x-3">
-                  <div class="flex-1">
-                    <FormTextInput
-                      v-model="item.value.email"
-                      :name="`email-${item.key}`"
-                      color="foundation"
-                      placeholder="Email address"
-                      show-clear
-                      full-width
-                      use-label-in-errors
-                      show-label
-                      label="Email"
-                      :rules="[isEmailOrEmpty]"
-                    />
-                  </div>
-                  <FormSelectProjectRoles
-                    v-model="item.value.projectRole"
-                    label="Select role"
-                    :name="`fields.${index}.projectRole`"
-                    class="w-40"
-                    mount-menu-on-body
-                    show-label
-                    :allow-unset="false"
-                    :hidden-items="[Roles.Stream.Owner]"
-                  />
-                </div>
-                <div v-if="isInWorkspace">
-                  <FormSelectProjects
-                    v-model="item.value.project"
-                    label="Select project"
-                    class="w-full"
-                    owned-only
-                    show-optional
-                    mount-menu-on-body
-                    show-label
-                    :name="`project-${index}`"
-                    :disabled="!canBeMember(item.value.email)"
-                  />
-                  <p
-                    v-if="!canBeMember(item.value.email)"
-                    class="text-body-3xs text-foreground-2 mt-2"
-                  >
-                    This email does not match the set domain policy, and can only be
-                    invited to individual projects
-                  </p>
-                </div>
-              </div>
-              <CommonTextLink class="mt-7">
-                <TrashIcon
-                  v-if="fields.length > 1"
-                  class="h-4 w-4 text-foreground-2"
-                  @click="removeInvite(index)"
-                />
-                <div v-else class="h-4 w-4"></div>
-              </CommonTextLink>
-            </div>
-            <hr
-              v-if="index !== fields.length - 1"
-              class="flex-1 mt-3 border-outline-3"
-            />
-          </div>
+  <LayoutDialog
+    v-model:open="isOpen"
+    prevent-close-on-click-outside
+    :buttons="dialogButtons"
+    max-width="md"
+  >
+    <template #header>Invite to project</template>
+    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
+      Search existing workspace members or invite entirely new.
+    </p>
+    <form @submit="onSubmit">
+      <div class="flex flex-col gap-y-3 text-foreground">
+        <template v-for="(item, index) in fields" :key="item.key">
+          <InviteDialogProjectRow
+            v-model="item.value"
+            :item="item"
+            :index="index"
+            :show-delete="fields.length > 1"
+            :can-invite-new-members="isAdmin || !isInWorkspace"
+            :show-project-roles="!isInWorkspace"
+            :show-label="index === 0"
+            :is-in-workspace="isInWorkspace"
+            @remove="removeInvite(index)"
+            @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
+          />
+        </template>
+        <div>
           <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
             Add another user
           </FormButton>
         </div>
-      </form>
-      <div
-        v-if="showBillingInfo"
-        class="text-body-2xs text-foreground-2 leading-5 mt-4"
-      >
-        <p>
-          Inviting users may add seats to your current billing cycle. Your workspace is
-          currently billed for
-          {{ memberSeatText }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
-        </p>
       </div>
-    </template>
+    </form>
+    <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      As a project owner you can only add existing workspace members to the project. Ask
+      a workspace admin if you need to invite new people to the workspace.
+    </p>
+    <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
+      New people you invite will join as workspace guests on a free Viewer seat with
+      access only to this project. Give them an Editor seat later if they need to
+      contribute to this project beyond just viewing and commenting.
+    </p>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useForm, useFieldArray } from 'vee-validate'
-import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { InviteProjectForm, InviteProjectItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteProjectItem } from '~~/lib/invites/helpers/constants'
-import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
-import { Roles } from '@speckle/shared'
-import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
-import {
-  type InviteDialogProject_ProjectFragment,
-  type WorkspacePlans,
-  type ProjectInviteCreateInput,
-  type WorkspaceProjectInviteCreateInput,
-  WorkspacePlanStatuses
+import type {
+  InviteDialogProject_ProjectFragment,
+  ProjectInviteCreateInput,
+  WorkspaceProjectInviteCreateInput
 } from '~/lib/common/generated/gql/graphql'
-import { useTeamInternals } from '~~/lib/projects/composables/team'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {
     id
     name
-    ...InviteDialogProjectWorkspaceMembers_Project
+    workspaceId
     workspace {
       id
       name
@@ -130,16 +75,6 @@ graphql(`
       domains {
         domain
         id
-      }
-      plan {
-        status
-        name
-      }
-      subscription {
-        seats {
-          guest
-          plan
-        }
       }
     }
   }
@@ -152,13 +87,12 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const mixpanel = useMixpanel()
 const createInvite = useInviteUserToProject()
-const { collaboratorListItems } = useTeamInternals(computed(() => props.project))
 const { handleSubmit } = useForm<InviteProjectForm>({
   initialValues: {
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -170,41 +104,7 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteProjectItem>('fields')
 
-const invitableWorkspaceMembers = computed(() => {
-  const currentProjectMemberIds = new Set(
-    collaboratorListItems.value.map((item) => item.user?.id)
-  )
-
-  return (
-    props.project?.workspace?.team?.items.filter(
-      (member) => member.user.id && !currentProjectMemberIds.has(member.user.id)
-    ) || []
-  )
-})
-const isInWorkspace = computed(() => !!props.project.workspace?.id)
-const allowedDomains = computed(() =>
-  props.project.workspace?.domains?.map((d) => d.domain)
-)
-const memberSeatText = computed(() =>
-  props.project.workspace?.subscription?.seats.plan
-    ? getSeatText(props.project.workspace.subscription.seats.plan, 'member')
-    : ''
-)
-const guestSeatText = computed(() =>
-  props.project.workspace?.subscription?.seats.guest
-    ? getSeatText(props.project.workspace.subscription.seats.guest, 'guest')
-    : ''
-)
-const hasGuestSeats = computed(
-  () => (props.project.workspace?.subscription?.seats.guest ?? 0) > 0
-)
-const showBillingInfo = computed(() => {
-  if (!props.project.workspace?.plan) return false
-  return (
-    isPaidPlan(props.project.workspace.plan.name as unknown as WorkspacePlans) &&
-    props.project.workspace.plan.status === WorkspacePlanStatuses.Valid
-  )
-})
+const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -212,23 +112,15 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline' },
     onClick: () => (isOpen.value = false)
   },
-  ...(!isInWorkspace.value || isAdmin.value
-    ? [
-        {
-          text: 'Invite',
-          props: {
-            submit: true
-          },
-          onClick: onSubmit
-        }
-      ]
-    : [])
+
+  {
+    text: 'Invite',
+    props: {
+      submit: true
+    },
+    onClick: onSubmit
+  }
 ])
-
-const getSeatText = (count: number, type: 'member' | 'guest') =>
-  `${count} ${type} ${count === 1 ? 'seat' : 'seats'}`
-
-const canBeMember = (email: string) => matchesDomainPolicy(email, allowedDomains.value)
 
 const addInviteItem = () => {
   pushInvite({
@@ -237,25 +129,46 @@ const addInviteItem = () => {
   })
 }
 
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Reviewer
+    })
+  })
+}
+
 const onSubmit = handleSubmit(async () => {
   const invites = fields.value
-    .filter((invite) => invite.value.email)
+    .filter((invite) => invite.value.email || invite.value.userId)
     .map((invite) => invite.value)
 
   const inputs: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[] =
     invites.map((u) => ({
       role: u.projectRole,
-      email: u.email,
-      serverRole: u.serverRole,
+      ...(isInWorkspace.value
+        ? isAdmin.value && !u.userId
+          ? { email: u.email }
+          : { userId: u.userId }
+        : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
-            workspaceRole: u.project?.id
-              ? Roles.Workspace.Member
-              : Roles.Workspace.Guest
+            workspaceRole: Roles.Workspace.Guest
           }
         : {})
     }))
-  if (!inputs.length) return
+
+  if (!inputs.length) {
+    isOpen.value = false
+    return
+  }
 
   await createInvite(props.project.id, inputs)
 
@@ -264,7 +177,10 @@ const onSubmit = handleSubmit(async () => {
     name: 'send',
     multiple: inputs.length !== 1,
     count: inputs.length,
-    hasProject: true
+    hasProject: true,
+    isNewWorkspaceMember: isAdmin.value,
+    // eslint-disable-next-line camelcase
+    workspace_id: props.project.workspace?.id
   })
 
   isOpen.value = false

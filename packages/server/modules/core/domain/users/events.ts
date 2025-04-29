@@ -7,7 +7,8 @@ export const userEventsNamespace = 'users' as const
 export const UserEvents = {
   Created: `${userEventsNamespace}.created`,
   Deleted: `${userEventsNamespace}.deleted`,
-  Updated: `${userEventsNamespace}.updated`
+  Updated: `${userEventsNamespace}.updated`,
+  Authenticated: `${userEventsNamespace}.authenticated`
 } as const
 
 export type UserEventsPayloads = {
@@ -26,5 +27,12 @@ export type UserEventsPayloads = {
     oldUser: User
     update: UserUpdateInput
     updaterId: string
+  }
+  [UserEvents.Authenticated]: {
+    userId: string
+    /**
+     * Whether the user just registered or not
+     */
+    isNewUser: boolean
   }
 }

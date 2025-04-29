@@ -4,7 +4,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getRequestLogger } from '@/observability/components/express/requestContext'
 import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
-import { MaybeAsync } from '@speckle/shared'
+import { MaybeAsync, TIME_MS } from '@speckle/shared'
 import Redis from 'ioredis'
 import { isNumber } from 'lodash'
 
@@ -44,6 +44,17 @@ type WrapWithCacheBaseParams<Args extends Array<any>> = {
      * Function to generate the cache key for the specific args. Defaults to JSON.stringify
      */
     argsKey: (...args: Args) => string
+    /**
+     * Whether to always return the same promise instead of creating a new one for each call when the args are the same.
+     * This will avoid multiple calls to the resolver function on empty cache when they're invoked in short succession - the 2nd call
+     * will just await the 1st call's promise.
+     * Default: true
+     */
+    cachePromises?: boolean
+    /**
+     * Logger log level. Defaults to 'debug'
+     */
+    logLevel?: 'info' | 'debug'
   }>
 }
 
@@ -57,10 +68,12 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 ) => {
   const cacheProvider = params.cacheProvider
   const { name, resolver, options } = params
+  const cachePromises = params.options?.cachePromises ?? true
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
+  const logLevel = options?.logLevel || 'debug'
 
-  const buildRet =
+  const buildResolver =
     (
       retOptions?: Partial<{
         skipCache: boolean
@@ -71,28 +84,50 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
 
       const ttlMs = isNumber(params.ttlMs) ? params.ttlMs : params.ttlMs(...args)
       const cacheKey = key(...args)
-      const logger = (getRequestLogger() || cacheLogger).child({ cacheName: name })
+      const logger = (getRequestLogger() || cacheLogger).child({
+        cacheName: name
+      })
 
       if (skipCache) {
-        logger.info("Cache '{cacheName}' skipped for specific args")
+        logger[logLevel]("Cache '{cacheName}' skipped for specific args")
       } else {
         const cached = await cacheProvider.get(cacheKey)
         if (cached !== undefined) {
-          logger.info("Cache '{cacheName}' hit for specific args")
+          logger[logLevel]("Cache '{cacheName}' hit for specific args")
           return cached as Results
         } else {
-          logger.info("Cache '{cacheName}' miss for specific args")
+          logger[logLevel]("Cache '{cacheName}' miss for specific args")
         }
       }
 
       const result = await resolver(...args)
       await cacheProvider.set(cacheKey, result, { ttlMs })
-      logger.info("Cache '{cacheName}' upserted for specific args")
+      logger[logLevel]("Cache '{cacheName}' upserted for specific args")
 
       return result
     }
 
-  const ret = buildRet() as {
+  const coreResolver = buildResolver()
+  const freshResolver = buildResolver({ skipCache: true })
+
+  const promiseCache = new Map<string, Promise<Results>>()
+  const mainResolver = cachePromises
+    ? async (...args: Args) => {
+        const cacheKey = key(...args)
+        if (promiseCache.has(cacheKey)) {
+          return promiseCache.get(cacheKey)!
+        }
+
+        const resolverPromise = coreResolver(...args).finally(() => {
+          promiseCache.delete(cacheKey)
+        })
+
+        promiseCache.set(cacheKey, resolverPromise)
+        return resolverPromise
+      }
+    : coreResolver
+
+  const ret = mainResolver as {
     (...args: Args): Promise<Results>
     /**
      * Delete cached data for the given args
@@ -109,10 +144,10 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
     const logger = (getRequestLogger() || cacheLogger).child({ cacheName: name })
 
     await cacheProvider.delete(cacheKey)
-    logger.info("Cache '{cacheName}' cleared for specific args")
+    logger[logLevel]("Cache '{cacheName}' cleared for specific args")
   }
 
-  ret.fresh = buildRet({ skipCache: true })
+  ret.fresh = freshResolver
 
   return ret
 }
@@ -171,7 +206,7 @@ export const redisCacheProviderFactory = (deps?: {
         key,
         JSON.stringify(value),
         'EX',
-        Math.floor(ttlMs / 1000) // convert milliseconds to seconds
+        Math.floor(ttlMs / TIME_MS.second) // convert milliseconds to seconds
       )
     },
     delete: async (key) => {
@@ -196,3 +231,12 @@ export const inMemoryCacheProviderFactory = (deps?: {
     }
   }
 }
+
+export const appConstantValueCache = new TTLCache<string, unknown>()
+
+/**
+ * Use this for roles, scopes and other constant values that are not supposed to change during the app's lifetime.
+ * This cache gets cleared right after the app starts, to ensure up to date values (roles, scopes et.c)
+ */
+export const appConstantValueCacheProviderFactory = () =>
+  inMemoryCacheProviderFactory({ cache: appConstantValueCache })

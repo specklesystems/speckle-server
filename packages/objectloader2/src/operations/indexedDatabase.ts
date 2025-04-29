@@ -1,7 +1,7 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { CustomLogger, Item } from '../types/types.js'
-import { isSafari } from '@speckle/shared'
+import { isSafari, TIME_MS } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
@@ -86,10 +86,12 @@ export default class IndexedDatabase implements Cache {
     await this.#setupCacheDb()
     const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
 
-    for (let i = 0; i < ids.length; i += maxCacheReadSize) {
+    for (let i = 0; i < ids.length; ) {
       if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
-        this.#logger('pausing')
-        await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second, protects against out of memory
+        this.#logger(
+          'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
+        )
+        await new Promise((resolve) => setTimeout(resolve, TIME_MS.second)) // Pause for 1 second, protects against out of memory
         continue
       }
       const batch = ids.slice(i, i + maxCacheReadSize)
@@ -112,7 +114,10 @@ export default class IndexedDatabase implements Cache {
       })
       // const endTime = performance.now()
       // const duration = endTime - startTime
-      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
+
+      // interate down here to help with pausing
+      i += maxCacheReadSize
     }
   }
 
@@ -121,7 +126,7 @@ export default class IndexedDatabase implements Cache {
     await this.#setupCacheDb()
 
     return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
-      return await this.#cacheDB?.objects.get({ baseId: id })
+      return await this.#cacheDB?.objects.get(id)
     })
   }
 
@@ -138,7 +143,7 @@ export default class IndexedDatabase implements Cache {
     await cacheDB.objects.bulkPut(batch)
     // const endTime = performance.now()
     // const duration = endTime - startTime
-    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
   }
 
   /**

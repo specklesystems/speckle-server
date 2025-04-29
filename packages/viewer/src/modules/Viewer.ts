@@ -29,6 +29,7 @@ import { type Constructor } from 'type-fest'
 import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
+import { TIME_MS } from '@speckle/shared'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -196,13 +197,13 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  private frame() {
+  protected frame() {
     this.update()
     this.render()
   }
 
-  private update() {
-    const delta = this.clock.getDelta() * 1000 // turn to miliseconds
+  protected update() {
+    const delta = this.clock.getDelta() * TIME_MS.second
     const extensions = Object.values(this.extensions)
     extensions.forEach((ext: Extension) => {
       ext.onEarlyUpdate(delta)
@@ -215,7 +216,7 @@ export class Viewer extends EventEmitter implements IViewer {
     requestAnimationFrame(this.frame.bind(this))
   }
 
-  private render() {
+  protected render() {
     this.speckleRenderer.render()
     Object.values(this.extensions).forEach((ext: Extension) => {
       ext.onRender()

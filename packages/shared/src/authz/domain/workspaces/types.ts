@@ -1,5 +1,6 @@
 export type Workspace = {
   id: string
+  slug: string
 }
 
 export type WorkspaceSsoProvider = {

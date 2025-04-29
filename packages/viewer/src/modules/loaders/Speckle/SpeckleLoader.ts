@@ -4,6 +4,7 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import ObjectLoader2 from '@speckle/objectloader2'
+import { TIME_MS } from '@speckle/shared'
 
 export class SpeckleLoader extends Loader {
   protected loader: ObjectLoader2
@@ -120,7 +121,7 @@ export class SpeckleLoader extends Loader {
 
     Logger.warn(
       `Finished converting object ${this.resource} in ${
-        (performance.now() - start) / 1000
+        (performance.now() - start) / TIME_MS.second
       } seconds. Node count: ${this.tree.nodeCount}`
     )
 

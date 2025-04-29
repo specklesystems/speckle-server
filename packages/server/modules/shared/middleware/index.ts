@@ -24,13 +24,11 @@ import {
   MaybeNullOrUndefined,
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
-import { Authz, Optional, wait } from '@speckle/shared'
+import { Authz, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
-import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/observability/logging'
@@ -48,7 +46,7 @@ import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
-import { getLoaders } from '@/modules/loaders'
+import { moduleAuthLoaders } from '@/modules'
 
 export const authMiddlewareCreator = (
   steps: AuthPipelineFunction[]
@@ -170,28 +168,17 @@ export const authContextMiddleware: RequestHandler = async (req, res, next) => {
   next()
 }
 
-export async function addLoadersToCtx(
-  ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
-  options?: Partial<{ cleanLoadersEarly: boolean }>
-): Promise<GraphQLContext> {
-  const log =
-    ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = await buildRequestLoaders(ctx, options)
-  return { ...ctx, loaders, log }
-}
-
 /**
  * Build context for GQL operations
  */
-export async function buildContext({
-  req,
-  token,
-  cleanLoadersEarly
-}: {
-  req: MaybeNullOrUndefined<Request>
+export async function buildContext(params?: {
+  req?: MaybeNullOrUndefined<Request>
   token?: Nullable<string>
+  authContext?: AuthContext
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
+  const { req, token, authContext, cleanLoadersEarly } = params || {}
+
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
     getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -207,6 +194,7 @@ export async function buildContext({
   })
 
   const ctx =
+    authContext ||
     req?.context ||
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req), validateToken))
 
@@ -221,17 +209,26 @@ export async function buildContext({
     await wait(delay)
   }
 
-  const authPolicies = Authz.authPoliciesFactory(getLoaders())
+  const dataLoaders = await buildRequestLoaders(ctx, { cleanLoadersEarly })
+  const authLoaders = await moduleAuthLoaders({ dataLoaders })
+  const authPolicies = Authz.authPoliciesFactory(authLoaders.loaders)
 
-  // Adding request data loaders
-  return await addLoadersToCtx(
-    {
-      ...ctx,
-      log,
-      authPolicies
+  return {
+    ...ctx,
+    loaders: dataLoaders,
+    log,
+    authPolicies: {
+      ...authPolicies,
+      clearCache: () => {
+        authLoaders.clearCache()
+      }
     },
-    { cleanLoadersEarly }
-  )
+    authLoaders: authLoaders.loaders,
+    clearCache: async () => {
+      authLoaders.clearCache()
+      dataLoaders.clearAll()
+    }
+  }
 }
 
 /**

@@ -11,6 +11,7 @@ import { LRUCache } from 'lru-cache'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { StreamRecord } from '@/modules/core/helpers/types'
+import { TIME_MS } from '@speckle/shared'
 
 const mainDbKey = 'mainDb'
 
@@ -21,7 +22,7 @@ export const inMemoryRegionKeyStoreFactory = (): {
   const cache = new LRUCache<string, string>({
     max: 2000,
     /** ttl in ms */
-    ttl: 1000 * 60 * 10,
+    ttl: 10 * TIME_MS.minute,
     /** Do not return expired values */
     allowStale: false
   })

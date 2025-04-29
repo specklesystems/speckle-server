@@ -43,7 +43,7 @@ import {
   speckleAutomateUrl
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
-import { automateLogger, Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
@@ -132,13 +132,14 @@ export type CreateFunctionDeps = {
   createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
   getUser: GetUser
+  logger: Logger
 }
 
 export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
   async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
     const { input, userId } = params
-    const { createExecutionEngineFn, getUser, createStoredAuthCode } = deps
+    const { createExecutionEngineFn, getUser, createStoredAuthCode, logger } = deps
 
     // Validate user
     const user = await getUser(userId)
@@ -163,7 +164,7 @@ export const createFunctionFromTemplateFactory =
     const created = await createExecutionEngineFn({ body })
 
     if (isDevEnv() && created) {
-      automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
+      logger.info({ created }, `[dev] Created function #${created.functionId}`)
     }
 
     // Don't want to pull the function w/ another req, so we'll just return the input
@@ -197,16 +198,15 @@ export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: ReturnType<typeof getFunctionFactory>
   createStoredAuthCode: CreateStoredAuthCode
-  logger: Logger
 }
 
 export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    const { updateFunction, createStoredAuthCode, logger } = deps
+    const { getFunction, updateFunction, createStoredAuthCode } = deps
     const { input, userId } = params
 
-    const existingFn = await getFunctionFactory({ logger })({ functionId: input.id })
+    const existingFn = await getFunction({ functionId: input.id })
     if (!existingFn) {
       throw new AutomateFunctionUpdateError('Function not found')
     }
@@ -238,8 +238,6 @@ export const updateFunctionFactory =
         speckleServerAuthenticationPayload: authCode
       }
     })
-
-    console.log(JSON.stringify(apiResult, null, 2))
 
     return convertFunctionToGraphQLReturn(apiResult)
   }

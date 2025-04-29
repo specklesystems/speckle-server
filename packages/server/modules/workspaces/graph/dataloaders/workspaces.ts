@@ -2,9 +2,12 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
 import {
   getWorkspaceDomainsFactory,
-  getWorkspacesFactory
+  getWorkspacesFactory,
+  getWorkspacesProjectsCountsFactory,
+  getWorkspacesRolesForUsersFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
+  WorkspaceAcl,
   WorkspaceDomain,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -21,6 +24,8 @@ const dataLoadersDefinition = defineRequestDataloaders(
   ({ ctx, createLoader, deps: { db } }) => {
     const getWorkspaces = getWorkspacesFactory({ db })
     const getWorkspaceDomains = getWorkspaceDomainsFactory({ db })
+    const getWorkspacesProjectsCounts = getWorkspacesProjectsCountsFactory({ db })
+    const getWorkspacesRolesForUsers = getWorkspacesRolesForUsersFactory({ db })
 
     return {
       workspaces: {
@@ -34,6 +39,33 @@ const dataLoadersDefinition = defineRequestDataloaders(
               (w) => w.id
             )
             return ids.map((id) => results[id] || null)
+          }
+        ),
+        /**
+         * Get workspace project count
+         */
+        getProjectCount: createLoader<string, number | null>(async (ids) => {
+          const results = await getWorkspacesProjectsCounts({
+            workspaceIds: ids.slice()
+          })
+          return ids.map((id) => results[id])
+        }),
+        /**
+         * Get workspace role
+         */
+        getWorkspaceRole: createLoader<
+          { userId: string; workspaceId: string },
+          WorkspaceAcl | null,
+          string
+        >(
+          async (idPairs) => {
+            const results = await getWorkspacesRolesForUsers(idPairs.slice())
+            return idPairs.map(({ userId, workspaceId }) => {
+              return results[workspaceId]?.[userId] || null
+            })
+          },
+          {
+            cacheKeyFn: (args) => `${args.userId}-${args.workspaceId}`
           }
         )
       },

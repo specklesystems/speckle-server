@@ -74,6 +74,14 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
+    const loadingWrapper = document.getElementById('loadingWrapper')
+    if (loadingWrapper) {
+      loadingWrapper.addEventListener('transitionend', function () {
+        // Remove the loading wrapper from the page
+        loadingWrapper.style.display = 'none'
+      })
+      loadingWrapper.style.opacity = '0'
+    }
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -94,20 +102,14 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.objectLoaderOnly(_stream)
-  // await sandbox.loadUrl(_stream)
+  // await sandbox.objectLoaderOnly(_stream)
+  await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
 
 const getStream = () => {
   return (
     // prettier-ignore
-    // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
-    //crashing out of memory?
-    //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
-    //too big?
-    // `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
@@ -383,6 +385,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
     // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
     // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
+    // DEFAUL WEIRD MODEL
     // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
@@ -498,8 +501,21 @@ const getStream = () => {
     // REGIONS
     // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
 
-    // SUPER slow tree build time
+    // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
+
+    // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
     // 'https://app.speckle.systems/projects/0edb6ef628/models/ff3d8480bc@cd83d90a2c'
+
+    /* ObjectLoader 2 tests */
+    // `https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@5386a0af02`
+    //crashing out of memory?
+    //`https://latest.speckle.systems/projects/97750296c2/models/767b70fc63@2a6fd781f2`
+    //too big?
+    // `https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716`
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
+
+    // BUSTED model ID
+    // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
   )
 }
 

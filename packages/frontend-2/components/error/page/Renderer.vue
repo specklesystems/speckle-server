@@ -16,15 +16,16 @@ const props = defineProps<{
   }
 }>()
 
+const route = useRoute()
+
+const isProjectRoute = computed(() => route.path.match(/\/projects\/[^/]+/))
+const isWorkspaceRoute = computed(() => route.path.match(/\/workspaces\/[^/]+/))
+
 const finalError = computed(() => formatAppError(props.error))
 const isNoProjectAccessError = computed(
-  () =>
-    finalError.value.statusCode === 403 &&
-    finalError.value.message.includes('You do not have access to this project')
+  () => finalError.value.statusCode === 403 && isProjectRoute.value
 )
 const isNoWorkspaceAccessError = computed(
-  () =>
-    finalError.value.statusCode === 403 &&
-    finalError.value.message.includes('You do not have access to this workspace')
+  () => finalError.value.statusCode === 403 && isWorkspaceRoute.value
 )
 </script>

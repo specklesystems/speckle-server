@@ -7,7 +7,7 @@ import type {
 import type {
   DocumentParameter,
   OptionsParameter
-} from '@vue/apollo-composable/dist/useQuery'
+} from '@vue/apollo-composable/dist/useQuery.js'
 import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'

@@ -58,7 +58,6 @@ import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader2 from '@speckle/objectloader2'
-import ObjectLoader from '@speckle/objectloader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -308,24 +307,26 @@ export default class Sandbox {
         objects.push(batchObject)
       }
     }
+    const unionBox: Box3 = new Box3()
+    objects.forEach((obj: BatchObject) => {
+      unionBox.union(obj.renderView.aabb || new Box3())
+    })
+    const origin = unionBox.getCenter(new Vector3())
+    objects.forEach((obj: BatchObject) => {
+      obj.pivot = origin
+    })
     const position = { value: { x: 0, y: 0, z: 0 } }
     const rotation = { value: { x: 0, y: 0, z: 0 } }
     const scale = { value: { x: 1, y: 1, z: 1 } }
     this.objectControls
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value)
-          // obj.position = new Vector3(
-          //   position.value.x,
-          //   position.value.y,
-          //   position.value.z
-          // )
+          obj.position = new Vector3(
+            position.value.x,
+            position.value.y,
+            position.value.z
+          )
         })
         this.viewer.requestRender()
       })
@@ -338,13 +339,7 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
           obj.euler = new Euler(
             rotation.value.x,
             rotation.value.y,
@@ -363,13 +358,8 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb || new Box3())
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.scale = new Vector3(scale.value.x, scale.value.y, scale.value.z)
         })
         this.viewer.requestRender()
       })
@@ -1271,6 +1261,7 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
+    const colorImage = document.getElementById('colorImage')
     const authToken = localStorage.getItem(
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
@@ -1285,9 +1276,10 @@ export default class Sandbox {
         undefined
       )
       /** Too spammy */
-      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-      //   console.warn(arg)
-      // })
+      loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+        if (colorImage)
+          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+      })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })
@@ -1346,7 +1338,7 @@ export default class Sandbox {
     const loader = new ObjectLoader2({ serverUrl, streamId, objectId, token })
     let count = 0
 
-    for await (const obj of loader.getObjectIterator()) {
+    for await (const {} of loader.getObjectIterator()) {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
