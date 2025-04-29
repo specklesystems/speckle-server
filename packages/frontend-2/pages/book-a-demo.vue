@@ -26,8 +26,8 @@
           <FormRadioGroup v-model="bookDemoSelected" :options="options" is-stacked />
         </div>
       </template>
-      <div v-else class="w-full max-w-5xl">
-        <DemoEmbed />
+      <div v-else class="w-full">
+        <CalWidget />
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <div

@@ -93,6 +93,14 @@
                   </LayoutSidebarMenuGroupItem>
                 </div>
 
+                <CalPopUp>
+                  <LayoutSidebarMenuGroupItem label="Book a call">
+                    <template #icon>
+                      <CalendarDaysIcon class="size-5 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </CalPopUp>
+
                 <NuxtLink
                   to="https://speckle.guide/"
                   target="_blank"
@@ -143,6 +151,7 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
