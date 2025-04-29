@@ -31,14 +31,12 @@ export class EdgesPipeline extends ProgressivePipeline {
   protected MRTPipeline() {
     const depthNormalIdPass = new DepthNormalIdPass()
     depthNormalIdPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthNormalIdPass.setVisibility(ObjectVisibility.DEPTH)
     depthNormalIdPass.setJitter(true)
     depthNormalIdPass.setClearColor(0x000000, 1)
     depthNormalIdPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 
     const depthPassNormalIdDynamic = new DepthNormalIdPass()
     depthPassNormalIdDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassNormalIdDynamic.setVisibility(ObjectVisibility.DEPTH)
     depthPassNormalIdDynamic.setClearColor(0x000000, 1)
     depthPassNormalIdDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
 

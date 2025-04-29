@@ -28,6 +28,8 @@ export class PenViewPipeline extends ProgressivePipeline {
 
     const edgesPipeline = new EdgesPipeline(speckleRenderer)
     edgesPipeline.edgePassDynamic.outputTarget = null
+    edgesPipeline.depthPass.setVisibility(ObjectVisibility.DEPTH)
+    edgesPipeline.depthPassDynamic.setVisibility(ObjectVisibility.DEPTH)
     edgesPipeline.edgePass.options = { backgroundColor: 0x000000 }
     edgesPipeline.edgePassDynamic.options = { backgroundColor: 0x000000 }
 
