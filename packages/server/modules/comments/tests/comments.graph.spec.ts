@@ -1,120 +1,117 @@
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const crs = require('crypto-random-string')
-const { buildApolloServer } = require('@/app')
-const { beforeEachContext } = require('@/test/hooks')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { gql } = require('graphql-tag')
-const {
-  convertBasicStringToDocument
-} = require('@/modules/core/services/richTextEditorService')
-const {
+import crs from 'crypto-random-string'
+import { buildApolloServer } from '@/app'
+import { beforeEachContext } from '@/test/hooks'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import gql from 'graphql-tag'
+import { convertBasicStringToDocument } from '@/modules/core/services/richTextEditorService'
+import {
   createTestContext,
   createAuthedTestContext,
-  executeOperation
-} = require('@/test/graphqlHelper')
-const {
+  executeOperation,
+  ServerAndContext,
+  ExecuteOperationResponse
+} from '@/test/graphqlHelper'
+import {
   streamResourceCheckFactory,
   createCommentFactory
-} = require('@/modules/comments/services')
-const {
+} from '@/modules/comments/services'
+import {
   checkStreamResourceAccessFactory,
   markCommentViewedFactory,
   insertCommentsFactory,
   insertCommentLinksFactory,
   deleteCommentFactory,
   getCommentsResourcesFactory
-} = require('@/modules/comments/repositories/comments')
-const { db } = require('@/db/knex')
-const {
-  validateInputAttachmentsFactory
-} = require('@/modules/comments/services/commentTextService')
-const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
-const {
+} from '@/modules/comments/repositories/comments'
+import { db } from '@/db/knex'
+import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
+import { getBlobsFactory } from '@/modules/blobstorage/repositories'
+import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
-} = require('@/modules/core/services/commit/management')
-const {
+} from '@/modules/core/services/commit/management'
+import {
   createCommitFactory,
   insertStreamCommitsFactory,
   insertBranchCommitsFactory,
   getCommitsAndTheirBranchIdsFactory
-} = require('@/modules/core/repositories/commits')
-const {
+} from '@/modules/core/repositories/commits'
+import {
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
   getStreamBranchByNameFactory,
   createBranchFactory
-} = require('@/modules/core/repositories/branches')
-const {
+} from '@/modules/core/repositories/branches'
+import {
   getStreamFactory,
   createStreamFactory,
   updateStreamFactory,
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory
-} = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/repositories/streams'
+import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
-} = require('@/modules/core/repositories/objects')
-const {
+} from '@/modules/core/repositories/objects'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory,
   legacyUpdateStreamFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const {
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
   createUserEmailFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { createObjectFactory } = require('@/modules/core/services/objects/management')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import {
   getViewerResourcesFromLegacyIdentifiersFactory,
   getViewerResourcesForCommentsFactory
-} = require('@/modules/core/services/commit/viewerResources')
+} from '@/modules/core/services/commit/viewerResources'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { SetNonNullable } from 'type-fest'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -168,6 +165,51 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
 })
 
 const getStream = getStreamFactory({ db })
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -186,7 +228,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -232,45 +275,54 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
-function buildCommentInputFromString(textString) {
+function buildCommentInputFromString(textString: string) {
   return convertBasicStringToDocument(textString)
 }
 
-const testForbiddenResponse = (result) => {
+const testForbiddenResponse = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: ExecuteOperationResponse<Record<string, any>>
+) => {
   expect(result.errors, 'This should have failed').to.exist
-  expect(result.errors.length).to.be.above(0)
-  expect(result.errors[0].extensions.code).to.match(
+  expect(result.errors!.length).to.be.above(0)
+  expect(result.errors![0].extensions!.code).to.match(
     /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
   )
 }
 
-const testResult = (shouldSucceed, result, successTests) => {
+const testResult = (
+  shouldSucceed: boolean,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: ExecuteOperationResponse<Record<string, any>>,
+  successTests: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result: SetNonNullable<ExecuteOperationResponse<Record<string, any>>, 'data'>
+  ) => void
+) => {
   if (shouldSucceed) {
     expect(result.errors, 'This should not have failed').to.not.exist
-    successTests(result)
+    successTests(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      result as SetNonNullable<ExecuteOperationResponse<Record<string, any>>, 'data'>
+    )
   } else {
     testForbiddenResponse(result)
   }
 }
 
-/**
- * @typedef {{
- * apollo: import('@/test/graphqlHelper').ServerAndContext,
- * resources: {
- *  streamId: string,
- * objectId: string,
- * commentId: string,
- * testActorId: string
- * },
- * shouldSucceed: boolean,
- * streamId: string
- * }} TestContext
- */
+type TestContext = {
+  apollo: ServerAndContext
+  resources: {
+    streamId: string
+    objectId: string
+    commentId: string
+    testActorId: string
+  }
+  shouldSucceed: boolean
+  streamId: string
+}
 
-/**
- * @param {TestContext} param0
- */
-const writeComment = async ({ apollo, resources, shouldSucceed }) => {
+const writeComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -294,10 +346,11 @@ const writeComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const broadcastViewerActivity = async ({ apollo, resources, shouldSucceed }) => {
+const broadcastViewerActivity = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -320,10 +373,11 @@ const broadcastViewerActivity = async ({ apollo, resources, shouldSucceed }) => 
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const broadcastCommentActivity = async ({ apollo, resources, shouldSucceed }) => {
+const broadcastCommentActivity = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -346,10 +400,7 @@ const broadcastCommentActivity = async ({ apollo, resources, shouldSucceed }) =>
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const viewAComment = async ({ apollo, resources, shouldSucceed }) => {
+const viewAComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -367,13 +418,10 @@ const viewAComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
+const archiveMyComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const context = apollo.context
   const { id: commentId } = await createComment({
-    userId: context.userId,
+    userId: context!.userId!,
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('i wrote this myself'),
@@ -399,10 +447,11 @@ const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const archiveOthersComment = async ({ apollo, resources, shouldSucceed }) => {
+const archiveOthersComment = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -420,12 +469,9 @@ const archiveOthersComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
+const editMyComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const { id: commentId } = await createComment({
-    userId: apollo.context.userId,
+    userId: apollo.context!.userId!,
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('i wrote this myself'),
@@ -458,10 +504,7 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
+const editOthersComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -485,10 +528,7 @@ const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
+const replyToAComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -514,10 +554,7 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const queryComment = async ({ apollo, resources, shouldSucceed }) => {
+const queryComment = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const res = await executeOperation(
     apollo,
     gql`
@@ -547,10 +584,7 @@ const queryComment = async ({ apollo, resources, shouldSucceed }) => {
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const queryComments = async ({ apollo, resources, shouldSucceed }) => {
+const queryComments = async ({ apollo, resources, shouldSucceed }: TestContext) => {
   const object = {
     foo: 123,
     bar: crs({ length: 5 })
@@ -599,14 +633,17 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
   )
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.comments.totalCount).to.be.equal(numberOfComments)
-    expect(res.data.comments.items.map((i) => i.id)).to.be.equalInAnyOrder(commentIds)
+    expect(
+      res.data.comments.items.map((i: { id: string }) => i.id)
+    ).to.deep.equalInAnyOrder(commentIds)
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+const queryStreamCommentCount = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   await createComment({
     userId: resources.testActorId,
     input: {
@@ -635,10 +672,11 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+const queryObjectCommentCount = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   const objectId = await createObject({
     streamId: resources.streamId,
     object: {
@@ -675,10 +713,11 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
   })
 }
 
-/**
- * @param {TestContext} param0
- */
-const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+const queryCommitCommentCount = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}: TestContext) => {
   const objectId = await createObject({
     streamId: resources.streamId,
     object: {
@@ -722,14 +761,11 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
   })
 }
 
-/**
- * @param {TestContext} param0
- */
 const queryCommitCollectionCommentCount = async ({
   apollo,
   resources,
   shouldSucceed
-}) => {
+}: TestContext) => {
   const objectId = await createObject({
     streamId: resources.streamId,
     object: {
@@ -772,15 +808,12 @@ const queryCommitCollectionCommentCount = async ({
   )
   testResult(shouldSucceed, res, (res) => {
     res.data.otherUser.commits.items
-      .map((i) => i.commentCount)
-      .map((commentCount) => {
+      .map((i: { commentCount: number }) => i.commentCount)
+      .map((commentCount: number) => {
         expect(commentCount).to.be.greaterThanOrEqual(1)
       })
   })
 }
-
-// eslint-disable-next-line no-unused-vars
-const actions = ['queryCommitCommentCount', 'queryCommitCollectionCommentCount']
 
 describe('Graphql @comments', () => {
   // this user will be admin by default
@@ -789,59 +822,69 @@ describe('Graphql @comments', () => {
   const myTestActor = {
     name: 'Gergo Jedlicska',
     email: 'gergo@jedlicska.com',
-    password: 'sn3aky-1337-b1m'
+    password: 'sn3aky-1337-b1m',
+    id: ''
   }
 
   const chadTheEngineer = {
     name: 'Chad the Engineer',
     email: 'chad@engineering.acme',
     password: 'tryingNotToBeACadMonkey',
-    role: Roles.Server.User
+    role: Roles.Server.User,
+    id: ''
   }
 
   const archived = {
     name: 'The Balrog of Morgoth',
     email: 'durinsbane@moria.bridge',
-    role: Roles.Server.ArchivedUser
+    password: 'tryingNotToBeACadMonkey',
+    role: Roles.Server.ArchivedUser,
+    id: ''
   }
 
   const ownedStream = {
     name: 'stream owner',
     isPublic: false,
-    role: Roles.Stream.Owner
+    role: Roles.Stream.Owner,
+    id: ''
   }
 
   const contributorStream = {
     name: 'contributions are welcome',
     isPublic: false,
-    role: Roles.Stream.Contributor
+    role: Roles.Stream.Contributor,
+    id: ''
   }
 
   const reviewerStream = {
     name: 'no work, just talk',
     isPublic: false,
-    role: Roles.Stream.Reviewer
+    role: Roles.Stream.Reviewer,
+    id: ''
   }
 
   const noAccessStream = {
     name: 'aint nobody canna cross it',
     isPublic: false,
-    role: null
+    role: null,
+    id: ''
   }
 
   const publicStream = {
     name: 'come take a look',
     isPublic: true,
-    role: null
+    role: null,
+    id: ''
   }
 
   const publicStreamWithPublicComments = {
     name: 'the gossip protocol',
     isPublic: true,
-    role: null
+    role: null,
+    id: ''
   }
 
-  const testData = [
+  const testData = <const>[
     {
       user: chadTheEngineer,
       streamData: [
@@ -1116,11 +1159,8 @@ describe('Graphql @comments', () => {
     }`, () => {
       userContext.streamData.forEach((streamContext) => {
         const stream = streamContext.stream
-        let resources
-        /**
-         * @type {import('@/test/graphqlHelper').ServerAndContext}
-         */
-        let apollo
+        let resources: TestContext['resources']
+        let apollo: ServerAndContext
 
         before(async () => {
           apollo = {

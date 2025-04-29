@@ -1,71 +1,115 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const { beforeEachContext } = require('@/test/hooks')
+import { beforeEachContext } from '@/test/hooks'
 
-const { validateScopes, authorizeResolver } = require('@/modules/shared')
-const { buildContext } = require('@/modules/shared/middleware')
-const { Roles, Scopes } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const {
+import { validateScopes, authorizeResolver } from '@/modules/shared'
+import { buildContext } from '@/modules/shared/middleware'
+import { AvailableRoles, Roles, Scopes, ServerRoles } from '@speckle/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { ForbiddenError } from '@/modules/shared/errors'
+import {
   getStreamFactory,
-  createStreamFactory
-} = require('@/modules/core/repositories/streams')
-const { db } = require('@/db/knex')
-const {
+  createStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const {
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { mockAdminOverride } = require('@/test/mocks/global')
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { mockAdminOverride } from '@/test/mocks/global'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { Request } from 'express'
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -89,7 +133,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -134,7 +179,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Validate scopes', async () => {
-    await validateScopes()
+    await validateScopes(undefined, undefined as unknown as string)
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -156,14 +201,17 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
     await validateScopes(['a', 'b'], 'b') // should pass
   })
-  ;[
-    ['BS header', { req: { headers: { authorization: 'Bearer BS' } } }],
-    ['Null header', { req: { headers: { authorization: null } } }],
-    ['Undefined header', { req: { headers: { authorization: undefined } } }],
+  ;(<const>[
+    ['BS header', { req: { headers: { authorization: 'Bearer BS' } } as Request }],
+    [
+      'Null header',
+      { req: { headers: { authorization: null as string | null } } as Request }
+    ],
+    ['Undefined header', { req: { headers: { authorization: undefined } } as Request }],
     ['BS token', { token: 'Bearer BS' }],
     ['Null token', { token: null }],
     ['Undefined token', { token: undefined }]
-  ].map(([caseName, contextInput]) =>
+  ]).map(([caseName, contextInput]) =>
     it(`Should create proper context ${caseName}`, async () => {
       const res = await buildContext(contextInput)
       expect(res.auth).to.equal(false)
@@ -182,7 +230,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         expect('You do not have the required server role').to.equal(err.message)
       )
 
-    await throwForNotHavingServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
+    await throwForNotHavingServerRole(
+      { auth: true, role: 'HACZOR' as ServerRoles },
+      '133TCR3w' as ServerRoles
+    )
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -192,7 +243,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
     await throwForNotHavingServerRole(
       { auth: true, role: Roles.Server.Admin },
-      '133TCR3w'
+      '133TCR3w' as ServerRoles
     )
       .then(() => {
         throw new Error('This should have been rejected')
@@ -209,14 +260,19 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Resolver Authorization Should fail nicely when roles & resources are wanky', async () => {
-    await authorizeResolver(null, 'foo', 'bar')
+    await authorizeResolver(null, 'foo', 'bar' as AvailableRoles, null)
       .then(() => {
         throw new Error('This should have been rejected')
       })
       .catch((err) => expect('Unknown role: bar').to.equal(err.message))
 
     // this caught me out, but streams:read is not a valid role for now
-    await authorizeResolver('foo', 'bar', Scopes.Streams.Read)
+    await authorizeResolver(
+      'foo',
+      'bar' as AvailableRoles,
+      Scopes.Streams.Read as AvailableRoles,
+      null
+    )
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -226,21 +282,25 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   describe('Authorize resolver ', () => {
     const myStream = {
       name: 'My Stream 2',
-      isPublic: true
+      isPublic: true,
+      id: ''
     }
     const notMyStream = {
       name: 'Not My Stream 1',
-      isPublic: false
+      isPublic: false,
+      id: ''
     }
     const serverOwner = {
       name: 'Itsa Me',
       email: 'me@example.org',
-      password: 'sn3aky-1337-b1m'
+      password: 'sn3aky-1337-b1m',
+      id: ''
     }
     const otherGuy = {
       name: 'Some Other DUde',
       email: 'otherguy@example.org',
-      password: 'sn3aky-1337-b1m'
+      password: 'sn3aky-1337-b1m',
+      id: ''
     }
 
     before(async function () {
@@ -290,7 +350,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
           Roles.Stream.Contributor,
           null
         )
-        throw 'This should have thrown'
+        throw new Error('This should have thrown')
       } catch (e) {
         expect(e instanceof ForbiddenError)
       }
@@ -315,7 +375,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
           Roles.Stream.Contributor,
           null
         )
-        throw 'This should have thrown'
+        throw new Error('This should have thrown')
       } catch (e) {
         expect(e instanceof ForbiddenError)
       }
@@ -331,7 +391,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
           Roles.Stream.Contributor,
           null
         )
-        throw 'This should have thrown'
+        throw new Error('This should have thrown')
       } catch (e) {
         expect(e instanceof ForbiddenError)
       }
