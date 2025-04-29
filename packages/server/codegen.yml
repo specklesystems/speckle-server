@@ -118,6 +118,7 @@ generates:
     documents:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
+      - 'modules/**/tests/helpers/*Graphql.ts'
     config:
       enumsAsConst: true
       scalars:

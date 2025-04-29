@@ -57,7 +57,7 @@ const { result: workspaceResult } = useQuery(workspaceSidebarQuery, () => ({
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const isFreePlan = computed(() => workspace.value?.plan?.name === WorkspacePlans.Free)
-const isWorkspaceGuest = computed(() => workspace.value?.slug === Roles.Workspace.Guest)
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const hasDomains = computed(() => workspace.value?.domains?.length)
 </script>
