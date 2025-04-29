@@ -49,22 +49,20 @@ const processInvite = async (accept: boolean, token: Optional<string>) => {
 
   loading.value = true
 
-  const result = await useInvite({
+  await useInvite({
     projectId: props.invite.projectId,
     accept,
     token,
     inviteId: props.invite.id
   })
 
-  if (result) {
-    if (props.invite.workspaceSlug) {
-      mutateActiveWorkspaceSlug(props.invite.workspaceSlug)
-    } else {
-      mutateIsProjectsActive(true)
-    }
-
-    navigateTo(projectRoute(props.invite.projectId))
+  if (props.invite.workspaceSlug) {
+    mutateActiveWorkspaceSlug(props.invite.workspaceSlug)
+  } else {
+    mutateIsProjectsActive(true)
   }
+
+  navigateTo(projectRoute(props.invite.projectId))
 
   loading.value = false
 }
