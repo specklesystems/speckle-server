@@ -27,17 +27,7 @@
         </div>
       </template>
       <div v-else class="w-full max-w-5xl">
-        <div class="bg-foundation-page rounded-xl border-outline-2 border shadow">
-          <iframe
-            src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2_p9mPs9Mi1NfAPKqUA3GVauvG_Sw114KlgA37JsGAwhXeGyLC8CSa-bzfQ6VXewwpGdVVcnV5?gv=true"
-            style="border: 0; background: #fafafa"
-            class="rounded-xl"
-            width="100%"
-            height="600"
-            frameborder="0"
-            title="Book a demo"
-          />
-        </div>
+        <DemoEmbed />
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <div
