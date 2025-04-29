@@ -27,7 +27,14 @@ graphql(`
       team {
         totalCount
         items {
+          id
+          name
           avatar
+          streams {
+            numberOfHidden
+            totalCount
+          }
+          totalOwnedStreamsFavorites
         }
       }
     }
@@ -48,7 +55,14 @@ graphql(`
           team {
             totalCount
             items {
+              id
+              name
               avatar
+              streams {
+                numberOfHidden
+                totalCount
+              }
+              totalOwnedStreamsFavorites
             }
           }
         }
