@@ -626,7 +626,7 @@ export default class Sandbox {
       .addInput(pipeline, 'edges', {
         label: 'Show Edges'
       })
-      .on('change', (value) => {
+      .on('change', () => {
         setPipeline(pipeline.output)
       })
 
@@ -637,7 +637,7 @@ export default class Sandbox {
         max: 5,
         step: 0.25
       })
-      .on('change', (value) => {
+      .on('change', () => {
         const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
         edgesPasses.forEach((pass: GPass) => {
           pass.options = pipeline
@@ -649,7 +649,7 @@ export default class Sandbox {
         label: 'Outline Color',
         view: 'color'
       })
-      .on('change', (value) => {
+      .on('change', () => {
         const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
         edgesPasses.forEach((pass: GPass) => {
           pass.options = pipeline
@@ -664,7 +664,7 @@ export default class Sandbox {
         max: 1,
         step: 0.01
       })
-      .on('change', (value) => {
+      .on('change', () => {
         const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
         edgesPasses.forEach((pass: GPass) => {
           pass.options = pipeline
