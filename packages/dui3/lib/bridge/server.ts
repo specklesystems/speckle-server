@@ -105,7 +105,11 @@ export class ArchicadBridge {
   emit(
     eventName: string,
     payload: Record<string, unknown>,
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+    runMethod: (
+      methodName: string,
+      args: unknown[],
+      shouldTimeout: boolean
+    ) => Promise<unknown>
   ): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
@@ -129,7 +133,11 @@ export class ArchicadBridge {
 
   private async receiveByDesktopService(
     eventPayload: ReceiveViaDesktopServiceArgs,
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+    runMethod: (
+      methodName: string,
+      args: unknown[],
+      shouldTimeout: boolean
+    ) => Promise<unknown>
   ) {
     const { pingDesktopService } = useDesktopService()
 
@@ -187,6 +195,13 @@ export class ArchicadBridge {
 
     // 2 - POST the desktop service with formatted endpoint
     try {
+      hostAppStore.handleModelProgressEvents({
+        modelCardId: eventPayload.modelCardId,
+        progress: {
+          status: 'Conversion has started, Archicad may be unresponsive for a while.'
+        }
+      })
+
       const res = await fetch(
         `http://localhost:29364/${eventPayload.endpointVersion}/archicad-receive`,
         {
@@ -195,13 +210,24 @@ export class ArchicadBridge {
           headers: { 'Content-Type': 'application/json' }
         }
       )
+
+      if (!res.ok) {
+        const errorText = await res.text() // it is weird tho we can use .json() when it is not ok, it just throws and as below is OK.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        throw new Error(`${JSON.parse(errorText).detail as string}`)
+      }
+
       const path = (await res.json()) as unknown
 
-      await runMethod('afterGsmConverter', [
-        eventPayload.modelCardId,
-        result.data.project.model.version.sourceApplication,
-        path
-      ] as unknown as unknown[])
+      await runMethod(
+        'afterGsmConverter',
+        [
+          eventPayload.modelCardId,
+          result.data.project.model.version.sourceApplication,
+          path
+        ] as unknown as unknown[],
+        false
+      )
     } catch (error) {
       const notification: ToastNotification = {
         title: 'Load failed',
@@ -209,12 +235,20 @@ export class ArchicadBridge {
         type: ToastNotificationType.Danger
       }
       hostAppStore.setNotification(notification)
+      hostAppStore.handleModelProgressEvents({
+        modelCardId: eventPayload.modelCardId,
+        progress: undefined
+      })
     }
   }
 
   private async receiveByBrowser(
     eventPayload: ReceiveViaBrowserArgs,
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+    runMethod: (
+      methodName: string,
+      args: unknown[],
+      shouldTimeout: boolean
+    ) => Promise<unknown>
   ) {
     const accountStore = useAccountStore()
     const hostAppStore = useHostAppStore()
@@ -292,7 +326,11 @@ export class ArchicadBridge {
    */
   private async sendBatchViaBrowser(
     eventPayload: SendBatchViaBrowserArgs,
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+    runMethod: (
+      methodName: string,
+      args: unknown[],
+      shouldTimeout: boolean
+    ) => Promise<unknown>
   ) {
     const {
       serverUrl,
