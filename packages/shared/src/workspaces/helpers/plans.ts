@@ -1,12 +1,5 @@
 import { throwUncoveredError } from '../../core/helpers/error.js'
 
-/**
- * PLANS
- *
- * TODO:
- * - 'team' -> const
- */
-
 export const PaidWorkspacePlans = <const>{
   Team: 'team', // actually 'Starter'
   TeamUnlimited: 'teamUnlimited',
