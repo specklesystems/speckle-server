@@ -6,7 +6,7 @@ import {
   RequestObjectPreview,
   StoreObjectPreview
 } from '@/modules/previews/domain/operations'
-import { Roles, Scopes } from '@speckle/shared'
+import { Roles, Scopes, TIME_MS } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 export const createObjectPreviewFactory =
@@ -45,7 +45,7 @@ export const createObjectPreviewFactory =
       name: `preview-${streamId}@${objectId}`,
       userId,
       scopes: [Scopes.Streams.Read],
-      lifespan: 120 * 60 * 1000, // for now, lets make this valid for 2 hours
+      lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {
           id: streamId,

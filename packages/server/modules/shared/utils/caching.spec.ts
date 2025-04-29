@@ -7,7 +7,7 @@ import {
 } from '@/modules/shared/utils/caching'
 import { describeEach, itEach } from '@/test/assertionHelper'
 import TTLCache from '@isaacs/ttlcache'
-import { wait } from '@speckle/shared'
+import { TIME_MS, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import Redis from 'ioredis'
 import MockRedis from 'ioredis-mock'
@@ -71,7 +71,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const case1Args = <const>[1, 2]
@@ -102,7 +102,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const args = <const>[5, 50]
@@ -125,7 +125,7 @@ describe('wrapWithCache', () => {
           }),
           cacheProvider,
           name: 'add',
-          ttlMs: 1000
+          ttlMs: TIME_MS.second
         })
 
         const args = <const>[5, 50]
@@ -178,7 +178,7 @@ describe('wrapWithCache', () => {
             }),
             cacheProvider,
             name: 'add',
-            ttlMs: 1000,
+            ttlMs: TIME_MS.second,
             options: {
               cachePromises
             }
@@ -206,7 +206,7 @@ describe('wrapWithCache', () => {
           const multiplyAddCachedFactory = wrapFactoryWithCache({
             name: 'multiplyAdd',
             factory: multiplyAddFactory,
-            ttlMs: 1000,
+            ttlMs: TIME_MS.second,
             cacheProvider
           })
 

@@ -19,8 +19,6 @@
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
-              :can-edit="canEdit"
-              :can-delete="canDelete"
               :menu-position="
                 itemType === StructureItemType.EmptyModel
                   ? HorizontalDirection.Right
@@ -33,18 +31,25 @@
           </span>
         </div>
         <!-- Empty model action -->
-        <NuxtLink
+        <div
           v-if="itemType === StructureItemType.EmptyModel"
-          :class="[
-            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
-            'opacity-0 group-hover:opacity-100 transition duration-200',
-            'hover:text-primary p-1'
-          ]"
-          @click.stop="$emit('create-submodel', model?.name || '')"
+          :key="`add-submodel-${canCreateModel?.authorized}`"
+          v-tippy="
+            canCreateModel?.authorized
+              ? undefined
+              : canCreateModel?.message || 'You do not have permission to create models'
+          "
         >
-          <PlusIcon class="w-3 h-3" />
-          submodel
-        </NuxtLink>
+          <FormButton
+            color="subtle"
+            :icon-left="PlusIcon"
+            size="sm"
+            :disabled="!canCreateModel.authorized"
+            @click.stop="$emit('create-submodel', model?.name || '')"
+          >
+            submodel
+          </FormButton>
+        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
         <ProjectCardImportFileArea
@@ -52,7 +57,7 @@
           ref="importArea"
           :project-id="project.id"
           :model-name="item.fullName"
-          :disabled="project?.workspace?.readOnly"
+          :disabled="!canCreateModel.authorized"
           class="hidden"
         />
         <div
@@ -72,7 +77,7 @@
             v-else
             :project-id="project.id"
             :model-name="item.fullName"
-            :disabled="project?.workspace?.readOnly"
+            :disabled="!canCreateModel.authorized"
             class="h-full w-full"
           />
         </div>
@@ -249,11 +254,12 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
-    workspace {
-      id
-      readOnly
-    }
     ...ProjectPageModelsActions_Project
+    permissions {
+      canCreateModel {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -304,11 +310,9 @@ const trackFederateModels = () =>
 
 const showActionsMenu = ref(false)
 
+const canCreateModel = computed(() => props.project?.permissions.canCreateModel)
 const canEdit = computed(() =>
   isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canUpdate
-)
-const canDelete = computed(() =>
-  isPendingFileUpload(props.item) ? undefined : props.item.model?.permissions.canDelete
 )
 
 const itemType = computed<StructureItemType>(() => {

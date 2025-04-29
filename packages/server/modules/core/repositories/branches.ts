@@ -41,6 +41,7 @@ import {
   GetStreamBranchCounts,
   GetStreamBranchesByName,
   GetStructuredProjectModels,
+  GetTotalModelCount,
   InsertBranches,
   MarkCommitBranchUpdated,
   StoreBranch,
@@ -765,4 +766,13 @@ export const getLatestStreamBranchFactory =
       .limit(1)
     const [branch] = await q
     return branch
+  }
+
+export const getTotalModelCountFactory =
+  (deps: { db: Knex }): GetTotalModelCount =>
+  async () => {
+    const query = tables.branches(deps.db).count()
+    const [{ count }] = await query
+
+    return parseInt(String(count))
   }

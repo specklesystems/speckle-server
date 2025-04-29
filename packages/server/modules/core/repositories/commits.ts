@@ -58,7 +58,8 @@ import {
   MoveCommitsToBranch,
   LegacyGetPaginatedUserCommitsPage,
   LegacyGetPaginatedUserCommitsTotalCount,
-  LegacyGetPaginatedStreamCommitsPage
+  LegacyGetPaginatedStreamCommitsPage,
+  GetTotalVersionCount
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -708,4 +709,13 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
     }
+  }
+
+export const getTotalVersionCountFactory =
+  (deps: { db: Knex }): GetTotalVersionCount =>
+  async () => {
+    const query = tables.commits(deps.db).count()
+    const [{ count }] = await query
+
+    return parseInt(String(count))
   }

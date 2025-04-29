@@ -1,4 +1,5 @@
 import {
+  MarkAutomationDeleted,
   GetActiveTriggerDefinitions,
   GetAutomation,
   GetAutomationProject,
@@ -19,6 +20,7 @@ import {
   GetProjectAutomationCount,
   GetRevisionsFunctions,
   GetRevisionsTriggerDefinitions,
+  QueryAllAutomationFunctionRuns,
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
@@ -69,7 +71,10 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 
-import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
+import {
+  executeBatchedSelect,
+  formatJsonArrayRecords
+} from '@/modules/shared/helpers/dbHelper'
 import {
   decodeCursor,
   decodeIsoDateCursor,
@@ -310,6 +315,16 @@ export const storeAutomationFactory =
     return newAutomation
   }
 
+export const markAutomationDeletedFactory =
+  (deps: { db: Knex }): MarkAutomationDeleted =>
+  async ({ automationId }) => {
+    await tables.automations(deps.db).where({ id: automationId }).update({
+      isDeleted: true
+    })
+
+    return true
+  }
+
 export const storeAutomationTokenFactory =
   (deps: { db: Knex }): StoreAutomationToken =>
   async (automationToken: AutomationTokenRecord) => {
@@ -427,6 +442,7 @@ export const getAutomationsFactory =
       .automations(deps.db)
       .select()
       .whereIn(Automations.col.id, automationIds)
+      .andWhere(Automations.col.isDeleted, false)
 
     if (projectId?.length) {
       q.andWhere(Automations.col.projectId, projectId)
@@ -724,6 +740,27 @@ export const getAutomationRunsItemsFactory =
     }
   }
 
+export const queryAllAutomationFunctionRunsFactory =
+  (deps: { db: Knex }): QueryAllAutomationFunctionRuns =>
+  ({ automationId }) => {
+    const automationFunctionRunsQuery = tables
+      .automationRevisions(deps.db)
+      .select<AutomationFunctionRunRecord[]>(...AutomationFunctionRuns.cols)
+      .where({ automationId })
+      .join<AutomationRunRecord>(
+        AutomationRuns.name,
+        AutomationRuns.col.automationRevisionId,
+        AutomationRevisions.col.id
+      )
+      .join<AutomationFunctionRunRecord>(
+        AutomationFunctionRuns.name,
+        AutomationFunctionRuns.col.runId,
+        AutomationRuns.col.id
+      )
+
+    return executeBatchedSelect(automationFunctionRunsQuery)
+  }
+
 export type GetProjectAutomationsParams = {
   projectId: string
   args: ProjectAutomationsArgs
@@ -733,7 +770,10 @@ const getProjectAutomationsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetProjectAutomationsParams) => {
     const { projectId, args } = params
 
-    const q = tables.automations(deps.db).where(Automations.col.projectId, projectId)
+    const q = tables
+      .automations(deps.db)
+      .where(Automations.col.projectId, projectId)
+      .andWhere({ isDeleted: false })
 
     if (args.filter?.length) {
       q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)

@@ -12,6 +12,7 @@ import {
   WorkspaceNoAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
+import { TIME_MS } from '../../../core/helpers/timeConstants.js'
 
 describe('canBroadcastProjectActivityPolicy', () => {
   const buildSUT = (
@@ -57,7 +58,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -199,7 +200,24 @@ describe('canBroadcastProjectActivityPolicy', () => {
       expect(result).toBeOKResult()
     })
 
-    it('fails if user has no workspace role', async () => {
+    it('fails w/o workspace role, even if has project role', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => Roles.Stream.Reviewer,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspaceNoAccessError.code,
+        message: /You do not have access to this project's workspace/i
+      })
+    })
+
+    it('fails if user has no implicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => null
       })
@@ -210,7 +228,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       })
 
       expect(result).toBeAuthErrorResult({
-        code: WorkspaceNoAccessError.code
+        code: ProjectNoAccessError.code
       })
     })
 
@@ -248,7 +266,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - TIME_MS.second)
         })
       })
 

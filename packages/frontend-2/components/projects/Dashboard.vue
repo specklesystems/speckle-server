@@ -2,7 +2,10 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
-      <ProjectsMoveToWorkspaceAlert v-if="isWorkspacesEnabled" />
+      <ProjectsMoveToWorkspaceAlert
+        v-if="isWorkspacesEnabled"
+        @move-project="(id) => onMoveProject(id, 'projects')"
+      />
       <div class="flex items-center gap-2 mb-2">
         <Squares2X2Icon class="h-5 w-5" />
         <h1 class="text-heading-lg">Projects</h1>
@@ -40,7 +43,6 @@
         </div>
         <FormButton
           v-if="canCreatePersonalProject?.authorized"
-          class="!text-body-xs !font-normal"
           @click="openNewProject = true"
         >
           New project
@@ -61,7 +63,11 @@
       @create-project="openNewProject = true"
     />
     <template v-else-if="projects?.items?.length">
-      <ProjectsDashboardFilled :projects="projects" show-workspace-link />
+      <ProjectsDashboardFilled
+        :projects="projects"
+        show-workspace-link
+        @move-project="(id) => onMoveProject(id, 'project_card')"
+      />
       <InfiniteLoading
         :settings="{ identifier: infiniteLoaderId }"
         @infinite="infiniteLoad"
@@ -69,6 +75,11 @@
     </template>
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
     <ProjectsAddDialog v-model:open="openNewProject" />
+    <WorkspaceMoveProjectManager
+      v-if="showMoveProjectDialog"
+      v-model:open="showMoveProjectDialog"
+      :project-id="emittedProjectId || undefined"
+    />
   </div>
 </template>
 
@@ -80,6 +91,7 @@ import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
@@ -105,9 +117,10 @@ const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const filterProjectsToMove = ref(false)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
+const showMoveProjectDialog = ref(false)
+const emittedProjectId = ref<Nullable<string>>(null)
 const areQueriesLoading = useQueryLoading()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 useUserProjectsUpdatedTracking()
 
 const {
@@ -131,7 +144,7 @@ const {
       : selectedRoles.value?.length
       ? selectedRoles.value
       : null,
-    personalOnly: isWorkspaceNewPlansEnabled.value
+    personalOnly: isWorkspacesEnabled.value
   },
   cursor: null as Nullable<string>
 }))
@@ -179,6 +192,19 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) {
     state.complete()
   }
+}
+
+const mixpanel = useMixpanel()
+
+const onMoveProject = (projectId: string, location: string) => {
+  emittedProjectId.value = projectId
+  mixpanel.track('Move Project CTA Clicked', {
+    location,
+    // eslint-disable-next-line camelcase
+    workspace_id:
+      projects.value?.items.find((p) => p.id === projectId)?.workspace?.id || undefined
+  })
+  showMoveProjectDialog.value = true
 }
 
 watch(search, (newVal) => {

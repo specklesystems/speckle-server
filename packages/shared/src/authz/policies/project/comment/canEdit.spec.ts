@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { canEditProjectCommentPolicy } from './canEdit.js'
+import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 
 describe('canEditProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canEditProjectCommentPolicy>) =>
@@ -61,7 +62,7 @@ describe('canEditProjectCommentPolicy', () => {
       getWorkspaceSsoSession: async () => ({
         userId: 'user-id',
         providerId: 'provider-id',
-        validUntil: new Date()
+        validUntil: new Date(Date.now() + TIME_MS.day)
       }),
       ...overrides
     })
@@ -359,7 +360,7 @@ describe('canEditProjectCommentPolicy', () => {
         getWorkspaceSsoSession: async () => ({
           userId: 'user-id',
           providerId: 'provider-id',
-          validUntil: new Date(Date.now() - 1000)
+          validUntil: new Date(Date.now() - TIME_MS.second)
         })
       })
 

@@ -96,6 +96,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
 import { FormSwitch } from '@speckle/ui-components'
 import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
+import { TIME_MS } from '@speckle/shared'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -114,7 +115,7 @@ const debounceTrackLightConfigChange = debounce(() => {
     type: 'action',
     name: 'light-config-change'
   })
-}, 1000)
+}, TIME_MS.second)
 
 const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
   computed({

@@ -8,7 +8,7 @@
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
                 :to="workspaceRoute(project?.workspace.slug)"
-                :name="isWorkspaceNewPlansEnabled ? 'Home' : project?.workspace.name"
+                name="Projects"
                 :separator="false"
               />
             </template>
@@ -161,7 +161,6 @@ const projectId = writableAsyncComputed({
   asyncRead: false
 })
 
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const state = useSetupViewer({
   projectId
 })
@@ -288,11 +287,10 @@ watch(
       return
     }
 
-    if (missingThread) {
+    // Only show comment dialog if it's a federated view AND we have a missing referenced object
+    if (missingThread && isFederated.value && hasMissingReferencedObject.value) {
       limitsDialogType.value = 'comment'
       showLimitsDialog.value = true
-    } else {
-      showLimitsDialog.value = false
     }
   },
   { immediate: true }

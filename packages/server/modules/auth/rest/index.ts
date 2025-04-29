@@ -37,6 +37,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -146,11 +147,19 @@ export default function (app: Express) {
         if (!req.body.appId || !req.body.appSecret)
           throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
-        const authResponse = await refreshAppToken({
-          refreshToken: req.body.refreshToken,
-          appId: req.body.appId,
-          appSecret: req.body.appSecret
-        })
+        const authResponse = await withOperationLogging(
+          async () =>
+            await refreshAppToken({
+              refreshToken: req.body.refreshToken,
+              appId: req.body.appId,
+              appSecret: req.body.appSecret
+            }),
+          {
+            operationName: 'refreshAppToken',
+            operationDescription: 'Refresh an app token',
+            logger: req.log
+          }
+        )
         return res.send(authResponse)
       }
 
@@ -165,12 +174,20 @@ export default function (app: Express) {
           `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
         )
 
-      const authResponse = await createAppTokenFromAccessCode({
-        appId: req.body.appId,
-        appSecret: req.body.appSecret,
-        accessCode: req.body.accessCode,
-        challenge: req.body.challenge
-      })
+      const authResponse = await withOperationLogging(
+        async () =>
+          await createAppTokenFromAccessCode({
+            appId: req.body.appId,
+            appSecret: req.body.appSecret,
+            accessCode: req.body.accessCode,
+            challenge: req.body.challenge
+          }),
+        {
+          operationName: 'createAppTokenFromAccessCode',
+          operationDescription: 'Create an app token from an access code',
+          logger: req.log
+        }
+      )
       return res.send(authResponse)
     } catch (err) {
       req.log.info({ err }, 'Error while trying to generate a new token.')

@@ -38,6 +38,10 @@ export const EnvHelperMock = mockRequireModule<
   ['@/modules/shared/index']
 )
 
+export const StreamsRepositoryMock = mockRequireModule<
+  typeof import('@/modules/core/repositories/streams')
+>(['@/modules/core/repositories/streams'])
+
 export const mockAdminOverride = () => {
   const enable = (enabled: boolean) => {
     EnvHelperMock.mockFunction('adminOverrideEnabled', () => enabled)
