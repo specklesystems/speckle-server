@@ -25,7 +25,7 @@ import {
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { PaidWorkspacePlansNew, WorkspacePlan } from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspacePlan } from '@speckle/shared'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
 
@@ -212,8 +212,6 @@ export const getWorkspaceSubscriptionBySubscriptionIdFactory =
     return subscription ?? null
   }
 
-const newPlans = Object.values(PaidWorkspacePlansNew)
-
 export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
   ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
   async () => {
@@ -226,7 +224,7 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
         WorkspacePlans.col.workspaceId,
         'workspace_subscriptions.workspaceId'
       )
-      .whereIn(WorkspacePlans.col.name, newPlans)
+      .whereIn(WorkspacePlans.col.name, Object.values(PaidWorkspacePlans))
       .where('currentBillingCycleEnd', '<', cycleEnd)
       .select(WorkspaceSubscriptions.cols)
   }

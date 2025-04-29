@@ -2,7 +2,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { workspacePlanQuery } from '~~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   UnpaidWorkspacePlans,
   WorkspacePlanBillingIntervals,
   isPaidPlan as isPaidPlanShared,
@@ -69,8 +69,8 @@ export const useWorkspacePlan = (slug: string) => {
   const isFreePlan = computed(() => plan.value?.name === UnpaidWorkspacePlans.Free)
   const isBusinessPlan = computed(
     () =>
-      plan.value?.name === PaidWorkspacePlansNew.Pro ||
-      plan.value?.name === PaidWorkspacePlansNew.ProUnlimited
+      plan.value?.name === PaidWorkspacePlans.Pro ||
+      plan.value?.name === PaidWorkspacePlans.ProUnlimited
   )
   const isUnlimitedPlan = computed(
     () => plan.value?.name === UnpaidWorkspacePlans.Unlimited
@@ -115,7 +115,7 @@ export const useWorkspacePlan = (slug: string) => {
   const editorSeatPriceFormatted = computed(() => {
     if (plan.value?.name && isPaidPlanShared(plan.value?.name)) {
       return formatPrice(
-        prices.value?.[plan.value?.name as PaidWorkspacePlansNew]?.[
+        prices.value?.[plan.value?.name as PaidWorkspacePlans]?.[
           intervalIsYearly.value
             ? WorkspacePlanBillingIntervals.Yearly
             : WorkspacePlanBillingIntervals.Monthly

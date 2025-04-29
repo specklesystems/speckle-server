@@ -283,7 +283,7 @@ describe('subscriptions @gatekeeper', () => {
     })
   })
 
-  describe('addWorkspaceSubscriptionSeatIfNeededFactoryNew returns a function, that', () => {
+  describe('addWorkspaceSubscriptionSeatIfNeededFactory returns a function, that', () => {
     it('just returns if the workspacePlan is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const addWorkspaceSubscriptionSeatIfNeeded =

@@ -5,11 +5,7 @@ import {
 import { Currency } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
-  WorkspacePlanBillingIntervals
-} from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { expect } from 'chai'
 import { flatten } from 'lodash'
 import { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
@@ -50,7 +46,7 @@ const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
 }
 
 const fakeGetRecurringPrices = async () => {
-  const pricePairs = Object.values(PaidWorkspacePlansNew).map((plan) => {
+  const pricePairs = Object.values(PaidWorkspacePlans).map((plan) => {
     const { productId, monthly, yearly } = testProductAndPriceIds[plan]
     return [
       {
@@ -95,7 +91,7 @@ describe('prices @gatekeeper', () => {
       expect(result).to.be.ok
       for (const currency of Object.values(Currency)) {
         const newPlans = result[currency]
-        for (const newPaidPlan of Object.values(PaidWorkspacePlansNew)) {
+        for (const newPaidPlan of Object.values(PaidWorkspacePlans)) {
           const plan = newPlans[newPaidPlan]
           for (const interval of Object.values(WorkspacePlanBillingIntervals)) {
             const price = plan[interval]

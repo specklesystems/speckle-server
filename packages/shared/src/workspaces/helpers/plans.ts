@@ -4,25 +4,14 @@ import { throwUncoveredError } from '../../core/helpers/error.js'
  * PLANS
  *
  * TODO:
- * Old/removable: starter, plus, business
- * - rename consts remove suffix 'New' 'Old'
- * - db migration that removes old statuses/plans from even dev dbs
- * - eventbus events
  * - 'team' -> const
  */
 
-export const PaidWorkspacePlansNew = <const>{
+export const PaidWorkspacePlans = <const>{
   Team: 'team', // actually 'Starter'
   TeamUnlimited: 'teamUnlimited',
   Pro: 'pro', // actually 'Business'
   ProUnlimited: 'proUnlimited'
-}
-
-export type PaidWorkspacePlansNew =
-  (typeof PaidWorkspacePlansNew)[keyof typeof PaidWorkspacePlansNew]
-
-export const PaidWorkspacePlans = <const>{
-  ...PaidWorkspacePlansNew
 }
 
 export type PaidWorkspacePlans =

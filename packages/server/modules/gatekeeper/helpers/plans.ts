@@ -1,5 +1,5 @@
-import { PaidWorkspacePlansNew, WorkspacePlans } from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspacePlans } from '@speckle/shared'
 
 export const isPaidPlanType = (plan: WorkspacePlans): boolean => {
-  return (Object.values(PaidWorkspacePlansNew) as string[]).includes(plan)
+  return (Object.values(PaidWorkspacePlans) as string[]).includes(plan)
 }

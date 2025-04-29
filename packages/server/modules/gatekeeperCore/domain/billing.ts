@@ -1,6 +1,6 @@
-import { PaidWorkspacePlansNew, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 
-export type WorkspacePricingProducts = PaidWorkspacePlansNew
+export type WorkspacePricingProducts = PaidWorkspacePlans
 
 export const Currency = {
   usd: 'usd',
@@ -14,7 +14,7 @@ type IntervalPrices = Record<
 
 export type WorkspacePlanProductPrices = Record<
   Currency,
-  Record<PaidWorkspacePlansNew, IntervalPrices>
+  Record<PaidWorkspacePlans, IntervalPrices>
 >
 
 export type Currency = (typeof Currency)[keyof typeof Currency]

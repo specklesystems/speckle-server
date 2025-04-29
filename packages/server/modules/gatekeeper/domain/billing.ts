@@ -13,7 +13,6 @@ import {
   Optional,
   PaidWorkspacePlan,
   PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
   UnpaidWorkspacePlan,
   WorkspacePlan,
   WorkspacePlanBillingIntervals
@@ -185,7 +184,7 @@ type MultiCurrencyProductPrice = {
 }
 
 export type WorkspacePlanProductAndPriceIds = Record<
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   { productId: string } & MultiCurrencyProductPrice
 >
 

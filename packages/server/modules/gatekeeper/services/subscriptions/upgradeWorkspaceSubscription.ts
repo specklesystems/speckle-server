@@ -24,7 +24,6 @@ import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekee
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
 import {
   PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
   throwUncoveredError,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
@@ -106,7 +105,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     )
       throw new WorkspacePlanUpgradeError("Can't upgrade to the same plan")
 
-    const planOrder: Record<PaidWorkspacePlansNew, number> = {
+    const planOrder: Record<PaidWorkspacePlans, number> = {
       team: 1,
       teamUnlimited: 2,
       pro: 3,
@@ -115,9 +114,7 @@ export const upgradeWorkspaceSubscriptionFactory =
     if (
       !isUpgradeWorkspacePlanValid({ current: workspacePlan.name, upgrade: targetPlan })
     ) {
-      if (
-        planOrder[workspacePlan.name] > planOrder[targetPlan as PaidWorkspacePlansNew]
-      ) {
+      if (planOrder[workspacePlan.name] > planOrder[targetPlan]) {
         throw new WorkspacePlanUpgradeError("Can't upgrade to a less expensive plan")
       }
       throw new InvalidWorkspacePlanUpgradeError(null, {

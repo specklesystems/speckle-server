@@ -17,7 +17,7 @@ import {
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   throwUncoveredError
 } from '@speckle/shared'
@@ -193,7 +193,7 @@ export const getTotalSeatsCountByPlanFactory =
     workspacePlan,
     subscriptionData
   }: {
-    workspacePlan: PaidWorkspacePlansNew
+    workspacePlan: PaidWorkspacePlans
     subscriptionData: Pick<SubscriptionData, 'products'>
   }) => {
     const productId = getWorkspacePlanProductId({
