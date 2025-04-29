@@ -132,7 +132,8 @@ watch(dialogOpen, (value) => {
       type: props.limitType === 'version' ? 'version' : 'model',
       location: 'viewer',
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceSlug
+      workspace_id: props.workspaceSlug,
+      limitType: props.limitType
     })
   }
 })

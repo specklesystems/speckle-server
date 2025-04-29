@@ -4,7 +4,7 @@
       class="p-2 pl-3 bg-info-lighter rounded-md flex items-center justify-between gap-x-2"
     >
       <p class="text-primary-focus text-body-3xs font-semibold dark:text-foreground">
-        You're on a free plan.
+        You're on the Free plan
       </p>
       <FormButton
         size="sm"

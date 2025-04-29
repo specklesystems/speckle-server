@@ -25,11 +25,14 @@
             :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
           />
         </template>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-          Add another user
-        </FormButton>
+        <div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            Add another user
+          </FormButton>
+        </div>
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
@@ -89,7 +92,7 @@ const { handleSubmit } = useForm<InviteProjectForm>({
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -123,6 +126,22 @@ const addInviteItem = () => {
   pushInvite({
     ...emptyInviteProjectItem,
     project: { id: props.project.id, name: props.project.name }
+  })
+}
+
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Reviewer
+    })
   })
 }
 

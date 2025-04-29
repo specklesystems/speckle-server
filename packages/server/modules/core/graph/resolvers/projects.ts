@@ -484,7 +484,8 @@ export = {
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -494,7 +495,8 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreams({
           userId: ctx.userId!,
@@ -507,7 +509,8 @@ export = {
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
           personalOnly: args.filter?.personalOnly,
-          sortBy: args.sortBy || undefined
+          sortBy: args.sortBy || undefined,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         })
       ])
 

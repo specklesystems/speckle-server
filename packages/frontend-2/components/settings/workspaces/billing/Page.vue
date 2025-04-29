@@ -16,7 +16,7 @@
       class="mb-6"
     />
     <div class="flex flex-col gap-y-6 md:gap-y-10">
-      <section v-if="isNewPlan && !isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
+      <section v-if="!isFreePlan" class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Summary" subheading />
         <SettingsWorkspacesBillingSummary :workspace-id="workspace?.id" />
       </section>
@@ -52,14 +52,13 @@
 <script lang="ts" setup>
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import type { WorkspaceRoles } from '@speckle/shared'
+import { type WorkspaceRoles, workspaceReachedPlanLimit } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   BillingInterval,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
-import { workspaceReachedPlanLimit } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -83,7 +82,7 @@ graphql(`
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const { isFreePlan, isNewPlan } = useWorkspacePlan(slug.value)
+const { isFreePlan } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({

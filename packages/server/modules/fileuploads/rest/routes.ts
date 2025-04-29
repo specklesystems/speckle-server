@@ -4,14 +4,13 @@ import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/
 import request from 'request'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
 
 export const getRouter = () => {
   const app = Router()
@@ -20,7 +19,6 @@ export const getRouter = () => {
     async (req, res, next) => {
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
-          getRoles: getRolesFactory({ db }),
           getStream: getStreamFactory({ db })
         })
       )(req, res, next)

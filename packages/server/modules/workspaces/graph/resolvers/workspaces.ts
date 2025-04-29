@@ -218,6 +218,7 @@ import {
   throwIfAuthNotOk
 } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -395,9 +396,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { projectId } = args
 
           const inviteCount = args.inputs.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > WorkspaceInvitesLimit && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              `Maximum ${WorkspaceInvitesLimit} invites can be sent at once by non admins`
             )
           }
 
@@ -1168,9 +1169,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { workspaceId } = args
 
           const inviteCount = args.input.length
-          if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+          if (inviteCount > WorkspaceInvitesLimit && ctx.role !== Roles.Server.Admin) {
             throw new InviteCreateValidationError(
-              'Maximum 10 invites can be sent at once by non admins'
+              `Maximum ${WorkspaceInvitesLimit} invites can be sent at once by non admins`
             )
           }
 
@@ -1501,8 +1502,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
         },
         role: async (parent, _args, ctx) => {
-          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
-          return workspace?.role || null
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: ctx.userId!,
+            workspaceId: parent.id
+          })
+          return acl?.role || null
         },
         team: async (parent, args) => {
           const roles = args.filter?.roles?.map((r) => {
@@ -1751,6 +1755,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }
 
           return parent.email
+        }
+      },
+      ProjectCollaborator: {
+        workspaceRole: async (parent, _args, ctx) => {
+          const project = await ctx.loaders.streams.getStream.load(parent.projectId)
+          if (!project?.workspaceId) return null
+
+          const acl = await ctx.loaders.workspaces!.getWorkspaceRole.load({
+            userId: parent.user.id,
+            workspaceId: project.workspaceId
+          })
+          return acl?.role || null
         }
       },
       User: {
