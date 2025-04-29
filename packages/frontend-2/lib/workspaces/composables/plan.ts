@@ -88,9 +88,6 @@ export const useWorkspacePlan = (slug: string) => {
   })
 
   // Plan status information
-  const statusIsExpired = computed(
-    () => plan.value?.status === WorkspacePlanStatuses.Expired
-  )
   const statusIsCanceled = computed(
     () => plan.value?.status === WorkspacePlanStatuses.Canceled
   )
@@ -134,7 +131,6 @@ export const useWorkspacePlan = (slug: string) => {
 
   return {
     plan,
-    statusIsExpired,
     statusIsCanceled,
     isFreePlan,
     billingInterval,
