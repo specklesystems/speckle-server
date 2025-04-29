@@ -42,7 +42,13 @@ export const handleSubscriptionUpdateFactory =
     const subscription = await getWorkspaceSubscriptionBySubscriptionId({
       subscriptionId: subscriptionData.subscriptionId
     })
-    if (!subscription) throw new WorkspaceSubscriptionNotFoundError()
+    if (!subscription) {
+      if (subscriptionData.status === 'incomplete') {
+        // the checkout was not completed, so not finding a matching workspace subscription is expected
+        return
+      }
+      throw new WorkspaceSubscriptionNotFoundError()
+    }
 
     const workspacePlan = await getWorkspacePlan({
       workspaceId: subscription.workspaceId
