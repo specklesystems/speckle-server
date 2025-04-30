@@ -85,7 +85,7 @@
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
 
-                <div @click="openFeedbackDialog">
+                <div @click="openChat">
                   <LayoutSidebarMenuGroupItem label="Give us feedback">
                     <template #icon>
                       <IconFeedback class="size-4 text-foreground-2" />
@@ -161,6 +161,11 @@ const { activeWorkspaceSlug } = useNavigation()
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
 
+const openChat = () => {
+  window.Intercom('showNewMessage', '')
+  isOpenMobile.value = false
+}
+
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspaceSlug.value
@@ -170,10 +175,5 @@ const projectsLink = computed(() => {
 })
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
-  isOpenMobile.value = false
 }
 </script>

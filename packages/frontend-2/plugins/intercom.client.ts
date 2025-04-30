@@ -16,6 +16,9 @@ declare global {
       ): void
       (command: 'shutdown'): void
       (command: 'update'): void
+      (command: 'show'): void
+      (command: 'hide'): void
+      (command: 'showNewMessage', message?: string): void
     }
   }
 }
