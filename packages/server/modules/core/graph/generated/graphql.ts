@@ -1013,18 +1013,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspaceCollaborator = {
-  __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar?: Maybe<Scalars['String']['output']>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollection = {
-  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<DiscoverableWorkspaceCollaborator>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1229,6 +1217,13 @@ export type LimitedUserWorkspaceRoleArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type LimitedUserCollection = {
+  __typename?: 'LimitedUserCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int']['output'];
+};
+
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
@@ -1243,7 +1238,7 @@ export type LimitedWorkspace = {
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
-  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+  team?: Maybe<LimitedUserCollection>;
 };
 
 
@@ -1991,6 +1986,7 @@ export type PendingStreamCollaborator = {
   token?: Maybe<Scalars['String']['output']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
+  workspaceSlug?: Maybe<Scalars['String']['output']>;
 };
 
 export type PendingWorkspaceCollaborator = {
@@ -5317,8 +5313,6 @@ export type ResolversTypes = {
   DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
-  DiscoverableWorkspaceCollaborator: ResolverTypeWrapper<DiscoverableWorkspaceCollaborator>;
-  DiscoverableWorkspaceCollaboratorCollection: ResolverTypeWrapper<DiscoverableWorkspaceCollaboratorCollection>;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
@@ -5333,7 +5327,8 @@ export type ResolversTypes = {
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
-  LimitedWorkspace: ResolverTypeWrapper<LimitedWorkspace>;
+  LimitedUserCollection: ResolverTypeWrapper<Omit<LimitedUserCollection, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
+  LimitedWorkspace: ResolverTypeWrapper<Omit<LimitedWorkspace, 'team'> & { team?: Maybe<ResolversTypes['LimitedUserCollection']> }>;
   LimitedWorkspaceJoinRequest: ResolverTypeWrapper<LimitedWorkspaceJoinRequestGraphQLReturn>;
   LimitedWorkspaceJoinRequestCollection: ResolverTypeWrapper<Omit<LimitedWorkspaceJoinRequestCollection, 'items'> & { items: Array<ResolversTypes['LimitedWorkspaceJoinRequest']> }>;
   MarkCommentViewedInput: MarkCommentViewedInput;
@@ -5651,8 +5646,6 @@ export type ResolversParentTypes = {
   DeleteVersionsInput: DeleteVersionsInput;
   DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
-  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaborator;
-  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollection;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: FileUploadGraphQLReturn;
@@ -5667,7 +5660,8 @@ export type ResolversParentTypes = {
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
-  LimitedWorkspace: LimitedWorkspace;
+  LimitedUserCollection: Omit<LimitedUserCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
+  LimitedWorkspace: Omit<LimitedWorkspace, 'team'> & { team?: Maybe<ResolversParentTypes['LimitedUserCollection']> };
   LimitedWorkspaceJoinRequest: LimitedWorkspaceJoinRequestGraphQLReturn;
   LimitedWorkspaceJoinRequestCollection: Omit<LimitedWorkspaceJoinRequestCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedWorkspaceJoinRequest']> };
   MarkCommentViewedInput: MarkCommentViewedInput;
@@ -6326,18 +6320,6 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type DiscoverableWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscoverableWorkspaceCollaborator'] = ResolversParentTypes['DiscoverableWorkspaceCollaborator']> = {
-  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscoverableWorkspaceCollaboratorCollection'] = ResolversParentTypes['DiscoverableWorkspaceCollaboratorCollection']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['DiscoverableWorkspaceCollaborator']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
   branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6413,13 +6395,20 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type LimitedUserCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedUserCollection'] = ResolversParentTypes['LimitedUserCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type LimitedWorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedWorkspace'] = ResolversParentTypes['LimitedWorkspace']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  team?: Resolver<Maybe<ResolversTypes['DiscoverableWorkspaceCollaboratorCollection']>, ParentType, ContextType, RequireFields<LimitedWorkspaceTeamArgs, 'limit'>>;
+  team?: Resolver<Maybe<ResolversTypes['LimitedUserCollection']>, ParentType, ContextType, RequireFields<LimitedWorkspaceTeamArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6609,6 +6598,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  workspaceSlug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7719,14 +7709,13 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  DiscoverableWorkspaceCollaborator?: DiscoverableWorkspaceCollaboratorResolvers<ContextType>;
-  DiscoverableWorkspaceCollaboratorCollection?: DiscoverableWorkspaceCollaboratorCollectionResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
   GendoAIRender?: GendoAiRenderResolvers<ContextType>;
   GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;
+  LimitedUserCollection?: LimitedUserCollectionResolvers<ContextType>;
   LimitedWorkspace?: LimitedWorkspaceResolvers<ContextType>;
   LimitedWorkspaceJoinRequest?: LimitedWorkspaceJoinRequestResolvers<ContextType>;
   LimitedWorkspaceJoinRequestCollection?: LimitedWorkspaceJoinRequestCollectionResolvers<ContextType>;

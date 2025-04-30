@@ -21,6 +21,7 @@
     "lint:ci": "yarn lint:tsc",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:ci": "vitest --run --coverage",
     "test:coverage": "vitest --coverage",
     "test:single-run": "vitest run"
   },
