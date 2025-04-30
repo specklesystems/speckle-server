@@ -77,7 +77,7 @@ export default class ObjectLoader2 {
     if (item) {
       return item.base
     }
-    return await this.#deferments.defer({ id: params.id })
+    throw new Error(`Object with id ${params.id} not found in cache or database`)
   }
 
   async getTotalObjectCount() {
@@ -110,8 +110,9 @@ export default class ObjectLoader2 {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
-      this.#deferments.undefer(item)
+      //order matters here with found before undefer
       this.#found.set(item.baseId, true)
+      this.#deferments.undefer(item)
       yield item.base
       count++
       if (count >= total) {
