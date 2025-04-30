@@ -1,4 +1,5 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import { useIsWorkspacesEnabled } from '~/composables/globals'
 
 declare global {
   interface Window {
@@ -24,6 +25,11 @@ declare global {
 }
 
 export default defineNuxtPlugin(() => {
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+  // Only initialize Intercom if workspaces are enabled
+  if (!isWorkspacesEnabled.value) return
+
   // Initialize Intercom with auth state changes
   useOnAuthStateChange()(
     async (user) => {
