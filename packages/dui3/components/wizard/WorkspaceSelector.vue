@@ -72,12 +72,14 @@ const { result: workspacesResult } = useQuery(
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
 
-const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
+const workspaces = computed(() =>
+  workspacesResult.value?.activeUser?.workspaces.items.filter(
+    (w) => w.creationState?.completed
+  )
+)
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
 
 watch(selectedWorkspace, (newVal) => {
-  console.log(newVal)
-
   emit('update:selectedWorkspace', newVal)
 })
 
