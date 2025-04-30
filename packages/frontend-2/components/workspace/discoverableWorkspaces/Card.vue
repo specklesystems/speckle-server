@@ -7,7 +7,7 @@
         </div>
         <UserAvatarGroup
           :users="workspace.team?.items ?? []"
-          :max-count="10"
+          :max-count="5"
           size="sm"
         />
       </div>
@@ -16,7 +16,7 @@
       <FormButton v-if="requestStatus" color="outline" size="sm" disabled>
         Join request sent
       </FormButton>
-      <div v-else class="flex flex-col gap-2 items-end">
+      <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
           Request to join
         </FormButton>

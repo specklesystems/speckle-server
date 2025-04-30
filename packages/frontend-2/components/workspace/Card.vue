@@ -7,7 +7,7 @@
     }"
     @click="clickable && onClick"
   >
-    <div class="flex justify-between gap-4">
+    <div class="flex flex-col sm:flex-row justify-between gap-4">
       <div class="flex gap-4">
         <WorkspaceAvatar :name="name" :logo="logo" size="xl" />
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
