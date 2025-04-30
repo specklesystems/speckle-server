@@ -217,6 +217,10 @@ import {
   throwIfAuthNotOk
 } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 
 const eventBus = getEventBus()
@@ -251,6 +255,90 @@ const buildCollectAndValidateResourceTargets = () =>
       })
   })
 
+const buildFinalizeWorkspaceInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({
+      db,
+      filterQuery: workspaceInviteValidityFilter
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: ({ eventName, payload }) =>
+      getEventBus().emit({
+        eventName,
+        payload
+      }),
+    validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
+      getWorkspace: getWorkspaceFactory({ db })
+    }),
+    processInvite: processFinalizedWorkspaceInviteFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      updateWorkspaceRole: updateWorkspaceRoleFactory({
+        getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+        findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+        getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+        upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+        emitWorkspaceEvent: getEventBus().emit,
+        ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+          eventEmit: getEventBus().emit
+        })
+      })
+    }),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
+  })
+
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  emitEvent: getEventBus().emit
+})
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaborator
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
+  })
+
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory({ db }),
@@ -265,7 +353,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeProjectInvite()
   })
 
 const buildCreateAndSendWorkspaceInvite = () =>
@@ -283,9 +372,9 @@ const buildCreateAndSendWorkspaceInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeWorkspaceInvite()
   })
-const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
 })
@@ -1214,52 +1303,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         use: async (_parent, args, ctx) => {
           const logger = ctx.log
 
-          const finalizeInvite = finalizeResourceInviteFactory({
-            findInvite: findInviteFactory({
-              db,
-              filterQuery: workspaceInviteValidityFilter
-            }),
-            deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-            insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-            emitEvent: ({ eventName, payload }) =>
-              getEventBus().emit({
-                eventName,
-                payload
-              }),
-            validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
-              getWorkspace: getWorkspaceFactory({ db })
-            }),
-            processInvite: processFinalizedWorkspaceInviteFactory({
-              getWorkspace: getWorkspaceFactory({ db }),
-              updateWorkspaceRole: updateWorkspaceRoleFactory({
-                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-                findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
-                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: getEventBus().emit,
-                ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-                  eventEmit: getEventBus().emit
-                })
-              })
-            }),
-            findEmail: findEmailFactory({ db }),
-            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-              createUserEmail: createUserEmailFactory({ db }),
-              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-              findEmail: findEmailFactory({ db }),
-              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-              }),
-              requestNewEmailVerification
-            }),
-            collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-            getUser,
-            getServerInfo
-          })
-
+          const finalizeInvite = buildFinalizeWorkspaceInvite()
           await withOperationLogging(
             async () =>
               await finalizeInvite({

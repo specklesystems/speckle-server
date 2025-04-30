@@ -202,7 +202,8 @@ export const finalizeResourceInviteFactory =
       token,
       resourceType,
       finalizerResourceAccessLimits,
-      allowAttachingNewEmail
+      allowAttachingNewEmail,
+      trueFinalizerId
     } = params
 
     const finalizerUserTarget = buildUserTarget(finalizerUserId)
@@ -318,7 +319,8 @@ export const finalizeResourceInviteFactory =
       payload: {
         invite,
         accept,
-        finalizerUserId
+        finalizerUserId,
+        trueFinalizerUserId: trueFinalizerId || finalizerUserId
       }
     })
   }

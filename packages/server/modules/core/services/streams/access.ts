@@ -208,8 +208,9 @@ export const addOrUpdateStreamCollaboratorFactory =
         eventName: ServerInvitesEvents.Finalized,
         payload: {
           invite: fromInvite,
-          finalizerUserId: addedById,
-          accept: true
+          finalizerUserId: userId,
+          accept: true,
+          trueFinalizerUserId: addedById
         }
       })
     } else {

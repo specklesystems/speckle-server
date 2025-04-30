@@ -1,78 +1,124 @@
 /* instanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const { buildApolloServer } = require('@/app')
-const { StreamFavorites, Streams, Users } = require('@/modules/core/dbSchema')
-const { truncateTables } = require('@/test/hooks')
-const { gql } = require('graphql-tag')
-const { sleep } = require('@/test/helpers')
-const {
+import { buildApolloServer } from '@/app'
+import { StreamFavorites, Streams, Users } from '@/modules/core/dbSchema'
+import { truncateTables } from '@/test/hooks'
+import gql from 'graphql-tag'
+import { sleep } from '@/test/helpers'
+import {
   createAuthedTestContext,
   createTestContext,
-  executeOperation
-} = require('@/test/graphqlHelper')
-const {
+  executeOperation,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import {
   getStreamFactory,
-  createStreamFactory
-} = require('@/modules/core/repositories/streams')
-const { db } = require('@/db/knex')
-const {
+  createStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const {
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -91,7 +137,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -205,29 +252,35 @@ const totalOwnedStreamsFavoritesNew = gql`
 describe('Favorite streams', () => {
   const myPubStream = {
     name: 'My Stream 1',
-    isPublic: false
+    isPublic: false,
+    id: ''
   }
   const myStream = {
     name: 'My Stream 2',
-    isPublic: true
+    isPublic: true,
+    id: ''
   }
   const notMyStream = {
     name: 'Not My Stream 1',
-    isPublic: false
+    isPublic: false,
+    id: ''
   }
   const notMyPubStream = {
     name: 'Not My Stream 2',
-    isPublic: true
+    isPublic: true,
+    id: ''
   }
   const me = {
     name: 'Itsa Me',
     email: 'me@example.org',
-    password: 'sn3aky-1337-b1m'
+    password: 'sn3aky-1337-b1m',
+    id: ''
   }
   const otherGuy = {
     name: 'Some Other DUde',
     email: 'otherguy@example.org',
-    password: 'sn3aky-1337-b1m'
+    password: 'sn3aky-1337-b1m',
+    id: ''
   }
 
   before(async function () {
@@ -259,9 +312,9 @@ describe('Favorite streams', () => {
 
   describe('when authenticated', () => {
     /** @type {import('@/test/graphqlHelper').ServerAndContext} */
-    let apollo
+    let apollo: ServerAndContext
 
-    const favoriteStream = async (sid, favorited) =>
+    const favoriteStream = async (sid: string, favorited: boolean) =>
       await executeOperation(apollo, favoriteMutationGql, { sid, favorited })
 
     before(async () => {
@@ -274,7 +327,7 @@ describe('Favorite streams', () => {
       await StreamFavorites.knex().truncate()
     })
 
-    const accessibleStreamIds = [
+    const accessibleStreamIds = <const>[
       [() => myPubStream.id, 'owned and public'],
       [() => myStream.id, 'owned and not public'],
       [() => notMyPubStream.id, 'not owned, but public']
@@ -292,7 +345,7 @@ describe('Favorite streams', () => {
         expect(result.errors).to.not.be.ok
         expect(result.data?.streamFavorite?.favoritedDate).to.be.a('date')
         expect(result.data?.streamFavorite?.favoritedDate.getTime()).to.satisfy(
-          (t) => t > beforeTime && t < afterTime
+          (t: number) => t > beforeTime && t < afterTime
         )
         expect(result.data?.streamFavorite?.id).to.equal(streamId)
         expect(result.data?.streamFavorite?.favoritesCount).to.equal(1)
@@ -302,19 +355,19 @@ describe('Favorite streams', () => {
     it("can't be favorited if not owned and not public", async () => {
       const result = await favoriteStream(notMyStream.id, true)
 
-      expect(result.data.streamFavorite).to.not.be.ok
+      expect(result.data!.streamFavorite).to.not.be.ok
       expect(result.errors).to.have.lengthOf(1)
-      expect(result.errors.at(0).message).to.contain("doesn't have access")
+      expect(result.errors!.at(0)!.message).to.contain("doesn't have access")
     })
 
     describe('and favorited', () => {
       const favoritedStream = {
         name: 'Favorited Stream',
-        isPublic: true
+        isPublic: true,
+        id: ''
       }
 
-      /** @type {{favoritedDate: Date, favoritesCount: number, id: string}} */
-      let favoritingResults
+      let favoritingResults: { favoritedDate: Date; favoritesCount: number; id: string }
 
       before(async () => {
         favoritedStream.id = await createStream({ ...favoritedStream, ownerId: me.id })
@@ -345,12 +398,12 @@ describe('Favorite streams', () => {
 
     describe('and being queried', () => {
       const favoritableStreams = [
-        { name: 'Random 1', isPublic: true },
-        { name: 'Random 2', isPublic: true },
-        { name: 'Random 2', isPublic: true }
+        { name: 'Random 1', isPublic: true, id: '' },
+        { name: 'Random 2', isPublic: true, id: '' },
+        { name: 'Random 2', isPublic: true, id: '' }
       ]
 
-      const getFavorites = async (cursor, limit = 10) =>
+      const getFavorites = async (cursor: string | null, limit = 10) =>
         await executeOperation(apollo, favoriteStreamsQueryGql, { cursor, limit })
 
       const favoritedStreamIds = () => favoritableStreams.map((s) => s.id)
@@ -380,7 +433,7 @@ describe('Favorite streams', () => {
         )
 
         expect(data).to.be.ok
-        expect(data.otherUser?.favoriteStreams).to.not.be.ok
+        expect(data!.otherUser?.favoriteStreams).to.not.be.ok
         expect((errors || []).map((e) => e.message).join()).to.match(
           /cannot view another user's favorite streams/i
         )
@@ -394,22 +447,24 @@ describe('Favorite streams', () => {
         expect(results.data?.activeUser?.favoriteStreams?.items).to.have.lengthOf(
           ids.length
         )
-        expect(results.data.activeUser.favoriteStreams.totalCount).to.equal(ids.length)
-        expect(results.data.activeUser.favoriteStreams.cursor).to.be.a('string')
+        expect(results.data!.activeUser.favoriteStreams.totalCount).to.equal(ids.length)
+        expect(results.data!.activeUser.favoriteStreams.cursor).to.be.a('string')
       })
 
       it('are paginated correctly', async () => {
         let nextCursor = null
-        let returnedStreamIds = []
+        let returnedStreamIds: string[] = []
 
-        const getPaginatedAndAssert = async (nextCursor) => {
+        const getPaginatedAndAssert = async (nextCursor: string | null) => {
           const results = await getFavorites(nextCursor, 1)
           expect(results.errors).to.not.be.ok
           expect(results.data?.activeUser?.favoriteStreams).to.be.ok
 
           return {
-            cursor: results.data.activeUser.favoriteStreams.cursor,
-            sids: results.data.activeUser.favoriteStreams.items.map((i) => i.id)
+            cursor: results.data!.activeUser.favoriteStreams.cursor,
+            sids: results.data!.activeUser.favoriteStreams.items.map(
+              (i: { id: string }) => i.id
+            )
           }
         }
 
@@ -456,8 +511,7 @@ describe('Favorite streams', () => {
   })
 
   describe('when not authenticated', () => {
-    /** @type {import('@/test/graphqlHelper').ServerAndContext} */
-    let apollo
+    let apollo: ServerAndContext
 
     before(async () => {
       apollo = {
@@ -472,15 +526,15 @@ describe('Favorite streams', () => {
         favorited: true
       })
 
-      expect(result.data.streamFavorite).to.not.be.ok
+      expect(result.data!.streamFavorite).to.not.be.ok
       expect(result.errors).to.have.lengthOf(1)
-      expect(result.errors.at(0).message).to.contain('Must provide an auth token')
+      expect(result.errors!.at(0)!.message).to.contain('Must provide an auth token')
     })
 
     it("can't be retrieved", async () => {
       const result = await executeOperation(apollo, favoriteStreamsQueryGql)
 
-      expect(result.data.activeUser).to.be.null
+      expect(result.data!.activeUser).to.be.null
       expect(result.errors).to.not.be.ok
     })
   })
