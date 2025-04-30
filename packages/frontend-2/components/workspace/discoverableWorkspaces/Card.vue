@@ -9,14 +9,8 @@
       </div>
     </template>
     <template #actions>
-      <FormButton
-        v-if="workspace.requestStatus"
-        color="outline"
-        size="sm"
-        disabled
-        class="capitalize"
-      >
-        {{ workspace.requestStatus }}
+      <FormButton v-if="workspace.requestStatus" color="outline" size="sm" disabled>
+        Join request sent
       </FormButton>
       <div v-else class="flex flex-col gap-2 items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
