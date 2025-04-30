@@ -23,9 +23,11 @@ graphql(`
     team {
       totalCount
       items {
-        id
-        name
-        avatar
+        user {
+          id
+          name
+          avatar
+        }
       }
     }
   }
@@ -43,9 +45,11 @@ graphql(`
       team {
         totalCount
         items {
-          id
-          name
-          avatar
+          user {
+            id
+            name
+            avatar
+          }
         }
       }
     }
