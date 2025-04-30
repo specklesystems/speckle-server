@@ -35,6 +35,8 @@
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { homeRoute, bookDemoRoute } from '~/lib/common/helpers/route'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 useHead({
   title: 'Welcome to Speckle'
@@ -49,9 +51,11 @@ const isOnboardingForced = useIsOnboardingForced()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { setUserOnboardingComplete } = useProcessOnboarding()
 const { logout } = useAuthManager()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const onSkip = () => {
   setUserOnboardingComplete()
-  navigateTo(isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
+  navigateTo(!isMobile.value && isWorkspacesEnabled.value ? bookDemoRoute : homeRoute)
 }
 </script>
