@@ -379,13 +379,17 @@ type LimitedWorkspace {
   """
   Workspace members visible to people with verified email domain
   """
-  team(cursor: String, limit: Int! = 25): LimitedUserCollection
+  team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
 }
 
-type LimitedUserCollection {
+type LimitedWorkspaceCollaboratorCollection {
   totalCount: Int!
   cursor: String
-  items: [LimitedUser!]!
+  items: [LimitedWorkspaceCollaborator!]!
+}
+
+type LimitedWorkspaceCollaborator {
+  user: LimitedUser!
 }
 
 type WorkspaceDomain {
