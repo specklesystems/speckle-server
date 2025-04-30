@@ -68,6 +68,21 @@
         :description="featureMetadata.description"
       />
     </ul>
+    <div v-if="showAddons && displayAddons.length > 0" class="mt-auto lg:h-72 pt-8">
+      <h5 class="text-body-2xs mb-2 text-foreground-2">Available add-ons</h5>
+      <div class="flex flex-col gap-y-2">
+        <PricingTableAddon
+          v-for="addon in displayAddons"
+          :key="addon.title"
+          :title="addon.title"
+          :base-plan="props.plan === WorkspacePlans.Team ? 'team' : 'pro'"
+          :is-yearly-interval-selected="isYearlyIntervalSelected"
+          :currency="props.currency"
+          :tooltip="addon.tooltip"
+          :fixed-price="addon.fixedPrice"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -100,7 +115,9 @@ const props = defineProps<{
   activeBillingInterval?: MaybeNullOrUndefined<BillingInterval>
   hasSubscription?: MaybeNullOrUndefined<boolean>
   currency?: Currency
+  showAddons?: boolean
 }>()
+
 const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected', {
   default: false
 })
@@ -223,8 +240,12 @@ const isCurrentPlan = computed(() => {
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan &&
-    !isYearlyIntervalSelected.value
+    !isYearlyIntervalSelected.value &&
+    (props.currentPlan?.name === props.plan ||
+      (props.currentPlan?.name === WorkspacePlans.TeamUnlimited &&
+        props.plan === WorkspacePlans.Team) ||
+      (props.currentPlan?.name === WorkspacePlans.ProUnlimited &&
+        props.plan === WorkspacePlans.Pro))
   )
 })
 
@@ -312,6 +333,12 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (
+    props.plan === WorkspacePlans.Free &&
+    props.currentPlan?.name === WorkspacePlans.Free
+  )
+    return undefined
+
   if (!props.canUpgrade) {
     return 'You must be a workspace admin.'
   }
@@ -352,6 +379,35 @@ const badgeText = computed(() =>
     ? 'Current plan'
     : ''
 )
+
+const displayAddons = computed(() => {
+  if (props.plan === WorkspacePlans.Team) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can purchase this in the next step'
+      }
+    ]
+  } else if (props.plan === WorkspacePlans.Pro) {
+    return [
+      {
+        title: 'Unlimited projects and models',
+        tooltip: 'You can purchase this in the next step'
+      },
+      {
+        title: 'Extra data regions',
+        fixedPrice: '$500 per region / month',
+        tooltip: 'Available upon request'
+      },
+      {
+        title: 'Priority support',
+        fixedPrice: 'Contact us for pricing',
+        tooltip: 'Available upon request'
+      }
+    ]
+  }
+  return []
+})
 
 const handleUpgradeClick = () => {
   if (!props.workspaceId) return

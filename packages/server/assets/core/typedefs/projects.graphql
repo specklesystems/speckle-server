@@ -154,6 +154,7 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
+    sortBy: [String!]
   ): UserProjectCollection! @isOwner
 }
 
@@ -213,6 +214,12 @@ input UserProjectsFilter {
   Only include personal projects (not in any workspace)
   """
   personalOnly: Boolean
+
+  """
+  If set to true, will also include streams that the user may not have an explicit role on,
+  but has implicit access to because of workspaces
+  """
+  includeImplicitAccess: Boolean
 }
 
 enum UserProjectsUpdatedMessageType {

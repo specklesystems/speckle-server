@@ -124,6 +124,10 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     search?: string
     seatType?: WorkspaceSeatType
+    /**
+     * Optionally filter by user id
+     */
+    excludeUserIds?: string[]
   }
 }
 
@@ -179,6 +183,19 @@ export type GetWorkspaceRolesForUser = (
   args: GetWorkspaceRolesForUserArgs,
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
+
+export type GetWorkspacesRolesForUsers = (
+  reqs: Array<{
+    userId: string
+    workspaceId: string
+  }>
+) => Promise<{
+  [workspaceId: string]:
+    | {
+        [userId: string]: WorkspaceAcl | undefined
+      }
+    | undefined
+}>
 
 /** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>

@@ -5,6 +5,7 @@ extend type Automation {
 type AutomationPermissionChecks {
   canRead: PermissionCheckResult!
   canUpdate: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
 }
 
 extend type ProjectPermissionChecks {

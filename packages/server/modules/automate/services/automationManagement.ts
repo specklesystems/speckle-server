@@ -42,6 +42,7 @@ import { validateAutomationName } from '@/modules/automate/utils/automationConfi
 import {
   CreateAutomation,
   CreateStoredAuthCode,
+  MarkAutomationDeleted,
   GetAutomation,
   GetEncryptionKeyPair,
   GetLatestVersionAutomationRuns,
@@ -109,7 +110,8 @@ export const createAutomationFactory =
       enabled,
       projectId,
       executionEngineAutomationId,
-      isTestAutomation: false
+      isTestAutomation: false,
+      isDeleted: false
     })
 
     const automationTokenRecord = await storeAutomationToken({
@@ -196,7 +198,8 @@ export const createTestAutomationFactory =
       enabled: true,
       projectId,
       executionEngineAutomationId: null,
-      isTestAutomation: true
+      isTestAutomation: true,
+      isDeleted: false
     })
 
     await eventEmit({
@@ -238,6 +241,13 @@ export const createTestAutomationFactory =
     })
 
     return automationRecord
+  }
+
+export const deleteAutomationFactory =
+  (deps: { deleteAutomation: MarkAutomationDeleted }) =>
+  async (params: { automationId: string }) => {
+    const { automationId } = params
+    return await deps.deleteAutomation({ automationId })
   }
 
 export type ValidateAndUpdateAutomationDeps = {

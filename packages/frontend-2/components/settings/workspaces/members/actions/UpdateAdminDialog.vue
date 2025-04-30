@@ -38,7 +38,7 @@
             :is-guest="false"
             :has-available-seat="hasAvailableEditorSeats"
             :seat-price="editorSeatPriceFormatted"
-            :billing-interval="intervalIsYearly ? 'yearly' : 'monthly'"
+            :billing-interval="intervalIsYearly ? 'year' : 'month'"
           />
           <template v-if="needsEditorUpgrade && !isFreePlan && !isUnlimitedPlan">
             <p
@@ -49,11 +49,9 @@
               will not incur any charges.
             </p>
             <p v-else class="text-foreground-2 text-body-xs mt-4 leading-5">
-              You'll be charged immediately for the partial period from today until your
-              plan renewal on {{ currentBillingCycleEnd }} ({{
-                editorSeatPriceFormatted
-              }}/{{ intervalIsYearly ? 'year' : 'month' }} adjusted for the remaining
-              time).
+              You will be charged an adjusted amount for the partial period from today
+              until your plan renewal on
+              {{ dayjs(currentBillingCycleEnd).format('MMMM D, YYYY') }}.
             </p>
           </template>
         </CommonCard>
@@ -63,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
@@ -73,6 +72,7 @@ import type {
   SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
@@ -89,6 +89,7 @@ const open = defineModel<boolean>('open', { required: true })
 
 const isLoading = ref(false)
 
+const mixpanel = useMixpanel()
 const updateUserRole = useWorkspaceUpdateRole()
 const {
   hasAvailableEditorSeats,
@@ -101,6 +102,10 @@ const {
 
 const needsEditorUpgrade = computed(() => {
   return props.action === 'make' && props.user.seatType === SeatTypes.Viewer
+})
+
+const isUnpaidPaidUpgrade = computed(() => {
+  return isFreePlan.value || hasAvailableEditorSeats.value || isUnlimitedPlan.value
 })
 
 const title = computed(() => {
@@ -117,7 +122,7 @@ const title = computed(() => {
 const buttonText = computed(() => {
   switch (props.action) {
     case 'make':
-      return needsEditorUpgrade.value ? 'Confirm and pay' : 'Make an admin'
+      return isUnpaidPaidUpgrade.value ? 'Make an admin' : 'Confirm and pay'
     case 'remove':
       return 'Revoke admin access'
     default:
@@ -146,6 +151,15 @@ const handleConfirm = async () => {
       role: props.action === 'make' ? Roles.Workspace.Admin : Roles.Workspace.Member,
       workspaceId: props.workspace.id
     })
+
+    if (!isUnpaidPaidUpgrade.value) {
+      mixpanel.track('Workspace Seat Purchased', {
+        location: 'upgrade_admin_dialog',
+        seatType: 'editor',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspace.id
+      })
+    }
 
     open.value = false
     emit('success')

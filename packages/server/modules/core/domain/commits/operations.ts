@@ -291,3 +291,5 @@ export type LegacyGetPaginatedStreamCommits = (
   cursor: Nullable<string>
   totalCount: number
 }>
+
+export type GetTotalVersionCount = () => Promise<number>

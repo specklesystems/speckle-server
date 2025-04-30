@@ -244,7 +244,7 @@
         "maxConnectionsServer": {
           "type": "number",
           "description": "The number of connections to the Postgres database to provide in the connection pool",
-          "default": 4
+          "default": 8
         },
         "certificate": {
           "type": "string",
