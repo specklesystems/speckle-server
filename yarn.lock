@@ -11621,6 +11621,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@intercom/messenger-js-sdk@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@intercom/messenger-js-sdk@npm:0.0.14"
+  checksum: 10/49a95cdb701553df45e8c526596ab7ae9b44f462ef3317e9397b44e9358c5e9cbd556f49722984a714f7052645998876aa8721d43c5f77479e3b9ba94699c7ed
+  languageName: node
+  linkType: hard
+
 "@ioredis/as-callback@npm:^3.0.0":
   version: 3.0.0
   resolution: "@ioredis/as-callback@npm:3.0.0"
@@ -16524,6 +16531,7 @@ __metadata:
     "@graphql-codegen/visitor-plugin-common": "npm:^5.7.1"
     "@headlessui/vue": "npm:^1.7.13"
     "@heroicons/vue": "npm:^2.0.12"
+    "@intercom/messenger-js-sdk": "npm:^0.0.14"
     "@jsonforms/core": "npm:^3.3.0"
     "@jsonforms/vue": "npm:^3.3.0"
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
