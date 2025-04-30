@@ -1,17 +1,19 @@
 <template>
-  <div
+  <button
     :data-cal-link="calLink"
     :data-cal-namespace="calNamespace"
     :data-cal-config="callOptions"
+    @click="onClick"
   >
     <slot />
-  </div>
+  </button>
 </template>
 
 <script lang="ts" setup>
 import { useTheme } from '~~/lib/core/composables/theme'
 import { initCalWidget } from '~/lib/cal/cal'
 import { calNamespace, calLink } from '~/lib/cal/helpers/constants'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const { isDarkTheme } = useTheme()
 
@@ -28,4 +30,12 @@ const callOptions = computed(() => {
     layout: 'month_view'
   })
 })
+
+const mixpanel = useMixpanel()
+
+const onClick = () => {
+  mixpanel.track('Booking Calendar Triggered', {
+    location: 'sidebar'
+  })
+}
 </script>

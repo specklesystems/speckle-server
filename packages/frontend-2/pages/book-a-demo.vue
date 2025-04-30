@@ -91,10 +91,16 @@ const options = computed(() => [
 const onCtaClick = () => {
   if (bookDemoSelected.value === 'yes') {
     showEmbed.value = true
-    mixpanel.track('Book a Demo Selected')
+    mixpanel.track('Booking Calendar Triggered', {
+      location: 'book-a-demo-page'
+    })
   } else {
     mixpanel.track('Book a Demo Skipped')
     navigateTo(workspaceJoinRoute)
   }
 }
+
+onMounted(() => {
+  mixpanel.track('Book A Demo Page Viewed')
+})
 </script>
