@@ -103,7 +103,7 @@ export const useProcessOnboarding = () => {
 
     mixpanel.people.set_once({
       onboardingSurveyRole: onboardingData?.role,
-      onboardingSurveyPlans: onboardingData?.plans,
+      onboardingSurveyUseCase: onboardingData?.plans,
       onboardingSurveySource: onboardingData?.source
     })
 
