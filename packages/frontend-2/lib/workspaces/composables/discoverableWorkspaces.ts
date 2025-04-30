@@ -1,8 +1,5 @@
 import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
-import {
-  discoverableWorkspacesQuery,
-  discoverableWorkspacesRequestsQuery
-} from '../graphql/queries'
+import { discoverableWorkspacesQuery } from '~/lib/workspaces/graphql/queries'
 import {
   dismissDiscoverableWorkspaceMutation,
   requestToJoinWorkspaceMutation
@@ -17,12 +14,31 @@ import {
 } from '~~/lib/common/helpers/graphql'
 
 graphql(`
-  fragment DiscoverableList_Discoverable on User {
-    discoverableWorkspaces {
+  fragment DiscoverableWorkspace_LimitedWorkspace on LimitedWorkspace {
+    id
+    name
+    logo
+    description
+    slug
+    team {
+      totalCount
+      items {
+        id
+        name
+        avatar
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment WorkspaceJoinRequests_LimitedWorkspaceJoinRequest on LimitedWorkspaceJoinRequest {
+    id
+    status
+    workspace {
       id
       name
       logo
-      description
       slug
       team {
         totalCount
@@ -30,41 +46,6 @@ graphql(`
           id
           name
           avatar
-          streams {
-            numberOfHidden
-            totalCount
-          }
-          totalOwnedStreamsFavorites
-        }
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment DiscoverableList_Requests on User {
-    workspaceJoinRequests {
-      items {
-        id
-        status
-        workspace {
-          id
-          name
-          logo
-          slug
-          team {
-            totalCount
-            items {
-              id
-              name
-              avatar
-              streams {
-                numberOfHidden
-                totalCount
-              }
-              totalOwnedStreamsFavorites
-            }
-          }
         }
       }
     }
@@ -74,18 +55,9 @@ graphql(`
 export const useDiscoverableWorkspaces = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
-    discoverableWorkspacesQuery,
-    undefined,
-    { enabled: isWorkspacesEnabled }
-  )
-  const { result: requestsResult, loading: joinRequestsLoading } = useQuery(
-    discoverableWorkspacesRequestsQuery,
-    undefined,
-    {
-      enabled: isWorkspacesEnabled
-    }
-  )
+  const { result, loading } = useQuery(discoverableWorkspacesQuery, undefined, {
+    enabled: isWorkspacesEnabled
+  })
 
   const { mutate: requestToJoin } = useMutation(requestToJoinWorkspaceMutation)
   const { mutate: dismissWorkspace } = useMutation(dismissDiscoverableWorkspaceMutation)
@@ -96,11 +68,11 @@ export const useDiscoverableWorkspaces = () => {
   const apollo = useApolloClient().client
 
   const discoverableWorkspaces = computed(
-    () => discoverableResult.value?.activeUser?.discoverableWorkspaces
+    () => result.value?.activeUser?.discoverableWorkspaces
   )
 
   const workspaceJoinRequests = computed(
-    () => requestsResult.value?.activeUser?.workspaceJoinRequests
+    () => result.value?.activeUser?.workspaceJoinRequests
   )
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
@@ -250,10 +222,6 @@ export const useDiscoverableWorkspaces = () => {
       })
     }
   }
-
-  const loading = computed(() => {
-    return discoverableLoading.value || joinRequestsLoading.value
-  })
 
   return {
     hasDiscoverableWorkspaces,
