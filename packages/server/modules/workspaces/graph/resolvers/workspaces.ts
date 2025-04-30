@@ -1697,6 +1697,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }))
         }
       },
+      LimitedWorkspaceCollaborator: {
+        user: async (parent) => {
+          return parent
+        }
+      },
       ProjectRole: {
         project: async (parent, _args, ctx) => {
           return await ctx.loaders.streams.getStream.load(parent.projectId)

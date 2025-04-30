@@ -102,7 +102,9 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         description
         team {
           items {
-            avatar
+            user {
+              avatar
+            }
           }
           totalCount
           cursor
