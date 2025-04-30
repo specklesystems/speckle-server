@@ -41,19 +41,15 @@ export default defineNuxtPlugin(() => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
   const { activeWorkspaceData } = useNavigation()
 
-  // Only initialize Intercom if workspaces are enabled
+  // Only run Intercom if workspaces are enabled
   if (!isWorkspacesEnabled.value) return
 
-  // Initialize Intercom with auth state changes
   useOnAuthStateChange()(async (user) => {
     if (typeof window.Intercom !== 'function') {
-      // eslint-disable-next-line no-console
-      console.warn('Intercom not initialized')
       return
     }
 
     if (user) {
-      // Boot Intercom with user data when user is authenticated
       window.Intercom('boot', {
         /* eslint-disable camelcase */
         app_id: 'hoiaq4wn',
@@ -73,12 +69,11 @@ export default defineNuxtPlugin(() => {
           : undefined
       })
     } else {
-      // Shutdown Intercom when user logs out
       window.Intercom('shutdown')
     }
   })
 
-  // Watch for changes in active workspace and update Intercom
+  // Update Intercom when active workspace changes
   watch(
     () => activeWorkspaceData.value,
     (newWorkspace) => {
