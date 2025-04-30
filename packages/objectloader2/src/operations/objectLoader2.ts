@@ -30,7 +30,9 @@ export default class ObjectLoader2 {
       new IndexedDatabase({
         logger: this.#logger,
         maxCacheReadSize: 10_000,
-        maxCacheWriteSize: 5_000,
+        maxCacheWriteSize: 10_000,
+        maxWriteQueueSize: 40_000,
+        maxCacheBatchWriteWait: 3_000,
         indexedDB: options.indexedDB,
         keyRange: options.keyRange
       })

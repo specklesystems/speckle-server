@@ -25,9 +25,10 @@ export interface BaseDatabaseOptions {
     lowerBound: Function
     upperBound: Function
   }
-  maxCacheReadSize?: number
-  maxCacheWriteSize?: number
-  maxCacheBatchWriteWait?: number
+  maxCacheReadSize: number
+  maxCacheWriteSize: number
+  maxCacheBatchWriteWait: number
+  maxWriteQueueSize: number
 }
 
 export interface BaseDownloadOptions {

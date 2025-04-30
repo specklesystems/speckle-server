@@ -30,13 +30,7 @@ export default class IndexedDatabase implements Cache {
   // #count: number = 0
 
   constructor(options: BaseDatabaseOptions) {
-    this.#options = {
-      ...{
-        maxCacheReadSize: 10000,
-        maxCacheBatchWriteWait: 1000
-      },
-      ...options
-    }
+    this.#options = options
     this.#logger = options.logger || (() => {})
   }
 
@@ -44,7 +38,7 @@ export default class IndexedDatabase implements Cache {
     if (!this.#writeQueue) {
       await this.#setupCacheDb()
       this.#writeQueue = new BatchingQueue({
-        batchSize: this.#options.maxCacheWriteSize ?? 10000,
+        batchSize: this.#options.maxCacheWriteSize,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
         processFunction: (batch: Item[]) =>
           this.#cacheSaveBatch({ batch, cacheDB: this.#cacheDB! })
@@ -84,10 +78,10 @@ export default class IndexedDatabase implements Cache {
   }): Promise<void> {
     const { ids, foundItems, notFoundItems } = params
     await this.#setupCacheDb()
-    const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
+    const maxCacheReadSize = this.#options.maxCacheReadSize
 
     for (let i = 0; i < ids.length; ) {
-      if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
+      if ((this.#writeQueue?.count() ?? 0) > this.#options.maxWriteQueueSize) {
         this.#logger(
           'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
         )
