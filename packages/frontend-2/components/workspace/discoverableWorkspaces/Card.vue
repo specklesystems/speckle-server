@@ -5,14 +5,18 @@
         <div class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <div class="text-body-2xs">{{ workspace.team?.totalCount }} members</div>
+        <UserAvatarGroup
+          :users="workspace.team?.items ?? []"
+          :max-count="5"
+          size="sm"
+        />
       </div>
     </template>
     <template #actions>
-      <FormButton v-if="workspace.requestStatus" color="outline" size="sm" disabled>
+      <FormButton v-if="requestStatus" color="outline" size="sm" disabled>
         Join request sent
       </FormButton>
-      <div v-else class="flex flex-col gap-2 items-end">
+      <div v-else class="flex flex-col gap-2 sm:items-end">
         <FormButton color="outline" size="sm" @click="onRequest">
           Request to join
         </FormButton>
@@ -30,18 +34,15 @@
 </template>
 
 <script setup lang="ts">
-import type { LimitedWorkspace } from '~~/lib/common/generated/gql/graphql'
+import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-type WorkspaceWithStatus = LimitedWorkspace & {
-  requestStatus: string | null
-}
-
 const props = defineProps<{
-  workspace: WorkspaceWithStatus
+  workspace: DiscoverableWorkspace_LimitedWorkspaceFragment
   showDismissButton?: boolean
   location?: string
+  requestStatus: string | null
 }>()
 
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
