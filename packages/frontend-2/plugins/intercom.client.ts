@@ -1,5 +1,7 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { watch } from 'vue'
 
 declare global {
   interface Window {
@@ -10,22 +12,35 @@ declare global {
           app_id: string
           user_id?: string
           created_at?: number
-
           name?: string
           email?: string
+          company?: {
+            id: string
+            name: string
+            plan?: string
+          }
+        }
+      ): void
+      (
+        command: 'update',
+        options: {
+          company?: {
+            id: string
+            name: string
+            plan?: string
+          }
         }
       ): void
       (command: 'shutdown'): void
-      (command: 'update'): void
       (command: 'show'): void
       (command: 'hide'): void
-      (command: 'showNewMessage', message?: string): void
     }
   }
 }
 
 export default defineNuxtPlugin(() => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
+  const { activeWorkspaceData } = useNavigation()
 
   // Only initialize Intercom if workspaces are enabled
   if (!isWorkspacesEnabled.value) return
@@ -50,7 +65,14 @@ export default defineNuxtPlugin(() => {
             : undefined,
           /* eslint-enable camelcase */
           name: user.name || undefined,
-          email: user.email || undefined
+          email: user.email || undefined,
+          company: activeWorkspaceData.value
+            ? {
+                id: activeWorkspaceData.value.id,
+                name: activeWorkspaceData.value.name,
+                plan: activeWorkspaceData.value.plan?.name
+              }
+            : undefined
         })
       } else {
         // Shutdown Intercom when user logs out
@@ -58,5 +80,23 @@ export default defineNuxtPlugin(() => {
       }
     },
     { immediate: true }
+  )
+
+  // Watch for changes in active workspace and update Intercom
+  watch(
+    () => activeWorkspaceData.value,
+    (newWorkspace) => {
+      if (typeof window.Intercom !== 'function') return
+
+      window.Intercom('update', {
+        company: newWorkspace
+          ? {
+              id: newWorkspace.id,
+              name: newWorkspace.name,
+              plan: newWorkspace.plan?.name
+            }
+          : undefined
+      })
+    }
   )
 })
