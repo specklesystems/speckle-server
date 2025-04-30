@@ -29,7 +29,7 @@
           <FormRadioGroup v-model="bookDemoSelected" :options="options" is-stacked />
         </div>
       </template>
-      <div v-else class="w-full mt-8">
+      <div v-else class="w-full mt-8 mb-6">
         <CalWidget />
       </div>
       <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
