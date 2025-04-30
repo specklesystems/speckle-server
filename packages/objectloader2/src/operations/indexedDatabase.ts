@@ -124,6 +124,13 @@ export default class IndexedDatabase implements Cache {
   async getItem(params: { id: string }): Promise<Item | undefined> {
     const { id } = params
     await this.#setupCacheDb()
+    //might not be in the real DB yet, so check the write queue first
+    if (this.#writeQueue) {
+      const item = this.#writeQueue.get(id)
+      if (item) {
+        return item
+      }
+    }
 
     return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
       return await this.#cacheDB?.objects.get(id)

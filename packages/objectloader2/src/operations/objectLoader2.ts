@@ -17,7 +17,6 @@ export default class ObjectLoader2 {
   #downloader: Downloader
 
   #deferments: DefermentManager
-  #found: Map<string, boolean> = new Map()
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -26,7 +25,6 @@ export default class ObjectLoader2 {
 
     this.#logger = options.logger || console.log
     this.#gathered = options.results || new AsyncGeneratorQueue()
-    this.#deferments = new DefermentManager()
     this.#database =
       options.cache ||
       new IndexedDatabase({
@@ -47,6 +45,7 @@ export default class ObjectLoader2 {
         token: options.token,
         headers: options.headers
       })
+    this.#deferments = new DefermentManager(this.#database)
   }
 
   async disposeAsync(): Promise<void> {
@@ -55,7 +54,6 @@ export default class ObjectLoader2 {
       this.#downloader.disposeAsync(),
       this.#gathered.dispose()
     ])
-    this.#found.clear()
   }
 
   async getRootObject(): Promise<Item | undefined> {
@@ -70,14 +68,7 @@ export default class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-    if (!this.#found.has(params.id)) {
-      return await this.#deferments.defer({ id: params.id })
-    }
-    const item = await this.#database.getItem({ id: params.id })
-    if (item) {
-      return item.base
-    }
-    throw new Error(`Object with id ${params.id} not found in cache or database`)
+    return await this.#deferments.defer({ id: params.id })
   }
 
   async getTotalObjectCount() {
@@ -110,8 +101,6 @@ export default class ObjectLoader2 {
       if (count % 1000 === 0) {
         console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
       }
-      //order matters here with found before undefer
-      this.#found.set(item.baseId, true)
       this.#deferments.undefer(item)
       yield item.base
       count++
