@@ -5,11 +5,7 @@
         <div class="text-body-2xs line-clamp-3">
           {{ workspace.description }}
         </div>
-        <UserAvatarGroup
-          :users="workspace.team?.items ?? []"
-          :max-count="5"
-          size="sm"
-        />
+        <UserAvatarGroup :users="users" :max-count="5" size="sm" />
       </div>
     </template>
     <template #actions>
@@ -48,6 +44,8 @@ const props = defineProps<{
 const { requestToJoinWorkspace, dismissDiscoverableWorkspace } =
   useDiscoverableWorkspaces()
 const mixpanel = useMixpanel()
+
+const users = computed(() => props.workspace.team?.items?.map((u) => u.user) ?? [])
 
 const onRequest = () => {
   requestToJoinWorkspace(props.workspace.id, props.location || 'discovery_card')

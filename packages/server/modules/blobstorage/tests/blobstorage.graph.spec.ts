@@ -1,58 +1,61 @@
-import knex, { db } from '@/db/knex'
+import { buildApolloServer } from '@/app'
+import { truncateTables } from '@/test/hooks'
+import gql from 'graphql-tag'
+import { createBlobs } from '@/modules/blobstorage/tests/helpers'
+import { expect } from 'chai'
+import { Users, Streams } from '@/modules/core/dbSchema'
 import {
-  createRandomEmail,
-  createRandomPassword
-} from '@/modules/core/helpers/testHelpers'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+  createAuthedTestContext,
+  executeOperation,
+  ServerAndContext
+} from '@/test/graphqlHelper'
 import {
-  createStreamFactory,
   getStreamFactory,
+  createStreamFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
 import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
-  countAdminUsersFactory,
-  getUserFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
 } from '@/modules/core/repositories/users'
 import {
-  createStreamReturnRecordFactory,
-  legacyCreateStreamFactory
-} from '@/modules/core/services/streams/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { createUserFactory } from '@/modules/core/services/users/management'
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  deleteInvitesByTargetFactory,
-  deleteServerOnlyInvitesFactory,
-  findInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { truncateTables } from '@/test/hooks'
-import { expect } from 'chai'
-import crs from 'crypto-random-string'
-import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -63,16 +66,9 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 
-const WEBHOOKS_CONFIG_TABLE = 'webhooks_config'
-const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
-
-const WebhooksConfig = () => knex(WEBHOOKS_CONFIG_TABLE)
-const randomId = () => crs({ length: 10 })
-
-const cleanOrphanedWebhookConfigs = cleanOrphanedWebhookConfigsFactory({ db })
 const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 
 const buildFinalizeProjectInvite = () =>
@@ -148,6 +144,7 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
+
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -176,70 +173,72 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 
-const countWebhooks = async () => {
-  const [{ count }] = await WebhooksConfig().count()
-  return parseInt(count as string)
-}
+describe('Blobs graphql @blobstorage', () => {
+  let graphqlServer: ServerAndContext
 
-describe('Webhooks cleanup @webhooks', () => {
+  const user = {
+    name: 'Baron Von Blubba',
+    email: 'zebarron@bubble.bobble',
+    password: 'bubblesAreMyBlobs',
+    id: ''
+  }
+
   before(async () => {
-    await truncateTables([WEBHOOKS_CONFIG_TABLE, WEBHOOKS_EVENTS_TABLE])
-  })
-
-  it('Cleans orphaned webhook configs', async () => {
-    const webhookConfig = {
-      id: randomId(),
-      streamId: randomId(),
-      url: 'foobar',
-      description: 'test_hook',
-      triggers: {
-        // eslint-disable-next-line camelcase
-        stream_update: true
-      }
+    await truncateTables(['blob_storage', Users.name, Streams.name])
+    user.id = await createUser(user)
+    graphqlServer = {
+      apollo: await buildApolloServer(),
+      context: await createAuthedTestContext(user.id)
     }
-    await WebhooksConfig().insert(webhookConfig)
-    expect(await countWebhooks()).to.equal(1)
-    await cleanOrphanedWebhookConfigs()
-    expect(await countWebhooks()).to.equal(0)
   })
 
-  it('Cleans orphans, leaves live ones intact', async () => {
-    const ownerId = await createUser({
-      name: 'User',
-      email: createRandomEmail(),
-      password: createRandomPassword()
-    })
-    const streamId = await createStream({
-      name: 'foo',
-      description: 'bar',
-      ownerId
-    })
-
-    const webhookConfigs = [
-      {
-        id: randomId(),
-        streamId: randomId(),
-        url: 'foobar',
-        description: 'test_hook',
-        triggers: {
-          // eslint-disable-next-line camelcase
-          stream_update: true
-        }
-      },
-      {
-        id: randomId(),
-        streamId,
-        url: 'foobar',
-        description: 'test_hook',
-        triggers: {
-          // eslint-disable-next-line camelcase
-          stream_update: true
+  it('Stream has blob metadata for a single blob', async () => {
+    const query = gql`
+      query ($streamId: String!, $blobId: String!) {
+        stream(id: $streamId) {
+          id
+          blob(id: $blobId) {
+            id
+            fileName
+            uploadStatus
+            fileSize
+            fileHash
+          }
         }
       }
-    ]
-    await Promise.all(webhookConfigs.map((c) => WebhooksConfig().insert(c)))
-    expect(await countWebhooks()).to.equal(2)
-    await cleanOrphanedWebhookConfigs()
-    expect(await countWebhooks()).to.equal(1)
+    `
+    const streamId = await createStream({ ownerId: user.id })
+    const [blob] = await createBlobs({ streamId, number: 1 })
+
+    const result = await executeOperation(graphqlServer, query, {
+      streamId,
+      blobId: blob.id
+    })
+
+    const blobMetadata = result.data!.stream.blob
+    expect(blobMetadata.id).to.equal(blob.id)
+    expect(blobMetadata.fileSize).to.equal(blob.fileSize)
+    expect(blobMetadata.fileHash).to.equal(blob.fileHash)
+  })
+
+  it('Blob metadata collection returns proper summary values', async () => {
+    const query = gql`
+      query ($streamId: String!) {
+        stream(id: $streamId) {
+          id
+          blobs {
+            totalCount
+            totalSize
+          }
+        }
+      }
+    `
+    const streamId = await createStream({ ownerId: user.id })
+    const number = 10
+    const fileSize = 123
+    await createBlobs({ streamId, number, fileSize })
+    const result = await executeOperation(graphqlServer, query, { streamId })
+    expect(result.data!.stream.blobs.totalCount).to.equal(number)
+    expect(result.data!.stream.blobs.totalSize).to.equal(number * fileSize)
   })
 })

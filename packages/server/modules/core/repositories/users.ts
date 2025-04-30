@@ -1,5 +1,18 @@
-import { ServerAcl, StreamAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import { ServerAclRecord, UserRecord, UserWithRole } from '@/modules/core/helpers/types'
+import {
+  ServerAcl,
+  StreamAcl,
+  Streams,
+  UserEmails,
+  Users,
+  knex
+} from '@/modules/core/dbSchema'
+import {
+  ServerAclRecord,
+  StreamAclRecord,
+  StreamRecord,
+  UserRecord,
+  UserWithRole
+} from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -36,11 +49,14 @@ import {
   UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),
-  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name)
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name),
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name),
+  streams: (db: Knex) => db<StreamRecord>(Streams.name)
 }
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -508,9 +524,32 @@ export const lookupUsersFactory =
 
     // limit to given project
     if (projectId) {
+      // Workspace implicit roles logic:
+      // - User must have an explicit stream acl OR
+      // - User must have a project workspace acl w/ non-guest role
       query
-        .innerJoin(StreamAcl.name, StreamAcl.col.userId, Users.col.id)
-        .andWhere(StreamAcl.col.resourceId, projectId)
+        .innerJoin(Streams.name, (j1) => {
+          j1.onVal(Streams.col.id, projectId)
+        })
+        .leftJoin(StreamAcl.name, (j1) => {
+          j1.on(StreamAcl.col.resourceId, Streams.col.id).andOn(
+            StreamAcl.col.userId,
+            Users.col.id
+          )
+        })
+        .leftJoin(WorkspaceAcl.name, (j1) => {
+          j1.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOn(
+            WorkspaceAcl.col.userId,
+            Users.col.id
+          )
+        })
+        .andWhere((w1) => {
+          w1.whereNotNull(StreamAcl.col.role).orWhere(
+            WorkspaceAcl.col.role,
+            '!=',
+            Roles.Workspace.Guest
+          )
+        })
     }
 
     const rows = (await query) as UserRecord[]
