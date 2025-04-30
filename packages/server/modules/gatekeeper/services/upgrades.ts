@@ -3,12 +3,6 @@ import { WorkspacePlans } from '@speckle/shared'
 const WorkspacePlansUpgradeMapping: Record<WorkspacePlans, WorkspacePlans[]> = {
   academia: [],
   unlimited: [],
-  business: [],
-  businessInvoiced: [],
-  plus: [],
-  plusInvoiced: [],
-  starter: [],
-  starterInvoiced: [],
   free: ['team', 'teamUnlimited', 'pro', 'proUnlimited'],
   team: ['team', 'teamUnlimited', 'pro', 'proUnlimited'],
   teamUnlimited: ['teamUnlimited', 'pro', 'proUnlimited'],

@@ -249,13 +249,9 @@ const buildCollectAndValidateResourceTargets = () =>
         getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db }),
         getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
         getWorkspaceRoleToDefaultProjectRoleMapping:
-          getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-          }),
+          getWorkspaceRoleToDefaultProjectRoleMappingFactory(),
         getWorkspaceSeatTypeToProjectRoleMapping:
-          getWorkspaceSeatTypeToProjectRoleMappingFactory({
-            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-          })
+          getWorkspaceSeatTypeToProjectRoleMappingFactory()
       })
   })
 
@@ -693,17 +689,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'teamUnlimited':
               case 'pro':
               case 'proUnlimited':
-              case 'starter':
-              case 'plus':
-              case 'business':
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
                   case 'valid':
                   case 'paymentFailed':
                     throw new WorkspacePaidPlanActiveError()
                   case 'canceled':
-                  case 'trial':
-                  case 'expired':
                     break
                   default:
                     throwUncoveredError(workspacePlan)
@@ -711,9 +702,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'free':
               case 'unlimited':
               case 'academia':
-              case 'starterInvoiced':
-              case 'plusInvoiced':
-              case 'businessInvoiced':
               case 'proUnlimitedInvoiced':
               case 'teamUnlimitedInvoiced':
                 break

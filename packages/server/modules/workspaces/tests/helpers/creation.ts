@@ -50,8 +50,11 @@ import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated
 import cryptoRandomString from 'crypto-random-string'
 import {
   MaybeNullOrUndefined,
+  PaidWorkspacePlans,
   Roles,
   WorkspacePlan,
+  WorkspacePlans,
+  WorkspacePlanStatuses,
   WorkspaceRoles
 } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -70,7 +73,7 @@ import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/
 import {
   getWorkspacePlanFactory,
   getWorkspaceWithPlanFactory,
-  upsertPaidWorkspacePlanFactory,
+  upsertWorkspacePlanFactory,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { SetOptional } from 'type-fest'
@@ -102,6 +105,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
+import { isBoolean, isString } from 'lodash'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -141,7 +145,7 @@ export const createTestWorkspace = async (
   owner: BasicTestUser,
   options?: {
     domain?: string
-    addPlan?: Pick<WorkspacePlan, 'name' | 'status'> | boolean
+    addPlan?: Partial<Pick<WorkspacePlan, 'name' | 'status'>> | boolean | WorkspacePlans
     addSubscription?: boolean
     regionKey?: string
   }
@@ -158,7 +162,7 @@ export const createTestWorkspace = async (
     return
   }
 
-  const upsertWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
+  const upsertWorkspacePlan = upsertWorkspacePlanFactory({ db })
   const createWorkspace = createWorkspaceFactory({
     validateSlug: validateSlugFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
@@ -207,21 +211,25 @@ export const createTestWorkspace = async (
   }
 
   if (addPlan || useRegion) {
+    let planName: WorkspacePlans
+    let planStatus: WorkspacePlanStatuses
+    if (isBoolean(addPlan)) {
+      planName = PaidWorkspacePlans.Team
+      planStatus = WorkspacePlanStatuses.Valid
+    } else {
+      planName = (isString(addPlan) ? addPlan : addPlan.name) || PaidWorkspacePlans.Team
+      planStatus =
+        (isString(addPlan) ? WorkspacePlanStatuses.Valid : addPlan.status) ||
+        WorkspacePlanStatuses.Valid
+    }
+
     await upsertWorkspacePlan({
       workspacePlan: {
         createdAt: new Date(),
         workspaceId: newWorkspace.id,
-        name:
-          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'name')
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (addPlan.name as any)
-            : 'business',
-        status:
-          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'status')
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (addPlan.status as any)
-            : 'valid'
-      }
+        name: planName,
+        status: planStatus
+      } as WorkspacePlan
     })
   }
 
@@ -411,13 +419,9 @@ export const createWorkspaceInviteDirectly = async (
           getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db }),
           getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
           getWorkspaceRoleToDefaultProjectRoleMapping:
-            getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-            }),
+            getWorkspaceRoleToDefaultProjectRoleMappingFactory(),
           getWorkspaceSeatTypeToProjectRoleMapping:
-            getWorkspaceSeatTypeToProjectRoleMappingFactory({
-              getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-            })
+            getWorkspaceSeatTypeToProjectRoleMappingFactory()
         })
     })
 

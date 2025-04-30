@@ -75,6 +75,7 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 export const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
@@ -154,19 +155,23 @@ export const collectAndValidateWorkspaceTargetsFactory =
       ? primaryResourceTarget
       : null
 
-    const targetRole =
+    const targetWorkspaceRole =
       primaryWorkspaceResourceTarget?.role ||
       input.primaryResourceTarget.secondaryResourceRoles?.[
         WorkspaceInviteResourceType
       ] ||
       Roles.Workspace.Guest
+    const targetWorkspaceSeatType =
+      targetWorkspaceRole === Roles.Workspace.Admin
+        ? WorkspaceSeatType.Editor
+        : WorkspaceSeatType.Viewer
 
     // Role based checks
-    if (!Object.values(Roles.Workspace).includes(targetRole)) {
+    if (!Object.values(Roles.Workspace).includes(targetWorkspaceRole)) {
       throw new InviteCreateValidationError('Unexpected workspace invite role')
     }
 
-    if (targetRole === Roles.Workspace.Admin) {
+    if (targetWorkspaceRole === Roles.Workspace.Admin) {
       const serverGuestInvite = baseTargets.find(
         (target) =>
           target.resourceType === ServerInviteResourceType &&
@@ -224,7 +229,16 @@ export const collectAndValidateWorkspaceTargetsFactory =
       await deps.validateWorkspaceMemberProjectRoleFactory({
         workspaceId,
         userId: targetUser.id,
-        projectRole
+        projectRole,
+        workspaceAccess: workspaceRoleAndSeat
+          ? {
+              role: workspaceRoleAndSeat.role.role,
+              seatType: workspaceRoleAndSeat.seat.type
+            }
+          : {
+              role: targetWorkspaceRole,
+              seatType: targetWorkspaceSeatType
+            }
       })
 
       // If project target is primary and user target is already a workspace member, mark invite as auto-acceptable
@@ -264,7 +278,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
     }
 
     if (
-      targetRole !== Roles.Workspace.Guest &&
+      targetWorkspaceRole !== Roles.Workspace.Guest &&
       workspace.domainBasedMembershipProtectionEnabled
     ) {
       const workspaceDomains = await deps.getWorkspaceDomains({
@@ -308,7 +322,7 @@ export const collectAndValidateWorkspaceTargetsFactory =
       : {
           resourceId: workspaceId,
           resourceType: WorkspaceInviteResourceType,
-          role: targetRole
+          role: targetWorkspaceRole
         }
 
     return [...baseTargets, finalWorkspaceResourceTarget]

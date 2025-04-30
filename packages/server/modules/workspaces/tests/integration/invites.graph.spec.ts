@@ -66,6 +66,7 @@ import {
   buildInvitesGraphqlOperations
 } from '@/modules/workspaces/tests/helpers/invites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 enum InviteByTarget {
   Email = 'email',
@@ -528,7 +529,12 @@ describe('Workspaces Invites GQL', () => {
           ]
         ])
         await assignToWorkspaces([
-          [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
+          [
+            myProjectInviteTargetWorkspace,
+            myWorkspaceFriend,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          ],
           [
             myProjectInviteTargetWorkspace,
             workspaceMemberWithNoProjectAccess,
@@ -615,7 +621,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: otherGuy.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -671,7 +677,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: workspaceMemberWithNoProjectAccess.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -1026,7 +1032,7 @@ describe('Workspaces Invites GQL', () => {
                 inputs: [
                   {
                     userId: otherGuy.id,
-                    role: Roles.Stream.Owner
+                    role: Roles.Stream.Reviewer
                   }
                 ]
               },
@@ -1506,7 +1512,7 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
-          expectedProjectRole: Roles.Stream.Owner
+          expectedProjectRole: Roles.Stream.Reviewer
         })
       })
 
@@ -1525,7 +1531,7 @@ describe('Workspaces Invites GQL', () => {
                   inputs: [
                     {
                       userId: otherGuy.id,
-                      role: Roles.Stream.Owner,
+                      role: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
                       workspaceRole: withRole ? Roles.Workspace.Admin : undefined
                     }
                   ]
@@ -1562,7 +1568,7 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
-            expectedProjectRole: Roles.Stream.Owner
+            expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer
           })
         }
       )
