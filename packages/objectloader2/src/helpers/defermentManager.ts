@@ -4,39 +4,64 @@ import { Cache } from '../operations/interfaces.js'
 
 export class DefermentManager {
   #deferments: Map<string, DeferredBase> = new Map()
-  #found: Map<string, boolean> = new Map()
+  // #found: Map<string, boolean> = new Map()
 
-  #database: Cache
+  constructor(
+    private ttlMs: number, // Sliding TTL
+    private database: Cache
+  ) {
+    this.resetGlobalTimer()
+  }
 
-  constructor(database: Cache) {
-    this.#database = database
+  private now(): number {
+    return Date.now()
   }
 
   async defer(params: { id: string }): Promise<Base> {
-    if (this.#found.has(params.id)) {
-      const item = await this.#database.getItem({ id: params.id })
-      if (item) {
-        return Promise.resolve(item.base)
-      }
-      // If the item is not found in the database, we can resolve the promise with undefined or throw an error
-      throw new Error(`Object with id ${params.id} not found in cache or database`)
-    }
+    const now = this.now()
     const deferredBase = this.#deferments.get(params.id)
     if (deferredBase) {
+      deferredBase.lastAccess = now
       return deferredBase.promise
     }
-    const d = new DeferredBase(params.id)
-    this.#deferments.set(params.id, d)
-    return d.promise
+    const item = await this.database.getItem({ id: params.id })
+    if (!item) {
+      const waiter = new DeferredBase(params.id, now)
+      this.#deferments.set(params.id, waiter)
+      return waiter.promise
+    }
+    const existing = new DeferredBase(params.id, now)
+    existing.resolve(item.base)
+    this.#deferments.set(params.id, existing)
+    return existing.promise
   }
 
   undefer(item: Item): void {
     //order matters here with found before undefer
-    this.#found.set(item.baseId, true)
+    //  this.#found.set(item.baseId, true)
     const deferredBase = this.#deferments.get(item.baseId)
     if (deferredBase) {
+      const now = this.now()
       deferredBase.resolve(item.base)
-      this.#deferments.delete(item.baseId)
+      deferredBase.lastAccess = now
     }
+  }
+
+  private resetGlobalTimer():void {
+     const run = () => {
+       this.cleanDeferments()
+      setTimeout(run, this.ttlMs)
+     }
+      setTimeout(run, this.ttlMs)
+  }
+
+  private cleanDeferments(): void {
+    const now = this.now()
+      const expired = now - this.ttlMs
+      this.#deferments.forEach((deferredBase, id) => {
+        if (deferredBase.lastAccess < expired) {
+          this.#deferments.delete(id)
+        }
+      })
   }
 }

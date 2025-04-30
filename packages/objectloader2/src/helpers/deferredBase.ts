@@ -6,8 +6,10 @@ export class DeferredBase {
   reject!: (reason?: Error) => void
 
   readonly id: string
+  lastAccess: number // Timestamp in ms
 
-  constructor(id: string) {
+  constructor(id: string, lastAccess: number) {
+    this.lastAccess = lastAccess
     this.id = id
     this.promise = new Promise<Base>((resolve, reject) => {
       this.resolve = resolve

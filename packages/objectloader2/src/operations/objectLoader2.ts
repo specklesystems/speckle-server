@@ -47,7 +47,7 @@ export default class ObjectLoader2 {
         token: options.token,
         headers: options.headers
       })
-    this.#deferments = new DefermentManager(this.#database)
+    this.#deferments = new DefermentManager(5_000, this.#database)
   }
 
   async disposeAsync(): Promise<void> {
