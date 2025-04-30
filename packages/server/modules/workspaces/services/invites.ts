@@ -30,6 +30,7 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
+  isPrimaryResourceTarget,
   isProjectResourceTarget,
   resolveInviteTargetTitle,
   resolveTarget
@@ -225,6 +226,11 @@ export const collectAndValidateWorkspaceTargetsFactory =
         userId: targetUser.id,
         projectRole
       })
+
+      // If project target is primary and user target is already a workspace member, mark invite as auto-acceptable
+      if (isPrimaryResourceTarget(projectTarget) && workspaceRole) {
+        projectTarget.autoAccept = true
+      }
     }
 
     // Do further validation only if we're actually planning to invite to a workspace

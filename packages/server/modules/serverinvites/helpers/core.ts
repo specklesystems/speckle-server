@@ -69,6 +69,10 @@ export const isProjectResourceTarget = (
 ): target is ProjectInviteResourceTarget =>
   target.resourceType === ProjectInviteResourceType
 
+export const isPrimaryResourceTarget = (
+  target: InviteResourceTarget
+): target is PrimaryInviteResourceTarget => 'primary' in target && !!target.primary
+
 export interface ResourceTargetTypeRoleTypeMap {
   [ServerInviteResourceType]: ServerRoles
   [ProjectInviteResourceType]: StreamRoles

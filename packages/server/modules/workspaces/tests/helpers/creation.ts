@@ -1,11 +1,18 @@
 import { db } from '@/db/knex'
 import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory,
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
 } from '@/modules/core/repositories/userEmails'
 import {
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -19,12 +26,15 @@ import {
   getWorkspaceDomainsFactory,
   storeWorkspaceDomainFactory,
   getWorkspaceBySlugFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  workspaceInviteValidityFilter
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
   collectAndValidateWorkspaceTargetsFactory,
-  createWorkspaceInviteFactory
+  createWorkspaceInviteFactory,
+  processFinalizedWorkspaceInviteFactory,
+  validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
@@ -92,6 +102,16 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
+import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -378,10 +398,9 @@ export const createWorkspaceInviteDirectly = async (
   const getServerInfo = getServerInfoFactory({ db })
   const getStream = getStreamFactory({ db })
   const getUser = getUserFactory({ db })
-  const createAndSendInvite = createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
+
+  const buildCollectAndValidateResourceTargets = () =>
+    collectAndValidateWorkspaceTargetsFactory({
       getStream,
       getWorkspace: getWorkspaceFactory({ db }),
       getWorkspaceDomains: getWorkspaceDomainsFactory({ db }),
@@ -400,7 +419,68 @@ export const createWorkspaceInviteDirectly = async (
               getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
             })
         })
-    }),
+    })
+
+  const buildFinalizeWorkspaceInvite = () =>
+    finalizeResourceInviteFactory({
+      findInvite: findInviteFactory({
+        db,
+        filterQuery: workspaceInviteValidityFilter
+      }),
+      deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        }),
+      validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
+        getWorkspace: getWorkspaceFactory({ db })
+      }),
+      processInvite: processFinalizedWorkspaceInviteFactory({
+        getWorkspace: getWorkspaceFactory({ db }),
+        updateWorkspaceRole: updateWorkspaceRoleFactory({
+          getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+          findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+          getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+          emitWorkspaceEvent: getEventBus().emit,
+          ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+            createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+            getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+            eventEmit: getEventBus().emit
+          })
+        })
+      }),
+      findEmail: findEmailFactory({ db }),
+      validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+        createUserEmail: createUserEmailFactory({ db }),
+        ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+        findEmail: findEmailFactory({ db }),
+        updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+          deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+          updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+        }),
+        requestNewEmailVerification: requestNewEmailVerificationFactory({
+          findEmail: findEmailFactory({ db }),
+          getUser,
+          getServerInfo,
+          deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+            db
+          }),
+          renderEmail,
+          sendEmail
+        })
+      }),
+      collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+      getUser,
+      getServerInfo
+    })
+
+  const createAndSendInvite = createAndSendInviteFactory({
+    findUserByTarget: findUserByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
       getStream,
       getWorkspace: getWorkspaceFactory({ db })
@@ -411,18 +491,22 @@ export const createWorkspaceInviteDirectly = async (
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeWorkspaceInvite()
   })
 
   const createInvite = createWorkspaceInviteFactory({
     createAndSendInvite
   })
 
-  return await createInvite({
-    ...args,
-    inviterId,
-    inviterResourceAccessRules: null
-  })
+  return await captureCreatedInvite(
+    async () =>
+      await createInvite({
+        ...args,
+        inviterId,
+        inviterResourceAccessRules: null
+      })
+  )
 }
 
 export const createTestOidcProvider = async (
