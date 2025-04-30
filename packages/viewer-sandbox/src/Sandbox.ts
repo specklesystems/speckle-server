@@ -3,20 +3,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-  ArcticViewPipeline,
   ClearFlags,
   DefaultLightConfiguration,
-  DefaultPipeline,
   GPass,
   InputType,
   NormalsPass,
   ObjectLayers,
   OutputPass,
-  PenViewPipeline,
   Pipeline,
   SectionTool,
-  ShadedViewPipeline,
-  SolidViewPipeline,
   SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
