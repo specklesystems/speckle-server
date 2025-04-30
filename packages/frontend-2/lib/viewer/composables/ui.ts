@@ -79,6 +79,8 @@ export function useSectionBoxUtilities() {
           serializedSectionBox.max[2]
         )
       )
+    } else {
+      resolveSectionBoxFromSelection()
     }
   }
 

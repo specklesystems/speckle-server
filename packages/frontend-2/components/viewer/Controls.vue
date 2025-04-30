@@ -249,7 +249,7 @@
         </div>
       </div>
     </div>
-    <Portal v-if="isSectionBoxEnabled && isSectionBoxEdited" to="pocket-actions">
+    <Portal v-if="isSectionBoxEnabled" to="pocket-actions">
       <FormButton @click="resetSectionBox()">Reset section box</FormButton>
     </Portal>
   </div>
@@ -353,13 +353,8 @@ if (import.meta.client) {
 }
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
-const {
-  resetSectionBox,
-  isSectionBoxEnabled,
-  isSectionBoxVisible,
-  toggleSectionBox,
-  isSectionBoxEdited
-} = useSectionBoxUtilities()
+const { resetSectionBox, isSectionBoxEnabled, isSectionBoxVisible, toggleSectionBox } =
+  useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
