@@ -93,7 +93,7 @@
                   </LayoutSidebarMenuGroupItem>
                 </div>
 
-                <CalPopUp>
+                <CalPopUp v-if="!isWorkspacesEnabled">
                   <LayoutSidebarMenuGroupItem label="Book an intro call">
                     <template #icon>
                       <CalendarDaysIcon class="size-5 text-foreground-2" />
