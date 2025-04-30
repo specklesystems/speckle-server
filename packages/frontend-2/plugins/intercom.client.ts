@@ -33,7 +33,6 @@ declare global {
       ): void
       (command: 'shutdown'): void
       (command: 'show'): void
-      (command: 'hide'): void
     }
   }
 }
@@ -46,41 +45,38 @@ export default defineNuxtPlugin(() => {
   if (!isWorkspacesEnabled.value) return
 
   // Initialize Intercom with auth state changes
-  useOnAuthStateChange()(
-    async (user) => {
-      if (typeof window.Intercom !== 'function') {
-        // eslint-disable-next-line no-console
-        console.warn('Intercom not initialized')
-        return
-      }
+  useOnAuthStateChange()(async (user) => {
+    if (typeof window.Intercom !== 'function') {
+      // eslint-disable-next-line no-console
+      console.warn('Intercom not initialized')
+      return
+    }
 
-      if (user) {
-        // Boot Intercom with user data when user is authenticated
-        window.Intercom('boot', {
-          /* eslint-disable camelcase */
-          app_id: 'hoiaq4wn',
-          user_id: user.id || undefined,
-          created_at: user.createdAt
-            ? Math.floor(new Date(user.createdAt).getTime() / 1000)
-            : undefined,
-          /* eslint-enable camelcase */
-          name: user.name || undefined,
-          email: user.email || undefined,
-          company: activeWorkspaceData.value
-            ? {
-                id: activeWorkspaceData.value.id,
-                name: activeWorkspaceData.value.name,
-                plan: activeWorkspaceData.value.plan?.name
-              }
-            : undefined
-        })
-      } else {
-        // Shutdown Intercom when user logs out
-        window.Intercom('shutdown')
-      }
-    },
-    { immediate: true }
-  )
+    if (user) {
+      // Boot Intercom with user data when user is authenticated
+      window.Intercom('boot', {
+        /* eslint-disable camelcase */
+        app_id: 'hoiaq4wn',
+        user_id: user.id || undefined,
+        created_at: user.createdAt
+          ? Math.floor(new Date(user.createdAt).getTime() / 1000)
+          : undefined,
+        /* eslint-enable camelcase */
+        name: user.name || undefined,
+        email: user.email || undefined,
+        company: activeWorkspaceData.value
+          ? {
+              id: activeWorkspaceData.value.id,
+              name: activeWorkspaceData.value.name,
+              plan: activeWorkspaceData.value.plan?.name
+            }
+          : undefined
+      })
+    } else {
+      // Shutdown Intercom when user logs out
+      window.Intercom('shutdown')
+    }
+  })
 
   // Watch for changes in active workspace and update Intercom
   watch(
