@@ -196,11 +196,6 @@ export const createAndSendInviteFactory =
         invite: finalInvite
       }
     })
-
-    // return {
-    //   inviteId: invite.id,
-    //   token: invite.token
-    // }
   }
 
 /**
