@@ -851,7 +851,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const create = createTestAutomationFactory({
             getEncryptionKeyPair,
-            getFunction: getFunctionFactory({ logger: ctx.log }),
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,

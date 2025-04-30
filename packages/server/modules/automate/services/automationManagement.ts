@@ -7,7 +7,6 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunctionFactory,
   getFunctionReleaseFactory,
   getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
@@ -21,7 +20,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
-  AutomationCreationError,
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError,
@@ -131,7 +129,6 @@ export const createAutomationFactory =
 
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunction: ReturnType<typeof getFunctionFactory>
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
@@ -151,14 +148,13 @@ export const createTestAutomationFactory =
     userResourceAccessRules?: ContextResourceAccessRules
   }) => {
     const {
-      input: { name, functionId, modelId },
+      input: { name, modelId },
       projectId,
       userId,
       userResourceAccessRules
     } = params
     const {
       getEncryptionKeyPair,
-      getFunction,
       storeAutomation,
       storeAutomationRevision,
       validateStreamAccess,
@@ -173,18 +169,6 @@ export const createTestAutomationFactory =
       Roles.Stream.Owner,
       userResourceAccessRules
     )
-
-    // Get latest release for specified function
-    const fn = await getFunction({ functionId })
-
-    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
-      // TODO: This should probably be okay for test automations
-      throw new AutomationCreationError(
-        'The specified function does not have any releases'
-      )
-    }
-
-    const latestFunctionRelease = fn.functionVersions[0]
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
@@ -213,13 +197,7 @@ export const createTestAutomationFactory =
     const encryptionKeyPair = await getEncryptionKeyPair()
 
     const automationRevisionRecord = await storeAutomationRevision({
-      functions: [
-        {
-          functionId,
-          functionReleaseId: latestFunctionRelease.functionVersionId,
-          functionInputs: null
-        }
-      ],
+      functions: [],
       triggers: [
         {
           triggerType: VersionCreationTriggerType,

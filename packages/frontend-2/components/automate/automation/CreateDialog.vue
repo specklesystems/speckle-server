@@ -353,7 +353,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   const parameters = functionParameters.value
   const name = automationName.value
 
-  if (!fn || !project || !model || !name?.length || !fnRelease) {
+  if (!fn || !project || !model || !name?.length) {
     logger.error('Missing required data', {
       fn,
       project,
@@ -388,6 +388,20 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
 
       automationId.value = testAutomationId
       await goToNewAutomation()
+      return
+    }
+
+    // Test automations can be created with functions without versions
+    // TODO: Stop requiring functions for test automations
+    if (!fnRelease) {
+      logger.error('Missing required data', {
+        fn,
+        project,
+        model,
+        parameters,
+        name,
+        fnRelease
+      })
       return
     }
 
