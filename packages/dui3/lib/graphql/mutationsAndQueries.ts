@@ -379,6 +379,7 @@ export const projectDetailsQuery = graphql(`
         name
         slug
         readOnly
+        role
       }
       team {
         user {

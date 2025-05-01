@@ -1,7 +1,7 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { CustomLogger, Item } from '../types/types.js'
-import { isSafari } from '@speckle/shared'
+import { isSafari, TIME } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
@@ -91,7 +91,7 @@ export default class IndexedDatabase implements Cache {
         this.#logger(
           'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
         )
-        await new Promise((resolve) => setTimeout(resolve, 1000)) // Pause for 1 second, protects against out of memory
+        await new Promise((resolve) => setTimeout(resolve, TIME.second)) // Pause for 1 second, protects against out of memory
         continue
       }
       const batch = ids.slice(i, i + maxCacheReadSize)
@@ -114,7 +114,7 @@ export default class IndexedDatabase implements Cache {
       })
       // const endTime = performance.now()
       // const duration = endTime - startTime
-      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
 
       // interate down here to help with pausing
       i += maxCacheReadSize
@@ -143,7 +143,7 @@ export default class IndexedDatabase implements Cache {
     await cacheDB.objects.bulkPut(batch)
     // const endTime = performance.now()
     // const duration = endTime - startTime
-    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / 1000)
+    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
   }
 
   /**

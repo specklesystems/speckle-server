@@ -10,7 +10,7 @@
           <div class="relative">
             <div
               v-if="!menuOpen && hasNotifications"
-              class="absolute -top-[4px] -right-[4px] size-2 bg-primary rounded-full"
+              class="absolute -top-[4px] -right-[4px] size-2 bg-danger rounded-full"
             />
 
             <BellIcon v-if="!menuOpen" class="w-5 h-5" />
@@ -54,14 +54,27 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
 import { useQuery } from '@vue/apollo-composable'
-import { navigationInvitesQuery } from '~~/lib/navigation/graphql/queries'
+import {
+  navigationProjectInvitesQuery,
+  navigationWorkspaceInvitesQuery
+} from '~~/lib/navigation/graphql/queries'
 
 const menuButtonId = useId()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-const { result } = useQuery(navigationInvitesQuery)
+const { result: projectInviteResult } = useQuery(navigationProjectInvitesQuery)
+const { result: workspaceInviteResult } = useQuery(
+  navigationWorkspaceInvitesQuery,
+  null,
+  { enabled: isWorkspacesEnabled.value }
+)
 
-const projectsInvites = computed(() => result.value?.activeUser?.projectInvites)
-const workspacesInvites = computed(() => result.value?.activeUser?.workspaceInvites)
+const projectsInvites = computed(
+  () => projectInviteResult.value?.activeUser?.projectInvites
+)
+const workspacesInvites = computed(
+  () => workspaceInviteResult.value?.activeUser?.workspaceInvites
+)
 
 const hasNotifications = computed(
   () => projectsInvites.value?.length || workspacesInvites.value?.length

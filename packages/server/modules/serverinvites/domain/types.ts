@@ -35,6 +35,12 @@ export type PrimaryInviteResourceTarget<
    * If invite also has secondary resource targets, you can specify the expected roles here
    */
   secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+
+  /**
+   * Whether the invite should be auto accepted or not. If this is true, no invite is actually created or email sent,
+   * and the accept process is done automatically without user involvement.
+   */
+  autoAccept?: boolean
 }
 
 export type ServerInviteResourceTarget = InviteResourceTarget<

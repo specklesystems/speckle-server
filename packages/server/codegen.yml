@@ -25,6 +25,7 @@ generates:
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         User: '@/modules/core/helpers/graphTypes#UserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        UserMetaMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         UserEmailMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
@@ -38,6 +39,7 @@ generates:
         ServerStats: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
+        CommentPermissionChecks: '@/modules/comments/helpers/graphTypes#CommentPermissionChecksGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         StreamCollaborator: '@/modules/core/helpers/graphTypes#StreamCollaboratorGraphQLReturn'
         ProjectCollaborator: '@/modules/core/helpers/graphTypes#ProjectCollaboratorGraphQLReturn'
@@ -45,6 +47,7 @@ generates:
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
+        AutomationPermissionChecks: '@/modules/automate/helpers/graphTypes#AutomationPermissionChecksGraphQLReturn'
         AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
         AutomationRevisionFunction: '@/modules/automate/helpers/graphTypes#AutomationRevisionFunctionGraphQLReturn'
         AutomateRun: '@/modules/automate/helpers/graphTypes#AutomateRunGraphQLReturn'
@@ -69,6 +72,7 @@ generates:
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        LimitedWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceCollaboratorGraphQLReturn'
         WorkspaceSubscriptionSeats: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionSeatsGraphQLReturn'
         WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
         LimitedWorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#LimitedWorkspaceJoinRequestGraphQLReturn'
@@ -90,7 +94,10 @@ generates:
         ServerRegionItem: '@/modules/multiregion/helpers/graphTypes#ServerRegionItemGraphQLReturn'
         Price: '@/modules/gatekeeperCore/helpers/graphTypes#PriceGraphQLReturn'
         WorkspaceSubscription: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceSubscriptionGraphQLReturn'
+        UserMeta: '@/modules/core/helpers/graphTypes#UserMetaGraphQLReturn'
         ProjectPermissionChecks: '@/modules/core/helpers/graphTypes#ProjectPermissionChecksGraphQLReturn'
+        ModelPermissionChecks: '@/modules/core/helpers/graphTypes#ModelPermissionChecksGraphQLReturn'
+        VersionPermissionChecks: '@/modules/core/helpers/graphTypes#VersionPermissionChecksGraphQLReturn'
         RootPermissionChecks: '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn'
         WorkspacePermissionChecks: '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
@@ -112,6 +119,7 @@ generates:
     documents:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
+      - 'modules/**/tests/helpers/*Graphql.ts'
     config:
       enumsAsConst: true
       scalars:

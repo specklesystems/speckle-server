@@ -13,8 +13,9 @@ export const emptyInviteServerItem: InviteServerItem = {
 
 export const emptyInviteProjectItem: InviteProjectItem = {
   email: '',
+  userId: undefined,
   serverRole: Roles.Server.User,
-  projectRole: Roles.Stream.Contributor,
+  projectRole: Roles.Stream.Reviewer,
   project: undefined
 }
 

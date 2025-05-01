@@ -48,9 +48,13 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   deleteAllResourceInvitesFactory,
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
-  queryAllResourceInvitesFactory
+  queryAllResourceInvitesFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
@@ -74,6 +78,25 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -83,6 +106,52 @@ const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
   getFavoritedStreamsPage: getFavoritedStreamsPageFactory({ db })
 })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
@@ -100,7 +169,8 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
           payload
         }),
       getUser,
-      getServerInfo
+      getServerInfo,
+      finalizeInvite: buildFinalizeProjectInvite()
     }),
     getUsers
   }),
@@ -417,59 +487,129 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const { id } = await createStreamReturnRecord({
-        ...args.stream,
-        ownerId: context.userId!,
-        ownerResourceAccessRules: context.resourceAccessRules
-      })
+      const { id } = await withOperationLogging(
+        async () =>
+          await createStreamReturnRecord({
+            ...args.stream,
+            ownerId: context.userId!,
+            ownerResourceAccessRules: context.resourceAccessRules
+          }),
+        {
+          logger: context.log,
+          operationName: 'createStream',
+          operationDescription: `Create a new Stream`
+        }
+      )
 
       return id
     },
 
     async streamUpdate(_, args, context) {
+      const projectId = args.stream.id
       await authorizeResolver(
         context.userId,
         args.stream.id,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      await updateStreamAndNotify(args.stream, context.userId!)
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      await withOperationLogging(
+        async () => await updateStreamAndNotify(args.stream, context.userId!),
+        {
+          logger,
+          operationName: 'updateStream',
+          operationDescription: `Update a Stream`
+        }
+      )
       return true
     },
 
     async streamDelete(_, args, context) {
+      const projectId = args.id
       await authorizeResolver(
         context.userId,
         args.id,
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      return await deleteStreamAndNotify(args.id, context.userId!)
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+
+      return await withOperationLogging(
+        async () => await deleteStreamAndNotify(args.id, context.userId!),
+        {
+          logger,
+          operationName: 'deleteStream',
+          operationDescription: `Delete a Stream`
+        }
+      )
     },
 
     async streamsDelete(_, args, context) {
-      const results = await Promise.all(
-        (args.ids || []).map(async (id) => {
-          return await deleteStreamAndNotify(id, context.userId!)
-        })
+      const logger = context.log
+
+      const results = await withOperationLogging(
+        async () =>
+          await Promise.all(
+            (args.ids || []).map(async (id) => {
+              return await deleteStreamAndNotify(id, context.userId!)
+            })
+          ),
+        {
+          logger,
+          operationName: 'deleteStreams',
+          operationDescription: `Delete one or more Streams`
+        }
       )
       return results.every((res) => res === true)
     },
 
     async streamUpdatePermission(_, args, context) {
-      const result = await updateStreamRoleAndNotify(
-        args.permissionParams,
-        context.userId!,
-        context.resourceAccessRules
+      const projectId = args.permissionParams.streamId
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+      const result = await withOperationLogging(
+        async () =>
+          await updateStreamRoleAndNotify(
+            args.permissionParams,
+            context.userId!,
+            context.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'updateStreamPermission',
+          operationDescription: `Update a Stream Permission`
+        }
       )
       return !!result
     },
 
     async streamRevokePermission(_, args, context) {
-      const result = await updateStreamRoleAndNotify(
-        args.permissionParams,
-        context.userId!,
-        context.resourceAccessRules
+      const projectId = args.permissionParams.streamId
+      const logger = context.log.child({
+        projectId,
+        streamId: projectId //legacy
+      })
+      const result = await withOperationLogging(
+        async () =>
+          await updateStreamRoleAndNotify(
+            args.permissionParams,
+            context.userId!,
+            context.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'revokeStreamPermission',
+          operationDescription: `Revoke a Stream Permission`
+        }
       )
       return !!result
     },
@@ -477,13 +617,25 @@ export = {
     async streamFavorite(_parent, args, ctx) {
       const { streamId, favorited } = args
       const { userId, resourceAccessRules } = ctx
-
-      const stream = await favoriteStream({
-        userId: userId!,
-        streamId,
-        favorited,
-        userResourceAccessRules: resourceAccessRules
+      const logger = ctx.log.child({
+        projectId: streamId,
+        streamId //legacy
       })
+
+      const stream = await withOperationLogging(
+        async () =>
+          await favoriteStream({
+            userId: userId!,
+            streamId,
+            favorited,
+            userResourceAccessRules: resourceAccessRules
+          }),
+        {
+          logger,
+          operationName: 'favoriteStream',
+          operationDescription: `Favorite a Stream`
+        }
+      )
 
       return stream
     },
@@ -492,11 +644,24 @@ export = {
       const { streamId } = args
       const { userId } = ctx
 
-      await removeStreamCollaborator(
-        streamId,
-        userId!,
-        userId!,
-        ctx.resourceAccessRules
+      const logger = ctx.log.child({
+        projectId: streamId,
+        streamId //legacy
+      })
+
+      await withOperationLogging(
+        async () =>
+          await removeStreamCollaborator(
+            streamId,
+            userId!,
+            userId!,
+            ctx.resourceAccessRules
+          ),
+        {
+          logger,
+          operationName: 'leaveStream',
+          operationDescription: `Leave a Stream`
+        }
       )
 
       return true

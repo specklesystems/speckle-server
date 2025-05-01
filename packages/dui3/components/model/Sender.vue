@@ -3,7 +3,8 @@
     ref="cardBase"
     :model-card="modelCard"
     :project="project"
-    :readonly="readonly"
+    :can-edit="canEdit"
+    :is-explicit-project-reviewer="isExplicitProjectReviewer"
     @manual-publish-or-load="sendOrCancel"
   >
     <div class="flex max-[275px]:w-full overflow-hidden my-2">
@@ -13,7 +14,7 @@
         size="sm"
         color="subtle"
         class="block text-foreground-2 hover:text-foreground overflow-hidden max-w-full !justify-start"
-        :disabled="!!modelCard.progress || noWriteAccess"
+        :disabled="!!modelCard.progress || !props.canEdit"
         full-width
         @click.stop="openFilterDialog = true"
       >
@@ -82,7 +83,8 @@ const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
-  readonly: boolean
+  canEdit: boolean
+  isExplicitProjectReviewer: boolean
 }>()
 
 const store = useHostAppStore()
@@ -92,7 +94,7 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const sendOrCancel = () => {
-  if (props.readonly) {
+  if (!props.canEdit) {
     return
   }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
@@ -194,9 +196,5 @@ const latestVersionNotification = computed(() => {
     action: () => cardBase.value?.viewModel()
   }
   return notification
-})
-
-const noWriteAccess = computed(() => {
-  return props.readonly
 })
 </script>

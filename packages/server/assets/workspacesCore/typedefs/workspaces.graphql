@@ -120,7 +120,7 @@ extend type ProjectInviteMutations {
   createForWorkspace(
     projectId: ID!
     inputs: [WorkspaceProjectInviteCreateInput!]!
-  ): Project! @hasScope(scope: "users:invite") @hasServerRole(role: SERVER_USER)
+  ): Project! @hasScope(scope: "users:invite")
 }
 
 extend type Mutation {
@@ -229,14 +229,10 @@ input WorkspaceInviteResendInput {
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
     @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
-  resend(input: WorkspaceInviteResendInput!): Boolean!
-    @hasScope(scope: "users:invite")
-    @hasServerRole(role: SERVER_USER)
+  resend(input: WorkspaceInviteResendInput!): Boolean! @hasScope(scope: "users:invite")
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
@@ -383,17 +379,17 @@ type LimitedWorkspace {
   """
   Workspace members visible to people with verified email domain
   """
-  team(cursor: String, limit: Int! = 25): DiscoverableWorkspaceCollaboratorCollection
+  team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
 }
 
-type DiscoverableWorkspaceCollaboratorCollection {
+type LimitedWorkspaceCollaboratorCollection {
   totalCount: Int!
   cursor: String
-  items: [DiscoverableWorkspaceCollaborator!]!
+  items: [LimitedWorkspaceCollaborator!]!
 }
 
-type DiscoverableWorkspaceCollaborator {
-  avatar: String
+type LimitedWorkspaceCollaborator {
+  user: LimitedUser!
 }
 
 type WorkspaceDomain {

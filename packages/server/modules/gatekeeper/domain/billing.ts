@@ -1,4 +1,5 @@
 import {
+  Currency,
   WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
@@ -12,7 +13,6 @@ import {
   Optional,
   PaidWorkspacePlan,
   PaidWorkspacePlans,
-  TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
   WorkspacePlanBillingIntervals
@@ -20,6 +20,7 @@ import {
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
 
+export { Currency } from '@/modules/gatekeeperCore/domain/billing'
 export { WorkspaceSeat, WorkspaceSeatType }
 export {
   GetWorkspaceRoleAndSeat,
@@ -37,10 +38,6 @@ export type GetWorkspacePlansByWorkspaceId = (args: {
 export type GetWorkspaceWithPlan = (args: {
   workspaceId: string
 }) => Promise<Optional<Workspace & { plan: Nullable<WorkspacePlan> }>>
-
-export type UpsertTrialWorkspacePlan = (args: {
-  workspacePlan: TrialWorkspacePlan
-}) => Promise<void>
 
 export type UpsertPaidWorkspacePlan = (args: {
   workspacePlan: PaidWorkspacePlan
@@ -66,6 +63,7 @@ export type CheckoutSession = SessionInput & {
   workspacePlan: PaidWorkspacePlans
   paymentStatus: SessionPaymentStatus
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   createdAt: Date
   updatedAt: Date
 }
@@ -91,16 +89,6 @@ export type UpdateCheckoutSessionStatus = (args: {
   paymentStatus: SessionPaymentStatus
 }) => Promise<void>
 
-// Remove with FF_WORKSPACES_NEW_PLANS_ENABLED
-export type CreateCheckoutSessionOld = (args: {
-  workspaceId: string
-  workspaceSlug: string
-  seatCount: number
-  guestCount: number
-  workspacePlan: PaidWorkspacePlans
-  billingInterval: WorkspacePlanBillingIntervals
-  isCreateFlow: boolean
-}) => Promise<CheckoutSession>
 export type CreateCheckoutSession = (args: {
   workspaceId: string
   workspaceSlug: string
@@ -108,6 +96,7 @@ export type CreateCheckoutSession = (args: {
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
   isCreateFlow: boolean
+  currency: Currency
 }) => Promise<CheckoutSession>
 
 export type WorkspaceSubscription = {
@@ -116,6 +105,7 @@ export type WorkspaceSubscription = {
   updatedAt: Date
   currentBillingCycleEnd: Date
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
   subscriptionData: SubscriptionData
 }
 const subscriptionProduct = z.object({
@@ -134,7 +124,7 @@ export const SubscriptionData = z.object({
   status: z.union([
     z.literal('incomplete'),
     z.literal('incomplete_expired'),
-    z.literal('trialing'),
+    z.literal('trialing'), // TODO: Should we get rid of trial related states?
     z.literal('active'),
     z.literal('past_due'),
     z.literal('canceled'),
@@ -148,20 +138,12 @@ export const SubscriptionData = z.object({
 export type SubscriptionData = z.infer<typeof SubscriptionData>
 
 export const calculateSubscriptionSeats = ({
-  subscriptionData,
-  guestSeatProductId
+  subscriptionData
 }: {
   subscriptionData: SubscriptionData
-  guestSeatProductId: string
-}): { plan: number; guest: number } => {
-  const guestProduct = subscriptionData.products.find(
-    (p) => p.productId === guestSeatProductId
-  )
-
-  const planProduct = subscriptionData.products.find(
-    (p) => p.productId !== guestSeatProductId
-  )
-  return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
+}): number => {
+  const product = subscriptionData.products[0]
+  return product?.quantity || 0
 }
 
 export type UpsertWorkspaceSubscription = (args: {
@@ -185,19 +167,28 @@ export type GetSubscriptionData = (args: {
 export type GetWorkspacePlanPriceId = (args: {
   workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
+  currency: Currency
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
 
-type Products = 'guest' | PaidWorkspacePlans
+export type MultiCurrencyPrice = {
+  usd: string
+  gbp: string
+}
+type MultiCurrencyProductPrice = {
+  monthly: MultiCurrencyPrice
+  yearly: MultiCurrencyPrice
+}
 
-export type GetWorkspacePlanProductAndPriceIds = () => Record<
-  Products,
-  { productId: string; monthly: string; yearly: string }
+export type WorkspacePlanProductAndPriceIds = Record<
+  PaidWorkspacePlans,
+  { productId: string } & MultiCurrencyProductPrice
 >
 
+export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
   {

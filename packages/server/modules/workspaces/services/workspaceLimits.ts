@@ -16,12 +16,7 @@ export const getWorkspaceModelCountFactory =
     for await (const projects of deps.queryAllWorkspaceProjects({ workspaceId })) {
       for (const project of projects) {
         modelCount =
-          modelCount +
-          (await deps.getPaginatedProjectModelsTotalCount(project.id, {
-            filter: {
-              onlyWithVersions: true
-            }
-          }))
+          modelCount + (await deps.getPaginatedProjectModelsTotalCount(project.id, {}))
       }
     }
 

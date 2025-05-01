@@ -786,7 +786,25 @@ jobs:
 
       - run:
           name: Run tests
-          command: yarn test:single-run
+          command: yarn test:ci
+          working_directory: 'packages/shared'
+
+      - codecov/upload:
+          files: packages/shared/coverage/coverage-final.json
+
+      - run:
+          name: Build
+          command: yarn build
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Ensure ESM import works
+          command: node ./e2e/testEsm.mjs
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Ensure CJS require works
+          command: node ./e2e/testCjs.cjs
           working_directory: 'packages/shared'
 
   test-objectsender:

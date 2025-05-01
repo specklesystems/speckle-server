@@ -131,9 +131,9 @@ export const usersRetrievalQuery = gql`
 `
 
 export const activeUserProjectsQuery = gql`
-  query ActiveUserProjects($filter: UserProjectsFilter!) {
+  query ActiveUserProjects($filter: UserProjectsFilter!, $sortBy: [String!]) {
     activeUser {
-      projects(filter: $filter) {
+      projects(filter: $filter, sortBy: $sortBy) {
         cursor
         items {
           id
@@ -165,6 +165,65 @@ export const getProjectWithVersionsQuery = gql`
           id
           referencedObject
         }
+      }
+    }
+  }
+`
+
+export const getProjectWithModelVersionsQuery = gql`
+  query GetProjectWithModelVersions($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+      models {
+        items {
+          versions {
+            items {
+              id
+              referencedObject
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+export const getNewWorkspaceExplainerDismissedQuery = gql`
+  query GetNewWorkspaceExplainerDismissed {
+    activeUser {
+      meta {
+        newWorkspaceExplainerDismissed
+      }
+    }
+  }
+`
+export const setNewWorkspaceExplainerDismissedMutation = gql`
+  mutation SetNewWorkspaceExplainerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setNewWorkspaceExplainerDismissed(value: $input)
+      }
+    }
+  }
+`
+
+export const getLegacyProjectsExplainerCollapsedQuery = gql`
+  query GetLegacyProjectsExplainerCollapsed {
+    activeUser {
+      meta {
+        legacyProjectsExplainerCollapsed
+      }
+    }
+  }
+`
+
+export const setLegacyProjectsExplainerCollapsedMutation = gql`
+  mutation SetLegacyProjectsExplainerCollapsed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setLegacyProjectsExplainerCollapsed(value: $input)
       }
     }
   }

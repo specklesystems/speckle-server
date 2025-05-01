@@ -1,7 +1,7 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { authLogger, moduleLogger } from '@/observability/logging'
+import { moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -58,7 +58,6 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const findEmail = findEmailFactory({ db })
@@ -138,12 +137,13 @@ const setupStrategies = setupStrategiesFactory({
   }),
   oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUser: legacyGetUserFactory({ db })
+  getUser: legacyGetUserFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 let authStrategies: AuthStrategyMetadata[]
 
-export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
+export const init: SpeckleModule['init'] = async ({ app }) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies
@@ -156,15 +156,6 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of authScopes) {
     await registerFunc({ scope })
-  }
-
-  // Listen to event emitters
-  if (isInitial) {
-    const initializeEventListener = initializeEventListenerFactory({
-      eventBus: getEventBus(),
-      logger: authLogger
-    })
-    initializeEventListener()
   }
 }
 

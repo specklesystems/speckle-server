@@ -22,7 +22,7 @@
             v-else-if="selectedWorkspace"
             :workspaces="workspaces"
             :current-selected-workspace-id="selectedWorkspace.id"
-            @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => selectedWorkspace = workspace"
+            @workspace:selected="(workspace: WorkspaceListWorkspaceItemFragment) => handleWorkspaceSelected(workspace)"
           >
             <template #activator="{ toggle }">
               <button
@@ -43,7 +43,7 @@
             </template>
           </WorkspaceMenu>
         </div>
-        <div class="mt-1 mr-1 px-0.5 shrink-0">
+        <div class="px-0.5 shrink-0">
           <AccountsMenu
             :current-selected-account-id="accountId"
             @select="(e) => selectAccount(e)"
@@ -119,6 +119,7 @@
           :project="project"
           :disable-no-write-access-projects="disableNoWriteAccessProjects"
           :is-sender="isSender"
+          :workspace-admin="isWorkspaceAdmin"
           @click="handleProjectCardClick(project)"
         />
         <FormButton
@@ -151,6 +152,7 @@ import type {
   WorkspaceListWorkspaceItemFragment
 } from 'lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useConfigStore } from '~/store/config'
 
 const { trackEvent } = useMixpanel()
 const { $openUrl } = useNuxtApp()
@@ -183,6 +185,7 @@ const props = withDefaults(
 const searchText = ref<string>()
 const newProjectName = ref<string>()
 const accountStore = useAccountStore()
+const configStore = useConfigStore()
 const { activeAccount } = storeToRefs(accountStore)
 
 const accountId = computed(() => activeAccount.value.accountInfo.id)
@@ -231,10 +234,23 @@ const { result: activeWorkspaceResult, refetch: refetchActiveWorkspace } = useQu
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
 
-const activeWorkspace = computed(
-  () =>
-    activeWorkspaceResult.value?.activeUser
-      ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
+const activeWorkspace = computed(() => {
+  const userSelectedWorkspaceId = configStore.userSelectedWorkspaceId
+  if (userSelectedWorkspaceId) {
+    const previouslySelectedWorkspace = workspaces.value?.find(
+      (w) => w.id === userSelectedWorkspaceId
+    )
+    if (previouslySelectedWorkspace) {
+      return previouslySelectedWorkspace
+    }
+  }
+  // fallback to activeWorkspace query result
+  return activeWorkspaceResult.value?.activeUser
+    ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
+})
+
+const isWorkspaceAdmin = computed(
+  () => activeWorkspace.value.role === 'workspace:admin'
 )
 
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
@@ -255,14 +271,31 @@ watch(
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   // TODO: error
-  if (
-    props.disableNoWriteAccessProjects &&
-    (!project.role || project.role === 'stream:reviewer')
-  ) {
+  if (!isWorkspaceAdmin.value && project.role === 'stream:reviewer') {
     return
   }
   emit('next', accountId.value, project, selectedWorkspace.value)
 }
+
+const handleWorkspaceSelected = (
+  newSelectedWorkspace: WorkspaceListWorkspaceItemFragment
+) => {
+  selectedWorkspace.value = newSelectedWorkspace
+  configStore.setUserSelectedWorkspace(newSelectedWorkspace.id)
+}
+
+// This is a hack for people who don't have a workspace and have personal projects only.
+const timeoutWait = ref(false)
+
+const filtersReady = computed(
+  () => selectedWorkspace.value !== undefined || timeoutWait.value
+)
+
+onMounted(() => {
+  setTimeout(() => {
+    timeoutWait.value = true
+  }, 1000)
+})
 
 const {
   result: projectsResult,
@@ -278,10 +311,12 @@ const {
       workspaceId:
         selectedWorkspace.value?.id === 'personalProject'
           ? null
-          : selectedWorkspace.value?.id
+          : selectedWorkspace.value?.id,
+      includeImplicitAccess: true
     }
   }),
   () => ({
+    enabled: filtersReady.value,
     clientId: accountId.value,
     debounce: 500,
     fetchPolicy: 'network-only'

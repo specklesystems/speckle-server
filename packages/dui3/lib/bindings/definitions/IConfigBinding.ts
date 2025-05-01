@@ -18,6 +18,9 @@ export interface IConfigBinding extends IBinding<IConfigBindingEvents> {
   updateConfig: (config: ConnectorConfig) => void
   setUserSelectedAccountId: (accountId: string) => void
   getUserSelectedAccountId: () => Promise<AccountsConfig>
+  getAccountsConfig: () => Promise<AccountsConfig> // should have been named like this from day 0. we should get rid of `getUserSelectedAccountId` function after some amount of time to not confuse ourselves.
+  setUserSelectedWorkspaceId: (workspaceId: string) => void
+  getWorkspacesConfig: () => Promise<WorkspacesConfig>
 }
 
 export interface IConfigBindingEvents extends IBindingSharedEvents {}
@@ -28,6 +31,10 @@ export type ConnectorConfig = {
 
 export type AccountsConfig = {
   userSelectedAccountId: string
+}
+
+export type WorkspacesConfig = {
+  userSelectedWorkspaceId: string
 }
 
 // Useless, but will do for now :)

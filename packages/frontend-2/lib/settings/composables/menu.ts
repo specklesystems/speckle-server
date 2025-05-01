@@ -15,6 +15,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
@@ -39,37 +40,37 @@ export const useSettingsMenu = () => {
     {
       title: 'General',
       name: settingsWorkspaceRoutes.general.name,
-      route: (slug: string) => settingsWorkspaceRoutes.general.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.general.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     {
       title: 'People',
       name: settingsWorkspaceRoutes.members.name,
-      route: (slug: string) => settingsWorkspaceRoutes.members.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.members.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Projects',
       name: settingsWorkspaceRoutes.projects.name,
-      route: (slug: string) => settingsWorkspaceRoutes.projects.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.projects.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
-      route: (slug: string) => settingsWorkspaceRoutes.security.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.security.route(slug),
       permission: [Roles.Workspace.Admin]
     },
     {
       title: 'Billing',
       name: settingsWorkspaceRoutes.billing.name,
-      route: (slug: string) => settingsWorkspaceRoutes.billing.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.billing.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Data residency',
       name: settingsWorkspaceRoutes.regions.name,
-      route: (slug: string) => settingsWorkspaceRoutes.regions.route(slug),
+      route: (slug?: string) => settingsWorkspaceRoutes.regions.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(!isMultiRegionEnabled
         ? {
@@ -149,9 +150,11 @@ export const useSettingsMembersActions = (params: {
 }) => {
   const { activeUser } = useActiveUser()
 
-  const { hasSingleAdmin } = useWorkspaceLastAdminCheck({
+  const { isLastAdmin } = useWorkspaceLastAdminCheck({
     workspaceSlug: params.workspaceSlug.value || ''
   })
+
+  const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')
 
   const targetUserRole = computed(() => {
     return params.targetUser.value.role
@@ -164,7 +167,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const isOnlyAdmin = computed(
-    () => hasSingleAdmin.value && isActiveUserWorkspaceAdmin.value
+    () => isLastAdmin.value && isActiveUserWorkspaceAdmin.value
   )
 
   const isActiveUserTargetUser = computed(
@@ -184,7 +187,7 @@ export const useSettingsMembersActions = (params: {
   )
 
   const showMakeGuest = computed(
-    () => canModifyUser.value && targetUserRole.value !== Roles.Workspace.Guest
+    () => canModifyUser.value && targetUserRole.value === Roles.Workspace.Member
   )
 
   const showMakeMember = computed(
@@ -203,9 +206,10 @@ export const useSettingsMembersActions = (params: {
 
   const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
-  const showUpdateProjectPermissions = computed(() => canModifyUser.value)
+  // const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
+    const headerItems: LayoutMenuItem[] = []
     const mainItems: LayoutMenuItem[] = []
     const footerItems: LayoutMenuItem[] = []
 
@@ -213,6 +217,14 @@ export const useSettingsMembersActions = (params: {
       mainItems.push({
         title: 'Make admin...',
         id: WorkspaceUserActionTypes.MakeAdmin
+      })
+    }
+    if (showRemoveAdmin.value) {
+      mainItems.push({
+        title: 'Revoke admin access...',
+        id: WorkspaceUserActionTypes.RemoveAdmin,
+        disabled: isOnlyAdmin.value,
+        disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
     if (showMakeGuest.value) {
@@ -230,41 +242,39 @@ export const useSettingsMembersActions = (params: {
       })
     }
     if (showUpgradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Upgrade to editor...',
-        id: WorkspaceUserActionTypes.UpgradeEditor
+        id: WorkspaceUserActionTypes.UpgradeEditor,
+        disabled: statusIsCanceled.value,
+        disabledTooltip: 'This workspace has a canceled plan'
       })
     }
     if (showDowngradeEditor.value) {
-      mainItems.push({
+      headerItems.push({
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
-        disabled: targetUserRole.value === Roles.Workspace.Admin,
-        disabledTooltip: 'Admins must be on an Editor seat'
+        disabled:
+          targetUserRole.value === Roles.Workspace.Admin || statusIsCanceled.value,
+        disabledTooltip: statusIsCanceled.value
+          ? 'This workspace has a canceled plan'
+          : 'Admins must be on an Editor seat'
       })
     }
-    if (showUpdateProjectPermissions.value) {
-      mainItems.push({
-        title: 'Manage project access...',
-        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
-        disabled: params.targetUser.value.projectRoles.length === 0,
-        disabledTooltip: 'User is not in any projects'
-      })
-    }
+    // This will return post new workspace plan launch
+    // if (showUpdateProjectPermissions.value) {
+    //   mainItems.push({
+    //     title: 'Manage project access...',
+    //     id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+    //     disabled: params.targetUser.value.projectRoles.length === 0,
+    //     disabledTooltip: 'User is not in any projects'
+    //   })
+    // }
 
-    if (showRemoveAdmin.value) {
-      footerItems.push({
-        title: 'Revoke admin access...',
-        id: WorkspaceUserActionTypes.RemoveAdmin,
-        disabled: isOnlyAdmin.value,
-        disabledTooltip: 'There must be at least one admin in this workspace'
-      })
-    }
     if (showRemoveFromWorkspace.value) {
       footerItems.push({
         title: 'Remove from workspace...',
         id: WorkspaceUserActionTypes.RemoveFromWorkspace,
-        disabled: isOnlyAdmin.value,
+        disabled: isOnlyAdmin.value && targetUserRole.value === Roles.Workspace.Admin,
         disabledTooltip: 'There must be at least one admin in this workspace'
       })
     }
@@ -278,6 +288,7 @@ export const useSettingsMembersActions = (params: {
     }
 
     const result: LayoutMenuItem[][] = []
+    if (headerItems.length) result.push(headerItems)
     if (mainItems.length) result.push(mainItems)
     if (footerItems.length) result.push(footerItems)
     return result
