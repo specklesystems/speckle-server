@@ -423,7 +423,7 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}-v2
             - yarn-packages-server-{{ .Branch }}
             - yarn-packages-server-
       - run:
@@ -431,29 +431,12 @@ jobs:
           command: yarn --immutable --immutable-cache
       - save_cache:
           name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+          key: yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}-v2
           paths:
             - .yarn/cache
+            - .yarn/install-state.gz
+            - .yarn/build-state.yml
             - .yarn/unplugged
-            - node_modules
-            - packages/ui-components-nuxt/node_modules
-            - packages/monitor-deployment/node_modules
-            - packages/webhook-service/node_modules
-            - packages/fileimport-service/node_modules
-            - packages/dui3/node_modules
-            - packages/server/node_modules
-            - packages/ui-components/node_modules
-            - packages/shared/node_modules
-            - packages/viewer-sandbox/node_modules
-            - packages/viewer/node_modules
-            - packages/preview-service/node_modules
-            - packages/tailwind-theme/node_modules
-            - packages/frontend-2/node_modules
-            - packages/preview-frontend/node_modules
-            - packages/objectloader/node_modules
-            - packages/objectsender/node_modules
-            - packages/dui3/.output/server/node_modules
-
   pre-commit:
     parameters:
       config_file:
