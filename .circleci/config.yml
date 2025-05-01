@@ -423,14 +423,17 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - save_cache:
           name: Save Yarn Package Cache
-          key: yarn-packages-server-test-{{ checksum "yarn.lock" }}
+          key: yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
           paths:
+            - ~/.cache/yarn
             - .yarn/cache
             - .yarn/unplugged
             - node_modules
@@ -487,7 +490,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -539,10 +542,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
 
       - run:
           name: Build public packages
@@ -688,10 +693,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -708,10 +715,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -747,10 +756,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -777,10 +788,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Lint
           command: yarn lint:ci
@@ -812,10 +825,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -834,10 +849,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build public packages
           command: yarn build:public
@@ -870,10 +887,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -896,10 +915,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1022,9 +1043,6 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - setup_remote_docker:
-          version: default
-          docker_layer_caching: true
       - run:
           name: Build and Save
           command: ./.circleci/build.sh
@@ -1178,7 +1196,7 @@ jobs:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1246,10 +1264,12 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-test-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+            - yarn-packages-server-{{ .Branch }}
+            - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
