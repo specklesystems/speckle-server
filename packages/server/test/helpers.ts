@@ -9,7 +9,7 @@ import { get } from 'lodash'
  * @returns An object. The 'commit' property is the base object with a closure property which references all the other ('children') objects. The 'objs' property is an array of children objects.
  */
 export function generateManyObjects(shitTon: number, noise?: unknown) {
-  shitTon = shitTon || 10000
+  shitTon = shitTon || 10_000
   noise = noise || Math.random() * 100
 
   const objs = []
@@ -55,7 +55,7 @@ export function generateManyObjects(shitTon: number, noise?: unknown) {
  * @returns An array of objects, including a base object (at index 0) with a closure property which references all the other objects.
  */
 export function createManyObjects(num: number, noise?: unknown) {
-  num = num || 10000
+  num = num || 10_000
   noise = noise || Math.random() * 100
 
   const objs = []

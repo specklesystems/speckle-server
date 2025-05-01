@@ -101,6 +101,12 @@ export const useProcessOnboarding = () => {
     const user = activeUser.value
     if (!user) throw new OnboardingError('Attempting to onboard unidentified user')
 
+    mixpanel.people.set_once({
+      onboardingSurveyRole: onboardingData?.role,
+      onboardingSurveyUseCase: onboardingData?.plans,
+      onboardingSurveySource: onboardingData?.source
+    })
+
     await apollo
       .mutate({
         mutation: finishOnboardingMutation,
@@ -120,7 +126,6 @@ export const useProcessOnboarding = () => {
         }
       })
       .catch(convertThrowIntoFetchResult)
-    goHome()
   }
 
   /**

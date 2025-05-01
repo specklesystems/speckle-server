@@ -392,7 +392,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'Invalid project ID'
+            projectInvite ? 'Project not found' : 'Invalid project ID specified'
           )
         })
 
@@ -418,7 +418,9 @@ describe('[Stream & Server Invites]', () => {
 
           expect(result.data).to.not.be.ok
           expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-            'You are not authorized to access this resource'
+            projectInvite
+              ? 'You do not have access to the project'
+              : "Inviter doesn't have owner access to"
           )
         })
 
@@ -488,14 +490,12 @@ describe('[Stream & Server Invites]', () => {
         })
 
         // Creating some invites
-        await Promise.all(
-          invites.map((i) =>
-            createInviteDirectly(i, me.id).then((o) => {
-              i.inviteId = o.inviteId
-              i.token = o.token
-            })
-          )
-        )
+        for (const invite of invites) {
+          await createInviteDirectly(invite, me.id).then((o) => {
+            invite.inviteId = o.id
+            invite.token = o.token
+          })
+        }
       })
 
       it('they can resend pre-existing invites irregardless of type', async () => {
@@ -566,14 +566,12 @@ describe('[Stream & Server Invites]', () => {
           }
         ]
 
-        await Promise.all(
-          deletableInvites.map((i) =>
-            createInviteDirectly(i, me.id).then((o) => {
-              i.inviteId = o.inviteId
-              i.token = o.token
-            })
-          )
-        )
+        for (const deletableInvite of deletableInvites) {
+          await createInviteDirectly(deletableInvite, me.id).then((o) => {
+            deletableInvite.inviteId = o.id
+            deletableInvite.token = o.token
+          })
+        }
 
         // Delete all invites
         for (const invite of deletableInvites) {
@@ -693,7 +691,7 @@ describe('[Stream & Server Invites]', () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
         await createInviteDirectly(inviteFromOtherGuy, otherGuy.id).then((o) => {
-          inviteFromOtherGuy.inviteId = o.inviteId
+          inviteFromOtherGuy.inviteId = o.id
           inviteFromOtherGuy.token = o.token
         })
       })
@@ -802,23 +800,21 @@ describe('[Stream & Server Invites]', () => {
         ])
 
         // Create a couple of static invites that shouldn't be mutated in tests
-        await Promise.all([
-          createInviteDirectly(myInvite, me.id).then((o) => {
-            myInvite.inviteId = o.inviteId
-            myInvite.token = o.token
-          }),
-          createInviteDirectly(otherGuysInvite, otherGuy.id).then((o) => {
-            otherGuysInvite.inviteId = o.inviteId
-            otherGuysInvite.token = o.token
-          })
-        ])
+        await createInviteDirectly(myInvite, me.id).then((o) => {
+          myInvite.inviteId = o.id
+          myInvite.token = o.token
+        })
+        await createInviteDirectly(otherGuysInvite, otherGuy.id).then((o) => {
+          otherGuysInvite.inviteId = o.id
+          otherGuysInvite.token = o.token
+        })
       })
 
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
         await createInviteDirectly(dynamicInvite, me.id).then((o) => {
-          dynamicInvite.inviteId = o.inviteId
+          dynamicInvite.inviteId = o.id
           dynamicInvite.token = o.token
         })
       })
@@ -893,24 +889,22 @@ describe('[Stream & Server Invites]', () => {
         await createTestUser(ownInvitesGuy)
 
         // Invite him to a few streams
-        await Promise.all([
-          createInviteDirectly(
-            {
-              stream: myPrivateStream,
-              // SPecifically w/ email
-              email: ownInvitesGuy.email
-            },
-            me.id
-          ),
-          createInviteDirectly(
-            {
-              // Specifically w/ id
-              userId: ownInvitesGuy.id,
-              stream: otherGuysStream
-            },
-            otherGuy.id
-          )
-        ])
+        await createInviteDirectly(
+          {
+            stream: myPrivateStream,
+            // SPecifically w/ email
+            email: ownInvitesGuy.email
+          },
+          me.id
+        )
+        await createInviteDirectly(
+          {
+            // Specifically w/ id
+            userId: ownInvitesGuy.id,
+            stream: otherGuysStream
+          },
+          otherGuy.id
+        )
 
         // Build authenticated apollo instance
         apollo = await testApolloServer({ authUserId: ownInvitesGuy.id })

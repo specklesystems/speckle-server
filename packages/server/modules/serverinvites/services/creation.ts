@@ -19,6 +19,7 @@ import {
   BuildInviteEmailContents,
   CollectAndValidateResourceTargets,
   CreateAndSendInvite,
+  FinalizeInvite,
   ResendInviteEmail
 } from '@/modules/serverinvites/services/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -91,7 +92,8 @@ export const createAndSendInviteFactory =
     buildInviteEmailContents,
     emitEvent,
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite
   }: {
     findUserByTarget: FindUserByTarget
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
@@ -100,6 +102,7 @@ export const createAndSendInviteFactory =
     emitEvent: EventBusEmit
     getUser: GetUser
     getServerInfo: GetServerInfo
+    finalizeInvite: FinalizeInvite
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -165,6 +168,19 @@ export const createAndSendInviteFactory =
       targetUser ? [targetUser.email, buildUserTarget(targetUser.id)!] : []
     )
 
+    const autoAccept = finalPrimaryResource.autoAccept
+    if (autoAccept && targetUser?.id) {
+      await finalizeInvite({
+        finalizerUserId: targetUser.id,
+        finalizerResourceAccessLimits: inviterResourceAccessLimits,
+        accept: true,
+        token: invite.token,
+        resourceType: finalPrimaryResource.resourceType,
+        trueFinalizerId: inviterId
+      })
+      return
+    }
+
     // generate and send email
     await sendInviteEmail({
       invite: finalInvite,
@@ -180,11 +196,6 @@ export const createAndSendInviteFactory =
         invite: finalInvite
       }
     })
-
-    return {
-      inviteId: invite.id,
-      token: invite.token
-    }
   }
 
 /**

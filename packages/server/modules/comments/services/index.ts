@@ -247,7 +247,7 @@ export const editCommentFactory =
   }: {
     userId: string
     input: CommentEditInput
-    matchUser: boolean
+    matchUser?: boolean
   }) => {
     const editedComment = await deps.getComment({ id: input.id })
     if (!editedComment) throw new CommentNotFoundError("The comment doesn't exist")

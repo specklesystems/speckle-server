@@ -17,7 +17,7 @@ import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { MultiRegionDbSelectorMock } from '@/test/mocks/global'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
-import { Roles } from '@speckle/shared'
+import { PaidWorkspacePlans, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
 const storeRegion = storeRegionFactory({ db })
@@ -51,7 +51,10 @@ isEnabled
 
         await Promise.all([
           // Create first test workspace
-          createTestWorkspace(myFirstWorkspace, me),
+          createTestWorkspace(myFirstWorkspace, me, {
+            // pro for custom regions
+            addPlan: { name: PaidWorkspacePlans.Pro }
+          }),
           // Create a couple of test regions
           storeRegion({
             region: {
@@ -91,7 +94,28 @@ isEnabled
         })
       })
 
-      describe('when setting default region', () => {
+      it("can't set default region on invalid plan", async () => {
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          slug: '',
+          name: 'My second workspace'
+        }
+        await createTestWorkspace(workspace, me, {
+          addPlan: { name: PaidWorkspacePlans.Team }
+        })
+
+        const res = await apollo.execute(
+          SetWorkspaceDefaultRegionDocument,
+          { workspaceId: workspace.id, regionKey: region1Key },
+          { authUserId: me.id }
+        )
+
+        expect(res).to.haveGraphQLErrors('Specified region not available for workspace')
+        expect(res.data?.workspaceMutations.setDefaultRegion).to.be.not.ok
+      })
+
+      describe('when setting default region on valid plan', () => {
         const mySecondWorkspace: BasicTestWorkspace = {
           id: '',
           ownerId: '',
@@ -100,7 +124,10 @@ isEnabled
         }
 
         before(async () => {
-          await createTestWorkspace(mySecondWorkspace, me)
+          await createTestWorkspace(mySecondWorkspace, me, {
+            // pro for custom regions
+            addPlan: { name: PaidWorkspacePlans.Pro }
+          })
         })
 
         beforeEach(async () => {
@@ -145,7 +172,10 @@ isEnabled
         }
 
         before(async () => {
-          await createTestWorkspace(myThirdWorkspace, me)
+          await createTestWorkspace(myThirdWorkspace, me, {
+            // pro for custom regions
+            addPlan: { name: PaidWorkspacePlans.Pro }
+          })
           await apollo.execute(
             SetWorkspaceDefaultRegionDocument,
             {

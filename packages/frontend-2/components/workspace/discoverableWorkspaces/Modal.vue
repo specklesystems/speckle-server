@@ -10,10 +10,22 @@
     </p>
     <div class="flex flex-col gap-y-3">
       <WorkspaceDiscoverableWorkspacesCard
-        v-for="workspace in discoverableWorkspacesAndJoinRequests"
+        v-for="workspace in workspacesToShow"
         :key="workspace.id"
         :workspace="workspace"
+        :request-status="workspace.requestStatus"
+        show-dismiss-button
+        location="workspace_switcher"
       />
+      <FormButton
+        v-if="!showAllWorkspaces"
+        color="subtle"
+        size="lg"
+        full-width
+        @click="showAllWorkspaces = true"
+      >
+        Show all ({{ discoverableWorkspacesAndJoinRequestsCount }})
+      </FormButton>
     </div>
   </LayoutDialog>
 </template>
@@ -23,11 +35,19 @@ import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discover
 
 const {
   discoverableWorkspacesAndJoinRequests,
-  hasDiscoverableWorkspacesOrJoinRequests
+  hasDiscoverableWorkspacesOrJoinRequests,
+  discoverableWorkspacesAndJoinRequestsCount
 } = useDiscoverableWorkspaces()
 
 const open = defineModel<boolean>('open', { required: true })
 
+const showAllWorkspaces = ref(false)
+
+const workspacesToShow = computed(() => {
+  return showAllWorkspaces.value
+    ? discoverableWorkspacesAndJoinRequests.value
+    : discoverableWorkspacesAndJoinRequests.value.slice(0, 3)
+})
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
     {
@@ -37,5 +57,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
       }
     }
   ]
+})
+
+watch(open, () => {
+  showAllWorkspaces.value = false
 })
 </script>

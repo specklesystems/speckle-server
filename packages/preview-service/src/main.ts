@@ -3,7 +3,7 @@ import puppeteer, { Browser } from 'puppeteer'
 import { createTerminus } from '@godaddy/terminus'
 import type { Logger } from 'pino'
 import { Redis, type RedisOptions } from 'ioredis'
-import Bull from 'bull'
+import Bull, { type QueueOptions } from 'bull'
 
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 
@@ -21,10 +21,14 @@ import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { AppState } from '@/const.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
+import { ensureError } from '@speckle/shared'
+import { isRedisReady } from '@/utils.js'
 
 const app = express()
 const host = HOST
 const port = PORT
+
+const JobQueueName = 'preview-service-jobs'
 
 let appState: AppState = AppState.STARTING
 
@@ -35,7 +39,7 @@ await initMetrics({ app, registry: initPrometheusRegistry() })
 let client: Redis
 let subscriber: Redis
 
-const opts = {
+const opts: QueueOptions = {
   // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
   createClient(type: string, redisOpts: RedisOptions) {
     switch (type) {
@@ -64,7 +68,7 @@ const opts = {
     }
   }
 }
-const jobQueue = new Bull('preview-service-jobs', opts)
+let jobQueue: Bull.Queue | undefined = undefined
 
 // store this callback, so on shutdown we can error the job
 let currentJob: { logger: Logger; done: Bull.DoneCallback } | undefined = undefined
@@ -78,15 +82,21 @@ const server = app.listen(port, host, async () => {
   logger.info({ port }, '📡 Started Preview Service server, listening on {port}')
   appState = AppState.RUNNING
 
-  const gpuWithVulkanArgs = [
-    '--use-angle=vulkan',
-    '--enable-features=Vulkan',
-    '--disable-vulkan-surface',
-    '--enable-unsafe-webgpu'
-  ]
+  const gpuArgs = ['--use-gl=angle', '--use-angle=gl-egl']
 
   const launchBrowser = async (): Promise<Browser> => {
-    logger.debug('Starting browser')
+    const launchArguments = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-session-crashed-bubble',
+      ...(GPU_ENABLED ? gpuArgs : [])
+    ]
+    logger.debug(
+      `Starting browser, located at "${CHROMIUM_EXECUTABLE_PATH}", with the following arguments: ${JSON.stringify(
+        launchArguments
+      )}`
+    )
     return await puppeteer.launch({
       headless: !PREVIEWS_HEADED,
       executablePath: CHROMIUM_EXECUTABLE_PATH,
@@ -94,13 +104,7 @@ const server = app.listen(port, host, async () => {
       // slowMo: 3000, // Use for debugging during development
       // we trust the web content that is running, so can disable the sandbox
       // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-session-crashed-bubble',
-        ...(GPU_ENABLED ? gpuWithVulkanArgs : [])
-      ],
+      args: launchArguments,
       protocolTimeout: PREVIEW_TIMEOUT,
       // handle closing of the browser by the preview-service, not puppeteer
       // this is important for the preview-service to be able to shut down gracefully,
@@ -110,7 +114,29 @@ const server = app.listen(port, host, async () => {
       handleSIGTERM: false
     })
   }
-  logger.debug('Starting message queues')
+
+  try {
+    const newQueue = new Bull(JobQueueName, opts)
+
+    logger.info('Checking Redis connection is ready...')
+
+    // Bull's Queue.isReady() does not actually check the Redis connection
+    // see https://github.com/OptimalBits/bull/issues/1873#issuecomment-953581143
+    await isRedisReady(newQueue.client)
+    logger.info('Redis is ready')
+
+    jobQueue = await newQueue.isReady()
+  } catch (e) {
+    const err = ensureError(e, 'Unknown error creating job queue')
+    logger.error({ err }, 'Error creating job queue')
+
+    // the callback to server.listen has failed, so we need to exit the process and not just return
+    await beforeShutdown() // handle the shutdown gracefully
+    await onShutdown()
+    process.exit(1)
+  }
+
+  logger.debug(`Starting processing of "${JobQueueName}" message queue`)
 
   // nothing after this line is getting called, this blocks
   await jobQueue.process(async (payload, done) => {
@@ -121,7 +147,7 @@ const server = app.listen(port, host, async () => {
     })
 
     if (browser) {
-      const message = 'Starting job but Browser is already open.'
+      const message = 'Tried to start job but Browser is already open.'
       done(new Error(message))
       throw new Error(message)
     }
@@ -183,10 +209,12 @@ const beforeShutdown = async () => {
   logger.info('🛑 Beginning shut down, pausing all jobs')
   appState = AppState.SHUTTINGDOWN
   // stop accepting new jobs and kill any running jobs
-  await jobQueue.pause(
-    true, // just pausing this local worker of the queue
-    true // do not wait for active jobs to finish
-  )
+  if (jobQueue) {
+    await jobQueue.pause(
+      true, // just pausing this local worker of the queue
+      true // do not wait for active jobs to finish
+    )
+  }
 
   if (currentJob) {
     currentJob.logger.warn('Cancelling job due to preview-service shutdown')
@@ -200,6 +228,7 @@ const beforeShutdown = async () => {
     await browser.close()
     browser = undefined
   }
+  // no need to close the job queue and redis client, when the process exits they will be closed automatically
 }
 
 const onShutdown = async () => {
@@ -215,6 +244,17 @@ createTerminus(server, {
         return Promise.reject(new Error('Preview service is shutting down'))
       }
 
+      if (!jobQueue) {
+        return Promise.reject(new Error('Job queue is not initialized'))
+      }
+
+      try {
+        await isRedisReady(jobQueue.client)
+      } catch (e) {
+        return Promise.reject(
+          ensureError(e, 'Unknown error when checking Redis client')
+        )
+      }
       const isReady = await jobQueue.isReady()
       if (!isReady)
         return Promise.reject(

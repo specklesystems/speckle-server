@@ -5,12 +5,24 @@ export default {
   Project: {
     permissions: (parent) => ({ projectId: parent.id })
   },
+  Model: {
+    permissions: (parent) => ({
+      projectId: parent.streamId,
+      modelId: parent.id
+    })
+  },
+  Version: {
+    permissions: (parent) => ({
+      projectId: parent.streamId,
+      versionId: parent.id
+    })
+  },
   User: {
     permissions: () => ({})
   },
   ProjectPermissionChecks: {
     canCreateModel: async (parent, _args, ctx) => {
-      const canCreateModel = await ctx.authPolicies.project.canCreateModel({
+      const canCreateModel = await ctx.authPolicies.project.model.canCreate({
         userId: ctx.userId,
         projectId: parent.projectId
       })
@@ -20,7 +32,7 @@ export default {
       const canMoveToWorkspace = await ctx.authPolicies.project.canMoveToWorkspace({
         userId: ctx.userId,
         projectId: parent.projectId,
-        workspaceId: args.workspaceId
+        workspaceId: args.workspaceId ?? undefined
       })
       return Authz.toGraphqlResult(canMoveToWorkspace)
     },
@@ -30,6 +42,97 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canRead)
+    },
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdate)
+    },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canDelete)
+    },
+    canUpdateAllowPublicComments: async (parent, _args, ctx) => {
+      const canUpdateAllowPublicComments =
+        await ctx.authPolicies.project.canUpdateAllowPublicComments({
+          projectId: parent.projectId,
+          userId: ctx.userId
+        })
+      return Authz.toGraphqlResult(canUpdateAllowPublicComments)
+    },
+    canReadSettings: async (parent, _args, ctx) => {
+      const canReadSettings = await ctx.authPolicies.project.canReadSettings({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadSettings)
+    },
+    canReadWebhooks: async (parent, _args, ctx) => {
+      const canReadWebhooks = await ctx.authPolicies.project.canReadWebhooks({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadWebhooks)
+    },
+    canLeave: async (parent, _args, ctx) => {
+      const canLeave = await ctx.authPolicies.project.canLeave({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canLeave)
+    },
+    canRequestRender: async (parent, _args, ctx) => {
+      const canRequestRender = await ctx.authPolicies.project.version.canRequestRender({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canRequestRender)
+    }
+  },
+  ModelPermissionChecks: {
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.model.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdate)
+    },
+    canDelete: async (parent, _args, ctx) => {
+      const canDelete = await ctx.authPolicies.project.model.canDelete({
+        projectId: parent.projectId,
+        userId: ctx.userId,
+        modelId: parent.modelId
+      })
+      return Authz.toGraphqlResult(canDelete)
+    },
+    canCreateVersion: async (parent, _args, ctx) => {
+      const canCreate = await ctx.authPolicies.project.version.canCreate({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canCreate)
+    }
+  },
+  VersionPermissionChecks: {
+    canUpdate: async (parent, _args, ctx) => {
+      const canUpdate = await ctx.authPolicies.project.version.canUpdate({
+        projectId: parent.projectId,
+        userId: ctx.userId,
+        versionId: parent.versionId
+      })
+      return Authz.toGraphqlResult(canUpdate)
+    },
+    canReceive: async (parent, _args, ctx) => {
+      const canReceive = await ctx.authPolicies.project.version.canReceive({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReceive)
     }
   },
   RootPermissionChecks: {

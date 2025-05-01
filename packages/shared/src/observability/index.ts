@@ -1,6 +1,7 @@
 import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
 import { toClef, toClefLogLevel } from './pinoClef.js'
+import { TIME_MS } from '../core/index.js'
 
 let logger: pino.Logger
 export type MixinFn = (mergeObject: object, level: number) => object
@@ -78,7 +79,7 @@ export function simpleRpmCounter() {
 
   const validateHits = () => {
     const timestamp = getTimestamp()
-    if (timestamp > lastDateTimestamp + 60 * 1000) {
+    if (timestamp > lastDateTimestamp + TIME_MS.minute) {
       hits = 0
       lastDateTimestamp = timestamp
     }

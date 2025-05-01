@@ -13,15 +13,6 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
-export const projectRoleCheckQuery = graphql(`
-  query ProjectRoleCheck($id: String!) {
-    project(id: $id) {
-      id
-      role
-    }
-  }
-`)
-
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {
@@ -35,6 +26,7 @@ export const projectsDashboardQuery = graphql(`
         }
       }
       ...ProjectsHiddenProjectWarning_User
+      ...ProjectsDashboard_User
     }
   }
 `)
@@ -248,6 +240,11 @@ export const projectAutomationsTabQuery = graphql(`
         }
         ...AutomateFunctionCreateDialog_Workspace
       }
+      permissions {
+        canCreateAutomation {
+          ...FullPermissionCheckResult
+        }
+      }
       ...FormSelectProjects_Project
     }
     ...AutomateFunctionsPageHeader_Query
@@ -326,6 +323,7 @@ export const projectWebhooksQuery = graphql(`
     project(id: $projectId) {
       id
       name
+      ...ProjectPageSettingsWebhooks_Project
       webhooks {
         items {
           streamId

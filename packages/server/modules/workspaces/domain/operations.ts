@@ -124,6 +124,10 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     search?: string
     seatType?: WorkspaceSeatType
+    /**
+     * Optionally filter by user id
+     */
+    excludeUserIds?: string[]
   }
 }
 
@@ -180,16 +184,25 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+export type GetWorkspacesRolesForUsers = (
+  reqs: Array<{
+    userId: string
+    workspaceId: string
+  }>
+) => Promise<{
+  [workspaceId: string]:
+    | {
+        [userId: string]: WorkspaceAcl | undefined
+      }
+    | undefined
+}>
+
 /** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Service-level change with protection against invalid role changes */
 export type UpdateWorkspaceRole = (
   args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
     /**
      * Only add or upgrade role, prevent downgrades
      */
@@ -220,6 +233,20 @@ export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
     [workspaceSeatType in WorkspaceSeatType]: StreamRoles
   }
 }>
+
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+  /**
+   * Instead of resolving actual workspace role/seatType, use this one. Useful when checking
+   * if a planned workspace member will have valid access to a project
+   */
+  workspaceAccess?: {
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }
+}) => Promise<void>
 
 /** Workspace Projects */
 

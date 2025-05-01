@@ -4,7 +4,6 @@ import { useProcessProjectInvite } from '~/lib/projects/composables/projectManag
 export const useProjectInviteManager = () => {
   const processInvite = useProcessProjectInvite()
   const mp = useMixpanel()
-
   const loading = ref(false)
 
   const useInvite = async (params: {

@@ -41,8 +41,8 @@
       <button
         v-if="iconClick"
         v-tippy="iconText ? iconText : undefined"
-        class="hidden group-hover:flex p-1 shrink-0 hover:bg-primary-muted rounded text-foreground-2"
-        :class="noHover ? '' : 'mr-2'"
+        class="group-hover:flex p-1 shrink-0 hover:bg-primary-muted rounded text-foreground-2"
+        :class="[noHover ? '' : 'mr-2', alwaysShowIcon ? 'flex' : 'hidden']"
         @click="iconClick"
       >
         <Edit v-if="icon === 'edit'" class="h-4 w-4" />
@@ -74,6 +74,7 @@ defineProps<{
   iconClick?: () => void
   noHover?: boolean
   nested?: boolean
+  alwaysShowIcon?: boolean
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')

@@ -74,6 +74,7 @@ export const completeCheckoutSessionFactory =
       currentBillingCycleEnd,
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,
+      currency: checkoutSession.currency,
       subscriptionData
     }
 

@@ -37,6 +37,7 @@ import {
   GetCommentParents,
   GetCommentReplyAuthorIds,
   GetCommentReplyCounts,
+  GetComments,
   GetCommentsResources,
   GetCommitCommentCounts,
   GetPaginatedBranchCommentsPage,
@@ -103,6 +104,18 @@ export const getCommentFactory =
       })
     }
     query.where({ id }).first()
+    return await query
+  }
+
+export const getCommentsFactory =
+  (deps: { db: Knex }): GetComments =>
+  async (params) => {
+    const { ids } = params
+    if (!ids.length) return []
+
+    const query = tables.comments(deps.db).select<CommentRecord[]>('*')
+    query.whereIn(Comments.col.id, ids)
+
     return await query
   }
 
