@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectsender",
-  "version": "2.23.23",
+  "version": "1.0.1",
   "description": "Simple API helper to serialize and send objects to the server.",
   "type": "module",
   "main": "dist/objectsender.cjs",
