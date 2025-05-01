@@ -103,9 +103,19 @@ export function useAddByUrl() {
     }
 
     if (project && model && acc) {
-      if (type === 'sender' && (project.role === 'stream:reviewer' || !project.role)) {
-        urlParseError.value =
-          'You do not have enough permissions to send data to this project.'
+      const errorMessage =
+        type === 'sender'
+          ? 'Publish is not permitted by your role on this project.'
+          : 'Load is not permitted by your role on this project.'
+
+      // TODO: we should align these permissions when web team's helper logic is ready!
+      const isWorkspaceAdmin = project.workspace?.role === 'workspace:admin'
+
+      const isExplicitProjectReviewer = project.role === 'stream:reviewer'
+      const canEdit = isWorkspaceAdmin ? true : project.role !== 'stream:reviewer'
+      const canDoOperation = !isExplicitProjectReviewer && canEdit
+      if (!canDoOperation) {
+        urlParseError.value = errorMessage
         return
       }
 

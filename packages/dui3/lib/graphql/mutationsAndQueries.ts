@@ -231,6 +231,7 @@ export const projectListFragment = graphql(`
       id
       name
       slug
+      role
     }
     models {
       totalCount

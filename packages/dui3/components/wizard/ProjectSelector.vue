@@ -270,11 +270,12 @@ watch(
 )
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
-  // TODO: error
-  if (!isWorkspaceAdmin.value && project.role === 'stream:reviewer') {
-    return
+  if (
+    isWorkspaceAdmin.value ||
+    (project.role !== null && project.role !== 'stream:reviewer')
+  ) {
+    emit('next', accountId.value, project, selectedWorkspace.value)
   }
-  emit('next', accountId.value, project, selectedWorkspace.value)
 }
 
 const handleWorkspaceSelected = (
