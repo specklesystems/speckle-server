@@ -4,6 +4,34 @@ orbs:
   snyk: snyk/snyk@2.0.3
   codecov: codecov/codecov@5.0.3
 
+aliases:
+  - &default_image
+    working_directory: &ramdisk /mnt/ramdisk/speckle
+    resource_class: medium+
+    docker:
+      - image: cimg/node:18.19.0
+
+  - &cache_key v3-yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+  - &restore_yarn_cache
+    restore_cache:
+      name: Restore Yarn Package Cache
+      keys:
+        - *cache_key
+        - v3-yarn-packages-server-{{ .Branch }}
+        - v3-yarn-packages-server
+
+executors:
+  ci-node:
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
+    resource_class: medium+
+    working_directory: &work-dir /tmp/ci
+  ci-node-browser:
+    docker:
+      - image: cimg/node:18.19.0-browsers
+    resource_class: medium+
+    working_directory: *ramdisk
+
 workflows:
   test-build:
     jobs:
@@ -400,7 +428,7 @@ jobs:
   get-version:
     docker: &docker-base-image
       - image: cimg/base:2024.02
-    working_directory: &work-dir /tmp/ci
+    working_directory: *work-dir
     steps:
       - checkout
       - run: mkdir -p workspace
@@ -416,27 +444,36 @@ jobs:
             - env-vars
 
   install-and-cache-dependencies:
-    docker:
-      - image: cimg/node:18.19.0
+    <<: *default_image
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}-v2
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - save_cache:
           name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}-v2
+          key: *cache_key
           paths:
-            - .yarn/cache
-            - .yarn/install-state.gz
-            - .yarn/build-state.yml
-            - .yarn/unplugged
+            - .yarn
+            - node_modules
+            - packages/ui-components-nuxt/node_modules
+            - packages/monitor-deployment/node_modules
+            - packages/webhook-service/node_modules
+            - packages/fileimport-service/node_modules
+            - packages/dui3/node_modules
+            - packages/server/node_modules
+            - packages/ui-components/node_modules
+            - packages/shared/node_modules
+            - packages/viewer-sandbox/node_modules
+            - packages/viewer/node_modules
+            - packages/preview-service/node_modules
+            - packages/tailwind-theme/node_modules
+            - packages/frontend-2/node_modules
+            - packages/preview-frontend/node_modules
+            - packages/objectloader/node_modules
+            - packages/objectsender/node_modules
+            - packages/dui3/.output/server/node_modules
   pre-commit:
     parameters:
       config_file:
@@ -472,7 +509,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -521,33 +558,20 @@ jobs:
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
-      - run:
-          name: Install Dependencies
-          command: yarn --immutable --immutable-cache
-
+      - *restore_yarn_cache
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
-
       - run:
           command: cp .env.test-example .env.test
           working_directory: 'packages/server'
-
       - run:
           name: 'Lint'
           command: yarn lint:ci
           working_directory: 'packages/server'
-
       - run:
           name: 'Run tests'
           # Extra formatting to get timestamps on each line in CI (for profiling purposes)
@@ -561,25 +585,20 @@ jobs:
             yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
           no_output_timeout: 30m
-
       - codecov/upload:
           files: packages/server/coverage/lcov.info
-
       - run:
           name: Introspect GQL schema for subsequent checks
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against app.speckle.systems
           command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against latest.speckle.systems
           command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - store_test_results:
           path: packages/server/reports
 
@@ -667,20 +686,13 @@ jobs:
       RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
-    docker: &docker-node-browsers-image
+    docker:
       - image: cimg/node:18.19.0-browsers
+    working_directory: *ramdisk
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
-      - run:
-          name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+      - *restore_yarn_cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -690,19 +702,14 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: *docker-node-browsers-image
+    executor: ci-node-browser
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -735,15 +742,10 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -763,19 +765,24 @@ jobs:
           working_directory: 'packages/preview-service'
 
   test-shared:
-    docker: *docker-node-browsers-image
-    resource_class: medium+
+    <<: *default_image
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
+      - run: pwd
+      - run: ls -a
       - run:
-          name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: pwd
+          working_directory: 'packages/shared'
+      - run:
+          command: ls -a
+          working_directory: 'packages/shared'
+      - run:
+          command: pwd
+          working_directory: '/mnt/ramdisk/speckle/packages/shared'
+      - run:
+          command: ls -a
+          working_directory: '/mnt/ramdisk/speckle/packages/shared'
       - run:
           name: Lint
           command: yarn lint:ci
@@ -800,19 +807,14 @@ jobs:
           working_directory: 'packages/shared'
 
   test-objectsender:
-    docker: *docker-node-browsers-image
+    executor: ci-node-browser
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -824,19 +826,14 @@ jobs:
           path: 'packages/objectsender/coverage'
 
   test-ui-components:
-    docker: *docker-node-browsers-image
+    executor: ci-node-browser
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -861,20 +858,13 @@ jobs:
           working_directory: 'packages/ui-components'
 
   ui-components-chromatic:
-    resource_class: medium+
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
+    executor: ci-node
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -889,20 +879,15 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker: *docker-node-image
+    executor: ci-node
     resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1165,20 +1150,17 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker: *docker-node-image
+    executor: ci-node
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-{{ checksum "yarn.lock" }}
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn --immutable
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1237,15 +1219,10 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-            - yarn-packages-server-{{ .Branch }}
-            - yarn-packages-server-
+      - *restore_yarn_cache
       - run:
           name: Install Dependencies
-          command: yarn --immutable --immutable-cache
+          command: yarn
       - run:
           name: Build public packages
           command: yarn build:public
