@@ -62,10 +62,12 @@ To get started, run:
 
 1. `corepack enable`
 1. `yarn`
+1. `yarn husky:install`
 1. `yarn build`
 
 After this, you can use the scripts in the individual packages or run them all in dev mode:
 
+- `yarn build:public`
 - `yarn dev`
 
 For development you'll also want to run `yarn dev:docker:up` which will start up the docker containers you will need
