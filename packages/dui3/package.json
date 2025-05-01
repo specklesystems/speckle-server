@@ -7,7 +7,8 @@
     "node": "^18.19.0"
   },
   "scripts": {
-    "build": "yarn ensure:tailwind-deps && nuxt prepare && nuxt build",
+    "prebuild": "yarn ensure:tailwind-deps && nuxt prepare",
+    "build": "yarn prebuild && nuxt build",
     "dev:nuxt": "nuxt dev",
     "dev": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "generate": "nuxt generate",

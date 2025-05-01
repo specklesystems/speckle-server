@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "yarn ensure:tailwind-deps && nuxt prepare && NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
+    "prebuild": "yarn ensure:tailwind-deps && nuxt prepare",
+    "build": "yarn prebuild && NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
     "build:sourcemaps": "BUILD_SOURCEMAPS=true yarn build",
     "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
