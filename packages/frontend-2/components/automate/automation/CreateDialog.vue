@@ -54,24 +54,15 @@
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
       />
-      <template v-else-if="enumStep === AutomationCreateSteps.AutomationDetails">
-        <AutomateAutomationCreateDialogAutomationDetailsStep
-          v-model:project="selectedProject"
-          v-model:model="selectedModel"
-          v-model:automation-name="automationName"
-          :preselected-project="preselectedProject"
-          :is-test-automation="isTestAutomation"
-          :workspace-id="workspaceId"
-        />
-        <AutomateAutomationCreateDialogSelectFunctionStep
-          v-if="isTestAutomation"
-          v-model:selected-function="selectedFunction"
-          :preselected-function="validatedPreselectedFunction"
-          :page-size="2"
-          :is-test-automation="true"
-          :workspace-id="workspaceId"
-        />
-      </template>
+      <AutomateAutomationCreateDialogAutomationDetailsStep
+        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
+        v-model:project="selectedProject"
+        v-model:model="selectedModel"
+        v-model:automation-name="automationName"
+        :preselected-project="preselectedProject"
+        :is-test-automation="isTestAutomation"
+        :workspace-id="workspaceId"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -191,8 +182,7 @@ const shouldShowStepsWidget = computed(() => {
 })
 
 const enableSubmitTestAutomation = computed(() => {
-  const isValidInput =
-    !!automationName.value && !!selectedModel.value && !!selectedFunction.value
+  const isValidInput = !!automationName.value && !!selectedModel.value
   const isLoading = creationLoading.value
 
   return isValidInput && !isLoading
@@ -353,7 +343,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   const parameters = functionParameters.value
   const name = automationName.value
 
-  if (!fn || !project || !model || !name?.length) {
+  if (!project || !model || !name?.length) {
     logger.error('Missing required data', {
       fn,
       project,
@@ -376,7 +366,6 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
         projectId: project.id,
         input: {
           name,
-          functionId: fn.id,
           modelId: model.id
         }
       })
@@ -391,9 +380,8 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    // Test automations can be created with functions without versions
-    // TODO: Stop requiring functions for test automations
-    if (!fnRelease) {
+    // Test automations can be created without functions
+    if (!fn || !fnRelease) {
       logger.error('Missing required data', {
         fn,
         project,

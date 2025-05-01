@@ -15,8 +15,7 @@ import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
-  ProjectAutomationUpdateInput,
-  ProjectTestAutomationCreateInput
+  ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
@@ -142,40 +141,27 @@ export type CreateTestAutomationDeps = {
 export const createTestAutomationFactory =
   (deps: CreateTestAutomationDeps) =>
   async (params: {
-    input: ProjectTestAutomationCreateInput
+    automationName: string
     projectId: string
+    modelId: string
     userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
   }) => {
-    const {
-      input: { name, modelId },
-      projectId,
-      userId,
-      userResourceAccessRules
-    } = params
+    const { automationName, projectId, modelId, userId } = params
     const {
       getEncryptionKeyPair,
       storeAutomation,
       storeAutomationRevision,
-      validateStreamAccess,
       eventEmit
     } = deps
 
-    validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
+    validateAutomationName(automationName)
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
 
     const automationRecord = await storeAutomation({
       id: automationId,
-      name,
+      name: automationName,
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -842,6 +842,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createTestAutomation(parent, { input }, ctx) {
           const projectId = parent.projectId
 
+          const authResult = await ctx.authPolicies.project.automation.canCreate({
+            userId: ctx.userId,
+            projectId
+          })
+          throwIfAuthNotOk(authResult)
+
           const logger = ctx.log.child({
             projectId,
             streamId: projectId //legacy
@@ -860,10 +866,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return await withOperationLogging(
             async () =>
               await create({
-                input,
+                automationName: input.name,
+                modelId: input.modelId,
                 projectId,
-                userId: ctx.userId!,
-                userResourceAccessRules: ctx.resourceAccessRules
+                userId: ctx.userId!
               }),
             {
               logger,
