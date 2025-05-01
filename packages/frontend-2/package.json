@@ -11,7 +11,6 @@
     "dev": "yarn dev:app",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",
-    "postinstall": "",
     "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
