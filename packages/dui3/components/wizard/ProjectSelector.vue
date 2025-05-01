@@ -305,14 +305,15 @@ const {
 } = useQuery(
   projectsListQuery,
   () => ({
-    limit: 20, // stupid hack, increased it since we do manual filter to be able to see more project, see below TODO note, once we have `personalOnly` filter, decrease back to 10
+    limit: 10, // stupid hack, increased it since we do manual filter to be able to see more project, see below TODO note, once we have `personalOnly` filter, decrease back to 10
     filter: {
       search: (searchText.value || '').trim() || null,
       workspaceId:
         selectedWorkspace.value?.id === 'personalProject'
           ? null
           : selectedWorkspace.value?.id,
-      includeImplicitAccess: true
+      includeImplicitAccess: true,
+      personalOnly: selectedWorkspace.value?.id === 'personalProject'
     }
   }),
   () => ({
