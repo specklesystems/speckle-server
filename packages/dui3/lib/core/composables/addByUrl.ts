@@ -108,11 +108,13 @@ export function useAddByUrl() {
           ? 'Publish is not permitted by your role on this project.'
           : 'Load is not permitted by your role on this project.'
 
-      // TODO: we should align these permissions when web team is ready!
+      // TODO: we should align these permissions when web team's helper logic is ready!
       const isWorkspaceAdmin = project.workspace?.role === 'workspace:admin'
-      const isProjectReviewer = project.role === 'stream:reviewer'
-      const canEdit = isWorkspaceAdmin || !isProjectReviewer
-      if (!canEdit) {
+
+      const isExplicitProjectReviewer = project.role === 'stream:reviewer'
+      const canEdit = isWorkspaceAdmin ? true : project.role !== 'stream:reviewer'
+      const canDoOperation = !isExplicitProjectReviewer && canEdit
+      if (!canDoOperation) {
         urlParseError.value = errorMessage
         return
       }
