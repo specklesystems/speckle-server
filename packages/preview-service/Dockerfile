@@ -1,9 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-ARG NODE_ENV=production
-
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 
-ARG NODE_ENV
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
