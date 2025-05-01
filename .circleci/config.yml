@@ -428,12 +428,11 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
           paths:
-            - ~/.cache/yarn
             - .yarn/cache
             - .yarn/unplugged
             - node_modules
@@ -490,7 +489,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -547,7 +546,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
 
       - run:
           name: Build public packages
@@ -698,7 +697,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -720,7 +719,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -761,7 +760,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -793,7 +792,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Lint
           command: yarn lint:ci
@@ -830,7 +829,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -854,7 +853,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -892,7 +891,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -920,7 +919,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
+          command: yarn --immutable --immutable-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1196,13 +1195,7 @@ jobs:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+          command: yarn --immutable --immutable-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1269,13 +1262,7 @@ jobs:
             - yarn-packages-server-
       - run:
           name: Install Dependencies
-          command: yarn --frozen-lockfile --cache-folder ~/.cache/yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+          command: yarn --immutable --immutable-cache
       - run:
           name: Build public packages
           command: yarn build:public
