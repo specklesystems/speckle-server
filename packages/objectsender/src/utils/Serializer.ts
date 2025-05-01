@@ -139,12 +139,12 @@ export class Serializer implements IDisposable {
       }
     }
 
-    const { hash, serializedObject, size } = this.#generateId(traversed)
+    const { hash, serializedObject, size, objectId } = this.#generateId(traversed)
     traversed.id = hash
 
     // Pop it in
     if ((detached || root) && this.transport) {
-      await this.transport.write(serializedObject, size)
+      await this.transport.write(serializedObject, size, objectId)
     }
 
     // We've reached the end, let's flush
@@ -241,6 +241,7 @@ export class Serializer implements IDisposable {
     const f = s.substring(0, 1) + `"id":"${h}",` + s.substring(1)
     return {
       hash: SHA1(s),
+      objectId: h,
       serializedObject: f,
       size: s.length // approx, good enough as we're just limiting artificially batch sizes based on this
     }
