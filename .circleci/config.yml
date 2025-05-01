@@ -217,6 +217,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
+            - publish-approval
 
       - docker-publish-webhooks:
           context: *docker-hub-context
