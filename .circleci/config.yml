@@ -120,10 +120,6 @@ workflows:
           filters: *filters-allow-all
           requires: *yarn-install
 
-      - test-preview-service:
-          filters: *filters-allow-all
-          requires: *yarn-install
-
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -270,7 +266,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -287,7 +282,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-frontend-2-sourcemaps:
           context:
@@ -313,7 +307,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -330,7 +323,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -347,7 +339,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -364,7 +355,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-postgres-container:
           context: *docker-hub-context
@@ -387,7 +377,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
@@ -404,7 +393,6 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-server-multiregion
-            - test-preview-service
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -449,7 +437,6 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-shared
-            - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
@@ -735,38 +722,6 @@ jobs:
           name: Build viewer-sandbox
           command: yarn build
           working_directory: 'packages/viewer-sandbox'
-
-  test-preview-service:
-    docker:
-      - image: cimg/node:18.19.0
-      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
-        environment:
-          POSTGRES_DB: preview_service_test
-          POSTGRES_PASSWORD: preview_service_test
-          POSTGRES_USER: preview_service_test
-    resource_class: large
-    environment: {}
-    steps:
-      - checkout
-      - *restore-yarn-cache
-      - *yarn
-      - run:
-          name: Build public packages
-          command: yarn build:public
-      - run:
-          name: Lint everything
-          command: yarn lint:ci
-          working_directory: 'packages/preview-service'
-      - run:
-          name: Copy .env.example to .env
-          command: |
-            #!/usr/bin/env bash
-            cp packages/preview-service/.env.example packages/preview-service/.env
-            sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
-      - run:
-          name: Run tests
-          command: yarn test
-          working_directory: 'packages/preview-service'
 
   test-shared:
     <<: *docker-node-image-w-browsers
