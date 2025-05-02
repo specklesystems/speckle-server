@@ -433,7 +433,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -518,7 +518,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -674,7 +674,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -703,7 +703,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -754,7 +754,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -795,7 +795,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -843,7 +843,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -873,7 +873,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -902,10 +902,6 @@ jobs:
           working_directory: 'packages/ui-components-nuxt'
 
       - run:
-          name: Install Playwright
-          command: cd ~ && npx playwright install --with-deps
-
-      - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
           working_directory: 'packages/ui-components'
@@ -922,7 +918,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -957,7 +953,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -1242,7 +1238,7 @@ jobs:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -1313,7 +1309,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
+          command: yarn install:nobrowsers
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}

@@ -13,5 +13,5 @@ cp -n "${GIT_ROOT}/packages/server/.env-example" "${GIT_ROOT}/packages/server/.e
 cp -n "${GIT_ROOT}/packages/frontend-2/.env.example" "${GIT_ROOT}/packages/frontend-2/.env" || true
 
 echo "Installing nodejs dependencies and building shared packages"
-yarn
+yarn install:nobrowsers
 yarn build:public
