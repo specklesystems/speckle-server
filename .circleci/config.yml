@@ -10,27 +10,48 @@ aliases:
       - image: cimg/base:2024.02
 
   - &docker-node-image
+    working_directory: &ramdisk /mnt/ramdisk/speckle
     docker:
       - image: cimg/node:18.19.0
 
   - &docker-node-image-w-browsers
+    working_directory: *ramdisk
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-{{ checksum "yarn.lock" }}
+  - &cache-key v1-yarn-packages-server-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
       name: Restore Yarn Package Cache
-      key: *cache-key
+      keys:
+        - *cache-key
+        - v1-yarn-packages-server-
 
   - &save-yarn-cache
     save_cache:
       name: Save Yarn Package Cache
       key: *cache-key
       paths:
-        - .yarn/cache
-        - .yarn/unplugged
+        - .yarn
+        - node_modules
+        - packages/ui-components-nuxt/node_modules
+        - packages/monitor-deployment/node_modules
+        - packages/webhook-service/node_modules
+        - packages/fileimport-service/node_modules
+        - packages/dui3/node_modules
+        - packages/server/node_modules
+        - packages/ui-components/node_modules
+        - packages/shared/node_modules
+        - packages/viewer-sandbox/node_modules
+        - packages/viewer/node_modules
+        - packages/preview-service/node_modules
+        - packages/tailwind-theme/node_modules
+        - packages/frontend-2/node_modules
+        - packages/preview-frontend/node_modules
+        - packages/objectloader/node_modules
+        - packages/objectsender/node_modules
+        - packages/dui3/.output/server/node_modules
 
   - &yarn
     run:
@@ -487,7 +508,6 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -538,7 +558,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -672,7 +691,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -688,7 +706,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -723,7 +740,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -749,7 +765,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Lint
           command: yarn lint:ci
@@ -780,7 +795,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -800,7 +814,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -828,7 +841,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -850,7 +862,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1123,7 +1134,6 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1182,7 +1192,6 @@ jobs:
       - checkout
       - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
