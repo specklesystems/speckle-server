@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-breakcache6-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache7-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -478,6 +478,11 @@ jobs:
       - *restore-yarn-cache
       - *yarn
       - *save-yarn-cache
+      - run: ls -la .
+      - run: la -la packages
+      - run: ls -la packages/frontend-2/node_modules
+      - run: ls -la ~/.npm
+      - run: ls -la ~/.yarn/berry
 
   pre-commit:
     parameters:
