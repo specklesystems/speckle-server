@@ -496,7 +496,6 @@ jobs:
           name: Restore pre-commit & Yarn Package cache
           keys:
             - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
-            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
@@ -504,6 +503,7 @@ jobs:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
+      - *restore-yarn-cache
       - *yarn
       - run:
           name: Build public packages
