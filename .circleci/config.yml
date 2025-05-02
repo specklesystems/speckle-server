@@ -19,14 +19,14 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key v1-yarn-packages-server-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
       name: Restore Yarn Package Cache
       keys:
         - *cache-key
-        - v1-yarn-packages-server-
+        - v4-yarn-packages-
 
   - &save-yarn-cache
     save_cache:
@@ -79,8 +79,8 @@ workflows:
               only:
                 - main
                 - hotfix*
-          requires: &yarn-install
-            - install-and-cache-dependencies
+          requires: &yarn-install-node-image
+            - install-and-cache-dependencies-node-image
 
       - test-server: &test-server-job-definition
           context:
@@ -93,41 +93,42 @@ workflows:
               only: /.*/
           requires:
             - docker-publish-postgres-container
-            - install-and-cache-dependencies
+            - install-and-cache-dependencies-node-image
 
       - test-server-no-ff:
           filters: *filters-allow-all
           requires:
             - docker-publish-postgres-container
-            - install-and-cache-dependencies
+            - install-and-cache-dependencies-node-image
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
-          requires:
-            - install-and-cache-dependencies
+          requires: &yarn-install-node-image-w-browsers
+            - install-and-cache-dependencies-node-image-w-browsers
 
       - test-viewer:
           filters: *filters-allow-all
-          requires: *yarn-install
+          requires: *yarn-install-node-image-w-browsers
 
       - test-objectsender:
           filters: *filters-allow-all
-          requires: *yarn-install
+          requires: *yarn-install-node-image
 
       - test-shared:
           filters: *filters-allow-all
-          requires: *yarn-install
+          requires: *yarn-install-node-image-w-browsers
 
       - test-ui-components:
           filters: *filters-allow-all
+          # we do not have a requirement on install-and-cache-dependencies-node-image-w-browsers because this job needs to install additional dependencies (browsers)
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
-          requires: *yarn-install
+          requires: *yarn-install-node-image-w-browsers
 
       - deployment-testing-approval:
           type: approval
@@ -180,9 +181,12 @@ workflows:
 
       - pre-commit:
           filters: *filters-allow-all
-          requires: *yarn-install
+          requires: *yarn-install-node-image
 
-      - install-and-cache-dependencies:
+      - install-and-cache-dependencies-node-image:
+          filters: *filters-allow-all
+
+      - install-and-cache-dependencies-node-image-w-browsers:
           filters: *filters-allow-all
 
       - docker-build-server:
@@ -463,8 +467,18 @@ jobs:
           paths:
             - env-vars
 
-  install-and-cache-dependencies:
+  install-and-cache-dependencies-node-image:
     <<: *docker-node-image
+    steps:
+      - checkout
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
+
+  # The ramdisk we populate in this job is mounted to a specific machine.
+  # We need to duplicate the process for each machine image we use.
+  install-and-cache-dependencies-node-image-w-browsers:
+    <<: *docker-node-image-w-browsers
     steps:
       - checkout
       - *restore-yarn-cache
