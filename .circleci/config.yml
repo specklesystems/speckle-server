@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-breakcache7-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache8-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -49,8 +49,8 @@ aliases:
         - packages/preview-frontend/node_modules
         - packages/objectloader/node_modules
         - packages/objectsender/node_modules
-        - packages/dui3/nuxt # generated from postinstall scripts
-        - packages/frontend-2/nuxt # generated from postinstall scripts
+        - packages/dui3/.nuxt # generated from postinstall scripts
+        - packages/frontend-2/.nuxt # generated from postinstall scripts
         - packages/shared/dist # generated from postinstall scripts
         - packages/tailwind-theme/dist # generated from postinstall scripts
         - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
@@ -482,6 +482,7 @@ jobs:
       - run: ls -la .
       - run: ls -la packages
       - run: ls -la packages/frontend-2
+      - run: ls -la .yarn
       - run: ls -la ~/.npm
       - run: ls -la ~/.yarn/berry
 
