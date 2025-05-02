@@ -8,7 +8,7 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
-        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1"
+        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 auto-rows-min"
       >
         <ProjectPageAutomationTestAutomationInfo
           v-if="isTestAutomation"
