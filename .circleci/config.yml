@@ -464,6 +464,7 @@ jobs:
 
   install-and-cache-dependencies:
     <<: *docker-node-image
+    resource_class: large
     steps:
       - checkout
       - *restore-yarn-cache
