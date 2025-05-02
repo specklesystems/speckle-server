@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-breakcache9-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache10-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -33,6 +33,7 @@ aliases:
         - .yarn/unplugged
         - .husky/_ # generated from postinstall scripts
         - .yarn/install-state.gz
+        - node_modules
         - packages/ui-components-nuxt/node_modules
         - packages/monitor-deployment/node_modules
         - packages/webhook-service/node_modules
