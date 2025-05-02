@@ -15,6 +15,8 @@ workflows:
               only:
                 - main
                 - hotfix*
+          requires: &yarn-install
+            - install-and-cache-dependencies
 
       - test-server: &test-server-job-definition
           context:
@@ -32,31 +34,40 @@ workflows:
           filters: *filters-allow-all
           requires:
             - docker-publish-postgres-container
+            - install-and-cache-dependencies
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
+          requires:
+            - install-and-cache-dependencies
 
       - test-viewer:
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - test-objectsender:
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - test-shared:
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - test-preview-service:
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - test-ui-components:
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
+          requires: *yarn-install
 
       - deployment-testing-approval:
           type: approval
@@ -108,6 +119,10 @@ workflows:
           filters: *filters-allow-all
 
       - pre-commit:
+          filters: *filters-allow-all
+          requires: *yarn-install
+
+      - install-and-cache-dependencies:
           filters: *filters-allow-all
 
       - docker-build-server:
@@ -398,6 +413,25 @@ jobs:
           paths:
             - env-vars
 
+  install-and-cache-dependencies:
+    docker: &docker-base-image
+      - image: cimg/node:18.19.0
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
   pre-commit:
     parameters:
       config_file:
@@ -520,7 +554,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -552,24 +585,19 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
-
       - run:
           command: cp .env.test-example .env.test
           working_directory: 'packages/server'
-
       - run:
           name: 'Lint'
           command: yarn lint:ci
           working_directory: 'packages/server'
-
       - run:
           name: 'Run tests'
           # Extra formatting to get timestamps on each line in CI (for profiling purposes)
@@ -583,25 +611,20 @@ jobs:
             yarn test:report $GREP_FLAG --color=always | while IFS= read -r line; do echo -e "$(date +%T.%3N) > $line"; done
           working_directory: 'packages/server'
           no_output_timeout: 30m
-
       - codecov/upload:
           files: packages/server/coverage/lcov.info
-
       - run:
           name: Introspect GQL schema for subsequent checks
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against app.speckle.systems
           command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - run:
           name: Checking for GQL schema breakages against latest.speckle.systems
           command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
-
       - store_test_results:
           path: packages/server/reports
 
@@ -701,7 +724,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -733,11 +755,9 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint everything
           command: yarn lint:ci
@@ -755,7 +775,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -787,26 +806,21 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint viewer
           command: yarn lint:ci
           working_directory: 'packages/viewer'
-
       - run:
           name: Run tests
           command: yarn test
           working_directory: 'packages/viewer'
-
       - run:
           name: Lint viewer-sandbox
           command: yarn lint:ci
           working_directory: 'packages/viewer-sandbox'
-
       - run:
           name: Build viewer-sandbox
           command: yarn build
@@ -831,7 +845,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -863,23 +876,19 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint everything
           command: yarn lint:ci
           working_directory: 'packages/preview-service'
-
       - run:
           name: Copy .env.example to .env
           command: |
             #!/usr/bin/env bash
             cp packages/preview-service/.env.example packages/preview-service/.env
             sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
-
       - run:
           name: Run tests
           command: yarn test
@@ -897,7 +906,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -929,30 +937,24 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Lint
           command: yarn lint:ci
           working_directory: 'packages/shared'
-
       - run:
           name: Run tests
           command: yarn test:ci
           working_directory: 'packages/shared'
-
       - codecov/upload:
           files: packages/shared/coverage/coverage-final.json
-
       - run:
           name: Build
           command: yarn build
           working_directory: 'packages/shared'
-
       - run:
           name: Ensure ESM import works
           command: node ./e2e/testEsm.mjs
           working_directory: 'packages/shared'
-
       - run:
           name: Ensure CJS require works
           command: node ./e2e/testCjs.cjs
@@ -970,7 +972,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -1002,7 +1003,6 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
@@ -1025,7 +1025,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -1057,26 +1056,21 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build public packages
           command: yarn build:public
-
       - run:
           name: Lint tailwind theme
           command: yarn lint:ci
           working_directory: 'packages/tailwind-theme'
-
       - run:
           name: Lint ui components
           command: yarn lint:ci
           working_directory: 'packages/ui-components'
-
       - run:
           name: Lint component nuxt package
           command: yarn lint:ci
           working_directory: 'packages/ui-components-nuxt'
-
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
@@ -1095,7 +1089,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache2-{{ checksum "yarn.lock" }}
@@ -1127,11 +1120,9 @@ jobs:
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
             - ~/.npm
-
       - run:
           name: Build shared packages
           command: yarn build:public
-
       - run:
           name: Run chromatic
           command: yarn chromatic
@@ -1284,14 +1275,12 @@ jobs:
               echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
               sudo chmod 775 "./postgres-data"
             fi
-
       - run:
           name: Deploy Kubernetes (kind) cluster
           command: |
             nix-shell \
             --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
             ./.circleci/deployment/helm-chart-shell.nix
-
       - run:
           name: Deploy Kubernetes resources to cluster
           command: |
@@ -1504,7 +1493,6 @@ jobs:
       - run:
           name: try login to npm
           command: yarn npm whoami
-
       - run:
           name: build public packages
           command: yarn workspaces foreach -ptvW --no-private run build
@@ -1512,7 +1500,6 @@ jobs:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
           command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
-
       - run:
           name: publish to npm
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
