@@ -1,0 +1,79 @@
+version: 2.1
+
+parameters:
+  run-server-pipeline:
+    type: boolean
+    default: false
+  run-frotend-pipeline:
+    type: boolean
+    default: false
+  run-viewer-pipeline:
+    type: boolean
+    default: false
+
+aliases:
+  filters: &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+jobs:
+  server:
+    docker:
+      - image: cimg/node:18.19.0
+    steps:
+      - run: echo 'test'
+      - run: echo 'build'
+
+  frontend:
+    docker:
+      - image: cimg/node:18.19.0
+    steps:
+      - run: echo 'test'
+
+  viewer:
+    docker:
+      - image: cimg/node:18.19.0
+    steps:
+      - run: echo 'test'
+
+  this-allways-happen:
+    docker:
+      - image: cimg/node:18.19.0
+    steps:
+      - run: echo 'hi there, always here'
+
+workflows:
+  server-check:
+    when: << pipeline.parameters.run-server-pipeline >>
+    filters: *filters-allow-all
+    jobs:
+      - server
+
+  frontend-check:
+    when: << pipeline.parameters.run-frotend-pipeline >>
+    filters: *filters-allow-all
+    jobs:
+      - frontend
+
+  viewer-check:
+    when: << pipeline.parameters.run-viewer-pipeline >>
+    filters: *filters-allow-all
+    jobs:
+      - viewer
+
+  some:
+    when:
+      or:
+        [
+          << pipeline.parameters.run-server-pipeline >>,
+          << pipeline.parameters.run-frotend-pipeline >>,
+          << pipeline.parameters.run-viewer-pipeline >>
+        ]
+    filters: *filters-allow-all
+    jobs:
+      - this-allways-happen
+
+  always:
+    jobs:
+      - this-allways-happen
