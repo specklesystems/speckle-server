@@ -111,6 +111,7 @@ export default class ObjectLoader2 {
       }
     }
     await processPromise
+    this.#deferments.dispose()
     console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
   }
 
