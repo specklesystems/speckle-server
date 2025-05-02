@@ -479,17 +479,6 @@ jobs:
       - *restore-yarn-cache
       - *yarn
       - *save-yarn-cache
-      - run: pwd
-      - run: ls -la .
-      - run: ls -la packages
-      - run: ls -la packages/frontend-2
-      - run: ls -la packages/shared
-      - run: ls -la packages/ui-components
-      - run: ls -la .git
-      - run: ls -la .yarn
-      - run: ls -la ~/.npm
-      - run: ls -la ~/.yarn/berry
-      - run: ls -la /tmp
 
   pre-commit:
     parameters:
