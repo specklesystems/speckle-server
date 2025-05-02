@@ -244,6 +244,16 @@ export const startQueue = async () => {
         throw new MultiRegionNotYetImplementedError()
     }
   })
+  void queue.on('failed', (job, err) => {
+    logger.error(
+      {
+        jobId: job.id,
+        error: err,
+        errorMessage: err.message
+      },
+      `Failed to process multiregion job ${job.id}`
+    )
+  })
   void queue.on('error', (err) => {
     logger.error(
       {
