@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache5-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
