@@ -464,6 +464,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
       - run:
           name: Build public packages
           command: yarn build:public
@@ -550,6 +551,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -730,6 +732,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -783,6 +786,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -858,6 +862,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -923,6 +928,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Lint
@@ -995,6 +1001,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -1049,6 +1056,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build public packages
@@ -1118,6 +1126,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
 
       - run:
           name: Build shared packages
@@ -1176,6 +1185,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1485,6 +1495,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1580,6 +1591,7 @@ jobs:
             - packages/tailwind-theme/dist # generated from postinstall scripts
             - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
             - packages/ui-components/dist # generated from postinstall scripts
+            - ~/.npm
       - run:
           name: Build public packages
           command: yarn build:public
