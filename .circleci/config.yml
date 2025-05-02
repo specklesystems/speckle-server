@@ -17,21 +17,6 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-{{ checksum "yarn.lock" }}
-
-  - &restore-yarn-cache
-    restore_cache:
-      name: Restore Yarn Package Cache
-      key: *cache-key
-
-  - &save-yarn-cache
-    save_cache:
-      name: Save Yarn Package Cache
-      key: *cache-key
-      paths:
-        - .yarn/cache
-        - .yarn/unplugged
-
   - &yarn
     run:
       name: Install Dependencies
@@ -48,8 +33,6 @@ workflows:
               only:
                 - main
                 - hotfix*
-          requires: &yarn-install
-            - install-and-cache-dependencies
 
       - test-server: &test-server-job-definition
           context:
@@ -67,40 +50,31 @@ workflows:
           filters: *filters-allow-all
           requires:
             - docker-publish-postgres-container
-            - install-and-cache-dependencies
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
-          requires:
-            - install-and-cache-dependencies
 
       - test-viewer:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-objectsender:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-shared:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-preview-service:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - test-ui-components:
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
-          requires: *yarn-install
 
       - deployment-testing-approval:
           type: approval
@@ -152,10 +126,6 @@ workflows:
           filters: *filters-allow-all
 
       - pre-commit:
-          filters: *filters-allow-all
-          requires: *yarn-install
-
-      - install-and-cache-dependencies:
           filters: *filters-allow-all
 
       - docker-build-server:
@@ -445,14 +415,6 @@ jobs:
           paths:
             - env-vars
 
-  install-and-cache-dependencies:
-    <<: *docker-node-image
-    steps:
-      - checkout
-      - *restore-yarn-cache
-      - *yarn
-      - *save-yarn-cache
-
   pre-commit:
     parameters:
       config_file:
@@ -487,7 +449,6 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -536,9 +497,7 @@ jobs:
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -670,9 +629,7 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -686,9 +643,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -721,9 +676,7 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -747,9 +700,7 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Lint
           command: yarn lint:ci
@@ -778,9 +729,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -796,11 +745,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -826,9 +773,7 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -848,9 +793,7 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1121,9 +1064,7 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1180,9 +1121,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - *restore-yarn-cache
       - *yarn
-      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
