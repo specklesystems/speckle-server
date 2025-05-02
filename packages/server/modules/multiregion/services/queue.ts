@@ -141,6 +141,15 @@ export const startQueue = async () => {
       throw new MultiRegionInvalidJobError()
     }
 
+    logger.info(
+      {
+        jobId: job.id,
+        payload: job.data.payload,
+        type: job.data.type
+      },
+      `Processing multiregion job ${job.id}`
+    )
+
     switch (job.data.type) {
       case 'move-project-region': {
         const { projectId, regionKey } = job.data.payload
@@ -234,6 +243,15 @@ export const startQueue = async () => {
       default:
         throw new MultiRegionNotYetImplementedError()
     }
+  })
+  void queue.on('error', (err) => {
+    logger.error(
+      {
+        error: err,
+        errorMessage: err.message
+      },
+      'Failed to process multiregion job'
+    )
   })
 }
 
