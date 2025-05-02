@@ -4,6 +4,39 @@ orbs:
   snyk: snyk/snyk@2.0.3
   codecov: codecov/codecov@5.0.3
 
+aliases:
+  - &docker-base-image
+    docker:
+      - image: cimg/base:2024.02
+
+  - &docker-node-image
+    docker:
+      - image: cimg/node:18.19.0
+
+  - &docker-node-image-w-browsers
+    docker:
+      - image: cimg/node:18.19.0-browsers
+
+  - &cache-key yarn-packages-server-{{ checksum "yarn.lock" }}
+
+  - &restore-yarn-cache
+    restore_cache:
+      name: Restore Yarn Package Cache
+      key: *cache-key
+
+  - &save-yarn-cache
+    save_cache:
+      name: Save Yarn Package Cache
+      key: *cache-key
+      paths:
+        - .yarn/cache
+        - .yarn/unplugged
+
+  - &yarn
+    run:
+      name: Install Dependencies
+      command: yarn
+
 workflows:
   test-build:
     jobs:
@@ -396,8 +429,7 @@ workflows:
 
 jobs:
   get-version:
-    docker: &docker-base-image
-      - image: cimg/base:2024.02
+    <<: *docker-base-image
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -414,23 +446,12 @@ jobs:
             - env-vars
 
   install-and-cache-dependencies:
-    docker: &docker-base-image
-      - image: cimg/node:18.19.0
+    <<: *docker-node-image
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
 
   pre-commit:
     parameters:
@@ -465,15 +486,8 @@ jobs:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -522,19 +536,9 @@ jobs:
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -662,24 +666,13 @@ jobs:
       RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -689,23 +682,13 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -738,19 +721,9 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -770,23 +743,13 @@ jobs:
           working_directory: 'packages/preview-service'
 
   test-shared:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: medium+
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Lint
           command: yarn lint:ci
@@ -811,23 +774,13 @@ jobs:
           working_directory: 'packages/shared'
 
   test-objectsender:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -839,23 +792,13 @@ jobs:
           path: 'packages/objectsender/coverage'
 
   test-ui-components:
-    docker: *docker-node-browsers-image
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
@@ -880,24 +823,13 @@ jobs:
           working_directory: 'packages/ui-components'
 
   ui-components-chromatic:
+    <<: *docker-node-image
     resource_class: medium+
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build shared packages
           command: yarn build:public
@@ -912,24 +844,14 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker: *docker-node-image
+    <<: *docker-node-image
     resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
@@ -1042,7 +964,7 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: *docker-base-image
+    <<: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -1073,7 +995,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
   docker-publish-frontend-2-sourcemaps:
-    docker: *docker-node-image
+    <<: *docker-node-image
     resource_class: xlarge
     working_directory: *work-dir
     environment:
@@ -1129,7 +1051,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker: *docker-base-image
+    <<: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -1193,26 +1115,16 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker: *docker-node-image
+    <<: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1249,7 +1161,7 @@ jobs:
           command: ./.circleci/publish_helm_chart.sh
 
   update-helm-documentation:
-    docker: *docker-node-image
+    <<: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
@@ -1264,24 +1176,14 @@ jobs:
           command: ./.circleci/update_helm_documentation.sh
 
   publish-viewer-sandbox-cloudflare-pages:
-    docker: *docker-node-image
+    <<: *docker-node-image
     working_directory: *work-dir
     resource_class: large
     steps:
       - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
+      - *restore-yarn-cache
+      - *yarn
+      - *save-yarn-cache
       - run:
           name: Build public packages
           command: yarn build:public
