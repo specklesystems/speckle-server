@@ -19,7 +19,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key v4-yarn-packages-cachebust2-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-cachebust3-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -464,7 +464,7 @@ jobs:
 
   install-and-cache-dependencies:
     <<: *docker-node-image
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - *restore-yarn-cache
