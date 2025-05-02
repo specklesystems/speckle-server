@@ -433,7 +433,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache-{{ checksum "yarn.lock" }}
@@ -518,7 +518,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -698,7 +698,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -751,7 +751,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -826,7 +826,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -891,7 +891,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -963,7 +963,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -1017,7 +1017,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -1086,7 +1086,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -1145,7 +1145,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache-{{ checksum "yarn.lock" }}
@@ -1454,7 +1454,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache-{{ checksum "yarn.lock" }}
@@ -1549,7 +1549,7 @@ jobs:
             - yarn-packages-breakcache-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn install:nobrowsers
+          command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-breakcache-{{ checksum "yarn.lock" }}
