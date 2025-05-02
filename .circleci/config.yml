@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-breakcache5-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache6-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -56,6 +56,7 @@ aliases:
         - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
         - packages/ui-components/dist # generated from postinstall scripts
         - ~/.npm # generated from postinstall scripts
+        - ~/.yarn/berry # generated from postinstall scripts
 
   - &yarn
     run:
