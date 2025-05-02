@@ -35,7 +35,7 @@ aliases:
   - &yarn
     run:
       name: Install Dependencies
-      command: yarn
+      command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
 
 workflows:
   test-build:
@@ -797,7 +797,9 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
-      - *yarn
+      - run:
+          name: Install Dependencies
+          command: PUPPETEER_SKIP_DOWNLOAD=true yarn
       - *save-yarn-cache
       - run:
           name: Build public packages
@@ -814,9 +816,6 @@ jobs:
           name: Lint component nuxt package
           command: yarn lint:ci
           working_directory: 'packages/ui-components-nuxt'
-      - run:
-          name: Install Playwright
-          command: cd ~ && npx playwright install --with-deps
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci

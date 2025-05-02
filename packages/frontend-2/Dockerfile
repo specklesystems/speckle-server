@@ -30,7 +30,7 @@ COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
 
 # hadolint ignore=DL3059
-RUN yarn workspaces focus -A
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach --exclude "@speckle/frontend-2" -W run build
 
