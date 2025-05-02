@@ -31,6 +31,31 @@ aliases:
       paths:
         - .yarn/cache
         - .yarn/unplugged
+        - .husky/_ # generated from postinstall scripts
+        - .yarn/install-state.gz
+        - packages/ui-components-nuxt/node_modules
+        - packages/monitor-deployment/node_modules
+        - packages/webhook-service/node_modules
+        - packages/fileimport-service/node_modules
+        - packages/dui3/node_modules
+        - packages/server/node_modules
+        - packages/ui-components/node_modules
+        - packages/shared/node_modules
+        - packages/viewer-sandbox/node_modules
+        - packages/viewer/node_modules
+        - packages/preview-service/node_modules
+        - packages/tailwind-theme/node_modules
+        - packages/frontend-2/node_modules
+        - packages/preview-frontend/node_modules
+        - packages/objectloader/node_modules
+        - packages/objectsender/node_modules
+        - packages/dui3/nuxt # generated from postinstall scripts
+        - packages/frontend-2/nuxt # generated from postinstall scripts
+        - packages/shared/dist # generated from postinstall scripts
+        - packages/tailwind-theme/dist # generated from postinstall scripts
+        - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
+        - packages/ui-components/dist # generated from postinstall scripts
+        - ~/.npm # generated from postinstall scripts
 
   - &yarn
     run:
