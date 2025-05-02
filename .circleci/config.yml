@@ -17,7 +17,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key yarn-packages-server-breakcache11-{{ checksum "yarn.lock" }}
+  - &cache-key yarn-packages-server-breakcache12-{{ checksum "yarn.lock" }}
 
   - &restore-yarn-cache
     restore_cache:
@@ -58,7 +58,7 @@ aliases:
         - packages/ui-components/dist # generated from postinstall scripts
         - ~/.npm # generated from postinstall scripts
         - ~/.yarn/berry # generated from postinstall scripts
-        - .git/config # generated from postinstall scripts
+        # - .git/config # generated from postinstall scripts
 
   - &yarn
     run:
@@ -836,11 +836,11 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
+      # - *restore-yarn-cache # currently fails because the cache does not have the playwright browsers
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
-      - *save-yarn-cache
+      # - *save-yarn-cache # currently fails because the cache does not have the playwright browsers
       - run:
           name: Build public packages
           command: yarn build:public
