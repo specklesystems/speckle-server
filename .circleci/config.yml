@@ -421,13 +421,13 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
+            - yarn-packages-breakcache3-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
       - save_cache:
           name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          key: yarn-packages-breakcache3-{{ checksum "yarn.lock" }}
           paths:
             - .yarn/cache
             - .yarn/unplugged
