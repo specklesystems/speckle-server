@@ -90,6 +90,7 @@ workflows:
               only: /.*/
           requires:
             - docker-publish-postgres-container
+            - install-and-cache-dependencies
 
       - test-server-no-ff:
           filters: *filters-allow-all
