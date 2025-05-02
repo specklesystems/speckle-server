@@ -530,7 +530,7 @@ jobs:
         command: server /data --console-address ":9001"
         # environment:
 
-    resource_class: large
+    resource_class: xlarge
     environment:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
@@ -725,7 +725,7 @@ jobs:
 
   test-shared:
     <<: *docker-node-image-w-browsers
-    resource_class: medium+
+    resource_class: xlarge
     steps:
       - checkout
       - *restore-yarn-cache
@@ -801,7 +801,7 @@ jobs:
 
   ui-components-chromatic:
     <<: *docker-node-image
-    resource_class: medium+
+    resource_class: xlarge
     steps:
       - checkout
       - *restore-yarn-cache
