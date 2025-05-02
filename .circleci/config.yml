@@ -478,9 +478,10 @@ jobs:
       - *restore-yarn-cache
       - *yarn
       - *save-yarn-cache
+      - run: pwd
       - run: ls -la .
-      - run: la -la packages
-      - run: ls -la packages/frontend-2/node_modules
+      - run: ls -la packages
+      - run: ls -la packages/frontend-2
       - run: ls -la ~/.npm
       - run: ls -la ~/.yarn/berry
 
