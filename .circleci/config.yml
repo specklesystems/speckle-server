@@ -5,32 +5,26 @@ orbs:
   codecov: codecov/codecov@5.0.3
 
 aliases:
-  - &default_image
+  - &docker-node-image
     working_directory: &ramdisk /mnt/ramdisk/speckle
     resource_class: medium+
     docker:
       - image: cimg/node:18.19.0
 
-  - &cache_key v3-yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
-  - &restore_yarn_cache
+  - &docker-node-image-w-browsers
+    working_directory: *ramdisk
+    docker:
+      - image: cimg/node:18.19.0-browsers
+
+  - &cache-key v4-yarn-packages-server-{{ .Branch }}-{{ checksum "yarn.lock" }}
+
+  - &restore-yarn-cache
     restore_cache:
       name: Restore Yarn Package Cache
       keys:
-        - *cache_key
-        - v3-yarn-packages-server-{{ .Branch }}
-        - v3-yarn-packages-server
-
-executors:
-  ci-node:
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
-    resource_class: medium+
-    working_directory: &work-dir /tmp/ci
-  ci-node-browser:
-    docker:
-      - image: cimg/node:18.19.0-browsers
-    resource_class: medium+
-    working_directory: *ramdisk
+        - *cache-key
+        - v4-yarn-packages-server-{{ .Branch }}
+        - v4-yarn-packages-server
 
 workflows:
   test-build:
@@ -428,7 +422,7 @@ jobs:
   get-version:
     docker: &docker-base-image
       - image: cimg/base:2024.02
-    working_directory: *work-dir
+    working_directory: &work-dir /tmp/ci
     steps:
       - checkout
       - run: mkdir -p workspace
@@ -444,16 +438,16 @@ jobs:
             - env-vars
 
   install-and-cache-dependencies:
-    <<: *default_image
+    <<: *docker-node-image
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
       - save_cache:
           name: Save Yarn Package Cache
-          key: *cache_key
+          key: *cache-key
           paths:
             - .yarn
             - node_modules
@@ -474,6 +468,7 @@ jobs:
             - packages/objectloader/node_modules
             - packages/objectsender/node_modules
             - packages/dui3/.output/server/node_modules
+
   pre-commit:
     parameters:
       config_file:
@@ -558,7 +553,10 @@ jobs:
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
+      - run:
+          name: Install Dependencies
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -686,13 +684,14 @@ jobs:
       RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
-    docker:
-      - image: cimg/node:18.19.0-browsers
-    working_directory: *ramdisk
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
+      - run:
+          name: Install Dependencies
+          command: yarn --immutable
       - run:
           name: Build public packages
           command: yarn build:public
@@ -702,11 +701,11 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    executor: ci-node-browser
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -742,7 +741,7 @@ jobs:
     environment: {}
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -765,24 +764,13 @@ jobs:
           working_directory: 'packages/preview-service'
 
   test-shared:
-    <<: *default_image
+    <<: *docker-node-image
     steps:
       - checkout
-      - *restore_yarn_cache
-      - run: pwd
-      - run: ls -a
+      - *restore-yarn-cache
       - run:
-          command: pwd
-          working_directory: 'packages/shared'
-      - run:
-          command: ls -a
-          working_directory: 'packages/shared'
-      - run:
-          command: pwd
-          working_directory: '/mnt/ramdisk/speckle/packages/shared'
-      - run:
-          command: ls -a
-          working_directory: '/mnt/ramdisk/speckle/packages/shared'
+          name: Install Dependencies
+          command: yarn --immutable
       - run:
           name: Lint
           command: yarn lint:ci
@@ -807,11 +795,11 @@ jobs:
           working_directory: 'packages/shared'
 
   test-objectsender:
-    executor: ci-node-browser
+    <<: *docker-node-image-w-browsers
     resource_class: large
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -826,11 +814,11 @@ jobs:
           path: 'packages/objectsender/coverage'
 
   test-ui-components:
-    executor: ci-node-browser
+    <<: *docker-node-image-w-browsers
     resource_class: xlarge
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -858,10 +846,10 @@ jobs:
           working_directory: 'packages/ui-components'
 
   ui-components-chromatic:
-    executor: ci-node
+    <<: *docker-node-image
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -879,12 +867,12 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    executor: ci-node
+    <<: *docker-node-image
     resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -1010,6 +998,9 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
       - run:
           name: Build and Save
           command: ./.circleci/build.sh
@@ -1030,7 +1021,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
   docker-publish-frontend-2-sourcemaps:
-    docker: *docker-node-image
+    <<: *docker-node-image
     resource_class: xlarge
     working_directory: *work-dir
     environment:
@@ -1150,14 +1141,14 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    executor: ci-node
+    <<: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn --immutable
@@ -1169,7 +1160,6 @@ jobs:
       - run:
           name: try login to npm
           command: yarn npm whoami
-
       - run:
           name: build public packages
           command: yarn workspaces foreach -ptvW --no-private run build
@@ -1177,7 +1167,6 @@ jobs:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
           command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
-
       - run:
           name: publish to npm
           command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
@@ -1199,8 +1188,7 @@ jobs:
           command: ./.circleci/publish_helm_chart.sh
 
   update-helm-documentation:
-    docker: *docker-node-image
-    working_directory: *work-dir
+    <<: *docker-node-image
     steps:
       - checkout
       - attach_workspace:
@@ -1214,12 +1202,11 @@ jobs:
           command: ./.circleci/update_helm_documentation.sh
 
   publish-viewer-sandbox-cloudflare-pages:
-    docker: *docker-node-image
-    working_directory: *work-dir
+    <<: *docker-node-image
     resource_class: large
     steps:
       - checkout
-      - *restore_yarn_cache
+      - *restore-yarn-cache
       - run:
           name: Install Dependencies
           command: yarn
