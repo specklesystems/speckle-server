@@ -442,23 +442,23 @@ workflows:
           context:
             - cloudflare-pages-edit
           requires:
+            - install-and-cache-dependencies
             - test-viewer
 
 jobs:
   get-version:
     <<: *docker-base-image
-    working_directory: &work-dir /tmp/ci
     steps:
       - checkout
-      - run: mkdir -p workspace
+      - run: mkdir -p /tmp/ci/workspace
       - run:
           name: set version
           command: |
-            echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
-      - run: cat workspace/env-vars >> $BASH_ENV
+            echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> /tmp/ci/workspace/env-vars
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
       - persist_to_workspace:
-          root: workspace
+          root: /tmp/ci/workspace
           paths:
             - env-vars
 
@@ -489,7 +489,6 @@ jobs:
     docker:
       - image: speckle/pre-commit-runner:latest
     resource_class: xlarge
-    working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
@@ -821,8 +820,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     <<: *docker-node-image
-    resource_class: medium
-    working_directory: *work-dir
+    resource_class: xlarge
     steps:
       - checkout
       - *restore-yarn-cache
@@ -836,7 +834,6 @@ jobs:
       image: ubuntu-2204:2024.05.1
       docker_layer_caching: true
     resource_class: large
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
@@ -862,7 +859,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
           paths:
             - /nix
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
@@ -870,7 +867,6 @@ jobs:
       image: ubuntu-2204:2024.01.1
       docker_layer_caching: true
     resource_class: large
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
@@ -898,7 +894,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
           paths:
             - /nix
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
@@ -941,12 +937,11 @@ jobs:
   docker-build: &build-job
     <<: *docker-base-image
     resource_class: medium
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -954,7 +949,7 @@ jobs:
           name: Build and Save
           command: ./.circleci/build.sh
       - persist_to_workspace:
-          root: workspace
+          root: /tmp/ci/workspace
           paths:
             - speckle*
 
@@ -972,14 +967,13 @@ jobs:
   docker-publish-frontend-2-sourcemaps:
     <<: *docker-node-image
     resource_class: xlarge
-    working_directory: *work-dir
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -1028,12 +1022,11 @@ jobs:
   docker-publish: &publish-job
     <<: *docker-base-image
     resource_class: medium
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -1091,12 +1084,11 @@ jobs:
 
   publish-npm:
     <<: *docker-node-image
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - *restore-yarn-cache
       - *yarn
       - run:
@@ -1121,12 +1113,11 @@ jobs:
   publish-helm-chart:
     docker:
       - image: cimg/python:3.12.1
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
             - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
@@ -1136,12 +1127,11 @@ jobs:
 
   update-helm-documentation:
     <<: *docker-node-image
-    working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
             - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
@@ -1151,8 +1141,7 @@ jobs:
 
   publish-viewer-sandbox-cloudflare-pages:
     <<: *docker-node-image
-    working_directory: *work-dir
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - *restore-yarn-cache
