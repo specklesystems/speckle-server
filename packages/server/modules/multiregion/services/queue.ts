@@ -147,7 +147,7 @@ export const startQueue = async () => {
         payload: job.data.payload,
         type: job.data.type
       },
-      `Processing multiregion job ${job.id}`
+      'Processing multiregion job {jobId}'
     )
 
     switch (job.data.type) {
@@ -251,7 +251,7 @@ export const startQueue = async () => {
         error: err,
         errorMessage: err.message
       },
-      `Failed to process multiregion job ${job.id}`
+      'Failed to process multiregion job {jobId}'
     )
   })
   void queue.on('error', (err) => {
