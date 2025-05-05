@@ -70,9 +70,9 @@ export class ViewModes extends Extension {
     super.on(eventType, listener)
   }
 
-  public setViewMode(viewMode: ViewMode, options: ViewModeOptions) {
+  public setViewMode(viewMode: ViewMode, options?: ViewModeOptions) {
     /** Edges on/off require pipeline rebuild */
-    if (viewMode !== this._viewMode || options.edges !== undefined) {
+    if (viewMode !== this._viewMode || options?.edges !== undefined) {
       this._viewMode = viewMode
       this.updateViewModes(viewMode, options)
     } else {
@@ -80,7 +80,7 @@ export class ViewModes extends Extension {
     }
   }
 
-  protected updateViewModes(viewMode: ViewMode, options: ViewModeOptions) {
+  protected updateViewModes(viewMode: ViewMode, options?: ViewModeOptions) {
     const renderer = this.viewer.getRenderer()
     switch (viewMode) {
       case ViewMode.DEFAULT:
@@ -107,7 +107,9 @@ export class ViewModes extends Extension {
     this.emit(ViewModeEvent.Changed, viewMode)
   }
 
-  protected updateViewModeOptions(options: ViewModeOptions) {
+  protected updateViewModeOptions(options?: ViewModeOptions) {
+    if (!options) return
+
     const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
     edgesPasses.forEach((pass: GPass) => {
       pass.options = options
