@@ -4,7 +4,12 @@ import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { WorkspaceWithOptionalRole } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { WorkspacePlan } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  UnpaidWorkspacePlans,
+  WorkspacePlan
+} from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
@@ -24,8 +29,8 @@ describe('workspacePlan services @gatekeeper', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspacePlan({
           workspaceId: cryptoRandomString({ length: 10 }),
-          name: 'business',
-          status: 'expired'
+          name: PaidWorkspacePlans.Team,
+          status: PaidWorkspacePlanStatuses.Canceled
         })
       })
       expect(err.message).to.equal(new WorkspaceNotFoundError().message)
@@ -34,100 +39,97 @@ describe('workspacePlan services @gatekeeper', () => {
     const invalidPlanMessage = new InvalidWorkspacePlanStatus().message
     ;(
       [
-        { planName: 'foobar', cases: [['trial', uncoveredErrorMessage]] },
         {
-          planName: 'starter',
+          planName: 'foobar',
+          cases: [[PaidWorkspacePlanStatuses.Canceled, uncoveredErrorMessage]]
+        },
+        {
+          planName: PaidWorkspacePlans.Team,
           cases: [
-            ['trial', null],
-            ['expired', null],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'business',
+          planName: PaidWorkspacePlans.Pro,
           cases: [
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'plus',
+          planName: PaidWorkspacePlans.TeamUnlimited,
           cases: [
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['valid', null],
-            ['cancelationScheduled', null],
-            ['canceled', null],
-            ['paymentFailed', null],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'academia',
+          planName: PaidWorkspacePlans.ProUnlimited,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, null],
+            [PaidWorkspacePlanStatuses.Canceled, null],
+            [PaidWorkspacePlanStatuses.PaymentFailed, null],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'unlimited',
+          planName: UnpaidWorkspacePlans.Academia,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'starterInvoiced',
+          planName: UnpaidWorkspacePlans.Free,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'plusInvoiced',
+          planName: UnpaidWorkspacePlans.Unlimited,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         },
         {
-          planName: 'businessInvoiced',
+          planName: UnpaidWorkspacePlans.TeamUnlimitedInvoiced,
           cases: [
-            ['valid', null],
-            ['trial', invalidPlanMessage],
-            ['expired', invalidPlanMessage],
-            ['cancelationScheduled', invalidPlanMessage],
-            ['canceled', invalidPlanMessage],
-            ['paymentFailed', invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
+            ['foobar', uncoveredErrorMessage]
+          ]
+        },
+        {
+          planName: UnpaidWorkspacePlans.ProUnlimitedInvoiced,
+          cases: [
+            [PaidWorkspacePlanStatuses.Valid, null],
+            [PaidWorkspacePlanStatuses.CancelationScheduled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.Canceled, invalidPlanMessage],
+            [PaidWorkspacePlanStatuses.PaymentFailed, invalidPlanMessage],
             ['foobar', uncoveredErrorMessage]
           ]
         }

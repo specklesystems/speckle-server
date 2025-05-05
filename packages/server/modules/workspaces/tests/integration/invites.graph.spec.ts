@@ -66,6 +66,7 @@ import {
   buildInvitesGraphqlOperations
 } from '@/modules/workspaces/tests/helpers/invites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 enum InviteByTarget {
   Email = 'email',
@@ -528,7 +529,12 @@ describe('Workspaces Invites GQL', () => {
           ]
         ])
         await assignToWorkspaces([
-          [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
+          [
+            myProjectInviteTargetWorkspace,
+            myWorkspaceFriend,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          ],
           [
             myProjectInviteTargetWorkspace,
             workspaceMemberWithNoProjectAccess,
@@ -559,7 +565,9 @@ describe('Workspaces Invites GQL', () => {
           Roles.Stream.Owner,
           me.id
         )
+      })
 
+      beforeEach(async () => {
         // Remove all project access from workspaceMemberWithNoProjectAccess
         await Promise.all([
           leaveStream(
@@ -613,7 +621,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: otherGuy.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -630,6 +638,38 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
+      it('can invite to workspace project as admin, even if target doesnt belong to workspace', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          inputs: [
+            {
+              userId: otherGuy.id,
+              role: Roles.Stream.Reviewer
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // no auto-accept, since target is not a workspace member
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
+        const emailParams = sendEmailInvocations.args[0][0]
+        await validateInviteExistanceFromEmail(emailParams)
+
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: false,
+          userId: otherGuy.id,
+          workspaceId: myProjectInviteTargetWorkspace.id,
+          streamId: myProjectInviteTargetWorkspaceProject.id
+        })
+      })
+
       it('can invite to workspace project even if not workspace admin, if target already belongs to workspace', async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite(
           {
@@ -637,7 +677,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: workspaceMemberWithNoProjectAccess.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -650,6 +690,38 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+      })
+
+      it('invite auto-accepted if both users already belong to the workspace', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          inputs: [
+            {
+              userId: workspaceMemberWithNoProjectAccess.id,
+              role: Roles.Stream.Reviewer
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // No invite email should be sent out, due to auto-accept
+        expect(sendEmailInvocations.length()).to.eq(0)
+
+        // Should have project role
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: true,
+          userId: workspaceMemberWithNoProjectAccess.id,
+          workspaceId: myProjectInviteTargetWorkspace.id,
+          streamId: myProjectInviteTargetWorkspaceProject.id,
+          expectedProjectRole: Roles.Stream.Reviewer
+        })
       })
 
       it("can't invite a workspace guest to be a workspace project owner", async () => {
@@ -960,7 +1032,7 @@ describe('Workspaces Invites GQL', () => {
                 inputs: [
                   {
                     userId: otherGuy.id,
-                    role: Roles.Stream.Owner
+                    role: Roles.Stream.Reviewer
                   }
                 ]
               },
@@ -1097,7 +1169,7 @@ describe('Workspaces Invites GQL', () => {
           },
           me.id
         )
-        expect(brokenInvite.inviteId).to.be.ok
+        expect(brokenInvite.id).to.be.ok
 
         // Db query directly, cause this isn't a supported use case
         await Workspaces.knex()
@@ -1440,7 +1512,7 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
-          expectedProjectRole: Roles.Stream.Owner
+          expectedProjectRole: Roles.Stream.Reviewer
         })
       })
 
@@ -1459,7 +1531,7 @@ describe('Workspaces Invites GQL', () => {
                   inputs: [
                     {
                       userId: otherGuy.id,
-                      role: Roles.Stream.Owner,
+                      role: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
                       workspaceRole: withRole ? Roles.Workspace.Admin : undefined
                     }
                   ]
@@ -1496,7 +1568,7 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
-            expectedProjectRole: Roles.Stream.Owner
+            expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer
           })
         }
       )
@@ -1569,8 +1641,7 @@ describe('Workspaces Invites GQL', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.workspaceMutations.invites.use).to.be.ok
-      expect(await findInviteFactory({ db })({ inviteId: invite.inviteId })).to.be.not
-        .ok
+      expect(await findInviteFactory({ db })({ inviteId: invite.id })).to.be.not.ok
 
       await gqlHelpers.validateResourceAccess({
         shouldHaveAccess: true,

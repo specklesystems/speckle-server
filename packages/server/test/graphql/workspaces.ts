@@ -11,6 +11,7 @@ export const workspaceFragment = gql`
     logo
     readOnly
     discoverabilityEnabled
+    role
   }
 `
 
@@ -102,7 +103,9 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         description
         team {
           items {
-            avatar
+            user {
+              avatar
+            }
           }
           totalCount
           cursor

@@ -13,7 +13,7 @@ import {
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   TIME_MS,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
@@ -29,7 +29,7 @@ export const getFreshWorkspacePlanProductPricesFactory =
     const productAndPriceIds = deps.getWorkspacePlanProductAndPriceIds()
 
     const productPrices = Object.values(Currency).reduce((acc, currency) => {
-      const currencyPrices = Object.values(PaidWorkspacePlansNew).reduce(
+      const currencyPrices = Object.values(PaidWorkspacePlans).reduce(
         (acc, paidPlan) => {
           const intervalPrices = Object.values(WorkspacePlanBillingIntervals).reduce(
             (acc, interval) => {
