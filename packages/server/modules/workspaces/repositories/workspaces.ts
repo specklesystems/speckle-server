@@ -30,6 +30,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesNonComplete,
   GetWorkspacesProjectsCounts,
   GetWorkspacesRolesForUsers,
   QueryWorkspaces,
@@ -50,6 +51,7 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
+  WorkspaceCreationState as DbWorkspaceCreationState,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import {
@@ -478,6 +480,15 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const getWorkspacesNonCompleteFactory =
+  ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
+  async () => {
+    return tables
+      .workspaceCreationState(db)
+      .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .select([DbWorkspaceCreationState.col.workspaceId])
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

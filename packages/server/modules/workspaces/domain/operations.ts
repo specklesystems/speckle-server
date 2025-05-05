@@ -72,6 +72,8 @@ export type GetWorkspacesBySlug = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type GetWorkspacesNonComplete = () => Promise<{ workspaceId: string }[]>
+
 export type StoreWorkspaceDomain = (args: {
   workspaceDomain: WorkspaceDomain
 }) => Promise<void>
