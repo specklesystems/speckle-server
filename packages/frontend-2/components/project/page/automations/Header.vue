@@ -2,7 +2,7 @@
   <div
     class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center mt-3"
   >
-    <h1 class="block text-heading-lg md:text-heading-xl flex items-center gap-3">
+    <h1 class="block text-heading-lg flex items-center gap-3">
       Automations
       <CommonBadge
         v-tippy="
