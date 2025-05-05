@@ -100,6 +100,7 @@ const invitableCollaboratorsQuery = graphql(`
         items {
           user {
             id
+            avatar
             name
             workspaceRole(workspaceId: $workspaceId)
           }
@@ -141,7 +142,7 @@ const showAllMembers = ref(false)
 const members = computed(() => {
   return (
     result.value?.project?.invitableCollaborators?.items.filter(
-      (c) => c.user.workspaceRole !== Roles.Workspace.Member
+      (c) => c.user.workspaceRole === Roles.Workspace.Member
     ) || []
   )
 })
