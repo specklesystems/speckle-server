@@ -1,9 +1,6 @@
 import { setActiveWorkspaceMutation } from '~/lib/navigation/graphql/mutations'
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import {
-  navigationActiveWorkspaceQuery,
-  navigationWorkspaceListQuery
-} from '~/lib/navigation/graphql/queries'
+import { navigationActiveWorkspaceQuery } from '~/lib/navigation/graphql/queries'
 import { graphql } from '~/lib/common/generated/gql'
 import type { UseNavigationActiveWorkspace_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
@@ -11,16 +8,6 @@ graphql(`
   fragment UseNavigationActiveWorkspace_Workspace on Workspace {
     ...HeaderWorkspaceSwitcherActiveWorkspace_Workspace
     id
-  }
-`)
-
-graphql(`
-  fragment UseNavigationWorkspaceList_User on User {
-    id
-    ...HeaderWorkspaceSwitcherWorkspaceList_User
-    projects(filter: $filter) {
-      totalCount
-    }
   }
 `)
 
@@ -50,45 +37,13 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.isProjectsActive = newVal)
   })
 
-  const { result } = useQuery(
-    navigationWorkspaceListQuery,
-    () => ({
-      filter: {
-        personalOnly: true
-      }
-    }),
-    {
-      enabled: isWorkspacesEnabled.value
-    }
-  )
-
-  // Check for expired SSO sessions
-  const expiredSsoSessions = computed(
-    () => result.value?.activeUser?.expiredSsoSessions || []
-  )
-
-  // Check if the current active workspace has an expired SSO session
-  const activeWorkspaceHasExpiredSsoSession = computed(
-    () =>
-      !!expiredSsoSessions.value.find(
-        (session) => session.slug === activeWorkspaceSlug.value
-      )
-  )
-
-  const hasProjects = computed(
-    () => result.value?.activeUser?.projects?.totalCount ?? 0 > 0
-  )
-
   const { result: activeWorkspaceResult, onResult } = useQuery(
     navigationActiveWorkspaceQuery,
     () => ({
       slug: activeWorkspaceSlug.value || ''
     }),
     () => ({
-      enabled:
-        !!activeWorkspaceSlug.value &&
-        isWorkspacesEnabled.value &&
-        !activeWorkspaceHasExpiredSsoSession.value
+      enabled: !!activeWorkspaceSlug.value && isWorkspacesEnabled.value
     })
   )
 
@@ -106,27 +61,12 @@ export const useNavigation = () => {
     await mutate({ isProjectsActive: state.value.isProjectsActive, slug: null })
   }
 
-  // Active workspace where SSO session is expired
-  const expiredSsoWorkspaceData = computed(() =>
-    expiredSsoSessions.value.find(
-      (session) => session.slug === activeWorkspaceSlug.value
-    )
-  )
-
   // Use the cached data or the current result
   const activeWorkspaceData = computed(() => {
     return (
       activeWorkspaceResult.value?.workspaceBySlug || state.value.cachedWorkspaceData
     )
   })
-
-  const workspaceList = computed(() =>
-    result.value?.activeUser
-      ? result.value.activeUser.workspaces.items.filter(
-          (workspace) => workspace.creationState?.completed !== false
-        )
-      : []
-  )
 
   // Save data in the state, the prevent flickering when the component remount in between navigation
   onResult((result) => {
@@ -141,10 +81,6 @@ export const useNavigation = () => {
     isProjectsActive,
     mutateActiveWorkspaceSlug,
     mutateIsProjectsActive,
-    activeWorkspaceData,
-    workspaceList,
-    activeWorkspaceHasExpiredSsoSession,
-    expiredSsoWorkspaceData,
-    hasProjects
+    activeWorkspaceData
   }
 }
