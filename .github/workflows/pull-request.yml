@@ -1,0 +1,130 @@
+name: Build and Test PR
+
+on: pull_request
+
+jobs:
+  install-and-build:
+    name: Install and build
+    runs-on: 8-core-ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+
+  test-shared:
+    needs: install-and-build
+    name: Test Shared
+    runs-on: 8-core-ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn --immutable
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/shared'
+      # TODO: codecov
+      - name: Build
+        run: yarn build
+        working-directory: 'packages/shared'
+      - name: Ensure ESM import works
+        run: node ./e2e/testEsm.mjs
+        working-directory: 'packages/shared'
+      - name: Ensure CJS require works
+        run: node ./e2e/testCjs.cjs
+        working-directory: 'packages/shared'
+
+  test-viewer:
+    needs: install-and-build
+    name: Test Viewer
+    runs-on: 8-core-ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn --immutable --immutable-cache
+      # load public dir
+      - name: Lint viewer
+        run: yarn lint:ci
+        working-directory: 'packages/viewer'
+      - name: Run tests
+        run: yarn test
+        working-directory: 'packages/viewer'
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+
+  test-frontend:
+    needs: install-and-build
+    name: Test Frontend
+    runs-on: 8-core-ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn --immutable --immutable-cache
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
+# get_version: # maybe there is a github action / param / or we do not even need it
+
+# # gha https://github.com/pre-commit/action
+
+# pre-commit:
+
+# # checks
+
+# test-server:
+# test-server-no-ff: # look for permutiations strategy metric from test-server
+# test-server-multiregion: # "
+# test-frontend:
+# test-viewer:
+# test-objectsender:
+# test-shared:
+# test-preview-service: # we do not have tests here at the moment
+# test-ui-components:
+
+# # gha https://www.chromatic.com/docs/github-actions/
+
+# ui-components-chromatic: # gha https://www.chromatic.com/docs/github-actions/
+
+# # strandalone smoke test gha docker/build-push-action  build and push to branch id location
+
+# docker-build:
+
+# docker-build-server:
+# docker-build-frontend:
+# docker-build-webhooks:
+# docker-build-file-imports:
+# docker-build-previews:
+
+# docker-build-test-container:
+# docker-build-postgres-container:
+# docker-build-monitor-container:
+# docker-build-docker-compose-ingress:
+
+# # standalone helm check
+
+# deployment-test-helm-chart: # there big one here without running k8
