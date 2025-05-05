@@ -18,6 +18,7 @@
       :slug="slug"
       :plan="finalNewPlan"
       :billing-interval="billingInterval"
+      :editor-seat-count="editorSeatCount"
     />
   </LayoutDialog>
 </template>
@@ -26,7 +27,7 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   WorkspacePlanConfigs,
   type MaybeNullOrUndefined,
   doesPlanIncludeUnlimitedProjectsAddon
@@ -39,7 +40,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 type AddonIncludedSelect = 'yes' | 'no'
 
 const props = defineProps<{
-  plan: PaidWorkspacePlansNew
+  plan: PaidWorkspacePlans
   billingInterval: BillingInterval
   workspaceId: MaybeNullOrUndefined<string>
   slug: string
@@ -54,9 +55,8 @@ const includeUnlimitedAddon = defineModel<AddonIncludedSelect | undefined>(
 )
 
 const { upgradePlan, redirectToCheckout } = useBillingActions()
-const { hasUnlimitedAddon, plan, subscription, statusIsCanceled } = useWorkspacePlan(
-  props.slug
-)
+const { hasUnlimitedAddon, plan, subscription, statusIsCanceled, seats } =
+  useWorkspacePlan(props.slug)
 const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 
@@ -100,13 +100,15 @@ const isSamePlanWithAddon = computed(
 // If the user has selected to include the add-on, return the new plan with the add-on
 const finalNewPlan = computed(() => {
   if (includeUnlimitedAddon.value === 'yes') {
-    return props.plan === PaidWorkspacePlansNew.Team
-      ? PaidWorkspacePlansNew.TeamUnlimited
-      : PaidWorkspacePlansNew.ProUnlimited
+    return props.plan === PaidWorkspacePlans.Team
+      ? PaidWorkspacePlans.TeamUnlimited
+      : PaidWorkspacePlans.ProUnlimited
   }
 
   return props.plan
 })
+
+const editorSeatCount = computed(() => seats.value?.editors.assigned || 0)
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -126,6 +128,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       color: 'primary',
       loading: isLoading.value
     },
+    disabled: showAddonSelect.value
+      ? includeUnlimitedAddon.value === null
+      : isLoading.value,
     onClick: () => {
       if (showAddonSelect.value) {
         showAddonSelect.value = false

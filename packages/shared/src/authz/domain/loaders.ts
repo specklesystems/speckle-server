@@ -3,6 +3,7 @@ import { MaybeAsync } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
 import type {
   GetProject,
+  GetProjectModelCount,
   GetProjectRole,
   GetProjectRoleCounts
 } from './projects/operations.js'
@@ -56,6 +57,7 @@ export const AuthCheckContextLoaderKeys = <const>{
   getProject: 'getProject',
   getProjectRoleCounts: 'getProjectRoleCounts',
   getProjectRole: 'getProjectRole',
+  getProjectModelCount: 'getProjectModelCount',
   getServerRole: 'getServerRole',
   getWorkspace: 'getWorkspace',
   getWorkspaceRole: 'getWorkspaceRole',
@@ -83,6 +85,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts
+  getProjectModelCount: GetProjectModelCount
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
   getWorkspaceRole: GetWorkspaceRole

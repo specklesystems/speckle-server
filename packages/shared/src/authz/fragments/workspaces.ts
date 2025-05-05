@@ -18,13 +18,11 @@ import { Loaders } from '../domain/loaders.js'
 import { Roles, WorkspaceRoles } from '../../core/constants.js'
 import {
   MaybeUserContext,
+  MaybeWorkspaceContext,
   ProjectContext,
   WorkspaceContext
 } from '../domain/context.js'
-import {
-  isNewWorkspacePlan,
-  isWorkspacePlanStatusReadOnly
-} from '../../workspaces/helpers/plans.js'
+import { isWorkspacePlanStatusReadOnly } from '../../workspaces/helpers/plans.js'
 import { hasEditorSeat } from '../checks/workspaceSeat.js'
 
 /**
@@ -181,13 +179,11 @@ export const ensureWorkspaceProjectCanBeCreatedFragment: AuthPolicyEnsureFragmen
 
     // Now check editor seat
     if (userId) {
-      if (isNewWorkspacePlan(workspacePlan.name)) {
-        const isEditor = await hasEditorSeat(loaders)({
-          userId,
-          workspaceId
-        })
-        if (!isEditor) return err(new WorkspaceNoEditorSeatError())
-      }
+      const isEditor = await hasEditorSeat(loaders)({
+        userId,
+        workspaceId
+      })
+      if (!isEditor) return err(new WorkspaceNoEditorSeatError())
     }
 
     const workspaceLimits = await loaders.getWorkspaceLimits({ workspaceId })
@@ -223,7 +219,14 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
   | typeof Loaders.getWorkspaceLimits
   | typeof Loaders.getProject
   | typeof Loaders.getWorkspaceModelCount,
-  ProjectContext & MaybeUserContext,
+  ProjectContext &
+    MaybeWorkspaceContext &
+    MaybeUserContext & {
+      /**
+       * How many models we're testing being added. Defaults to 1
+       */
+      addedModelCount?: number
+    },
   InstanceType<
     | typeof WorkspaceNoAccessError
     | typeof WorkspaceReadOnlyError
@@ -232,11 +235,13 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
   >
 > =
   (loaders) =>
-  async ({ projectId, userId }) => {
+  async ({ projectId, userId, addedModelCount, workspaceId }) => {
+    addedModelCount = addedModelCount ?? 1
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
 
-    const { workspaceId } = project
+    // Project may not be attached to a workspace yet, then we use the specified workspaceId
+    workspaceId = workspaceId || project.workspaceId || undefined
     if (!workspaceId) return ok()
 
     if (userId) {
@@ -267,7 +272,7 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
 
     if (currentModelCount === null) return err(new WorkspaceNoAccessError())
 
-    return currentModelCount < workspaceLimits.modelCount
+    return currentModelCount + addedModelCount <= workspaceLimits.modelCount
       ? ok()
       : err(
           new WorkspaceLimitsReachedError({

@@ -1,83 +1,130 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
-const request = require('supertest')
+import { expect } from 'chai'
+import request from 'supertest'
 
-const assert = require('assert')
-const crypto = require('crypto')
+import assert from 'assert'
+import crypto from 'crypto'
 
-const { beforeEachContext } = require('@/test/hooks')
-const { createManyObjects } = require('@/test/helpers')
+import { beforeEachContext } from '@/test/hooks'
+import { createManyObjects } from '@/test/helpers'
 
-const { Scopes } = require('@speckle/shared')
-const {
+import { Scopes } from '@speckle/shared'
+import {
   getStreamFactory,
-  createStreamFactory
-} = require('@/modules/core/repositories/streams')
-const { db } = require('@/db/knex')
-const {
+  createStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const {
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
   storeTokenScopesFactory,
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import cryptoRandomString from 'crypto-random-string'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import type Express from 'express'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -96,7 +143,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -146,22 +194,33 @@ describe('Upload/Download Routes @api-rest', () => {
   const userA = {
     name: 'd1',
     email: 'd.1@speckle.systems',
-    password: 'wowwow8charsplease'
+    password: 'wowwow8charsplease',
+    id: '',
+    token: ''
   }
   const userB = {
     name: 'd2',
     email: 'd.2@speckle.systems',
-    password: 'wowwow8charsplease'
+    password: 'wowwow8charsplease',
+    id: '',
+    token: ''
   }
 
   const testStream = {
     name: 'Test Stream 01',
-    description: 'wonderful test stream'
+    description: 'wonderful test stream',
+    id: '',
+    ownerId: ''
   }
 
-  const privateTestStream = { name: 'Private Test Stream', isPublic: false }
+  const privateTestStream = {
+    name: 'Private Test Stream',
+    isPublic: false,
+    id: '',
+    ownerId: ''
+  }
 
-  let app
+  let app: Express.Express
   before(async () => {
     ;({ app } = await beforeEachContext())
 
@@ -276,7 +335,12 @@ describe('Upload/Download Routes @api-rest', () => {
       .post(`/objects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Content-type', 'application/json')
-      .attach(Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
+      .attach(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Buffer.from(JSON.stringify(objBatches[0]), 'utf8') as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        undefined as any
+      )
     expect(res).to.have.status(400)
     expect(res.text).to.equal(
       'Failed to parse request headers and body content as valid multipart/form-data.'
@@ -288,7 +352,8 @@ describe('Upload/Download Routes @api-rest', () => {
       .post(`/objects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Content-type', 'multipart/form-data')
-      .attach(JSON.stringify(objBatches[0], 'utf8'))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .attach(JSON.stringify(objBatches[0]) as any, undefined as any)
     expect(res).to.have.status(400)
     expect(res.text).to.equal(
       'Failed to parse request headers and body content as valid multipart/form-data.'
@@ -340,7 +405,8 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should not allow upload with invalid body (not contained within array)', async () => {
     //creating a single valid object
     const objectToPost = {
-      name: 'yet again cannot believe i have to create this'
+      name: 'yet again cannot believe i have to create this',
+      id: ''
     }
     const objectId = crypto
       .createHash('md5')
@@ -383,7 +449,7 @@ describe('Upload/Download Routes @api-rest', () => {
   //   expect(res.text).contains('Object too large')
   // })
 
-  let parentId
+  let parentId: string
   const numObjs = 5000
   const objBatches = [
     createManyObjects(numObjs),
@@ -411,19 +477,22 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should properly download an object, with all its children, into a application/json response', (done) => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     new Promise((resolve) => setTimeout(resolve, 1500)) // avoids race condition
       .then(() => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         request(app)
           .get(`/objects/${testStream.id}/${parentId}`)
           .set('Authorization', userA.token)
           .buffer()
           .parse((res, cb) => {
-            res.data = ''
-            res.on('data', (chunk) => {
-              res.data += chunk.toString()
+            const resTyped = res as typeof res & { data: string }
+            resTyped.data = ''
+            resTyped.on('data', (chunk) => {
+              resTyped.data += chunk.toString()
             })
-            res.on('end', () => {
-              cb(null, res.data)
+            resTyped.on('end', () => {
+              cb(null, resTyped.data)
             })
           })
           .end((err, res) => {
@@ -441,24 +510,27 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should properly download an object, with all its children, into a text/plain response', (done) => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     request(app)
       .get(`/objects/${testStream.id}/${parentId}`)
       .set('Authorization', userA.token)
       .set('Accept', 'text/plain')
       .buffer()
       .parse((res, cb) => {
-        res.data = ''
-        res.on('data', (chunk) => {
-          res.data += chunk.toString()
+        const resTyped = res as typeof res & { data: string }
+
+        resTyped.data = ''
+        resTyped.on('data', (chunk) => {
+          resTyped.data += chunk.toString()
         })
-        res.on('end', () => {
-          cb(null, res.data)
+        resTyped.on('end', () => {
+          cb(null, resTyped.data)
         })
       })
       .end((err, res) => {
         if (err) done(err)
         try {
-          const o = res.body.split('\n').filter((l) => l !== '')
+          const o = res.body.split('\n').filter((l: string) => l !== '')
           expect(o.length).to.equal(numObjs + 1)
           expect(res).to.be.text
           done()
@@ -473,6 +545,7 @@ describe('Upload/Download Routes @api-rest', () => {
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     request(app)
       .post(`/api/getobjects/${testStream.id}`)
       .set('Authorization', userA.token)
@@ -480,18 +553,20 @@ describe('Upload/Download Routes @api-rest', () => {
       .send({ objects: JSON.stringify(objectIds) })
       .buffer()
       .parse((res, cb) => {
-        res.data = ''
-        res.on('data', (chunk) => {
-          res.data += chunk.toString()
+        const resTyped = res as typeof res & { data: string }
+
+        resTyped.data = ''
+        resTyped.on('data', (chunk) => {
+          resTyped.data += chunk.toString()
         })
-        res.on('end', () => {
-          cb(null, res.data)
+        resTyped.on('end', () => {
+          cb(null, resTyped.data)
         })
       })
       .end((err, res) => {
         if (err) done(err)
         try {
-          const o = res.body.split('\n').filter((l) => l !== '')
+          const o = res.body.split('\n').filter((l: string) => l !== '')
           expect(o.length).to.equal(objectIds.length)
           expect(res).to.be.text
           done()
@@ -499,6 +574,20 @@ describe('Upload/Download Routes @api-rest', () => {
           done(err)
         }
       })
+  })
+
+  it('Should return nothing if the object is not found', async () => {
+    const objectIds = []
+    objectIds.push(cryptoRandomString({ length: 10 })) // random string that does not exist
+
+    const res = await request(app)
+      .post(`/api/getobjects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Accept', 'text/plain')
+      .send({ objects: JSON.stringify(objectIds) })
+      .buffer()
+    expect(res).to.have.status(200)
+    expect(res.text).to.equal('') // empty response, as the object is not found
   })
 
   it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
@@ -515,7 +604,7 @@ describe('Upload/Download Routes @api-rest', () => {
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
-    const fakeIds = []
+    const fakeIds: string[] = []
     for (let i = 0; i < 100; i++) {
       const fakeId = crypto
         .createHash('md5')
@@ -525,18 +614,21 @@ describe('Upload/Download Routes @api-rest', () => {
       objectIds.push(fakeId)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     request(app)
       .post(`/api/diff/${testStream.id}`)
       .set('Authorization', userA.token)
       .send({ objects: JSON.stringify(objectIds) })
       .buffer()
       .parse((res, cb) => {
-        res.data = ''
-        res.on('data', (chunk) => {
-          res.data += chunk.toString()
+        const resTyped = res as typeof res & { data: string }
+
+        resTyped.data = ''
+        resTyped.on('data', (chunk) => {
+          resTyped.data += chunk.toString()
         })
-        res.on('end', () => {
-          cb(null, res.data)
+        resTyped.on('end', () => {
+          cb(null, resTyped.data)
         })
       })
       .end((err, res) => {
@@ -575,7 +667,7 @@ describe('Upload/Download Routes @api-rest', () => {
 })
 
 describe('Express @core-rest', () => {
-  let app
+  let app: Express.Express
   before(async () => {
     ;({ app } = await beforeEachContext())
   })

@@ -2,11 +2,11 @@
   <div class="pb-24">
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Guests are external collaborators. They can't create or add others to workspace
-        projects. Read more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        The guest role is meant for external collaborators. Guests can access only the
+        specific projects they're invited to, and their email doesn't need to follow any
+        of the allowed email domains that you may have set up. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can contribute
+        to projects if given the permission. They can never create new projects.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -33,9 +33,7 @@
       :items="guests"
       :loading="loading"
       :empty-message="
-        search.length
-          ? `No guests found for '${search}'`
-          : 'This workspace has no guests'
+        search.length || seatTypeFilter ? 'No results' : 'This workspace has no guests'
       "
     >
       <template #name="{ item }">
@@ -118,7 +116,6 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{

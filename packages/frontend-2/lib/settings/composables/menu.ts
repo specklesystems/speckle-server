@@ -15,6 +15,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceLastAdminCheck } from '~/lib/workspaces/composables/management'
+import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
@@ -153,6 +154,8 @@ export const useSettingsMembersActions = (params: {
     workspaceSlug: params.workspaceSlug.value || ''
   })
 
+  const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')
+
   const targetUserRole = computed(() => {
     return params.targetUser.value.role
   })
@@ -203,7 +206,7 @@ export const useSettingsMembersActions = (params: {
 
   const showLeaveWorkspace = computed(() => isActiveUserTargetUser.value)
 
-  const showUpdateProjectPermissions = computed(() => canModifyUser.value)
+  // const showUpdateProjectPermissions = computed(() => canModifyUser.value)
 
   const actionItems = computed(() => {
     const headerItems: LayoutMenuItem[] = []
@@ -241,25 +244,31 @@ export const useSettingsMembersActions = (params: {
     if (showUpgradeEditor.value) {
       headerItems.push({
         title: 'Upgrade to editor...',
-        id: WorkspaceUserActionTypes.UpgradeEditor
+        id: WorkspaceUserActionTypes.UpgradeEditor,
+        disabled: statusIsCanceled.value,
+        disabledTooltip: 'This workspace has a canceled plan'
       })
     }
     if (showDowngradeEditor.value) {
       headerItems.push({
         title: 'Downgrade to viewer...',
         id: WorkspaceUserActionTypes.DowngradeEditor,
-        disabled: targetUserRole.value === Roles.Workspace.Admin,
-        disabledTooltip: 'Admins must be on an Editor seat'
+        disabled:
+          targetUserRole.value === Roles.Workspace.Admin || statusIsCanceled.value,
+        disabledTooltip: statusIsCanceled.value
+          ? 'This workspace has a canceled plan'
+          : 'Admins must be on an Editor seat'
       })
     }
-    if (showUpdateProjectPermissions.value) {
-      mainItems.push({
-        title: 'Manage project access...',
-        id: WorkspaceUserActionTypes.UpdateProjectPermissions,
-        disabled: params.targetUser.value.projectRoles.length === 0,
-        disabledTooltip: 'User is not in any projects'
-      })
-    }
+    // This will return post new workspace plan launch
+    // if (showUpdateProjectPermissions.value) {
+    //   mainItems.push({
+    //     title: 'Manage project access...',
+    //     id: WorkspaceUserActionTypes.UpdateProjectPermissions,
+    //     disabled: params.targetUser.value.projectRoles.length === 0,
+    //     disabledTooltip: 'User is not in any projects'
+    //   })
+    // }
 
     if (showRemoveFromWorkspace.value) {
       footerItems.push({

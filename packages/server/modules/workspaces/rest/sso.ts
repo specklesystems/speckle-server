@@ -131,7 +131,8 @@ const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFacto
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
-  getUser: legacyGetUserFactory({ db })
+  getUser: legacyGetUserFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 const moveWorkspaceIdToSessionMiddleware: RequestHandler<

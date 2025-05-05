@@ -24,10 +24,7 @@
 
     <WorkspaceWizard :workspace-id="workspaceId" />
 
-    <div
-      v-if="requiresWorkspaceCreation && isFirstStep && !registeredThisSession"
-      class="w-full max-w-sm mx-auto mt-4"
-    >
+    <div v-if="shouldShowWhyAmISeeingThis" class="w-full max-w-sm mx-auto mt-4">
       <CommonAlert color="neutral" size="xs" hide-icon>
         <template #title>Why am I seeing this?</template>
         <template #description>
@@ -49,7 +46,7 @@ import { homeRoute } from '~~/lib/common/helpers/route'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables/auth'
+import { useAuthManager } from '~/lib/auth/composables/auth'
 import { useQuery } from '@vue/apollo-composable'
 import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 
@@ -61,7 +58,6 @@ const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const registeredThisSession = useRegisteredThisSession()
 
 const { result } = useQuery(activeUserWorkspaceExistenceCheckQuery, null, {
   enabled: isWorkspacesEnabled.value
@@ -77,6 +73,16 @@ const requiresWorkspaceCreation = computed(() => {
     (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
     // Legacy projects
     (result.value?.activeUser?.versions.totalCount || 0) === 0
+  )
+})
+
+const shouldShowWhyAmISeeingThis = computed(() => {
+  return (
+    isWorkspacesEnabled.value &&
+    isFirstStep.value &&
+    (result.value?.activeUser?.workspaces?.totalCount || 0) === 0 &&
+    // Legacy projects
+    (result.value?.activeUser?.versions.totalCount || 0) > 0
   )
 })
 

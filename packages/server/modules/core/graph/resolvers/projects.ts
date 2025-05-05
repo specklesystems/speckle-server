@@ -77,8 +77,12 @@ import {
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
+  deleteInvitesByTargetFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
@@ -94,11 +98,75 @@ import {
 import { has } from 'lodash'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
@@ -116,7 +184,8 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
           payload
         }),
       getUser,
-      getServerInfo
+      getServerInfo,
+      finalizeInvite: buildFinalizeProjectInvite()
     }),
     getUsers
   }),
@@ -483,7 +552,8 @@ export = {
           withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -493,7 +563,8 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         }),
         getUserStreams({
           userId: ctx.userId!,
@@ -505,7 +576,9 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true,
           workspaceId: args.filter?.workspaceId,
-          personalOnly: args.filter?.personalOnly
+          personalOnly: args.filter?.personalOnly,
+          sortBy: args.sortBy || undefined,
+          includeImplicitAccess: args.filter?.includeImplicitAccess
         })
       ])
 

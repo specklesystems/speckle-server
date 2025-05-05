@@ -2,11 +2,10 @@
   <div>
     <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
       <template #description>
-        Workspace members can have a viewer or editor seat. Admins must be editors. Read
-        more about
-        <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-          Speckle roles and seats.
-        </NuxtLink>
+        Workspace members can view all projects by default. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can create new
+        projects in the workspace and fully contribute to other projects if given the
+        permission.
       </template>
     </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
@@ -23,9 +22,9 @@
       class="mt-6 mb-12"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
-        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
-        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-3' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-4' },
+        // { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
@@ -35,7 +34,9 @@
       :items="members"
       :loading="loading"
       :empty-message="
-        hasNoResults ? 'No members found' : 'This workspace has no members'
+        search.length || seatTypeFilter || roleFilter
+          ? 'No results'
+          : 'This workspace has no members'
       "
     >
       <template #name="{ item }">
@@ -85,7 +86,7 @@
       <template #joined="{ item }">
         <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
-      <template #projects="{ item }">
+      <!-- <template #projects="{ item }">
         <FormButton
           v-if="
             item.projectRoles.length > 0 &&
@@ -109,7 +110,7 @@
           {{ item.projectRoles.length }}
           {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </div>
-      </template>
+      </template> -->
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
           :target-user="item"
@@ -141,7 +142,6 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
@@ -210,10 +210,6 @@ const members = computed(() => {
     }))
     .filter((user) => user.role !== Roles.Workspace.Guest)
 })
-
-const hasNoResults = computed(() => workspace.value?.team.items.length === 0)
-
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 </script>

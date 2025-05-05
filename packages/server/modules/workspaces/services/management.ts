@@ -349,6 +349,7 @@ export const deleteWorkspaceFactory =
 type WorkspaceRoleDeleteArgs = {
   userId: string
   workspaceId: string
+  deletedByUserId: string
 }
 
 export const deleteWorkspaceRoleFactory =
@@ -363,7 +364,8 @@ export const deleteWorkspaceRoleFactory =
   }) =>
   async ({
     workspaceId,
-    userId
+    userId,
+    deletedByUserId
   }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -380,7 +382,7 @@ export const deleteWorkspaceRoleFactory =
     // Emit deleted role
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.RoleDeleted,
-      payload: { acl: deletedRole }
+      payload: { acl: deletedRole, updatedByUserId: deletedByUserId }
     })
 
     return deletedRole
@@ -420,7 +422,6 @@ export const updateWorkspaceRoleFactory =
     workspaceId,
     userId,
     role: nextWorkspaceRole,
-    skipProjectRoleUpdatesFor,
     preventRoleDowngrade,
     updatedByUserId
   }): Promise<void> => {
@@ -492,9 +493,6 @@ export const updateWorkspaceRoleFactory =
           userId,
           workspaceId,
           role: nextWorkspaceRole
-        },
-        flags: {
-          skipProjectRoleUpdatesFor: skipProjectRoleUpdatesFor ?? []
         },
         updatedByUserId
       }

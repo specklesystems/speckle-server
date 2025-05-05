@@ -5,36 +5,47 @@
       The workspace
       <span class="font-bold">{{ workspaceName }}</span>
       is on a {{ formatName(plan) }} plan with a limit of
-      {{ limits?.projectCount }}
-      {{ limits?.projectCount === 1 ? 'project' : 'projects' }} and
-      {{ limits?.modelCount }} {{ limits?.modelCount === 1 ? 'model' : 'models' }}.
-      Upgrade the workspace to add more.
+      {{ planConfig?.limits.projectCount }}
+      {{ planConfig?.limits.projectCount === 1 ? 'project' : 'projects' }} and
+      {{ planConfig?.limits.modelCount }}
+      {{ planConfig?.limits.modelCount === 1 ? 'model' : 'models' }}. Upgrade the
+      workspace to add more.
     </div>
   </WorkspacePlanLimitReachedDialog>
 </template>
 <script setup lang="ts">
-import type { MaybeNullOrUndefined, WorkspacePlans } from '@speckle/shared'
-import { Roles } from '@speckle/shared'
+import {
+  Roles,
+  type WorkspacePlans,
+  WorkspacePlanConfigs,
+  type MaybeNullOrUndefined
+} from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
-import { useWorkspaceLimits } from '~/lib/workspaces/composables/limits'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 const props = defineProps<{
   workspaceSlug: string
   workspaceName?: string
   workspaceRole?: MaybeNullOrUndefined<string>
-  plan?: MaybeNullOrUndefined<WorkspacePlans>
-  type?: 'version' | 'model'
-  location?: string
+  plan?: WorkspacePlans
+  type?: 'project' | 'model'
+  location: string
 }>()
 
 const mixpanel = useMixpanel()
-const { limits } = useWorkspaceLimits(props.workspaceSlug)
+
+const { mutateActiveWorkspaceSlug } = useNavigation()
 
 const dialogOpen = defineModel<boolean>('open', {
   required: true
+})
+
+const planConfig = computed(() => {
+  if (!props.plan) return null
+  return WorkspacePlanConfigs[props.plan]
 })
 
 const explorePlansButton: LayoutDialogButton = {
@@ -48,7 +59,8 @@ const explorePlansButton: LayoutDialogButton = {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceSlug
     })
-    return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug || ''))
+    mutateActiveWorkspaceSlug(props.workspaceSlug)
+    return navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceSlug))
   }
 }
 
@@ -68,7 +80,8 @@ watch(dialogOpen, (value) => {
       type: props.type,
       location: props.location,
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceSlug
+      workspace_id: props.workspaceSlug,
+      limitType: props.type || 'project/model'
     })
   }
 })

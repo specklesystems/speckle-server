@@ -1,11 +1,11 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
-const assert = require('assert')
+import { expect } from 'chai'
+import assert from 'assert'
 
-const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { noErrors } = require('@/test/helpers')
-const { Scopes, Roles } = require('@speckle/shared')
-const {
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { noErrors } from '@/test/helpers'
+import { Scopes, Roles, ensureError } from '@speckle/shared'
+import {
   createWebhookConfigFactory,
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
@@ -14,78 +14,77 @@ const {
   getStreamWebhooksFactory,
   createWebhookEventFactory,
   getLastWebhookEventsFactory
-} = require('@/modules/webhooks/repositories/webhooks')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/webhooks/repositories/webhooks'
+import { db } from '@/db/knex'
+import {
   createWebhookFactory,
   updateWebhookFactory,
   deleteWebhookFactory,
   dispatchStreamEventFactory
-} = require('@/modules/webhooks/services/webhooks')
-const {
+} from '@/modules/webhooks/services/webhooks'
+import {
   getStreamFactory,
   createStreamFactory,
   grantStreamPermissionsFactory
-} = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/repositories/streams'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const {
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUserFactory,
   getUsersFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { omit } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -95,6 +94,52 @@ const updateWebhook = updateWebhookFactory({
   updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -113,7 +158,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),
@@ -161,27 +207,32 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
-  let sendRequest
+  let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const userOne = {
     name: 'User',
     email: 'user@example.org',
-    password: 'jdsadjsadasfdsa'
+    password: 'jdsadjsadasfdsa',
+    id: '',
+    token: ''
   }
 
   const streamOne = {
     name: 'streamOne',
     description: 'stream',
-    isPublic: true
+    isPublic: true,
+    ownerId: '',
+    id: ''
   }
 
   const webhookOne = {
-    streamId: null, // filled in `before`
+    streamId: '', // filled in `before`
     url: 'http://localhost:42/non-existent',
     description: 'test wh',
     secret: 'secret',
     enabled: true,
-    triggers: ['commit_create', 'commit_update']
+    triggers: ['commit_create', 'commit_update'],
+    id: ''
   }
 
   before(async () => {
@@ -209,7 +260,7 @@ describe('Webhooks @webhooks', () => {
       const webhook = await getWebhook({ id: webhookOne.id })
       expect(webhook).to.not.be.null
       expect(webhook).to.have.property('url')
-      expect(webhook.url).to.equal(webhookOne.url)
+      expect(webhook!.url).to.equal(webhookOne.url)
     })
 
     it('Should update a webhook', async () => {
@@ -223,7 +274,7 @@ describe('Webhooks @webhooks', () => {
       const webhook = await getWebhook({ id: webhookId })
       expect(webhook).to.not.be.null
       expect(webhook).to.have.property('url')
-      expect(webhook.url).to.equal(newUrl)
+      expect(webhook!.url).to.equal(newUrl)
     })
 
     it('Should delete a webhook', async () => {
@@ -240,7 +291,8 @@ describe('Webhooks @webhooks', () => {
         description: 'test wh',
         secret: 'secret',
         enabled: true,
-        triggers: ['commit_create', 'commit_update']
+        triggers: ['commit_create', 'commit_update'],
+        id: ''
       }
       webhook.id = await createWebhookFactory({
         createWebhookConfig: createWebhookConfigFactory({ db }),
@@ -307,7 +359,6 @@ describe('Webhooks @webhooks', () => {
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       await dispatchStreamEventFactory({
-        db,
         getServerInfo,
         getStream,
         createWebhookEvent: createWebhookEventFactory({ db }),
@@ -328,22 +379,27 @@ describe('Webhooks @webhooks', () => {
     const userTwo = {
       name: 'User2',
       email: 'user2@example.org',
-      password: 'jdsadjsadasfdsa'
+      password: 'jdsadjsadasfdsa',
+      id: '',
+      token: ''
     }
 
     const webhookTwo = {
-      streamId: null,
+      streamId: '',
       url: 'http://localhost:42/non-existent-two',
       description: 'test wh no 2',
       secret: 'secret',
       enabled: true,
-      triggers: ['commit_create', 'commit_update']
+      triggers: ['commit_create', 'commit_update'],
+      id: ''
     }
 
     const streamTwo = {
       name: 'streamTwo',
       description: 'stream',
-      isPublic: true
+      isPublic: true,
+      ownerId: '',
+      id: ''
     }
 
     before(async () => {
@@ -373,7 +429,7 @@ describe('Webhooks @webhooks', () => {
       const res = await sendRequest(userTwo.token, {
         query:
           'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }',
-        variables: { webhook: webhookTwo }
+        variables: { webhook: omit(webhookTwo, ['id']) }
       })
       expect(noErrors(res))
       expect(res.body.data.webhookCreate).to.not.be.null
@@ -382,7 +438,6 @@ describe('Webhooks @webhooks', () => {
 
     it('Should get stream webhooks and the previous events', async () => {
       await dispatchStreamEventFactory({
-        db,
         getServerInfo,
         getStream,
         getStreamWebhooks: getStreamWebhooksFactory({ db }),
@@ -420,9 +475,9 @@ describe('Webhooks @webhooks', () => {
       })
       const webhook = await getWebhook({ id: webhookTwo.id })
       expect(noErrors(res))
-      expect(res.body.data.webhookUpdate).to.equal(webhook.id)
-      expect(webhook.description).to.equal('updated webhook')
-      expect(webhook.enabled).to.equal(false)
+      expect(res.body.data.webhookUpdate).to.equal(webhook!.id)
+      expect(webhook!.description).to.equal('updated webhook')
+      expect(webhook!.enabled).to.equal(false)
     })
 
     it('Should *not* update or delete a webhook if the stream id and webhook id do not match', async () => {
@@ -461,7 +516,8 @@ describe('Webhooks @webhooks', () => {
         description: 'test wh',
         secret: 'secret',
         enabled: true,
-        triggers: ['commit_create', 'commit_update']
+        triggers: ['commit_create', 'commit_update'],
+        id: ''
       }
       webhook.id = await createWebhookFactory({
         createWebhookConfig: createWebhookConfigFactory({ db }),
@@ -475,11 +531,11 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should *not* create a webhook if user is not a stream owner', async () => {
-      delete webhookTwo.id
+      webhookTwo.id = ''
       const res = await sendRequest(userOne.token, {
         query:
           'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }',
-        variables: { webhook: webhookTwo }
+        variables: { webhook: omit(webhookTwo, ['id']) }
       })
       expect(res.body.errors).to.exist
       expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
@@ -525,7 +581,7 @@ describe('Webhooks @webhooks', () => {
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       } catch (err) {
-        if (err.toString().indexOf('Maximum') > -1) return
+        if (ensureError(err).toString().indexOf('Maximum') > -1) return
       }
 
       assert.fail('Configured more webhooks than the limit')

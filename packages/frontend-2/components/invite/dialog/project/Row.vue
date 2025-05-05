@@ -8,7 +8,7 @@
           <div class="flex-1 relative">
             <div ref="listboxButton" class="relative">
               <FormTextInput
-                v-if="canInviteNewMembers"
+                v-if="!isInWorkspace"
                 v-model="email"
                 :name="`email-${item.key}`"
                 color="foundation"
@@ -16,9 +16,10 @@
                 show-clear
                 full-width
                 use-label-in-errors
-                show-label
+                :show-label="showLabel"
                 label="Email"
                 :rules="[isEmailOrEmpty]"
+                @paste="handlePaste"
               />
               <FormTextInput
                 v-else
@@ -29,14 +30,22 @@
                 show-clear
                 full-width
                 use-label-in-errors
-                show-label
-                label="Search workspace members"
+                :show-label="showLabel"
+                :label="
+                  canInviteNewMembers ? 'Name or email' : 'Search workspace members'
+                "
                 autocomplete="off"
-                :readonly="!!selectedUser"
+                :readonly="canInviteNewMembers ? false : !!selectedUser"
+                :rules="
+                  canInviteNewMembers
+                    ? [isEmailOrUserId({ userId: selectedUser?.id })]
+                    : []
+                "
                 @input="(e) => handleInput(e.value)"
                 @focus="showSuggestions"
                 @click="showSuggestions"
                 @clear="handleClear"
+                @paste="handlePaste"
               />
               <Transition
                 v-if="isMounted"
@@ -46,16 +55,13 @@
               >
                 <Teleport to="body">
                   <div
-                    v-if="
-                      (filteredSuggestions.length > 0 || isSearchLoading || search) &&
-                      isMenuOpen
-                    "
+                    v-if="showDropdown"
                     ref="menuEl"
                     :style="listboxOptionsStyle"
-                    class="z-50 fixed bg-white shadow-lg rounded-md border border-outline-3"
+                    class="z-50 fixed bg-foundation shadow-lg rounded-md border border-outline-3"
                   >
                     <div
-                      v-if="isSearchLoading"
+                      v-if="isSearchLoading && !filteredSuggestions.length"
                       class="flex items-center justify-center p-4"
                     >
                       <CommonLoadingIcon />
@@ -88,20 +94,16 @@
             :name="`fields.${index}.projectRole`"
             class="w-40"
             mount-menu-on-body
-            show-label
+            :show-label="showLabel"
             :allow-unset="false"
             :hidden-items="[Roles.Stream.Owner]"
           />
         </div>
       </div>
-      <CommonTextLink class="mt-7">
-        <TrashIcon
-          v-if="showDelete"
-          class="size-4 text-foreground-2"
-          @click="$emit('remove')"
-        />
-        <div v-else class="size-4" />
+      <CommonTextLink v-if="showDelete" :class="showLabel && 'mt-7'">
+        <TrashIcon class="size-4 text-foreground-2" @click="$emit('remove')" />
       </CommonTextLink>
+      <div v-else class="size-4" />
     </div>
   </div>
 </template>
@@ -120,6 +122,8 @@ import type { InviteProjectItem } from '~~/lib/invites/helpers/types'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
+import { isEmailOrUserId } from '~~/lib/invites/helpers/validation'
+import { parsePastedEmails } from '~~/lib/invites/helpers/helpers'
 
 type SelectedUser = {
   id: string
@@ -153,11 +157,14 @@ const props = defineProps<{
   showDelete?: boolean
   canInviteNewMembers?: boolean
   showProjectRoles?: boolean
+  showLabel?: boolean
+  isInWorkspace?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: InviteProjectItem): void
   (e: 'remove'): void
+  (e: 'add-multiple-emails', emails: string[]): void
 }>()
 
 const isMounted = useMounted()
@@ -166,6 +173,7 @@ const listboxButton = ref<HTMLDivElement | null>(null)
 const search = ref('')
 const input = ref('')
 const selectedUser = ref<SelectedUser | null>(null)
+const isMenuOpen = ref(false)
 
 const listboxButtonBounding = useElementBounding(listboxButton, {
   windowResize: true,
@@ -191,12 +199,9 @@ const { result, loading: isSearchLoading } = useQuery(
     }
   }),
   () => ({
-    enabled:
-      !!search.value && !!props.modelValue.project?.id && !props.canInviteNewMembers
+    enabled: !!search.value && !!props.modelValue.project?.id
   })
 )
-
-const isMenuOpen = ref(false)
 
 const filteredSuggestions = computed(() =>
   search.value ? result.value?.project?.invitableCollaborators?.items || [] : []
@@ -232,25 +237,43 @@ const userId = computed({
   }
 })
 
+const showDropdown = computed(() => {
+  if (props.canInviteNewMembers) {
+    return filteredSuggestions.value.length > 0 && isMenuOpen.value
+  }
+  return (
+    (filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value) &&
+    isMenuOpen.value
+  )
+})
+
 const handleInput = (value: string) => {
   search.value = value
+  if (props.isInWorkspace && props.canInviteNewMembers) {
+    emit('update:modelValue', {
+      ...props.modelValue,
+      email: value
+    })
+  }
 }
 
 const handleClear = () => {
   input.value = ''
   search.value = ''
   selectedUser.value = null
+  emit('update:modelValue', {
+    ...props.modelValue,
+    userId: undefined
+  })
 }
 
 const listboxOptionsStyle = computed(() => {
   const style: CSSProperties = {}
-
   const top = listboxButtonBounding.top.value
   const left = listboxButtonBounding.left.value
   const width = listboxButtonBounding.width.value
-  const height = listboxButtonBounding.height.value
 
-  style.top = `${top + height}px`
+  style.top = `${top + (props.showLabel ? 60 : 32)}px`
   style.left = `${left}px`
   style.width = `${width}px`
 
@@ -268,6 +291,36 @@ const selectSuggestion = (user: SelectedUser) => {
 const showSuggestions = () => {
   isMenuOpen.value = true
 }
+
+const handlePaste = (event: ClipboardEvent) => {
+  const pastedText = event.clipboardData?.getData('text')
+
+  if (pastedText && /[\s,;]/.test(pastedText)) {
+    event.preventDefault()
+
+    const validEmails = parsePastedEmails(pastedText)
+
+    if (validEmails.length > 0) {
+      input.value = validEmails[0]
+
+      if (props.isInWorkspace && props.canInviteNewMembers) {
+        handleInput(validEmails[0])
+      } else if (!props.isInWorkspace) {
+        email.value = validEmails[0]
+      }
+
+      validEmails.shift()
+
+      if (validEmails.length > 0) {
+        emit('add-multiple-emails', validEmails)
+      }
+    }
+  }
+}
+
+onMounted(() => {
+  input.value = props.modelValue.email
+})
 
 onClickOutside(
   menuEl,

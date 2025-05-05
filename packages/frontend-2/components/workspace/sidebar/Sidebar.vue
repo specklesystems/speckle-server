@@ -24,10 +24,9 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
 import { LayoutSidebar } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useQuery } from '@vue/apollo-composable'
 import { workspaceSidebarQuery } from '~/lib/workspaces/graphql/queries'
 
@@ -42,6 +41,9 @@ graphql(`
     domains {
       id
     }
+    plan {
+      name
+    }
   }
 `)
 
@@ -54,10 +56,8 @@ const { result: workspaceResult } = useQuery(workspaceSidebarQuery, () => ({
 }))
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-
-const { isFreePlan } = useWorkspacePlan(props.workspaceSlug)
-
-const isWorkspaceGuest = computed(() => workspace.value?.slug === Roles.Workspace.Guest)
+const isFreePlan = computed(() => workspace.value?.plan?.name === WorkspacePlans.Free)
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const hasDomains = computed(() => workspace.value?.domains?.length)
 </script>

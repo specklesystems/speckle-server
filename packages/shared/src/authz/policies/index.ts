@@ -26,13 +26,15 @@ import { canUpdateAutomationPolicy } from './project/automation/canUpdate.js'
 import { canReadAutomationPolicy } from './project/automation/canRead.js'
 import { canReceiveWorkspaceProjectsUpdatedMessagePolicy } from './workspace/canReceiveProjectsUpdatedMessage.js'
 import { canDeleteProjectPolicy } from './project/canDelete.js'
+import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   project: {
     automation: {
       canCreate: canCreateAutomationPolicy(loaders),
       canRead: canReadAutomationPolicy(loaders),
-      canUpdate: canUpdateAutomationPolicy(loaders)
+      canUpdate: canUpdateAutomationPolicy(loaders),
+      canDelete: canDeleteAutomationPolicy(loaders)
     },
     model: {
       canCreate: canCreateModelPolicy(loaders),

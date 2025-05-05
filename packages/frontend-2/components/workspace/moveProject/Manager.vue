@@ -5,6 +5,7 @@
       v-if="!selectedProject"
       :workspace="workspaceResult?.workspaceBySlug"
       :project-permissions="projectResult?.project.permissions.canMoveToWorkspace"
+      :workspace-id="workspaceId"
       @project-selected="onProjectSelected"
     />
 
@@ -74,7 +75,7 @@ graphql(`
   fragment WorkspaceMoveProjectManager_Project on Project {
     ...WorkspaceMoveProjectManager_ProjectBase
     permissions {
-      canMoveToWorkspace {
+      canMoveToWorkspace(workspaceId: $workspaceId) {
         ...FullPermissionCheckResult
       }
     }
@@ -127,6 +128,7 @@ graphql(`
 const props = defineProps<{
   projectId?: string
   workspaceSlug?: string
+  workspaceId?: string
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -148,7 +150,8 @@ const activeDialog = computed(() => {
 const { result: projectResult } = useQuery(
   workspaceMoveProjectManagerProjectQuery,
   () => ({
-    projectId: props.projectId || ''
+    projectId: props.projectId || '',
+    workspaceId: props.workspaceId || ''
   }),
   () => ({
     enabled: !!props.projectId
@@ -160,7 +163,8 @@ const { result: workspaceResult } = useQuery(
   workspaceMoveProjectManagerWorkspaceQuery,
   () => ({
     workspaceSlug: props.workspaceSlug || '',
-    projectId: props.projectId
+    projectId: props.projectId,
+    workspaceId: props.workspaceId || ''
   }),
   () => ({
     enabled: !!props.workspaceSlug
@@ -175,12 +179,20 @@ if (workspaceResult.value?.workspaceBySlug) {
   selectedWorkspace.value = workspaceResult.value.workspaceBySlug
 }
 
+watch(projectResult, (newVal) => {
+  if (newVal?.project) {
+    selectedProject.value = newVal.project
+  }
+})
+
 const dialogTitle = computed(() => {
   switch (activeDialog.value) {
     case 'confirmation':
       return 'Confirm move'
     case 'project':
+      return 'Choose project to move'
     case 'workspace':
+      return 'Choose workspace'
     default:
       return 'Ready to move your project? '
   }

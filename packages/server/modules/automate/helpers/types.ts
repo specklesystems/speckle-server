@@ -8,6 +8,7 @@ export type AutomationRecord = {
   enabled: boolean
   createdAt: Date
   updatedAt: Date
+  isDeleted: boolean
 } & (
   | {
       executionEngineAutomationId: string

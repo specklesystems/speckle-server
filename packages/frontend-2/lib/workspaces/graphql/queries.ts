@@ -121,16 +121,14 @@ export const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
     activeUser {
       id
-      ...DiscoverableList_Discoverable
-    }
-  }
-`)
-
-export const discoverableWorkspacesRequestsQuery = graphql(`
-  query DiscoverableWorkspacesRequests {
-    activeUser {
-      id
-      ...DiscoverableList_Requests
+      discoverableWorkspaces {
+        ...DiscoverableWorkspace_LimitedWorkspace
+      }
+      workspaceJoinRequests {
+        items {
+          ...WorkspaceJoinRequests_LimitedWorkspaceJoinRequest
+        }
+      }
     }
   }
 `)
@@ -180,7 +178,7 @@ export const workspaceUsageQuery = graphql(`
 `)
 
 export const workspaceMoveProjectManagerProjectQuery = graphql(`
-  query WorkspaceMoveProjectManagerProject($projectId: String!) {
+  query WorkspaceMoveProjectManagerProject($projectId: String!, $workspaceId: String) {
     project(id: $projectId) {
       ...WorkspaceMoveProjectManager_Project
     }
@@ -203,6 +201,8 @@ export const workspaceMoveProjectManagerUserQuery = graphql(`
     $cursor: String
     $filter: UserProjectsFilter
     $projectId: String
+    $sortBy: [String!]
+    $workspaceId: String
   ) {
     activeUser {
       ...WorkspaceMoveProjectSelectWorkspace_User

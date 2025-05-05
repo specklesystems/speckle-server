@@ -374,7 +374,7 @@ export function isEmailEnabled() {
 }
 
 export function postgresMaxConnections() {
-  return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
+  return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
 }
 
 export function postgresConnectionAcquireTimeoutMillis() {

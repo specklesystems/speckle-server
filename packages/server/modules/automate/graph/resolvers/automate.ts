@@ -5,7 +5,6 @@ import {
   updateFunction as execEngineUpdateFunction,
   getFunctionFactory,
   getFunctionReleaseFactory,
-  getPublicFunctionsFactory,
   getFunctionReleasesFactory,
   getUserGithubAuthState,
   getUserGithubOrganizations,
@@ -30,14 +29,16 @@ import {
   updateAutomationFactory,
   updateAutomationRunFactory,
   upsertAutomationFunctionRunFactory,
-  upsertAutomationRunFactory
+  upsertAutomationRunFactory,
+  markAutomationDeletedFactory
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomationFactory,
   createAutomationRevisionFactory,
   createTestAutomationFactory,
   getAutomationsStatusFactory,
-  validateAndUpdateAutomationFactory
+  validateAndUpdateAutomationFactory,
+  deleteAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
@@ -122,7 +123,11 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { mapAuthToServerError } from '@/modules/shared/helpers/errorHelper'
+import { asOperation } from '@/modules/shared/command'
+import {
+  mapAuthToServerError,
+  throwIfAuthNotOk
+} from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -320,7 +325,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const automationRevision = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getLatestAutomationRevision.load(parent.id)
-          return { ...automationRevision, projectId: parent.projectId }
+          return automationRevision
+            ? { ...automationRevision, projectId: parent.projectId }
+            : null
         },
         async runs(parent, args) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
@@ -408,6 +415,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           } catch (e) {
             ctx.log.warn('Error formatting results schema', e)
           }
+          return null
         },
         status: (parent) => mapDbStatusToGqlStatus(parent.status)
       },
@@ -707,6 +715,40 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             }
           )
         },
+        async delete(parent, input, context) {
+          const canDelete = await context.authPolicies.project.automation.canDelete({
+            userId: context.userId,
+            projectId: parent.projectId
+          })
+          throwIfAuthNotOk(canDelete)
+
+          const projectId = parent.projectId
+          const automationId = input.automationId
+
+          const logger = context.log.child({
+            projectId,
+            streamId: projectId, //legacy
+            automationId
+          })
+
+          const projectDb = await getProjectDbClient({ projectId })
+
+          return await asOperation(
+            async ({ db }) => {
+              const deleteAutomation = deleteAutomationFactory({
+                deleteAutomation: markAutomationDeletedFactory({ db })
+              })
+
+              return await deleteAutomation({ automationId })
+            },
+            {
+              logger,
+              name: 'deleteProjectAutomation',
+              description: 'Delete an Automation attached to a project',
+              db: projectDb
+            }
+          )
+        },
         async createRevision(parent, { input }, ctx) {
           const projectId = parent.projectId
           const automationId = input.automationId
@@ -912,50 +954,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           }
 
           return convertFunctionToGraphQLReturn(fn)
-        },
-        async automateFunctions(_parent, args, ctx) {
-          try {
-            const res = await getPublicFunctionsFactory({
-              logger: ctx.log
-            })({
-              query: {
-                query: args.filter?.search || undefined,
-                cursor: args.cursor || undefined,
-                limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-                functionsWithoutVersions:
-                  args.filter?.functionsWithoutReleases || undefined
-              }
-            })
-
-            if (!res) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            const items = res.items.map(convertFunctionToGraphQLReturn)
-
-            return {
-              cursor: res.cursor,
-              totalCount: res.totalCount,
-              items
-            }
-          } catch (e) {
-            const isNotFound =
-              e instanceof ExecutionEngineFailedResponseError &&
-              e.response.statusMessage === 'FunctionNotFound'
-            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
-              return {
-                cursor: null,
-                totalCount: 0,
-                items: []
-              }
-            }
-
-            throw e
-          }
         }
       },
       User: {

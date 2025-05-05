@@ -16,9 +16,8 @@ import {
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import {
-  PaidWorkspacePlansNew,
+  PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   throwUncoveredError
 } from '@speckle/shared'
@@ -70,9 +69,6 @@ export const handleSubscriptionUpdateFactory =
 
     if (status) {
       switch (workspacePlan.name) {
-        case 'starter':
-        case 'plus':
-        case 'business':
         case 'team':
         case 'teamUnlimited':
         case 'pro':
@@ -80,9 +76,6 @@ export const handleSubscriptionUpdateFactory =
           break
         case 'unlimited':
         case 'academia':
-        case 'starterInvoiced':
-        case 'plusInvoiced':
-        case 'businessInvoiced':
         case 'proUnlimitedInvoiced':
         case 'teamUnlimitedInvoiced':
         case 'free':
@@ -105,7 +98,7 @@ export const handleSubscriptionUpdateFactory =
     }
   }
 
-export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
+export const addWorkspaceSubscriptionSeatIfNeededFactory =
   ({
     getWorkspacePlan,
     getWorkspaceSubscription,
@@ -134,11 +127,6 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) return
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
-    const isNewPlan = isNewPlanType(workspacePlan.name)
-    if (!isNewPlan) {
-      // old plans not supported
-      return
-    }
 
     switch (workspacePlan.name) {
       case 'team':
@@ -146,16 +134,13 @@ export const addWorkspaceSubscriptionSeatIfNeededFactoryNew =
       case 'pro':
       case 'proUnlimited':
         // If viewer seat type, we don't need to do anything
-        if (seatType === WorkspaceSeatType.Viewer) return
-      case 'starter':
-      case 'plus':
-      case 'business':
-        break
+        if (seatType === WorkspaceSeatType.Viewer) {
+          return
+        } else {
+          break
+        }
       case 'unlimited':
       case 'academia':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
       case 'proUnlimitedInvoiced':
       case 'teamUnlimitedInvoiced':
       case 'free':
@@ -208,7 +193,7 @@ export const getTotalSeatsCountByPlanFactory =
     workspacePlan,
     subscriptionData
   }: {
-    workspacePlan: PaidWorkspacePlansNew
+    workspacePlan: PaidWorkspacePlans
     subscriptionData: Pick<SubscriptionData, 'products'>
   }) => {
     const productId = getWorkspacePlanProductId({

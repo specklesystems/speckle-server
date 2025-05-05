@@ -10,8 +10,8 @@
     </div>
     <div class="flex items-center gap-x-2">
       <div
-        v-for="(button, index) in buttons"
-        :key="button.id || index"
+        v-if="button"
+        :key="`${buttonId}-${button.disabled}`"
         v-tippy="button.disabledMessage"
       >
         <FormButton
@@ -38,7 +38,9 @@ defineProps<{
   title: string
   subtitle?: string
   info?: string
-  buttons?: LayoutDialogButton[]
+  button: LayoutDialogButton
   disclaimer?: string
 }>()
+
+const buttonId = useId()
 </script>

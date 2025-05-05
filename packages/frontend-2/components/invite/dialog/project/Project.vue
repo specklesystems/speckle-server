@@ -1,8 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <LayoutDialog v-model:open="isOpen" :buttons="dialogButtons" max-width="md">
-    <template #header>Invite to Project</template>
+  <LayoutDialog
+    v-model:open="isOpen"
+    prevent-close-on-click-outside
+    :buttons="dialogButtons"
+    max-width="md"
+  >
+    <template #header>Invite to project</template>
+    <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
+      Search existing workspace members or invite entirely new.
+    </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
         <template v-for="(item, index) in fields" :key="item.key">
@@ -13,25 +21,28 @@
             :show-delete="fields.length > 1"
             :can-invite-new-members="isAdmin || !isInWorkspace"
             :show-project-roles="!isInWorkspace"
+            :show-label="index === 0"
+            :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
           />
-          <hr v-if="index !== fields.length - 1" class="flex-1 mt-3 border-outline-3" />
         </template>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
-          Add another user
-        </FormButton>
+        <div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            Add another user
+          </FormButton>
+        </div>
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      Project owners without admin rights can only add existing workspace members.
+      As a project owner you can only add existing workspace members to the project. Ask
+      a workspace admin if you need to invite new people to the workspace.
     </p>
     <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      Users not currently in the workspace will be added with a free viewer seat. Read
-      more about
-      <NuxtLink :to="LearnMoreRolesSeatsUrl" class="underline" target="_blank">
-        Speckle roles and seats.
-      </NuxtLink>
+      New people you invite will join as workspace guests on a free Viewer seat with
+      access only to this project. Give them an Editor seat later if they need to
+      contribute to this project beyond just viewing and commenting.
     </p>
   </LayoutDialog>
 </template>
@@ -50,7 +61,6 @@ import type {
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
-import { LearnMoreRolesSeatsUrl } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {
@@ -82,7 +92,7 @@ const { handleSubmit } = useForm<InviteProjectForm>({
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -119,6 +129,22 @@ const addInviteItem = () => {
   })
 }
 
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Reviewer
+    })
+  })
+}
+
 const onSubmit = handleSubmit(async () => {
   const invites = fields.value
     .filter((invite) => invite.value.email || invite.value.userId)
@@ -128,15 +154,13 @@ const onSubmit = handleSubmit(async () => {
     invites.map((u) => ({
       role: u.projectRole,
       ...(isInWorkspace.value
-        ? isAdmin.value
+        ? isAdmin.value && !u.userId
           ? { email: u.email }
           : { userId: u.userId }
         : { email: u.email }),
       ...(props.project?.workspace?.id
         ? {
-            workspaceRole: u.project?.id
-              ? Roles.Workspace.Member
-              : Roles.Workspace.Guest
+            workspaceRole: Roles.Workspace.Guest
           }
         : {})
     }))

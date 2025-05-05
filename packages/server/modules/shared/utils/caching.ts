@@ -4,7 +4,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getRequestLogger } from '@/observability/components/express/requestContext'
 import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
-import { MaybeAsync } from '@speckle/shared'
+import { MaybeAsync, TIME_MS } from '@speckle/shared'
 import Redis from 'ioredis'
 import { isNumber } from 'lodash'
 
@@ -51,6 +51,10 @@ type WrapWithCacheBaseParams<Args extends Array<any>> = {
      * Default: true
      */
     cachePromises?: boolean
+    /**
+     * Logger log level. Defaults to 'debug'
+     */
+    logLevel?: 'info' | 'debug'
   }>
 }
 
@@ -67,6 +71,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
   const cachePromises = params.options?.cachePromises ?? true
   const { argsKey = (...args: Args) => JSON.stringify(args) } = options || {}
   const key = (...args: Args) => `wrapWithCache:${name}:${argsKey(...args)}`
+  const logLevel = options?.logLevel || 'debug'
 
   const buildResolver =
     (
@@ -84,20 +89,20 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
       })
 
       if (skipCache) {
-        logger.info("Cache '{cacheName}' skipped for specific args")
+        logger[logLevel]("Cache '{cacheName}' skipped for specific args")
       } else {
         const cached = await cacheProvider.get(cacheKey)
         if (cached !== undefined) {
-          logger.info("Cache '{cacheName}' hit for specific args")
+          logger[logLevel]("Cache '{cacheName}' hit for specific args")
           return cached as Results
         } else {
-          logger.info("Cache '{cacheName}' miss for specific args")
+          logger[logLevel]("Cache '{cacheName}' miss for specific args")
         }
       }
 
       const result = await resolver(...args)
       await cacheProvider.set(cacheKey, result, { ttlMs })
-      logger.info("Cache '{cacheName}' upserted for specific args")
+      logger[logLevel]("Cache '{cacheName}' upserted for specific args")
 
       return result
     }
@@ -139,7 +144,7 @@ export const wrapWithCache = <Args extends Array<any>, Results>(
     const logger = (getRequestLogger() || cacheLogger).child({ cacheName: name })
 
     await cacheProvider.delete(cacheKey)
-    logger.info("Cache '{cacheName}' cleared for specific args")
+    logger[logLevel]("Cache '{cacheName}' cleared for specific args")
   }
 
   ret.fresh = freshResolver
@@ -201,7 +206,7 @@ export const redisCacheProviderFactory = (deps?: {
         key,
         JSON.stringify(value),
         'EX',
-        Math.floor(ttlMs / 1000) // convert milliseconds to seconds
+        Math.floor(ttlMs / TIME_MS.second) // convert milliseconds to seconds
       )
     },
     delete: async (key) => {

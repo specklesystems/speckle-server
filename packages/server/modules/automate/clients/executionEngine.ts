@@ -22,6 +22,7 @@ import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/en
 import {
   type Nullable,
   type SourceAppName,
+  TIME_MS,
   isNonNullable,
   isNullOrUndefined,
   retry,
@@ -138,7 +139,10 @@ const invokeRequest = async (params: {
         }).catch((e) => {
           throw new ExecutionEngineNetworkError({ method, url, body }, e)
         }),
-        timeoutAt(20 * 1000, 'Automate Execution Engine API request timed out')
+        timeoutAt(
+          20 * TIME_MS.second,
+          'Automate Execution Engine API request timed out'
+        )
       ]),
     params.retry !== false ? 3 : 1,
     (i, error) => {
@@ -146,7 +150,7 @@ const invokeRequest = async (params: {
         { url, method, err: error },
         'Automate Execution Engine API call failed, retrying...'
       )
-      return i * 1000
+      return i * TIME_MS.second
     }
   )
 
@@ -535,40 +539,6 @@ export const getFunctionsFactory =
     })
   }
 
-export type GetPublicFunctionsResponse = {
-  totalCount: number
-  cursor: Nullable<string>
-  items: FunctionWithVersionsSchemaType[]
-}
-
-export const getPublicFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-      functionsWithoutVersions?: boolean
-    }
-  }) => {
-    const { logger } = deps
-    const { query } = params
-    const url = getApiUrl(`/api/v1/functions`, {
-      query: {
-        ...query,
-        featuredFunctionsOnly: true
-      },
-      logger
-    })
-
-    return await invokeSafeJsonRequestFactory<GetFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'get'
-    })
-  }
-
 type GetUserFunctionsResponse = {
   functions: FunctionWithVersionsSchemaType[]
 }
@@ -591,40 +561,6 @@ export const getUserFunctionsFactory =
     const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query, logger })
 
     return await invokeSafeJsonRequestFactory<GetUserFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'POST',
-      body,
-      retry: false
-    })
-  }
-
-type GetWorkspaceFunctionsResponse = {
-  functions: FunctionWithVersionsSchemaType[]
-}
-
-export const getWorkspaceFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    workspaceId: string
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-    }
-    body: {
-      speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-    }
-  }) => {
-    const { logger } = deps
-    const { workspaceId, query, body } = params
-    const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, {
-      query,
-      logger
-    })
-
-    return await invokeSafeJsonRequestFactory<GetWorkspaceFunctionsResponse>({
       logger
     })({
       url,
