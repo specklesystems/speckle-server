@@ -151,7 +151,6 @@ import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
 import { OrientedSectionTool } from './modules/extensions/sections/OrientedSectionTool.js'
-import { AxisAlignedSectionTool } from './modules/extensions/sections/AxisAlignedSectionTool.js'
 import {
   SectionTool,
   SectionToolEvent,
@@ -185,7 +184,6 @@ export {
   SelectionExtension,
   CameraController,
   SectionTool,
-  AxisAlignedSectionTool,
   OrientedSectionTool,
   SectionOutlines,
   MeasurementsExtension,
