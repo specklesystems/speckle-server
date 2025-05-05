@@ -54,7 +54,9 @@
               v-if="canEdit"
               color="outline"
               size="sm"
-              @click="onAddClick(member.user.id, member.user.workspaceRole)"
+              @click="
+                onAddClick(member.user.id, member.user.workspaceRole, member.user.name)
+              "
             >
               Add to project
             </FormButton>
@@ -165,7 +167,8 @@ const toggleExpanded = () => {
 
 const onAddClick = async (
   userId: string,
-  workspaceRole: MaybeNullOrUndefined<string>
+  workspaceRole: MaybeNullOrUndefined<string>,
+  userName: string
 ) => {
   await createInvite(
     projectId.value,
@@ -183,7 +186,7 @@ const onAddClick = async (
 
   triggerNotification({
     type: ToastNotificationType.Success,
-    title: 'Workspace member added to project'
+    title: `${userName} added as a project member`
   })
 
   refetch()
