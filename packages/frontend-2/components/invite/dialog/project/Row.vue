@@ -44,9 +44,8 @@
                 @click="showSuggestions"
                 @clear="handleClear"
                 @paste="handlePaste"
-                @keydown.down.prevent="handleKeyDown"
-                @keydown.up.prevent="handleKeyUp"
-                @keydown.enter.prevent="handleKeyEnter"
+                @keydown.down.prevent="navigateDown"
+                @keydown.up.prevent="navigateUp"
               />
               <Transition
                 v-if="isMounted"
@@ -86,7 +85,7 @@
                         @keydown.enter.prevent="
                           selectSuggestion(filteredSuggestions[activeIndex]?.user)
                         "
-                        @keydown.esc.prevent="isMenuOpen = false"
+                        @keydown.esc.prevent="showDropdownState = false"
                         @focus="activeIndex = i"
                       >
                         {{ suggestion.user.name }}
@@ -183,7 +182,7 @@ const listboxButton = ref<HTMLDivElement | null>(null)
 const search = ref('')
 const input = ref('')
 const selectedUser = ref<SelectedUser | null>(null)
-const isMenuOpen = ref(false)
+const showDropdownState = ref(false)
 const activeIndex = ref(-1)
 const suggestionRefs = ref<HTMLButtonElement[]>([])
 
@@ -250,13 +249,11 @@ const userId = computed({
 })
 
 const showDropdown = computed(() => {
-  if (props.canInviteNewMembers) {
-    return filteredSuggestions.value.length > 0 && isMenuOpen.value
-  }
-  return (
-    (filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value) &&
-    isMenuOpen.value
-  )
+  const hasContent = props.canInviteNewMembers
+    ? filteredSuggestions.value.length > 0
+    : filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value
+
+  return hasContent && showDropdownState.value
 })
 
 const handleInput = (value: string) => {
@@ -293,7 +290,7 @@ const listboxOptionsStyle = computed(() => {
 })
 
 const showSuggestions = () => {
-  isMenuOpen.value = true
+  showDropdownState.value = true
   if (filteredSuggestions.value.length > 0) {
     activeIndex.value = -1
   }
@@ -313,10 +310,13 @@ const navigateDown = () => {
 
 const navigateUp = () => {
   if (filteredSuggestions.value.length === 0) return
-  activeIndex.value =
-    activeIndex.value <= 0
-      ? filteredSuggestions.value.length - 1
-      : activeIndex.value - 1
+
+  if (activeIndex.value <= 0) {
+    activeIndex.value = filteredSuggestions.value.length - 1
+  } else {
+    activeIndex.value--
+  }
+
   focusActiveItem()
 }
 
@@ -326,44 +326,12 @@ const focusActiveItem = () => {
   }
 }
 
-const handleKeyDown = () => {
-  if (filteredSuggestions.value.length > 0) {
-    if (activeIndex.value === -1) {
-      activeIndex.value = 0
-      focusActiveItem()
-    } else {
-      navigateDown()
-    }
-  }
-}
-
-const handleKeyUp = () => {
-  if (filteredSuggestions.value.length > 0) {
-    if (activeIndex.value === -1) {
-      activeIndex.value = filteredSuggestions.value.length - 1
-      focusActiveItem()
-    } else {
-      navigateUp()
-    }
-  }
-}
-
-const handleKeyEnter = () => {
-  if (
-    isMenuOpen.value &&
-    activeIndex.value >= 0 &&
-    activeIndex.value < filteredSuggestions.value.length
-  ) {
-    selectSuggestion(filteredSuggestions.value[activeIndex.value].user)
-  }
-}
-
 const selectSuggestion = (user: SelectedUser) => {
   userId.value = user.id
   selectedUser.value = user
   search.value = ''
   input.value = user.name
-  isMenuOpen.value = false
+  showDropdownState.value = false
   activeIndex.value = -1
 }
 
@@ -401,7 +369,7 @@ onClickOutside(
   menuEl,
   () => {
     search.value = ''
-    isMenuOpen.value = false
+    showDropdownState.value = false
     activeIndex.value = -1
   },
   {
