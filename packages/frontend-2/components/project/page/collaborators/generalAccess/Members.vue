@@ -29,8 +29,8 @@
       />
       <div>
         <CommonLoadingIcon v-if="loading" class="mx-auto my-4" />
-        <div v-else-if="members.length === 0" class="mt-4 mb-2">
-          <p class="text-body-xs text-center text-foreground-2">
+        <div v-else-if="members.length === 0">
+          <p class="text-body-xs text-foreground-2 mt-3">
             {{
               !!search
                 ? 'No members found'
@@ -56,7 +56,7 @@
               size="sm"
               @click="onAddClick(member.user.id, member.user.workspaceRole)"
             >
-              Add
+              Add to project
             </FormButton>
           </div>
           <FormButton
