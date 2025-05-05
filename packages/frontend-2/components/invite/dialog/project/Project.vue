@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <LayoutDialog
     v-model:open="isOpen"
@@ -42,8 +40,8 @@
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      As a project owner you can only add existing workspace users to the project. Ask
-      a workspace admin if you need to invite new users to the workspace.
+      As a project owner you can only add existing workspace users to the project. Ask a
+      workspace admin if you need to invite new users to the workspace.
     </p>
     <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
       New users you invite will join as workspace guests on a free Viewer seat with
@@ -52,6 +50,7 @@
     </p>
   </LayoutDialog>
 </template>
+
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
