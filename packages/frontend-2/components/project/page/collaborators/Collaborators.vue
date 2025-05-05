@@ -20,6 +20,7 @@
               :logo="project.workspace?.logo"
               :can-edit="!!canUpdate?.authorized"
               :admins="workspaceAdmins"
+              :workspace-id="project.workspaceId"
             />
           </div>
         </template>
