@@ -44,34 +44,37 @@ export default defineNuxtPlugin(() => {
   // Only run Intercom if workspaces are enabled
   if (!isWorkspacesEnabled.value) return
 
-  useOnAuthStateChange()(async (user) => {
-    if (typeof window.Intercom !== 'function') {
-      return
-    }
+  useOnAuthStateChange()(
+    async (user, { isReset }) => {
+      if (typeof window.Intercom !== 'function') {
+        return
+      }
 
-    if (user) {
-      window.Intercom('boot', {
-        /* eslint-disable camelcase */
-        app_id: 'hoiaq4wn',
-        user_id: user.id || undefined,
-        created_at: user.createdAt
-          ? Math.floor(new Date(user.createdAt).getTime() / 1000)
-          : undefined,
-        /* eslint-enable camelcase */
-        name: user.name || undefined,
-        email: user.email || undefined,
-        company: activeWorkspaceData.value
-          ? {
-              id: activeWorkspaceData.value.id,
-              name: activeWorkspaceData.value.name,
-              plan: activeWorkspaceData.value.plan?.name
-            }
-          : undefined
-      })
-    } else {
-      window.Intercom('shutdown')
-    }
-  })
+      if (user) {
+        window.Intercom('boot', {
+          /* eslint-disable camelcase */
+          app_id: 'hoiaq4wn',
+          user_id: user.id || undefined,
+          created_at: user.createdAt
+            ? Math.floor(new Date(user.createdAt).getTime() / 1000)
+            : undefined,
+          /* eslint-enable camelcase */
+          name: user.name || undefined,
+          email: user.email || undefined,
+          company: activeWorkspaceData.value
+            ? {
+                id: activeWorkspaceData.value.id,
+                name: activeWorkspaceData.value.name,
+                plan: activeWorkspaceData.value.plan?.name
+              }
+            : undefined
+        })
+      } else if (isReset) {
+        window.Intercom('shutdown')
+      }
+    },
+    { immediate: true }
+  )
 
   // Update Intercom when active workspace changes
   watch(
