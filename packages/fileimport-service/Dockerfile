@@ -44,7 +44,7 @@ COPY packages/frontend-2/type-augmentations/stubs packages/frontend-2/type-augme
 COPY packages/shared/package.json packages/shared/
 COPY packages/fileimport-service/package.json packages/fileimport-service/
 
-RUN yarn workspaces focus --all
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --all
 
 # build shared libraries
 COPY packages/shared packages/shared/
