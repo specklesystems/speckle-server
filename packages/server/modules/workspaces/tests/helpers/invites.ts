@@ -12,8 +12,12 @@ import {
   CreateWorkspaceProjectInviteDocument,
   CreateWorkspaceProjectInviteMutationVariables,
   GetMyWorkspaceInvitesDocument,
+  GetProjectDocument,
+  GetProjectQueryVariables,
+  GetWorkspaceDocument,
   GetWorkspaceInviteDocument,
   GetWorkspaceInviteQueryVariables,
+  GetWorkspaceQueryVariables,
   GetWorkspaceWithTeamDocument,
   GetWorkspaceWithTeamQueryVariables,
   ResendWorkspaceInviteDocument,
@@ -27,16 +31,20 @@ import { expect } from 'chai'
 
 import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow } from '@/test/assertionHelper'
-
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { db } from '@/db/knex'
 
 export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps
-  const getStream = getStreamFactory({ db })
+
+  const getWorkspace = async (
+    args: GetWorkspaceQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetWorkspaceDocument, args, options)
+
+  const getProject = async (
+    args: GetProjectQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectDocument, args, options)
 
   const useInvite = async (
     args: UseWorkspaceInviteMutationVariables,
@@ -91,7 +99,8 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
     }
 
     await wrapAccessCheck(async () => {
-      const workspace = await getWorkspaceFactory({ db })({ workspaceId, userId })
+      const res = await getWorkspace({ workspaceId }, { authUserId: userId })
+      const workspace = res.data?.workspace
       if (!workspace?.role) {
         throw new ForbiddenError('Missing workspace role')
       }
@@ -108,14 +117,20 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
 
     if (streamId?.length) {
       await wrapAccessCheck(async () => {
-        const project = await getStream({ streamId, userId })
-        if (!project?.role) {
+        const res = await getProject({ id: streamId }, { authUserId: userId })
+        const project = res.data?.project
+
+        // No need to check for project role, since it can be implicit from workspace
+        if (!project?.id) {
           throw new ForbiddenError('Missing project role')
         }
 
-        if (params.expectedProjectRole && project.role !== params.expectedProjectRole) {
+        if (
+          params.expectedProjectRole &&
+          project?.role !== params.expectedProjectRole
+        ) {
           throw new ForbiddenError(
-            `Unexpected project role! Expected: ${params.expectedProjectRole}, real: ${project.role}`
+            `Unexpected project role! Expected: ${params.expectedProjectRole}, real: ${project?.role}`
           )
         }
       })

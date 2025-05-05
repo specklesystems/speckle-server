@@ -686,11 +686,11 @@ describe('Workspaces GQL CRUD', () => {
         expect(res.data?.activeUser?.discoverableWorkspaces).to.have.length(2)
         const discoverableWorkspaces = res.data?.activeUser?.discoverableWorkspaces
         expect(discoverableWorkspaces?.[0].team?.items).to.have.length(1)
-        expect(discoverableWorkspaces?.[0].team?.items[0].avatar).to.eq(
+        expect(discoverableWorkspaces?.[0].team?.items[0]?.user?.avatar).to.eq(
           workspaceAdmin.avatar
         )
         expect(discoverableWorkspaces?.[1].team?.items).to.have.length(1)
-        expect(discoverableWorkspaces?.[1].team?.items[0].avatar).to.eq(
+        expect(discoverableWorkspaces?.[1].team?.items[0]?.user?.avatar).to.eq(
           workspaceAdmin.avatar
         )
       })

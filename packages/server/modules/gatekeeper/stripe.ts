@@ -1,12 +1,9 @@
 import {
-  Currency,
   GetWorkspacePlanPriceId,
   GetWorkspacePlanProductAndPriceIds,
-  GetWorkspacePlanProductId,
-  isMultiCurrencyPrice
+  GetWorkspacePlanProductId
 } from '@/modules/gatekeeper/domain/billing'
 import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
-import { PriceLookupError } from '@/modules/gatekeeper/errors/billing'
 import { Stripe } from 'stripe'
 import { NotImplementedError } from '@/modules/shared/errors'
 
@@ -18,43 +15,6 @@ export const getStripeClient = () => {
 }
 
 const loadProductAndPriceIds: GetWorkspacePlanProductAndPriceIds = () => ({
-  // old
-  guest: {
-    productId: getStringFromEnv('WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: {
-      gbp: getStringFromEnv('WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID')
-    },
-    yearly: {
-      gbp: getStringFromEnv('WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID')
-    }
-  },
-  starter: {
-    productId: getStringFromEnv('WORKSPACE_STARTER_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: {
-      gbp: getStringFromEnv('WORKSPACE_MONTHLY_STARTER_SEAT_STRIPE_PRICE_ID')
-    },
-    yearly: {
-      gbp: getStringFromEnv('WORKSPACE_YEARLY_STARTER_SEAT_STRIPE_PRICE_ID')
-    }
-  },
-  plus: {
-    productId: getStringFromEnv('WORKSPACE_PLUS_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: {
-      gbp: getStringFromEnv('WORKSPACE_MONTHLY_PLUS_SEAT_STRIPE_PRICE_ID')
-    },
-    yearly: {
-      gbp: getStringFromEnv('WORKSPACE_YEARLY_PLUS_SEAT_STRIPE_PRICE_ID')
-    }
-  },
-  business: {
-    productId: getStringFromEnv('WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: {
-      gbp: getStringFromEnv('WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
-    },
-    yearly: {
-      gbp: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
-    }
-  },
   team: {
     productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
     monthly: {
@@ -118,13 +78,6 @@ export const getWorkspacePlanPriceId: GetWorkspacePlanPriceId = ({
 }) => {
   const plan = getWorkspacePlanProductAndPriceIds()[workspacePlan]
   const priceIds = plan[billingInterval]
-  if (!isMultiCurrencyPrice(priceIds)) {
-    if (currency !== Currency.gbp)
-      throw new PriceLookupError(
-        `Plan '${workspacePlan}' does not have a ${billingInterval} price for currency ${currency}`
-      )
-    return priceIds[currency]
-  }
   return priceIds[currency]
 }
 

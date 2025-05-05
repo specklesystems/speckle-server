@@ -28,6 +28,10 @@ export default defineModuleLoaders(async () => {
       const counts = await dataLoaders.streams.getCollaboratorCounts.load(projectId)
       return counts?.[role] || 0
     },
+    getProjectModelCount: async ({ projectId }, { dataLoaders }) => {
+      const db = await getProjectDbClient({ projectId })
+      return await dataLoaders.forRegion({ db }).streams.getBranchCount.load(projectId)
+    },
     getModel: async ({ projectId, modelId }, { dataLoaders }) => {
       const db = await getProjectDbClient({ projectId })
       const model = await dataLoaders.forRegion({ db }).branches.getById.load(modelId)

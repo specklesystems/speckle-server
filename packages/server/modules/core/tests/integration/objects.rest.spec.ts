@@ -38,7 +38,7 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
-import { Scopes } from '@speckle/shared'
+import { PaidWorkspacePlans, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -108,7 +108,7 @@ describe('Objects REST @core', () => {
         slug: ''
       }
       await createTestWorkspace(workspace, user, {
-        addPlan: { name: 'business', status: 'expired' }
+        addPlan: { name: PaidWorkspacePlans.Team, status: 'canceled' }
       })
 
       const project = {

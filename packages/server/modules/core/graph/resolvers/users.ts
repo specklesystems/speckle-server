@@ -45,7 +45,11 @@ import {
   getMailchimpOnboardingIds
 } from '@/modules/shared/helpers/envHelper'
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
+import { asOperation } from '@/modules/shared/command'
+import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
+import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -231,15 +235,36 @@ export = {
   Mutation: {
     async userUpdate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
-      await updateUserAndNotify(context.userId!, args.user)
+      const logger = context.log.child({
+        userIdToOperateOn: context.userId
+      })
+      await withOperationLogging(
+        async () => await updateUserAndNotify(context.userId!, args.user),
+        {
+          logger,
+          operationName: 'updateUser',
+          operationDescription: `Update user`
+        }
+      )
       return true
     },
 
-    async userRoleChange(_parent, args) {
-      await changeUserRole({
-        role: args.userRoleInput.role,
-        userId: args.userRoleInput.id
+    async userRoleChange(_parent, args, ctx) {
+      const logger = ctx.log.child({
+        userIdToOperateOn: args.userRoleInput.id
       })
+      await withOperationLogging(
+        async () =>
+          await changeUserRole({
+            role: args.userRoleInput.role,
+            userId: args.userRoleInput.id
+          }),
+        {
+          logger,
+          operationName: 'changeUserRole',
+          operationDescription: `Change user role`
+        }
+      )
       return true
     },
 
@@ -248,12 +273,25 @@ export = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser(user.id, context.userId)
+      const logger = context.log.child({
+        userIdToOperateOn: user.id
+      })
+      await withOperationLogging(
+        async () => await deleteUser(user.id, context.userId),
+        {
+          logger,
+          operationName: 'adminDeleteUser',
+          operationDescription: `Admin deletion of an user`
+        }
+      )
       return true
     },
 
     async userDelete(_parent, args, context) {
       const user = await getUser(context.userId!)
+      const logger = context.log.child({
+        userIdToOperateOn: context.userId
+      })
 
       if (args.userConfirmation.email !== user.email) {
         throw new BadRequestError('Malformed input: emails do not match.')
@@ -265,7 +303,14 @@ export = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId!, context.userId!)
+      await withOperationLogging(
+        async () => await deleteUser(context.userId!, context.userId!),
+        {
+          logger,
+          operationName: 'deleteUser',
+          operationDescription: `Delete user`
+        }
+      )
 
       return true
     },
@@ -276,30 +321,64 @@ export = {
     async finishOnboarding(_parent, args, ctx) {
       const userId = ctx.userId
       if (!userId) return false
+      const logger = ctx.log.child({
+        userIdToOperateOn: userId
+      })
 
-      const success = await markOnboardingComplete(userId)
+      const success = await withOperationLogging(
+        async () => await markOnboardingComplete(userId),
+        {
+          logger,
+          operationName: 'finishOnboarding',
+          operationDescription: `Finish onboarding`
+        }
+      )
 
       // If onboarding was marked complete successfully and we have onboarding data
-      if (success && args.input && getMailchimpStatus()) {
+      if (success && args.input) {
+        const choices = args.input
         try {
-          const user = await getUser(userId)
-          const { listId } = getMailchimpOnboardingIds()
+          await asOperation(
+            async () => {
+              const setUserOnboardingChoices = setUserOnboardingChoicesFactory({
+                getUser: getUserFactory({ db }),
+                updateMailchimpMemberTags,
+                getMixpanelClient,
+                getMailchimpStatus,
+                getMailchimpOnboardingIds
+              })
 
-          await updateMailchimpMemberTags(user, listId, {
-            role: args.input?.role || undefined,
-            plans: args.input?.plans || undefined,
-            source: args.input?.source || undefined
-          })
-        } catch (error) {
-          // Log but don't fail the request
-          ctx.log.warn({ err: error }, 'Failed to update Mailchimp tags')
+              return await setUserOnboardingChoices({
+                userId,
+                choices: {
+                  role: choices.role || undefined,
+                  plans: choices.plans || undefined,
+                  source: choices.source || undefined
+                }
+              })
+            },
+            {
+              logger: ctx.log,
+              name: 'Set user onboarding choices'
+            }
+          )
+        } catch {
+          // Suppress, already logged by asOperation
         }
       }
 
       return success
     },
     async update(_parent, args, context) {
-      const newUser = await updateUserAndNotify(context.userId!, args.user)
+      const logger = context.log
+      const newUser = await withOperationLogging(
+        async () => await updateUserAndNotify(context.userId!, args.user),
+        {
+          logger,
+          operationName: 'updateUser',
+          operationDescription: 'Update user'
+        }
+      )
       return newUser
     },
     meta: () => ({})

@@ -29,6 +29,7 @@ import {
   createAutomationMutation,
   createAutomationRevisionMutation,
   createTestAutomationMutation,
+  deleteAutomationMutation,
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
@@ -61,6 +62,59 @@ export function useCreateAutomation() {
     }
 
     return res?.data?.projectMutations.automationMutations.create
+  }
+}
+
+export function useDeleteAutomation() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { client: apollo } = useApolloClient()
+
+  return async (projectId: string, automationId: string) => {
+    if (!activeUser.value) return
+
+    const result = await apollo
+      .mutate({
+        mutation: deleteAutomationMutation,
+        variables: {
+          projectId,
+          automationId
+        },
+        update: (cache, res) => {
+          const { data } = res
+          if (!data?.projectMutations?.automationMutations?.delete) return
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'automations',
+            ({ value, helpers }) => {
+              return {
+                ...value,
+                items: value.items?.filter(
+                  (automation) => helpers.readField(automation, 'id') !== automationId
+                )
+              }
+            }
+          )
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Automation deleted'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to delete automation',
+        description: errorMessage
+      })
+    }
+
+    return result?.data?.projectMutations?.automationMutations?.delete
   }
 }
 

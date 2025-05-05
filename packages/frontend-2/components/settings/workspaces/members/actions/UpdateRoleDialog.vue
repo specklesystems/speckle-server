@@ -35,14 +35,7 @@
       </p>
 
       <p v-if="roleInfo" class="text-foreground-2 text-body-2xs">
-        {{ roleInfo }} Learn more about
-        <NuxtLink
-          :to="LearnMoreRolesSeatsUrl"
-          target="_blank"
-          class="text-foreground-2 underline"
-        >
-          workspace roles.
-        </NuxtLink>
+        {{ roleInfo }}
       </p>
     </div>
   </LayoutDialog>
@@ -50,20 +43,19 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { LearnMoreRolesSeatsUrl } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 import { WorkspaceRoleDescriptions } from '~/lib/settings/helpers/constants'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTable_WorkspaceFragment
+  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
   user: SettingsWorkspacesMembersActionsMenu_UserFragment
   newRole: MaybeNullOrUndefined<string>
-  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
@@ -73,6 +65,8 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const updateUserRole = useWorkspaceUpdateRole()
+
+const isLoading = ref(false)
 
 const title = computed(() => {
   if (!props.newRole) return ''
@@ -106,14 +100,19 @@ const roleInfo = computed(() => {
 const handleConfirm = async () => {
   if (!props.workspace?.id || !props.newRole) return
 
-  await updateUserRole({
-    userId: props.user.id,
-    role: props.newRole as string,
-    workspaceId: props.workspace.id
-  })
+  isLoading.value = true
+  try {
+    await updateUserRole({
+      userId: props.user.id,
+      role: props.newRole as string,
+      workspaceId: props.workspace.id
+    })
 
-  open.value = false
-  emit('success')
+    open.value = false
+    emit('success')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -125,7 +124,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: buttonText.value,
     props: {
-      color: 'primary'
+      color: 'primary',
+      loading: isLoading.value
     },
     onClick: handleConfirm,
     disabled: props.user.user.workspaceDomainPolicyCompliant === false

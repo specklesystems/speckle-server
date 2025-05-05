@@ -1,5 +1,4 @@
 import { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
-import { Nullable } from '@speckle/shared'
 
 export type GetWorkspaceRolesAndSeats = (params: {
   workspaceId: string
@@ -7,7 +6,7 @@ export type GetWorkspaceRolesAndSeats = (params: {
 }) => Promise<{
   [userId: string]: {
     role: WorkspaceAcl
-    seat: Nullable<WorkspaceSeat>
+    seat: WorkspaceSeat
     userId: string
   }
 }>
@@ -18,8 +17,14 @@ export type GetWorkspaceRoleAndSeat = (params: {
 }) => Promise<
   | {
       role: WorkspaceAcl
-      seat: Nullable<WorkspaceSeat>
+      seat: WorkspaceSeat
       userId: string
     }
   | undefined
 >
+
+export type GetUserWorkspaceCountFactory = (params: {
+  userId: string
+}) => Promise<number>
+
+export type GetTotalWorkspaceCountFactory = () => Promise<number>

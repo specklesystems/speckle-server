@@ -18,6 +18,7 @@ import { NotFoundError } from '@/modules/shared/errors'
 import {
   PaidWorkspacePlans,
   throwUncoveredError,
+  TIME_MS,
   WorkspacePlanBillingIntervals
 } from '@speckle/shared'
 
@@ -96,13 +97,6 @@ export const startCheckoutSessionFactory =
             checkoutSessionId: existingCheckoutSession?.id
           })
         break
-
-      // maybe, we can reactivate canceled plans via the sub in stripe, but this is fine too
-      // it will create a new customer and a new sub though, the reactivation would use the existing customer
-      case 'trial':
-      case 'expired':
-        // lets go ahead and pay
-        break
       default:
         throwUncoveredError(existingWorkspacePlan)
     }
@@ -117,8 +111,7 @@ export const startCheckoutSessionFactory =
         throw new WorkspaceAlreadyPaidError()
       if (
         new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        1000
-        // 10 * 60 * 1000
+        1 * TIME_MS.second
       ) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id

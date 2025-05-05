@@ -22,9 +22,7 @@
         :class="isEmbedEnabled ? 'mt-2' : 'mt-3'"
       >
         <template v-if="isLimited">
-          <ViewerResourcesUpgradeLimitAlert
-            text="Upgrade to view comments older than (count) days."
-          />
+          <ViewerResourcesUpgradeLimitAlert limit-type="comment" />
         </template>
         <template v-else>
           <CommonTiptapTextEditor
@@ -68,5 +66,5 @@ const createdAt = computed(() => {
   }
 })
 
-const isLimited = computed(() => !props.comment.rawText)
+const isLimited = computed(() => !props.comment.text)
 </script>

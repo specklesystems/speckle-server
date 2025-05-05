@@ -9,6 +9,7 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getTokenAppInfo = getTokenAppInfoFactory({ db })
 const createAppToken = createAppTokenFactory({
@@ -50,13 +51,21 @@ export = {
       })
 
       const scopes = args.token.scopes.filter(isValidScope)
-      const token = await createAppToken({
-        ...args.token,
-        userId: ctx.userId!,
-        appId,
-        lifespan: args.token.lifespan || undefined,
-        scopes
-      })
+      const token = await withOperationLogging(
+        async () =>
+          await createAppToken({
+            ...args.token,
+            userId: ctx.userId!,
+            appId,
+            lifespan: args.token.lifespan || undefined,
+            scopes
+          }),
+        {
+          logger: ctx.log,
+          operationName: 'createAppToken',
+          operationDescription: `Create a new App Token`
+        }
+      )
       return token
     }
   }

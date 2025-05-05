@@ -11,8 +11,7 @@
       :workspace-id="props.workspaceId"
       :has-subscription="!!subscription"
       :currency="props.currency"
-      @on-yearly-interval-selected="onYearlyIntervalSelected"
-      @on-upgrade-click="toggleUpgradeDialog(plan as PaidWorkspacePlansNew)"
+      @on-upgrade-click="toggleUpgradeDialog(plan as PaidWorkspacePlans)"
     />
 
     <SettingsWorkspacesBillingUpgradeDialog
@@ -33,12 +32,13 @@
 import { BillingInterval, type Currency } from '~/lib/common/generated/gql/graphql'
 import {
   WorkspacePlans,
-  type PaidWorkspacePlansNew,
+  type PaidWorkspacePlans,
   type MaybeNullOrUndefined,
   type WorkspaceRoles,
   Roles
 } from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   slug: string
@@ -53,12 +53,13 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 const {
   billingInterval,
   plan: currentPlan,
-  subscription
+  subscription,
+  intervalIsYearly
 } = useWorkspacePlan(props.slug)
+const mixpanel = useMixpanel()
 
-const isYearlySelected = ref(false)
 const isUpgradeDialogOpen = ref(false)
-const planToUpgrade = ref<PaidWorkspacePlansNew | null>(null)
+const planToUpgrade = ref<PaidWorkspacePlans | null>(null)
 
 const plans = computed(() => [
   WorkspacePlans.Free,
@@ -68,12 +69,19 @@ const plans = computed(() => [
 
 const isAdmin = computed(() => props.role === Roles.Workspace.Admin)
 
-const toggleUpgradeDialog = (plan: PaidWorkspacePlansNew) => {
+const toggleUpgradeDialog = (plan: PaidWorkspacePlans) => {
   planToUpgrade.value = plan
   isUpgradeDialogOpen.value = !isUpgradeDialogOpen.value
+
+  mixpanel.track('Pricing Plan CTA Clicked', {
+    plan,
+    cycle: billingInterval.value,
+    // eslint-disable-next-line camelcase
+    workspace_id: props.workspaceId
+  })
 }
 
-const onYearlyIntervalSelected = (newValue: boolean) => {
-  isYearlySelected.value = newValue
-}
+onMounted(() => {
+  isYearlyIntervalSelected.value = intervalIsYearly.value
+})
 </script>

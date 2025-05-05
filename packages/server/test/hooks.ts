@@ -24,6 +24,7 @@ import {
   Nullable,
   Optional,
   retry,
+  TIME_MS,
   wait
 } from '@speckle/shared'
 import * as mocha from 'mocha'
@@ -198,15 +199,15 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
 
   // If we do not wait, the following call occasionally fails because a replication slot is still in use.
   const dropSubs = async (info: SubInfo) => {
-    await wait(1000)
+    await wait(TIME_MS.second)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
-    await wait(1000)
+    await wait(TIME_MS.second)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
-    await wait(1000)
+    await wait(TIME_MS.second)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
@@ -354,7 +355,7 @@ let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
-      console.log('Running tests in multi-region mode...')
+      logger.info('Running tests in multi-region mode...')
     }
 
     logger.info('running before all')

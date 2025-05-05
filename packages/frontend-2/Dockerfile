@@ -1,6 +1,5 @@
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 ARG NODE_ENV=production
-ARG SPECKLE_SERVER_VERSION=custom
 ARG BUILD_SOURCEMAPS=false
 
 # for better sourcemaps (the app still gets minified at the end)
@@ -20,7 +19,7 @@ COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/ui-components-nuxt/package.json ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme/package.json ./packages/tailwind-theme/
 COPY packages/frontend-2/package.json ./packages/frontend-2/
-COPY packages/frontend-2/type-augmentations ./packages/frontend-2/ 
+COPY packages/frontend-2/type-augmentations ./packages/frontend-2/
 
 COPY packages/objectloader ./packages/objectloader/
 COPY packages/viewer ./packages/viewer/
@@ -31,9 +30,15 @@ COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
 
 # hadolint ignore=DL3059
-RUN yarn workspaces focus -A
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 # hadolint ignore=DL3059
-RUN yarn workspaces foreach -W run build
+RUN yarn workspaces foreach --exclude "@speckle/frontend-2" -W run build
+
+# improve caching as other builds do not depend on server version
+ARG SPECKLE_SERVER_VERSION=custom
+# hadolint ignore=DL3059
+RUN yarn workspaces foreach --include "packages/frontend-2" -W run build
+
 
 ENV TINI_VERSION v0.19.0
 RUN apt-get update -y \

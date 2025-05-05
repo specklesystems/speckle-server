@@ -120,12 +120,6 @@ export const useBillingActions = () => {
     workspaceId: string
   }) => {
     const { plan, cycle, workspaceId } = args
-    mixpanel.track('Workspace Upgrade Button Clicked', {
-      plan,
-      cycle,
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId
-    })
 
     const result = await apollo
       .mutate({

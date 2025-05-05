@@ -8,7 +8,7 @@
     <div
       class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2 items-center"
     >
-      <FormButton full-width color="outline" :to="homeRoute">Go home</FormButton>
+      <FormButton full-width color="outline" @click="goToHome">Go home</FormButton>
       <FormButton v-if="!isLoggedIn" full-width @click="() => goToLogin()">
         Sign in
       </FormButton>
@@ -17,6 +17,7 @@
 </template>
 <script setup lang="ts">
 import { useRememberRouteAndGoToLogin, homeRoute } from '~/lib/common/helpers/route'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 withDefaults(
   defineProps<{
@@ -29,4 +30,15 @@ withDefaults(
 
 const { isLoggedIn } = useActiveUser()
 const goToLogin = useRememberRouteAndGoToLogin()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
+
+const goToHome = () => {
+  if (isWorkspacesEnabled.value) {
+    mutateActiveWorkspaceSlug(null)
+    mutateIsProjectsActive(false)
+  }
+
+  navigateTo(homeRoute)
+}
 </script>

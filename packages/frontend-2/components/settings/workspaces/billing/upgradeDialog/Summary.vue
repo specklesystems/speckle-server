@@ -10,9 +10,18 @@
             </template>
           </p>
           <div class="mt-2 flex justify-between items-center">
-            <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
+            <div class="flex items-center gap-x-2">
+              <h3 class="text-body">{{ formatName(plan?.name) }}</h3>
+              <CommonBadge
+                v-if="hasUnlimitedAddon && statusIsCanceled"
+                color-classes="bg-foundation border-blue-200 dark:border-blue-800 border"
+                rounded
+              >
+                Unlimited Projects & Models
+              </CommonBadge>
+            </div>
             <p v-if="!isFreePlan && !statusIsCanceled" class="text-body-2xs">
-              {{ currentEditorPrice }} editor seat/month
+              {{ currentEditorPrice }} per editor seat/month
             </p>
           </div>
           <template v-if="hasUnlimitedAddon && !statusIsCanceled">
@@ -23,12 +32,12 @@
               >
                 Unlimited Projects & Models
               </CommonBadge>
-              <p class="text-body-2xs">{{ currentAddonPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ currentAddonPrice }} per editor seat/month</p>
             </div>
             <hr class="my-4 border-outline-2" />
             <div class="mt-2 flex justify-between items-center">
               <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ totalPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ totalPrice }} per per editor seat/month</p>
             </div>
           </template>
         </div>
@@ -50,8 +59,9 @@
 
           <div class="mt-2 flex justify-between items-center">
             <h3 class="text-body">{{ formatName(props.plan) }}</h3>
-            <p class="text-body-2xs">{{ newEditorPrice }} editor seat/month</p>
+            <p class="text-body-2xs">{{ newEditorPrice }} per editor seat / month</p>
           </div>
+
           <template v-if="newPlanHasUnlimitedAddon">
             <div class="mt-2 flex justify-between items-center">
               <CommonBadge
@@ -60,12 +70,42 @@
               >
                 Unlimited Projects & Models
               </CommonBadge>
-              <p class="text-body-2xs">{{ newAddonPrice }} editor seat/month</p>
+              <p class="text-body-2xs">{{ newAddonPrice }} per editor seat / month</p>
             </div>
+            <template v-if="!isFreePlan">
+              <hr class="my-4 border-outline-2" />
+              <div class="flex justify-between items-center">
+                <h3 class="text-body">Total</h3>
+                <p class="text-body-2xs">
+                  {{ newTotalPriceFormatted }} per editor seat / month
+                </p>
+              </div>
+            </template>
+          </template>
+
+          <template v-if="isFreePlan">
             <hr class="my-4 border-outline-2" />
-            <div class="mt-2 flex justify-between items-center">
-              <h3 class="text-body">Total</h3>
-              <p class="text-body-2xs">{{ newTotalPrice }} editor seat/month</p>
+            <div class="flex flex-col gap-y-2">
+              <div class="flex justify-between items-center">
+                <h3 class="text-body">Total</h3>
+                <p class="text-body-2xs">
+                  {{ newTotalPriceFormatted }} x {{ editorSeatCount }} per editor seat{{
+                    editorSeatCount === 1 ? '' : 's'
+                  }}
+                  / month
+                </p>
+              </div>
+              <div class="flex justify-end">
+                <p class="text-body-2xs font-semibold">
+                  {{
+                    formatPrice({
+                      amount: newTotalPrice * editorSeatCount,
+                      currency
+                    })
+                  }}
+                  / month
+                </p>
+              </div>
             </div>
           </template>
         </div>
@@ -77,7 +117,7 @@
       class="text-foreground-2 text-body-2xs my-2"
     >
       The amount you will be charged today will be prorated based on the time remaining
-      in your billing cycle. The prorated amount will be lower than the listed price.
+      in your billing cycle.
     </p>
   </div>
 </template>
@@ -94,14 +134,15 @@ import {
   WorkspacePlans,
   isPaidPlan,
   doesPlanIncludeUnlimitedProjectsAddon,
-  type PaidWorkspacePlansNew
+  type PaidWorkspacePlans
 } from '@speckle/shared'
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   slug: string
-  plan: PaidWorkspacePlansNew
+  plan: PaidWorkspacePlans
   billingInterval: BillingInterval
+  editorSeatCount: number
 }>()
 
 const {
@@ -125,7 +166,7 @@ const currentEditorPrice = computed(() => {
   ) {
     const basePlanType =
       plan.value.name === WorkspacePlans.TeamUnlimited ? 'team' : 'pro'
-    const amount = intervalIsYearly
+    const amount = intervalIsYearly.value
       ? (prices.value?.[currency.value]?.[basePlanType]?.yearly.amount || 0) / 12
       : prices.value?.[currency.value]?.[basePlanType]?.monthly.amount || 0
 
@@ -135,12 +176,13 @@ const currentEditorPrice = computed(() => {
     })
   }
 
-  const planPrice =
-    activeWorkspacePrices.value?.[plan.value.name as PaidWorkspacePlansNew]
+  const planPrice = activeWorkspacePrices.value?.[plan.value.name as PaidWorkspacePlans]
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -179,11 +221,13 @@ const newEditorPrice = computed(() => {
 
 const totalPrice = computed(() => {
   const planPrice =
-    activeWorkspacePrices.value?.[plan.value?.name as PaidWorkspacePlansNew]
+    activeWorkspacePrices.value?.[plan.value?.name as PaidWorkspacePlans]
   if (!planPrice) return null
 
   return formatPrice({
-    amount: intervalIsYearly ? planPrice.yearly.amount / 12 : planPrice.monthly.amount,
+    amount: intervalIsYearly.value
+      ? planPrice.yearly.amount / 12
+      : planPrice.monthly.amount,
     currency: currency.value
   })
 })
@@ -191,13 +235,16 @@ const totalPrice = computed(() => {
 const newTotalPrice = computed(() => {
   const planPrice =
     prices.value?.[currency.value]?.[props.plan]?.[props.billingInterval]
-  if (!planPrice) return null
+  if (!planPrice) return 0
 
+  return props.billingInterval === BillingInterval.Yearly
+    ? planPrice.amount / 12
+    : planPrice.amount
+})
+
+const newTotalPriceFormatted = computed(() => {
   return formatPrice({
-    amount:
-      props.billingInterval === BillingInterval.Yearly
-        ? planPrice.amount / 12
-        : planPrice.amount,
+    amount: newTotalPrice.value,
     currency: currency.value
   })
 })
@@ -205,10 +252,10 @@ const newTotalPrice = computed(() => {
 const currentAddonPrice = computed(() => {
   if (!plan.value?.name) return null
   const addonPrice =
-    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlansNew]
+    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlans]
   if (!addonPrice) return null
 
-  return intervalIsYearly
+  return intervalIsYearly.value
     ? formatPrice({
         amount: addonPrice.yearly.amount / 12,
         currency: addonPrice.yearly.currency

@@ -8,23 +8,24 @@ export const workspaceAccessCheckQuery = graphql(`
   }
 `)
 
-export const workspacePageQuery = graphql(`
-  query WorkspacePageQuery(
+export const workspaceSidebarQuery = graphql(`
+  query WorkspaceSidebar(
     $workspaceSlug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
-    $token: String
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      ...WorkspaceProjectList_Workspace
+      ...WorkspaceSidebar_Workspace
     }
-    workspaceInvite(
-      workspaceId: $workspaceSlug
-      token: $token
-      options: { useSlug: true }
-    ) {
-      id
-      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
-      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
+  }
+`)
+
+export const workspaceDashboardQuery = graphql(`
+  query WorkspaceDashboard(
+    $workspaceSlug: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceDashboard_Workspace
     }
   }
 `)
@@ -38,7 +39,7 @@ export const workspaceProjectsQuery = graphql(`
     workspaceBySlug(slug: $workspaceSlug) {
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
-        ...WorkspaceProjectList_ProjectCollection
+        ...WorkspaceDashboardProjectList_ProjectCollection
       }
     }
   }
@@ -120,16 +121,14 @@ export const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
     activeUser {
       id
-      ...DiscoverableList_Discoverable
-    }
-  }
-`)
-
-export const discoverableWorkspacesRequestsQuery = graphql(`
-  query DiscoverableWorkspacesRequests {
-    activeUser {
-      id
-      ...DiscoverableList_Requests
+      discoverableWorkspaces {
+        ...DiscoverableWorkspace_LimitedWorkspace
+      }
+      workspaceJoinRequests {
+        items {
+          ...WorkspaceJoinRequests_LimitedWorkspaceJoinRequest
+        }
+      }
     }
   }
 `)
@@ -153,7 +152,11 @@ export const activeWorkspaceQuery = graphql(`
 export const workspaceLastAdminCheckQuery = graphql(`
   query WorkspaceLastAdminCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      ...WorkspaceLastAdminCheck_Workspace
+      teamByRole {
+        admins {
+          totalCount
+        }
+      }
     }
   }
 `)
@@ -175,7 +178,7 @@ export const workspaceUsageQuery = graphql(`
 `)
 
 export const workspaceMoveProjectManagerProjectQuery = graphql(`
-  query WorkspaceMoveProjectManagerProject($projectId: String!) {
+  query WorkspaceMoveProjectManagerProject($projectId: String!, $workspaceId: String) {
     project(id: $projectId) {
       ...WorkspaceMoveProjectManager_Project
     }
@@ -198,6 +201,8 @@ export const workspaceMoveProjectManagerUserQuery = graphql(`
     $cursor: String
     $filter: UserProjectsFilter
     $projectId: String
+    $sortBy: [String!]
+    $workspaceId: String
   ) {
     activeUser {
       ...WorkspaceMoveProjectSelectWorkspace_User

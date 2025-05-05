@@ -13,7 +13,8 @@ import {
   workspaceCreateRoute,
   workspaceJoinRoute,
   projectsRoute,
-  workspaceRoute
+  workspaceRoute,
+  bookDemoRoute
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
@@ -29,7 +30,8 @@ import { useNavigation } from '~/lib/navigation/composables/navigation'
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isSSOPath = to.path.includes('/sso/')
-  if (isAuthPage || isSSOPath) return
+  const isBookDemoPage = to.path === bookDemoRoute
+  if (isAuthPage || isSSOPath || isBookDemoPage) return
 
   const client = useApolloClientFromNuxt()
   const {
@@ -100,21 +102,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data: workspaceExistenceData } = await client
     .query({
-      query: activeUserWorkspaceExistenceCheckQuery
+      query: activeUserWorkspaceExistenceCheckQuery,
+      variables: {
+        filter: {
+          personalOnly: true
+        },
+        limit: 0
+      }
     })
     .catch(convertThrowIntoFetchResult)
 
-  const workspaces =
-    workspaceExistenceData?.activeUser?.workspaces?.items.filter(
-      (w) => w.creationState?.completed !== false
-    ) ?? []
+  const workspaces = workspaceExistenceData?.activeUser?.workspaces?.items ?? []
   const hasWorkspaces = workspaces.length > 0
   const hasDiscoverableWorkspaces =
     (workspaceExistenceData?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
     (workspaceExistenceData?.activeUser?.workspaceJoinRequests?.totalCount ?? 0) > 0
   // If user has existing projects, we consider these legacy projects, and don't block app access yet
   const hasLegacyProjects =
-    (workspaceExistenceData?.activeUser?.versions?.totalCount ?? 0) > 0
+    (workspaceExistenceData?.activeUser?.projects?.totalCount ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
@@ -159,17 +164,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path === projectsRoute) {
     if (hasLegacyProjects) {
       mutateIsProjectsActive(true)
-    } else {
-      if (hasWorkspaces) {
-        mutateActiveWorkspaceSlug(workspaces[0].slug)
-        navigateTo(workspaceRoute(workspaces[0].slug))
-      }
     }
     return
   }
 
   // 4.3 If going to workspace, set it active
-  if (to.path.startsWith('/workspaces/')) {
+  if (
+    to.path.startsWith('/workspaces/') ||
+    to.path.startsWith('/settings/workspaces/')
+  ) {
     const slug = to.params.slug as string
     if (slug && belongsToWorkspace(slug)) {
       mutateActiveWorkspaceSlug(slug)

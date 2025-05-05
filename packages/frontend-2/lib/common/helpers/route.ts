@@ -21,7 +21,7 @@ export const forumPageUrl = 'https://speckle.community/'
 export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
-
+export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {
@@ -41,39 +41,39 @@ export const settingsServerRoutes = {
 export const settingsWorkspaceRoutes = {
   general: {
     name: 'settings-workspaces-slug-general',
-    route: (slug: string) => `/settings/workspaces/${slug}/general`
+    route: (slug?: string) => `/settings/workspaces/${slug}/general`
   },
   members: {
     name: 'settings-workspaces-slug-members',
-    route: (slug: string) => `/settings/workspaces/${slug}/members`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members`
   },
   membersGuests: {
     name: 'settings-workspaces-slug-members-guests',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/guests`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/guests`
   },
   membersInvites: {
     name: 'settings-workspaces-slug-members-invites',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/invites`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/invites`
   },
   membersRequests: {
     name: 'settings-workspaces-slug-members-requests',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/requests`
+    route: (slug?: string) => `/settings/workspaces/${slug}/members/requests`
   },
   projects: {
     name: 'settings-workspaces-slug-projects',
-    route: (slug: string) => `/settings/workspaces/${slug}/projects`
+    route: (slug?: string) => `/settings/workspaces/${slug}/projects`
   },
   security: {
     name: 'settings-workspaces-slug-security',
-    route: (slug: string) => `/settings/workspaces/${slug}/security`
+    route: (slug?: string) => `/settings/workspaces/${slug}/security`
   },
   billing: {
     name: 'settings-workspaces-slug-billing',
-    route: (slug: string) => `/settings/workspaces/${slug}/billing`
+    route: (slug?: string) => `/settings/workspaces/${slug}/billing`
   },
   regions: {
     name: 'settings-workspaces-slug-regions',
-    route: (slug: string) => `/settings/workspaces/${slug}/regions`
+    route: (slug?: string) => `/settings/workspaces/${slug}/regions`
   }
 }
 

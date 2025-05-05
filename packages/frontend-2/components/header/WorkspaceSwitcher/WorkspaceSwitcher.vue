@@ -7,7 +7,7 @@
           <template v-if="activeWorkspaceSlug || isProjectsActive">
             <div class="relative">
               <WorkspaceAvatar
-                :size="isMobile ? 'sm' : 'base'"
+                size="base"
                 :name="displayName || ''"
                 :logo="displayLogo"
               />
@@ -36,7 +36,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute left-2 lg:left-3 top-12 lg:top-14 w-full lg:w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
+          class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
           <HeaderWorkspaceSwitcherHeaderSsoExpired
             v-if="activeWorkspaceHasExpiredSsoSession"
@@ -46,6 +46,7 @@
           <HeaderWorkspaceSwitcherHeaderWorkspace
             v-else-if="!!activeWorkspace"
             :workspace="activeWorkspace"
+            @show-invite-dialog="showInviteDialog = true"
           />
           <div
             class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar"
@@ -66,7 +67,7 @@
                 @on-click="onWorkspaceSelect(item.slug)"
               />
               <HeaderWorkspaceSwitcherItem
-                v-if="hasProjectsToMove"
+                v-if="hasProjects"
                 :is-active="route.path === projectsRoute"
                 name="Personal projects"
                 tag="LEGACY"
@@ -82,10 +83,11 @@
               >
                 <p class="text-body-xs text-foreground">Join existing workspaces</p>
                 <div class="relative">
-                  <CommonBadge v-if="hasDiscoverableWorkspaces" rounded>
-                    {{ discoverableWorkspacesCount }}
+                  <CommonBadge v-if="hasDiscoverableWorkspacesOrJoinRequests" rounded>
+                    {{ discoverableWorkspacesAndJoinRequestsCount }}
                   </CommonBadge>
                   <div
+                    v-if="hasDiscoverableWorkspaces"
                     class="absolute -top-[4px] -right-[4px] size-3 border-[2px] border-foundation-page bg-danger rounded-full"
                   />
                 </div>
@@ -99,15 +101,17 @@
     <WorkspaceDiscoverableWorkspacesModal
       v-model:open="showDiscoverableWorkspacesModal"
     />
+
+    <InviteDialogWorkspace
+      v-model:open="showInviteDialog"
+      :workspace="activeWorkspace"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import {
-  useActiveUser,
-  useActiveUserProjectsToMove
-} from '~~/lib/auth/composables/activeUser'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   workspaceCreateRoute,
   workspaceRoute,
@@ -119,15 +123,14 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { Roles, WorkspacePlans } from '@speckle/shared'
 import type { HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
+    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
+    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
-    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
   }
 `)
 
@@ -174,19 +177,18 @@ const {
   activeWorkspaceData,
   workspaceList: workspaces,
   activeWorkspaceHasExpiredSsoSession,
-  expiredSsoWorkspaceData
+  expiredSsoWorkspaceData,
+  hasProjects
 } = useNavigation()
 const route = useRoute()
 const {
   hasDiscoverableWorkspaces,
-  discoverableWorkspacesCount,
+  discoverableWorkspacesAndJoinRequestsCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
-const { hasProjectsToMove } = useActiveUserProjectsToMove()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('lg')
 
 const showDiscoverableWorkspacesModal = ref(false)
+const showInviteDialog = ref(false)
 
 const activeWorkspace = computed(() => {
   return activeWorkspaceData.value

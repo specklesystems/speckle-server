@@ -1,4 +1,5 @@
 import { WorkspacePlans } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const formatPrice = (price?: { amount: number; currency: string }) => {
   if (!price) return ''
@@ -13,25 +14,19 @@ export const formatPrice = (price?: { amount: number; currency: string }) => {
 }
 
 // Internal plan names dont match the names we use in the product
-export const formatName = (plan?: WorkspacePlans) => {
+export const formatName = (plan?: MaybeNullOrUndefined<WorkspacePlans>) => {
   if (!plan) return ''
 
   const formattedPlanNames: Record<WorkspacePlans, string> = {
     [WorkspacePlans.Unlimited]: 'Unlimited',
     [WorkspacePlans.Academia]: 'Academia',
-    [WorkspacePlans.StarterInvoiced]: 'Starter (invoiced)',
-    [WorkspacePlans.PlusInvoiced]: 'Plus (Invoiced)',
-    [WorkspacePlans.BusinessInvoiced]: 'Business (Invoiced)',
-    [WorkspacePlans.Starter]: 'Starter',
-    [WorkspacePlans.Plus]: 'Plus',
-    [WorkspacePlans.Business]: 'Business',
     [WorkspacePlans.Free]: 'Free',
     [WorkspacePlans.Team]: 'Starter',
-    [WorkspacePlans.TeamUnlimited]: 'Starter Unlimited',
-    [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter Unlimited (Invoiced)',
+    [WorkspacePlans.TeamUnlimited]: 'Starter',
+    [WorkspacePlans.TeamUnlimitedInvoiced]: 'Starter (Invoiced)',
     [WorkspacePlans.Pro]: 'Business',
-    [WorkspacePlans.ProUnlimited]: 'Business Unlimited',
-    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business Unlimited (Invoiced)'
+    [WorkspacePlans.ProUnlimited]: 'Business',
+    [WorkspacePlans.ProUnlimitedInvoiced]: 'Business (Invoiced)'
   }
   return formattedPlanNames[plan]
 }
