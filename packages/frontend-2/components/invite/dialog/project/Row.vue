@@ -315,18 +315,14 @@ const navigateUp = () => {
 }
 
 const focusActiveItem = () => {
-  nextTick(() => {
-    if (suggestionRefs.value && suggestionRefs.value[activeIndex.value]) {
-      suggestionRefs.value[activeIndex.value].focus()
-    }
-  })
+  // nextTick(() => {
+  if (suggestionRefs.value && suggestionRefs.value[activeIndex.value]) {
+    suggestionRefs.value[activeIndex.value].focus()
+  }
+  // })
 }
 
 const handleKeyDown = () => {
-  if (!isMenuOpen.value) {
-    isMenuOpen.value = true
-  }
-
   if (filteredSuggestions.value.length > 0) {
     if (activeIndex.value === -1) {
       activeIndex.value = 0
@@ -338,10 +334,6 @@ const handleKeyDown = () => {
 }
 
 const handleKeyUp = () => {
-  if (!isMenuOpen.value) {
-    isMenuOpen.value = true
-  }
-
   if (filteredSuggestions.value.length > 0) {
     if (activeIndex.value === -1) {
       activeIndex.value = filteredSuggestions.value.length - 1
