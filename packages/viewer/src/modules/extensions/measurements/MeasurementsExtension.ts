@@ -111,7 +111,6 @@ export class MeasurementsExtension extends Extension {
   }
 
   public onLateUpdate() {
-    if (!this._enabled) return
     const camera = this.renderer.renderingCamera
     if (!camera) return
 
@@ -119,16 +118,18 @@ export class MeasurementsExtension extends Extension {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
 
     if (this._activeMeasurement)
-      this._activeMeasurement.frameUpdate(
-        camera,
-        this.screenBuff0,
-        this.renderer.sceneBox
-      )
+      this._enabled &&
+        this._activeMeasurement.frameUpdate(
+          camera,
+          this.screenBuff0,
+          this.renderer.sceneBox
+        )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
+      ;(this._enabled || value instanceof PointMeasurement) &&
+        value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
 
-    this.updateClippingPlanes(this.renderer.clippingPlanes)
+    this._enabled && this.updateClippingPlanes(this.renderer.clippingPlanes)
   }
 
   public onResize() {
@@ -499,13 +500,18 @@ export class MeasurementsExtension extends Extension {
   }
 
   public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
-    const measurement = new PointToPointMeasurement()
-    measurement.startPoint.copy(startPoint)
-    measurement.endPoint.copy(endPoint)
-    measurement.state = MeasurementState.DANGLING_END
-    await measurement.update()
-    measurement.state = MeasurementState.COMPLETE
-    await measurement.update()
-    this.measurements.push(measurement)
+    /** Only point to point programatic measurements for now */
+    const cacheType = this._options.type
+    this._options.type = MeasurementType.POINTTOPOINT
+    this._activeMeasurement = this.startMeasurement()
+    this._activeMeasurement.isVisible = true
+    this._activeMeasurement.startPoint.copy(startPoint)
+    this._activeMeasurement.startNormal.copy(new Vector3(0, 0, 1))
+    await this._activeMeasurement.update()
+    this._activeMeasurement.state = MeasurementState.DANGLING_END
+    this._activeMeasurement.endPoint.copy(endPoint)
+    this._activeMeasurement.endNormal.copy(new Vector3(0, 0, 1))
+    await this._activeMeasurement.update()
+    this._options.type = cacheType
   }
 }

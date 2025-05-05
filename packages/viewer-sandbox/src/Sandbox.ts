@@ -493,7 +493,6 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
-
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
