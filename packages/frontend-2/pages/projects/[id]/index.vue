@@ -16,7 +16,7 @@
       />
 
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mt-2 mb-6"
+        class="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-6"
       >
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
