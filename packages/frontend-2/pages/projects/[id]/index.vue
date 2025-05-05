@@ -244,8 +244,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
   if (isAutomateEnabled.value && project.value?.workspace) {
     items.push({
       title: 'Automations',
-      id: 'automations',
-      tag: 'BETA'
+      id: 'automations'
     })
   }
 
