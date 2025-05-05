@@ -39,7 +39,7 @@
           class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
           <HeaderWorkspaceSwitcherHeaderSsoExpired
-            v-if="activeWorkspaceHasExpiredSsoSession"
+            v-if="expiredSsoWorkspaceData"
             :workspace="expiredSsoWorkspaceData"
           />
           <HeaderWorkspaceSwitcherHeaderProjects v-else-if="isProjectsActive" />
@@ -89,51 +89,23 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
-import { graphql } from '~/lib/common/generated/gql'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useQuery } from '@vue/apollo-composable'
-
-graphql(`
-  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
-    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
-    ...InviteDialogWorkspace_Workspace
-    id
-    name
-    logo
-  }
-`)
-
-const headerWorkspaceSwitcherWorkspaceListQuery = graphql(`
-  query HeaderWorkspaceSwitcherWorkspaceList($filter: UserProjectsFilter) {
-    activeUser {
-      id
-      expiredSsoSessions {
-        id
-        ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
-      }
-      workspaces {
-        items {
-          id
-          ...HeaderWorkspaceSwitcherWorkspaceListItem_Workspace
-        }
-      }
-      projects(filter: $filter) {
-        totalCount
-      }
-    }
-  }
-`)
+import {
+  navigationWorkspaceListQuery,
+  navigationActiveWorkspaceQuery
+} from '~~/lib/navigation/graphql/queries'
 
 const menuButtonId = useId()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { activeWorkspaceSlug, isProjectsActive, activeWorkspaceData } = useNavigation()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const {
   hasDiscoverableWorkspaces,
   discoverableWorkspacesAndJoinRequestsCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
 const { result } = useQuery(
-  headerWorkspaceSwitcherWorkspaceListQuery,
+  navigationWorkspaceListQuery,
   () => ({
     filter: {
       personalOnly: true
@@ -143,6 +115,15 @@ const { result } = useQuery(
     enabled: isWorkspacesEnabled.value
   }
 )
+const { result: activeWorkspaceResult } = useQuery(
+  navigationActiveWorkspaceQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value || ''
+  }),
+  () => ({
+    enabled: !!activeWorkspaceSlug.value && isWorkspacesEnabled.value
+  })
+)
 
 const showDiscoverableWorkspacesModal = ref(false)
 const showInviteDialog = ref(false)
@@ -150,18 +131,9 @@ const showInviteDialog = ref(false)
 const expiredSsoSessions = computed(
   () => result.value?.activeUser?.expiredSsoSessions || []
 )
-const activeWorkspaceHasExpiredSsoSession = computed(
-  () =>
-    !!expiredSsoSessions.value.find(
-      (session) => session.slug === activeWorkspaceSlug.value
-    )
-)
 const expiredSsoWorkspaceData = computed(() =>
   expiredSsoSessions.value.find((session) => session.slug === activeWorkspaceSlug.value)
 )
-const activeWorkspace = computed(() => {
-  return activeWorkspaceData.value
-})
 const workspaces = computed(() =>
   result.value?.activeUser
     ? result.value.activeUser.workspaces.items.filter(
@@ -172,6 +144,7 @@ const workspaces = computed(() =>
 const hasPersonalProjects = computed(
   () => !!result.value?.activeUser?.projects?.totalCount
 )
+const activeWorkspace = computed(() => activeWorkspaceResult.value?.workspaceBySlug)
 const displayName = computed(() =>
   isProjectsActive.value ? 'Personal projects' : activeWorkspace.value?.name
 )
