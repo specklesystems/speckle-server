@@ -86,6 +86,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { type MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 const invitableCollaboratorsQuery = graphql(`
   query InvitableCollaborators(
@@ -115,6 +116,7 @@ const props = defineProps<{
   workspaceId: MaybeNullOrUndefined<string>
 }>()
 
+const { triggerNotification } = useGlobalToast()
 const createInvite = useInviteUserToProject()
 const route = useRoute()
 const search = ref('')
@@ -165,13 +167,24 @@ const onAddClick = async (
   userId: string,
   workspaceRole: MaybeNullOrUndefined<string>
 ) => {
-  await createInvite(projectId.value, [
+  await createInvite(
+    projectId.value,
+    [
+      {
+        role: Roles.Stream.Reviewer,
+        userId,
+        workspaceRole
+      }
+    ],
     {
-      role: Roles.Stream.Reviewer,
-      userId,
-      workspaceRole
+      hideToasts: true
     }
-  ])
+  )
+
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Workspace member added to project'
+  })
 
   refetch()
 }
