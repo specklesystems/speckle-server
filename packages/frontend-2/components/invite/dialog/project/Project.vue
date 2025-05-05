@@ -7,9 +7,15 @@
     :buttons="dialogButtons"
     max-width="md"
   >
-    <template #header>Invite to project</template>
+    <template #header>
+      {{ isInWorkspace && !isAdmin ? 'Add to project' : 'Invite to project' }}
+    </template>
     <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
-      Search existing workspace members or invite entirely new.
+      {{
+        isAdmin
+          ? 'Search for existing workspace members or invite new members.'
+          : 'Search for existing workspace members.'
+      }}
     </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
@@ -114,7 +120,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
 
   {
-    text: 'Invite',
+    text: isInWorkspace.value && !isAdmin.value ? 'Add' : 'Invite',
     props: {
       submit: true
     },
