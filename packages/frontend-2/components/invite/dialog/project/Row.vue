@@ -301,7 +301,13 @@ const showSuggestions = () => {
 
 const navigateDown = () => {
   if (filteredSuggestions.value.length === 0) return
-  activeIndex.value = (activeIndex.value + 1) % filteredSuggestions.value.length
+
+  if (activeIndex.value >= filteredSuggestions.value.length - 1) {
+    activeIndex.value = 0
+  } else {
+    activeIndex.value++
+  }
+
   focusActiveItem()
 }
 
@@ -315,11 +321,9 @@ const navigateUp = () => {
 }
 
 const focusActiveItem = () => {
-  // nextTick(() => {
   if (suggestionRefs.value && suggestionRefs.value[activeIndex.value]) {
     suggestionRefs.value[activeIndex.value].focus()
   }
-  // })
 }
 
 const handleKeyDown = () => {
