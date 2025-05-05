@@ -46,6 +46,7 @@
                 @paste="handlePaste"
                 @keydown.down.prevent="navigateDown"
                 @keydown.up.prevent="navigateUp"
+                @keydown.esc.prevent="onEsc"
               />
               <Transition
                 v-if="isMounted"
@@ -85,7 +86,7 @@
                         @keydown.enter.prevent="
                           selectSuggestion(filteredSuggestions[activeIndex]?.user)
                         "
-                        @keydown.esc.prevent="showDropdownState = false"
+                        @keydown.esc.prevent="onEsc"
                         @focus="activeIndex = i"
                       >
                         {{ suggestion.user.name }}
@@ -256,6 +257,19 @@ const showDropdown = computed(() => {
   return hasContent && showDropdownState.value
 })
 
+const listboxOptionsStyle = computed(() => {
+  const style: CSSProperties = {}
+  const top = listboxButtonBounding.top.value
+  const left = listboxButtonBounding.left.value
+  const width = listboxButtonBounding.width.value
+
+  style.top = `${top + (props.showLabel ? 61 : 33)}px`
+  style.left = `${left}px`
+  style.width = `${width}px`
+
+  return style
+})
+
 const handleInput = (value: string) => {
   search.value = value
   if (props.isInWorkspace && props.canInviteNewMembers) {
@@ -276,18 +290,11 @@ const handleClear = () => {
   })
 }
 
-const listboxOptionsStyle = computed(() => {
-  const style: CSSProperties = {}
-  const top = listboxButtonBounding.top.value
-  const left = listboxButtonBounding.left.value
-  const width = listboxButtonBounding.width.value
-
-  style.top = `${top + (props.showLabel ? 61 : 33)}px`
-  style.left = `${left}px`
-  style.width = `${width}px`
-
-  return style
-})
+const onEsc = () => {
+  showDropdownState.value = false
+  activeIndex.value = -1
+  handleClear()
+}
 
 const showSuggestions = () => {
   showDropdownState.value = true
