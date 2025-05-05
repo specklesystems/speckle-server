@@ -325,7 +325,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const automationRevision = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getLatestAutomationRevision.load(parent.id)
-          return { ...automationRevision, projectId: parent.projectId }
+          return automationRevision
+            ? { ...automationRevision, projectId: parent.projectId }
+            : null
         },
         async runs(parent, args) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
@@ -413,6 +415,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           } catch (e) {
             ctx.log.warn('Error formatting results schema', e)
           }
+          return null
         },
         status: (parent) => mapDbStatusToGqlStatus(parent.status)
       },

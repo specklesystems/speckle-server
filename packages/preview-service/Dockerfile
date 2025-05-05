@@ -33,7 +33,7 @@ COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN yarn workspaces focus -A && yarn
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 
 # Onyl copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
@@ -99,7 +99,7 @@ COPY --link --from=build-stage /speckle-server/packages/preview-frontend/dist ./
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 RUN groupadd -g 30000 -r pptruser && \
     useradd -r -g pptruser -G audio,video -u 800 pptruser && \
