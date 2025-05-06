@@ -59,15 +59,31 @@ export const ToolShortcuts = {
 export const ViewModeShortcuts = {
   SetViewModeDefault: {
     name: 'Rendered',
-    description: 'Set view mode to Rendered',
+    description: 'Colors by render materials',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit1',
     action: 'SetViewModeDefault',
     viewMode: ViewMode.DEFAULT
   },
+  SetViewModeShaded: {
+    name: 'Shaded',
+    description: 'Colors by layer or object colors. Better for autocad & similar apps',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit6',
+    action: 'SetViewModeColors',
+    viewMode: ViewMode.SHADED
+  },
+  SetViewModeArctic: {
+    name: 'Arctic',
+    description: 'High contrast',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit5',
+    action: 'SetViewModeArctic',
+    viewMode: ViewMode.ARCTIC
+  },
   SetViewModeSolid: {
     name: 'Solid',
-    description: 'Set view mode to Solid',
+    description: 'Flat shaded surfaces',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit3',
     action: 'SetViewModeShaded',
@@ -75,27 +91,11 @@ export const ViewModeShortcuts = {
   },
   SetViewModePen: {
     name: 'Pen',
-    description: 'Set view mode to Pen',
+    description: 'Technical line drawing style',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit4',
     action: 'SetViewModePen',
     viewMode: ViewMode.PEN
-  },
-  SetViewModeArctic: {
-    name: 'Arctic',
-    description: 'Set view mode to Arctic',
-    modifiers: [ModifierKeys.Shift],
-    key: 'Digit5',
-    action: 'SetViewModeArctic',
-    viewMode: ViewMode.ARCTIC
-  },
-  SetViewModeShaded: {
-    name: 'Shaded',
-    description: 'Set view mode to Shaded',
-    modifiers: [ModifierKeys.Shift],
-    key: 'Digit6',
-    action: 'SetViewModeColors',
-    viewMode: ViewMode.SHADED
   }
 } as const
 
