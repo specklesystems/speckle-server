@@ -60,6 +60,7 @@ import {
   getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
+  workspaceInviteValidityFilter,
   getWorkspaceCollaboratorsTotalCountFactory,
   deleteWorkspaceDomainFactory as repoDeleteWorkspaceDomainFactory,
   storeWorkspaceDomainFactory,
@@ -257,7 +258,8 @@ const buildCollectAndValidateResourceTargets = () =>
 const buildFinalizeWorkspaceInvite = () =>
   finalizeResourceInviteFactory({
     findInvite: findInviteFactory({
-      db
+      db,
+      filterQuery: workspaceInviteValidityFilter
     }),
     deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
@@ -267,11 +269,7 @@ const buildFinalizeWorkspaceInvite = () =>
         payload
       }),
     validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
-      getWorkspace: getWorkspaceFactory({ db }),
-      validateProjectInviteBeforeFinalization:
-        validateProjectInviteBeforeFinalizationFactory({
-          getProject: getStream
-        })
+      getWorkspace: getWorkspaceFactory({ db })
     }),
     processInvite: processFinalizedWorkspaceInviteFactory({
       getWorkspace: getWorkspaceFactory({ db }),
@@ -286,10 +284,6 @@ const buildFinalizeWorkspaceInvite = () =>
           getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
           eventEmit: getEventBus().emit
         })
-      }),
-      processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
-        getProject: getStream,
-        addProjectRole: addOrUpdateStreamCollaborator
       })
     }),
     findEmail: findEmailFactory({ db }),
@@ -392,7 +386,12 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
-  addOrUpdateStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    emitEvent: getEventBus().emit
+  }),
   removeStreamCollaborator
 })
 
@@ -447,7 +446,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         workspaceInvite: async (_parent, args, ctx) => {
           const getPendingInvite = getUserPendingWorkspaceInviteFactory({
             findInvite: findInviteFactory({
-              db
+              db,
+              filterQuery: workspaceInviteValidityFilter
             }),
             getUser,
             getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
@@ -1173,7 +1173,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }),
             findUserByTarget: findUserByTargetFactory({ db }),
             findInvite: findInviteFactory({
-              db
+              db,
+              filterQuery: workspaceInviteValidityFilter
             }),
             markInviteUpdated: markInviteUpdatedFactory({ db }),
             getUser,
@@ -1310,6 +1311,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 finalizerResourceAccessLimits: ctx.resourceAccessRules,
                 token: args.input.token,
                 accept: args.input.accept,
+                resourceType: WorkspaceInviteResourceType,
                 allowAttachingNewEmail: args.input.addNewEmail ?? undefined
               }),
             {
@@ -1345,15 +1347,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const cancelInvite = cancelResourceInviteFactory({
             findInvite: findInviteFactory({
-              db
+              db,
+              filterQuery: workspaceInviteValidityFilter
             }),
             deleteInvite: deleteInviteFactory({ db }),
             validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
-              getWorkspace: getWorkspaceFactory({ db }),
-              validateProjectInviteBeforeFinalization:
-                validateProjectInviteBeforeFinalizationFactory({
-                  getProject: getStream
-                })
+              getWorkspace: getWorkspaceFactory({ db })
             }),
             emitEvent: getEventBus().emit
           })
@@ -1361,8 +1360,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           await withOperationLogging(
             async () =>
               await cancelInvite({
+                resourceId: args.workspaceId,
                 inviteId,
                 cancelerId: ctx.userId!,
+                resourceType: WorkspaceInviteResourceType,
                 cancelerResourceAccessLimits: ctx.resourceAccessRules
               }),
             {
@@ -1597,7 +1598,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         invitedTeam: async (parent, args) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
             queryAllResourceInvites: queryAllResourceInvitesFactory({
-              db
+              db,
+              filterQuery: workspaceInviteValidityFilter
             }),
             getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
           })
@@ -1856,7 +1858,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const getInvites = getUserPendingWorkspaceInvitesFactory({
             getUser,
             getUserResourceInvites: queryAllUserResourceInvitesFactory({
-              db
+              db,
+              filterQuery: workspaceInviteValidityFilter
             })
           })
 
