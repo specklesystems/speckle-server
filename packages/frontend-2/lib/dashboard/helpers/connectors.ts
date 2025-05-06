@@ -108,15 +108,15 @@ export const connectorItems: ConnectorItem[] = [
     image: '/images/connectors/navisworks.png',
     categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
   },
-  {
-    title: 'Archicad',
-    slug: 'archicad',
-    description:
-      'Publish Archicad models to boost design coordination and business intelligence workflows.',
-    url: 'https://www.speckle.systems/connectors/archicad',
-    image: '/images/connectors/archicad.png',
-    categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
-  },
+  // {
+  //   title: 'Archicad',
+  //   slug: 'archicad',
+  //   description:
+  //     'Publish Archicad models to boost design coordination and business intelligence workflows.',
+  //   url: 'https://www.speckle.systems/connectors/archicad',
+  //   image: '/images/connectors/archicad.png',
+  //   categories: [ConnectorCategory.NextGen, ConnectorCategory.BIM]
+  // },
   {
     title: 'Tekla',
     slug: 'teklastructures',
