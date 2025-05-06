@@ -1,0 +1,19 @@
+version: 2.1
+
+aliases:
+  filters: &filters-allow-all
+    tags:
+      # run tests for any commit on any branch, including any tags
+      only: /.*/
+
+jobs:
+  all-the-steps:
+    name: All the steps
+    filters: *filters-allow-all
+    steps:
+      - command: echo 'HI!'
+
+workflow:
+  test-build:
+    jobs:
+      - all-the-steps
