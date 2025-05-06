@@ -17,6 +17,8 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'
 import type { Optional } from '@speckle/shared'
 import { useProjectInviteManager } from '~/lib/projects/composables/invites'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { projectRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment HeaderNavNotificationsProjectInvite_PendingStreamCollaborator on PendingStreamCollaborator {
@@ -27,6 +29,7 @@ graphql(`
     projectId
     projectName
     token
+    workspaceSlug
     user {
       id
     }
@@ -37,6 +40,7 @@ const props = defineProps<{
   invite: HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragment
 }>()
 
+const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
 const { useInvite } = useProjectInviteManager()
 const loading = ref(false)
 
@@ -51,6 +55,14 @@ const processInvite = async (accept: boolean, token: Optional<string>) => {
     token,
     inviteId: props.invite.id
   })
+
+  if (props.invite.workspaceSlug) {
+    mutateActiveWorkspaceSlug(props.invite.workspaceSlug)
+  } else {
+    mutateIsProjectsActive(true)
+  }
+
+  navigateTo(projectRoute(props.invite.projectId))
 
   loading.value = false
 }

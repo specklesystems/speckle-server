@@ -37,7 +37,8 @@ import {
   getStreamFactory,
   getCommitStreamFactory,
   createStreamFactory,
-  markCommitStreamUpdatedFactory
+  markCommitStreamUpdatedFactory,
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -53,7 +54,9 @@ import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  findInviteFactory,
+  deleteInvitesByTargetFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
@@ -76,7 +79,10 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
+  finalizeInvitedServerRegistrationFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getBranchCommitsTotalCountByNameFactory,
@@ -85,6 +91,15 @@ import {
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { ensureError } from '@speckle/shared'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -139,6 +154,51 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
 })
 const getStreamCommitCount = getStreamCommitCountFactory({ db })
 
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaboratorFactory({
+        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+        getUser,
+        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        emitEvent: getEventBus().emit
+      })
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification: requestNewEmailVerificationFactory({
+        findEmail: findEmailFactory({ db }),
+        getUser,
+        getServerInfo,
+        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+          db
+        }),
+        renderEmail,
+        sendEmail
+      })
+    }),
+    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+      getStream
+    }),
+    getUser,
+    getServerInfo
+  })
+
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -157,7 +217,8 @@ const createStream = legacyCreateStreamFactory({
             payload
           }),
         getUser,
-        getServerInfo
+        getServerInfo,
+        finalizeInvite: buildFinalizeProjectInvite()
       }),
       getUsers
     }),

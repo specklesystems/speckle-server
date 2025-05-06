@@ -1,7 +1,7 @@
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { GetWorkspacePlanPricesDocument } from '@/test/graphql/generated/graphql'
 import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
-import { PaidWorkspacePlansNew } from '@speckle/shared'
+import { PaidWorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 import { Currency } from '@/modules/gatekeeper/domain/billing'
 
@@ -21,7 +21,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
     it('returns prices', async () => {
       const res = await getPrices()
 
-      const expectedPlans = [...Object.values(PaidWorkspacePlansNew)]
+      const expectedPlans = [...Object.values(PaidWorkspacePlans)]
 
       expect(res).to.not.haveGraphQLErrors()
 

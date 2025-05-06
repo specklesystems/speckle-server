@@ -216,11 +216,11 @@ import {
   throwIfAuthNotOk
 } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
+import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -248,14 +248,101 @@ const buildCollectAndValidateResourceTargets = () =>
         getWorkspaceRoleAndSeat: getWorkspaceRoleAndSeatFactory({ db }),
         getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db }),
         getWorkspaceRoleToDefaultProjectRoleMapping:
-          getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-          }),
+          getWorkspaceRoleToDefaultProjectRoleMappingFactory(),
         getWorkspaceSeatTypeToProjectRoleMapping:
-          getWorkspaceSeatTypeToProjectRoleMappingFactory({
-            getWorkspaceWithPlan: getWorkspaceWithPlanFactory({ db })
-          })
+          getWorkspaceSeatTypeToProjectRoleMappingFactory()
       })
+  })
+
+const buildFinalizeWorkspaceInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({
+      db
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: ({ eventName, payload }) =>
+      getEventBus().emit({
+        eventName,
+        payload
+      }),
+    validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      validateProjectInviteBeforeFinalization:
+        validateProjectInviteBeforeFinalizationFactory({
+          getProject: getStream
+        })
+    }),
+    processInvite: processFinalizedWorkspaceInviteFactory({
+      getWorkspace: getWorkspaceFactory({ db }),
+      updateWorkspaceRole: updateWorkspaceRoleFactory({
+        getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+        findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
+        getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+        upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+        emitWorkspaceEvent: getEventBus().emit,
+        ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+          createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+          getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+          eventEmit: getEventBus().emit
+        })
+      }),
+      processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
+        getProject: getStream,
+        addProjectRole: addOrUpdateStreamCollaborator
+      })
+    }),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
+  })
+
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  emitEvent: getEventBus().emit
+})
+
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaborator
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
   })
 
 const buildCreateAndSendServerOrProjectInvite = () =>
@@ -272,7 +359,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeProjectInvite()
   })
 
 const buildCreateAndSendWorkspaceInvite = () =>
@@ -290,9 +378,9 @@ const buildCreateAndSendWorkspaceInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeWorkspaceInvite()
   })
-const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
 })
@@ -300,12 +388,6 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
-  validateStreamAccess,
-  getUser,
-  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
@@ -607,17 +689,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'teamUnlimited':
               case 'pro':
               case 'proUnlimited':
-              case 'starter':
-              case 'plus':
-              case 'business':
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
                   case 'valid':
                   case 'paymentFailed':
                     throw new WorkspacePaidPlanActiveError()
                   case 'canceled':
-                  case 'trial':
-                  case 'expired':
                     break
                   default:
                     throwUncoveredError(workspacePlan)
@@ -625,9 +702,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
               case 'free':
               case 'unlimited':
               case 'academia':
-              case 'starterInvoiced':
-              case 'plusInvoiced':
-              case 'businessInvoiced':
               case 'proUnlimitedInvoiced':
               case 'teamUnlimitedInvoiced':
                 break
@@ -1228,59 +1302,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         use: async (_parent, args, ctx) => {
           const logger = ctx.log
 
-          const finalizeInvite = finalizeResourceInviteFactory({
-            findInvite: findInviteFactory({
-              db
-            }),
-            deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-            insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-            emitEvent: ({ eventName, payload }) =>
-              getEventBus().emit({
-                eventName,
-                payload
-              }),
-            validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
-              getWorkspace: getWorkspaceFactory({ db }),
-              validateProjectInviteBeforeFinalization:
-                validateProjectInviteBeforeFinalizationFactory({
-                  getProject: getStream
-                })
-            }),
-            processInvite: processFinalizedWorkspaceInviteFactory({
-              getWorkspace: getWorkspaceFactory({ db }),
-              updateWorkspaceRole: updateWorkspaceRoleFactory({
-                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-                findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
-                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-                emitWorkspaceEvent: getEventBus().emit,
-                ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-                  eventEmit: getEventBus().emit
-                })
-              }),
-              processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
-                getProject: getStream,
-                addProjectRole: addOrUpdateStreamCollaborator
-              })
-            }),
-            findEmail: findEmailFactory({ db }),
-            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-              createUserEmail: createUserEmailFactory({ db }),
-              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-              findEmail: findEmailFactory({ db }),
-              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-              }),
-              requestNewEmailVerification
-            }),
-            collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-            getUser,
-            getServerInfo
-          })
-
+          const finalizeInvite = buildFinalizeWorkspaceInvite()
           await withOperationLogging(
             async () =>
               await finalizeInvite({
@@ -1703,6 +1725,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             projectId: resourceId,
             role
           }))
+        }
+      },
+      LimitedWorkspaceCollaborator: {
+        user: async (parent) => {
+          return parent
         }
       },
       ProjectRole: {

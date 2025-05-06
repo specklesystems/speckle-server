@@ -93,14 +93,24 @@ describe('Project retrieval services', () => {
 
 describe('Project management services', () => {
   describe('moveProjectToWorkspaceFactory returns a function, that', () => {
-    const roleMapping: [
-      StreamRoles, // Current project role
-      WorkspaceRoles | null, // Current workspace role
-      WorkspaceSeatType | null, // Current workspace seat type
-      StreamRoles, // Final project role
-      WorkspaceRoles, // Final workspace role
-      WorkspaceSeatType // Final workspace seat type
-    ][] = [
+    const roleMapping: Array<
+      | [
+          StreamRoles, // Current project role
+          null, // Current workspace role
+          null, // Current workspace seat type
+          StreamRoles, // Final project role
+          WorkspaceRoles, // Final workspace role
+          WorkspaceSeatType // Final workspace seat type
+        ]
+      | [
+          StreamRoles, // Current project role
+          WorkspaceRoles, // Current workspace role
+          WorkspaceSeatType, // Current workspace seat type
+          StreamRoles, // Final project role
+          WorkspaceRoles, // Final workspace role
+          WorkspaceSeatType // Final workspace seat type
+        ]
+    > = [
       [
         Roles.Stream.Owner,
         Roles.Workspace.Admin,
@@ -343,7 +353,13 @@ describe('Project management services', () => {
                 workspaceId,
                 createdAt: new Date()
               },
-              seat: null,
+              seat: {
+                workspaceId,
+                userId,
+                type: WorkspaceSeatType.Editor,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              },
               userId
             }
           }
@@ -471,7 +487,7 @@ describe('Project management services', () => {
             ]
           },
           getWorkspaceRolesAndSeats: async () => {
-            return workspaceRole
+            return workspaceRole && workspaceSeatType
               ? {
                   [userId]: {
                     role: {
@@ -480,15 +496,13 @@ describe('Project management services', () => {
                       workspaceId,
                       createdAt: new Date()
                     },
-                    seat: workspaceSeatType
-                      ? {
-                          workspaceId,
-                          userId,
-                          createdAt: new Date(),
-                          updatedAt: new Date(),
-                          type: workspaceSeatType
-                        }
-                      : null,
+                    seat: {
+                      workspaceId,
+                      userId,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      type: workspaceSeatType
+                    },
                     userId
                   }
                 }

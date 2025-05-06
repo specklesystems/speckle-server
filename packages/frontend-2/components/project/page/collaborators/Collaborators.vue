@@ -2,7 +2,7 @@
   <div>
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
-        <h1 class="block text-heading-lg md:text-heading-xl">Collaborators</h1>
+        <h1 class="block text-heading-lg">Collaborators</h1>
         <div v-tippy="tooltipText">
           <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
             Invite to project
@@ -20,6 +20,7 @@
               :logo="project.workspace?.logo"
               :can-edit="!!canUpdate?.authorized"
               :admins="workspaceAdmins"
+              :workspace-id="project.workspaceId"
             />
           </div>
         </template>

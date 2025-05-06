@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn, Commen
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationPermissionChecksGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
-import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectMoveToWorkspaceDryRunGraphQLReturn, ProjectRoleGraphQLReturn, WorkspacePermissionChecksGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
+import { WorkspaceGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceJoinRequestMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, LimitedWorkspaceCollaboratorGraphQLReturn, WorkspaceJoinRequestGraphQLReturn, LimitedWorkspaceJoinRequestGraphQLReturn, ProjectMoveToWorkspaceDryRunGraphQLReturn, ProjectRoleGraphQLReturn, WorkspacePermissionChecksGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { WorkspacePlanGraphQLReturn, WorkspacePlanUsageGraphQLReturn, PriceGraphQLReturn } from '@/modules/gatekeeperCore/helpers/graphTypes';
 import { WorkspaceBillingMutationsGraphQLReturn, WorkspaceSubscriptionSeatsGraphQLReturn, WorkspaceSubscriptionGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
@@ -1013,18 +1013,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspaceCollaborator = {
-  __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar?: Maybe<Scalars['String']['output']>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollection = {
-  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<DiscoverableWorkspaceCollaborator>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1243,7 +1231,7 @@ export type LimitedWorkspace = {
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
   /** Workspace members visible to people with verified email domain */
-  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+  team?: Maybe<LimitedWorkspaceCollaboratorCollection>;
 };
 
 
@@ -1251,6 +1239,18 @@ export type LimitedWorkspace = {
 export type LimitedWorkspaceTeamArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+export type LimitedWorkspaceCollaborator = {
+  __typename?: 'LimitedWorkspaceCollaborator';
+  user: LimitedUser;
+};
+
+export type LimitedWorkspaceCollaboratorCollection = {
+  __typename?: 'LimitedWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type LimitedWorkspaceJoinRequest = {
@@ -1942,11 +1942,8 @@ export type OnboardingCompletionInput = {
 };
 
 export const PaidWorkspacePlans = {
-  Business: 'business',
-  Plus: 'plus',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
-  Starter: 'starter',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited'
 } as const;
@@ -4901,9 +4898,7 @@ export type WorkspacePlanPrice = {
 export const WorkspacePlanStatuses = {
   CancelationScheduled: 'cancelationScheduled',
   Canceled: 'canceled',
-  Expired: 'expired',
   PaymentFailed: 'paymentFailed',
-  Trial: 'trial',
   Valid: 'valid'
 } as const;
 
@@ -4916,16 +4911,10 @@ export type WorkspacePlanUsage = {
 
 export const WorkspacePlans = {
   Academia: 'academia',
-  Business: 'business',
-  BusinessInvoiced: 'businessInvoiced',
   Free: 'free',
-  Plus: 'plus',
-  PlusInvoiced: 'plusInvoiced',
   Pro: 'pro',
   ProUnlimited: 'proUnlimited',
   ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
-  Starter: 'starter',
-  StarterInvoiced: 'starterInvoiced',
   Team: 'team',
   TeamUnlimited: 'teamUnlimited',
   TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
@@ -5318,8 +5307,6 @@ export type ResolversTypes = {
   DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
-  DiscoverableWorkspaceCollaborator: ResolverTypeWrapper<DiscoverableWorkspaceCollaborator>;
-  DiscoverableWorkspaceCollaboratorCollection: ResolverTypeWrapper<DiscoverableWorkspaceCollaboratorCollection>;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
@@ -5334,7 +5321,9 @@ export type ResolversTypes = {
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
-  LimitedWorkspace: ResolverTypeWrapper<LimitedWorkspace>;
+  LimitedWorkspace: ResolverTypeWrapper<Omit<LimitedWorkspace, 'team'> & { team?: Maybe<ResolversTypes['LimitedWorkspaceCollaboratorCollection']> }>;
+  LimitedWorkspaceCollaborator: ResolverTypeWrapper<LimitedWorkspaceCollaboratorGraphQLReturn>;
+  LimitedWorkspaceCollaboratorCollection: ResolverTypeWrapper<Omit<LimitedWorkspaceCollaboratorCollection, 'items'> & { items: Array<ResolversTypes['LimitedWorkspaceCollaborator']> }>;
   LimitedWorkspaceJoinRequest: ResolverTypeWrapper<LimitedWorkspaceJoinRequestGraphQLReturn>;
   LimitedWorkspaceJoinRequestCollection: ResolverTypeWrapper<Omit<LimitedWorkspaceJoinRequestCollection, 'items'> & { items: Array<ResolversTypes['LimitedWorkspaceJoinRequest']> }>;
   MarkCommentViewedInput: MarkCommentViewedInput;
@@ -5652,8 +5641,6 @@ export type ResolversParentTypes = {
   DeleteVersionsInput: DeleteVersionsInput;
   DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
-  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaborator;
-  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollection;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
   FileUpload: FileUploadGraphQLReturn;
@@ -5668,7 +5655,9 @@ export type ResolversParentTypes = {
   JoinWorkspaceInput: JoinWorkspaceInput;
   LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
-  LimitedWorkspace: LimitedWorkspace;
+  LimitedWorkspace: Omit<LimitedWorkspace, 'team'> & { team?: Maybe<ResolversParentTypes['LimitedWorkspaceCollaboratorCollection']> };
+  LimitedWorkspaceCollaborator: LimitedWorkspaceCollaboratorGraphQLReturn;
+  LimitedWorkspaceCollaboratorCollection: Omit<LimitedWorkspaceCollaboratorCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedWorkspaceCollaborator']> };
   LimitedWorkspaceJoinRequest: LimitedWorkspaceJoinRequestGraphQLReturn;
   LimitedWorkspaceJoinRequestCollection: Omit<LimitedWorkspaceJoinRequestCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedWorkspaceJoinRequest']> };
   MarkCommentViewedInput: MarkCommentViewedInput;
@@ -6327,18 +6316,6 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
-export type DiscoverableWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscoverableWorkspaceCollaborator'] = ResolversParentTypes['DiscoverableWorkspaceCollaborator']> = {
-  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type DiscoverableWorkspaceCollaboratorCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscoverableWorkspaceCollaboratorCollection'] = ResolversParentTypes['DiscoverableWorkspaceCollaboratorCollection']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['DiscoverableWorkspaceCollaborator']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
   branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6420,7 +6397,19 @@ export type LimitedWorkspaceResolvers<ContextType = GraphQLContext, ParentType e
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  team?: Resolver<Maybe<ResolversTypes['DiscoverableWorkspaceCollaboratorCollection']>, ParentType, ContextType, RequireFields<LimitedWorkspaceTeamArgs, 'limit'>>;
+  team?: Resolver<Maybe<ResolversTypes['LimitedWorkspaceCollaboratorCollection']>, ParentType, ContextType, RequireFields<LimitedWorkspaceTeamArgs, 'limit'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LimitedWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedWorkspaceCollaborator'] = ResolversParentTypes['LimitedWorkspaceCollaborator']> = {
+  user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type LimitedWorkspaceCollaboratorCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedWorkspaceCollaboratorCollection'] = ResolversParentTypes['LimitedWorkspaceCollaboratorCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['LimitedWorkspaceCollaborator']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7721,8 +7710,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  DiscoverableWorkspaceCollaborator?: DiscoverableWorkspaceCollaboratorResolvers<ContextType>;
-  DiscoverableWorkspaceCollaboratorCollection?: DiscoverableWorkspaceCollaboratorCollectionResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
   GendoAIRender?: GendoAiRenderResolvers<ContextType>;
   GendoAIRenderCollection?: GendoAiRenderCollectionResolvers<ContextType>;
@@ -7730,6 +7717,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;
   LimitedWorkspace?: LimitedWorkspaceResolvers<ContextType>;
+  LimitedWorkspaceCollaborator?: LimitedWorkspaceCollaboratorResolvers<ContextType>;
+  LimitedWorkspaceCollaboratorCollection?: LimitedWorkspaceCollaboratorCollectionResolvers<ContextType>;
   LimitedWorkspaceJoinRequest?: LimitedWorkspaceJoinRequestResolvers<ContextType>;
   LimitedWorkspaceJoinRequestCollection?: LimitedWorkspaceJoinRequestCollectionResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;

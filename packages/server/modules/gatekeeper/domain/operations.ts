@@ -17,10 +17,6 @@ export type WorkspaceFeatureAccessFunction = (args: {
   workspaceId: string
 }) => Promise<boolean>
 
-export type ChangeExpiredTrialWorkspacePlanStatuses = (args: {
-  numberOfDays: number
-}) => Promise<WorkspacePlan[]>
-
 export type GetWorkspacesByPlanDaysTillExpiry = (args: {
   daysTillExpiry: number
   planValidFor: number

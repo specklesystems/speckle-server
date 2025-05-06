@@ -124,6 +124,7 @@ export const dispatchStreamEventFactory =
       stream?: StreamWithOptionalRole
       userId?: string | null
       user?: Partial<UserWithOptionalRole> | null
+      test?: string
     }
   }) => {
     const payload: typeof eventPayload & {
