@@ -8,9 +8,15 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
-        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1"
+        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 auto-rows-min"
       >
+        <ProjectPageAutomationTestAutomationInfo
+          v-if="isTestAutomation"
+          :automation-id="automation.id"
+          :project-id="projectId"
+        />
         <ProjectPageAutomationFunctions
+          v-else
           :automation="automation"
           :workspace-id="workspaceId"
           :project-id="projectId"
@@ -77,4 +83,7 @@ const workspaceId = computed(() => project.value?.workspaceId ?? undefined)
 const isEditable = computed(() => {
   return result?.value?.project?.automation?.permissions?.canUpdate.authorized ?? false
 })
+const isTestAutomation = computed(
+  () => result.value?.project.automation.isTestAutomation
+)
 </script>
