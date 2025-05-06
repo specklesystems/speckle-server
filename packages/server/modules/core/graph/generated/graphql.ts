@@ -2610,7 +2610,9 @@ export type ProjectPermissionChecks = {
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canLeave: PermissionCheckResult;
+  canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
+  canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
@@ -6801,7 +6803,9 @@ export type ProjectPermissionChecksResolvers<ContextType = GraphQLContext, Paren
   canCreateModel?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canLeave?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canLoad?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<ProjectPermissionChecksCanMoveToWorkspaceArgs>>;
+  canPublish?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadSettings?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canReadWebhooks?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
