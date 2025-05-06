@@ -69,7 +69,7 @@ export const ViewModeShortcuts = {
     name: 'Shaded',
     description: 'Colors by layer or object colors. Better for autocad & similar apps',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit6',
+    key: 'Digit2',
     action: 'SetViewModeColors',
     viewMode: ViewMode.SHADED
   },
@@ -77,7 +77,7 @@ export const ViewModeShortcuts = {
     name: 'Arctic',
     description: 'High contrast',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit5',
+    key: 'Digit3',
     action: 'SetViewModeArctic',
     viewMode: ViewMode.ARCTIC
   },
@@ -85,7 +85,7 @@ export const ViewModeShortcuts = {
     name: 'Solid',
     description: 'Flat shaded surfaces',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit3',
+    key: 'Digit4',
     action: 'SetViewModeShaded',
     viewMode: ViewMode.SOLID
   },
@@ -93,7 +93,7 @@ export const ViewModeShortcuts = {
     name: 'Pen',
     description: 'Technical line drawing style',
     modifiers: [ModifierKeys.Shift],
-    key: 'Digit4',
+    key: 'Digit5',
     action: 'SetViewModePen',
     viewMode: ViewMode.PEN
   }

@@ -24,7 +24,7 @@
     </div>
     <div
       class="border-t border-b border-outline-2 p-2 flex items-center justify-between"
-      :class="{ 'border-b': showEdges }"
+      :class="{ 'border-b': edgesEnabled }"
     >
       <span class="text-body-2xs font-medium text-foreground leading-none">Edges</span>
       <div
@@ -35,15 +35,16 @@
         "
       >
         <FormSwitch
-          v-model="showEdges"
+          :model-value="edgesEnabled"
           :show-label="false"
           name="toggle-edges"
           class="text-body-2xs"
           :disabled="currentViewMode === ViewMode.PEN"
+          @update:model-value="toggleEdgesEnabled"
         />
       </div>
     </div>
-    <div v-if="showEdges" class="p-2 pt-1.5">
+    <div v-if="edgesEnabled" class="p-2 pt-1.5">
       <div>
         <div class="flex items-center justify-between gap-2">
           <div class="text-body-2xs">Line width</div>
@@ -54,13 +55,13 @@
             class="!text-foreground-2 !pr-0"
             @click="showLineWidthSlider = !showLineWidthSlider"
           >
-            {{ edgeStroke }}
+            {{ lineWeight }}
           </FormButton>
         </div>
         <input
           v-show="showLineWidthSlider"
           id="edge-stroke"
-          v-model="edgeStroke"
+          v-model="lineWeight"
           class="w-full mt-1"
           type="range"
           name="edge-stroke"
@@ -68,6 +69,7 @@
           :max="3"
           step="0.1"
           :disabled="!showLineWidthSlider"
+          @input="handleLineWeightChange"
         />
         <div class="flex items-center justify-between gap-2 mt-1.5 pr-0.5">
           <div class="text-body-2xs">Color</div>
@@ -102,14 +104,23 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 
 const open = defineModel<boolean>('open', { default: false })
 
-const { setViewMode, currentViewMode } = useViewModeUtilities()
+const {
+  setViewMode,
+  currentViewMode,
+  edgesEnabled,
+  toggleEdgesEnabled,
+  setLineWeight,
+  lineWeight
+} = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 const isManuallyOpened = ref(false)
-const showEdges = ref(true)
-const edgeStroke = ref(1)
 const showLineWidthSlider = ref(false)
+
+const handleLineWeightChange = () => {
+  setLineWeight(lineWeight.value)
+}
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
   () => {
@@ -161,7 +172,7 @@ onUnmounted(() => {
 
 watch(currentViewMode, (newMode) => {
   if (newMode === ViewMode.PEN) {
-    showEdges.value = true
+    edgesEnabled.value = true
   }
 })
 </script>
