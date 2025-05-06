@@ -73,6 +73,14 @@
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <CalPopUp v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem label="Book an intro call">
+                    <template #icon>
+                      <IconCalendar class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </CalPopUp>
+
                 <NuxtLink
                   to="https://speckle.community/"
                   target="_blank"
@@ -92,14 +100,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </div>
-
-                <CalPopUp v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem label="Book an intro call">
-                    <template #icon>
-                      <CalendarDaysIcon class="size-5 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -151,7 +151,6 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
