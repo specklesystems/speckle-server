@@ -21,17 +21,14 @@
     </Portal>
 
     <div class="flex gap-x-3">
-      <NuxtLink
-        v-if="project.workspace && isWorkspacesEnabled"
-        :to="workspaceRoute(project.workspace.slug)"
-      >
-        <WorkspaceAvatar
-          :logo="project.workspace.logo"
-          :name="project.workspace.name"
-          size="sm"
-          class="mt-0.5"
-        />
-      </NuxtLink>
+      <WorkspaceAvatar
+        v-if="project.workspace && isWorkspacesEnabled && !project.workspace.role"
+        v-tippy="project.workspace.name"
+        :logo="project.workspace.logo"
+        :name="project.workspace.name"
+        size="sm"
+        class="mt-0.5"
+      />
       <CommonTitleDescription
         :title="project.name"
         :description="project.description"

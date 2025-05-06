@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="flex flex-col">
     <div class="flex flex-1 gap-x-3">
@@ -46,6 +44,9 @@
                 @click="showSuggestions"
                 @clear="handleClear"
                 @paste="handlePaste"
+                @keydown.down.prevent="navigateDown"
+                @keydown.up.prevent="navigateUp"
+                @keydown.esc.prevent="onEsc"
               />
               <Transition
                 v-if="isMounted"
@@ -68,19 +69,28 @@
                     </div>
                     <div
                       v-else-if="filteredSuggestions.length === 0"
-                      class="flex items-center justify-center p-4 text-foreground-2 text-body-xs"
+                      class="flex items-center justify-center p-4 text-foreground-2 text-body-xs leading-none"
                     >
                       No results
                     </div>
-                    <div
-                      v-for="(suggestion, i) in filteredSuggestions"
-                      :key="i"
-                      :class="[
-                        'block w-full text-left px-4 py-2 text-body-xs cursor-pointer hover:bg-background-2'
-                      ]"
-                      @click="selectSuggestion(suggestion.user)"
-                    >
-                      {{ suggestion.user.name }}
+                    <div v-else class="suggestions-container p-1 flex flex-col gap-y-1">
+                      <button
+                        v-for="(suggestion, i) in filteredSuggestions"
+                        :key="i"
+                        ref="suggestionRefs"
+                        type="button"
+                        class="block w-full text-left px-4 py-2 text-body-xs cursor-pointer hover:bg-foundation-2 focus:bg-foundation-2 focus:outline-none rounded-md"
+                        @click="selectSuggestion(suggestion.user)"
+                        @keydown.down.prevent="navigateDown"
+                        @keydown.up.prevent="navigateUp"
+                        @keydown.enter.prevent="
+                          selectSuggestion(filteredSuggestions[activeIndex]?.user)
+                        "
+                        @keydown.esc.prevent="onEsc"
+                        @focus="activeIndex = i"
+                      >
+                        {{ suggestion.user.name }}
+                      </button>
                     </div>
                   </div>
                 </Teleport>
@@ -173,7 +183,9 @@ const listboxButton = ref<HTMLDivElement | null>(null)
 const search = ref('')
 const input = ref('')
 const selectedUser = ref<SelectedUser | null>(null)
-const isMenuOpen = ref(false)
+const showDropdownState = ref(false)
+const activeIndex = ref(-1)
+const suggestionRefs = ref<HTMLButtonElement[]>([])
 
 const listboxButtonBounding = useElementBounding(listboxButton, {
   windowResize: true,
@@ -238,13 +250,24 @@ const userId = computed({
 })
 
 const showDropdown = computed(() => {
-  if (props.canInviteNewMembers) {
-    return filteredSuggestions.value.length > 0 && isMenuOpen.value
-  }
-  return (
-    (filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value) &&
-    isMenuOpen.value
-  )
+  const hasContent = props.canInviteNewMembers
+    ? filteredSuggestions.value.length > 0
+    : filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value
+
+  return hasContent && showDropdownState.value
+})
+
+const listboxOptionsStyle = computed(() => {
+  const style: CSSProperties = {}
+  const top = listboxButtonBounding.top.value
+  const left = listboxButtonBounding.left.value
+  const width = listboxButtonBounding.width.value
+
+  style.top = `${top + (props.showLabel ? 61 : 33)}px`
+  style.left = `${left}px`
+  style.width = `${width}px`
+
+  return style
 })
 
 const handleInput = (value: string) => {
@@ -267,29 +290,56 @@ const handleClear = () => {
   })
 }
 
-const listboxOptionsStyle = computed(() => {
-  const style: CSSProperties = {}
-  const top = listboxButtonBounding.top.value
-  const left = listboxButtonBounding.left.value
-  const width = listboxButtonBounding.width.value
+const onEsc = () => {
+  showDropdownState.value = false
+  activeIndex.value = -1
+  handleClear()
+}
 
-  style.top = `${top + (props.showLabel ? 60 : 32)}px`
-  style.left = `${left}px`
-  style.width = `${width}px`
+const showSuggestions = () => {
+  showDropdownState.value = true
+  if (filteredSuggestions.value.length > 0) {
+    activeIndex.value = -1
+  }
+}
 
-  return style
-})
+const navigateDown = () => {
+  if (filteredSuggestions.value.length === 0) return
+
+  if (activeIndex.value >= filteredSuggestions.value.length - 1) {
+    activeIndex.value = 0
+  } else {
+    activeIndex.value++
+  }
+
+  focusActiveItem()
+}
+
+const navigateUp = () => {
+  if (filteredSuggestions.value.length === 0) return
+
+  if (activeIndex.value <= 0) {
+    activeIndex.value = filteredSuggestions.value.length - 1
+  } else {
+    activeIndex.value--
+  }
+
+  focusActiveItem()
+}
+
+const focusActiveItem = () => {
+  if (suggestionRefs.value && suggestionRefs.value[activeIndex.value]) {
+    suggestionRefs.value[activeIndex.value].focus()
+  }
+}
 
 const selectSuggestion = (user: SelectedUser) => {
   userId.value = user.id
   selectedUser.value = user
   search.value = ''
   input.value = user.name
-  isMenuOpen.value = false
-}
-
-const showSuggestions = () => {
-  isMenuOpen.value = true
+  showDropdownState.value = false
+  activeIndex.value = -1
 }
 
 const handlePaste = (event: ClipboardEvent) => {
@@ -326,7 +376,8 @@ onClickOutside(
   menuEl,
   () => {
     search.value = ''
-    isMenuOpen.value = false
+    showDropdownState.value = false
+    activeIndex.value = -1
   },
   {
     ignore: [listboxButton]

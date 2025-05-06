@@ -15,10 +15,79 @@
       <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
         <ViewerMenuItem
           :label="shortcut.name"
+          :description="shortcut.description"
           :active="isActiveMode(shortcut.viewMode)"
           :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
           @click="handleViewModeChange(shortcut.viewMode)"
         />
+      </div>
+    </div>
+    <div
+      class="border-t border-b border-outline-2 p-2 flex items-center justify-between"
+      :class="{ 'border-b': edgesEnabled }"
+    >
+      <span class="text-body-2xs font-medium text-foreground leading-none">Edges</span>
+      <div
+        v-tippy="
+          currentViewMode === ViewMode.PEN
+            ? 'Edges are always enabled in Pen mode'
+            : undefined
+        "
+      >
+        <FormSwitch
+          :model-value="edgesEnabled"
+          :show-label="false"
+          name="toggle-edges"
+          class="text-body-2xs"
+          :disabled="currentViewMode === ViewMode.PEN"
+          @update:model-value="toggleEdgesEnabled"
+        />
+      </div>
+    </div>
+    <div v-if="edgesEnabled" class="p-2 pt-1.5">
+      <div>
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-body-2xs">Line width</div>
+          <FormButton
+            color="subtle"
+            size="sm"
+            :icon-right="showLineWidthSlider ? ChevronUpIcon : ChevronDownIcon"
+            class="!text-foreground-2 !pr-0"
+            @click="showLineWidthSlider = !showLineWidthSlider"
+          >
+            {{ lineWeight }}
+          </FormButton>
+        </div>
+        <input
+          v-show="showLineWidthSlider"
+          id="edge-stroke"
+          v-model="lineWeight"
+          class="w-full mt-1"
+          type="range"
+          name="edge-stroke"
+          :min="0.5"
+          :max="3"
+          step="0.1"
+          :disabled="!showLineWidthSlider"
+          @input="handleLineWeightChange"
+        />
+        <div class="flex items-center justify-between gap-2 mt-1.5 pr-0.5">
+          <div class="text-body-2xs">Color</div>
+          <div v-tippy="`Coming soon`" class="flex items-center gap-1 opacity-60">
+            <div
+              class="w-3 h-3 rounded-full bg-foundation border-[1.5px] border-foreground-2 opacity-80"
+            />
+            <div
+              class="w-3 h-3 rounded-full bg-[#98FB98] border-[1.5px] border-outline-2"
+            />
+            <div
+              class="w-3 h-3 rounded-full bg-[#87CEEB] border-[1.5px] border-outline-2"
+            />
+            <div
+              class="w-3 h-3 rounded-full bg-[#FFB6C1] border-[1.5px] border-outline-2"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </ViewerMenu>
@@ -30,14 +99,28 @@ import { ViewMode } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+import { FormSwitch } from '@speckle/ui-components'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 
 const open = defineModel<boolean>('open', { default: false })
 
-const { setViewMode, currentViewMode } = useViewModeUtilities()
+const {
+  setViewMode,
+  currentViewMode,
+  edgesEnabled,
+  toggleEdgesEnabled,
+  setLineWeight,
+  lineWeight
+} = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 const isManuallyOpened = ref(false)
+const showLineWidthSlider = ref(false)
+
+const handleLineWeightChange = () => {
+  setLineWeight(lineWeight.value)
+}
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
   () => {
@@ -85,5 +168,11 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
 onUnmounted(() => {
   cancelCloseTimer()
+})
+
+watch(currentViewMode, (newMode) => {
+  if (newMode === ViewMode.PEN) {
+    edgesEnabled.value = true
+  }
 })
 </script>

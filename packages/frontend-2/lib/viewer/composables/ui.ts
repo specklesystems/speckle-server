@@ -487,19 +487,45 @@ export function useHighlightedObjectsUtilities() {
 export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
+  const edgesEnabled = ref(true)
+  const lineWeight = ref(1)
 
   const currentViewMode = computed(() => viewMode.value)
 
-  const setViewMode = (mode: ViewMode) => {
+  const updateViewMode = () => {
     const viewModes = instance.getExtension(ViewModes)
     if (viewModes) {
-      viewModes.setViewMode(mode)
+      viewModes.setViewMode(currentViewMode.value, {
+        edges: edgesEnabled.value,
+        outlineThickness: lineWeight.value,
+        outlineOpacity: 1,
+        outlineColor: 0x323232
+      })
     }
+  }
+
+  const setViewMode = (mode: ViewMode) => {
+    viewMode.value = mode
+    updateViewMode()
+  }
+
+  const toggleEdgesEnabled = () => {
+    edgesEnabled.value = !edgesEnabled.value
+    updateViewMode()
+  }
+
+  const setLineWeight = (weight: number) => {
+    lineWeight.value = weight
+    updateViewMode()
   }
 
   return {
     currentViewMode,
-    setViewMode
+    setViewMode,
+    edgesEnabled,
+    toggleEdgesEnabled,
+    lineWeight,
+    setLineWeight
   }
 }
 

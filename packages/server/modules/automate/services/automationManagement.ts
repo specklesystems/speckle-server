@@ -7,7 +7,6 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunctionFactory,
   getFunctionReleaseFactory,
   getFunctionReleasesFactory
 } from '@/modules/automate/clients/executionEngine'
@@ -16,12 +15,10 @@ import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
-  ProjectAutomationUpdateInput,
-  ProjectTestAutomationCreateInput
+  ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
-  AutomationCreationError,
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError,
@@ -131,7 +128,6 @@ export const createAutomationFactory =
 
 export type CreateTestAutomationDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
-  getFunction: ReturnType<typeof getFunctionFactory>
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
@@ -145,53 +141,27 @@ export type CreateTestAutomationDeps = {
 export const createTestAutomationFactory =
   (deps: CreateTestAutomationDeps) =>
   async (params: {
-    input: ProjectTestAutomationCreateInput
+    automationName: string
     projectId: string
+    modelId: string
     userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
   }) => {
-    const {
-      input: { name, functionId, modelId },
-      projectId,
-      userId,
-      userResourceAccessRules
-    } = params
+    const { automationName, projectId, modelId, userId } = params
     const {
       getEncryptionKeyPair,
-      getFunction,
       storeAutomation,
       storeAutomationRevision,
-      validateStreamAccess,
       eventEmit
     } = deps
 
-    validateAutomationName(name)
-
-    await validateStreamAccess(
-      userId,
-      projectId,
-      Roles.Stream.Owner,
-      userResourceAccessRules
-    )
-
-    // Get latest release for specified function
-    const fn = await getFunction({ functionId })
-
-    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
-      // TODO: This should probably be okay for test automations
-      throw new AutomationCreationError(
-        'The specified function does not have any releases'
-      )
-    }
-
-    const latestFunctionRelease = fn.functionVersions[0]
+    validateAutomationName(automationName)
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
 
     const automationRecord = await storeAutomation({
       id: automationId,
-      name,
+      name: automationName,
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -213,13 +183,7 @@ export const createTestAutomationFactory =
     const encryptionKeyPair = await getEncryptionKeyPair()
 
     const automationRevisionRecord = await storeAutomationRevision({
-      functions: [
-        {
-          functionId,
-          functionReleaseId: latestFunctionRelease.functionVersionId,
-          functionInputs: null
-        }
-      ],
+      functions: [],
       triggers: [
         {
           triggerType: VersionCreationTriggerType,

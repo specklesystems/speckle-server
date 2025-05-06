@@ -39,7 +39,7 @@
           class="absolute left-2 lg:left-3 top-[3.2rem] lg:top-14 w-[17rem] origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
           <HeaderWorkspaceSwitcherHeaderSsoExpired
-            v-if="activeWorkspaceHasExpiredSsoSession"
+            v-if="expiredSsoWorkspaceData"
             :workspace="expiredSsoWorkspaceData"
           />
           <HeaderWorkspaceSwitcherHeaderProjects v-else-if="isProjectsActive" />
@@ -48,33 +48,10 @@
             :workspace="activeWorkspace"
             @show-invite-dialog="showInviteDialog = true"
           />
-          <div
-            class="p-2 pt-1 max-h-[60vh] lg:max-h-96 overflow-y-auto simple-scrollbar"
-          >
-            <LayoutSidebarMenuGroup
-              title="Workspaces"
-              :icon-click="isGuest ? undefined : handlePlusClick"
-              icon-text="Create workspace"
-              always-show-icon
-            >
-              <HeaderWorkspaceSwitcherItem
-                v-for="item in workspaces"
-                :key="`menu-item-${item.id}`"
-                :is-active="item.slug === activeWorkspaceSlug"
-                :name="item.name"
-                :logo="item.logo"
-                :tag="getWorkspaceTag(item)"
-                @on-click="onWorkspaceSelect(item.slug)"
-              />
-              <HeaderWorkspaceSwitcherItem
-                v-if="hasProjects"
-                :is-active="route.path === projectsRoute"
-                name="Personal projects"
-                tag="LEGACY"
-                @on-click="onProjectsSelect"
-              />
-            </LayoutSidebarMenuGroup>
-          </div>
+          <HeaderWorkspaceSwitcherList
+            :workspaces="workspaces"
+            :has-personal-projects="hasPersonalProjects"
+          />
           <MenuItem v-if="hasDiscoverableWorkspacesOrJoinRequests">
             <div class="p-2">
               <NuxtLink
@@ -111,125 +88,72 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import {
-  workspaceCreateRoute,
-  workspaceRoute,
-  projectsRoute
-} from '~/lib/common/helpers/route'
-import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
-import { graphql } from '~/lib/common/generated/gql'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { Roles, WorkspacePlans } from '@speckle/shared'
-import type { HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import {
+  navigationWorkspaceListQuery,
+  navigationActiveWorkspaceQuery
+} from '~~/lib/navigation/graphql/queries'
 
-graphql(`
-  fragment HeaderWorkspaceSwitcherActiveWorkspace_Workspace on Workspace {
-    ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
-    ...InviteDialogWorkspace_Workspace
-    id
-    name
-    logo
-  }
-`)
-
-graphql(`
-  fragment HeaderWorkspaceSwitcherWorkspaceList_Workspace on Workspace {
-    id
-    name
-    logo
-    role
-    slug
-    creationState {
-      completed
-    }
-    plan {
-      name
-    }
-  }
-`)
-
-graphql(`
-  fragment HeaderWorkspaceSwitcherWorkspaceList_User on User {
-    id
-    expiredSsoSessions {
-      id
-      ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
-    }
-    workspaces {
-      items {
-        id
-        ...HeaderWorkspaceSwitcherWorkspaceList_Workspace
-      }
-    }
-  }
-`)
-
-const { isGuest } = useActiveUser()
 const menuButtonId = useId()
-const mixpanel = useMixpanel()
-const {
-  activeWorkspaceSlug,
-  isProjectsActive,
-  mutateActiveWorkspaceSlug,
-  mutateIsProjectsActive,
-  activeWorkspaceData,
-  workspaceList: workspaces,
-  activeWorkspaceHasExpiredSsoSession,
-  expiredSsoWorkspaceData,
-  hasProjects
-} = useNavigation()
-const route = useRoute()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const {
   hasDiscoverableWorkspaces,
   discoverableWorkspacesAndJoinRequestsCount,
   hasDiscoverableWorkspacesOrJoinRequests
 } = useDiscoverableWorkspaces()
+const { result } = useQuery(
+  navigationWorkspaceListQuery,
+  () => ({
+    filter: {
+      personalOnly: true
+    }
+  }),
+  {
+    enabled: isWorkspacesEnabled.value
+  }
+)
+const { result: activeWorkspaceResult } = useQuery(
+  navigationActiveWorkspaceQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value || ''
+  }),
+  () => ({
+    enabled: !!activeWorkspaceSlug.value && isWorkspacesEnabled.value
+  })
+)
 
 const showDiscoverableWorkspacesModal = ref(false)
 const showInviteDialog = ref(false)
 
-const activeWorkspace = computed(() => {
-  return activeWorkspaceData.value
-})
-
-const displayName = computed(() =>
-  isProjectsActive.value
-    ? 'Personal projects'
-    : activeWorkspaceHasExpiredSsoSession.value
-    ? expiredSsoWorkspaceData.value?.name
-    : activeWorkspace.value?.name
+const expiredSsoSessions = computed(
+  () => result.value?.activeUser?.expiredSsoSessions || []
 )
-
-const displayLogo = computed(() => {
-  if (isProjectsActive.value) return null
-  return activeWorkspaceHasExpiredSsoSession.value
-    ? expiredSsoWorkspaceData.value?.logo
-    : activeWorkspace.value?.logo
+const expiredSsoWorkspaceData = computed(() =>
+  expiredSsoSessions.value.find((session) => session.slug === activeWorkspaceSlug.value)
+)
+const workspaces = computed(() =>
+  result.value?.activeUser
+    ? result.value.activeUser.workspaces.items.filter(
+        (workspace) => workspace.creationState?.completed !== false
+      )
+    : []
+)
+const hasPersonalProjects = computed(
+  () => !!result.value?.activeUser?.projects?.totalCount
+)
+const selectedWorkspaceMeta = computed(() => {
+  return workspaces.value.find(
+    (workspace) => workspace.slug === activeWorkspaceSlug.value
+  )
 })
-
-const onWorkspaceSelect = (slug: string) => {
-  navigateTo(workspaceRoute(slug))
-  mutateActiveWorkspaceSlug(slug)
-}
-
-const onProjectsSelect = () => {
-  mutateIsProjectsActive(true)
-  navigateTo(projectsRoute)
-}
-
-const handlePlusClick = () => {
-  navigateTo(workspaceCreateRoute())
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'navigation'
-  })
-}
-
-const getWorkspaceTag = (
-  workspace: HeaderWorkspaceSwitcherWorkspaceList_WorkspaceFragment
-) => {
-  if (workspace.role === Roles.Workspace.Guest) return 'GUEST'
-  if (workspace.plan?.name === WorkspacePlans.Free) return 'FREE'
-}
+const activeWorkspace = computed(() => activeWorkspaceResult.value?.workspaceBySlug)
+const displayName = computed(() =>
+  isProjectsActive.value ? 'Personal projects' : selectedWorkspaceMeta.value?.name
+)
+const displayLogo = computed(() =>
+  isProjectsActive.value ? null : selectedWorkspaceMeta.value?.logo
+)
 </script>
