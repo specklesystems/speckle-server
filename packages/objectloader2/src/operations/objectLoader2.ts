@@ -56,6 +56,7 @@ export default class ObjectLoader2 {
       this.#downloader.disposeAsync(),
       this.#gathered.dispose()
     ])
+    this.#deferments.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {
