@@ -2587,7 +2587,9 @@ export type ProjectPermissionChecks = {
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canLeave: PermissionCheckResult;
+  canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
+  canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
@@ -8419,7 +8421,9 @@ export type ProjectPermissionChecksFieldArgs = {
   canCreateModel: {},
   canDelete: {},
   canLeave: {},
+  canLoad: {},
   canMoveToWorkspace: ProjectPermissionChecksCanMoveToWorkspaceArgs,
+  canPublish: {},
   canRead: {},
   canReadSettings: {},
   canReadWebhooks: {},
