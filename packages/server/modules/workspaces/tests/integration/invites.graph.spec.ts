@@ -781,21 +781,11 @@ describe('Workspaces Invites GQL', () => {
     })
 
     describe('and administrating invites', () => {
-      const BATCH_INVITE_COUNT = 10
-      const EXPLICIT_INVITE_COUNT = BATCH_INVITE_COUNT + 1 // + 1 in beforeEach
-
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
         id: '',
         slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
-      }
-
-      const myAdministrationProject: BasicTestStream = {
-        name: 'My Administration Project',
-        id: '',
-        ownerId: '',
-        isPublic: false
       }
 
       const cancelableInvite = {
@@ -811,26 +801,10 @@ describe('Workspaces Invites GQL', () => {
         await gqlHelpers.batchCreateInvites(
           {
             workspaceId: myAdministrationWorkspace.id,
-            input: times(BATCH_INVITE_COUNT, () => ({
+            input: times(10, () => ({
               email: `aszzzdasasd${Math.random()}@example.org`,
               role: WorkspaceRole.Member
             }))
-          },
-          { assertNoErrors: true }
-        )
-
-        // Create project and an invite to it too
-        myAdministrationProject.workspaceId = myAdministrationWorkspace.id
-        await createTestStreams([[myAdministrationProject, me]])
-        await gqlHelpers.createWorkspaceProjectInvite(
-          {
-            projectId: myAdministrationProject.id,
-            inputs: [
-              {
-                userId: otherGuy.id,
-                role: Roles.Stream.Reviewer
-              }
-            ]
           },
           { assertNoErrors: true }
         )
@@ -879,22 +853,7 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace).to.be.ok
-        expect(res.data?.workspace.invitedTeam?.length || 0).to.be.greaterThanOrEqual(
-          EXPLICIT_INVITE_COUNT
-        )
-      })
-
-      it('invite list includes implicit one from project invite', async () => {
-        const res = await gqlHelpers.getWorkspaceWithTeam({
-          workspaceId: myAdministrationWorkspace.id
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-
-        const otherGuyInvite = res.data?.workspace.invitedTeam?.find(
-          (t) => t.user?.id === otherGuy.id
-        )
-        expect(otherGuyInvite).to.be.ok
+        expect(res.data?.workspace.invitedTeam).to.have.length(11)
       })
 
       it("can't cancel invite, if not admin", async () => {
@@ -1296,7 +1255,7 @@ describe('Workspaces Invites GQL', () => {
           expect(res.data?.activeUser?.workspaceInvites).to.be.ok
 
           if (test.hasSome) {
-            expect(res.data?.activeUser?.workspaceInvites).to.have.length(2) // 1 workspace + 1 workspace project (implicit workspace invite)
+            expect(res.data?.activeUser?.workspaceInvites).to.have.length(1)
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
               processableWorkspaceInvite.inviteId
             )

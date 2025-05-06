@@ -6,6 +6,7 @@ import { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,
+  InviteResourceTargetType,
   PrimaryInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
@@ -27,6 +28,7 @@ export type FinalizeInvite = (params: {
   finalizerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   accept: boolean
   token: string
+  resourceType?: InviteResourceTargetType
   /**
    * If true, finalization also allows accepting an invite that technically belongs to a different
    * email, one that is not yet attached to any user account.
