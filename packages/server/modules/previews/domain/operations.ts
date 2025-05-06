@@ -1,11 +1,45 @@
 import type { ObjectPreview } from '@/modules/previews/domain/types'
-import type { Nullable, Optional, PartialBy } from '@speckle/shared'
+import type {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  PartialBy
+} from '@speckle/shared'
 import type { Request, Response } from 'express'
+import { PreviewStatus } from '@/modules/previews/domain/consts'
 
 export type GetObjectPreviewInfo = (params: {
   streamId: string
   objectId: string
 }) => Promise<Optional<ObjectPreview>>
+
+export type GetPaginatedObjectPreviewsInErrorState = (params: {
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  totalCount: number
+  items: ObjectPreview[]
+  cursor: string | null
+}>
+
+export type PaginatedObjectPreviewsParams = {
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    status: (typeof PreviewStatus)[keyof typeof PreviewStatus]
+  }>
+}
+
+export type GetPaginatedObjectPreviewsPage = (
+  params: PaginatedObjectPreviewsParams
+) => Promise<{
+  items: ObjectPreview[]
+  cursor: string | null
+}>
+
+export type GetPaginatedObjectPreviewsTotalCount = (
+  params: Omit<PaginatedObjectPreviewsParams, 'limit' | 'cursor'>
+) => Promise<number>
 
 export type CreateObjectPreview = (
   params: Pick<ObjectPreview, 'streamId' | 'objectId' | 'priority'>

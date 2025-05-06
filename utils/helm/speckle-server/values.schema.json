@@ -99,6 +99,11 @@
           "type": "boolean",
           "description": "Enables the ability to move a project region (manually or automatically)",
           "default": false
+        },
+        "retryErroredPreviewsEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the system periodically retries preview requests which have previously errored.",
+          "default": false
         }
       }
     },

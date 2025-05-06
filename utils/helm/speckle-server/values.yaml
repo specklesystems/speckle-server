@@ -61,6 +61,8 @@ featureFlags:
   workspacesNewPlanEnabled: false
   ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
   moveProjectRegionEnabled: false
+  ## @param featureFlags.retryErroredPreviewsEnabled Toggles whether the system periodically retries preview requests which have previously errored.
+  retryErroredPreviewsEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
