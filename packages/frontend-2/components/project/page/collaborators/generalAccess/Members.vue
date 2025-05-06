@@ -16,7 +16,7 @@
         {{ accessSelectItems[generalAccessRole].title }}
       </div>
     </div>
-    <div v-if="expanded">
+    <div v-if="expanded" class="grid gap-3">
       <FormTextInput
         name="search"
         color="foundation"
@@ -30,7 +30,7 @@
       <div>
         <CommonLoadingIcon v-if="loading" class="mx-auto my-4" />
         <div v-else-if="members.length === 0">
-          <p class="text-body-xs text-foreground-2 mt-3">
+          <p class="text-body-xs text-foreground-2">
             {{
               !!search
                 ? 'No members found'
@@ -38,11 +38,11 @@
             }}
           </p>
         </div>
-        <div v-else class="mt-3">
+        <div v-else class="grid gap-1">
           <div
             v-for="member in membersToShow"
             :key="member.user.id"
-            class="flex justify-between items-center gap-2 mt-1.5"
+            class="flex justify-between items-center gap-2"
           >
             <div class="flex gap-2 items-center">
               <UserAvatar :user="member.user" />
