@@ -21,6 +21,7 @@ import {
   ValidateProjectRegionCopy
 } from '@/modules/workspaces/domain/operations'
 import { ProjectRegionAssignmentError } from '@/modules/workspaces/errors/regions'
+import { logger } from '@/observability/logging'
 
 export const updateProjectRegionFactory =
   (deps: {
@@ -92,20 +93,29 @@ export const updateProjectRegionFactory =
     await deps.copyProjectBlobs({ projectIds })
 
     // Validate that state after move captures latest state of project
-    const isValidCopy = await deps.validateProjectRegionCopy({
+    const targetProjectResources = {
+      models: copiedModelCount[projectId],
+      versions: copiedVersionCount[projectId],
+      objects: copiedObjectCount[projectId],
+      automations: copiedAutomationCount[projectId],
+      comments: copiedCommentCount[projectId],
+      webhooks: copiedWebhookCount[projectId]
+    }
+
+    const [isValidCopy, sourceProjectResources] = await deps.validateProjectRegionCopy({
       projectId,
-      copiedRowCount: {
-        models: copiedModelCount[projectId],
-        versions: copiedVersionCount[projectId],
-        objects: copiedObjectCount[projectId],
-        automations: copiedAutomationCount[projectId],
-        comments: copiedCommentCount[projectId],
-        webhooks: copiedWebhookCount[projectId]
-      }
+      copiedRowCount: targetProjectResources
     })
 
     if (!isValidCopy) {
       // TODO: Move failed or source project added data while changing regions. Retry move.
+      logger.error(
+        {
+          sourceData: sourceProjectResources,
+          targetData: targetProjectResources
+        },
+        'Failed to copy all project resources during project region move.'
+      )
       throw new ProjectRegionAssignmentError(
         'Missing data from source project in target region copy after move.'
       )
@@ -124,7 +134,7 @@ export const validateProjectRegionCopyFactory =
     countProjectComments: GetStreamCommentCount
     getProjectWebhooks: GetStreamWebhooks
   }): ValidateProjectRegionCopy =>
-  async ({ projectId, copiedRowCount }): Promise<boolean> => {
+  async ({ projectId, copiedRowCount }) => {
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
     const sourceProjectVersionCount = await deps.countProjectVersions(projectId)
     const sourceProjectObjectCount = await deps.countProjectObjects({
@@ -145,5 +155,15 @@ export const validateProjectRegionCopyFactory =
       copiedRowCount.webhooks === sourceProjectWebhooks.length
     ]
 
-    return tests.every((test) => !!test)
+    return [
+      tests.every((test) => !!test),
+      {
+        models: sourceProjectModelCount,
+        versions: sourceProjectVersionCount,
+        objects: sourceProjectObjectCount,
+        automations: sourceProjectAutomationCount,
+        comments: sourceProjectCommentCount,
+        webhooks: sourceProjectWebhooks.length
+      }
+    ]
   }
