@@ -21,7 +21,7 @@ import {
   deleteWorkspaceFactory,
   getWorkspacesNonCompleteFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/management'
+import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
 
@@ -48,9 +48,9 @@ const scheduleDeleteWorkspacesNonComplete = ({
     deleteWorkspace: deleteWorkspaceFactory({ db })
   })
 
-  const DAILY_AT_1_AM = '0 1 * * *'
+  const EVERY_30_MINS = '*/30 * * * *'
   return scheduleExecution(
-    DAILY_AT_1_AM,
+    EVERY_30_MINS,
     'DeleteWorkspaceNonComplete',
     async (_scheduledTime, { logger }) => {
       await Promise.all([deleteWorkspacesNonComplete({ logger })])

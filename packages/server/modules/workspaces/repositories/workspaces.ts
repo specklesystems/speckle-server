@@ -78,6 +78,7 @@ import {
   encodeCompositeCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import dayjs from 'dayjs'
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>('branches'),
@@ -485,9 +486,17 @@ export const getWorkspaceWithDomainsFactory =
 export const getWorkspacesNonCompleteFactory =
   ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
   async () => {
+    const thirtyMinutesAgo = dayjs().subtract(30, 'minutes')
+
     return tables
       .workspaceCreationState(db)
       .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+      .where(Workspaces.col.createdAt, '<', thirtyMinutesAgo.toISOString())
       .select([DbWorkspaceCreationState.col.workspaceId])
   }
 

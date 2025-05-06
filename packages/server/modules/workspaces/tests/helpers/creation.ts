@@ -27,7 +27,8 @@ import {
   storeWorkspaceDomainFactory,
   getWorkspaceBySlugFactory,
   getWorkspaceRoleForUserFactory,
-  workspaceInviteValidityFilter
+  workspaceInviteValidityFilter,
+  upsertWorkspaceCreationStateFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -116,6 +117,7 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { WorkspaceCreationState } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -148,9 +150,16 @@ export const createTestWorkspace = async (
     addPlan?: Partial<Pick<WorkspacePlan, 'name' | 'status'>> | boolean | WorkspacePlans
     addSubscription?: boolean
     regionKey?: string
+    addCreationState?: Pick<WorkspaceCreationState, 'completed' | 'state'>
   }
 ) => {
-  const { domain, addPlan = true, regionKey, addSubscription } = options || {}
+  const {
+    domain,
+    addPlan = true,
+    regionKey,
+    addSubscription,
+    addCreationState
+  } = options || {}
   const useRegion = isMultiRegionTestMode() && regionKey
 
   if (!FF_WORKSPACES_MODULE_ENABLED) {
@@ -273,6 +282,17 @@ export const createTestWorkspace = async (
     await assignRegion({
       workspaceId: newWorkspace.id,
       regionKey
+    })
+  }
+
+  if (addCreationState) {
+    const upsertWorkspaceState = upsertWorkspaceCreationStateFactory({ db })
+    await upsertWorkspaceState({
+      workspaceCreationState: {
+        workspaceId: newWorkspace.id,
+        state: addCreationState.state,
+        completed: addCreationState.completed
+      }
     })
   }
 

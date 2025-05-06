@@ -12,8 +12,7 @@ import {
   UpdateWorkspace,
   GetWorkspaceBySlug,
   UpdateWorkspaceRole,
-  EnsureValidWorkspaceRoleSeat,
-  GetWorkspacesNonComplete
+  EnsureValidWorkspaceRoleSeat
 } from '@/modules/workspaces/domain/operations'
 import {
   Workspace,
@@ -70,7 +69,6 @@ import {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
-import { Logger } from '@/observability/logging'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -346,24 +344,6 @@ export const deleteWorkspaceFactory =
       eventName: WorkspaceEvents.Deleted,
       payload: { workspaceId }
     })
-  }
-
-export const deleteWorkspacesNonCompleteFactory =
-  ({
-    getWorkspacesNonComplete,
-    deleteWorkspace
-  }: {
-    getWorkspacesNonComplete: GetWorkspacesNonComplete
-    deleteWorkspace: DeleteWorkspace
-  }) =>
-  async ({ logger }: { logger: Logger }): Promise<void> => {
-    const workspaces = await getWorkspacesNonComplete()
-    if (!workspaces?.length) return
-
-    const workspaceIds = workspaces.map((workspace) => workspace.workspaceId)
-    logger.info('Deleting non complete workspaces', { workspaceIds })
-
-    workspaceIds.forEach(async (workspaceId) => await deleteWorkspace({ workspaceId }))
   }
 
 type WorkspaceRoleDeleteArgs = {
