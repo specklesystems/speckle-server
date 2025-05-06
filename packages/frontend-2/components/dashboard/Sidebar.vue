@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="group h-full">
-    <template v-if="isLoggedIn">
+    <template v-if="showSidebar">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -156,7 +156,7 @@ import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug } = useNavigation()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
@@ -168,6 +168,13 @@ const projectsLink = computed(() => {
       : projectsRoute
     : projectsRoute
 })
+
+const showSidebar = computed(() => {
+  return isWorkspacesEnabled.value
+    ? !!activeWorkspaceSlug.value || isProjectsActive.value
+    : isLoggedIn.value
+})
+
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
