@@ -25,10 +25,10 @@ uniform mat4 cameraInverseProjectionMatrix;
 
 float getDepth( const in ivec2 screenPosition ) {
   #if __VERSION__ == 300
-	  return unpackRGBAToDepth( texelFetch( tDepth, screenPosition, 0 ) );
+	  return unpackRGBAToDepth( texelFetch( tDepth, clamp(screenPosition, ivec2(0,0), ivec2(size)), 0 ) );
   #else
     vec2 cUv = vec2(0.5/size.x, 0.5/size.y);
-    return unpackRGBAToDepth( texture2D( tDepth, vec2(screenPosition)/size + cUv ) );
+    return unpackRGBAToDepth( texture2D( tDepth, vec2(min(screenPosition, ivec2(size)))/size + cUv ) );
   #endif
 }
 
@@ -79,7 +79,7 @@ float DetectSilho(ivec2 fragCoord, ivec2 dir, float tolerance)
     // plane) depth values.
     // -------------------------------------------
     float x0 = abs(getDepth(fragCoord + dir*-2));
-    float x1 = abs(getDepth(fragCoord + dir*-1 ));
+    float x1 = abs(getDepth(fragCoord + dir*-1));
     float x2 = abs(getDepth(fragCoord + dir* 0));
     float x3 = abs(getDepth(fragCoord + dir* 1));
     
