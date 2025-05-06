@@ -171,7 +171,7 @@ const projectsLink = computed(() => {
 
 const showSidebar = computed(() => {
   return isWorkspacesEnabled.value
-    ? !!activeWorkspaceSlug.value || isProjectsActive.value
+    ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
     : isLoggedIn.value
 })
 
