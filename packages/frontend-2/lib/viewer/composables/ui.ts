@@ -18,7 +18,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { Vector3, Box3 } from 'three'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import type {
@@ -44,8 +43,12 @@ export function useSectionBoxUtilities() {
 
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = instance.getSectionBoxFromObjects(objectIds)
-    sectionBox.value = box
+    const box = instance.getRenderer().boxFromObjects(objectIds)
+    /** When generating a section box from selection we don't apply any rotation */
+    sectionBox.value = {
+      min: box.min.toArray(),
+      max: box.max.toArray()
+    }
   }
 
   const toggleSectionBox = () => {
@@ -67,18 +70,11 @@ export function useSectionBoxUtilities() {
 
     if (serializedSectionBox) {
       // Same logic we have in deserialization
-      sectionBox.value = new Box3(
-        new Vector3(
-          serializedSectionBox.min[0],
-          serializedSectionBox.min[1],
-          serializedSectionBox.min[2]
-        ),
-        new Vector3(
-          serializedSectionBox.max[0],
-          serializedSectionBox.max[1],
-          serializedSectionBox.max[2]
-        )
-      )
+      sectionBox.value = {
+        min: serializedSectionBox.min,
+        max: serializedSectionBox.max,
+        rotation: serializedSectionBox.rotation
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import { Box3, MathUtils, Vector2, Vector3 } from 'three'
+import { Box3, MathUtils, Matrix3, Vector2, Vector3 } from 'three'
 import {
   FilteringExtension,
   type FilteringState
@@ -48,6 +48,7 @@ import { HybridCameraController } from './extensions/HybridCameraController.js'
 import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
 import { SectionTool } from '../index.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
+import { SpeckleViewer } from '@speckle/shared'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -146,41 +147,31 @@ export class LegacyViewer extends Viewer {
 
   /** SECTION BOX */
   public setSectionBox(
-    box?: {
-      min: {
-        x: number
-        y: number
-        z: number
-      }
-      max: { x: number; y: number; z: number }
-    },
+    boxData?: SpeckleViewer.ViewerState.SectionBoxData,
     offset?: number
   ) {
-    if (!box) {
+    let box: Box3 | OBB
+    if (!boxData) {
       box = this.speckleRenderer.sceneBox
+    } else {
+      box = new OBB()
+      box.min = new Vector3().fromArray(boxData.min)
+      box.max = new Vector3().fromArray(boxData.max)
+      box.rotation =
+        boxData.rotation && boxData.rotation.length
+          ? new Matrix3().fromArray(boxData.rotation)
+          : new Matrix3().identity()
     }
-    this.sections.setBox(
-      new Box3(
-        new Vector3(box.min.x, box.min.y, box.min.z),
-        new Vector3(box.max.x, box.max.y, box.max.z)
-      ),
-      offset
-    )
+    this.sections.setBox(box, offset)
   }
 
-  public getSectionBoxFromObjects(objectIds: string[]) {
-    return this.speckleRenderer.boxFromObjects(objectIds)
-  }
-
-  public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
-    this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
-  }
-
-  public getCurrentSectionBox(): Box3 {
-    /** Temporary until server data model is updated so we don't need to change anything in FE*/
-    let box = this.sections.getBox()
-    if (box instanceof OBB) box = new Box3().fromOBB(box)
-    return box
+  public getCurrentSectionBox(): SpeckleViewer.ViewerState.SectionBoxData {
+    const box = this.sections.getBox()
+    return {
+      min: box.min.toArray(),
+      max: box.max.toArray(),
+      ...(box instanceof OBB && { rotation: box.rotation.toArray() })
+    } as SpeckleViewer.ViewerState.SectionBoxData
   }
 
   public toggleSectionBox() {

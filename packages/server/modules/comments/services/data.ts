@@ -160,7 +160,8 @@ export const convertLegacyDataToStateFactory =
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
-              max: (sectionBox.max as number[]) || [0, 0, 0]
+              max: (sectionBox.max as number[]) || [0, 0, 0],
+              rotation: (sectionBox.rotation as number[]) || [1, 0, 0, 0, 1, 0, 0, 0, 1]
             }
           : null,
         lightConfig: {},

@@ -4,6 +4,7 @@ import { Box3, Vector3, Matrix3 } from 'three'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 const _vector3 = new Vector3()
+const _box3 = new Box3()
 
 OBB.prototype.isEmpty = function () {
   return this.halfSize.length() === 0
@@ -27,6 +28,39 @@ OBB.prototype.equals = function (other: OBB, epsion = 1e-6) {
 
   return true
 }
+
+OBB.prototype._min = new Vector3()
+OBB.prototype._max = new Vector3()
+
+Object.defineProperty(OBB.prototype, 'min', {
+  get(this: OBB) {
+    return new Vector3().copy(this.center).sub(this.halfSize)
+  },
+  set(this: OBB, value: Vector3) {
+    this._min.copy(value)
+    _box3.set(value, this._max)
+    _box3.getCenter(this.center)
+    _box3.getSize(this.halfSize)
+    this.halfSize.multiplyScalar(0.5)
+  },
+  enumerable: true,
+  configurable: true
+})
+
+Object.defineProperty(OBB.prototype, 'max', {
+  get(this: OBB) {
+    return new Vector3().copy(this.center).add(this.halfSize)
+  },
+  set(this: OBB, value: Vector3) {
+    this._max.copy(value)
+    _box3.set(this._min, value)
+    _box3.getCenter(this.center)
+    _box3.getSize(this.halfSize)
+    this.halfSize.multiplyScalar(0.5)
+  },
+  enumerable: true,
+  configurable: true
+})
 
 Box3.prototype.fromOBB = function (obb: OBB): Box3 {
   const { center, halfSize, rotation } = obb
