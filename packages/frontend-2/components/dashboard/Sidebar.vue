@@ -73,19 +73,7 @@
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
-                <NuxtLink
-                  to="https://speckle.community/"
-                  target="_blank"
-                  @click="isOpenMobile = false"
-                >
-                  <LayoutSidebarMenuGroupItem label="Community forum" external>
-                    <template #icon>
-                      <IconCommunity class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
-
-                <div @click="openFeedbackDialog">
+                <div v-if="isWorkspacesEnabled" @click="openChat">
                   <LayoutSidebarMenuGroupItem label="Give us feedback">
                     <template #icon>
                       <IconFeedback class="size-4 text-foreground-2" />
@@ -100,6 +88,18 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
+
+                <NuxtLink
+                  to="https://speckle.community/"
+                  target="_blank"
+                  @click="isOpenMobile = false"
+                >
+                  <LayoutSidebarMenuGroupItem label="Community forum" external>
+                    <template #icon>
+                      <IconCommunity class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -161,6 +161,11 @@ const { activeWorkspaceSlug } = useNavigation()
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
 
+const openChat = () => {
+  window.Intercom('show')
+  isOpenMobile.value = false
+}
+
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspaceSlug.value
@@ -170,10 +175,5 @@ const projectsLink = computed(() => {
 })
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
-  isOpenMobile.value = false
 }
 </script>
