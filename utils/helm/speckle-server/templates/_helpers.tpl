@@ -614,42 +614,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: "{{ default .Values.secretName .Values.billing.secretName }}"
       key: {{ .Values.billing.stripeEndpointSigningKey.secretKey }}
 
-- name: WORKSPACE_GUEST_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceGuestSeatStripeProductId }}
-
-- name: WORKSPACE_MONTHLY_GUEST_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyGuestSeatStripePriceId }}
-
-- name: WORKSPACE_YEARLY_GUEST_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyGuestSeatStripePriceId }}
-
-- name: WORKSPACE_STARTER_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceStarterSeatStripeProductId }}
-
-- name: WORKSPACE_MONTHLY_STARTER_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyStarterSeatStripePriceId }}
-
-- name: WORKSPACE_YEARLY_STARTER_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyStarterSeatStripePriceId }}
-
-- name: WORKSPACE_PLUS_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspacePlusSeatStripeProductId }}
-
-- name: WORKSPACE_MONTHLY_PLUS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyPlusSeatStripePriceId }}
-
-- name: WORKSPACE_YEARLY_PLUS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyPlusSeatStripePriceId }}
-
-- name: WORKSPACE_BUSINESS_SEAT_STRIPE_PRODUCT_ID
-  value: {{ .Values.billing.workspaceBusinessSeatStripeProductId }}
-
-- name: WORKSPACE_MONTHLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceMonthlyBusinessSeatStripePriceId }}
-
-- name: WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID
-  value: {{ .Values.billing.workspaceYearlyBusinessSeatStripePriceId }}
-
 - name: WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID
   value: {{ .Values.billing.workspaceTeamSeatStripeProductId }}
 

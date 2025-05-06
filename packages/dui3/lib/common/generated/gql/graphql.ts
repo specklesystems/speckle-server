@@ -1913,11 +1913,8 @@ export type OnboardingCompletionInput = {
 };
 
 export enum PaidWorkspacePlans {
-  Business = 'business',
-  Plus = 'plus',
   Pro = 'pro',
   ProUnlimited = 'proUnlimited',
-  Starter = 'starter',
   Team = 'team',
   TeamUnlimited = 'teamUnlimited'
 }
@@ -4848,9 +4845,7 @@ export type WorkspacePlanPrice = {
 export enum WorkspacePlanStatuses {
   CancelationScheduled = 'cancelationScheduled',
   Canceled = 'canceled',
-  Expired = 'expired',
   PaymentFailed = 'paymentFailed',
-  Trial = 'trial',
   Valid = 'valid'
 }
 
@@ -4862,16 +4857,10 @@ export type WorkspacePlanUsage = {
 
 export enum WorkspacePlans {
   Academia = 'academia',
-  Business = 'business',
-  BusinessInvoiced = 'businessInvoiced',
   Free = 'free',
-  Plus = 'plus',
-  PlusInvoiced = 'plusInvoiced',
   Pro = 'pro',
   ProUnlimited = 'proUnlimited',
   ProUnlimitedInvoiced = 'proUnlimitedInvoiced',
-  Starter = 'starter',
-  StarterInvoiced = 'starterInvoiced',
   Team = 'team',
   TeamUnlimited = 'teamUnlimited',
   TeamUnlimitedInvoiced = 'teamUnlimitedInvoiced',

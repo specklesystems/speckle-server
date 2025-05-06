@@ -834,10 +834,7 @@ describe('Workspace role services', () => {
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(payload).to.deep.equal({
         acl: role,
-        updatedByUserId: workspaceOwnerId,
-        flags: {
-          skipProjectRoleUpdatesFor: []
-        }
+        updatedByUserId: workspaceOwnerId
       })
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {

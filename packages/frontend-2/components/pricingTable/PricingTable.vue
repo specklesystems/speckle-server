@@ -11,7 +11,7 @@
       :workspace-id="props.workspaceId"
       :has-subscription="!!subscription"
       :currency="props.currency"
-      @on-upgrade-click="toggleUpgradeDialog(plan as PaidWorkspacePlansNew)"
+      @on-upgrade-click="toggleUpgradeDialog(plan as PaidWorkspacePlans)"
     />
 
     <SettingsWorkspacesBillingUpgradeDialog
@@ -32,7 +32,7 @@
 import { BillingInterval, type Currency } from '~/lib/common/generated/gql/graphql'
 import {
   WorkspacePlans,
-  type PaidWorkspacePlansNew,
+  type PaidWorkspacePlans,
   type MaybeNullOrUndefined,
   type WorkspaceRoles,
   Roles
@@ -59,7 +59,7 @@ const {
 const mixpanel = useMixpanel()
 
 const isUpgradeDialogOpen = ref(false)
-const planToUpgrade = ref<PaidWorkspacePlansNew | null>(null)
+const planToUpgrade = ref<PaidWorkspacePlans | null>(null)
 
 const plans = computed(() => [
   WorkspacePlans.Free,
@@ -69,7 +69,7 @@ const plans = computed(() => [
 
 const isAdmin = computed(() => props.role === Roles.Workspace.Admin)
 
-const toggleUpgradeDialog = (plan: PaidWorkspacePlansNew) => {
+const toggleUpgradeDialog = (plan: PaidWorkspacePlans) => {
   planToUpgrade.value = plan
   isUpgradeDialogOpen.value = !isUpgradeDialogOpen.value
 

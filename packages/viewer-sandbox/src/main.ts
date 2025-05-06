@@ -104,6 +104,8 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   // await sandbox.objectLoaderOnly(_stream)
   await sandbox.loadUrl(_stream)
+  // await sandbox.objectLoaderOnly(_stream)
+  await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
 
@@ -516,6 +518,9 @@ const getStream = () => {
 
     // BUSTED model ID
     // 'https://app.speckle.systems/projects/155101d3ca/models/b8d3b42787b2dc9fc412a8ae16af03ac385e48e6'
+
+    // New text
+    // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
   )
 }
 

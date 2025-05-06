@@ -1,9 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-ARG NODE_ENV=production
-
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 
-ARG NODE_ENV
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -35,7 +33,7 @@ COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader2/package.json ./packages/objectloader2/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN yarn workspaces focus -A && yarn
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 
 # Only copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
@@ -101,7 +99,7 @@ COPY --link --from=build-stage /speckle-server/packages/preview-frontend/dist ./
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 RUN groupadd -g 30000 -r pptruser && \
     useradd -r -g pptruser -G audio,video -u 800 pptruser && \
