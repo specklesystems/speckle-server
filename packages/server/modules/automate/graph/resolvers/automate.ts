@@ -225,15 +225,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
-          const res = ctx.loaders
+          const res = await ctx.loaders
             .forRegion({ db: projectDb })
             .streams.getAutomation.forStream(parent.id)
             .load(args.id)
 
           if (!res) {
-            if (!res) {
-              throw new AutomationNotFoundError()
-            }
+            throw new AutomationNotFoundError()
           }
 
           return res

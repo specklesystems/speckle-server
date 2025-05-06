@@ -27,7 +27,7 @@
     </div>
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
-  <div v-else />
+  <CommonGenericEmptyState v-else message="Automation not found." />
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
