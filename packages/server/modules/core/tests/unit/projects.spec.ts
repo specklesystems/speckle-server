@@ -2,6 +2,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import { isSpecificEventPayload } from '@/modules/shared/services/eventBus'
 import { expectToThrow } from '@/test/assertionHelper'
@@ -31,13 +32,12 @@ describe('project services @core', () => {
       const project = await createNewProject({ ownerId })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Private)
       expect(storedProject!.allowPublicComments).to.be.false
     })
 
     // Discoverability currently disabled
-    it.skip(`makes PUBLIC projects public and discoverable`, async () => {
+    it.skip(`makes PUBLIC projects public`, async () => {
       const visibility = 'PUBLIC'
       const ownerId = cryptoRandomString({ length: 10 })
 
@@ -60,12 +60,11 @@ describe('project services @core', () => {
       const project = await createNewProject({ ownerId, visibility })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.true
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Public)
       expect(storedProject!.allowPublicComments).to.be.false
     })
 
-    it(`makes UNLISTED projects public but not discoverable`, async () => {
+    it(`makes UNLISTED projects public`, async () => {
       const visibility = 'UNLISTED'
       const ownerId = cryptoRandomString({ length: 10 })
 
@@ -88,11 +87,10 @@ describe('project services @core', () => {
       const project = await createNewProject({ ownerId, visibility })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.true
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Public)
       expect(storedProject!.allowPublicComments).to.be.false
     })
-    // )
+
     it('creates a private project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
       let storedProject: Project | undefined = undefined
@@ -113,8 +111,7 @@ describe('project services @core', () => {
       const project = await createNewProject({ ownerId, visibility: 'PRIVATE' })
 
       expect(project).deep.equal(storedProject)
-      expect(storedProject!.isPublic).to.be.false
-      expect(storedProject!.isDiscoverable).to.be.false
+      expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Private)
       expect(storedProject!.allowPublicComments).to.be.false
     })
     it('deletes the created project if getProject throws StreamNotFoundError', async () => {

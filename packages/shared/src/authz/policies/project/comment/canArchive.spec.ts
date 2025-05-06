@@ -20,9 +20,7 @@ describe('canArchiveProjectCommentPolicy', () => {
       getEnv: async () => parseFeatureFlags({}),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
@@ -45,8 +43,6 @@ describe('canArchiveProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
         allowPublicComments: false
       }),
       getProjectRole: async () => null,

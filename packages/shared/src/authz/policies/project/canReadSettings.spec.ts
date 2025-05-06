@@ -19,9 +19,7 @@ describe('canReadProjectSettingsPolicy', () => {
       getEnv: async () => parseFeatureFlags({}),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -39,9 +37,7 @@ describe('canReadProjectSettingsPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspace-id'
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

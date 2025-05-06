@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -161,6 +162,9 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 
 export type BasicTestStream = {
   name: string
+  /**
+   * @deprecated Use visibility instead
+   */
   isPublic: boolean
   /**
    * The ID of the owner user. Will be filled in by createTestStream().
@@ -199,7 +203,9 @@ export async function createTestStream(
         description: streamObj.description,
         visibility: streamObj.isPublic
           ? ProjectVisibility.Public
-          : ProjectVisibility.Private,
+          : (streamObj.visibility
+              ? mapDbToGqlProjectVisibility(streamObj.visibility)
+              : undefined) || ProjectVisibility.Private,
         workspaceId: streamObj.workspaceId
       },
       ownerId: owner.id

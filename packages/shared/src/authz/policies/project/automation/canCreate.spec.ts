@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 const buildCanCreatePolicy = (
   overrides?: Partial<Parameters<typeof canCreateAutomationPolicy>[0]>
@@ -22,8 +23,7 @@ const buildCanCreatePolicy = (
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false,
+      visibility: ProjectVisibility.Private,
       allowPublicComments: false
     }),
     getProjectRole: async () => Roles.Stream.Owner,
@@ -131,8 +131,7 @@ describe('canCreateAutomation', () => {
       getProject: async () => ({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
+        visibility: ProjectVisibility.Private,
         allowPublicComments: false
       }),
       getWorkspace: async () => ({

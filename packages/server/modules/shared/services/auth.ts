@@ -4,6 +4,7 @@ import {
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -97,7 +98,7 @@ export const authorizeResolverFactory =
 
       targetWorkspaceId = stream.workspaceId
 
-      const isPublic = !!stream?.isPublic
+      const isPublic = stream.visibility === ProjectRecordVisibility.Public
       if (isPublic && role.weight < 200) return
     }
 

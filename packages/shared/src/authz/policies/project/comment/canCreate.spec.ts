@@ -12,6 +12,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canCreateProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectCommentPolicy>) =>
@@ -19,9 +20,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getEnv: async () => parseFeatureFlags({}),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
@@ -39,8 +38,6 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
         allowPublicComments: false
       }),
       getProjectRole: async () => null,
@@ -76,8 +73,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: true
       }),
       getProjectRole: async () => null
@@ -112,8 +108,7 @@ describe('canCreateProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: false
       })
     })

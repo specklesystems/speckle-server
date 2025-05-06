@@ -25,6 +25,7 @@ import {
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  ProjectRecordVisibility,
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
@@ -47,7 +48,10 @@ import {
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import {
+  isProjectCreateInput,
+  mapGqlToDbProjectVisibility
+} from '@/modules/core/helpers/project'
 import {
   StreamAccessUpdateError,
   StreamNotFoundError,
@@ -59,8 +63,7 @@ import {
   DeleteProjectRole,
   UpdateProject,
   GetRolesByUserId,
-  UpsertProjectRole,
-  ProjectVisibility
+  UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
 import {
   StreamWithCommitId,
@@ -243,7 +246,9 @@ const getFavoritedStreamsQueryBaseFactory =
           .andOnVal(StreamAcl.col.userId, userId)
       )
       .andWhere((q) =>
-        q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+        q
+          .where(Streams.col.visibility, ProjectRecordVisibility.Public)
+          .orWhereNotNull(StreamAcl.col.resourceId)
       )
 
     if (streamIdWhitelist?.length) {
@@ -406,7 +411,10 @@ export const canUserFavoriteStreamFactory =
       })
       .where(Streams.col.id, streamId)
       .andWhere(function () {
-        this.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+        this.where(
+          Streams.col.visibility,
+          ProjectRecordVisibility.Public
+        ).orWhereNotNull(StreamAcl.col.resourceId)
       })
       .limit(1)
 
@@ -469,8 +477,8 @@ const buildDiscoverableStreamsBaseQueryFactory =
     const q = tables
       .streams(deps.db)
       .select<Result>(Streams.cols)
-      .where(Streams.col.isDiscoverable, true)
-      .andWhere(Streams.col.isPublic, true)
+      .andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
+      .andWhere(false) // No such thing as discoverability anymore, just return nothing
 
     if (params.streamIdWhitelist?.length) {
       q.whereIn(Streams.col.id, params.streamIdWhitelist)
@@ -774,9 +782,7 @@ const getUserStreamsQueryBaseFactory =
     }
 
     if (forOtherUser) {
-      query
-        .andWhere(Streams.col.isDiscoverable, true)
-        .andWhere(Streams.col.isPublic, true)
+      query.andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
     }
 
     if (searchQuery) {
@@ -876,15 +882,14 @@ export const createStreamFactory =
     const { name, description } = input
     const { ownerId, trx } = options || {}
 
-    let shouldBePublic: boolean, shouldBeDiscoverable: boolean
+    let visibility: ProjectRecordVisibility
     if (isProjectCreateInput(input)) {
-      shouldBeDiscoverable = input.visibility === 'PUBLIC'
-      const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
-      shouldBePublic =
-        !input.visibility || publicVisibilities.includes(input.visibility)
+      visibility = mapGqlToDbProjectVisibility(input.visibility || 'PRIVATE')
     } else {
-      shouldBePublic = input.isPublic !== false
-      shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
+      visibility =
+        input.isPublic !== false
+          ? ProjectRecordVisibility.Public
+          : ProjectRecordVisibility.Private
     }
 
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
@@ -895,8 +900,7 @@ export const createStreamFactory =
       id,
       name: name || generateProjectName(),
       description: description || '',
-      isPublic: shouldBePublic,
-      isDiscoverable: shouldBeDiscoverable,
+      visibility,
       updatedAt: knex.fn.now(),
       workspaceId: workspaceId || null,
       regionKey
@@ -945,7 +949,7 @@ export const getUserStreamCountsFactory =
 
     if (publicOnly) {
       q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -1017,18 +1021,21 @@ export const updateStreamFactory =
     )
 
     if (isProjectUpdateInput(update)) {
-      if (has(validUpdate, 'visibility')) {
-        validUpdate.isPublic = update.visibility !== 'PRIVATE'
-        validUpdate.isDiscoverable = update.visibility === 'PUBLIC'
-        delete validUpdate['visibility'] // cause it's not a real column
+      if (has(update, 'visibility')) {
+        validUpdate.visibility = mapGqlToDbProjectVisibility(
+          update.visibility || 'PRIVATE'
+        )
       }
     } else {
-      if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-        validUpdate.isDiscoverable = false
+      if (has(update, 'isPublic') && !update.isPublic) {
+        validUpdate.visibility = ProjectRecordVisibility.Private
       }
     }
 
-    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+    if (
+      has(validUpdate, 'visibility') &&
+      validUpdate.visibility !== ProjectRecordVisibility.Public
+    ) {
       validUpdate.allowPublicComments = false
     } else if (
       has(validUpdate, 'allowPublicComments') &&
@@ -1037,8 +1044,9 @@ export const updateStreamFactory =
       validUpdate.isPublic = true
     }
 
-    // Ignore discoverability for now
+    // Remove non-existant fields
     delete validUpdate['isDiscoverable']
+    delete validUpdate['isPublic']
 
     if (!Object.keys(validUpdate).length) return null
 

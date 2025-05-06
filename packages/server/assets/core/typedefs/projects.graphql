@@ -7,17 +7,10 @@ extend type Query {
 }
 
 enum ProjectVisibility {
-  PRIVATE
-  UNLISTED
-  PUBLIC
-}
-
-"""
-Visibility without the "discoverable" option
-"""
-enum SimpleProjectVisibility {
-  PRIVATE
-  UNLISTED
+  PRIVATE # Accessible to explicit collaborators
+  UNLISTED # (public & unlisted are the same)
+  PUBLIC # Accessible to everyone (even non-logged in users)
+  # WORKSPACE # Accessible to everyone in the project's workspace
 }
 
 """
@@ -175,7 +168,7 @@ type Project {
   id: ID!
   name: String!
   description: String
-  visibility: SimpleProjectVisibility!
+  visibility: ProjectVisibility!
   allowPublicComments: Boolean!
   """
   Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.

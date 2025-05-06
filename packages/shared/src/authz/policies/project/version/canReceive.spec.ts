@@ -19,9 +19,7 @@ describe('canReceiveProjectVersionPolicy', () => {
     canReceiveProjectVersionPolicy({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getEnv: async () => parseFeatureFlags({}),
@@ -39,9 +37,7 @@ describe('canReceiveProjectVersionPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: 'workspace-id'
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

@@ -20,9 +20,7 @@ const buildCanReadAutomationPolicy = (
   canReadAutomationPolicy({
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: null,
-      isPublic: false,
-      isDiscoverable: false
+      workspaceId: null
     }),
     getProjectRole: async () => Roles.Stream.Reviewer,
     getAdminOverrideEnabled: async () => false,
@@ -124,9 +122,7 @@ describe('canReadAutomationPolicy', () => {
     const overrides = {
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: 'workspace-id'
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

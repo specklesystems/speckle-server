@@ -39,6 +39,7 @@ import { GetStream } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { authorizeResolver } from '@/modules/shared'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -66,8 +67,10 @@ export const authorizeProjectCommentsAccessFactory =
     }
 
     let success = true
-    if (!project.isPublic && !authCtx.auth) success = false
-    if (!project.isPublic && !project.role) success = false
+    if (project.visibility !== ProjectRecordVisibility.Public && !authCtx.auth)
+      success = false
+    if (project.visibility !== ProjectRecordVisibility.Public && !project.role)
+      success = false
     if (requireProjectRole && !project.role && !project.allowPublicComments)
       success = false
     if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)

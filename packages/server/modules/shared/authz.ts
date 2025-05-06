@@ -33,6 +33,7 @@ import {
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
 import { moduleAuthLoaders } from '@/modules'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 export { AuthContext, AuthParams }
 
 interface AuthFailedResult extends AuthResult {
@@ -267,20 +268,25 @@ export const allowForServerAdmins: AuthPipelineFunction = async ({
 
 export const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic
+    context.auth && context.stream?.visibility === ProjectRecordVisibility.Public
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic && context.stream?.allowPublicComments
+    context.auth &&
+    context.stream?.visibility === ProjectRecordVisibility.Public &&
+    context.stream?.allowPublicComments
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowAnonymousUsersOnPublicStreams: AuthPipelineFunction = async ({
   context,
   authResult
-}) => (context.stream?.isPublic ? authSuccess(context) : { context, authResult })
+}) =>
+  context.stream?.visibility === ProjectRecordVisibility.Public
+    ? authSuccess(context)
+    : { context, authResult }
 
 export const authPipelineCreator = (
   steps: AuthPipelineFunction[]

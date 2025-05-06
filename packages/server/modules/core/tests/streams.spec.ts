@@ -602,7 +602,7 @@ describe('Streams @core-streams', () => {
     const TOTAL_OWN_STREAM_COUNT = OWNED_STREAM_COUNT + SHARED_STREAM_COUNT
 
     const PUBLIC_STREAM_COUNT = 15
-    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT - 5
+    const DISCOVERABLE_STREAM_COUNT = 0 // discoverability removed
 
     let userOneStreams: BasicTestStream[]
     let userTwoStreams: BasicTestStream[]
@@ -613,7 +613,6 @@ describe('Streams @core-streams', () => {
 
       async function setupStreams(user: BasicTestUser): Promise<BasicTestStream[]> {
         let remainingPublicStreams = PUBLIC_STREAM_COUNT
-        let remainingDiscoverableStreams = DISCOVERABLE_STREAM_COUNT
 
         // creating test streams
         const streamDefinitions = times(
@@ -621,7 +620,6 @@ describe('Streams @core-streams', () => {
           (i): BasicTestStream => ({
             name: `${user.name} test stream #${i}`,
             isPublic: remainingPublicStreams-- > 0,
-            isDiscoverable: remainingDiscoverableStreams-- > 0,
             id: '',
             ownerId: ''
           })

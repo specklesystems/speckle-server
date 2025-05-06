@@ -21,15 +21,14 @@ import {
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { getProjectFake } from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
     ensureMinimumProjectRoleFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
@@ -47,9 +46,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspaceId'
       }),
       getWorkspace: async () => ({
         id: 'workspaceId',
@@ -167,9 +164,7 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
     checkIfPubliclyReadableProjectFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getEnv: async () => parseFeatureFlags({}),
       ...overrides
@@ -200,8 +195,7 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
       getProject: getProjectFake({
         id: 'projectId',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       })
     })
 
@@ -216,9 +210,7 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
     const sut = buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       })
     })
     const result = await sut({
@@ -235,9 +227,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
     ensureProjectWorkspaceAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getEnv: async () => parseFeatureFlags({}),
       getWorkspace: async () => null,
@@ -253,9 +243,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspaceId'
       }),
       getWorkspace: async () => ({
         id: 'workspaceId',
@@ -391,9 +379,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     ensureImplicitProjectMemberWithReadAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getServerRole: async () => Roles.Server.User,
@@ -412,9 +398,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspaceId'
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -612,9 +596,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     ensureImplicitProjectMemberWithWriteAccessFragment({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
@@ -632,9 +614,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspaceId'
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

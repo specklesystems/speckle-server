@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canBroadcastProjectActivityPolicy', () => {
   const buildSUT = (
@@ -22,9 +23,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getEnv: async () => parseFeatureFlags({}),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getAdminOverrideEnabled: async () => false,
       getProjectRole: async () => Roles.Stream.Reviewer,
@@ -42,9 +41,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspace-id'
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -79,8 +76,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => null
     })
@@ -187,8 +183,7 @@ describe('canBroadcastProjectActivityPolicy', () => {
         getProject: getProjectFake({
           id: 'project-id',
           workspaceId: 'workspace-id',
-          isDiscoverable: false,
-          isPublic: true
+          visibility: ProjectVisibility.Public
         })
       })
 
