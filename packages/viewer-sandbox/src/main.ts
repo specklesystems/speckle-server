@@ -104,8 +104,6 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   // await sandbox.objectLoaderOnly(_stream)
   await sandbox.loadUrl(_stream)
-  // await sandbox.objectLoaderOnly(_stream)
-  await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
 
