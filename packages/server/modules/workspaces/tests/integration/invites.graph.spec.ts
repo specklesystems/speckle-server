@@ -783,6 +783,21 @@ describe('Workspaces Invites GQL', () => {
     describe('and administrating invites', () => {
       const BATCH_INVITE_COUNT = 10
       const EXPLICIT_INVITE_COUNT = BATCH_INVITE_COUNT + 1 // + 1 in beforeEach
+      const IMPLICIT_INVITE_COUNT = EXPLICIT_INVITE_COUNT + 1 // 1 from project invite
+
+      const unrelatedWorkspace: BasicTestWorkspace = {
+        name: 'Unrelated Workspace',
+        id: '',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+
+      const unrelatedWorkspaceStream: BasicTestStream = {
+        name: 'Unrelated Workspace Stream',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
 
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
@@ -804,7 +819,10 @@ describe('Workspaces Invites GQL', () => {
       }
 
       before(async () => {
-        await createTestWorkspaces([[myAdministrationWorkspace, me]])
+        await createTestWorkspaces([
+          [myAdministrationWorkspace, me],
+          [unrelatedWorkspace, me]
+        ])
         await assignToWorkspaces([
           [myAdministrationWorkspace, myWorkspaceFriend, Roles.Workspace.Guest]
         ])
@@ -831,6 +849,32 @@ describe('Workspaces Invites GQL', () => {
                 role: Roles.Stream.Reviewer
               }
             ]
+          },
+          { assertNoErrors: true }
+        )
+
+        // Create unrelated invites, to ensure they dont show up where they shouldnt
+        unrelatedWorkspaceStream.workspaceId = unrelatedWorkspace.id
+        await createTestStreams([[unrelatedWorkspaceStream, me]])
+        await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: unrelatedWorkspaceStream.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Reviewer
+              }
+            ]
+          },
+          { assertNoErrors: true }
+        )
+        await gqlHelpers.createInvite(
+          {
+            workspaceId: unrelatedWorkspace.id,
+            input: {
+              email: 'aaasdasjdhasdjasd@aaa.com',
+              role: WorkspaceRole.Member
+            }
           },
           { assertNoErrors: true }
         )
@@ -879,8 +923,8 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace).to.be.ok
-        expect(res.data?.workspace.invitedTeam?.length || 0).to.be.greaterThanOrEqual(
-          EXPLICIT_INVITE_COUNT
+        expect(res.data?.workspace.invitedTeam?.length || 0).to.be.equal(
+          IMPLICIT_INVITE_COUNT
         )
       })
 
@@ -895,6 +939,19 @@ describe('Workspaces Invites GQL', () => {
           (t) => t.user?.id === otherGuy.id
         )
         expect(otherGuyInvite).to.be.ok
+      })
+
+      it("invite list doesn't include unrelated invites", async () => {
+        const res = await gqlHelpers.getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const unrelatedInvite = res.data?.workspace.invitedTeam?.find(
+          (t) => t.workspaceId === unrelatedWorkspace.id
+        )
+        expect(unrelatedInvite).to.be.not.ok
       })
 
       it("can't cancel invite, if not admin", async () => {

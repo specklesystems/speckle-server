@@ -114,7 +114,10 @@ const buildInvitesBaseQuery =
       knex.raw(
         `${RawWorkspaces.name} ON 
           (${RawServerInvites.col.resource} ->> 'resourceType' = '${WorkspaceInviteResourceType}' AND ${RawServerInvites.col.resource} ->> 'resourceId' = ${RawWorkspaces.col.id})
-          OR ${RawStreams.col.workspaceId} IS NOT NULL
+          OR (
+            ${RawServerInvites.col.resource} ->> 'resourceType' = '${ProjectInviteResourceType}' AND ${RawServerInvites.col.resource} ->> 'resourceId' = ${RawStreams.col.id}
+            AND ${RawStreams.col.workspaceId} = ${RawWorkspaces.col.id}
+          )
         `
       )
     )
