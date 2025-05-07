@@ -10,57 +10,77 @@ aliases:
       - image: cimg/base:2024.02
 
   - &docker-node-image
-    working_directory: &ramdisk /mnt/ramdisk/speckle
+    working_directory: &default-working-dir /speckle-server
     docker:
       - image: cimg/node:18.19.0
 
   - &docker-node-image-w-browsers
-    working_directory: *ramdisk
+    working_directory: *default-working-dir
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key v4-yarn-packages-cachebust4-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-cachebust5-{{ checksum "yarn.lock" }}
 
-  - &restore-yarn-cache
+  - &pull-yarn-cache
     restore_cache:
       name: Restore Yarn Package Cache
       keys:
         - *cache-key
 
-  - &save-yarn-cache
+  - &yarn-cache-paths
+    - .yarn/cache
+    - .yarn/unplugged
+    - .husky/_ # generated from postinstall scripts
+    - .yarn/install-state.gz
+    - node_modules
+    - packages/ui-components-nuxt/node_modules
+    - packages/monitor-deployment/node_modules
+    - packages/webhook-service/node_modules
+    - packages/fileimport-service/node_modules
+    - packages/dui3/node_modules
+    - packages/server/node_modules
+    - packages/ui-components/node_modules
+    - packages/shared/node_modules
+    - packages/viewer-sandbox/node_modules
+    - packages/viewer/node_modules
+    - packages/preview-service/node_modules
+    - packages/tailwind-theme/node_modules
+    - packages/frontend-2/node_modules
+    - packages/preview-frontend/node_modules
+    - packages/objectloader/node_modules
+    - packages/objectsender/node_modules
+    - packages/dui3/.nuxt # generated from postinstall scripts
+    - packages/frontend-2/.nuxt # generated from postinstall scripts
+    - packages/shared/dist # generated from postinstall scripts
+    - packages/tailwind-theme/dist # generated from postinstall scripts
+    - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
+    - packages/ui-components/dist # generated from postinstall scripts
+    - ~/.npm # generated from postinstall scripts
+    - ~/.yarn/berry # generated from postinstall scripts
+
+  - &push-yarn-cache
     save_cache:
       name: Save Yarn Package Cache
       key: *cache-key
-      paths:
-        - .yarn/cache
-        - .yarn/unplugged
-        - .husky/_ # generated from postinstall scripts
-        - .yarn/install-state.gz
-        - node_modules
-        - packages/ui-components-nuxt/node_modules
-        - packages/monitor-deployment/node_modules
-        - packages/webhook-service/node_modules
-        - packages/fileimport-service/node_modules
-        - packages/dui3/node_modules
-        - packages/server/node_modules
-        - packages/ui-components/node_modules
-        - packages/shared/node_modules
-        - packages/viewer-sandbox/node_modules
-        - packages/viewer/node_modules
-        - packages/preview-service/node_modules
-        - packages/tailwind-theme/node_modules
-        - packages/frontend-2/node_modules
-        - packages/preview-frontend/node_modules
-        - packages/objectloader/node_modules
-        - packages/objectsender/node_modules
-        - packages/dui3/.nuxt # generated from postinstall scripts
-        - packages/frontend-2/.nuxt # generated from postinstall scripts
-        - packages/shared/dist # generated from postinstall scripts
-        - packages/tailwind-theme/dist # generated from postinstall scripts
-        - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
-        - packages/ui-components/dist # generated from postinstall scripts
-        - ~/.npm # generated from postinstall scripts
-        - ~/.yarn/berry # generated from postinstall scripts
+      paths: *yarn-cache-paths
+
+  - &save-yarn-cache
+    persist_to_workspace:
+      root: *default-working-dir
+      paths: *yarn-cache-paths
+
+  - &restore-yarn-cache
+    attach_workspace:
+      at: *default-working-dir
+
+  - &restore_workspace
+    attach_workspace:
+      at: /tmp/ci/workspace
+
+  - &restore_env_vars
+    run:
+      name: Restore Env Vars
+      command: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
 
   - &yarn
     run:
@@ -79,7 +99,7 @@ workflows:
                 - main
                 - hotfix*
           requires: &yarn-install
-            - install-and-cache-dependencies
+            - install-dependencies
 
       - test-server: &test-server-job-definition
           context:
@@ -92,20 +112,20 @@ workflows:
               only: /.*/
           requires:
             - docker-publish-postgres-container
-            - install-and-cache-dependencies
+            - install-dependencies
 
       - test-server-no-ff:
           filters: *filters-allow-all
           requires:
             - docker-publish-postgres-container
-            - install-and-cache-dependencies
+            - install-dependencies
 
       - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
           requires:
-            - install-and-cache-dependencies
+            - install-dependencies
 
       - test-viewer:
           filters: *filters-allow-all
@@ -181,8 +201,13 @@ workflows:
           filters: *filters-allow-all
           requires: *yarn-install
 
-      - install-and-cache-dependencies:
+      - install-dependencies:
           filters: *filters-allow-all
+
+      - cache-dependencies:
+          filters: *filters-allow-all
+          requires:
+            - install-dependencies
 
       - docker-build-server:
           context: &build-context
@@ -442,7 +467,7 @@ workflows:
           context:
             - cloudflare-pages-edit
           requires:
-            - install-and-cache-dependencies
+            - install-dependencies
             - test-viewer
 
 jobs:
@@ -455,21 +480,29 @@ jobs:
           name: set version
           command: |
             echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> /tmp/ci/workspace/env-vars
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_env_vars
       - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
       - persist_to_workspace:
           root: /tmp/ci/workspace
           paths:
             - env-vars
 
-  install-and-cache-dependencies:
+  install-dependencies:
     <<: *docker-node-image
     resource_class: xlarge
     steps:
       - checkout
-      - *restore-yarn-cache
+      - *pull-yarn-cache # from circleci cache storage
       - *yarn
-      - *save-yarn-cache
+      - *save-yarn-cache # to workspace
+
+  cache-dependencies:
+    <<: *docker-node-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - *restore-yarn-cache # from workspace
+      - *push-yarn-cache # to circleci cache storage
 
   pre-commit:
     parameters:
@@ -836,8 +869,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
+      - *restore_workspace
       # create the nix folder with permissive write permissions
       - run: |
           sudo mkdir /nix
@@ -859,7 +891,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
           paths:
             - /nix
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_env_vars
       - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
@@ -869,8 +901,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
+      - *restore_workspace
       # create the nix folder with permissive write permissions
       - run: |
           sudo mkdir /nix
@@ -894,7 +925,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
           paths:
             - /nix
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_env_vars
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
@@ -939,9 +970,8 @@ jobs:
     resource_class: medium
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -971,9 +1001,8 @@ jobs:
       SPECKLE_SERVER_PACKAGE: frontend-2
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -1024,9 +1053,8 @@ jobs:
     resource_class: medium
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
@@ -1086,9 +1114,8 @@ jobs:
     <<: *docker-node-image
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - *restore-yarn-cache
       - *yarn
       - run:
@@ -1115,9 +1142,8 @@ jobs:
       - image: cimg/python:3.12.1
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - add_ssh_keys:
           fingerprints:
             - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
@@ -1129,9 +1155,8 @@ jobs:
     <<: *docker-node-image
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat /tmp/ci/workspace/env-vars >> $BASH_ENV
+      - *restore_workspace
+      - *restore_env_vars
       - add_ssh_keys:
           fingerprints:
             - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
