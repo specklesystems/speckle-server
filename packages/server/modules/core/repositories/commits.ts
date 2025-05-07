@@ -611,7 +611,7 @@ const getCommitsByUserIdBaseFactory =
       .leftJoin('users', 'commits.author', 'users.id')
       .where('author', userId)
 
-    if (publicOnly) query.andWhere('streams.isPublic', true)
+    if (publicOnly) query.andWhere('streams.visibility', ProjectRecordVisibility.Public)
     if (streamIdWhitelist?.length) query.whereIn('streams.streamId', streamIdWhitelist)
 
     return query

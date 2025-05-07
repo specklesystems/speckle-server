@@ -7,9 +7,18 @@ extend type Query {
 }
 
 enum ProjectVisibility {
-  PRIVATE # Accessible to explicit collaborators
-  UNLISTED # (public & unlisted are the same)
-  PUBLIC # Accessible to everyone (even non-logged in users)
+  """
+  Only accessible to explicit collaborators
+  """
+  PRIVATE
+  """
+  Legacy - same as public
+  """
+  UNLISTED
+  """
+  Accessible to everyone (even non-logged in users)
+  """
+  PUBLIC
   # WORKSPACE # Accessible to everyone in the project's workspace
 }
 

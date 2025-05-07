@@ -28,7 +28,7 @@ export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
   limit: number
   orderBy?: string | null | undefined
-  visibility?: string | null | undefined
+  visibility?: 'private' | 'public' | 'all' | null | undefined
   searchQuery?: string | null | undefined
   streamIdWhitelist?: string[] | null | undefined
   workspaceIdWhitelist?: string[] | null | undefined

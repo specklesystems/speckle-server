@@ -1349,9 +1349,8 @@ export const legacyGetStreamsFactory =
         throw new LogicError(
           'Stream visibility should be either private, public or all'
         )
-      const isPublic = visibility === 'public'
       const publicFunc: Knex.QueryCallback = function () {
-        this.where({ isPublic })
+        this.where({ visibility })
       }
       query.andWhere(publicFunc)
     }

@@ -36,8 +36,7 @@ describe('project services @core', () => {
       expect(storedProject!.allowPublicComments).to.be.false
     })
 
-    // Discoverability currently disabled
-    it.skip(`makes PUBLIC projects public`, async () => {
+    it(`makes PUBLIC projects public`, async () => {
       const visibility = 'PUBLIC'
       const ownerId = cryptoRandomString({ length: 10 })
 
