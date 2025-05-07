@@ -10,7 +10,7 @@ aliases:
       - image: cimg/base:2024.02
 
   - &docker-node-image
-    working_directory: &default-working-dir /speckle-server
+    working_directory: &default-working-dir /tmp/ci/speckle-server
     docker:
       - image: cimg/node:18.19.0
 
