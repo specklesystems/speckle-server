@@ -99,6 +99,11 @@
           "type": "boolean",
           "description": "Enables the ability to move a project region (manually or automatically)",
           "default": false
+        },
+        "nextGenFileImporterEnabled": {
+          "type": "boolean",
+          "description": "Enables the next generation file importer",
+          "default": false
         }
       }
     },

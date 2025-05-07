@@ -1,11 +1,11 @@
 import { Page, Browser } from 'puppeteer'
 import type { Logger } from 'pino'
 
-import type { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
+import type { PreviewGenerator } from '@speckle/shared/dist/esm/workers/previews/interface.js'
 import type {
   JobPayload,
   PreviewResultPayload
-} from '@speckle/shared/dist/esm/previews/job.js'
+} from '@speckle/shared/dist/esm/workers/previews/job.js'
 
 import { AppState } from '@/const.js'
 import { TIME_MS } from '@speckle/shared'
