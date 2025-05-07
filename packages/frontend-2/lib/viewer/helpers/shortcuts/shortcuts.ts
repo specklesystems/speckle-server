@@ -70,7 +70,7 @@ export const ViewModeShortcuts = {
     description: 'Colors by layer or object colors. Better for autocad & similar apps',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit2',
-    action: 'SetViewModeColors',
+    action: 'SetViewModeShaded',
     viewMode: ViewMode.SHADED
   },
   SetViewModeArctic: {
@@ -86,7 +86,7 @@ export const ViewModeShortcuts = {
     description: 'Flat shaded surfaces',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit4',
-    action: 'SetViewModeShaded',
+    action: 'SetViewModeSolid',
     viewMode: ViewMode.SOLID
   },
   SetViewModePen: {
