@@ -156,10 +156,6 @@ const main = async () => {
           .toString()
           .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
-      const mainTrx = await targetMainDb.transaction()
-
-      const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
-
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
 
@@ -170,6 +166,9 @@ const main = async () => {
         skippedProjects.push(existingProject)
         continue
       }
+
+      const mainTrx = await targetMainDb.transaction()
+      const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
 
       // TODO: Why is initial write wrapped in a transaction?
       await storeProjectFactory({ db: targetRegionDb })({
@@ -376,7 +375,7 @@ const main = async () => {
       } catch (err) {
         await regionTrx.rollback()
         // Rollback ?
-        await mainTrx.commit()
+        await mainTrx.rollback()
         // cleanup the project from the DB
         await deleteProjectFactory({ db: targetRegionDb })({
           projectId: sourceProject.id
