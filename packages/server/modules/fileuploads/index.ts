@@ -9,7 +9,10 @@ import {
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
-import { isFileUploadsEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  getFeatureFlags,
+  isFileUploadsEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -30,6 +33,9 @@ import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/ta
 import { TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
+import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
+
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 let scheduledTasks: cron.ScheduledTask[] = []
 
@@ -78,8 +84,12 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
     return
   }
   moduleLogger.info('📄 Init FileUploads module')
-
-  app.use(fileuploadRouterFactory())
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+    moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+    app.use(nextGenFileImporterRouterFactory())
+  } else {
+    app.use(fileuploadRouterFactory())
+  }
 
   if (isInitial) {
     const scheduleExecution = scheduleExecutionFactory({
@@ -89,30 +99,32 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 
     scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-    listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
+    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
+        const parsedMessage = parseMessagePayload(msg.payload)
+        if (!parsedMessage.streamId) return
+        const projectDb = await getProjectDbClient({
+          projectId: parsedMessage.streamId
+        })
+        await onFileImportProcessedFactory({
+          getFileInfo: getFileInfoFactory({ db: projectDb }),
+          publish,
+          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+          eventEmit: getEventBus().emit
+        })(parsedMessage)
       })
-      await onFileImportProcessedFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish,
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        eventEmit: getEventBus().emit
-      })(parsedMessage)
-    })
-    listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
+      listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
+        const parsedMessage = parseMessagePayload(msg.payload)
+        if (!parsedMessage.streamId) return
+        const projectDb = await getProjectDbClient({
+          projectId: parsedMessage.streamId
+        })
+        await onFileProcessingFactory({
+          getFileInfo: getFileInfoFactory({ db: projectDb }),
+          publish
+        })(parsedMessage)
       })
-      await onFileProcessingFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        publish
-      })(parsedMessage)
-    })
+    }
   }
 }
 

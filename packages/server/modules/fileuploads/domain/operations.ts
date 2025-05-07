@@ -1,6 +1,7 @@
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { FileUploadConvertedStatus, FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import { Optional } from '@speckle/shared'
+import { FileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job'
 
 export type GetFileInfo = (args: {
   fileId: string
@@ -15,3 +16,15 @@ export type GarbageCollectPendingUploadedFiles = (args: {
 export type NotifyChangeInFileStatus = (params: {
   file: FileUploadRecord
 }) => Promise<void>
+
+export type FileIdFromJobId = (params: { jobId: string }) => Promise<string>
+
+export type ProcessFileImportResult = (params: {
+  jobId: string
+  jobResult: FileImportResultPayload
+}) => Promise<void>
+
+export type UpdateFileStatus = (params: {
+  fileId: string
+  status: FileUploadConvertedStatus
+}) => Promise<FileUploadRecord>

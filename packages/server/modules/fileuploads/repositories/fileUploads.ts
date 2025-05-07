@@ -1,8 +1,10 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
+  UpdateFileStatus,
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
-  SaveUploadFile
+  SaveUploadFile,
+  FileIdFromJobId
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -166,4 +168,28 @@ export const getBranchPendingVersionsFactory =
       )
 
     return await q
+  }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getFileIdFromJobIdFactory = (_deps: { db: Knex }): FileIdFromJobId => async (params) => {
+  return params.jobId //FIXME it is possible to upload multiple files with the same fileId, so is not unique
+}
+
+export const updateFileStatusFactory =
+  (deps: { db: Knex }): UpdateFileStatus =>
+  async (params) => {
+    const { fileId, status } = params
+    const fileInfos = await tables
+      .fileUploads(deps.db)
+      .update<FileUploadRecord[]>({
+        [FileUploads.col.convertedStatus]: status,
+        [FileUploads.col.convertedLastUpdate]: Date.now(),
+        [FileUploads.col.convertedMessage]: 'File import completed'
+      })
+      .where({ [FileUploads.col.id]: fileId })
+
+    if (fileInfos.length === 0) {
+      throw new Error(`File with id ${fileId} not found`)
+    }
+    return fileInfos[0]
   }

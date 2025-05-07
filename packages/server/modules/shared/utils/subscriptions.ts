@@ -139,6 +139,11 @@ export enum FileImportSubscriptions {
   ProjectFileImportUpdated = 'PROJECT_FILE_IMPORT_UPDATED'
 }
 
+export enum NextGenFileImportSubscriptions {
+  ProjectPendingVersionsUpdated = 'NEXT_GEN_PROJECT_PENDING_VERSIONS_UPDATED',
+  ProjectFileImportUpdated = 'NEXT_GEN_PROJECT_FILE_IMPORT_UPDATED'
+}
+
 export enum TestSubscriptions {
   Ping = 'PING'
 }
