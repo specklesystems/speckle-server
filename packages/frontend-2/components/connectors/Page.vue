@@ -175,7 +175,6 @@ const filteredConnectors = computed(() => {
 })
 
 watch(filteredConnectors, (newList) => {
-  // Example: hide the image if the filtered list is different from the full list
   if (newList.length !== connectors.value.length) {
     promoHidden.value = true
   } else {
