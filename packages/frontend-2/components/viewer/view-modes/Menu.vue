@@ -51,15 +51,15 @@
           <FormButton
             color="subtle"
             size="sm"
-            :icon-right="showLineWidthSlider ? ChevronUpIcon : ChevronDownIcon"
+            :icon-right="showEdgesLineWidthSlider ? ChevronUpIcon : ChevronDownIcon"
             class="!text-foreground-2 !pr-0"
-            @click="showLineWidthSlider = !showLineWidthSlider"
+            @click="showEdgesLineWidthSlider = !showEdgesLineWidthSlider"
           >
             {{ lineWeight }}
           </FormButton>
         </div>
         <input
-          v-show="showLineWidthSlider"
+          v-show="showEdgesLineWidthSlider"
           id="edge-stroke"
           v-model="lineWeight"
           class="w-full mt-1"
@@ -68,8 +68,8 @@
           :min="0.5"
           :max="3"
           step="0.1"
-          :disabled="!showLineWidthSlider"
-          @input="handleLineWeightChange"
+          :disabled="!showEdgesLineWidthSlider"
+          @input="handleEdgesLineWeightChange"
         />
         <div class="flex items-center justify-between gap-2 mt-1.5 pr-0.5">
           <div class="text-body-2xs">Color</div>
@@ -109,17 +109,17 @@ const {
   currentViewMode,
   edgesEnabled,
   toggleEdgesEnabled,
-  setLineWeight,
+  setEdgesLineWeight,
   lineWeight
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 const isManuallyOpened = ref(false)
-const showLineWidthSlider = ref(false)
+const showEdgesLineWidthSlider = ref(false)
 
-const handleLineWeightChange = () => {
-  setLineWeight(lineWeight.value)
+const handleEdgesLineWeightChange = () => {
+  setEdgesLineWeight(Number(lineWeight.value))
 }
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(

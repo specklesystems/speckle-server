@@ -514,8 +514,8 @@ export function useViewModeUtilities() {
     updateViewMode()
   }
 
-  const setLineWeight = (weight: number) => {
-    lineWeight.value = weight
+  const setEdgesLineWeight = (weight: number) => {
+    lineWeight.value = Number(weight)
     updateViewMode()
   }
 
@@ -525,7 +525,7 @@ export function useViewModeUtilities() {
     edgesEnabled,
     toggleEdgesEnabled,
     lineWeight,
-    setLineWeight
+    setEdgesLineWeight
   }
 }
 
