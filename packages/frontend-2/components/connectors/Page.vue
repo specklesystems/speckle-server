@@ -6,19 +6,6 @@
           <div class="flex items-center gap-2">
             <h1 class="text-heading-sm md:text-heading line-clamp-2">Connectors</h1>
           </div>
-          <!-- <p class="text-body-sm text-foreground-2">
-            Extract and exchange data between the most popular AEC applications using
-            our tailored connectors.
-          </p> -->
-          <!-- <p class="text-body-xs text-foreground-3 leading-none">
-            Looking for V2 connectors? Get them
-            <NuxtLink
-              class="text-foreground-3 hover:text-foreground-2 underline"
-              to="https://releases.speckle.systems/legacy-connectors"
-            >
-              here.
-            </NuxtLink>
-          </p> -->
         </div>
       </section>
       <section class="flex gap-4 flex-col">

@@ -1,7 +1,7 @@
 <template>
   <div>
     <CommonCard
-      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full min hover:bg-foundation"
+      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full hover:bg-foundation"
     >
       <div class="flex gap-2 items-center">
         <img
