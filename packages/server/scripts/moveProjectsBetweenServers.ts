@@ -339,6 +339,10 @@ const main = async () => {
           db: sourceDb
         })(sourceProject.id, undefined, { limit: 100 })
 
+        // Give admin role
+        await grantStreamPermissions({ userId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID, streamId: sourceProject.id, role: Roles.Stream.Owner })
+
+        // Try to assign roles
         for (const user of sourceUsers) {
           // stream_acl is calculated based on the users workspace role and the original role
           if (!(user.id in userIdMapping))
@@ -354,7 +358,7 @@ const main = async () => {
             role = existingCollaborator.streamRole
           }
           const workspaceAcl = workspaceAcls.find((w) => w.userId === userId)
-          if (!workspaceAcl) throw new Error('User not member of the workspace')
+          if (!workspaceAcl) continue
           if (workspaceAcl.role === Roles.Workspace.Admin) {
             role = Roles.Stream.Owner
           }
