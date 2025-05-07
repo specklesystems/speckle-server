@@ -11,7 +11,10 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  InviteResourceTargetType,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
@@ -197,6 +200,7 @@ export const finalizeResourceInviteFactory =
       finalizerUserId,
       accept,
       token,
+      resourceType,
       finalizerResourceAccessLimits,
       allowAttachingNewEmail,
       trueFinalizerId
@@ -204,7 +208,9 @@ export const finalizeResourceInviteFactory =
 
     const finalizerUserTarget = buildUserTarget(finalizerUserId)
     const invite = await findInvite({
-      token
+      token,
+      // target: allowAttachingNewEmail ? undefined : finalizerUserTarget,
+      resourceFilter: resourceType ? { resourceType } : undefined
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to finalize nonexistant invite', {
@@ -332,14 +338,26 @@ export const cancelResourceInviteFactory =
   }) =>
   async (params: {
     inviteId: string
+    resourceId: string
+    resourceType: InviteResourceTargetType
     cancelerId: string
     cancelerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   }) => {
     const { findInvite, validateResourceAccess, deleteInvite, emitEvent } = deps
-    const { inviteId, cancelerId, cancelerResourceAccessLimits } = params
+    const {
+      inviteId,
+      resourceId,
+      resourceType,
+      cancelerId,
+      cancelerResourceAccessLimits
+    } = params
 
     const invite = await findInvite({
-      inviteId
+      inviteId,
+      resourceFilter: {
+        resourceId,
+        resourceType
+      }
     })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to cancel nonexistant invite', {

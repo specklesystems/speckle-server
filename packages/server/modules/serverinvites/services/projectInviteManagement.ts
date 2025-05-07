@@ -142,6 +142,7 @@ export const useProjectInviteAndNotifyFactory =
 
     await deps.finalizeInvite({
       accept,
+      resourceType: ProjectInviteResourceType,
       token,
       finalizerUserId: userId,
       finalizerResourceAccessLimits: userResourceAccessRules
@@ -217,7 +218,10 @@ export const getUserPendingProjectInvitesFactory =
       throw new InviteNotFoundError('Nonexistant user specified')
     }
 
-    const invites = await deps.getUserResourceInvites<ProjectInviteResourceTarget>({
+    const invites = await deps.getUserResourceInvites<
+      typeof ProjectInviteResourceType,
+      StreamRoles
+    >({
       userId,
       resourceType: ProjectInviteResourceType
     })
@@ -237,14 +241,16 @@ export const getUserPendingProjectInviteFactory =
   ): Promise<Nullable<PendingStreamCollaboratorGraphQLReturn>> => {
     if (!userId && !token) return null
 
-    const invite = await deps.findInvite<ProjectInviteResourceTarget>({
-      target: userId ? buildUserTarget(userId) : undefined,
-      token: token || undefined,
-      resourceFilter: {
-        resourceType: ProjectInviteResourceType,
-        resourceId: projectId
+    const invite = await deps.findInvite<typeof ProjectInviteResourceType, StreamRoles>(
+      {
+        target: userId ? buildUserTarget(userId) : undefined,
+        token: token || undefined,
+        resourceFilter: {
+          resourceType: ProjectInviteResourceType,
+          resourceId: projectId
+        }
       }
-    })
+    )
     if (!invite) return null
 
     const targetUserId = resolveTarget(invite.target).userId
@@ -263,7 +269,10 @@ export const getPendingProjectCollaboratorsFactory =
   }) =>
   async (streamId: string): Promise<PendingStreamCollaboratorGraphQLReturn[]> => {
     // Get all pending invites
-    const invites = await deps.queryAllResourceInvites<ProjectInviteResourceTarget>({
+    const invites = await deps.queryAllResourceInvites<
+      typeof ProjectInviteResourceType,
+      StreamRoles
+    >({
       resourceId: streamId,
       resourceType: ProjectInviteResourceType
     })

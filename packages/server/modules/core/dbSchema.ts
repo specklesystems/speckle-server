@@ -114,17 +114,11 @@ type SchemaConfigParams = {
    * building subqueries or joining a table onto itself.
    */
   withCustomTablePrefix?: string
-
-  /**
-   * Will surround with quotes for putting directly in knex.raw() queries
-   */
-  quoted?: boolean
 }
 
 const createBaseInnerSchemaConfigBuilder =
   <T extends string, C extends string>(tableName: T, columns: C[]) =>
   (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
-    const quoted = params.quoted || false
     const aliasedTableName = params.withCustomTablePrefix
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
@@ -147,7 +141,7 @@ const createBaseInnerSchemaConfigBuilder =
       col: reduce(
         columns,
         (prev, curr) => {
-          prev[curr] = colName(curr, { addQuotes: quoted })
+          prev[curr] = colName(curr)
           return prev
         },
         {} as Record<C, string>
@@ -160,7 +154,7 @@ const createBaseInnerSchemaConfigBuilder =
             (prefix?.length ? prefix + '.' : '') + '*'
           })) as "${name}"`
         ),
-      cols: columns.map((c) => colName(c, { addQuotes: quoted }))
+      cols: columns.map((c) => colName(c))
     }
   }
 

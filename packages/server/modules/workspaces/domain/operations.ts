@@ -107,9 +107,6 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
 }
 export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
-export type GetProjectWorkspace = (args: {
-  projectId: string
-}) => Promise<Workspace | null>
 
 /** Workspace Roles */
 
