@@ -6,21 +6,20 @@ import {
   onFileProcessingFactory,
   parseMessagePayload
 } from '@/modules/fileuploads/services/resultListener'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { isFileUploadsEnabled } from '@/modules/shared/helpers/envHelper'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
   getFileInfoFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
-import {
-  getProjectDbClient,
-  getRegisteredDbClients
-} from '@/modules/multiregion/utils/dbSelector'
-import { listenFor } from '@/modules/core/utils/dbNotificationListener'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -74,12 +73,11 @@ const scheduleFileImportExpiry = async ({
 }
 
 export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
-  if (process.env.DISABLE_FILE_UPLOADS) {
+  if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
-  } else {
-    moduleLogger.info('📄 Init FileUploads module')
   }
+  moduleLogger.info('📄 Init FileUploads module')
 
   app.use(getRouter())
 
