@@ -5,7 +5,7 @@ import type { Logger } from 'pino'
 import { Redis, type RedisOptions } from 'ioredis'
 import Bull, { type QueueOptions } from 'bull'
 
-import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
+import { jobPayload } from '@speckle/shared/dist/esm/workers/previews/job.js'
 
 import {
   REDIS_URL,
