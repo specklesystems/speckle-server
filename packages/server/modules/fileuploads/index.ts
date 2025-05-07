@@ -28,8 +28,8 @@ import {
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
 import { TIME } from '@speckle/shared'
-import { getRouter } from '@/modules/fileuploads/rest/routes'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
+import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 
 let scheduledTasks: cron.ScheduledTask[] = []
 
@@ -79,7 +79,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   }
   moduleLogger.info('📄 Init FileUploads module')
 
-  app.use(getRouter())
+  app.use(fileuploadRouterFactory())
 
   if (isInitial) {
     const scheduleExecution = scheduleExecutionFactory({
