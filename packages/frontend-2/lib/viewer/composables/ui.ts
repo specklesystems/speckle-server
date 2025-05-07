@@ -493,8 +493,8 @@ export function useViewModeUtilities() {
   const edgesEnabled = ref(true)
   const lineWeight = ref(1)
   const outlineOpacity = ref(1)
-  const defaultColor = isLightTheme.value ? 0x1a1a1a : 0xffffff
-  const selectedColor = ref(defaultColor)
+  const defaultColor = computed(() => (isLightTheme.value ? 0x1a1a1a : 0xffffff))
+  const selectedColor = ref(defaultColor.value)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -516,7 +516,7 @@ export function useViewModeUtilities() {
       outlineOpacity.value = 1
       edgesEnabled.value = true
     } else {
-      if (selectedColor.value === defaultColor) {
+      if (selectedColor.value === defaultColor.value) {
         outlineOpacity.value = 0.75
       }
     }
