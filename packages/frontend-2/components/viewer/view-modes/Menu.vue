@@ -60,18 +60,17 @@
         />
         <div class="flex items-center justify-between gap-2 mt-1.5 mb-1 pr-0.5">
           <div class="text-body-2xs">Color</div>
-          <div v-tippy="`Coming soon`" class="flex items-center gap-1 opacity-60">
-            <div
-              class="w-3 h-3 rounded-full bg-foundation border-[1.5px] border-foreground-2 opacity-80"
-            />
-            <div
-              class="w-3 h-3 rounded-full bg-[#98FB98] border-[1.5px] border-outline-2"
-            />
-            <div
-              class="w-3 h-3 rounded-full bg-[#87CEEB] border-[1.5px] border-outline-2"
-            />
-            <div
-              class="w-3 h-3 rounded-full bg-[#FFB6C1] border-[1.5px] border-outline-2"
+          <div class="flex items-center gap-1">
+            <button
+              v-for="color in edgesColorOptions"
+              :key="color"
+              class="w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-110"
+              :class="[
+                selectedColor === color ? 'ring-2 ring-primary' : '',
+                'border-[1.5px] border-outline-2'
+              ]"
+              :style="{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }"
+              @click="setEdgesColor(color)"
             />
           </div>
         </div>
@@ -87,7 +86,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
-
+import { useTheme } from '~/lib/core/composables/theme'
 const open = defineModel<boolean>('open', { default: false })
 
 const {
@@ -96,10 +95,13 @@ const {
   edgesEnabled,
   toggleEdgesEnabled,
   setEdgesLineWeight,
-  lineWeight
+  lineWeight,
+  setEdgesColor,
+  selectedColor
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
+const { isLightTheme } = useTheme()
 
 const isManuallyOpened = ref(false)
 
@@ -130,6 +132,13 @@ const viewModeShortcuts = Object.values(ViewModeShortcuts)
 const emit = defineEmits<{
   (e: 'force-close-others'): void
 }>()
+
+const edgesColorOptions = computed(() => [
+  isLightTheme.value ? 0x1a1a1a : 0xffffff, // foreground
+  0x98fb98,
+  0x87ceeb,
+  0xffb6c1
+])
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)

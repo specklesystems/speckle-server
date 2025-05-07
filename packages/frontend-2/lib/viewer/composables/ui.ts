@@ -26,6 +26,7 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
+import { useTheme } from '~/lib/core/composables/theme'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -487,9 +488,12 @@ export function useHighlightedObjectsUtilities() {
 export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
+  const { isLightTheme } = useTheme()
+
   const edgesEnabled = ref(true)
   const lineWeight = ref(1)
   const outlineOpacity = ref(1)
+  const selectedColor = ref(isLightTheme.value ? 0x1a1a1a : 0xffffff)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -500,7 +504,7 @@ export function useViewModeUtilities() {
         edges: edgesEnabled.value,
         outlineThickness: lineWeight.value,
         outlineOpacity: outlineOpacity.value,
-        outlineColor: 0x323232
+        outlineColor: selectedColor.value
       })
     }
   }
@@ -526,13 +530,20 @@ export function useViewModeUtilities() {
     updateViewMode()
   }
 
+  const setEdgesColor = (color: number) => {
+    selectedColor.value = color
+    updateViewMode()
+  }
+
   return {
     currentViewMode,
     setViewMode,
     edgesEnabled,
     toggleEdgesEnabled,
     lineWeight,
-    setEdgesLineWeight
+    setEdgesLineWeight,
+    setEdgesColor,
+    selectedColor
   }
 }
 
