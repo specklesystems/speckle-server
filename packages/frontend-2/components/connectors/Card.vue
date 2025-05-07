@@ -17,7 +17,7 @@
         </div>
       </div>
       <p
-        class="text-body-2xs text-foreground-2 line-clamp-5 leading-5 lg:min-h-[86px] md:min-h-14 sm:min-h-8"
+        class="text-body-2xs text-foreground-2 line-clamp-5 leading-5 lg:min-h-20 md:min-h-14 sm:min-h-8"
       >
         {{ connector.description }}
       </p>

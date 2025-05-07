@@ -63,37 +63,48 @@
           <figure class="dark:hidden absolute w-full">
             <NuxtImg
               src="/images/connectors/connectors_light.png"
-              alt="Speckle cubes"
+              alt="Speckle Connectors"
               class="w-full h-auto aspect-[896/405] object-cover"
             />
             <NuxtImg
               src="/images/connectors/connectors_light.png"
-              alt="Speckle cubes"
-              class="absolute bottom-0 left-0 w-full h-[120px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
+              alt="Sync data in real time"
+              class="absolute bottom-0 left-0 w-full h-[125px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
             />
           </figure>
           <figure class="hidden dark:block absolute w-full">
             <NuxtImg
               src="/images/connectors/connectors_dark.png"
-              alt="Speckle cubes"
+              alt="Speckle Connectors"
               class="w-full h-auto aspect-[896/405] object-cover"
             />
             <NuxtImg
               src="/images/connectors/connectors_dark.png"
-              alt="Speckle cubes"
-              class="absolute bottom-0 left-0 w-full h-[120px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
+              alt="Speckle Connectors"
+              class="absolute bottom-0 left-0 w-full h-[125px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
             />
           </figure>
 
           <div class="absolute bottom-0 w-full p-6">
-            <h3>Sync data in real time</h3>
+            <h3>Sync models in real time</h3>
             <p class="text-body-xs text-foreground-2 mt-2 max-w-md text-balance">
               Extract and exchange data between the most popular AEC applications using
               our tailored connectors.
             </p>
           </div>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+        <div>
+          <p class="text-body-2xs text-foreground-3 leading-none">
+            Looking for V2 connectors? Get them
+            <NuxtLink
+              class="text-foreground-3 hover:text-foreground-2 underline"
+              to="https://releases.speckle.systems/legacy-connectors"
+            >
+              here.
+            </NuxtLink>
+          </p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ConnectorsCard
             v-for="connector in filteredConnectors"
             :key="connector.title"
