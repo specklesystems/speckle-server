@@ -43,7 +43,9 @@
             </template>
           </FormSelectBase>
         </div>
-        <ConnectorsBanner v-if="filteredConnectors.length === connectors.length" />
+        <ClientOnly>
+          <ConnectorsBanner v-if="filteredConnectors.length === connectors.length" />
+        </ClientOnly>
         <div>
           <p class="text-body-2xs text-foreground-3 leading-none">
             Looking for V2 connectors? Get them
