@@ -18,7 +18,7 @@ const buildCanMoveToWorkspace = (
   overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
 ) =>
   canMoveToWorkspacePolicy({
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: getProjectFake({
       id: 'project-id',
       workspaceId: null

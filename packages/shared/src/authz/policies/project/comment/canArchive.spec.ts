@@ -17,7 +17,7 @@ import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
 describe('canArchiveProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canArchiveProjectCommentPolicy>) =>
     canArchiveProjectCommentPolicy({
-      getEnv: async () => parseFeatureFlags({}),
+      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
