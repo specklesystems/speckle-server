@@ -118,6 +118,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { WorkspaceCreationState } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -323,6 +324,18 @@ export const createTestWorkspace = async (
       workspaceId: newWorkspace.id,
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
+  }
+}
+
+export const buildBasicTestWorkspace = (
+  override: Partial<BasicTestWorkspace> = {}
+): BasicTestWorkspace => {
+  return {
+    id: createRandomString(),
+    name: createRandomString(),
+    slug: createRandomString(),
+    ownerId: '',
+    ...override
   }
 }
 

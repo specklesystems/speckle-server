@@ -1,16 +1,12 @@
 import { db } from '@/db/knex'
-import {
-  createRandomEmail,
-  createRandomString
-} from '@/modules/core/helpers/testHelpers'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   BasicTestWorkspace,
+  buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import {
-  deleteWorkspaceFactory,
   getWorkspaceFactory,
   getWorkspacesNonCompleteFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -18,37 +14,57 @@ import { expect } from 'chai'
 import dayjs from 'dayjs'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 import { logger } from '@/observability/logging'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import {
+  deleteStreamFactory,
+  legacyGetStreamsFactory
+} from '@/modules/core/repositories/streams'
+import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
+
+const updateAWorkspaceCreatedAt = async (
+  workspaceId: string,
+  createdAt: dayjs.Dayjs = dayjs()
+) => {
+  await db
+    .table(Workspaces.name)
+    .where({ [Workspaces.col.id]: workspaceId })
+    .update({ createdAt })
+}
 
 describe('WorkspaceCreationState services', () => {
   const getWorkspacesNonComplete = getWorkspacesNonCompleteFactory({ db })
   const getWorkspace = getWorkspaceFactory({ db })
   const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
     getWorkspacesNonComplete,
-    deleteWorkspace: deleteWorkspaceFactory({ db })
+    deleteWorkspace: deleteWorkspaceFactory({
+      deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+      deleteProject: deleteStreamFactory({ db }),
+      deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+        getStreams: legacyGetStreamsFactory({ db })
+      }),
+      deleteSsoProvider: deleteSsoProviderFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit
+    })
   })
 
-  const adminUser: BasicTestUser = {
-    id: '',
-    name: createRandomString(),
-    email: createRandomEmail()
-  }
-
-  const completeWorkspace: BasicTestWorkspace = {
-    id: createRandomString(),
-    name: createRandomString(),
-    slug: createRandomString(),
-    ownerId: ''
-  }
-
-  const nonCompleteWorkspace: BasicTestWorkspace = {
-    id: createRandomString(),
-    name: createRandomString(),
-    slug: createRandomString(),
-    ownerId: ''
-  }
+  let adminUser: BasicTestUser
+  let completeWorkspace: BasicTestWorkspace
+  let nonCompleteWorkspace: BasicTestWorkspace
 
   before(async () => {
+    adminUser = buildBasicTestUser()
     await createTestUser(adminUser)
+  })
+
+  beforeEach(async () => {
+    completeWorkspace = buildBasicTestWorkspace()
+    nonCompleteWorkspace = buildBasicTestWorkspace()
+
     await createTestWorkspace(completeWorkspace, adminUser, {
       addCreationState: {
         state: {},
@@ -64,11 +80,8 @@ describe('WorkspaceCreationState services', () => {
   })
 
   it('does not show completed/impcompleted workspaces when they are recent', async () => {
-    await db
-      .table(Workspaces.name)
-      .where({ [Workspaces.col.id]: completeWorkspace.id })
-      .orWhere({ [Workspaces.col.id]: nonCompleteWorkspace.id })
-      .update({ createdAt: db.fn.now() })
+    await updateAWorkspaceCreatedAt(completeWorkspace.id, dayjs())
+    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, dayjs())
 
     const workspaces = await getWorkspacesNonComplete()
 
@@ -77,24 +90,19 @@ describe('WorkspaceCreationState services', () => {
 
   it('hits workspaces with complete false when they are 30 mins older', async () => {
     const fortyMinutesInThePast = dayjs().subtract(40, 'minutes')
-    await db
-      .table(Workspaces.name)
-      .where({ [Workspaces.col.id]: completeWorkspace.id })
-      .orWhere({ [Workspaces.col.id]: nonCompleteWorkspace.id })
-      .update({ createdAt: fortyMinutesInThePast })
+    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesInThePast)
+    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesInThePast)
 
     const workspaces = await getWorkspacesNonComplete()
 
+    expect(workspaces).to.have.lengthOf(1)
     expect(workspaces).to.deep.eq([{ workspaceId: nonCompleteWorkspace.id }])
   })
 
   it('deletes only those workspaces that are not completed', async () => {
     const fortyMinutesInThePast = dayjs().subtract(40, 'minutes')
-    await db
-      .table(Workspaces.name)
-      .where({ [Workspaces.col.id]: completeWorkspace.id })
-      .orWhere({ [Workspaces.col.id]: nonCompleteWorkspace.id })
-      .update({ createdAt: fortyMinutesInThePast })
+    await updateAWorkspaceCreatedAt(completeWorkspace.id, fortyMinutesInThePast)
+    await updateAWorkspaceCreatedAt(nonCompleteWorkspace.id, fortyMinutesInThePast)
 
     await deleteWorkspacesNonComplete({ logger })
 

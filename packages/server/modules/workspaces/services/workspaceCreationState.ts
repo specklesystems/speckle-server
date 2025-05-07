@@ -17,7 +17,9 @@ export const deleteWorkspacesNonCompleteFactory =
     if (!workspaces?.length) return
 
     const workspaceIds = workspaces.map((workspace) => workspace.workspaceId)
-    logger.info('Deleting non complete workspaces', { workspaceIds })
+    logger.info({ workspaceIds }, 'Deleting non complete workspaces')
 
-    workspaceIds.forEach(async (workspaceId) => await deleteWorkspace({ workspaceId }))
+    for (const workspaceId of workspaceIds) {
+      await deleteWorkspace({ workspaceId })
+    }
   }

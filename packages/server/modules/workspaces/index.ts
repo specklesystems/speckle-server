@@ -17,11 +17,18 @@ import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import {
-  deleteWorkspaceFactory,
-  getWorkspacesNonCompleteFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import {
+  deleteStreamFactory,
+  legacyGetStreamsFactory
+} from '@/modules/core/repositories/streams'
+import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
 
@@ -45,12 +52,21 @@ const scheduleDeleteWorkspacesNonComplete = ({
 }) => {
   const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
     getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db }),
-    deleteWorkspace: deleteWorkspaceFactory({ db })
+    deleteWorkspace: deleteWorkspaceFactory({
+      deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+      deleteProject: deleteStreamFactory({ db }),
+      deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+        getStreams: legacyGetStreamsFactory({ db })
+      }),
+      deleteSsoProvider: deleteSsoProviderFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit
+    })
   })
 
-  const EVERY_30_MINS = '*/30 * * * *'
+  const every30Mins = '*/30 * * * *'
   return scheduleExecution(
-    EVERY_30_MINS,
+    every30Mins,
     'DeleteWorkspaceNonComplete',
     async (_scheduledTime, { logger }) => {
       await Promise.all([deleteWorkspacesNonComplete({ logger })])

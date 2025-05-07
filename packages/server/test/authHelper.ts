@@ -1,5 +1,9 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import {
+  createRandomEmail,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -130,6 +134,17 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   setVal('id', id)
 
   return baseUser
+}
+
+export const buildBasicTestUser = (
+  override: Partial<BasicTestUser> = {}
+): BasicTestUser => {
+  return {
+    id: '',
+    name: createRandomString(),
+    email: createRandomEmail(),
+    ...override
+  }
 }
 
 export type CreateTestUsersParams = {
