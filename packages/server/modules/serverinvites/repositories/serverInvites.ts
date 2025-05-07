@@ -38,7 +38,7 @@ import {
 import { isNonNullable, Optional } from '@speckle/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { Workspaces } from '@/modules/workspacesCore/helpers/db'
+import { WorkspaceAcl, Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Project } from '@/modules/core/domain/streams/types'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
@@ -100,6 +100,7 @@ const buildInvitesBaseQuery =
     const RawServerInvites = ServerInvites.with({ quoted: true })
     const RawStreams = Streams.with({ quoted: true })
     const RawWorkspaces = Workspaces.with({ quoted: true })
+    const RawWorkspaceAcl = WorkspaceAcl.with({ quoted: true })
 
     // Join streams for project invites
     query.leftJoin(
@@ -118,6 +119,15 @@ const buildInvitesBaseQuery =
             ${RawServerInvites.col.resource} ->> 'resourceType' = '${ProjectInviteResourceType}' AND ${RawServerInvites.col.resource} ->> 'resourceId' = ${RawStreams.col.id}
             AND ${RawStreams.col.workspaceId} = ${RawWorkspaces.col.id}
           )
+        `
+      )
+    )
+
+    // Join workspace acl so we can filter out implicit workspace invites for already existing workspace members
+    query.leftJoin(
+      knex.raw(
+        `${RawWorkspaceAcl.name} ON 
+          (${RawWorkspaceAcl.col.workspaceId} = ${RawWorkspaces.col.id} AND ${RawWorkspaceAcl.col.userId} = SUBSTRING(${RawServerInvites.col.target} FROM 2))
         `
       )
     )
@@ -177,7 +187,7 @@ const buildInvitesBaseQuery =
           query.where((w) => {
             w.orWhereRaw(
               knex.raw(
-                `${RawServerInvites.col.resource} ->> 'resourceType' = '${ProjectInviteResourceType}' AND ${RawWorkspaces.col.id} IS NOT NULL`
+                `${RawServerInvites.col.resource} ->> 'resourceType' = '${ProjectInviteResourceType}' AND ${RawWorkspaces.col.id} IS NOT NULL AND ${RawWorkspaceAcl.col.userId} IS NULL`
               )
             ).orWhereRaw(
               knex.raw(
