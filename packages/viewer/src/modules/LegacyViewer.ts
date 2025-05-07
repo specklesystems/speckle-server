@@ -46,7 +46,7 @@ import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
 import { OrientedSectionTool } from './extensions/sections/OrientedSectionTool.js'
-import { SectionTool } from '../index.js'
+import { SectionTool, ViewerEvent } from '../index.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 import { SpeckleViewer } from '@speckle/shared'
 
@@ -135,6 +135,13 @@ export class LegacyViewer extends Viewer {
     this.diffExtension = this.createExtension(DiffExtension)
     this.highlightExtension = this.createExtension(HighlightExtension)
     this.createExtension(ViewModes)
+
+    /** Workaround so that the frontend comments get section outlines when comment that has sections needs to show at startup */
+    this.on(ViewerEvent.LoadComplete, () => {
+      const sections = this.getExtension(SectionTool)
+      const sectionOutlines = this.getExtension(SectionOutlines)
+      if (sections?.enabled && sectionOutlines) sectionOutlines.requestUpdate(true)
+    })
   }
 
   public async init(): Promise<void> {

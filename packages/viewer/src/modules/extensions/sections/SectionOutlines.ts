@@ -119,9 +119,11 @@ export class SectionOutlines extends Extension {
     }
   }
 
-  public requestUpdate() {
+  public requestUpdate(force: boolean = false) {
     this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
-    this.updateOutlines(this.sectionPlanesChanged)
+    this.updateOutlines(
+      force ? this.viewer.getRenderer().clippingPlanes : this.sectionPlanesChanged
+    )
   }
 
   private updatePlaneOutline(
