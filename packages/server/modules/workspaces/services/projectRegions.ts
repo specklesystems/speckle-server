@@ -1,11 +1,5 @@
-import { GetProjectAutomationCount } from '@/modules/automate/domain/operations'
-import { GetStreamCommentCount } from '@/modules/comments/domain/operations'
-import { GetStreamBranchCount } from '@/modules/core/domain/branches/operations'
-import { GetStreamCommitCount } from '@/modules/core/domain/commits/operations'
-import { GetStreamObjectCount } from '@/modules/core/domain/objects/operations'
 import { GetProject } from '@/modules/core/domain/projects/operations'
 import { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
-import { GetStreamWebhooks } from '@/modules/webhooks/domain/operations'
 import {
   CopyProjectAutomations,
   CopyProjectBlobs,
@@ -16,11 +10,18 @@ import {
   CopyProjectVersions,
   CopyProjectWebhooks,
   CopyWorkspace,
+  CountProjectAutomations,
+  CountProjectComments,
+  CountProjectModels,
+  CountProjectObjects,
+  CountProjectVersions,
+  CountProjectWebhooks,
   GetAvailableRegions,
   UpdateProjectRegion,
   ValidateProjectRegionCopy
 } from '@/modules/workspaces/domain/operations'
 import { ProjectRegionAssignmentError } from '@/modules/workspaces/errors/regions'
+import { logger } from '@/observability/logging'
 
 export const updateProjectRegionFactory =
   (deps: {
@@ -92,20 +93,29 @@ export const updateProjectRegionFactory =
     await deps.copyProjectBlobs({ projectIds })
 
     // Validate that state after move captures latest state of project
-    const isValidCopy = await deps.validateProjectRegionCopy({
+    const targetProjectResources = {
+      models: copiedModelCount[projectId],
+      versions: copiedVersionCount[projectId],
+      objects: copiedObjectCount[projectId],
+      automations: copiedAutomationCount[projectId],
+      comments: copiedCommentCount[projectId],
+      webhooks: copiedWebhookCount[projectId]
+    }
+
+    const [isValidCopy, sourceProjectResources] = await deps.validateProjectRegionCopy({
       projectId,
-      copiedRowCount: {
-        models: copiedModelCount[projectId],
-        versions: copiedVersionCount[projectId],
-        objects: copiedObjectCount[projectId],
-        automations: copiedAutomationCount[projectId],
-        comments: copiedCommentCount[projectId],
-        webhooks: copiedWebhookCount[projectId]
-      }
+      copiedRowCount: targetProjectResources
     })
 
     if (!isValidCopy) {
       // TODO: Move failed or source project added data while changing regions. Retry move.
+      logger.error(
+        {
+          sourceData: sourceProjectResources,
+          targetData: targetProjectResources
+        },
+        'Failed to copy all project resources during project region move.'
+      )
       throw new ProjectRegionAssignmentError(
         'Missing data from source project in target region copy after move.'
       )
@@ -117,24 +127,22 @@ export const updateProjectRegionFactory =
 
 export const validateProjectRegionCopyFactory =
   (deps: {
-    countProjectModels: GetStreamBranchCount
-    countProjectVersions: GetStreamCommitCount
-    countProjectObjects: GetStreamObjectCount
-    countProjectAutomations: GetProjectAutomationCount
-    countProjectComments: GetStreamCommentCount
-    getProjectWebhooks: GetStreamWebhooks
+    countProjectModels: CountProjectModels
+    countProjectVersions: CountProjectVersions
+    countProjectObjects: CountProjectObjects
+    countProjectAutomations: CountProjectAutomations
+    countProjectComments: CountProjectComments
+    countProjectWebhooks: CountProjectWebhooks
   }): ValidateProjectRegionCopy =>
-  async ({ projectId, copiedRowCount }): Promise<boolean> => {
-    const sourceProjectModelCount = await deps.countProjectModels(projectId)
-    const sourceProjectVersionCount = await deps.countProjectVersions(projectId)
-    const sourceProjectObjectCount = await deps.countProjectObjects({
-      streamId: projectId
-    })
+  async ({ projectId, copiedRowCount }) => {
+    const sourceProjectModelCount = await deps.countProjectModels({ projectId })
+    const sourceProjectVersionCount = await deps.countProjectVersions({ projectId })
+    const sourceProjectObjectCount = await deps.countProjectObjects({ projectId })
     const sourceProjectAutomationCount = await deps.countProjectAutomations({
       projectId
     })
-    const sourceProjectCommentCount = await deps.countProjectComments(projectId)
-    const sourceProjectWebhooks = await deps.getProjectWebhooks({ streamId: projectId })
+    const sourceProjectCommentCount = await deps.countProjectComments({ projectId })
+    const sourceProjectWebhooksCount = await deps.countProjectWebhooks({ projectId })
 
     const tests = [
       copiedRowCount.models === sourceProjectModelCount,
@@ -142,8 +150,18 @@ export const validateProjectRegionCopyFactory =
       copiedRowCount.objects === sourceProjectObjectCount,
       copiedRowCount.automations === sourceProjectAutomationCount,
       copiedRowCount.comments === sourceProjectCommentCount,
-      copiedRowCount.webhooks === sourceProjectWebhooks.length
+      copiedRowCount.webhooks === sourceProjectWebhooksCount
     ]
 
-    return tests.every((test) => !!test)
+    return [
+      tests.every((test) => !!test),
+      {
+        models: sourceProjectModelCount,
+        versions: sourceProjectVersionCount,
+        objects: sourceProjectObjectCount,
+        automations: sourceProjectAutomationCount,
+        comments: sourceProjectCommentCount,
+        webhooks: sourceProjectWebhooksCount
+      }
+    ]
   }
