@@ -21,6 +21,23 @@ aliases:
 
   - &cache-key v4-yarn-packages-cachebust5-{{ checksum "yarn.lock" }}
 
+  # This is a workaround for the fact that some packages run postinstall scripts
+  # and do not respect the NPM_CONFIG_PREFIX setting.
+  # And we cannot store ~/.npm in the workspace, because it is not a sub-directory of /tmp/ci/speckle-server
+  # So we need to store it in the CircleCI cache storage.
+  - &pull-npm-global
+    restore_cache:
+      name: Restore NPM global directory (workaround)
+      keys:
+        - ~/.npm
+
+  - &push-npm-global
+    save_cache:
+      name: Save NPM global directory (workaround)
+      key: npm-global-v1-{{ checksum "yarn.lock" }}
+      paths:
+        - ~/.npm
+
   - &pull-yarn-cache
     restore_cache:
       name: Restore Yarn Package Cache
@@ -55,8 +72,7 @@ aliases:
     - packages/tailwind-theme/dist # generated from postinstall scripts
     - packages/tailwind-theme/dist-cjs # generated from postinstall scripts
     - packages/ui-components/dist # generated from postinstall scripts
-    - ~/.npm # generated from postinstall scripts
-    - ~/.yarn/berry # generated from postinstall scripts
+    - .yarn/global # generated from postinstall scripts
 
   - &push-yarn-cache
     save_cache:
@@ -85,7 +101,11 @@ aliases:
   - &yarn
     run:
       name: Install Dependencies
-      command: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+      # puppeteer and playwright attempt to download browsers, which we don't need
+      command: |
+        PUPPETEER_SKIP_DOWNLOAD=true \
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+        yarn
 
 workflows:
   test-build:
@@ -495,6 +515,7 @@ jobs:
       - *pull-yarn-cache # from circleci cache storage
       - *yarn
       - *save-yarn-cache # to workspace
+      - *push-npm-global # populate the workaround
 
   cache-dependencies:
     <<: *docker-node-image
@@ -502,6 +523,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache # from workspace
+      - *pull-npm-global # workaround
       - *push-yarn-cache # to circleci cache storage
 
   pre-commit:
@@ -536,6 +558,7 @@ jobs:
           paths:
             - ~/.cache/pre-commit
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
@@ -586,6 +609,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
@@ -719,6 +743,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
@@ -734,6 +759,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
@@ -761,6 +787,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Lint
@@ -791,6 +818,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
@@ -808,6 +836,7 @@ jobs:
     steps:
       - checkout
       # - *restore-yarn-cache # fails because the cache does not have the playwright browsers
+      - *pull-npm-global # workaround
       - run:
           name: Install Dependencies
           command: PUPPETEER_SKIP_DOWNLOAD=true yarn
@@ -837,6 +866,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build shared packages
@@ -857,6 +887,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - snyk/scan:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
@@ -1117,6 +1148,7 @@ jobs:
       - *restore_workspace
       - *restore_env_vars
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: auth to npm as Speckle
@@ -1170,6 +1202,7 @@ jobs:
     steps:
       - checkout
       - *restore-yarn-cache
+      - *pull-npm-global # workaround
       - *yarn
       - run:
           name: Build public packages
