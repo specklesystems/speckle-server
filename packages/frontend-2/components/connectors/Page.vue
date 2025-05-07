@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mx-auto max-w-4xl">
     <div class="flex flex-col gap-y-6">
       <section class="flex items-center gap-2">
         <div class="flex flex-col gap-2 flex-1">
@@ -44,7 +44,7 @@
           </FormSelectBase>
         </div>
         <div
-          v-if="!promoHidden"
+          v-if="filteredConnectors.length === connectors.length"
           class="relative rounded-[6px] overflow-hidden aspect-[896/405] max-h-[405px] w-full"
         >
           <figure class="dark:hidden absolute w-full">
@@ -132,7 +132,6 @@ const {
 
 const labelId = useId()
 const buttonId = useId()
-const promoHidden = ref(false)
 
 const selectedCategory = ref<CategoryFilter>()
 const connectors = shallowRef<ConnectorItem[]>(connectorItems)
@@ -159,13 +158,5 @@ const filteredConnectors = computed(() => {
   }
 
   return filteredItems
-})
-
-watch(filteredConnectors, (newList) => {
-  if (newList.length !== connectors.value.length) {
-    promoHidden.value = true
-  } else {
-    promoHidden.value = false
-  }
 })
 </script>
