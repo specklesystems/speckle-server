@@ -24,6 +24,8 @@ export default class ObjectLoader2 {
 
   #gathered: AsyncGeneratorQueue<Item>
 
+  #root?: Item = undefined
+
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
     this.#logger = options.logger || console.log
@@ -44,13 +46,15 @@ export default class ObjectLoader2 {
       keyRange: options.keyRange
     })
     this.#deferments = new DefermentManager({
-      maxSize: 200_000, 
+      maxSize: 200_000,
       ttl: 10_000,
-      logger: this.#logger})
+      logger: this.#logger
+    })
     this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)
     this.#pump = new CachePump(
       this.#database,
-      this.#gathered, this.#deferments,
+      this.#gathered,
+      this.#deferments,
       cacheOptions
     )
     this.#downloader =
@@ -72,13 +76,13 @@ export default class ObjectLoader2 {
   }
 
   async getRootObject(): Promise<Item | undefined> {
-    const cachedRootObject = await this.#database.getItem({ id: this.#objectId })
-    if (cachedRootObject) {
-      return cachedRootObject
+    if (!this.#root) {
+      this.#root = await this.#database.getItem({ id: this.#objectId })
+      if (!this.#root) {
+        this.#root = await this.#downloader.downloadSingle()
+      }
     }
-    const rootItem = await this.#downloader.downloadSingle()
-
-    return rootItem
+    return this.#root
   }
 
   async getObject(params: { id: string }): Promise<Base> {

@@ -23,11 +23,11 @@ export class CacheReader {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-      if (!this.#defermentManager.isDeferred(params.id)) {
-        this.#getItem(params.id)
-      }
-      return await this.#defermentManager.defer({ id: params.id })
+    if (!this.#defermentManager.isDeferred(params.id)) {
+      this.#getItem(params.id)
     }
+    return await this.#defermentManager.defer({ id: params.id })
+  }
 
   #getItem(id: string): void {
     if (!this.#readQueue) {
@@ -52,7 +52,8 @@ export class CacheReader {
       if (items[i]) {
         this.#defermentManager.undefer(items[i]!)
       } else {
-        this.#logger(`Item ${batch[i]} not found in cache`)
+        //this is okay!
+        //this.#logger(`Item ${batch[i]} not found in cache`)
       }
     }
   }
