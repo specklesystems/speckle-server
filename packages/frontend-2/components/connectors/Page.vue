@@ -4,14 +4,13 @@
       <section class="flex items-center gap-2">
         <div class="flex flex-col gap-2 flex-1">
           <div class="flex items-center gap-2">
-            <IconConnectors class="size-4" />
-            <h1 class="text-heading-lg">Connectors</h1>
+            <h1 class="text-heading-sm md:text-heading line-clamp-2">Connectors</h1>
           </div>
-          <p class="text-body-sm text-foreground-2">
+          <!-- <p class="text-body-sm text-foreground-2">
             Extract and exchange data between the most popular AEC applications using
             our tailored connectors.
-          </p>
-          <p class="text-body-xs text-foreground-3 leading-none">
+          </p> -->
+          <!-- <p class="text-body-xs text-foreground-3 leading-none">
             Looking for V2 connectors? Get them
             <NuxtLink
               class="text-foreground-3 hover:text-foreground-2 underline"
@@ -19,7 +18,7 @@
             >
               here.
             </NuxtLink>
-          </p>
+          </p> -->
         </div>
       </section>
       <section class="flex gap-4 flex-col">
@@ -57,7 +56,44 @@
             </template>
           </FormSelectBase>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-if="!promoHidden"
+          class="relative rounded-[6px] overflow-hidden aspect-[896/405] max-h-[405px] w-full"
+        >
+          <figure class="dark:hidden absolute w-full">
+            <NuxtImg
+              src="/images/connectors/connectors_light.png"
+              alt="Speckle cubes"
+              class="w-full h-auto aspect-[896/405] object-cover"
+            />
+            <NuxtImg
+              src="/images/connectors/connectors_light.png"
+              alt="Speckle cubes"
+              class="absolute bottom-0 left-0 w-full h-[120px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
+            />
+          </figure>
+          <figure class="hidden dark:block absolute w-full">
+            <NuxtImg
+              src="/images/connectors/connectors_dark.png"
+              alt="Speckle cubes"
+              class="w-full h-auto aspect-[896/405] object-cover"
+            />
+            <NuxtImg
+              src="/images/connectors/connectors_dark.png"
+              alt="Speckle cubes"
+              class="absolute bottom-0 left-0 w-full h-[120px] aspect-[896/405] object-cover object-left-bottom blur-[20px]"
+            />
+          </figure>
+
+          <div class="absolute bottom-0 w-full p-6">
+            <h3>Sync data in real time</h3>
+            <p class="text-body-xs text-foreground-2 mt-2 max-w-md text-balance">
+              Extract and exchange data between the most popular AEC applications using
+              our tailored connectors.
+            </p>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
           <ConnectorsCard
             v-for="connector in filteredConnectors"
             :key="connector.title"
@@ -98,6 +134,7 @@ const {
 
 const labelId = useId()
 const buttonId = useId()
+const promoHidden = ref(false)
 
 const selectedCategory = ref<CategoryFilter>()
 const connectors = shallowRef<ConnectorItem[]>(connectorItems)
@@ -124,5 +161,14 @@ const filteredConnectors = computed(() => {
   }
 
   return filteredItems
+})
+
+watch(filteredConnectors, (newList) => {
+  // Example: hide the image if the filtered list is different from the full list
+  if (newList.length !== connectors.value.length) {
+    promoHidden.value = true
+  } else {
+    promoHidden.value = false
+  }
 })
 </script>

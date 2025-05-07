@@ -1,6 +1,8 @@
 <template>
   <div>
-    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full">
+    <CommonCard
+      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full min hover:bg-foundation"
+    >
       <div class="flex gap-2 items-center">
         <img
           v-if="connector.image"
@@ -14,7 +16,9 @@
           </h2>
         </div>
       </div>
-      <p class="text-body-2xs text-foreground-2 line-clamp-2 leading-5">
+      <p
+        class="text-body-2xs text-foreground-2 line-clamp-5 leading-5 lg:min-h-[86px] md:min-h-14 sm:min-h-8"
+      >
         {{ connector.description }}
       </p>
       <div class="flex gap-1 mt-2">
@@ -45,7 +49,7 @@
             })
           "
         >
-          Documentation
+          Docs
         </FormButton>
       </div>
     </CommonCard>
