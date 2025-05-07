@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { describe, expect, test } from 'vitest'
 import IndexedDatabase from './indexedDatabase.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
