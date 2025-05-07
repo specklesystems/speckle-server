@@ -140,7 +140,7 @@ const main = async () => {
   )
 
   // Begin moving project data
-  const sourceServerProjectCount = await getTotalStreamCountFactory({ db: sourceDb })
+  const sourceServerProjectCount = await getTotalStreamCountFactory({ db: sourceDb })()
   let currentProjectIndex = 0
 
   const skippedProjects: StreamRecord[] = []
@@ -280,6 +280,7 @@ const main = async () => {
             // yeah, that is added by the repo function...
             return omit(commit, 'branchId')
           })
+          console.log(commitsRemapped.length)
           if (commitsRemapped.length) {
             await insertCommitsFactory({ db: regionTrx })(commitsRemapped)
           }
