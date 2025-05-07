@@ -161,9 +161,11 @@ const main = async () => {
 
       const existingProject = await getProjectFactory({ db: targetRegionDb })({ projectId: sourceProject.id })
 
-      if (existingProject) {
+      if (existingProject || sourceProject.name.includes("First Project")) {
         console.log(`${logKey} Skipping ${sourceProject.name} ${sourceProject.id}`)
-        skippedProjects.push(existingProject)
+        if (existingProject) {
+          skippedProjects.push(existingProject)
+        }
         continue
       }
 
