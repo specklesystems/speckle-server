@@ -109,6 +109,9 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
 }
 export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
+export type GetProjectWorkspace = (args: {
+  projectId: string
+}) => Promise<Workspace | null>
 
 /** Workspace Roles */
 
@@ -477,7 +480,7 @@ export type ValidateProjectRegionCopy = (params: {
     comments: number
     webhooks: number
   }
-}) => Promise<boolean>
+}) => Promise<[boolean, Record<string, number>]>
 
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
@@ -493,6 +496,13 @@ export type CopyProjectObjects = (params: {
 export type CopyProjectAutomations = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type CountProjectModels = (params: { projectId: string }) => Promise<number>
+export type CountProjectVersions = (params: { projectId: string }) => Promise<number>
+export type CountProjectObjects = (params: { projectId: string }) => Promise<number>
+export type CountProjectAutomations = (params: { projectId: string }) => Promise<number>
+export type CountProjectComments = (params: { projectId: string }) => Promise<number>
+export type CountProjectWebhooks = (params: { projectId: string }) => Promise<number>
 
 export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {

@@ -2591,7 +2591,9 @@ export type ProjectPermissionChecks = {
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
   canLeave: PermissionCheckResult;
+  canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
+  canPublish: PermissionCheckResult;
   canRead: PermissionCheckResult;
   canReadSettings: PermissionCheckResult;
   canReadWebhooks: PermissionCheckResult;
@@ -2612,7 +2614,6 @@ export type ProjectRole = {
 };
 
 export type ProjectTestAutomationCreateInput = {
-  functionId: Scalars['String']['input'];
   modelId: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };

@@ -54,20 +54,9 @@ import {
   WorkspaceCreationState as DbWorkspaceCreationState,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
-import {
-  knex,
-  ServerAcl,
-  ServerInvites,
-  StreamAcl,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
-  filterByResource,
-  InvitesRetrievalValidityFilter
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+
 import { clamp, has, isObjectLike } from 'lodash'
 import {
   WorkspaceCreationState,
@@ -414,26 +403,6 @@ export const getWorkspaceCollaboratorsFactory =
 
     return items
   }
-
-export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
-  return q
-    .leftJoin(
-      knex.raw(
-        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
-        {
-          workspaces: Workspaces.name,
-          resourceCol: ServerInvites.col.resource,
-          resourceType: WorkspaceInviteResourceType,
-          workspaceIdCol: Workspaces.col.id
-        }
-      )
-    )
-    .where((w1) => {
-      w1.whereNot((w2) =>
-        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
-      ).orWhereNotNull(Workspaces.col.id)
-    })
-}
 
 export const storeWorkspaceDomainFactory =
   ({ db }: { db: Knex }): StoreWorkspaceDomain =>

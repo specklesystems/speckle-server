@@ -27,7 +27,6 @@ import {
   storeWorkspaceDomainFactory,
   getWorkspaceBySlugFactory,
   getWorkspaceRoleForUserFactory,
-  workspaceInviteValidityFilter,
   upsertWorkspaceCreationStateFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -58,7 +57,10 @@ import {
   WorkspacePlanStatuses,
   WorkspaceRoles
 } from '@speckle/shared'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -119,6 +121,15 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { WorkspaceCreationState } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
+import {
+  processFinalizedProjectInviteFactory,
+  validateProjectInviteBeforeFinalizationFactory
+} from '@/modules/serverinvites/services/coreFinalization'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -461,8 +472,7 @@ export const createWorkspaceInviteDirectly = async (
   const buildFinalizeWorkspaceInvite = () =>
     finalizeResourceInviteFactory({
       findInvite: findInviteFactory({
-        db,
-        filterQuery: workspaceInviteValidityFilter
+        db
       }),
       deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
       insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
@@ -472,7 +482,11 @@ export const createWorkspaceInviteDirectly = async (
           payload
         }),
       validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
-        getWorkspace: getWorkspaceFactory({ db })
+        getWorkspace: getWorkspaceFactory({ db }),
+        validateProjectInviteBeforeFinalization:
+          validateProjectInviteBeforeFinalizationFactory({
+            getProject: getStream
+          })
       }),
       processInvite: processFinalizedWorkspaceInviteFactory({
         getWorkspace: getWorkspaceFactory({ db }),
@@ -486,6 +500,15 @@ export const createWorkspaceInviteDirectly = async (
             createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
             getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
             eventEmit: getEventBus().emit
+          })
+        }),
+        processFinalizedProjectInvite: processFinalizedProjectInviteFactory({
+          getProject: getStream,
+          addProjectRole: addOrUpdateStreamCollaboratorFactory({
+            validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+            getUser: getUserFactory({ db }),
+            grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+            emitEvent: getEventBus().emit
           })
         })
       }),
