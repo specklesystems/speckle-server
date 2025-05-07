@@ -8,8 +8,14 @@ import { PenViewPipeline } from '../pipeline/Pipelines/PenViewPipeline.js'
 import { SolidViewPipeline } from '../pipeline/Pipelines/SolidViewPipeline.js'
 import { Extension } from './Extension.js'
 import { FilteringExtension, FilteringState } from './FilteringExtension.js'
-import { PipelineOptions } from '../pipeline/Pipelines/Pipeline.js'
-import { EdgesPipelineOptions } from '../pipeline/Pipelines/EdgesPipeline.js'
+import {
+  DefaultPipelineOptions,
+  PipelineOptions
+} from '../pipeline/Pipelines/Pipeline.js'
+import {
+  DefaultEdgesPipelineOptions,
+  EdgesPipelineOptions
+} from '../pipeline/Pipelines/EdgesPipeline.js'
 
 export enum ViewMode {
   DEFAULT,
@@ -32,6 +38,15 @@ export type ViewModeOptions = PipelineOptions & EdgesPipelineOptions
 export class ViewModes extends Extension {
   public get inject() {
     return [FilteringExtension]
+  }
+
+  protected _viewModeOptions: Required<ViewModeOptions> = Object.assign(
+    {},
+    DefaultPipelineOptions,
+    DefaultEdgesPipelineOptions
+  )
+  public get viewModeOptions(): ViewModeOptions {
+    return this.viewModeOptions
   }
 
   protected _viewMode: ViewMode
@@ -72,12 +87,16 @@ export class ViewModes extends Extension {
 
   public setViewMode(viewMode: ViewMode, options?: ViewModeOptions) {
     /** Edges on/off require pipeline rebuild */
-    if (viewMode !== this._viewMode || options?.edges !== undefined) {
+    if (
+      viewMode !== this._viewMode ||
+      (options && options.edges !== this._viewModeOptions.edges)
+    ) {
       this._viewMode = viewMode
       this.updateViewModes(viewMode, options)
     } else {
       this.updateViewModeOptions(options)
     }
+    Object.assign(this._viewModeOptions, options)
   }
 
   protected updateViewModes(viewMode: ViewMode, options?: ViewModeOptions) {
@@ -103,6 +122,7 @@ export class ViewModes extends Extension {
         )
         break
     }
+    this.updateViewModeOptions(options)
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
     this.emit(ViewModeEvent.Changed, viewMode)
   }

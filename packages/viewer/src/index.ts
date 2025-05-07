@@ -112,7 +112,10 @@ import {
   PassOptions,
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
-import { Pipeline } from './modules/pipeline/Pipelines/Pipeline.js'
+import {
+  DefaultPipelineOptions,
+  Pipeline
+} from './modules/pipeline/Pipelines/Pipeline.js'
 import { ProgressivePipeline } from './modules/pipeline/Pipelines/ProgressivePipeline.js'
 import { DepthPass, DepthPassOptions } from './modules/pipeline/Passes/DepthPass.js'
 import { GeometryPass } from './modules/pipeline/Passes/GeometryPass.js'
@@ -157,7 +160,10 @@ import {
   EdgesPass,
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
-import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import {
+  DefaultEdgesPipelineOptions,
+  EdgesPipeline
+} from './modules/pipeline/Pipelines/EdgesPipeline.js'
 
 export {
   Viewer,
@@ -253,6 +259,8 @@ export {
   ArcticViewPipeline,
   TAAPipeline,
   ShadedViewPipeline,
+  DefaultPipelineOptions,
+  DefaultEdgesPipelineOptions,
   ViewModes,
   ViewMode,
   FilterMaterial,

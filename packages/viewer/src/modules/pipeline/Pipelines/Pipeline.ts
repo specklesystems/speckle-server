@@ -18,7 +18,7 @@ export interface PipelineOptions extends BasePipelineOptions {
 }
 
 export const DefaultPipelineOptions = {
-  edges: false
+  edges: true
 }
 
 export abstract class Pipeline {

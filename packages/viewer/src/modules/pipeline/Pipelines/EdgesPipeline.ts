@@ -18,7 +18,7 @@ export interface EdgesPipelineOptions extends BasePipelineOptions {
 
 export const DefaultEdgesPipelineOptions = {
   outlineThickness: 1,
-  outlineDensity: 0.75,
+  outlineOpacity: 0.75,
   outlineColor: 0x323232
 }
 
