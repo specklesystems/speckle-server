@@ -19,7 +19,7 @@ aliases:
     docker:
       - image: cimg/node:18.19.0-browsers
 
-  - &cache-key v4-yarn-packages-cachebust5-{{ checksum "yarn.lock" }}
+  - &cache-key v4-yarn-packages-cachebust6-{{ checksum "yarn.lock" }}
 
   # This is a workaround for the fact that some packages run postinstall scripts
   # and do not respect the NPM_CONFIG_PREFIX setting.
@@ -29,12 +29,12 @@ aliases:
     restore_cache:
       name: Restore NPM global directory (workaround)
       keys:
-        - ~/.npm
+        - npm-global-cachebust2-{{ checksum "yarn.lock" }}
 
   - &push-npm-global
     save_cache:
       name: Save NPM global directory (workaround)
-      key: npm-global-v1-{{ checksum "yarn.lock" }}
+      key: npm-global-cachebust2-{{ checksum "yarn.lock" }}
       paths:
         - ~/.npm
 
