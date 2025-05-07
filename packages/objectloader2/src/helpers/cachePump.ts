@@ -12,13 +12,18 @@ export class CachePump {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: IndexedDatabase
   #logger: CustomLogger
-    #deferments: DefermentManager
-  
-    #gathered: AsyncGeneratorQueue<Item>
+  #deferments: DefermentManager
+
+  #gathered: AsyncGeneratorQueue<Item>
 
   #options: CacheOptions
 
-  constructor(database: IndexedDatabase, gathered: AsyncGeneratorQueue<Item>, deferments: DefermentManager, options: CacheOptions) {
+  constructor(
+    database: IndexedDatabase,
+    gathered: AsyncGeneratorQueue<Item>,
+    deferments: DefermentManager,
+    options: CacheOptions
+  ) {
     this.#database = database
     this.#gathered = gathered
     this.#deferments = deferments
@@ -72,7 +77,6 @@ export class CachePump {
   }
 
   async *load(ids: string[], downloader: Downloader): AsyncGenerator<Item> {
-    
     const total = ids.length
     const pumpPromise = this.pumpItems({
       ids,

@@ -71,7 +71,6 @@ export default class IndexedDatabase {
     await this.#safariFix()
     this.#cacheDB = await this.#openDatabase()
   }
-  
 
   async getItem(params: { id: string }): Promise<Item | undefined> {
     const { id } = params
