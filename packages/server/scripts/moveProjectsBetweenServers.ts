@@ -143,6 +143,8 @@ const main = async () => {
   const sourceServerProjectCount = await getTotalStreamCountFactory({ db: sourceDb })
   let currentProjectIndex = 0
 
+  const skippedProjects: StreamRecord[] = []
+
   for await (const sourceProjects of executeBatchedSelect(
     sourceDb.table<StreamRecord>('streams').select('*')
   )) {
@@ -151,8 +153,8 @@ const main = async () => {
       const logKey = `(${currentProjectIndex
         .toString()
         .padStart(4, '0')}/${sourceServerProjectCount
-        .toString()
-        .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
+          .toString()
+          .padStart(4, '0')}) ${sourceProject.id.substring(0, 6)} `
 
       const mainTrx = await targetMainDb.transaction()
 
@@ -160,6 +162,14 @@ const main = async () => {
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
+
+      const existingProject = await getProjectFactory({ db: targetRegionDb })({ projectId: sourceProject.id })
+
+      if (existingProject) {
+        console.log(`${logKey} Skipping ${sourceProject.name} ${sourceProject.id}`)
+        skippedProjects.push(existingProject)
+        continue
+      }
 
       // TODO: Why is initial write wrapped in a transaction?
       await storeProjectFactory({ db: targetRegionDb })({
@@ -216,8 +226,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-              .toString()
-              .padStart(6, '0')} objects moved`
+                .toString()
+                .padStart(6, '0')} objects moved`
           )
         }
 
@@ -369,6 +379,11 @@ const main = async () => {
         throw err
       }
     }
+  }
+
+  console.log(`Skipped ${skippedProjects.length} projects:`)
+  for (const project of skippedProjects) {
+    console.log(`${project.id} ${project.name}`)
   }
 }
 
