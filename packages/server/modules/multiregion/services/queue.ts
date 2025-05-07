@@ -23,11 +23,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
-import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
-import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
-import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
-import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   upsertProjectRegionKeyFactory,
@@ -36,7 +31,6 @@ import {
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
 import {
   copyWorkspaceFactory,
   copyProjectsFactory,
@@ -46,7 +40,13 @@ import {
   copyProjectAutomationsFactory,
   copyProjectCommentsFactory,
   copyProjectWebhooksFactory,
-  copyProjectBlobs
+  copyProjectBlobs,
+  countProjectModelsFactory,
+  countProjectVersionsFactory,
+  countProjectObjectsFactory,
+  countProjectAutomationsFactory,
+  countProjectCommentsFactory,
+  countProjectWebhooksFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
@@ -208,22 +208,14 @@ export const startQueue = async () => {
                 targetObjectStorage
               }),
               validateProjectRegionCopy: validateProjectRegionCopyFactory({
-                countProjectModels: getStreamBranchCountFactory({
+                countProjectModels: countProjectModelsFactory({ db: sourceDb }),
+                countProjectVersions: countProjectVersionsFactory({ db: sourceDb }),
+                countProjectObjects: countProjectObjectsFactory({ db: sourceDb }),
+                countProjectAutomations: countProjectAutomationsFactory({
                   db: sourceDb
                 }),
-                countProjectVersions: getStreamCommitCountFactory({
-                  db: sourceDb
-                }),
-                countProjectObjects: getStreamObjectCountFactory({
-                  db: sourceDb
-                }),
-                countProjectAutomations: getProjectAutomationsTotalCountFactory({
-                  db: sourceDb
-                }),
-                countProjectComments: getStreamCommentCountFactory({
-                  db: sourceDb
-                }),
-                getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
+                countProjectComments: countProjectCommentsFactory({ db: sourceDb }),
+                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
               }),
               updateProjectRegionKey: updateProjectRegionKeyFactory({
                 upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),

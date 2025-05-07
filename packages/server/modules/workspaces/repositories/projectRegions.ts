@@ -41,7 +41,13 @@ import {
   CopyProjects,
   CopyProjectVersions,
   CopyProjectWebhooks,
-  CopyWorkspace
+  CopyWorkspace,
+  CountProjectAutomations,
+  CountProjectComments,
+  CountProjectModels,
+  CountProjectObjects,
+  CountProjectVersions,
+  CountProjectWebhooks
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { Knex } from 'knex'
@@ -649,4 +655,49 @@ export const copyProjectBlobs =
     }
 
     return copiedBlobsCountByProjectId
+  }
+
+export const countProjectModelsFactory =
+  (deps: { db: Knex }): CountProjectModels =>
+  async ({ projectId }) => {
+    const [res] = await tables.models(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectVersionsFactory =
+  (deps: { db: Knex }): CountProjectVersions =>
+  async ({ projectId }) => {
+    const [res] = await tables
+      .streamCommits(deps.db)
+      .where({ streamId: projectId })
+      .count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectObjectsFactory =
+  (deps: { db: Knex }): CountProjectObjects =>
+  async ({ projectId }) => {
+    const [res] = await tables.objects(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectAutomationsFactory =
+  (deps: { db: Knex }): CountProjectAutomations =>
+  async ({ projectId }) => {
+    const [res] = await tables.automations(deps.db).where({ projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectCommentsFactory =
+  (deps: { db: Knex }): CountProjectComments =>
+  async ({ projectId }) => {
+    const [res] = await tables.comments(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectWebhooksFactory =
+  (deps: { db: Knex }): CountProjectWebhooks =>
+  async ({ projectId }) => {
+    const [res] = await tables.webhooks(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
   }

@@ -1,6 +1,9 @@
 import { db } from '@/db/knex'
 import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
+import { markAutomationDeletedFactory } from '@/modules/automate/repositories/automations'
+import { deleteAutomationFactory } from '@/modules/automate/services/automationManagement'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { updateCommentFactory } from '@/modules/comments/repositories/comments'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
@@ -155,6 +158,15 @@ isMultiRegionTestMode()
           stream: testProject
         })
 
+        const { automation: deletedAutomation } = await createTestAutomation({
+          userId: adminUser.id,
+          projectId: testProject.id
+        })
+
+        await deleteAutomationFactory({
+          deleteAutomation: markAutomationDeletedFactory({ db: sourceRegionDb })
+        })({ automationId: deletedAutomation.automation.id })
+
         const { automation, revision } = await createTestAutomation({
           userId: adminUser.id,
           projectId: testProject.id,
@@ -182,6 +194,16 @@ isMultiRegionTestMode()
           userId: adminUser.id,
           projectId: testProject.id,
           objectId: testVersion.objectId
+        })
+
+        const archivedComment = await createTestComment({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
+
+        await updateCommentFactory({ db: sourceRegionDb })(archivedComment.id, {
+          archived: true
         })
 
         testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
