@@ -3,7 +3,7 @@ import { Downloader } from './interfaces.js'
 import IndexedDatabase from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
-import { ObjectLoader2Options } from './options.js'
+import { CacheOptions, ObjectLoader2Options } from './options.js'
 import { MemoryDownloader } from './memoryDownloader.js'
 import { MemoryDatabase } from './memoryDatabase.js'
 import { DefermentManager } from '../helpers/defermentManager.js'
@@ -26,31 +26,37 @@ export default class ObjectLoader2 {
 
   constructor(options: ObjectLoader2Options) {
     this.#objectId = options.objectId
-
     this.#logger = options.logger || console.log
+
+    const cacheOptions: CacheOptions = {
+      logger: this.#logger,
+      maxCacheReadSize: 10_000,
+      maxCacheWriteSize: 10_000,
+      maxWriteQueueSize: 40_000,
+      maxCacheBatchWriteWait: 3_000,
+      maxCacheBatchReadWait: 3_000
+    }
+
     this.#gathered = options.results || new AsyncGeneratorQueue()
     this.#database = new IndexedDatabase({
       logger: this.#logger,
-      maxCacheReadSize: 10_000,
-      maxCacheWriteSize: 10_000,
-      maxWriteQueueSize: 40_000,
-      maxCacheBatchWriteWait: 3_000,
       indexedDB: options.indexedDB,
       keyRange: options.keyRange
     })
-    this.#pump = new CachePump(this.#database, {
-      logger: this.#logger,
-      maxCacheReadSize: 10_000,
-      maxCacheWriteSize: 10_000,
-      maxWriteQueueSize: 40_000,
-      maxCacheBatchWriteWait: 3_000,
-      indexedDB: options.indexedDB,
-      keyRange: options.keyRange
-    })
+    this.#deferments = new DefermentManager({
+      maxSize: 200_000, 
+      ttl: 10_000,
+      logger: this.#logger})
+    this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)
+    this.#pump = new CachePump(
+      this.#database,
+      this.#gathered, this.#deferments,
+      cacheOptions
+    )
     this.#downloader =
       options.downloader ||
       new ServerDownloader({
-        database: this.#pump,
+        cache: this.#pump,
         results: this.#gathered,
         serverUrl: options.serverUrl,
         streamId: options.streamId,
@@ -58,8 +64,6 @@ export default class ObjectLoader2 {
         token: options.token,
         headers: options.headers
       })
-    this.#deferments = new DefermentManager(100_000, 20_000)
-    this.#cache = new CacheReader(this.#database, this.#deferments, this.#logger)
   }
 
   async disposeAsync(): Promise<void> {
@@ -78,10 +82,7 @@ export default class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
-    if (!this.#deferments.isDeferred(params.id)) {
-      this.#cache.getItem(params.id)
-    }
-    return await this.#deferments.defer({ id: params.id })
+    return await this.#cache.getObject({ id: params.id })
   }
 
   async getTotalObjectCount() {
@@ -104,22 +105,9 @@ export default class ObjectLoader2 {
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
     this.#downloader.initializePool({ total })
-    const pumpPromise = this.#pump.pumpItems({
-      ids: children,
-      foundItems: this.#gathered,
-      notFoundItems: this.#downloader
-    })
-    let count = 0
-    for await (const item of this.#gathered.consume()) {
-      this.#deferments.undefer(item)
+    for await (const item of this.#pump.load(children, this.#downloader)) {
       yield item.base
-      count++
-      if (count >= total) {
-        await this.#pump.disposeAsync()
-        this.#gathered.dispose()
-      }
     }
-    await pumpPromise
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {

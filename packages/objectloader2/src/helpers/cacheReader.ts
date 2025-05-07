@@ -1,5 +1,6 @@
 import IndexedDatabase from '../operations/indexedDatabase.js'
-import { CustomLogger, Item } from '../types/types.js'
+import { CacheOptions } from '../operations/options.js'
+import { Base, CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
 import { DefermentManager } from './defermentManager.js'
 
@@ -7,23 +8,32 @@ export class CacheReader {
   #database: IndexedDatabase
   #defermentManager: DefermentManager
   #logger: CustomLogger
+  #options: CacheOptions
   #readQueue: BatchingQueue<string> | undefined
 
   constructor(
     database: IndexedDatabase,
     defermentManager: DefermentManager,
-    logger: CustomLogger
+    options: CacheOptions
   ) {
     this.#database = database
     this.#defermentManager = defermentManager
-    this.#logger = logger
+    this.#options = options
+    this.#logger = options.logger || (() => {})
   }
 
-  getItem(id: string): void {
+  async getObject(params: { id: string }): Promise<Base> {
+      if (!this.#defermentManager.isDeferred(params.id)) {
+        this.#getItem(params.id)
+      }
+      return await this.#defermentManager.defer({ id: params.id })
+    }
+
+  #getItem(id: string): void {
     if (!this.#readQueue) {
       this.#readQueue = new BatchingQueue({
-        batchSize: 5_000,
-        maxWaitTime: 5_000,
+        batchSize: this.#options.maxCacheReadSize,
+        maxWaitTime: this.#options.maxCacheBatchReadWait,
         processFunction: this.#processBatch
       })
     }

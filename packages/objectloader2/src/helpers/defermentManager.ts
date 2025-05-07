@@ -1,14 +1,12 @@
 import { DeferredBase } from './deferredBase.js'
 import { Base, Item } from '../types/types.js'
+import { DefermentManagerOptions } from '../operations/options.js'
 
 export class DefermentManager {
   #deferments: Map<string, DeferredBase> = new Map()
   #timer?: ReturnType<typeof setTimeout>
 
-  constructor(
-    private maxSize: number, // Max size of the deferment map
-    private ttlMs: number // Sliding TTL
-  ) {
+  constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
   }
 
@@ -48,9 +46,9 @@ export class DefermentManager {
   private resetGlobalTimer(): void {
     const run = () => {
       this.cleanDeferments()
-      this.#timer = setTimeout(run, this.ttlMs)
+      this.#timer = setTimeout(run, this.options.ttl)
     }
-    this.#timer = setTimeout(run, this.ttlMs)
+    this.#timer = setTimeout(run, this.options.ttl)
   }
 
   dispose(): void {
@@ -59,28 +57,26 @@ export class DefermentManager {
       this.#timer = undefined
     }
     this.#deferments.clear()
-    console.log('dispose deferments')
   }
 
   private cleanDeferments(): void {
     const now = this.now()
-    const expired = now - this.ttlMs
+    const expired = now - this.options.ttl
     let cleaned = 0
 
-    if (this.#deferments.size < this.maxSize) {
-      console.log('cleaned deferments', cleaned, this.#deferments.size)
+    if (this.#deferments.size < this.options.maxSize) {
+      this.options.logger('cleaned deferments', cleaned, this.#deferments.size)
       return
     }
     for (const [id, deferredBase] of this.#deferments) {
       if (deferredBase.done(expired)) {
         this.#deferments.delete(id)
         cleaned++
-        if (this.#deferments.size < this.maxSize) {
-          console.log('cleaned deferments', cleaned, this.#deferments.size)
+        if (this.#deferments.size < this.options.maxSize) {
+          this.options.logger('cleaned deferments', cleaned, this.#deferments.size)
           return
         }
       }
     }
-    console.log('cleaned deferments', cleaned, this.#deferments.size)
   }
 }

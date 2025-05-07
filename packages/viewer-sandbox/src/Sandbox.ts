@@ -1275,10 +1275,16 @@ export default class Sandbox {
         true,
         undefined
       )
+      let progress = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-        if (colorImage)
-          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+        const p = Math.floor(arg.progress * 100)
+        if (p > progress) {
+          if (colorImage)
+            colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+          progress = p
+          console.log(`Loading ${p}%`)
+        }
       })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)

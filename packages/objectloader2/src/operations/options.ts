@@ -26,9 +26,14 @@ export interface BaseDatabaseOptions {
     lowerBound: Function
     upperBound: Function
   }
+}
+
+export interface CacheOptions {
+  logger?: CustomLogger
   maxCacheReadSize: number
   maxCacheWriteSize: number
   maxCacheBatchWriteWait: number
+  maxCacheBatchReadWait: number
   maxWriteQueueSize: number
 }
 
@@ -40,11 +45,17 @@ export interface BaseDownloadOptions {
   headers?: Headers
 
   fetch?: Fetcher
-  database: CachePump
+  cache: CachePump
   results: Queue<Item>
 }
 
 export interface MemoryDatabaseOptions {
   logger?: CustomLogger
   items?: Record<string, Base>
+}
+
+export interface DefermentManagerOptions {
+  logger: CustomLogger
+  maxSize: number
+  ttl: number
 }

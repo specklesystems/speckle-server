@@ -1,19 +1,27 @@
 import { TIME } from '@speckle/shared'
 import IndexedDatabase from '../operations/indexedDatabase.js'
-import { BaseDatabaseOptions } from '../operations/options.js'
+import { CacheOptions } from '../operations/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
 import Queue from './queue.js'
+import { Downloader } from '../operations/interfaces.js'
+import { DefermentManager } from './defermentManager.js'
+import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 
 export class CachePump {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: IndexedDatabase
   #logger: CustomLogger
+    #deferments: DefermentManager
+  
+    #gathered: AsyncGeneratorQueue<Item>
 
-  #options: BaseDatabaseOptions
+  #options: CacheOptions
 
-  constructor(database: IndexedDatabase, options: BaseDatabaseOptions) {
+  constructor(database: IndexedDatabase, gathered: AsyncGeneratorQueue<Item>, deferments: DefermentManager, options: CacheOptions) {
     this.#database = database
+    this.#gathered = gathered
+    this.#deferments = deferments
     this.#options = options
     this.#logger = options.logger || (() => {})
   }
@@ -61,5 +69,25 @@ export class CachePump {
       }
       i += maxCacheReadSize
     }
+  }
+
+  async *load(ids: string[], downloader: Downloader): AsyncGenerator<Item> {
+    
+    const total = ids.length
+    const pumpPromise = this.pumpItems({
+      ids,
+      foundItems: this.#gathered,
+      notFoundItems: downloader
+    })
+    let count = 0
+    for await (const item of this.#gathered.consume()) {
+      this.#deferments.undefer(item)
+      yield item
+      count++
+      if (count >= total) {
+        this.#gathered.dispose()
+      }
+    }
+    await pumpPromise
   }
 }
