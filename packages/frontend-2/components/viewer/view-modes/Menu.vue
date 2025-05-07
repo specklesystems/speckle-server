@@ -22,10 +22,7 @@
         />
       </div>
     </div>
-    <div
-      class="border-t border-b border-outline-2 p-2 flex items-center justify-between"
-      :class="{ 'border-b': edgesEnabled }"
-    >
+    <div class="border-t border-outline-2 p-2 flex items-center justify-between">
       <span class="text-body-2xs font-medium text-foreground leading-none">Edges</span>
       <div
         v-tippy="
@@ -48,18 +45,9 @@
       <div>
         <div class="flex items-center justify-between gap-2">
           <div class="text-body-2xs">Line width</div>
-          <FormButton
-            color="subtle"
-            size="sm"
-            :icon-right="showEdgesLineWidthSlider ? ChevronUpIcon : ChevronDownIcon"
-            class="!text-foreground-2 !pr-0"
-            @click="showEdgesLineWidthSlider = !showEdgesLineWidthSlider"
-          >
-            {{ lineWeight }}
-          </FormButton>
+          <div class="text-body-2xs">{{ lineWeight }}</div>
         </div>
         <input
-          v-show="showEdgesLineWidthSlider"
           id="edge-stroke"
           v-model="lineWeight"
           class="w-full mt-1"
@@ -68,10 +56,9 @@
           :min="0.5"
           :max="3"
           step="0.1"
-          :disabled="!showEdgesLineWidthSlider"
           @input="handleEdgesLineWeightChange"
         />
-        <div class="flex items-center justify-between gap-2 mt-1.5 pr-0.5">
+        <div class="flex items-center justify-between gap-2 mt-1.5 mb-1 pr-0.5">
           <div class="text-body-2xs">Color</div>
           <div v-tippy="`Coming soon`" class="flex items-center gap-1 opacity-60">
             <div
@@ -100,7 +87,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline'
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -116,7 +102,6 @@ const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 const isManuallyOpened = ref(false)
-const showEdgesLineWidthSlider = ref(false)
 
 const handleEdgesLineWeightChange = () => {
   setEdgesLineWeight(Number(lineWeight.value))
@@ -138,25 +123,24 @@ registerShortcuts({
   SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true)
 })
 
-const isActiveMode = (mode: ViewMode) =>
-  snowingEnabled.value ? false : mode === currentViewMode.value
+const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
-const snowingEnabled = ref(false)
 
 const emit = defineEmits<{
   (e: 'force-close-others'): void
 }>()
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
-  snowingEnabled.value = false
   setViewMode(mode)
   cancelCloseTimer()
 
   if (isShortcut) {
-    emit('force-close-others')
-    open.value = true
     startCloseTimer()
+    if (!open.value) {
+      emit('force-close-others')
+    }
+    open.value = true
   }
 
   mp.track('Viewer Action', {
@@ -168,11 +152,5 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
 onUnmounted(() => {
   cancelCloseTimer()
-})
-
-watch(currentViewMode, (newMode) => {
-  if (newMode === ViewMode.PEN) {
-    edgesEnabled.value = true
-  }
 })
 </script>

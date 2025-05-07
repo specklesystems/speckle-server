@@ -1,8 +1,8 @@
 import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
-import type {
-  TreeNode,
-  MeasurementOptions,
-  PropertyInfo,
+import {
+  type TreeNode,
+  type MeasurementOptions,
+  type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
@@ -489,6 +489,7 @@ export function useViewModeUtilities() {
   const { viewMode } = useInjectedViewerInterfaceState()
   const edgesEnabled = ref(true)
   const lineWeight = ref(1)
+  const outlineOpacity = ref(1)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -498,7 +499,7 @@ export function useViewModeUtilities() {
       viewModes.setViewMode(currentViewMode.value, {
         edges: edgesEnabled.value,
         outlineThickness: lineWeight.value,
-        outlineOpacity: 1,
+        outlineOpacity: outlineOpacity.value,
         outlineColor: 0x323232
       })
     }
@@ -506,6 +507,12 @@ export function useViewModeUtilities() {
 
   const setViewMode = (mode: ViewMode) => {
     viewMode.value = mode
+    if (mode === ViewMode.PEN) {
+      outlineOpacity.value = 1
+      edgesEnabled.value = true
+    } else {
+      outlineOpacity.value = 0.75
+    }
     updateViewMode()
   }
 
