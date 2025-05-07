@@ -602,7 +602,7 @@ describe('Streams @core-streams', () => {
     const TOTAL_OWN_STREAM_COUNT = OWNED_STREAM_COUNT + SHARED_STREAM_COUNT
 
     const PUBLIC_STREAM_COUNT = 15
-    const DISCOVERABLE_STREAM_COUNT = 0 // discoverability removed
+    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT
 
     let userOneStreams: BasicTestStream[]
     let userTwoStreams: BasicTestStream[]
@@ -681,7 +681,7 @@ describe('Streams @core-streams', () => {
     ) => {
       const { limitedUserQuery } = options
       const expectedTotalCount = isOtherUser
-        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only shared streams + discoverable ones
+        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only public
         : TOTAL_OWN_STREAM_COUNT // all owned & shared streams
 
       const requestPage = async (cursor?: Nullable<string>) => {

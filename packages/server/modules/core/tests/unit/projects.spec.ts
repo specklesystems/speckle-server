@@ -249,7 +249,7 @@ describe('project services @core', () => {
       expect(eventPayload).deep.equal({
         ownerId,
         project,
-        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+        input: { description: '', name: project.name, visibility: 'PRIVATE' }
       })
     })
     it('successfully creates a project', async () => {
@@ -313,7 +313,7 @@ describe('project services @core', () => {
       expect(eventPayload).deep.equal({
         ownerId,
         project,
-        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+        input: { description: '', name: project.name, visibility: 'PRIVATE' }
       })
     })
   })

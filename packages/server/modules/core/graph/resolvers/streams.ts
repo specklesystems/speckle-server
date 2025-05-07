@@ -36,7 +36,7 @@ import {
   updateStreamAndNotifyFactory,
   updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { Roles, Scopes } from '@speckle/shared'
+import { Nullable, Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
@@ -314,7 +314,7 @@ export = {
         orderBy: args.orderBy,
         publicOnly: null,
         searchQuery: args.query,
-        visibility: args.visibility,
+        visibility: args.visibility as Nullable<ProjectRecordVisibility>,
         streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
         cursor: null
       })
