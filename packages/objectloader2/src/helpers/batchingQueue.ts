@@ -1,11 +1,9 @@
-import { Item } from '../types/types.js'
 import KeyedQueue from './keyedQueue.js'
-import Queue from './queue.js'
 
-export default class BatchingQueue implements Queue<Item> {
-  #queue: KeyedQueue<string, Item> = new KeyedQueue<string, Item>()
+export default class BatchingQueue<T> {
+  #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
   #batchSize: number
-  #processFunction: (batch: Item[]) => Promise<void>
+  #processFunction: (batch: T[]) => Promise<void>
 
   #baseInterval: number
   #minInterval: number
@@ -17,7 +15,7 @@ export default class BatchingQueue implements Queue<Item> {
   constructor(params: {
     batchSize: number
     maxWaitTime?: number
-    processFunction: (batch: Item[]) => Promise<void>
+    processFunction: (batch: T[]) => Promise<void>
   }) {
     this.#batchSize = params.batchSize
     this.#baseInterval = Math.min(params.maxWaitTime ?? 200, 200) // Initial batch time (ms)
@@ -32,11 +30,11 @@ export default class BatchingQueue implements Queue<Item> {
     await this.#processingLoop
   }
 
-  add(item: Item): void {
-    this.#queue.enqueue(item.baseId, item)
+  add(key: string, item: T): void {
+    this.#queue.enqueue(key, item)
   }
 
-  get(id: string): Item | undefined {
+  get(id: string): T | undefined {
     return this.#queue.get(id)
   }
 
@@ -44,7 +42,7 @@ export default class BatchingQueue implements Queue<Item> {
     return this.#queue.size
   }
 
-  #getBatch(batchSize: number): Item[] {
+  #getBatch(batchSize: number): T[] {
     return this.#queue.spliceValues(0, Math.min(batchSize, this.#queue.size))
   }
 

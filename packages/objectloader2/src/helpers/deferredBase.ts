@@ -22,10 +22,11 @@ export class DeferredBase {
     this.base = value
     this.resolve(value)
   }
-  done(): void {
-    if (this.base) {
+  done(expired: number): boolean {
+    if (this.lastAccess < expired && this.base) {
       this.resolve(this.base)
+      return true
     }
-    this.reject(new Error('Base not found'))
+    return false
   }
 }

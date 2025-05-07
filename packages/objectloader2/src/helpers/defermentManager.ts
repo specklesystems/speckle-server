@@ -1,14 +1,13 @@
 import { DeferredBase } from './deferredBase.js'
 import { Base, Item } from '../types/types.js'
-import { Cache } from '../operations/interfaces.js'
 
 export class DefermentManager {
   #deferments: Map<string, DeferredBase> = new Map()
-  #found: Map<string, boolean> = new Map()
+  #timer?: ReturnType<typeof setTimeout>
 
   constructor(
-    private ttlMs: number, // Sliding TTL
-    private database: Cache
+    private maxSize: number, // Max size of the deferment map
+    private ttlMs: number // Sliding TTL
   ) {
     this.resetGlobalTimer()
   }
@@ -17,6 +16,9 @@ export class DefermentManager {
     return Date.now()
   }
 
+  isDeferred(id: string): boolean {
+    return this.#deferments.has(id)
+  }
   async defer(params: { id: string }): Promise<Base> {
     const now = this.now()
     const deferredBase = this.#deferments.get(params.id)
@@ -24,19 +26,9 @@ export class DefermentManager {
       deferredBase.lastAccess = now
       return deferredBase.promise
     }
-    if (this.#found.get(params.id)) {
-      console.log('got from index', params.id)
-      const item = await this.database.getItem({ id: params.id })
-      if (!item) {
-        const waiter = new DeferredBase(params.id, now)
-        this.#deferments.set(params.id, waiter)
-        return waiter.promise
-      }
-      return item.base
-    }
-    const existing = new DeferredBase(params.id, now)
-    this.#deferments.set(params.id, existing)
-    return existing.promise
+    const notYetFound = new DeferredBase(params.id, now)
+    this.#deferments.set(params.id, notYetFound)
+    return notYetFound.promise
   }
 
   undefer(item: Item): void {
@@ -56,24 +48,39 @@ export class DefermentManager {
   private resetGlobalTimer(): void {
     const run = () => {
       this.cleanDeferments()
-      setTimeout(run, this.ttlMs)
+      this.#timer = setTimeout(run, this.ttlMs)
     }
-    setTimeout(run, this.ttlMs)
+    this.#timer = setTimeout(run, this.ttlMs)
+  }
+
+  dispose(): void {
+    if (this.#timer) {
+      clearTimeout(this.#timer)
+      this.#timer = undefined
+    }
+    this.#deferments.clear()
+    console.log('dispose deferments')
   }
 
   private cleanDeferments(): void {
     const now = this.now()
     const expired = now - this.ttlMs
-    this.#deferments.forEach((deferredBase, id) => {
-      if (this.#found.get(id) && deferredBase.lastAccess < expired) {
-        deferredBase.done()
-        this.#deferments.delete(id)
-      }
-    })
-  }
+    let cleaned = 0
 
-  public dispose(): void {
-    this.#deferments.clear()
-    this.#found.clear()
+    if (this.#deferments.size < this.maxSize) {
+      console.log('cleaned deferments', cleaned, this.#deferments.size)
+      return
+    }
+    for (const [id, deferredBase] of this.#deferments) {
+      if (deferredBase.done(expired)) {
+        this.#deferments.delete(id)
+        cleaned++
+        if (this.#deferments.size < this.maxSize) {
+          console.log('cleaned deferments', cleaned, this.#deferments.size)
+          return
+        }
+      }
+    }
+    console.log('cleaned deferments', cleaned, this.#deferments.size)
   }
 }

@@ -1,5 +1,5 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
-import { Cache, Downloader } from './interfaces.js'
+import { Downloader } from './interfaces.js'
 import IndexedDatabase from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
@@ -7,14 +7,18 @@ import { ObjectLoader2Options } from './options.js'
 import { MemoryDownloader } from './memoryDownloader.js'
 import { MemoryDatabase } from './memoryDatabase.js'
 import { DefermentManager } from '../helpers/defermentManager.js'
+import { CacheReader } from '../helpers/cacheReader.js'
+import { CachePump } from '../helpers/cachePump.js'
 
 export default class ObjectLoader2 {
   #objectId: string
 
   #logger: CustomLogger
 
-  #database: Cache
+  #database: IndexedDatabase
   #downloader: Downloader
+  #pump: CachePump
+  #cache: CacheReader
 
   #deferments: DefermentManager
 
@@ -25,21 +29,28 @@ export default class ObjectLoader2 {
 
     this.#logger = options.logger || console.log
     this.#gathered = options.results || new AsyncGeneratorQueue()
-    this.#database =
-      options.cache ||
-      new IndexedDatabase({
-        logger: this.#logger,
-        maxCacheReadSize: 10_000,
-        maxCacheWriteSize: 10_000,
-        maxWriteQueueSize: 40_000,
-        maxCacheBatchWriteWait: 3_000,
-        indexedDB: options.indexedDB,
-        keyRange: options.keyRange
-      })
+    this.#database = new IndexedDatabase({
+      logger: this.#logger,
+      maxCacheReadSize: 10_000,
+      maxCacheWriteSize: 10_000,
+      maxWriteQueueSize: 40_000,
+      maxCacheBatchWriteWait: 3_000,
+      indexedDB: options.indexedDB,
+      keyRange: options.keyRange
+    })
+    this.#pump = new CachePump(this.#database, {
+      logger: this.#logger,
+      maxCacheReadSize: 10_000,
+      maxCacheWriteSize: 10_000,
+      maxWriteQueueSize: 40_000,
+      maxCacheBatchWriteWait: 3_000,
+      indexedDB: options.indexedDB,
+      keyRange: options.keyRange
+    })
     this.#downloader =
       options.downloader ||
       new ServerDownloader({
-        database: this.#database,
+        database: this.#pump,
         results: this.#gathered,
         serverUrl: options.serverUrl,
         streamId: options.streamId,
@@ -47,15 +58,12 @@ export default class ObjectLoader2 {
         token: options.token,
         headers: options.headers
       })
-    this.#deferments = new DefermentManager(5_000, this.#database)
+    this.#deferments = new DefermentManager(100_000, 20_000)
+    this.#cache = new CacheReader(this.#database, this.#deferments, this.#logger)
   }
 
   async disposeAsync(): Promise<void> {
-    await Promise.all([
-      this.#database.disposeAsync(),
-      this.#downloader.disposeAsync(),
-      this.#gathered.dispose()
-    ])
+    await Promise.all([this.#downloader.disposeAsync(), this.#cache.disposeAsync()])
     this.#deferments.dispose()
   }
 
@@ -66,11 +74,13 @@ export default class ObjectLoader2 {
     }
     const rootItem = await this.#downloader.downloadSingle()
 
-    await this.#database.add(rootItem)
     return rootItem
   }
 
   async getObject(params: { id: string }): Promise<Base> {
+    if (!this.#deferments.isDeferred(params.id)) {
+      this.#cache.getItem(params.id)
+    }
     return await this.#deferments.defer({ id: params.id })
   }
 
@@ -86,34 +96,30 @@ export default class ObjectLoader2 {
       this.#logger('No root object found!')
       return
     }
+    //only for root
+    await this.#pump.add(rootItem)
     yield rootItem.base
     if (!rootItem.base.__closure) return
 
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
     this.#downloader.initializePool({ total })
-    const processPromise = this.#database.processItems({
+    const pumpPromise = this.#pump.pumpItems({
       ids: children,
       foundItems: this.#gathered,
       notFoundItems: this.#downloader
     })
     let count = 0
-    const t0 = performance.now()
-    console.log('About to start  ' + (performance.now() - t0) / 1000)
     for await (const item of this.#gathered.consume()) {
-      if (count % 1000 === 0) {
-        console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
-      }
       this.#deferments.undefer(item)
       yield item.base
       count++
       if (count >= total) {
-        await this.disposeAsync()
+        await this.#pump.disposeAsync()
+        this.#gathered.dispose()
       }
     }
-    await processPromise
-    this.#deferments.dispose()
-    console.log('Done ' + count + ' ' + (performance.now() - t0) / 1000)
+    await pumpPromise
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {

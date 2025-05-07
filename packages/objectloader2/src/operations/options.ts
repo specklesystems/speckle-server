@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import { CachePump } from '../helpers/cachePump.js'
 import Queue from '../helpers/queue.js'
 import { Base, CustomLogger, Fetcher, Item } from '../types/types.js'
 import { Cache, Downloader } from './interfaces.js'
@@ -39,7 +40,7 @@ export interface BaseDownloadOptions {
   headers?: Headers
 
   fetch?: Fetcher
-  database: Cache
+  database: CachePump
   results: Queue<Item>
 }
 
