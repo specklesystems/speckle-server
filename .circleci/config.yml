@@ -10,7 +10,7 @@ aliases:
       - image: cimg/base:2024.02
 
   - &docker-node-image
-    working_directory: &default-working-dir /tmp/ci/speckle-server
+    working_directory: &default-working-dir /mnt/ramdisk/speckle
     docker:
       - image: cimg/node:18.19.0
 
@@ -23,7 +23,7 @@ aliases:
 
   # This is a workaround for the fact that some packages run postinstall scripts
   # and do not respect the NPM_CONFIG_PREFIX setting.
-  # And we cannot store ~/.npm in the workspace, because it is not a sub-directory of /tmp/ci/speckle-server
+  # And we cannot store ~/.npm in the workspace, because it is not a sub-directory of our working directory
   # So we need to store it in the CircleCI cache storage.
   - &pull-npm-global
     restore_cache:
