@@ -110,6 +110,16 @@ const tables = {
   blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
 }
 
+const getCountObject = (projectIds: string[]) => {
+  const countObject: Record<string, number> = {}
+
+  for (const projectId of projectIds) {
+    countObject[projectId] = 0
+  }
+
+  return countObject
+}
+
 /**
  * Copies rows from the following tables:
  * - workspaces
@@ -205,7 +215,7 @@ export const copyProjectsFactory =
 export const copyProjectModelsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectModels =>
   async ({ projectIds }) => {
-    const copiedModelCountByProjectId: Record<string, number> = {}
+    const copiedModelCountByProjectId = getCountObject(projectIds)
 
     // Fetch `branches` rows for projects in batch
     const selectModels = tables
@@ -218,7 +228,6 @@ export const copyProjectModelsFactory =
       await tables.models(deps.targetDb).insert(models).onConflict().ignore()
 
       for (const model of models) {
-        copiedModelCountByProjectId[model.streamId] ??= 0
         copiedModelCountByProjectId[model.streamId]++
       }
     }
@@ -235,7 +244,7 @@ export const copyProjectModelsFactory =
 export const copyProjectVersionsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectVersions =>
   async ({ projectIds }) => {
-    const copiedVersionCountByProjectId: Record<string, number> = {}
+    const copiedVersionCountByProjectId = getCountObject(projectIds)
 
     const selectVersions = tables
       .streamCommits(deps.sourceDb)
@@ -269,7 +278,6 @@ export const copyProjectVersionsFactory =
       await tables.versions(deps.targetDb).insert(commits).onConflict().ignore()
 
       for (const version of versions) {
-        copiedVersionCountByProjectId[version.streamId] ??= 0
         copiedVersionCountByProjectId[version.streamId]++
       }
 
@@ -315,7 +323,7 @@ export const copyProjectVersionsFactory =
 export const copyProjectObjectsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectObjects =>
   async ({ projectIds }) => {
-    const copiedObjectCountByProjectId: Record<string, number> = {}
+    const copiedObjectCountByProjectId = getCountObject(projectIds)
 
     // Copy `objects` table rows in batches
     const selectObjects = tables
@@ -329,7 +337,6 @@ export const copyProjectObjectsFactory =
       await tables.objects(deps.targetDb).insert(objects).onConflict().ignore()
 
       for (const object of objects) {
-        copiedObjectCountByProjectId[object.streamId] ??= 0
         copiedObjectCountByProjectId[object.streamId]++
       }
     }
@@ -362,7 +369,7 @@ export const copyProjectObjectsFactory =
 export const copyProjectAutomationsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectAutomations =>
   async ({ projectIds }) => {
-    const copiedAutomationCountByProjectId: Record<string, number> = {}
+    const copiedAutomationCountByProjectId = getCountObject(projectIds)
 
     // Copy `automations` table rows in batches
     const selectAutomations = tables
@@ -382,7 +389,6 @@ export const copyProjectAutomationsFactory =
         .ignore()
 
       for (const automation of automations) {
-        copiedAutomationCountByProjectId[automation.projectId] ??= 0
         copiedAutomationCountByProjectId[automation.projectId]++
       }
 
@@ -501,7 +507,7 @@ export const copyProjectAutomationsFactory =
 export const copyProjectCommentsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectComments =>
   async ({ projectIds }) => {
-    const copiedCommentCountByProjectId: Record<string, number> = {}
+    const copiedCommentCountByProjectId = getCountObject(projectIds)
 
     // Copy `comments` table rows in batches
     const selectComments = tables
@@ -516,7 +522,6 @@ export const copyProjectCommentsFactory =
       await tables.comments(deps.targetDb).insert(comments).onConflict().ignore()
 
       for (const comment of comments) {
-        copiedCommentCountByProjectId[comment.streamId] ??= 0
         copiedCommentCountByProjectId[comment.streamId]++
       }
 
@@ -556,7 +561,7 @@ export const copyProjectCommentsFactory =
 export const copyProjectWebhooksFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectWebhooks =>
   async ({ projectIds }) => {
-    const copiedWebhookCountByProjectId: Record<string, number> = {}
+    const copiedWebhookCountByProjectId = getCountObject(projectIds)
 
     // Copy `webhooks_config` table rows in batches
     const selectWebhooks = tables
@@ -571,7 +576,6 @@ export const copyProjectWebhooksFactory =
       await tables.webhooks(deps.targetDb).insert(webhooks).onConflict().ignore()
 
       for (const webhook of webhooks) {
-        copiedWebhookCountByProjectId[webhook.streamId] ??= 0
         copiedWebhookCountByProjectId[webhook.streamId]++
       }
 
@@ -608,7 +612,7 @@ export const copyProjectBlobs =
     targetObjectStorage: ObjectStorage
   }): CopyProjectBlobs =>
   async ({ projectIds }) => {
-    const copiedBlobsCountByProjectId: Record<string, number> = {}
+    const copiedBlobsCountByProjectId = getCountObject(projectIds)
 
     // Copy `blob_storage` table rows in batches
     const selectBlobs = tables
@@ -621,7 +625,6 @@ export const copyProjectBlobs =
       await tables.blobStorage(deps.targetDb).insert(blobs).onConflict().ignore()
 
       for (const blob of blobs) {
-        copiedBlobsCountByProjectId[blob.streamId] ??= 0
         copiedBlobsCountByProjectId[blob.streamId]++
 
         // Copy file blob from one regional storage to the other
