@@ -161,6 +161,7 @@ import {
   EdgesPass,
   EdgesPassOptions
 } from './modules/pipeline/Passes/EdgesPass.js'
+import { BoxSelection } from './modules/extensions/BoxSelection.js'
 
 export {
   Viewer,
@@ -188,6 +189,7 @@ export {
   CameraEvent,
   ExplodeExtension,
   DiffExtension,
+  BoxSelection,
   Loader,
   SpeckleConverter,
   GeometryConverter,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { CONTAINED, InputEvent } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
@@ -26,6 +25,7 @@ export class BoxSelection extends Extension {
 
   private dragging = false
   private frameLock = false
+  private shiftDown = false
   private _realTimeSelection = true
 
   private idsToSelect: Set<string> | null = new Set()
@@ -44,7 +44,6 @@ export class BoxSelection extends Extension {
   public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
-    //@ts-ignore
     this.selectionExtension = this.viewer.getExtension(SelectionExtension)
 
     /** Create the drag box */
@@ -59,12 +58,13 @@ export class BoxSelection extends Extension {
   public onEarlyUpdate() {
     if (this.idsToSelect?.size) {
       /** Send the ids to the selection extension to be selected */
-      this.selectionExtension.clearSelection()
+      if (!this.shiftDown) this.selectionExtension.clearSelection()
       this.selectionExtension.selectObjects(Array.from(this.idsToSelect), true)
       this.idsToSelect = null
       this.viewer.requestRender()
     }
     this.frameLock = false
+    this.shiftDown = false
   }
   private onPointerDown(e: Vector2 & { event: PointerEvent }) {
     if (e.event.altKey) {
@@ -88,6 +88,7 @@ export class BoxSelection extends Extension {
     if (!this._realTimeSelection && e.event.altKey) {
       /** Get the ids of objects that fall withing the selection box */
       this.idsToSelect = this.getSelectionIds(this.ndcBox)
+      this.shiftDown = e.event.shiftKey
     }
 
     this.ndcBox.makeEmpty()
@@ -104,7 +105,7 @@ export class BoxSelection extends Extension {
     const ndcTransform = this.getNDCTransform(this.ndcFrom, this.ndcTo)
 
     /** Update the selection box visual */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
     this.dragBoxMaterial.uniforms.transform.value.copy(ndcTransform)
     this.dragBoxMaterial.needsUpdate = true
 

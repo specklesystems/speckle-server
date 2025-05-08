@@ -6,7 +6,8 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController
+  HybridCameraController,
+  BoxSelection
 } from '@speckle/viewer'
 
 import './style.css'
@@ -20,7 +21,6 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
-import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
 
 const createViewer = async (containerName: string, _stream: string) => {
