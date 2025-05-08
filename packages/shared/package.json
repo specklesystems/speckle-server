@@ -46,6 +46,7 @@
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
+    "bull": "*",
     "knex": "*",
     "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
@@ -64,6 +65,7 @@
     "@typescript-eslint/parser": "^7.12.0",
     "@vitest/coverage-v8": "^3.0.9",
     "@vitest/ui": "^3.0.9",
+    "bull": "^4.16.5",
     "crypto-random-string": "^5.0.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
@@ -87,6 +89,9 @@
       "./environment": "./src/environment/index.ts",
       "./observability": "./src/observability/index.ts",
       "./authz": "./src/authz/index.ts",
+      "./queue": "./src/queue/index.ts",
+      "./workers": "./src/workers/index.ts",
+      "./previews": "./src/previews/index.ts",
       "./dist/*": "./dist/*"
     },
     "exclude": [
@@ -141,6 +146,36 @@
       "require": {
         "types": "./dist/commonjs/authz/index.d.ts",
         "default": "./dist/commonjs/authz/index.js"
+      }
+    },
+    "./queue": {
+      "import": {
+        "types": "./dist/esm/queue/index.d.ts",
+        "default": "./dist/esm/queue/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/queue/index.d.ts",
+        "default": "./dist/commonjs/queue/index.js"
+      }
+    },
+    "./workers": {
+      "import": {
+        "types": "./dist/esm/workers/index.d.ts",
+        "default": "./dist/esm/workers/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/workers/index.d.ts",
+        "default": "./dist/commonjs/workers/index.js"
+      }
+    },
+    "./previews": {
+      "import": {
+        "types": "./dist/esm/previews/index.d.ts",
+        "default": "./dist/esm/previews/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/previews/index.d.ts",
+        "default": "./dist/commonjs/previews/index.js"
       }
     },
     "./dist/*": "./dist/*"

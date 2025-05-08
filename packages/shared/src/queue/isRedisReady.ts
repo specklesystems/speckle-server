@@ -1,5 +1,5 @@
 import { ensureError } from '@speckle/shared'
-import { Redis, type RedisOptions } from 'ioredis'
+import { Redis } from 'ioredis'
 
 // MIT Licensed: https://github.com/OptimalBits/bull/blob/develop/LICENSE.md
 // Reference: https://github.com/OptimalBits/bull/blob/develop/lib/utils.js
