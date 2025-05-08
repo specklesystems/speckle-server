@@ -3,20 +3,20 @@ import {
   metricDuration,
   metricInputFileSize,
   metricOperationErrors
-} from '@/controller/prometheusMetrics.js'
-import { getDbClients } from '@/knex.js'
+} from '../controller/prometheusMetrics.js'
+import { getDbClients } from '../knex.js'
 
-import { downloadFile } from '@/controller/filesApi.js'
+import { downloadFile } from '../controller/filesApi.js'
 import fs from 'fs'
 import { spawn } from 'child_process'
 
-import { ServerAPI } from '@/controller/api.js'
-import { downloadDependencies } from '@/controller/objDependencies.js'
-import { logger } from '@/observability/logging.js'
+import { ServerAPI } from '../controller/api.js'
+import { downloadDependencies } from '../controller/objDependencies.js'
+import { logger } from '../observability/logging.js'
 import { Nullable, Scopes, wait, TIME_MS } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Logger } from 'pino'
-import { getIfcDllPath, useLegacyIfcImporter } from '@/controller/helpers/env.js'
+import { getIfcDllPath, useLegacyIfcImporter } from '../controller/helpers/env.js'
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
