@@ -10,6 +10,16 @@ import { TIME_MS } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 
 const { createStream, createUser, createToken } = initUploadTestEnvironment()
+const gqlQueryToListFileUploads = `query ($streamId: String!) {
+  stream(id: $streamId) {
+    id
+    fileUploads {
+      id
+      fileName
+      convertedStatus
+    }
+  }
+}`
 
 describe('FileUploads @fileuploads integration', () => {
   let server: Server
@@ -77,16 +87,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.body.uploadResults).to.have.lengthOf(1)
       expect(response.body.uploadResults[0].fileName).to.equal('test.ifc')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -112,16 +113,7 @@ describe('FileUploads @fileuploads integration', () => {
         response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
       ).to.have.members(['test1.ifc', 'test2.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -153,16 +145,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.headers['content-type']).to.contain('application/json;')
       expect(response.body.error).to.contain('Upload request error.')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -182,16 +165,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.headers['content-type']).to.contain('application/json;')
       expect(response.body.error.message).to.contain('Missing Content-Type')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -213,16 +187,7 @@ describe('FileUploads @fileuploads integration', () => {
         response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
       ).to.have.members(['toolarge.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -251,16 +216,7 @@ describe('FileUploads @fileuploads integration', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(403)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -280,16 +236,7 @@ describe('FileUploads @fileuploads integration', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))

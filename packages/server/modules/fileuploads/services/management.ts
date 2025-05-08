@@ -1,7 +1,4 @@
-import {
-  GetBranchesByIds,
-  GetStreamBranchByName
-} from '@/modules/core/domain/branches/operations'
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
@@ -16,7 +13,6 @@ import {
   SaveUploadFileInputV2,
   SaveUploadFileInput
 } from '@/modules/fileuploads/repositories/fileUploads'
-import { NotFoundError } from '@/modules/shared/errors'
 import {
   FileImportSubscriptions,
   PublishSubscription
@@ -64,45 +60,11 @@ export const insertNewUploadAndNotifyFactory =
   }
 
 export const insertNewUploadAndNotifyFactoryV2 =
-  (deps: {
-    getModelsByIds: GetBranchesByIds // TODO: change loading mechanism
-    saveUploadFile: SaveUploadFileV2
-    publish: PublishSubscription
-  }) =>
+  (deps: { saveUploadFile: SaveUploadFileV2; publish: PublishSubscription }) =>
   async (upload: SaveUploadFileInputV2) => {
-    // No need to have the model name (branchName)
-    const [model] = await deps.getModelsByIds([upload.modelId], {
-      streamId: upload.projectId
-    })
-
-    if (!model) {
-      throw new NotFoundError('Module not found')
-    }
-
     await deps.saveUploadFile(upload)
 
-    // TODO: use file and model to nofiy subscriptions
-
-    /**
-    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
-      projectPendingVersionsUpdated: {
-        id: file.id,
-        type: ProjectPendingVersionsUpdatedMessageType.Created,
-        version: file,
-      },
-      projectId: file.projectId,
-      branchName: '@deprecated'
-    })
-
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: file.id,
-        type: ProjectFileImportUpdatedMessageType.Created,
-        upload: file // TODO
-      },
-      projectId: file.projectId
-    })
-    */
+    // TODO: add FE notification
   }
 
 export const notifyChangeInFileStatus =

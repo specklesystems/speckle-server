@@ -44,7 +44,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const modelId = req.query.modelId
       const userId = req.context.userId
 
-      if (!userId) throw new UnauthorizedError('No')
+      if (!userId) throw new UnauthorizedError('User not authorized')
 
       const logger = req.log.child({
         projectId,
@@ -53,11 +53,15 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       })
 
       const projectDb = await getProjectDbClient({ projectId })
+      const getModelsByIds = getBranchesByIdsFactory({ db: projectDb })
+      const [model] = await getModelsByIds([modelId], { streamId: projectId })
+      if (!model) throw new UnauthorizedError()
+
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
-        getModelsByIds: getBranchesByIdsFactory({ db: projectDb }),
         saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
         publish
       })
+
       const storeFileResultsAsFileUploads = async (data: UploadResult[]) => {
         await Promise.all(
           data.map(async (result) => {
@@ -74,21 +78,29 @@ export const nextGenFileImporterRouterFactory = (): Router => {
         )
       }
 
+      const onError = () => {
+        res.contentType('application/json')
+        res.status(400).end(UploadRequestErrorMessage)
+      }
+
+      const onFinishAllFileUploads = async (uploadResults: UploadResult[]) => {
+        try {
+          await storeFileResultsAsFileUploads(uploadResults)
+          res.status(201).send({ uploadResults })
+        } catch (err) {
+          logger.error({ err }, 'File importer handling error')
+          onError()
+        }
+      }
+
       const busboy = createBusboy(req)
       const newFileStreamProcessor = await processNewFileStream({
         busboy,
         streamId: projectId,
         userId,
         logger,
-        onFinishAllFileUploads: async (uploadResults) => {
-          await storeFileResultsAsFileUploads(uploadResults)
-          // TODO: send the message here
-          res.status(201).send({ uploadResults })
-        },
-        onError: () => {
-          res.contentType('application/json')
-          res.status(400).end(UploadRequestErrorMessage)
-        }
+        onFinishAllFileUploads,
+        onError
       })
 
       req.pipe(newFileStreamProcessor)

@@ -10,7 +10,6 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { noErrors } from '@/test/helpers'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { expect } from 'chai'
-import { randomInt } from 'crypto'
 import cryptoRandomString from 'crypto-random-string'
 import type { Express } from 'express'
 import type { Server } from 'http'
@@ -104,132 +103,129 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         variables: { streamId: projectId }
       })
 
-    describe('Receive results from file import service', async () => {
-      it('should 403 if no auth token is provided', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Content-Type', 'application/json')
-          .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+    it('should 403 if no auth token is provided', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
-        expect(response.status).to.equal(403)
+      expect(response.status).to.equal(403)
+    })
+
+    it('should 403 if an invalid auth token is provided', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${cryptoRandomString({ length: 20 })}`)
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+
+      expect(response.status).to.equal(403)
+    })
+
+    it('should 403 if the token does not have the correct scopes', async () => {
+      const badToken = await createToken({
+        userId: userOneId,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
       })
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${badToken.token}`)
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
-      it('should 403 if an invalid auth token is provided', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Content-Type', 'application/json')
-          .set('Authorization', `Bearer ${cryptoRandomString({ length: 20 })}`)
-          .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+      expect(response.status).to.equal(403)
+    })
 
-        expect(response.status).to.equal(403)
+    it('should 403 if the token is for a different user', async () => {
+      const userTwoId = await createUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        password: createRandomPassword()
       })
-
-      it('should 403 if the token does not have the correct scopes', async () => {
-        const badToken = await createToken({
-          userId: userOneId,
-          name: createRandomString(),
-          scopes: [Scopes.Streams.Read]
-        })
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Content-Type', 'application/json')
-          .set('Authorization', `Bearer ${badToken.token}`)
-          .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-
-        expect(response.status).to.equal(403)
+      const userTwoToken = await createToken({
+        userId: userTwoId,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
       })
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Accept', 'application/json')
+        .set('Authorization', `Bearer ${userTwoToken.token}`)
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
-      it('should 403 if the token is for a different user', async () => {
-        const userTwoId = await createUser({
-          name: createRandomString(),
-          email: createRandomEmail(),
-          password: createRandomPassword()
-        })
-        const userTwoToken = await createToken({
-          userId: userTwoId,
-          name: createRandomString(),
-          scopes: [Scopes.Streams.Read]
-        })
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Content-Type', 'application/json')
-          .set('Authorization', `Bearer ${userTwoToken.token}`)
-          .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+      expect(response.status).to.equal(403)
+    })
 
-        expect(response.status).to.equal(403)
-      })
+    it('should 400 if file is not sent', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .set('Content-type', 'multipart/form-data')
+      // .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc') // on purpose
 
-      it('should 400 if file is not sent', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Content-Type', 'application/json')
-          .set('Authorization', `Bearer ${userOneToken}`)
-          .send(JSON.stringify({}))
+      expect(response.status).to.equal(400)
+    })
 
-        expect(response.status).to.equal(400)
-      })
+    it('should 401 if the model cannot be found', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, createRandomString()))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
-      it('should 404 if the model cannot be found', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, createRandomString()))
-          .set('Content-Type', 'application/json')
-          .set('Authorization', `Bearer ${userOneToken}`)
-          .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+      expect(response.status).to.equal(401)
+    })
 
-        expect(response.status).to.equal(404)
-      })
+    it('should 201 if the payload reports a success result', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
-      it('should 200 if the payload reports a success result', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Authorization', `Bearer ${userOneToken}`)
-          .set('Content-Type', 'application/json')
-          .send(
-            JSON.stringify({
-              status: 'success',
-              warnings: [],
-              result: {
-                versionId: cryptoRandomString({ length: 10 }),
-                durationSeconds: randomInt(1, 3600)
-              }
-            })
-          )
+      expect(response.status).to.equal(201)
+      const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Queued
+      )
+    })
 
-        expect(response.status).to.equal(200)
-        const gqlResponse = await getFileUploads(projectOneId, userOneToken)
-        expect(noErrors(gqlResponse))
-        expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-        expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
-          FileUploadConvertedStatus.Completed
-        )
-      })
+    it('supports multiple attachments', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .set('Accept', 'application/json')
+        .attach('test1.ifc', require.resolve('@/readme.md'), 'test1.ifc')
+        .attach('test2.ifc', require.resolve('@/package.json'), 'test2.ifc')
 
-      it('should 200 if the payload reports an error result', async () => {
-        const response = await request(app)
-          .post(fileImporterUrl(projectOneId, model.id))
-          .set('Authorization', `Bearer ${userOneToken}`)
-          .set('Content-Type', 'application/json')
-          .send(
-            JSON.stringify({
-              status: 'error',
-              reasons: [cryptoRandomString({ length: 10 })],
-              result: {
-                durationSeconds: randomInt(1, 3600)
-              }
-            })
-          )
+      expect(response.status).to.equal(201)
+      const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(2)
+      expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Queued
+      )
+      expect(gqlResponse.body.data.stream.fileUploads[1].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Queued
+      )
+    })
 
-        expect(response.status).to.equal(200)
-        const gqlResponse = await getFileUploads(projectOneId, userOneToken)
-        expect(noErrors(gqlResponse))
-        expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-        expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
-          FileUploadConvertedStatus.Error
-        )
-      })
+    it('says OK with errors for too big files', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
 
-      // TODO: multipart
-      // TODO: too big
+      expect(response.status).to.equal(201)
+      const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Queued
+      )
     })
   }
 )

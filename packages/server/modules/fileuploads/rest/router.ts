@@ -83,12 +83,17 @@ export const fileuploadRouterFactory = (): Router => {
         userId,
         logger,
         onFinishAllFileUploads: async (uploadResults) => {
-          await saveFileUploads({
-            userId,
-            streamId: projectId,
-            branchName,
-            uploadResults
-          })
+          try {
+            await saveFileUploads({
+              userId,
+              streamId: projectId,
+              branchName,
+              uploadResults
+            })
+          } catch (err) {
+            logger.error({ err }, 'File importer handling error @deprecated')
+            res.status(500)
+          }
           res.status(201).send({ uploadResults })
         },
         onError: () => {
