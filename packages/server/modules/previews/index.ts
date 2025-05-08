@@ -21,7 +21,7 @@ import {
   JobPayload,
   PreviewResultPayload,
   previewResultPayload
-} from '@speckle/shared/dist/commonjs/previews/job.js'
+} from '@speckle/shared/dist/commonjs/workers/previews/job.js'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   storePreviewFactory,

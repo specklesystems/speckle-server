@@ -5,7 +5,7 @@ import type {
   PreviewGenerator,
   JobPayload,
   PreviewResultPayload
-} from '@speckle/shared/previews'
+} from '@speckle/shared/workers/previews'
 import { AppState } from '@speckle/shared/workers'
 import { TIME_MS } from '@speckle/shared'
 

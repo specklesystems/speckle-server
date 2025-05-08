@@ -2,9 +2,9 @@ import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
 import { createTerminus } from '@godaddy/terminus'
 import type { Logger } from 'pino'
-import Bull from 'bull'
+import type Bull from 'bull'
 
-import { JobPayload, PreviewResultPayload } from '@speckle/shared/previews'
+import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
 import { AppState } from '@speckle/shared/workers'
 import {
   REDIS_URL,
@@ -20,7 +20,8 @@ import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { initMetrics, initPrometheusRegistry } from '@/metrics.js'
 import { ensureError } from '@speckle/shared'
-import { initializeQueue, isRedisReady } from '@speckle/shared/queue'
+import { initializeQueue } from '@speckle/shared/queue'
+import { isRedisReady } from '@speckle/shared/redis'
 
 const app = express()
 const host = HOST
