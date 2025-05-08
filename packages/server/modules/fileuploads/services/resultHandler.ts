@@ -1,6 +1,5 @@
 import { Logger } from '@/observability/logging'
 import {
-  FileIdFromJobId,
   ProcessFileImportResult,
   UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
@@ -16,9 +15,9 @@ import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
+import { ensureError } from '@speckle/shared'
 
 type OnFileImportResultDeps = {
-  getFileIdFromJobId: FileIdFromJobId
   updateFileStatus: UpdateFileStatus
   publish: PublishSubscription
   logger: Logger
@@ -27,34 +26,31 @@ type OnFileImportResultDeps = {
 export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
-    const { logger: parentLogger } = deps
+    const { logger } = deps
     const { jobId, jobResult } = params
 
-    parentLogger.info('Processing result for file upload')
-
-    const fileId = await deps.getFileIdFromJobId({ jobId })
-
-    if (!fileId) {
-      parentLogger.error('Could not find fileId for jobId')
-      return
-    }
-
-    const logger = parentLogger.child({
-      fileId
-    })
+    logger.info('Processing result for file upload')
 
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
-    const updatedFile = await deps.updateFileStatus({
-      fileId,
-      status,
-      convertedMessage
-    })
+    let updatedFile
+    try {
+      updatedFile = await deps.updateFileStatus({
+        fileId: jobId,
+        status,
+        convertedMessage
+      })
+    } catch (e) {
+      const err = ensureError(e)
+      logger.error(
+        { err },
+        'Error updating imported file status in database. File ID: %s',
+        jobId
+      )
+      throw err
+    }
 
-    logger.info('File upload status updated')
-
-    //FIXME why both?
     await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
       projectPendingVersionsUpdated: {
         id: updatedFile.id,
@@ -73,4 +69,6 @@ export const onFileImportResultFactory =
       },
       projectId: updatedFile.streamId
     })
+
+    logger.info('File upload status updated')
   }

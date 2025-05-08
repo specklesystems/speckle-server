@@ -28,8 +28,6 @@ export type NotifyChangeInFileStatus = (params: {
   file: FileUploadRecord
 }) => Promise<void>
 
-export type FileIdFromJobId = (params: { jobId: string }) => Promise<string>
-
 export type ProcessFileImportResult = (params: {
   jobId: string
   jobResult: FileImportResultPayload
