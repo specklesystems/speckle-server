@@ -1,27 +1,18 @@
 import { describe, expect, test } from 'vitest'
 import ObjectLoader2 from './objectLoader2.js'
 import { Base, Item } from '../types/types.js'
-import { Cache, Downloader } from './interfaces.js'
-import Queue from '../helpers/queue.js'
-import { MemoryDatabase } from './memoryDatabase.js'
+import { Downloader } from './interfaces.js'
 import { MemoryDownloader } from './memoryDownloader.js'
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
     const root = { baseId: 'baseId' } as unknown as Item
-    const cache = {
-      getItem(params: { id: string }): Promise<Item> {
-        expect(params.id).toBe(root.baseId)
-        return Promise.resolve(root)
-      }
-    } as Cache
     const downloader = {} as Downloader
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      cache,
       downloader
     })
     const x = await loader.getRootObject()
@@ -30,16 +21,6 @@ describe('objectloader2', () => {
 
   test('can get a root object from downloader', async () => {
     const root = { baseId: 'baseId' } as unknown as Item
-    const cache = {
-      getItem(params: { id: string }): Promise<Item | undefined> {
-        expect(params.id).toBe(root.baseId)
-        return Promise.resolve<Item | undefined>(undefined)
-      },
-      add(item: Item): Promise<void> {
-        expect(item).toBe(root)
-        return Promise.resolve()
-      }
-    } as Cache
     const downloader = {
       downloadSingle(): Promise<Item> {
         return Promise.resolve(root)
@@ -49,7 +30,6 @@ describe('objectloader2', () => {
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      cache,
       downloader
     })
     const x = await loader.getRootObject()
@@ -58,20 +38,14 @@ describe('objectloader2', () => {
 
   test('can get single object from cache using iterator', async () => {
     const rootId = 'baseId'
-    const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
-    const root = { baseId: rootId, base: rootBase } as unknown as Item
-    const cache = {
-      getItem(params: { id: string }): Promise<Item | undefined> {
-        expect(params.id).toBe(rootId)
-        return Promise.resolve(root)
-      }
-    } as Cache
+    //const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
+   // const root = { baseId: rootId, base: rootBase } as unknown as Item
+
     const downloader = {} as Downloader
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
       objectId: rootId,
-      cache,
       downloader
     })
     const r = []
@@ -79,63 +53,6 @@ describe('objectloader2', () => {
       r.push(x)
     }
 
-    expect(r).toMatchSnapshot()
-  })
-
-  test('can get root/child object from cache using iterator', async () => {
-    const child1Base = { id: 'child1Id' }
-    const child1 = { baseId: 'child1Id', base: child1Base } as unknown as Item
-
-    const rootId = 'rootId'
-    const rootBase: Base = {
-      id: 'rootId',
-      speckle_type: 'type',
-      __closure: { child1Id: 100 }
-    }
-    const root = {
-      baseId: rootId,
-      base: rootBase
-    } as unknown as Item
-
-    const cache = {
-      getItem(params: { id: string }): Promise<Item | undefined> {
-        expect(params.id).toBe(root.baseId)
-        return Promise.resolve(root)
-      },
-      processItems(params: {
-        ids: string[]
-        foundItems: Queue<Item>
-
-        notFoundItems: Queue<string>
-      }): Promise<void> {
-        expect(params.ids.length).toBe(1)
-        expect(params.ids[0]).toBe(child1.baseId)
-        params.foundItems.add(child1)
-        return Promise.resolve()
-      },
-      disposeAsync(): Promise<void> {
-        return Promise.resolve()
-      }
-    } as Cache
-    const downloader = {
-      initializePool(params: { total: number }): void {
-        expect(params.total).toBe(1)
-      },
-      disposeAsync(): Promise<void> {
-        return Promise.resolve()
-      }
-    } as Downloader
-    const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: root.baseId,
-      cache,
-      downloader
-    })
-    const r = []
-    for await (const x of loader.getObjectIterator()) {
-      r.push(x)
-    }
     expect(r).toMatchSnapshot()
   })
 
@@ -162,7 +79,6 @@ describe('objectloader2', () => {
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      cache: new MemoryDatabase({ items: records }),
       downloader: new MemoryDownloader(rootId, records)
     })
     const r = []
@@ -203,7 +119,6 @@ describe('objectloader2', () => {
       streamId: 'b',
       objectId: root.baseId,
       results,
-      cache: new MemoryDatabase(),
       downloader: new MemoryDownloader(rootId, records, results)
     })
     const r = []
@@ -221,12 +136,6 @@ describe('objectloader2', () => {
 
   test('add extra header', async () => {
     const root = { baseId: 'baseId' } as unknown as Item
-    const cache = {
-      getItem(params: { id: string }): Promise<Item> {
-        expect(params.id).toBe(root.baseId)
-        return Promise.resolve(root)
-      }
-    } as Cache
     const downloader = {} as Downloader
     const headers = new Headers()
     headers.set('x-test', 'asdf')
@@ -235,7 +144,6 @@ describe('objectloader2', () => {
       streamId: 'b',
       objectId: root.baseId,
       headers,
-      cache,
       downloader
     })
     const x = await loader.getRootObject()

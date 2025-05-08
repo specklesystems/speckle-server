@@ -3,7 +3,8 @@ import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { CachePump } from '../helpers/cachePump.js'
 import Queue from '../helpers/queue.js'
 import { Base, CustomLogger, Fetcher, Item } from '../types/types.js'
-import { Cache, Downloader } from './interfaces.js'
+import { Database } from './indexedDatabase.js'
+import { Downloader } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
@@ -15,8 +16,8 @@ export interface ObjectLoader2Options {
   logger?: CustomLogger
   headers?: Headers
   results?: AsyncGeneratorQueue<Item>
-  cache?: Cache
   downloader?: Downloader
+  database?: Database
 }
 export interface BaseDatabaseOptions {
   logger?: CustomLogger
@@ -51,7 +52,7 @@ export interface BaseDownloadOptions {
 
 export interface MemoryDatabaseOptions {
   logger?: CustomLogger
-  items?: Record<string, Base>
+  items?: Map<string, Base>
 }
 
 export interface DefermentManagerOptions {

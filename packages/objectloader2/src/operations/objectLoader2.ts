@@ -124,7 +124,7 @@ export default class ObjectLoader2 {
       serverUrl: 'dummy',
       streamId: 'dummy',
       objectId: root.id,
-      cache: new MemoryDatabase({ items: records }),
+      database: new MemoryDatabase({ items: records }),
       downloader: new MemoryDownloader(root.id, records)
     })
     return loader

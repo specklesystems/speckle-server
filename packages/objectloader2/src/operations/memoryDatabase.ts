@@ -1,41 +1,42 @@
-import Queue from '../helpers/queue.js'
 import { Base, Item } from '../types/types.js'
-import { Cache } from './interfaces.js'
+import { Database } from './indexedDatabase.js'
 import { MemoryDatabaseOptions } from './options.js'
 
-export class MemoryDatabase implements Cache {
-  #items: Record<string, Base>
-  constructor(options?: MemoryDatabaseOptions) {
-    this.#items = options?.items || {}
+export class MemoryDatabase implements Database {
+  private items: Map<string, Base>
+
+  constructor(options: MemoryDatabaseOptions) {
+    this.items = options.items || new Map<string, Base>()
+  }
+
+  getAll(keys: string[]): Promise<(Item | undefined)[]> {
+    const found: (Item | undefined)[] = []
+    for (const key of keys) {
+      const item = this.items.get(key)
+      if (item) {
+        found.push({ baseId: key, base: item })
+      } else {
+        found.push(undefined)
+      }
+    }
+    return Promise.resolve(found)
+  }
+
+  cacheSaveBatch({ batch }: { batch: Item[] }): Promise<void> {
+    for (const item of batch) {
+      this.items.set(item.baseId, item.base)
+    }
+    return Promise.resolve()
   }
 
   getItem(params: { id: string }): Promise<Item | undefined> {
-    const item = this.#items[params.id]
+    const item = this.items.get(params.id)
     if (item) {
       return Promise.resolve({ baseId: params.id, base: item })
     }
     return Promise.resolve(undefined)
   }
-  processItems(params: {
-    ids: string[]
-    foundItems: Queue<Item>
-    notFoundItems: Queue<string>
-  }): Promise<void> {
-    const { ids, foundItems, notFoundItems } = params
-    for (const id of ids) {
-      const item = this.#items[id]
-      if (item) {
-        foundItems.add({ baseId: id, base: item })
-      } else {
-        notFoundItems.add(id)
-      }
-    }
-    return Promise.resolve()
-  }
-  add(item: Item): Promise<void> {
-    this.#items[item.baseId] = item.base
-    return Promise.resolve()
-  }
+
   disposeAsync(): Promise<void> {
     return Promise.resolve()
   }
