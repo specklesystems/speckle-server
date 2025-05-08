@@ -57,8 +57,7 @@ export const onFileImportResultFactory =
         version: updatedFile
       },
       projectId: updatedFile.streamId,
-      branchName: ''
-      //TODO add modelId
+      branchName: updatedFile.branchName
     })
 
     await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
