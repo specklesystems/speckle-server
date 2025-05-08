@@ -1,6 +1,6 @@
 import Bull from 'bull'
 import { Redis } from 'ioredis'
-import { isRedisReady } from './isRedisReady.js'
+import { isRedisReady } from '../redis/isRedisReady.js'
 
 // we're caching this here, so that there is one client for the app lifecycle
 

@@ -90,6 +90,7 @@
       "./observability": "./src/observability/index.ts",
       "./authz": "./src/authz/index.ts",
       "./queue": "./src/queue/index.ts",
+      "./redis": "./src/redis/index.ts",
       "./workers": "./src/workers/index.ts",
       "./previews": "./src/previews/index.ts",
       "./dist/*": "./dist/*"
@@ -156,6 +157,16 @@
       "require": {
         "types": "./dist/commonjs/queue/index.d.ts",
         "default": "./dist/commonjs/queue/index.js"
+      }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/esm/redis/index.d.ts",
+        "default": "./dist/esm/redis/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/redis/index.d.ts",
+        "default": "./dist/commonjs/redis/index.js"
       }
     },
     "./workers": {
