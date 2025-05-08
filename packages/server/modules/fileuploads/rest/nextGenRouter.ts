@@ -7,26 +7,90 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { fileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job.js'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
-import { getFileIdFromJobIdFactory, updateFileStatusFactory } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  getFileIdFromJobIdFactory,
+  saveUploadFileFactoryV2,
+  updateFileStatusFactory
+} from '@/modules/fileuploads/repositories/fileUploads'
+import { validateRequest } from 'zod-express'
+import { z } from 'zod'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
+import { UnauthorizedError } from '@/modules/shared/errors'
+import { createBusboy } from '@/modules/blobstorage/rest/busboy'
+import { processNewFileStreamFactoryV2 } from '@/modules/blobstorage/services/streamsV2'
+import { UploadResult } from '@/modules/blobstorage/domain/types'
+import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
+  const processNewFileStream = processNewFileStreamFactoryV2()
   const app = Router()
 
   app.post(
-    '/api/projects/:projectId/fileimporter/jobs',
+    '/api/projects/:streamId/fileimporter/jobs',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
       })
     ),
-    (_, res) => {
-      // handle the file and save in blob storage
-      // create a new job in the database
-      // queue the job for processing by the file import service
-
-      res.status(501).send({
-        error: 'This endpoint is not implemented yet.'
+    validateRequest({
+      query: z.object({
+        modelId: z.string()
       })
+    }),
+    async (req, res) => {
+      const projectId = req.params.streamId
+      const modelId = req.query.modelId
+      const userId = req.context.userId
+
+      if (!userId) throw new UnauthorizedError('No')
+
+      const logger = req.log.child({
+        projectId,
+        modelId,
+        userId
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        getModelsByIds: getBranchesByIdsFactory({ db: projectDb }),
+        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        publish
+      })
+      const storeFileResultsAsFileUploads = async (data: UploadResult[]) => {
+        await Promise.all(
+          data.map(async (result) => {
+            await insertNewUploadAndNotify({
+              projectId,
+              modelId,
+              userId,
+              fileId: result.blobId,
+              fileName: result.fileName,
+              fileType: result.fileName?.split('.').pop() || '', //FIXME
+              fileSize: result.fileSize
+            })
+          })
+        )
+      }
+
+      const busboy = createBusboy(req)
+      const newFileStreamProcessor = await processNewFileStream({
+        busboy,
+        streamId: projectId,
+        userId,
+        logger,
+        onFinishAllFileUploads: async (uploadResults) => {
+          await storeFileResultsAsFileUploads(uploadResults)
+          // TODO: send the message here
+          res.status(201).send({ uploadResults })
+        },
+        onError: () => {
+          res.contentType('application/json')
+          res.status(400).end(UploadRequestErrorMessage)
+        }
+      })
+
+      req.pipe(newFileStreamProcessor)
     }
   )
 

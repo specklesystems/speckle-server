@@ -4,11 +4,13 @@ import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
   SaveUploadFile,
-  FileIdFromJobId
+  FileIdFromJobId,
+  SaveUploadFileV2
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
-  FileUploadRecord
+  FileUploadRecord,
+  FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
 
@@ -56,6 +58,30 @@ export type SaveUploadFileInput = Pick<
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string }
 
+// While we haven't fully migrated to new endpoint
+const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 => {
+  return {
+    id: record.id,
+    projectId: record.streamId,
+    modelId: 'TODO',
+    userId: record.userId,
+    fileName: record.fileName,
+    fileType: record.fileType,
+    fileSize: record.fileSize,
+    uploadComplete: record.uploadComplete,
+    uploadDate: record.uploadDate,
+    convertedStatus: record.convertedStatus,
+    convertedLastUpdate: record.convertedLastUpdate,
+    convertedMessage: record.convertedMessage,
+    convertedCommitId: record.convertedCommitId
+  } as FileUploadRecordV2
+}
+
+export type SaveUploadFileInputV2 = Pick<
+  FileUploadRecordV2,
+  'projectId' | 'modelId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+> & { fileId: string }
+
 export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
   async ({
@@ -79,6 +105,30 @@ export const saveUploadFileFactory =
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
+  }
+
+export const saveUploadFileFactoryV2 =
+  (deps: { db: Knex }): SaveUploadFileV2 =>
+  async ({
+    fileId,
+    projectId,
+    userId,
+    fileName,
+    fileType,
+    fileSize
+  }: SaveUploadFileInputV2) => {
+    const dbFile: Partial<FileUploadRecord> = {
+      id: fileId,
+      streamId: projectId,
+      branchName: '@deprecated',
+      userId,
+      fileName,
+      fileType,
+      fileSize,
+      uploadComplete: true
+    }
+    const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
+    return mapFileUploadRecordToV2(newRecord)
   }
 
 export const expireOldPendingUploadsFactory =
@@ -171,9 +221,11 @@ export const getBranchPendingVersionsFactory =
   }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getFileIdFromJobIdFactory = (_deps: { db: Knex }): FileIdFromJobId => async (params) => {
-  return params.jobId //FIXME it is possible to upload multiple files with the same fileId, so is not unique
-}
+export const getFileIdFromJobIdFactory =
+  (_deps: { db: Knex }): FileIdFromJobId =>
+  async (params) => {
+    return params.jobId //FIXME it is possible to upload multiple files with the same fileId, so is not unique
+  }
 
 export const updateFileStatusFactory =
   (deps: { db: Knex }): UpdateFileStatus =>

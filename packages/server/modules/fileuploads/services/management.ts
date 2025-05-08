@@ -1,4 +1,7 @@
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import {
+  GetBranchesByIds,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
@@ -6,13 +9,18 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   SaveUploadFile,
-  NotifyChangeInFileStatus
+  NotifyChangeInFileStatus,
+  SaveUploadFileV2
 } from '@/modules/fileuploads/domain/operations'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  SaveUploadFileInputV2,
+  SaveUploadFileInput
+} from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
+import { ModelNotFoundError } from '@speckle/shared/dist/commonjs/authz'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
@@ -53,6 +61,48 @@ export const insertNewUploadAndNotifyFactory =
       },
       projectId: file.streamId
     })
+  }
+
+export const insertNewUploadAndNotifyFactoryV2 =
+  (deps: {
+    getModelsByIds: GetBranchesByIds // TODO: change loading mechanism
+    saveUploadFile: SaveUploadFileV2
+    publish: PublishSubscription
+  }) =>
+  async (upload: SaveUploadFileInputV2) => {
+    // No need to have the model name (branchName)
+    const [model] = await deps.getModelsByIds([upload.modelId], {
+      streamId: upload.projectId
+    })
+
+    if (!model) {
+      throw new ModelNotFoundError()
+    }
+
+    await deps.saveUploadFile(upload)
+
+    // TODO: use file and model to nofiy subscriptions
+
+    /**
+    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+      projectPendingVersionsUpdated: {
+        id: file.id,
+        type: ProjectPendingVersionsUpdatedMessageType.Created,
+        version: file,
+      },
+      projectId: file.projectId,
+      branchName: '@deprecated'
+    })
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: file // TODO
+      },
+      projectId: file.projectId
+    })
+    */
   }
 
 export const notifyChangeInFileStatus =

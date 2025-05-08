@@ -8,7 +8,6 @@ import {
   NextGenFileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType

@@ -1,5 +1,12 @@
-import { FileUploadConvertedStatus, FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  FileUploadConvertedStatus,
+  FileUploadRecord,
+  FileUploadRecordV2
+} from '@/modules/fileuploads/helpers/types'
+import {
+  SaveUploadFileInput,
+  SaveUploadFileInputV2
+} from '@/modules/fileuploads/repositories/fileUploads'
 import { Optional } from '@speckle/shared'
 import { FileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job'
 
@@ -8,6 +15,10 @@ export type GetFileInfo = (args: {
 }) => Promise<Optional<FileUploadRecord>>
 
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
+
+export type SaveUploadFileV2 = (
+  args: SaveUploadFileInputV2
+) => Promise<FileUploadRecordV2>
 
 export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number

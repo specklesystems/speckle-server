@@ -12,6 +12,7 @@ import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
+import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -92,11 +93,7 @@ export const fileuploadRouterFactory = (): Router => {
         },
         onError: () => {
           res.contentType('application/json')
-          res
-            .status(400)
-            .end(
-              '{ "error": "Upload request error. The server logs may have more details." }'
-            )
+          res.status(400).end(UploadRequestErrorMessage)
         }
       })
 
