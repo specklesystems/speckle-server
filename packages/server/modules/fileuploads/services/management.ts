@@ -16,11 +16,11 @@ import {
   SaveUploadFileInputV2,
   SaveUploadFileInput
 } from '@/modules/fileuploads/repositories/fileUploads'
+import { NotFoundError } from '@/modules/shared/errors'
 import {
   FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { ModelNotFoundError } from '@speckle/shared/dist/commonjs/authz'
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
@@ -76,7 +76,7 @@ export const insertNewUploadAndNotifyFactoryV2 =
     })
 
     if (!model) {
-      throw new ModelNotFoundError()
+      throw new NotFoundError('Module not found')
     }
 
     await deps.saveUploadFile(upload)

@@ -9,6 +9,7 @@ import { fileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/f
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import {
   getFileIdFromJobIdFactory,
+  saveUploadFileFactoryV2,
   updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
