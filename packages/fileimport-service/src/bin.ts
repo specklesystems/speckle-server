@@ -1,4 +1,4 @@
-import '@/bootstrap.js' // This has side-effects and has to be imported first
+import './bootstrap.js' // This has side-effects and has to be imported first
 import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = Environment.getFeatureFlags()
