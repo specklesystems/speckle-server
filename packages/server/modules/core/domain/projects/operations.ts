@@ -5,7 +5,7 @@ import { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 
 export type UpdateProject = (args: {
-  projectUpdate: Pick<StreamRecord, 'id' | 'workspaceId'>
+  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord>
 }) => Promise<StreamRecord>
 
 export type StoreProjectRole = (args: {

@@ -1,3 +1,4 @@
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   assignToWorkspaces,
@@ -19,7 +20,8 @@ import { waitForRegionUsers } from '@/test/speckle-helpers/regions'
 import {
   addAllToStream,
   BasicTestStream,
-  createTestStream
+  createTestStream,
+  createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -68,11 +70,19 @@ describe('Users @graphql', () => {
       id: '',
       slug: ''
     }
+
     const myWorkspaceCollaboratorProject: BasicTestStream = {
       name: 'My Workspace Collaborator Project #1',
       ownerId: '',
       id: '',
       isPublic: true
+    }
+
+    const myPrivateWorkspaceCollaboratorProject: BasicTestStream = {
+      name: 'My Private Workspace Collaborator Project #1',
+      ownerId: '',
+      id: '',
+      visibility: ProjectRecordVisibility.Private
     }
 
     const myBasicCollaboratorProject: BasicTestStream = {
@@ -97,9 +107,15 @@ describe('Users @graphql', () => {
         createTestStream(myBasicCollaboratorProject, me),
         createTestWorkspace(myWorkspace, me, {
           regionKey: getMainTestRegionKeyIfMultiRegion()
-        }).then(() => (myWorkspaceCollaboratorProject.workspaceId = myWorkspace.id))
+        })
       ])
-      await createTestStream(myWorkspaceCollaboratorProject, me)
+
+      myWorkspaceCollaboratorProject.workspaceId = myWorkspace.id
+      myPrivateWorkspaceCollaboratorProject.workspaceId = myWorkspace.id
+      await createTestStreams([
+        [myWorkspaceCollaboratorProject, me],
+        [myPrivateWorkspaceCollaboratorProject, me]
+      ])
 
       // Seed in users
       let remainingBasicProjectCollaborators = BASIC_COLLABORATOR_PROJECT_USER_COUNT

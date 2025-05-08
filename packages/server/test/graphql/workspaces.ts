@@ -38,6 +38,7 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    visibility
     team {
       id
       role

@@ -26,7 +26,9 @@ const createTestProject = (overrides?: Partial<Project>): Project => {
     visibility: ProjectRecordVisibility.Public,
     name: cryptoRandomString({ length: 10 }),
     regionKey: null,
-    workspaceId: null
+    workspaceId: null,
+    isPublic: true,
+    isDiscoverable: true
   }
   return assign(defaults, overrides || {})
 }

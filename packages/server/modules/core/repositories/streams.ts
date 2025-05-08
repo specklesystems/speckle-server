@@ -7,6 +7,7 @@ import _, {
   isObjectLike,
   isUndefined,
   mapValues,
+  omit,
   omitBy,
   reduce,
   toNumber
@@ -723,7 +724,9 @@ const getUserStreamsQueryBaseFactory =
       /**
        * implicit access rules:
        * 1. user must have an explicit stream role OR
-       * 2. user must be a non-guest member of the project's workspace
+       * 2. if project is in a workspace that the user is in:
+       *  - user must be a workspace admin OR
+       *  - project must not be fully private and user is non-workspace-guest
        */
       query
         .leftJoin(WorkspaceAcl.name, (j2) => {
@@ -734,11 +737,18 @@ const getUserStreamsQueryBaseFactory =
         })
         .andWhere((w1) => {
           w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
-            w2.whereNotNull(WorkspaceAcl.col.role).andWhere(
-              WorkspaceAcl.col.role,
-              '!=',
-              Roles.Workspace.Guest
-            )
+            // Implicit workspace role conditions
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere((w2) => {
+              w2.andWhere(WorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                (w4) => {
+                  w4.where(
+                    WorkspaceAcl.col.role,
+                    '!=',
+                    Roles.Workspace.Guest
+                  ).andWhereNot(Streams.col.visibility, ProjectRecordVisibility.Private)
+                }
+              )
+            })
           })
         })
     } else {
@@ -1068,7 +1078,14 @@ export const updateStreamFactory =
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
-    const updatedStream = await updateStreamFactory({ db })(projectUpdate)
+    const [updatedStream] = await tables
+      .streams(db)
+      .returning('*')
+      .where({ id: projectUpdate.id })
+      .update<StreamRecord[]>({
+        ...omit(projectUpdate, ['id']),
+        updatedAt: knex.fn.now()
+      })
 
     if (!updatedStream) {
       throw new StreamUpdateError('Stream was not updated.')

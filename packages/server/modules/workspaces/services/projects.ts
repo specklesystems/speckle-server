@@ -1,4 +1,4 @@
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
   GetWorkspaceDomains,
@@ -211,7 +211,17 @@ export const moveProjectToWorkspaceFactory =
     }
 
     // Assign project to workspace
-    return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
+    return await updateProject({
+      projectUpdate: {
+        id: projectId,
+        workspaceId,
+        visibility:
+          // Migrate from Private -> Workspace visibility
+          project.visibility === ProjectRecordVisibility.Private
+            ? ProjectRecordVisibility.Workspace
+            : project.visibility
+      }
+    })
   }
 
 export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =

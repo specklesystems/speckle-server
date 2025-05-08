@@ -1,3 +1,4 @@
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   assignToWorkspaces,
   BasicTestWorkspace,
@@ -107,9 +108,9 @@ describe('Workspace SSO', () => {
     const testProject: BasicTestStream = {
       id: '',
       ownerId: '',
-      isPublic: false,
       name: 'Workspace Project',
-      workspaceId: testWorkspaceWithSso.id
+      workspaceId: testWorkspaceWithSso.id,
+      visibility: ProjectRecordVisibility.Workspace
     }
 
     await createTestStream(testProject, workspaceAdmin)

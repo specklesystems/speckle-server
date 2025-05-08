@@ -36,7 +36,9 @@ export const createNewProjectFactory =
     storeModel: StoreModel
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
-    visibility = visibility || ProjectVisibility.Private
+    visibility =
+      visibility ||
+      (workspaceId ? ProjectVisibility.Workspace : ProjectVisibility.Private)
 
     const project: Project = {
       id: cryptoRandomString({ length: 10 }),
@@ -48,7 +50,10 @@ export const createNewProjectFactory =
       updatedAt: new Date(),
       workspaceId: workspaceId || null,
       regionKey: regionKey || null,
-      allowPublicComments: false
+      allowPublicComments: false,
+      // TODO: Will be removed in a moment
+      isPublic: false,
+      isDiscoverable: false
     }
 
     await storeProject({ project })
