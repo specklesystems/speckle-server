@@ -10,13 +10,16 @@ const clientCache: ClientCache = {}
 
 export const initializeQueue = async <T>({
   queueName,
-  redisUrl
+  redisUrl,
+  options
 }: {
   queueName: string
   redisUrl: string
+  options?: Partial<Bull.QueueOptions>
 }): Promise<Bull.Queue<T>> => {
   if (!(redisUrl in clientCache)) clientCache[redisUrl] = {}
   const opts: Bull.QueueOptions = {
+    ...options,
     // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
     createClient(type, redisOpts) {
       switch (type) {

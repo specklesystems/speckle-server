@@ -3,7 +3,6 @@ import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { Optional, TIME_MS } from '@speckle/shared'
-import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
   MultiRegionInvalidJobError,
@@ -30,6 +29,7 @@ import {
 } from '@/modules/multiregion/repositories/projectRegion'
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   copyWorkspaceFactory,
@@ -49,6 +49,7 @@ import {
   countProjectWebhooksFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -77,30 +78,7 @@ type MultiregionJob =
 
 let queue: Optional<Bull.Queue<MultiregionJob>>
 
-export const buildMultiregionQueue = (queueName: string) =>
-  new Bull(queueName, {
-    ...buildBaseQueueOptions(),
-    ...(!isTestEnv()
-      ? {
-          limiter: {
-            max: 10,
-            duration: TIME_MS.second
-          }
-        }
-      : {}),
-    defaultJobOptions: {
-      attempts: 5,
-      timeout: 15 * TIME_MS.minute,
-      backoff: {
-        type: 'fixed',
-        delay: 5 * TIME_MS.minute
-      },
-      removeOnComplete: isProdEnv(),
-      removeOnFail: false
-    }
-  })
-
-export const getQueue = (): Bull.Queue => {
+export const getQueue = (): Bull.Queue<MultiregionJob> => {
   if (!queue) {
     throw new UninitializedResourceAccessError(
       'Attempting to use uninitialized Bull queue'
@@ -110,8 +88,31 @@ export const getQueue = (): Bull.Queue => {
   return queue
 }
 
-export const initializeQueue = () => {
-  queue = buildMultiregionQueue(MULTIREGION_QUEUE_NAME)
+export const initializeQueue = async () => {
+  queue = await setupQueue({
+    queueName: MULTIREGION_QUEUE_NAME,
+    redisUrl: getRedisUrl(),
+    options: {
+      ...(!isTestEnv()
+        ? {
+            limiter: {
+              max: 10,
+              duration: TIME_MS.second
+            }
+          }
+        : {}),
+      defaultJobOptions: {
+        attempts: 5,
+        timeout: 15 * TIME_MS.minute,
+        backoff: {
+          type: 'fixed',
+          delay: 5 * TIME_MS.minute
+        },
+        removeOnComplete: isProdEnv(),
+        removeOnFail: false
+      }
+    }
+  })
 }
 
 /**

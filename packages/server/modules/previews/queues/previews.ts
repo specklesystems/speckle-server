@@ -5,6 +5,7 @@ import type { EventEmitter } from 'stream'
 import { upsertObjectPreviewFactory } from '@/modules/previews/repository/previews'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
+import { JobPayload } from '@speckle/shared/dist/commonjs/previews/job'
 
 export const requestObjectPreviewFactory =
   ({
@@ -12,7 +13,7 @@ export const requestObjectPreviewFactory =
     queue
   }: {
     responseQueue: string
-    queue: Queue
+    queue: Queue<JobPayload>
   }): RequestObjectPreview =>
   async ({ jobId, token, url }) => {
     const payload = { jobId, token, url, responseQueue }
