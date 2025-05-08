@@ -5,8 +5,8 @@ import { MemoryDatabaseOptions } from './options.js'
 export class MemoryDatabase implements Database {
   private items: Map<string, Base>
 
-  constructor(options: MemoryDatabaseOptions) {
-    this.items = options.items || new Map<string, Base>()
+  constructor(options?: MemoryDatabaseOptions) {
+    this.items = options?.items || new Map<string, Base>()
   }
 
   getAll(keys: string[]): Promise<(Item | undefined)[]> {

@@ -1,6 +1,6 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Downloader } from './interfaces.js'
-import IndexedDatabase from './indexedDatabase.js'
+import IndexedDatabase, { Database } from './indexedDatabase.js'
 import ServerDownloader from './serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { CacheOptions, ObjectLoader2Options } from './options.js'
@@ -15,7 +15,7 @@ export default class ObjectLoader2 {
 
   #logger: CustomLogger
 
-  #database: IndexedDatabase
+  #database: Database
   #downloader: Downloader
   #pump: CachePump
   #cache: CacheReader
@@ -40,11 +40,13 @@ export default class ObjectLoader2 {
     }
 
     this.#gathered = options.results || new AsyncGeneratorQueue()
-    this.#database = new IndexedDatabase({
-      logger: this.#logger,
-      indexedDB: options.indexedDB,
-      keyRange: options.keyRange
-    })
+    this.#database =
+      options.database ??
+      new IndexedDatabase({
+        logger: this.#logger,
+        indexedDB: options.indexedDB,
+        keyRange: options.keyRange
+      })
     this.#deferments = new DefermentManager({
       maxSize: 200_000,
       ttl: 10_000,
@@ -60,7 +62,7 @@ export default class ObjectLoader2 {
     this.#downloader =
       options.downloader ||
       new ServerDownloader({
-        cache: this.#pump,
+        pump: this.#pump,
         results: this.#gathered,
         serverUrl: options.serverUrl,
         streamId: options.streamId,
@@ -102,23 +104,23 @@ export default class ObjectLoader2 {
       return
     }
     //only for root
-    await this.#pump.add(rootItem)
+    this.#pump.add(rootItem)
     yield rootItem.base
     if (!rootItem.base.__closure) return
 
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
     this.#downloader.initializePool({ total })
-    for await (const item of this.#pump.load(children, this.#downloader)) {
+    for await (const item of this.#pump.gather(children, this.#downloader)) {
       yield item.base
     }
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {
     const root = objects[0]
-    const records: Record<string, Base> = {}
+    const records: Map<string, Base> = new Map<string, Base>()
     objects.forEach((element) => {
-      records[element.id] = element
+      records.set(element.id, element)
     })
     const loader = new ObjectLoader2({
       serverUrl: 'dummy',

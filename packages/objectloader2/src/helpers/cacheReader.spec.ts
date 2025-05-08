@@ -9,16 +9,19 @@ describe('CacheReader testing', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
 
     const deferments = new DefermentManager({ maxSize: 1, ttl: 1 })
-    const cacheReader = new CacheReader(new MemoryDatabase({
-      items: new Map<string, Base>([[i1.baseId, i1.base]] )
-    }), deferments, {
-      maxCacheReadSize: 1,
-      maxCacheWriteSize: 1,
-      maxCacheBatchWriteWait: 1,
-      maxCacheBatchReadWait: 1,
-      maxWriteQueueSize: 1
-    })
-
+    const cacheReader = new CacheReader(
+      new MemoryDatabase({
+        items: new Map<string, Base>([[i1.baseId, i1.base]])
+      }),
+      deferments,
+      {
+        maxCacheReadSize: 1,
+        maxCacheWriteSize: 1,
+        maxCacheBatchWriteWait: 1,
+        maxCacheBatchReadWait: 1,
+        maxWriteQueueSize: 1
+      }
+    )
 
     const objPromise = cacheReader.getObject({
       id: i1.baseId

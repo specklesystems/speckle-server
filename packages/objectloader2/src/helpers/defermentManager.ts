@@ -5,7 +5,7 @@ import { DefermentManagerOptions } from '../operations/options.js'
 export class DefermentManager {
   #deferments: Map<string, DeferredBase> = new Map()
   #timer?: ReturnType<typeof setTimeout>
-    #logger: CustomLogger
+  #logger: CustomLogger
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()

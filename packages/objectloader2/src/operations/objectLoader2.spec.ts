@@ -1,36 +1,45 @@
 import { describe, expect, test } from 'vitest'
 import ObjectLoader2 from './objectLoader2.js'
 import { Base, Item } from '../types/types.js'
-import { Downloader } from './interfaces.js'
 import { MemoryDownloader } from './memoryDownloader.js'
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
+import { MemoryDatabase } from './memoryDatabase.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
-    const root = { baseId: 'baseId' } as unknown as Item
-    const downloader = {} as Downloader
+    const rootId = 'baseId'
+    const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
+    const downloader = new MemoryDownloader(
+      rootId,
+      new Map<string, Base>([[rootId, rootBase]])
+    )
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
-      objectId: root.baseId,
-      downloader
+      objectId: rootId,
+      downloader,
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
     const x = await loader.getRootObject()
     expect(x).toMatchSnapshot()
   })
 
   test('can get a root object from downloader', async () => {
-    const root = { baseId: 'baseId' } as unknown as Item
-    const downloader = {
-      downloadSingle(): Promise<Item> {
-        return Promise.resolve(root)
-      }
-    } as Downloader
+    const rootId = 'baseId'
+    const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
+    const downloader = new MemoryDownloader(
+      rootId,
+      new Map<string, Base>([[rootId, rootBase]])
+    )
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
-      objectId: root.baseId,
-      downloader
+      objectId: rootId,
+      downloader,
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
     const x = await loader.getRootObject()
     expect(x).toMatchSnapshot()
@@ -38,15 +47,19 @@ describe('objectloader2', () => {
 
   test('can get single object from cache using iterator', async () => {
     const rootId = 'baseId'
-    //const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
-   // const root = { baseId: rootId, base: rootBase } as unknown as Item
+    const rootBase: Base = { id: 'baseId', speckle_type: 'type' }
 
-    const downloader = {} as Downloader
+    const downloader = new MemoryDownloader(
+      rootId,
+      new Map<string, Base>([[rootId, rootBase]])
+    )
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
       objectId: rootId,
-      downloader
+      downloader,
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
     const r = []
     for await (const x of loader.getObjectIterator()) {
@@ -69,17 +82,18 @@ describe('objectloader2', () => {
     const root = {
       baseId: rootId,
       base: rootBase
-    } as unknown as Item
+    } as Item
 
-    const records: Record<string, Base> = {}
-    records[root.baseId] = rootBase
-    records[child1.baseId] = child1Base
+    const records: Map<string, Base> = new Map<string, Base>()
+    records.set(root.baseId, rootBase)
+    records.set(child1.baseId, child1Base)
 
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      downloader: new MemoryDownloader(rootId, records)
+      downloader: new MemoryDownloader(rootId, records),
+      database: new MemoryDatabase({ items: records })
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
@@ -109,9 +123,9 @@ describe('objectloader2', () => {
       base: rootBase
     } as unknown as Item
 
-    const records: Record<string, Base> = {}
-    records[root.baseId] = rootBase
-    records[child1.baseId] = child1Base
+    const records: Map<string, Base> = new Map<string, Base>()
+    records.set(root.baseId, rootBase)
+    records.set(child1.baseId, child1Base)
 
     const results: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue<Item>()
     const loader = new ObjectLoader2({
@@ -119,7 +133,9 @@ describe('objectloader2', () => {
       streamId: 'b',
       objectId: root.baseId,
       results,
-      downloader: new MemoryDownloader(rootId, records, results)
+      downloader: new MemoryDownloader(rootId, records, results),
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
@@ -135,8 +151,19 @@ describe('objectloader2', () => {
   })
 
   test('add extra header', async () => {
-    const root = { baseId: 'baseId' } as unknown as Item
-    const downloader = {} as Downloader
+    const rootId = 'rootId'
+    const rootBase: Base = {
+      id: 'rootId',
+      speckle_type: 'type',
+      __closure: { child1Id: 100 }
+    }
+    const root = {
+      baseId: rootId,
+      base: rootBase
+    } as Item
+
+    const records: Map<string, Base> = new Map<string, Base>()
+    records.set(root.baseId, rootBase)
     const headers = new Headers()
     headers.set('x-test', 'asdf')
     const loader = new ObjectLoader2({
@@ -144,10 +171,11 @@ describe('objectloader2', () => {
       streamId: 'b',
       objectId: root.baseId,
       headers,
-      downloader
+      downloader: new MemoryDownloader(rootId, records),
+      indexedDB: new IDBFactory(),
+      keyRange: IDBKeyRange
     })
     const x = await loader.getRootObject()
-    expect(x).toBe(root)
     expect(x).toMatchSnapshot()
   })
 

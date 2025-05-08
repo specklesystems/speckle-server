@@ -45,13 +45,18 @@ describe('CachePump testing', () => {
 
     const gathered = new AsyncGeneratorQueue<Item>()
     const deferments = new DefermentManager({ maxSize: 1, ttl: 1 })
-    const cachePump = new CachePump(new MemoryDatabase({items: db}), gathered, deferments, {
-      maxCacheReadSize: 1,
-      maxCacheWriteSize: 1,
-      maxCacheBatchWriteWait: 1,
-      maxCacheBatchReadWait: 1,
-      maxWriteQueueSize: 1
-    })
+    const cachePump = new CachePump(
+      new MemoryDatabase({ items: db }),
+      gathered,
+      deferments,
+      {
+        maxCacheReadSize: 1,
+        maxCacheWriteSize: 1,
+        maxCacheBatchWriteWait: 1,
+        maxCacheBatchReadWait: 1,
+        maxWriteQueueSize: 1
+      }
+    )
 
     const foundItems = new BufferQueue<Item>()
     const notFoundItems = new BufferQueue<string>()

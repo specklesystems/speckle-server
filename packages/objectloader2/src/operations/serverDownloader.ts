@@ -1,5 +1,4 @@
 import BatchedPool from '../helpers/batchedPool.js'
-import Queue from '../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../types/errors.js'
 import { Fetcher, isBase, Item } from '../types/types.js'
 import { Downloader } from './interfaces.js'
@@ -54,8 +53,7 @@ export default class ServerDownloader implements Downloader {
         this.downloadBatch({
           batch,
           url: this.#requestUrlChildren,
-          headers: this.#headers,
-          results: this.#options.results
+          headers: this.#headers
         })
     })
   }
@@ -94,9 +92,8 @@ export default class ServerDownloader implements Downloader {
     batch: string[]
     url: string
     headers: HeadersInit
-    results: Queue<Item>
   }): Promise<void> {
-    const { batch, url, headers, results } = params
+    const { batch, url, headers } = params
     const response = await this.#fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
@@ -129,8 +126,8 @@ export default class ServerDownloader implements Downloader {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
-          await this.#options.cache.add(item)
-          results.add(item)
+          this.#options.pump.add(item)
+          this.#options.results.add(item)
           count++
           if (count % 1000 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen

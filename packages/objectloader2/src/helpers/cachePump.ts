@@ -8,7 +8,50 @@ import { Downloader } from '../operations/interfaces.js'
 import { DefermentManager } from './defermentManager.js'
 import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 
-export class CachePump {
+export class MemoryPump implements Pump {
+  #items: Map<string, Item> = new Map()
+
+  add(item: Item): void {
+    this.#items.set(item.baseId, item)
+  }
+
+  async pumpItems(params: {
+    ids: string[]
+    foundItems: Queue<Item>
+    notFoundItems: Queue<string>
+  }): Promise<void> {
+    const { ids, foundItems, notFoundItems } = params
+    for (const id of ids) {
+      const item = this.#items.get(id)
+      if (item) {
+        foundItems.add(item)
+      } else {
+        notFoundItems.add(id)
+      }
+    }
+    return Promise.resolve()
+  }
+
+  async *gather(ids: string[]): AsyncGenerator<Item> {
+    for (const id of ids) {
+      const item = this.#items.get(id)
+      if (item) {
+        yield item
+      }
+    }
+    return Promise.resolve()
+  }
+
+  async disposeAsync(): Promise<void> {}
+}
+
+export interface Pump {
+  add(item: Item): void
+  gather(ids: string[], downloader: Downloader): AsyncGenerator<Item>
+  disposeAsync(): Promise<void>
+}
+
+export class CachePump implements Pump {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
   #logger: CustomLogger
@@ -31,7 +74,7 @@ export class CachePump {
     this.#logger = options.logger || (() => {})
   }
 
-  async add(item: Item): Promise<void> {
+  add(item: Item): void {
     if (!this.#writeQueue) {
       this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize,
@@ -40,7 +83,6 @@ export class CachePump {
       })
     }
     this.#writeQueue.add(item.baseId, item)
-    return Promise.resolve()
   }
 
   async disposeAsync(): Promise<void> {
@@ -76,7 +118,7 @@ export class CachePump {
     }
   }
 
-  async *load(ids: string[], downloader: Downloader): AsyncGenerator<Item> {
+  async *gather(ids: string[], downloader: Downloader): AsyncGenerator<Item> {
     const total = ids.length
     const pumpPromise = this.pumpItems({
       ids,
