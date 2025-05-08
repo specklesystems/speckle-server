@@ -36,7 +36,9 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     let userOneId: string
     let userOneToken: string
     let projectOneId: string
+    let projectTwoId: string
     let model: BranchRecord
+    let model2: BranchRecord
 
     let existingCanonicalUrl: string
     let existingPort: string
@@ -70,10 +72,24 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         scopes: [Scopes.Streams.Write]
       }))
 
+      projectTwoId = await createStream({ ownerId: userOneId })
+      ;({ token: userOneToken } = await createToken({
+        userId: userOneId,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Write]
+      }))
+
       model = await createBranch({
         name: createRandomString(),
         description: createRandomString(),
         streamId: projectOneId,
+        authorId: userOneId
+      })
+
+      model2 = await createBranch({
+        name: createRandomString(),
+        description: createRandomString(),
+        streamId: projectTwoId,
         authorId: userOneId
       })
     })
@@ -177,7 +193,17 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       expect(response.status).to.equal(401)
     })
 
-    it('should 201 if the payload reports a success result', async () => {
+    it('should 401 if the model exist but not in the queried project', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model2.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .set('Content-type', 'multipart/form-data')
+        .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+
+      expect(response.status).to.equal(401)
+    })
+
+    it('sucessfuly uploads a file with 201', async () => {
       const response = await request(app)
         .post(fileImporterUrl(projectOneId, model.id))
         .set('Authorization', `Bearer ${userOneToken}`)
@@ -218,6 +244,21 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
         .post(fileImporterUrl(projectOneId, model.id))
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
+
+      expect(response.status).to.equal(201)
+      const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Queued
+      )
+    })
+
+    it('says OK to empty files', async () => {
+      const response = await request(app)
+        .post(fileImporterUrl(projectOneId, model.id))
+        .set('Authorization', `Bearer ${userOneToken}`)
+        .attach('empty.ifc', Buffer.alloc(0), 'empty.ifc')
 
       expect(response.status).to.equal(201)
       const gqlResponse = await getFileUploads(projectOneId, userOneToken)

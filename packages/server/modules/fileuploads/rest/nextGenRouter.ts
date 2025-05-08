@@ -14,16 +14,17 @@ import {
 import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
-import { processNewFileStreamFactoryV2 } from '@/modules/blobstorage/services/streamsV2'
+import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { UploadResult } from '@/modules/blobstorage/domain/types'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
+import { ensureError } from '@speckle/shared'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
-  const processNewFileStream = processNewFileStreamFactoryV2()
+  const processNewFileStream = processNewFileStreamFactory()
   const app = Router()
 
   app.post(
@@ -87,7 +88,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
           await storeFileResultsAsFileUploads(uploadResults)
           res.status(201).send({ uploadResults })
         } catch (err) {
-          logger.error({ err }, 'File importer handling error')
+          logger.error(ensureError(err), 'File importer handling error')
           onError()
         }
       }
