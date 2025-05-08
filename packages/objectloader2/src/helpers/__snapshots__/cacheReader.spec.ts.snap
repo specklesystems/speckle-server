@@ -1,31 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`CachePump testing > write two items to queue use pumpItems that are NOT found 1`] = `[]`;
-
-exports[`CachePump testing > write two items to queue use pumpItems that are NOT found 2`] = `
-[
-  "id1",
-  "id2",
-]
+exports[`CacheReader testing > deferred getObject 1`] = `
+{
+  "id": "id",
+  "speckle_type": "type",
+}
 `;
-
-exports[`CachePump testing > write two items to queue use pumpItems that are found 1`] = `
-[
-  {
-    "base": {
-      "id": "id",
-      "speckle_type": "type",
-    },
-    "baseId": "id1",
-  },
-  {
-    "base": {
-      "id": "id",
-      "speckle_type": "type",
-    },
-    "baseId": "id2",
-  },
-]
-`;
-
-exports[`CachePump testing > write two items to queue use pumpItems that are found 2`] = `[]`;

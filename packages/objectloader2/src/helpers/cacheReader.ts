@@ -1,18 +1,18 @@
-import IndexedDatabase from '../operations/indexedDatabase.js'
+import { Database } from '../operations/indexedDatabase.js'
 import { CacheOptions } from '../operations/options.js'
 import { Base, CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
 import { DefermentManager } from './defermentManager.js'
 
 export class CacheReader {
-  #database: IndexedDatabase
+  #database: Database
   #defermentManager: DefermentManager
   #logger: CustomLogger
   #options: CacheOptions
   #readQueue: BatchingQueue<string> | undefined
 
   constructor(
-    database: IndexedDatabase,
+    database: Database,
     defermentManager: DefermentManager,
     options: CacheOptions
   ) {
