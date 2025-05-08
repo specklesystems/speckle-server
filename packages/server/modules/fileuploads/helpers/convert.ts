@@ -11,7 +11,9 @@ export const jobResultStatusToFileUploadStatus = (
     case 'error':
       return FileUploadConvertedStatus.Error
     default:
-      throw new Error(`Unknown job result status: ${jobResultStatus}`)
+      throw new FileImportInvalidJobResultPayload(
+        `Unknown job result status: ${jobResultStatus}`
+      )
   }
 }
 
