@@ -95,7 +95,9 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     })
 
     afterEach(async () => {
+      userOneId = ''
       projectOneId = ''
+      projectTwoId = ''
     })
 
     after(async () => {

@@ -7,12 +7,10 @@ import {
 import {
   SaveUploadFile,
   NotifyChangeInFileStatus,
-  SaveUploadFileV2
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  SaveUploadFileInputV2
 } from '@/modules/fileuploads/domain/operations'
-import {
-  SaveUploadFileInputV2,
-  SaveUploadFileInput
-} from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
   PublishSubscription

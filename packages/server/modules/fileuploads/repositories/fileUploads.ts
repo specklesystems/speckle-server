@@ -4,7 +4,9 @@ import {
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
   SaveUploadFile,
-  SaveUploadFileV2
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  SaveUploadFileInputV2
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -53,17 +55,12 @@ export const getStreamFileUploadsFactory =
     return fileInfos
   }
 
-export type SaveUploadFileInput = Pick<
-  FileUploadRecord,
-  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
-
 // While we haven't fully migrated to new endpoint
 const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 => {
   return {
     id: record.id,
     projectId: record.streamId,
-    modelId: 'TODO',
+    modelId: record.modelId,
     userId: record.userId,
     fileName: record.fileName,
     fileType: record.fileType,
@@ -76,11 +73,6 @@ const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 =
     convertedCommitId: record.convertedCommitId
   } as FileUploadRecordV2
 }
-
-export type SaveUploadFileInputV2 = Pick<
-  FileUploadRecordV2,
-  'projectId' | 'modelId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
 
 export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
@@ -112,16 +104,18 @@ export const saveUploadFileFactoryV2 =
   async ({
     fileId,
     projectId,
+    modelId,
     userId,
     fileName,
     fileType,
     fileSize
   }: SaveUploadFileInputV2) => {
-    const dbFile: Partial<FileUploadRecord> = {
+    const dbFile: Partial<SaveUploadFileV2> = {
       id: fileId,
       streamId: projectId,
       branchName: '@deprecated',
       userId,
+      modelId,
       fileName,
       fileType,
       fileSize,
