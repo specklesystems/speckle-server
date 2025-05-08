@@ -7,10 +7,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { fileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
-import {
-  getFileIdFromJobIdFactory,
-  updateFileStatusFactory
-} from '@/modules/fileuploads/repositories/fileUploads'
+import { updateFileStatusFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
@@ -66,7 +63,6 @@ export const nextGenFileImporterRouterFactory = (): Router => {
 
       const onFileImportResult = onFileImportResultFactory({
         logger: logger.child({ fileUploadStatus: jobResult.status }),
-        getFileIdFromJobId: getFileIdFromJobIdFactory({ db: projectDb }),
         updateFileStatus: updateFileStatusFactory({ db: projectDb }),
         publish
       })

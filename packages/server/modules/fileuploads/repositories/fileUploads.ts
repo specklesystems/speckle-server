@@ -3,8 +3,7 @@ import {
   UpdateFileStatus,
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
-  SaveUploadFile,
-  FileIdFromJobId
+  SaveUploadFile
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
@@ -169,15 +168,6 @@ export const getBranchPendingVersionsFactory =
       )
 
     return await q
-  }
-
-export const getFileIdFromJobIdFactory =
-  (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _deps: { db: Knex }
-  ): FileIdFromJobId =>
-  async (params) => {
-    return params.jobId //FIXME it is possible to upload multiple files with the same fileId, so is not unique
   }
 
 export const updateFileStatusFactory =
