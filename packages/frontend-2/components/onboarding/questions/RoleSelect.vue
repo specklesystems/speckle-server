@@ -11,7 +11,7 @@
     show-label
     allow-unset
     clearable
-    :items="roles"
+    :items="shuffledRoles"
   >
     <template #option="{ item }">
       <div class="label label--light">
@@ -29,6 +29,7 @@ import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { RoleTitleMap } from '~/lib/auth/helpers/onboarding'
 import { OnboardingRole } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { shuffle } from 'lodash'
 
 const props = defineProps<{
   modelValue?: OnboardingRole
@@ -43,5 +44,13 @@ const roles = Object.values(OnboardingRole)
 const { selectedValue, isArrayValue } = useFormSelectChildInternals<OnboardingRole>({
   props: toRefs(props),
   emit
+})
+
+const shuffledRoles = computed(() => {
+  // Filter out "Other" and shuffle the remaining roles
+  const rolesWithoutOther = roles.filter((role) => role !== OnboardingRole.Other)
+  const shuffled = shuffle([...rolesWithoutOther])
+  // Add "Other" at the end
+  return [...shuffled, OnboardingRole.Other]
 })
 </script>
