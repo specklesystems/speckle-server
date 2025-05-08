@@ -7,6 +7,7 @@ import {
 } from '@/test/graphqlHelper'
 import {
   BasicTestUser,
+  buildBasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
@@ -37,6 +38,7 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
+  buildBasicTestWorkspace,
   createTestWorkspace,
   createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
@@ -73,6 +75,7 @@ import { itEach } from '@/test/assertionHelper'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { Workspaces } from '@/modules/workspaces/helpers/db'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const validateAndCreateUserEmail = validateAndCreateUserEmailFactory({
@@ -697,15 +700,13 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('query activeUser.workspaces', () => {
-      it('should return all workspaces for a user', async () => {
-        const testUser: BasicTestUser = {
-          id: '',
-          name: 'John Speckle',
-          email: 'foobar@example.org',
-          role: Roles.Server.Admin,
-          verified: true
-        }
+      beforeEach(async () => {
+        // db is polluted from prev tests
+        await db.table(Workspaces.name).delete()
+      })
 
+      it('should return all workspaces for a user', async () => {
+        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
         await createTestUser(testUser)
         const testApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
@@ -717,26 +718,9 @@ describe('Workspaces GQL CRUD', () => {
           })
         })
 
-        const workspace1: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
-
-        const workspace2: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
-
-        const workspace3: BasicTestWorkspace = {
-          id: '',
-          ownerId: '',
-          name: 'Workspace A',
-          slug: cryptoRandomString({ length: 10 })
-        }
+        const workspace1 = buildBasicTestWorkspace()
+        const workspace2 = buildBasicTestWorkspace()
+        const workspace3 = buildBasicTestWorkspace()
 
         await createTestWorkspace(workspace1, testUser)
         await createTestWorkspace(workspace2, testUser)
@@ -744,8 +728,36 @@ describe('Workspaces GQL CRUD', () => {
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
-        // TODO: this test depends on the previous tests
         expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(3)
+      })
+
+      it('omits non complete workspaces', async () => {
+        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
+        await createTestUser(testUser)
+        const testApollo: TestApolloServer = await testApolloServer({
+          context: await createTestContext({
+            auth: true,
+            userId: testUser.id,
+            token: '',
+            role: testUser.role,
+            scopes: AllScopes
+          })
+        })
+
+        const workspace1 = buildBasicTestWorkspace()
+        const workspace2 = buildBasicTestWorkspace()
+        const nonCompleteWorkspace3 = buildBasicTestWorkspace()
+
+        await createTestWorkspace(workspace1, testUser)
+        await createTestWorkspace(workspace2, testUser)
+        await createTestWorkspace(nonCompleteWorkspace3, testUser, {
+          addCreationState: { completed: false, state: {} }
+        })
+
+        const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {})
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(2)
       })
     })
 
@@ -1243,6 +1255,11 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
+      beforeEach(async () => {
+        // db is polluted from prev tests
+        await db.table(Workspaces.name).delete()
+      })
+
       describe('leave', () => {
         it('allows the active user to leave a workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
@@ -1287,6 +1304,7 @@ describe('Workspaces GQL CRUD', () => {
               .includes(name)
           ).to.be.false
         })
+
         it('stops the last workspace admin from leaving the workspace', async () => {
           const name = cryptoRandomString({ length: 6 })
           const workspaceCreateResult = await apollo.execute(CreateWorkspaceDocument, {

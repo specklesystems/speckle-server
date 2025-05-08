@@ -155,10 +155,20 @@ export const getWorkspacesFactory =
 
 export const getWorkspaceFactory =
   ({ db }: { db: Knex }): GetWorkspace =>
-  async ({ workspaceId, userId }) => {
-    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
-      .where(Workspaces.col.id, workspaceId)
-      .first()
+  async ({ workspaceId, userId, completed }) => {
+    const q = workspaceWithRoleBaseQuery({ db, userId })
+
+    if (completed !== undefined) {
+      q.leftJoin(
+        DbWorkspaceCreationState.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+        .where({ [DbWorkspaceCreationState.col.completed]: completed })
+        .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+    }
+
+    const workspace = await q.where(Workspaces.col.id, workspaceId).first()
 
     return workspace || null
   }

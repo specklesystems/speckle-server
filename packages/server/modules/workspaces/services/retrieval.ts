@@ -56,7 +56,9 @@ export const getWorkspacesForUserFactory =
     for (const workspaceRoleBatch of chunk(workspaceRoles, 20)) {
       // TODO: Use `getWorkspaces`, which I saw Fabians already wrote in another PR
       const workspacesBatch = await Promise.all(
-        workspaceRoleBatch.map(({ workspaceId }) => getWorkspace({ workspaceId }))
+        workspaceRoleBatch.map(({ workspaceId }) =>
+          getWorkspace({ workspaceId, completed: true })
+        )
       )
       workspaces.push(
         ...workspacesBatch.filter(

@@ -1,6 +1,7 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import {
+  buildTestObject,
   createRandomEmail,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
@@ -136,16 +137,16 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   return baseUser
 }
 
-export const buildBasicTestUser = (
-  override: Partial<BasicTestUser> = {}
-): BasicTestUser => {
-  return {
-    id: '',
-    name: createRandomString(),
-    email: createRandomEmail(),
-    ...override
-  }
-}
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>) =>
+  buildTestObject(
+    {
+      id: '',
+      name: createRandomString(),
+      email: createRandomEmail(),
+      verified: true
+    },
+    overrides
+  )
 
 export type CreateTestUsersParams = {
   /**

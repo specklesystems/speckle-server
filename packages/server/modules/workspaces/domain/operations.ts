@@ -50,6 +50,7 @@ export type GetUserDiscoverableWorkspaces = (args: {
 export type GetWorkspace = (args: {
   workspaceId: string
   userId?: string
+  completed?: true
 }) => Promise<WorkspaceWithOptionalRole | null>
 
 export type GetWorkspaceBySlug = (args: {

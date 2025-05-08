@@ -120,7 +120,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { WorkspaceCreationState } from '@/modules/cross-server-sync/graph/generated/graphql'
-import { createRandomString } from '@/modules/core/helpers/testHelpers'
+import { buildTestObject, createRandomString } from '@/modules/core/helpers/testHelpers'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
@@ -338,17 +338,16 @@ export const createTestWorkspace = async (
   }
 }
 
-export const buildBasicTestWorkspace = (
-  override: Partial<BasicTestWorkspace> = {}
-): BasicTestWorkspace => {
-  return {
-    id: createRandomString(),
-    name: createRandomString(),
-    slug: createRandomString(),
-    ownerId: '',
-    ...override
-  }
-}
+export const buildBasicTestWorkspace = (overrides?: Partial<BasicTestWorkspace>) =>
+  buildTestObject(
+    {
+      id: createRandomString(),
+      name: createRandomString(),
+      slug: createRandomString(),
+      ownerId: ''
+    },
+    overrides
+  )
 
 export const assignToWorkspace = async (
   workspace: BasicTestWorkspace,
