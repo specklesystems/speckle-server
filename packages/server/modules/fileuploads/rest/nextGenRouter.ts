@@ -5,9 +5,12 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { fileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job.js'
+import { fileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
-import { getFileIdFromJobIdFactory, updateFileStatusFactory } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  getFileIdFromJobIdFactory,
+  updateFileStatusFactory
+} from '@/modules/fileuploads/repositories/fileUploads'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const app = Router()

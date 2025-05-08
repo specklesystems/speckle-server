@@ -12,7 +12,7 @@ import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
-import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import { jobResultStatusToFileUploadStatus } from '@/modules/fileuploads/helpers/convert'
 
 type OnFileImportResultDeps = {
   getFileIdFromJobId: FileIdFromJobId
@@ -40,10 +40,7 @@ export const onFileImportResultFactory =
       fileId
     })
 
-    let status = FileUploadConvertedStatus.Error
-    if (jobResult.status === 'success') {
-      status = FileUploadConvertedStatus.Completed
-    }
+    const status = jobResultStatusToFileUploadStatus(jobResult.status)
 
     const updatedFile = await deps.updateFileStatus({ fileId, status })
 

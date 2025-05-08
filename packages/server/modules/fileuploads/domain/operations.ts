@@ -1,7 +1,10 @@
-import { FileUploadConvertedStatus, FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import {
+  FileUploadConvertedStatus,
+  FileUploadRecord
+} from '@/modules/fileuploads/helpers/types'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job'
+import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
 
 export type GetFileInfo = (args: {
   fileId: string
