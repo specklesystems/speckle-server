@@ -5,7 +5,7 @@ import type { EventEmitter } from 'stream'
 import { upsertObjectPreviewFactory } from '@/modules/previews/repository/previews'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { JobPayload } from '@speckle/shared/dist/commonjs/previews/job'
+import { JobPayload } from '@speckle/shared/dist/commonjs/workers/previews'
 
 export const requestObjectPreviewFactory =
   ({
