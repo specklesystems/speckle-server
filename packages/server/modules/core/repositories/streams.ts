@@ -478,7 +478,7 @@ const buildDiscoverableStreamsBaseQueryFactory =
       .streams(deps.db)
       .select<Result>(Streams.cols)
       .andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
-      .andWhere(false) // No such thing as discoverability anymore, just return nothing
+      .andWhere(false) // TODO: No such thing as discoverability anymore, just return nothing
 
     if (params.streamIdWhitelist?.length) {
       q.whereIn(Streams.col.id, params.streamIdWhitelist)
@@ -782,6 +782,7 @@ const getUserStreamsQueryBaseFactory =
     }
 
     if (forOtherUser) {
+      // TODO: How did this work before discoverability?
       query.andWhere(Streams.col.visibility, ProjectRecordVisibility.Public)
     }
 
@@ -884,7 +885,9 @@ export const createStreamFactory =
 
     let visibility: ProjectRecordVisibility
     if (isProjectCreateInput(input)) {
-      visibility = mapGqlToDbProjectVisibility(input.visibility || 'PRIVATE')
+      visibility = mapGqlToDbProjectVisibility(
+        input.visibility || (input.workspaceId ? 'WORKSPACE' : 'PRIVATE')
+      )
     } else {
       visibility =
         input.isPublic !== false
@@ -1345,9 +1348,15 @@ export const legacyGetStreamsFactory =
     }
 
     if (visibility && visibility !== 'all') {
-      if (!['private', 'public'].includes(visibility))
+      if (
+        ![
+          ProjectRecordVisibility.Private,
+          ProjectRecordVisibility.Public,
+          ProjectRecordVisibility.Workspace
+        ].includes(visibility)
+      )
         throw new LogicError(
-          'Stream visibility should be either private, public or all'
+          'Stream visibility should be either private, public, workspace or all'
         )
       const publicFunc: Knex.QueryCallback = function () {
         this.where({ visibility })

@@ -45,8 +45,8 @@ export type ServerAclRecord = {
 
 export const ProjectRecordVisibility = <const>{
   Public: 'public',
-  Private: 'private'
-  // Workspace: 'workspace'
+  Private: 'private',
+  Workspace: 'workspace'
 }
 
 export type ProjectRecordVisibility =

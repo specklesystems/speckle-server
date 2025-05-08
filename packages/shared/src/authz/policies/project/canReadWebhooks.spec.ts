@@ -13,6 +13,7 @@ import {
 import { canReadProjectWebhooksPolicy } from './canReadWebhooks.js'
 import { getProjectFake } from '../../../tests/fakes.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReadProjectWebhooksPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectWebhooksPolicy>) =>
@@ -38,7 +39,8 @@ describe('canReadProjectWebhooksPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

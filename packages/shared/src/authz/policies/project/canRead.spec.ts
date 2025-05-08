@@ -319,7 +319,7 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
       })
     })
 
-    it('allows project access via workspace role if user does not have project role', async () => {
+    it('allows project access via workspace admin role if user does not have project role, even if private project', async () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,
         getEnv: async () =>
@@ -327,7 +327,8 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
             FF_WORKSPACES_MODULE_ENABLED: 'true'
           }),
         getProject: getProjectFake({
-          workspaceId: crs({ length: 10 })
+          workspaceId: crs({ length: 10 }),
+          visibility: ProjectVisibility.Private
         }),
         getProjectRole: async () => null,
         getServerRole: async () => Roles.Server.User,
@@ -341,6 +342,31 @@ describe('canReadProjectPolicy creates a function, that handles ', () => {
 
       await expect(result).resolves.toBeAuthOKResult()
     })
+
+    it('allows project access via workspace role if user does not have project role on workspace visibility', async () => {
+      const result = canReadProjectPolicy({
+        getAdminOverrideEnabled: async () => false,
+        getEnv: async () =>
+          parseFeatureFlags({
+            FF_WORKSPACES_MODULE_ENABLED: 'true'
+          }),
+        getProject: getProjectFake({
+          workspaceId: crs({ length: 10 }),
+          visibility: ProjectVisibility.Workspace
+        }),
+        getProjectRole: async () => null,
+        getServerRole: async () => Roles.Server.User,
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getWorkspaceSsoSession: () => {
+          assert.fail()
+        },
+        getWorkspace,
+        getWorkspaceSsoProvider: async () => null
+      })(canReadProjectArgs())
+
+      await expect(result).resolves.toBeAuthOKResult()
+    })
+
     it('does not check SSO sessions if user is workspace guest', async () => {
       const result = canReadProjectPolicy({
         getAdminOverrideEnabled: async () => false,

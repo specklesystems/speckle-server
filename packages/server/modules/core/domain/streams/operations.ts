@@ -23,12 +23,13 @@ import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import type { Logger } from 'pino'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
   limit: number
   orderBy?: string | null | undefined
-  visibility?: 'private' | 'public' | 'all' | null | undefined
+  visibility?: ProjectRecordVisibility | 'all' | null | undefined
   searchQuery?: string | null | undefined
   streamIdWhitelist?: string[] | null | undefined
   workspaceIdWhitelist?: string[] | null | undefined

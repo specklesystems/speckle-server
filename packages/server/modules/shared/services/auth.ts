@@ -33,10 +33,16 @@ export const validateScopesFactory = (): ValidateScopes => async (scopes, scope)
     throw new ForbiddenError(errMsg, { info: { scope } })
 }
 
-const workspaceRoleImplicitProjectRoleMap = <const>{
-  [Roles.Workspace.Admin]: Roles.Stream.Owner,
-  [Roles.Workspace.Member]: Roles.Stream.Reviewer,
-  [Roles.Workspace.Guest]: null
+const workspaceRoleImplicitProjectRoleMap = (
+  projectVisibility: ProjectRecordVisibility | null
+) => {
+  const isFullyPrivate = projectVisibility === ProjectRecordVisibility.Private
+
+  return <const>{
+    [Roles.Workspace.Admin]: Roles.Stream.Owner,
+    [Roles.Workspace.Member]: isFullyPrivate ? null : Roles.Stream.Reviewer,
+    [Roles.Workspace.Guest]: null
+  }
 }
 
 /**
@@ -83,6 +89,7 @@ export const authorizeResolverFactory =
     }
 
     let targetWorkspaceId: string | null = null
+    let streamVisibility: ProjectRecordVisibility | null = null
 
     if (role.resourceTarget === RoleResourceTargets.Streams) {
       const stream = await deps.getStream({
@@ -97,8 +104,9 @@ export const authorizeResolverFactory =
       }
 
       targetWorkspaceId = stream.workspaceId
+      streamVisibility = stream.visibility
 
-      const isPublic = stream.visibility === ProjectRecordVisibility.Public
+      const isPublic = streamVisibility === ProjectRecordVisibility.Public
       if (isPublic && role.weight < 200) return
     }
 
@@ -115,9 +123,7 @@ export const authorizeResolverFactory =
       : null
 
     if (!userAclRole) {
-      // TODO: Could be more optimized (caching?) but we're moving away from this towards
-      // auth policies anyway
-      // Check if workspace role allows for stream actions
+      // Implicit workspace project access
       if (
         role.resourceTarget === RoleResourceTargets.Streams &&
         targetWorkspaceId &&
@@ -129,7 +135,9 @@ export const authorizeResolverFactory =
         })
         const implicitStreamRole =
           workspaceRoleAndSeat?.role.role &&
-          workspaceRoleImplicitProjectRoleMap[workspaceRoleAndSeat.role.role]
+          workspaceRoleImplicitProjectRoleMap(streamVisibility)[
+            workspaceRoleAndSeat.role.role
+          ]
         userAclRole = implicitStreamRole
       }
 

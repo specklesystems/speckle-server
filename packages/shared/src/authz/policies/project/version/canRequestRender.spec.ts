@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canRequestProjectVersionRenderPolicy', () => {
   const buildSUT = (
@@ -40,7 +41,8 @@ describe('canRequestProjectVersionRenderPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

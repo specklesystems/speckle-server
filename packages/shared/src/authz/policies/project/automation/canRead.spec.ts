@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 const buildCanReadAutomationPolicy = (
   overrides?: OverridesOf<typeof canReadAutomationPolicy>
@@ -122,7 +123,8 @@ describe('canReadAutomationPolicy', () => {
     const overrides = {
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

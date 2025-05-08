@@ -41,7 +41,8 @@ describe('canBroadcastProjectActivityPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

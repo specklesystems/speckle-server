@@ -175,6 +175,21 @@ describe('canCreateAutomation', () => {
       expect(result).toBeAuthOKResult()
     })
 
+    it('returns error with implicit member role', async () => {
+      const canCreateAutomation = buildCanCreatePolicy({
+        ...overrides,
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => null
+      })
+      const result = await canCreateAutomation({
+        userId: 'user-id',
+        projectId: 'project-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
     it('returns error if no workspace role, even w/ valid project role', async () => {
       const canCreateAutomation = buildCanCreatePolicy({
         ...overrides,

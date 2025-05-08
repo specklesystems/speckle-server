@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canArchiveProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canArchiveProjectCommentPolicy>) =>
@@ -43,7 +44,8 @@ describe('canArchiveProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        allowPublicComments: false
+        allowPublicComments: false,
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

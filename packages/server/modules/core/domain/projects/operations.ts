@@ -38,7 +38,7 @@ export type GetRolesByUserId = ({
   workspaceId?: string
 }) => Promise<Pick<StreamAclRecord, 'role' | 'resourceId'>[]>
 
-export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
+export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED' | 'WORKSPACE'
 
 export type ProjectCreateArgs = {
   description?: MaybeNullOrUndefined<string>

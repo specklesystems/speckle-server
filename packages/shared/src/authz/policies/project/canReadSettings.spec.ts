@@ -12,6 +12,7 @@ import {
 } from '../../domain/authErrors.js'
 import { getProjectFake } from '../../../tests/fakes.js'
 import { TIME_MS } from '../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReadProjectSettingsPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReadProjectSettingsPolicy>) =>
@@ -37,7 +38,8 @@ describe('canReadProjectSettingsPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

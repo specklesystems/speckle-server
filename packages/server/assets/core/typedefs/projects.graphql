@@ -19,7 +19,10 @@ enum ProjectVisibility {
   Accessible to everyone (even non-logged in users)
   """
   PUBLIC
-  # WORKSPACE # Accessible to everyone in the project's workspace
+  """
+  Accessible to everyone in the project's workspace
+  """
+  WORKSPACE
 }
 
 """

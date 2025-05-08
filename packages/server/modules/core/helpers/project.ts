@@ -20,6 +20,8 @@ export const mapGqlToDbProjectVisibility = (
       return ProjectRecordVisibility.Public
     case ProjectVisibility.Private:
       return ProjectRecordVisibility.Private
+    case ProjectVisibility.Workspace:
+      return ProjectRecordVisibility.Workspace
     default:
       throwUncoveredError(visibility)
   }
@@ -33,6 +35,8 @@ export const mapDbToGqlProjectVisibility = (
       return ProjectVisibility.Public
     case ProjectRecordVisibility.Private:
       return ProjectVisibility.Private
+    case ProjectRecordVisibility.Workspace:
+      return ProjectVisibility.Workspace
     default:
       throwUncoveredError(visibility)
   }

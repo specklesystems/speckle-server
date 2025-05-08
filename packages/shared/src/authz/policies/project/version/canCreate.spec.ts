@@ -14,8 +14,9 @@ import {
 } from '../../../domain/authErrors.js'
 import { canCreateProjectVersionPolicy } from './canCreate.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
-describe('canReceiveProjectVersionPolicy', () => {
+describe('canCreateProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectVersionPolicy>) =>
     canCreateProjectVersionPolicy({
       getProject: getProjectFake({
@@ -38,7 +39,8 @@ describe('canReceiveProjectVersionPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

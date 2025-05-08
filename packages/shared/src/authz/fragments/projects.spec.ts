@@ -46,7 +46,8 @@ describe('ensureMinimumProjectRoleFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId'
+        workspaceId: 'workspaceId',
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: async () => ({
         id: 'workspaceId',
@@ -138,6 +139,44 @@ describe('ensureMinimumProjectRoleFragment', () => {
       })
 
       expect(result).toBeAuthOKResult()
+    })
+
+    it('succeeds if user has implicit owner role even in private project', async () => {
+      const result = await buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Admin,
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthOKResult()
+    })
+
+    it('fails if user doesnt have explicit project role and project is private', async () => {
+      const result = await buildWorkspaceSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Member,
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
     })
 
     it('fails if implicit role is not enough', async () => {
@@ -398,7 +437,8 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId'
+        workspaceId: 'workspaceId',
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -521,6 +561,27 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       expect(result).toBeAuthOKResult()
     })
 
+    it('fails w/o explicit project role if private project', async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => null,
+        getProject: getProjectFake({
+          id: 'projectId',
+          workspaceId: 'workspaceId',
+          visibility: ProjectVisibility.Private
+        })
+      })
+
+      const result = await sut({
+        userId: 'userId',
+        projectId: 'projectId',
+        role: Roles.Stream.Reviewer
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
+
     it('succeeds w/o sso session, if workspace guest w/ explicit project role', async () => {
       const sut = buildWorkspaceSUT({
         getWorkspaceRole: async () => Roles.Workspace.Guest,
@@ -614,7 +675,8 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'projectId',
-        workspaceId: 'workspaceId'
+        workspaceId: 'workspaceId',
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({

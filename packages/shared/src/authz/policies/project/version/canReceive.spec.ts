@@ -13,6 +13,7 @@ import {
 } from '../../../domain/authErrors.js'
 import { canReceiveProjectVersionPolicy } from './canReceive.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canReceiveProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReceiveProjectVersionPolicy>) =>
@@ -37,7 +38,8 @@ describe('canReceiveProjectVersionPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id'
+        workspaceId: 'workspace-id',
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'
