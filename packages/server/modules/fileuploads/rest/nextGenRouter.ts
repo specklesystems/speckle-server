@@ -16,7 +16,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
   const app = Router()
 
   app.post(
-    '/api/projects/:projectId/fileimporter/jobs',
+    '/api/projects/:streamId/fileimporter/jobs',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
@@ -34,7 +34,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
   )
 
   app.post(
-    '/api/projects/:projectId/fileimporter/jobs/:jobId/results',
+    '/api/projects/:streamId/fileimporter/jobs/:jobId/results',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
@@ -42,7 +42,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
     ),
     async (req, res) => {
       const userId = req.context.userId
-      const projectId = req.params.projectId
+      const projectId = req.params.streamId
       const jobId = req.params.jobId
       const logger = req.log.child({
         projectId,
