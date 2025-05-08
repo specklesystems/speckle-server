@@ -29,7 +29,7 @@ import {
 } from '@/modules/multiregion/repositories/projectRegion'
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue'
+import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   copyWorkspaceFactory,

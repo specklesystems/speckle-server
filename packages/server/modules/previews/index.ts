@@ -33,8 +33,8 @@ import {
   PreviewJobDurationStep
 } from '@/modules/previews/observability/metrics'
 import { addRequestQueueListeners } from '@/modules/previews/queues/previews'
-import { initializeQueue } from '@speckle/shared/dist/commonjs/queue'
-import Bull from 'bull'
+import { initializeQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import type Bull from 'bull'
 
 const JobQueueName = 'preview-service-jobs'
 const ResponseQueueNamePrefix = 'preview-service-results'

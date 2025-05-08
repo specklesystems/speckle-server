@@ -14,7 +14,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 import { getRedisUrl, isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
-import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue'
+import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/observability/logging'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
