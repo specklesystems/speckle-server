@@ -144,6 +144,7 @@ export const startQueue = async () => {
     logger.info(
       {
         jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
         payload: job.data.payload,
         type: job.data.type
       },
@@ -236,10 +237,23 @@ export const startQueue = async () => {
         throw new MultiRegionNotYetImplementedError()
     }
   })
+  void queue.on('completed', (job) => {
+    const { projectId, regionKey } = job.data.payload
+    logger.info(
+      {
+        jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
+        projectId,
+        regionKey
+      },
+      'Completed multiregion job {jobId}'
+    )
+  })
   void queue.on('failed', (job, err) => {
     logger.error(
       {
         jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
         error: err,
         errorMessage: err.message
       },
@@ -249,6 +263,7 @@ export const startQueue = async () => {
   void queue.on('error', (err) => {
     logger.error(
       {
+        jobQueue: MULTIREGION_QUEUE_NAME,
         error: err,
         errorMessage: err.message
       },
