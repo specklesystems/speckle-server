@@ -5,21 +5,21 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { fileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job.js'
+import { fileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import {
   getFileIdFromJobIdFactory,
-  saveUploadFileFactoryV2,
   updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
+import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
-import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
-import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
-import { UnauthorizedError } from '@/modules/shared/errors'
-import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactoryV2 } from '@/modules/blobstorage/services/streamsV2'
+import { UnauthorizedError } from '@/modules/shared/errors'
+import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { UploadResult } from '@/modules/blobstorage/domain/types'
+import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
@@ -95,7 +95,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
   )
 
   app.post(
-    '/api/projects/:projectId/fileimporter/jobs/:jobId/results',
+    '/api/projects/:streamId/fileimporter/jobs/:jobId/results',
     authMiddlewareCreator(
       streamWritePermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
@@ -103,7 +103,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
     ),
     async (req, res) => {
       const userId = req.context.userId
-      const projectId = req.params.projectId
+      const projectId = req.params.streamId
       const jobId = req.params.jobId
       const logger = req.log.child({
         projectId,
@@ -118,10 +118,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
           { err: parseJobOutput.error.format() },
           'Error parsing file import job result'
         )
-        res.status(400).send({
-          error: 'Invalid job result format'
-        })
-        return
+        throw new FileImportInvalidJobResultPayload(parseJobOutput.error.message)
       }
       const jobResult = parseJobOutput.data
 

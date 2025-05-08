@@ -8,7 +8,7 @@ import {
   SaveUploadFileInputV2
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/dist/esm/workers/fileimport/job'
+import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
 
 export type GetFileInfo = (args: {
   fileId: string
@@ -38,4 +38,5 @@ export type ProcessFileImportResult = (params: {
 export type UpdateFileStatus = (params: {
   fileId: string
   status: FileUploadConvertedStatus
+  convertedMessage: string
 }) => Promise<FileUploadRecord>

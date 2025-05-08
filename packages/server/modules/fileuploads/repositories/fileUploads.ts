@@ -13,6 +13,7 @@ import {
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
+import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
@@ -220,9 +221,11 @@ export const getBranchPendingVersionsFactory =
     return await q
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getFileIdFromJobIdFactory =
-  (_deps: { db: Knex }): FileIdFromJobId =>
+  (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _deps: { db: Knex }
+  ): FileIdFromJobId =>
   async (params) => {
     return params.jobId //FIXME it is possible to upload multiple files with the same fileId, so is not unique
   }
@@ -230,18 +233,19 @@ export const getFileIdFromJobIdFactory =
 export const updateFileStatusFactory =
   (deps: { db: Knex }): UpdateFileStatus =>
   async (params) => {
-    const { fileId, status } = params
+    const { fileId, status, convertedMessage } = params
     const fileInfos = await tables
       .fileUploads(deps.db)
       .update<FileUploadRecord[]>({
-        [FileUploads.col.convertedStatus]: status,
-        [FileUploads.col.convertedLastUpdate]: Date.now(),
-        [FileUploads.col.convertedMessage]: 'File import completed'
+        [FileUploads.withoutTablePrefix.col.convertedStatus]: status,
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now(),
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: convertedMessage
       })
-      .where({ [FileUploads.col.id]: fileId })
+      .where({ [FileUploads.withoutTablePrefix.col.id]: fileId })
+      .returning<FileUploadRecord[]>('*')
 
     if (fileInfos.length === 0) {
-      throw new Error(`File with id ${fileId} not found`)
+      throw new FileImportJobNotFoundError(`File with id ${fileId} not found`)
     }
     return fileInfos[0]
   }

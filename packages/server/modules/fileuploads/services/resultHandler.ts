@@ -5,14 +5,17 @@ import {
   UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import {
-  NextGenFileImportSubscriptions,
+  FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
-import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import {
+  jobResultStatusToFileUploadStatus,
+  jobResultToConvertedMessage
+} from '@/modules/fileuploads/helpers/convert'
 
 type OnFileImportResultDeps = {
   getFileIdFromJobId: FileIdFromJobId
@@ -40,26 +43,29 @@ export const onFileImportResultFactory =
       fileId
     })
 
-    let status = FileUploadConvertedStatus.Error
-    if (jobResult.status === 'success') {
-      status = FileUploadConvertedStatus.Completed
-    }
+    const status = jobResultStatusToFileUploadStatus(jobResult.status)
+    const convertedMessage = jobResultToConvertedMessage(jobResult)
 
-    const updatedFile = await deps.updateFileStatus({ fileId, status })
+    const updatedFile = await deps.updateFileStatus({
+      fileId,
+      status,
+      convertedMessage
+    })
 
     logger.info('File upload status updated')
 
     //FIXME why both?
-    await deps.publish(NextGenFileImportSubscriptions.ProjectPendingVersionsUpdated, {
+    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
       projectPendingVersionsUpdated: {
         id: updatedFile.id,
         type: ProjectPendingVersionsUpdatedMessageType.Updated,
         version: updatedFile
       },
-      projectId: updatedFile.streamId
+      projectId: updatedFile.streamId,
+      branchName: updatedFile.branchName
     })
 
-    await deps.publish(NextGenFileImportSubscriptions.ProjectFileImportUpdated, {
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {
         id: updatedFile.id,
         type: ProjectFileImportUpdatedMessageType.Updated,
