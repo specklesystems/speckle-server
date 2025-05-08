@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { describe, expect, test } from 'vitest'
 import IndexedDatabase from './indexedDatabase.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
@@ -10,8 +9,7 @@ describe('database cache', () => {
     const i: Item = { baseId: 'id', base: { id: 'id', speckle_type: 'type' } }
     const database = new IndexedDatabase({
       indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange,
-      maxCacheBatchWriteWait: 200
+      keyRange: IDBKeyRange
     })
     await database.add(i)
     await database.disposeAsync()

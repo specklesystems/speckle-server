@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import IndexedDatabase from '../operations/indexedDatabase.js'
+import { Database } from '../operations/indexedDatabase.js'
 import { CacheOptions } from '../operations/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
@@ -10,7 +10,7 @@ import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 
 export class CachePump {
   #writeQueue: BatchingQueue<Item> | undefined
-  #database: IndexedDatabase
+  #database: Database
   #logger: CustomLogger
   #deferments: DefermentManager
 
@@ -19,7 +19,7 @@ export class CachePump {
   #options: CacheOptions
 
   constructor(
-    database: IndexedDatabase,
+    database: Database,
     gathered: AsyncGeneratorQueue<Item>,
     deferments: DefermentManager,
     options: CacheOptions

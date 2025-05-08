@@ -17,7 +17,14 @@ class ObjectStore extends Dexie {
   }
 }
 
-export default class IndexedDatabase {
+export interface Database {
+  getAll(keys: string[]): Promise<(Item | undefined)[]>
+  getItem(params: { id: string }): Promise<Item | undefined>
+  cacheSaveBatch(params: { batch: Item[] }): Promise<void>
+  disposeAsync(): Promise<void>
+}
+
+export default class IndexedDatabase implements Database {
   #options: BaseDatabaseOptions
   #logger: CustomLogger
 
@@ -119,5 +126,12 @@ export default class IndexedDatabase {
       }, 100)
       void tryIdb()
     }).finally(() => clearInterval(intervalId))
+  }
+
+  async disposeAsync(): Promise<void> { 
+    this.#cacheDB?.close()
+    this.#cacheDB = undefined
+    await this.#writeQueue?.disposeAsync()
+    this.#writeQueue = undefined
   }
 }

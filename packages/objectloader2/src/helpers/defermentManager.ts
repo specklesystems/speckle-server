@@ -1,13 +1,15 @@
 import { DeferredBase } from './deferredBase.js'
-import { Base, Item } from '../types/types.js'
+import { Base, CustomLogger, Item } from '../types/types.js'
 import { DefermentManagerOptions } from '../operations/options.js'
 
 export class DefermentManager {
   #deferments: Map<string, DeferredBase> = new Map()
   #timer?: ReturnType<typeof setTimeout>
+    #logger: CustomLogger
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
+    this.#logger = options.logger || (() => {})
   }
 
   private now(): number {
@@ -65,7 +67,7 @@ export class DefermentManager {
     let cleaned = 0
 
     if (this.#deferments.size < this.options.maxSize) {
-      this.options.logger('cleaned deferments', cleaned, this.#deferments.size)
+      this.#logger('cleaned deferments', cleaned, this.#deferments.size)
       return
     }
     for (const [id, deferredBase] of this.#deferments) {
@@ -73,7 +75,7 @@ export class DefermentManager {
         this.#deferments.delete(id)
         cleaned++
         if (this.#deferments.size < this.options.maxSize) {
-          this.options.logger('cleaned deferments', cleaned, this.#deferments.size)
+          this.#logger('cleaned deferments', cleaned, this.#deferments.size)
           return
         }
       }
