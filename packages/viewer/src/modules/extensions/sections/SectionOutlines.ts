@@ -331,6 +331,7 @@ export class SectionOutlines extends Extension {
     clipOutline.frustumCulled = false
     clipOutline.renderOrder = 1
     clipOutline.layers.set(ObjectLayers.PROPS)
+    clipOutline.visible = false
 
     return {
       renderable: clipOutline
