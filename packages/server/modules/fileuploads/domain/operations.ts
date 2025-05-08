@@ -30,4 +30,5 @@ export type ProcessFileImportResult = (params: {
 export type UpdateFileStatus = (params: {
   fileId: string
   status: FileUploadConvertedStatus
+  convertedMessage: string
 }) => Promise<FileUploadRecord>

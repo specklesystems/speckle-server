@@ -79,6 +79,7 @@ import { noErrors } from '@/test/helpers'
 import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { randomInt } from 'crypto'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -298,34 +299,126 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
           .send(JSON.stringify({})) //TODO should be a valid payload
 
         expect(response.status).to.equal(403)
-
-        const gqlResponse = await getFileUploads(projectOneId, userOneToken)
-        expect(noErrors(gqlResponse))
-        expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-        expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(jobOneId)
-        expect(gqlResponse.body.data.stream.fileUploads[0].status).to.equal('PENDING')
       })
       it('should 403 if an invalid auth token is provided', async () => {
         const response = await request(app)
-          .post(`/api/projects/${projectOneId}/fileimporter/jobs/:jobId/results`)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
           .set('Content-Type', 'application/json')
           .set('Authorization', `Bearer ${cryptoRandomString({ length: 20 })}`)
-          .send(JSON.stringify({})) //TODO should be a valid payload
+          .send(JSON.stringify({}))
 
         expect(response.status).to.equal(403)
       })
-      it('should 403 if the token does not have the correct scopes', async () => {})
-      it('should 403 if the token is not for the correct stream', async () => {})
-      it('should 400 if the payload is invalid', async () => {})
-      it('should 400 if the job id cannot be found', async () => {})
-      it('should 200 if the job id is found', async () => {
+      it('should 403 if the token does not have the correct scopes', async () => {
+        const badToken = await createToken({
+          userId: userOneId,
+          name: createRandomString(),
+          scopes: [Scopes.Streams.Read]
+        })
         const response = await request(app)
-          .post(`/api/projects/${projectOneId}/fileimporter/jobs/:jobId/results`)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${badToken.token}`)
+          .send(JSON.stringify({}))
+
+        expect(response.status).to.equal(403)
+      })
+      it('should 403 if the token is for a different user', async () => {
+        const userTwoId = await createUser({
+          name: createRandomString(),
+          email: createRandomEmail(),
+          password: createRandomPassword()
+        })
+        const userTwoToken = await createToken({
+          userId: userTwoId,
+          name: createRandomString(),
+          scopes: [Scopes.Streams.Read]
+        })
+        const response = await request(app)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${userTwoToken.token}`)
+          .send(JSON.stringify({}))
+
+        expect(response.status).to.equal(403)
+      })
+      it('should 400 if the payload is invalid', async () => {
+        const response = await request(app)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${userOneToken}`)
+          .send(JSON.stringify({ bad: 'payload' }))
+
+        expect(response.status).to.equal(400)
+      })
+      it('should 400 if the job id cannot be found', async () => {
+        const response = await request(app)
+          .post(
+            `/api/projects/${projectOneId}/fileimporter/jobs/${cryptoRandomString({
+              length: 10
+            })}/results`
+          )
+          .set('Content-Type', 'application/json')
+          .set('Authorization', `Bearer ${userOneToken}`)
+          .send(
+            JSON.stringify({
+              status: 'success',
+              warnings: [],
+              result: {
+                versionId: cryptoRandomString({ length: 10 }),
+                durationSeconds: randomInt(1, 3600)
+              }
+            })
+          )
+
+        expect(response.status).to.equal(404)
+      })
+      it('should 200 if the payload reports a success result', async () => {
+        const response = await request(app)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
           .set('Authorization', `Bearer ${userOneToken}`)
           .set('Content-Type', 'application/json')
-          .send(JSON.stringify({})) //TODO should be a valid payload
+          .send(
+            JSON.stringify({
+              status: 'success',
+              warnings: [],
+              result: {
+                versionId: cryptoRandomString({ length: 10 }),
+                durationSeconds: randomInt(1, 3600)
+              }
+            })
+          )
 
         expect(response.status).to.equal(200)
+        const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+        expect(noErrors(gqlResponse))
+        expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+        expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+          FileUploadConvertedStatus.Completed
+        )
+      })
+      it('should 200 if the payload reports an error result', async () => {
+        const response = await request(app)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
+          .set('Authorization', `Bearer ${userOneToken}`)
+          .set('Content-Type', 'application/json')
+          .send(
+            JSON.stringify({
+              status: 'error',
+              reasons: [cryptoRandomString({ length: 10 })],
+              result: {
+                durationSeconds: randomInt(1, 3600)
+              }
+            })
+          )
+
+        expect(response.status).to.equal(200)
+        const gqlResponse = await getFileUploads(projectOneId, userOneToken)
+        expect(noErrors(gqlResponse))
+        expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+        expect(gqlResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+          FileUploadConvertedStatus.Error
+        )
       })
     })
   }

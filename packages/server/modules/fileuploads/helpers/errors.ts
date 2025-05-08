@@ -6,3 +6,9 @@ export class FileUploadInternalError extends BaseError {
   static code = 'FILE_UPLOAD_ERROR'
   static statusCode = 500
 }
+
+export class FileImportJobNotFoundError extends BaseError {
+  static defaultMessage = 'The file upload job was not found.'
+  static code = 'FILE_IMPORT_JOB_NOT_FOUND'
+  static statusCode = 404
+}

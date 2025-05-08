@@ -41,8 +41,23 @@ export const onFileImportResultFactory =
     })
 
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
+    let messages = []
+    switch (jobResult.status) {
+      case 'success':
+        messages = jobResult.warnings
+        break
+      case 'error':
+        messages = jobResult.reasons
+        break
+      default:
+        throw new Error('Unknown job result status')
+    }
 
-    const updatedFile = await deps.updateFileStatus({ fileId, status })
+    const updatedFile = await deps.updateFileStatus({
+      fileId,
+      status,
+      convertedMessage: messages.join(', ')
+    })
 
     logger.info('File upload status updated')
 
