@@ -293,7 +293,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     describe('Receive results from file import service', async () => {
       it('should 403 if no auth token is provided', async () => {
         const response = await request(app)
-          .post(`/api/projects/${projectOneId}/fileimporter/jobs/:jobId/results`)
+          .post(`/api/projects/${projectOneId}/fileimporter/jobs/${jobOneId}/results`)
           .set('Content-Type', 'application/json')
           .send(JSON.stringify({})) //TODO should be a valid payload
 
