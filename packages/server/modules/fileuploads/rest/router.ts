@@ -11,7 +11,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { Nullable } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 
 export const fileuploadRouterFactory = (): Router => {
@@ -91,7 +91,7 @@ export const fileuploadRouterFactory = (): Router => {
               uploadResults
             })
           } catch (err) {
-            logger.error({ err }, 'File importer handling error @deprecated')
+            logger.error(ensureError(err), 'File importer handling error @deprecated')
             res.status(500)
           }
           res.status(201).send({ uploadResults })
