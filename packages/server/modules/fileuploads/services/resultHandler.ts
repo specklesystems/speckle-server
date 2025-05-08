@@ -5,10 +5,9 @@ import {
   UpdateFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import {
-  NextGenFileImportSubscriptions,
+  FileImportSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
@@ -51,16 +50,18 @@ export const onFileImportResultFactory =
     logger.info('File upload status updated')
 
     //FIXME why both?
-    await deps.publish(NextGenFileImportSubscriptions.ProjectPendingVersionsUpdated, {
+    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
       projectPendingVersionsUpdated: {
         id: updatedFile.id,
         type: ProjectPendingVersionsUpdatedMessageType.Updated,
         version: updatedFile
       },
-      projectId: updatedFile.streamId
+      projectId: updatedFile.streamId,
+      branchName: ''
+      //TODO add modelId
     })
 
-    await deps.publish(NextGenFileImportSubscriptions.ProjectFileImportUpdated, {
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
       projectFileImportUpdated: {
         id: updatedFile.id,
         type: ProjectFileImportUpdatedMessageType.Updated,
