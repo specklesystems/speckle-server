@@ -12,7 +12,10 @@ import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
-import { jobResultStatusToFileUploadStatus } from '@/modules/fileuploads/helpers/convert'
+import {
+  jobResultStatusToFileUploadStatus,
+  jobResultToConvertedMessage
+} from '@/modules/fileuploads/helpers/convert'
 
 type OnFileImportResultDeps = {
   getFileIdFromJobId: FileIdFromJobId
@@ -41,22 +44,12 @@ export const onFileImportResultFactory =
     })
 
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
-    let messages = []
-    switch (jobResult.status) {
-      case 'success':
-        messages = jobResult.warnings
-        break
-      case 'error':
-        messages = jobResult.reasons
-        break
-      default:
-        throw new Error('Unknown job result status')
-    }
+    const convertedMessage = jobResultToConvertedMessage(jobResult)
 
     const updatedFile = await deps.updateFileStatus({
       fileId,
       status,
-      convertedMessage: messages.join(', ')
+      convertedMessage
     })
 
     logger.info('File upload status updated')

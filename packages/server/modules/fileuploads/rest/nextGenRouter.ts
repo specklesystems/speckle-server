@@ -11,6 +11,7 @@ import {
   getFileIdFromJobIdFactory,
   updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
+import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const app = Router()
@@ -57,10 +58,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
           { err: parseJobOutput.error.format() },
           'Error parsing file import job result'
         )
-        res.status(400).send({
-          error: 'Invalid job result format'
-        })
-        return
+        throw new FileImportInvalidJobResultPayload(parseJobOutput.error.message)
       }
       const jobResult = parseJobOutput.data
 

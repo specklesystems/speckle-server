@@ -1,4 +1,6 @@
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job'
+import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
 
 export const jobResultStatusToFileUploadStatus = (
   jobResultStatus: 'success' | 'error'
@@ -10,5 +12,16 @@ export const jobResultStatusToFileUploadStatus = (
       return FileUploadConvertedStatus.Error
     default:
       throw new Error(`Unknown job result status: ${jobResultStatus}`)
+  }
+}
+
+export const jobResultToConvertedMessage = (jobResult: FileImportResultPayload) => {
+  switch (jobResult.status) {
+    case 'success':
+      return jobResult.warnings.join('; ')
+    case 'error':
+      return jobResult.reasons.join('; ')
+    default:
+      throw new FileImportInvalidJobResultPayload('Unknown job result status')
   }
 }
