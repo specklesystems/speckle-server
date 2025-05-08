@@ -3,7 +3,7 @@ import {
   loadMultiRegionsConfig,
   configureKnexClient
 } from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
-import { logger } from '@/observability/logging.js'
+import { logger } from './observability/logging.js'
 import { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
