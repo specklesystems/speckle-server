@@ -20,27 +20,26 @@ export const fileuploadRouterFactory = (): Router => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    async (req, res, next) => {
-      await authMiddlewareCreator(
-        streamWritePermissionsPipelineFactory({
-          getStream: getStreamFactory({ db })
-        })
-      )(req, res, next)
-    },
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getStream: getStreamFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
-      const streamId = req.params.streamId
+      const projectId = req.params.streamId
       const userId = req.context.userId
       if (!userId) {
         throw new UnauthorizedError('User not authenticated.')
       }
       const logger = req.log.child({
-        streamId,
+        projectId,
+        streamId: projectId, //legacy
         userId,
         branchName
       })
 
-      const projectDb = await getProjectDbClient({ projectId: streamId })
+      const projectDb = await getProjectDbClient({ projectId })
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
@@ -79,13 +78,13 @@ export const fileuploadRouterFactory = (): Router => {
       const busboy = createBusboy(req)
       const newFileStreamProcessor = await processNewFileStream({
         busboy,
-        streamId,
+        streamId: projectId,
         userId,
         logger,
         onFinishAllFileUploads: async (uploadResults) => {
           await saveFileUploads({
             userId,
-            streamId,
+            streamId: projectId,
             branchName,
             uploadResults
           })
