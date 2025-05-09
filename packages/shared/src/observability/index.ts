@@ -2,7 +2,6 @@ import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
 import { toClef, toClefLogLevel } from './pinoClef.js'
 import { TIME_MS } from '../core/index.js'
-export * from './mixpanel.js'
 
 let logger: pino.Logger
 export type MixinFn = (mergeObject: object, level: number) => object
