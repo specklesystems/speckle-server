@@ -51,6 +51,12 @@ export const canPublishPolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyEr
       role: Roles.Stream.Contributor
     })
     if (ensuredWriteAccess.isErr) {
+      if (ensuredWriteAccess.error.code === 'ProjectNotEnoughPermissions')
+        return err(
+          new ProjectNotEnoughPermissionsError({
+            message: "Your role on this project doesn't give you permission to publish."
+          })
+        )
       return err(ensuredWriteAccess.error)
     }
 
