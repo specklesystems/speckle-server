@@ -16,8 +16,7 @@ export enum OnboardingPlan {
   Collaboration = 'collaboration',
   DataWarehouse = 'data-warehouse',
   Development = 'development',
-  Automation = 'automation',
-  Other = 'other'
+  Automation = 'automation'
 }
 
 export enum OnboardingSource {
