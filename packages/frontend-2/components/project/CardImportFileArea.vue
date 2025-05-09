@@ -73,7 +73,7 @@
             </p>
           </div>
         </div>
-        <div v-if="emptyStateVariant === 'modelGrid'">
+        <div v-else-if="emptyStateVariant === 'modelGrid'">
           <div class="hidden min-[1400px]:block">
             <ProjectEmptyStateIllustration />
           </div>
@@ -147,7 +147,7 @@
             </p>
           </div>
         </div>
-        <div v-else-if="emptyStateVariant === 'default'">
+        <div v-else>
           <div class="hidden min-[1400px]:block">
             <ProjectEmptyStateIllustration />
           </div>
@@ -195,17 +195,12 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
-const props = withDefaults(
-  defineProps<{
-    projectId: string
-    modelName?: string
-    disabled?: boolean
-    emptyStateVariant?: 'modelGrid' | 'modelList' | 'modelsSection' | 'default'
-  }>(),
-  {
-    emptyStateVariant: 'default'
-  }
-)
+const props = defineProps<{
+  projectId: string
+  modelName?: string
+  disabled?: boolean
+  emptyStateVariant?: 'modelGrid' | 'modelList' | 'modelsSection'
+}>()
 
 const {
   maxSizeInBytes,
