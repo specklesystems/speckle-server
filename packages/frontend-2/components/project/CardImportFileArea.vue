@@ -35,154 +35,49 @@
           :style="progressBarStyle"
         />
       </div>
-      <div v-else class="w-full flex flex-row justify-center items-center gap-2 p-3">
-        <div v-if="emptyStateVariant === 'modelList'">
-          <div class="hidden min-[1400px]:block">
-            <ProjectEmptyStateIllustration />
-          </div>
-          <div class="max-w-[460px] text-center min-[1400px]:text-left">
-            <h2 class="text-heading text-foreground-2 p-0 m-0 inline-block">
-              modelList
-            </h2>
-            <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
-              Use
-              <NuxtLink
-                target="_blank"
-                :to="connectorsRoute"
-                class="font-medium"
-                @click.stop
-              >
-                <span class="underline">connectors</span>
-              </NuxtLink>
-              to publish a {{ modelName ? '' : 'new model' }} version to
-              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-              IFC/OBJ/STL file here.
-            </p>
-            <p
-              class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
-            >
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Upload a model
-              </FormButton>
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Install connectors
-              </FormButton>
-              <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-              Getting started video
-            </FormButton> -->
-            </p>
-          </div>
+      <div v-else :class="containerClasses">
+        <div
+          class="hidden min-[1400px]:block"
+          :class="emptyStateVariant === 'modelGrid' ? 'h-12' : 'h-32'"
+        >
+          <ProjectEmptyStateIllustration />
         </div>
-        <div v-else-if="emptyStateVariant === 'modelGrid'">
-          <div class="hidden min-[1400px]:block">
-            <ProjectEmptyStateIllustration />
-          </div>
-          <div class="max-w-[460px] text-center min-[1400px]:text-left">
-            <h2 class="text-heading text-foreground-2 p-0 m-0 inline-block">
-              modelGrid
-            </h2>
-            <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
-              Use
-              <NuxtLink
-                target="_blank"
-                :to="connectorsRoute"
-                class="font-medium"
-                @click.stop
-              >
-                <span class="underline">connectors</span>
-              </NuxtLink>
-              to publish a {{ modelName ? '' : 'new model' }} version to
-              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-              IFC/OBJ/STL file here.
-            </p>
-            <p
-              class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
+        <div class="max-w-[460px] text-center min-[1400px]:text-left">
+          <h2
+            class="text-foreground-2 p-0 m-0 inline-block"
+            :class="
+              emptyStateVariant === 'modelGrid' ? 'text-heading' : 'text-heading-sm'
+            "
+          >
+            {{ emptyStateVariant }}
+          </h2>
+          <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
+            Use
+            <NuxtLink
+              target="_blank"
+              :to="connectorsRoute"
+              class="font-medium"
+              @click.stop
             >
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Upload a model
-              </FormButton>
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Install connectors
-              </FormButton>
-              <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
+              <span class="underline">connectors</span>
+            </NuxtLink>
+            to publish a {{ modelName ? '' : 'new model' }} version to
+            {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
+            IFC/OBJ/STL file here.
+          </p>
+          <p
+            class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
+          >
+            <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
+              Upload a model
+            </FormButton>
+            <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
+              Install connectors
+            </FormButton>
+            <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
               Getting started video
             </FormButton> -->
-            </p>
-          </div>
-        </div>
-        <div v-else-if="emptyStateVariant === 'modelsSection'">
-          <div class="hidden min-[1400px]:block">
-            <ProjectEmptyStateIllustration />
-          </div>
-          <div class="max-w-[460px] text-center min-[1400px]:text-left">
-            <h2 class="text-heading text-foreground-2 p-0 m-0 inline-block">
-              modelsSection
-            </h2>
-            <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
-              Use
-              <NuxtLink
-                target="_blank"
-                :to="connectorsRoute"
-                class="font-medium"
-                @click.stop
-              >
-                <span class="underline">connectors</span>
-              </NuxtLink>
-              to publish a {{ modelName ? '' : 'new model' }} version to
-              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-              IFC/OBJ/STL file here.
-            </p>
-            <p
-              class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
-            >
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Upload a model
-              </FormButton>
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Install connectors
-              </FormButton>
-              <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-              Getting started video
-            </FormButton> -->
-            </p>
-          </div>
-        </div>
-        <div v-else>
-          <div class="hidden min-[1400px]:block">
-            <ProjectEmptyStateIllustration />
-          </div>
-          <div class="max-w-[460px] text-center min-[1400px]:text-left">
-            <h2 class="text-heading text-foreground-2 p-0 m-0 inline-block">
-              Default.
-            </h2>
-            <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
-              Use
-              <NuxtLink
-                target="_blank"
-                :to="connectorsRoute"
-                class="font-medium"
-                @click.stop
-              >
-                <span class="underline">connectors</span>
-              </NuxtLink>
-              to publish a {{ modelName ? '' : 'new model' }} version to
-              {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-              IFC/OBJ/STL file here.
-            </p>
-            <p
-              class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
-            >
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Upload a model
-              </FormButton>
-              <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-                Install connectors
-              </FormButton>
-              <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-              Getting started video
-            </FormButton> -->
-            </p>
-          </div>
+          </p>
         </div>
       </div>
     </div>
@@ -191,7 +86,7 @@
 <script setup lang="ts">
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { ExclamationTriangleIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
@@ -220,6 +115,21 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
+
+const containerClasses = computed(() => {
+  const classes = 'w-full flex p-3 gap-2'
+
+  if (props.emptyStateVariant === 'modelGrid') {
+    return `${classes} flex-col`
+  } else if (props.emptyStateVariant === 'modelList') {
+    return `${classes} `
+  } else if (props.emptyStateVariant === 'modelsSection') {
+    return `${classes} `
+  } else {
+    return `${classes} flex-row justify-center items-center`
+  }
+  return classes
+})
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   if (isDraggingFiles) return 'border-primary'
