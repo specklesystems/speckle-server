@@ -272,6 +272,7 @@ export const moveProjectToWorkspaceMutation = gql`
         moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
           id
           workspaceId
+          visibility
           team {
             id
             role

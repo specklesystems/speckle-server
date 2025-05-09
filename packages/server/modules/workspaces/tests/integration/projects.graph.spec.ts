@@ -108,14 +108,6 @@ describe('Workspace project GQL CRUD', () => {
     )
   })
 
-  /**
-   * TODO:
-   * - Test move project if public/private
-   * - Test workspace access: workspace/private on project read
-   *   + Admin: still has access
-   * - Test actual changed SQL queries
-   *   + Admin: still has access
-   */
   describe('when creating project', () => {
     it('should have workspace visibility by default', async () => {
       const res = await apollo.execute(
@@ -868,7 +860,7 @@ describe('Workspace project GQL CRUD', () => {
       id: '',
       ownerId: '',
       name: 'Test Project',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Private
     }
 
     const targetWorkspace: BasicTestWorkspace = {
@@ -891,17 +883,38 @@ describe('Workspace project GQL CRUD', () => {
       })
     })
 
-    it('should move the project to the target workspace', async () => {
+    it('should move the project to the target workspace and update visibility', async () => {
       const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
         projectId: testProject.id,
         workspaceId: targetWorkspace.id
       })
 
-      const { workspaceId } =
-        res.data?.workspaceMutations.projects.moveToWorkspace ?? {}
+      const project = res.data?.workspaceMutations.projects.moveToWorkspace
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.visibility).to.equal(ProjectRecordVisibility.Workspace)
+    })
+
+    it('should move a public project to the target workspace and keep same visibility', async () => {
+      const publicProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Public Project',
+        visibility: ProjectRecordVisibility.Public
+      }
+      await createTestStream(publicProject, serverAdminUser)
+
+      const res = await apollo.execute(MoveProjectToWorkspaceDocument, {
+        projectId: publicProject.id,
+        workspaceId: targetWorkspace.id
+      })
+
+      const project = res.data?.workspaceMutations.projects.moveToWorkspace
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(project?.workspaceId).to.equal(targetWorkspace.id)
+      expect(project?.visibility).to.equal(ProjectRecordVisibility.Public)
     })
 
     it('should preserve project roles for project members with editor seats', async () => {
