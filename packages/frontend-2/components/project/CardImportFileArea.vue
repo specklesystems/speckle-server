@@ -11,9 +11,8 @@
     @files-selected="onFilesSelected"
   >
     <div
-      class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm cursor-pointer"
+      class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm"
       :class="[getDashedBorderClasses(isDraggingFiles)]"
-      @click="openFilePicker"
     >
       <div
         v-if="fileUpload"
@@ -53,12 +52,7 @@
           </h2>
           <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
             Use
-            <NuxtLink
-              target="_blank"
-              :to="connectorsRoute"
-              class="font-medium"
-              @click.stop
-            >
+            <NuxtLink :to="connectorsRoute" class="font-medium">
               <span class="underline">connectors</span>
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
@@ -68,10 +62,20 @@
           <p
             class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
           >
-            <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
+            <FormButton
+              size="sm"
+              color="outline"
+              :icon-right="ChevronRightIcon"
+              @click="openFilePicker"
+            >
               Upload a model
             </FormButton>
-            <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
+            <FormButton
+              :to="connectorsRoute"
+              size="sm"
+              color="outline"
+              :icon-right="ChevronRightIcon"
+            >
               Install connectors
             </FormButton>
             <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
