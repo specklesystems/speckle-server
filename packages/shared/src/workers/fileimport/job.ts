@@ -28,13 +28,11 @@ const baseFileImportResult = z.object({
 
 export type FileImportResult = z.infer<typeof baseFileImportResult>
 
-const fileImportSuccessPayload = job.merge(
-  z.object({
-    status: z.literal('success'),
-    warnings: z.array(z.string()), //ok to be empty
-    result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
-  })
-)
+const fileImportSuccessPayload = z.object({
+  status: z.literal('success'),
+  warnings: z.array(z.string()), //ok to be empty
+  result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
+})
 
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 

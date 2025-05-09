@@ -6,9 +6,11 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   SaveUploadFile,
-  NotifyChangeInFileStatus
+  NotifyChangeInFileStatus,
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  SaveUploadFileInputV2
 } from '@/modules/fileuploads/domain/operations'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
   PublishSubscription
@@ -53,6 +55,14 @@ export const insertNewUploadAndNotifyFactory =
       },
       projectId: file.streamId
     })
+  }
+
+export const insertNewUploadAndNotifyFactoryV2 =
+  (deps: { saveUploadFile: SaveUploadFileV2; publish: PublishSubscription }) =>
+  async (upload: SaveUploadFileInputV2) => {
+    await deps.saveUploadFile(upload)
+
+    // TODO: add FE notification
   }
 
 export const notifyChangeInFileStatus =
