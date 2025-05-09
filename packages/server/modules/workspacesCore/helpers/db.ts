@@ -29,6 +29,12 @@ export const WorkspaceDomains = buildTableHelper('workspace_domains', [
   'verified'
 ])
 
+export const WorkspaceCreationState = buildTableHelper('workspace_creation_state', [
+  'workspaceId',
+  'completed',
+  'state'
+])
+
 export const WorkspaceJoinRequests = buildTableHelper('workspace_join_requests', [
   'workspaceId',
   'userId',
