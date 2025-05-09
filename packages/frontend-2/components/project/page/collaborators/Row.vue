@@ -115,7 +115,7 @@ const role = ref<StreamRoles>(props.collaborator.role as StreamRoles)
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: props.collaborator.inviteId ? 'Cancel invite' : 'Remove user',
+      title: props.collaborator.inviteId ? 'Cancel invite' : 'Remove from project',
       id: ActionTypes.Remove,
       disabled: props.loading
     }

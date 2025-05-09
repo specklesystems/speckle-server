@@ -9,6 +9,7 @@ import {
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
+  GetProjectWorkspace,
   GetWorkspace,
   GetWorkspaceCollaborators,
   GetWorkspaceRoleForUser,
@@ -29,6 +30,7 @@ import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/manage
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
+  MaybeNullOrUndefined,
   Roles,
   StreamRoles,
   throwUncoveredError,
@@ -111,6 +113,7 @@ import {
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getProjectWorkspaceFactory } from '@/modules/workspaces/repositories/projects'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -610,7 +613,8 @@ export const workspaceTrackingFactory =
   }
 
 const emitWorkspaceGraphqlSubscriptionsFactory =
-  (deps: { getWorkspace: GetWorkspace }) => async (params: EventPayload<'**'>) => {
+  (deps: { getWorkspace: GetWorkspace; getProjectWorkspace: GetProjectWorkspace }) =>
+  async (params: EventPayload<'**'>) => {
     const { eventName, payload } = params
     switch (eventName) {
       case WorkspaceEvents.Updated:
@@ -638,17 +642,22 @@ const emitWorkspaceGraphqlSubscriptionsFactory =
       case ServerInvitesEvents.Canceled:
       case ServerInvitesEvents.Finalized:
         const { invite } = payload
-        if (!isWorkspaceResourceTarget(invite.resource)) return
+        let workspace: MaybeNullOrUndefined<Workspace> = undefined
+        if (isWorkspaceResourceTarget(invite.resource)) {
+          workspace = await deps.getWorkspace({
+            workspaceId: invite.resource.resourceId
+          })
+        } else if (isProjectResourceTarget(invite.resource)) {
+          workspace = await deps.getProjectWorkspace({
+            projectId: invite.resource.resourceId
+          })
+        }
 
-        const res = invite.resource
-        const newInviteWorkspace = await deps.getWorkspace({
-          workspaceId: res.resourceId
-        })
-        if (newInviteWorkspace) {
+        if (workspace) {
           await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
             workspaceUpdated: {
-              workspace: newInviteWorkspace,
-              id: newInviteWorkspace.id
+              workspace,
+              id: workspace.id
             }
           })
         }
@@ -680,7 +689,8 @@ export const initializeEventListenersFactory =
     const getStreams = legacyGetStreamsFactory({ db })
     const getWorkspace = getWorkspaceFactory({ db })
     const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
-      getWorkspace
+      getWorkspace,
+      getProjectWorkspace: getProjectWorkspaceFactory({ db })
     })
     const getStream = getStreamFactory({ db })
     const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })

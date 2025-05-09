@@ -120,6 +120,10 @@ spec:
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
           {{- end }}
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+          {{- end }}
           {{- with .Values.fileimport_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}

@@ -52,7 +52,6 @@ import {
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
 import {
-  ProjectInviteResourceType,
   ServerInviteLimit,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
@@ -442,8 +441,6 @@ export = {
         async () =>
           await cancelInvite({
             inviteId,
-            resourceId: streamId,
-            resourceType: ProjectInviteResourceType,
             cancelerId: userId!,
             cancelerResourceAccessLimits: resourceAccessRules
           }),
@@ -670,10 +667,8 @@ export = {
       await withOperationLogging(
         async () =>
           await cancelInvite({
-            resourceId: projectId,
             inviteId,
             cancelerId: ctx.userId!,
-            resourceType: ProjectInviteResourceType,
             cancelerResourceAccessLimits: ctx.resourceAccessRules
           }),
         {

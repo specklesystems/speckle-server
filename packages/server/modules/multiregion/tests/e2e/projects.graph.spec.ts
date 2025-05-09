@@ -1,6 +1,9 @@
 import { db } from '@/db/knex'
 import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
+import { markAutomationDeletedFactory } from '@/modules/automate/repositories/automations'
+import { deleteAutomationFactory } from '@/modules/automate/services/automationManagement'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { updateCommentFactory } from '@/modules/comments/repositories/comments'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
@@ -95,6 +98,13 @@ isMultiRegionTestMode()
         isPublic: true
       }
 
+      const emptyProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Empty Regional Project',
+        isPublic: true
+      }
+
       const testModel: BasicTestBranch = {
         id: '',
         name: cryptoRandomString({ length: 8 }),
@@ -138,8 +148,10 @@ isMultiRegionTestMode()
           }
         })
 
+        emptyProject.workspaceId = testWorkspace.id
         testProject.workspaceId = testWorkspace.id
 
+        await createTestStream(emptyProject, adminUser)
         await createTestStream(testProject, adminUser)
         await createTestBranch({
           stream: testProject,
@@ -154,6 +166,15 @@ isMultiRegionTestMode()
           owner: adminUser,
           stream: testProject
         })
+
+        const { automation: deletedAutomation } = await createTestAutomation({
+          userId: adminUser.id,
+          projectId: testProject.id
+        })
+
+        await deleteAutomationFactory({
+          deleteAutomation: markAutomationDeletedFactory({ db: sourceRegionDb })
+        })({ automationId: deletedAutomation.automation.id })
 
         const { automation, revision } = await createTestAutomation({
           userId: adminUser.id,
@@ -184,6 +205,16 @@ isMultiRegionTestMode()
           objectId: testVersion.objectId
         })
 
+        const archivedComment = await createTestComment({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
+
+        await updateCommentFactory({ db: sourceRegionDb })(archivedComment.id, {
+          archived: true
+        })
+
         testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
           id: cryptoRandomString({ length: 9 }),
           streamId: testProject.id,
@@ -206,6 +237,15 @@ isMultiRegionTestMode()
         testBlobId = testBlob.blobId
 
         await assertProjectRegion(testProject.id, regionKey1)
+      })
+
+      it('moves projects with no resources of a given type', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: emptyProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+        await ensureProjectRegion(emptyProject.id, regionKey2)
       })
 
       it('moves project record to target regional db', async () => {

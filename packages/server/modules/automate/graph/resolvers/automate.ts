@@ -225,15 +225,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const projectDb = await getProjectDbClient({ projectId: parent.id })
 
-          const res = ctx.loaders
+          const res = await ctx.loaders
             .forRegion({ db: projectDb })
             .streams.getAutomation.forStream(parent.id)
             .load(args.id)
 
           if (!res) {
-            if (!res) {
-              throw new AutomationNotFoundError()
-            }
+            throw new AutomationNotFoundError()
           }
 
           return res
@@ -325,7 +323,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const automationRevision = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getLatestAutomationRevision.load(parent.id)
-          return { ...automationRevision, projectId: parent.projectId }
+          return automationRevision
+            ? { ...automationRevision, projectId: parent.projectId }
+            : null
         },
         async runs(parent, args) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
@@ -413,6 +413,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           } catch (e) {
             ctx.log.warn('Error formatting results schema', e)
           }
+          return null
         },
         status: (parent) => mapDbStatusToGqlStatus(parent.status)
       },
@@ -842,6 +843,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createTestAutomation(parent, { input }, ctx) {
           const projectId = parent.projectId
 
+          const authResult = await ctx.authPolicies.project.automation.canCreate({
+            userId: ctx.userId,
+            projectId
+          })
+          throwIfAuthNotOk(authResult)
+
           const logger = ctx.log.child({
             projectId,
             streamId: projectId //legacy
@@ -851,7 +858,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const create = createTestAutomationFactory({
             getEncryptionKeyPair,
-            getFunction: getFunctionFactory({ logger: ctx.log }),
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
@@ -861,10 +867,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return await withOperationLogging(
             async () =>
               await create({
-                input,
+                automationName: input.name,
+                modelId: input.modelId,
                 projectId,
-                userId: ctx.userId!,
-                userResourceAccessRules: ctx.resourceAccessRules
+                userId: ctx.userId!
               }),
             {
               logger,
