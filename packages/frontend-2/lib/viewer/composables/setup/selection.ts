@@ -85,7 +85,11 @@ function useSelectOrZoomOnSelection() {
         const isMeasureMode = state.ui.measurement.enabled.value
         const measurementType = state.ui.measurement.options.value.type
 
-        if (isMeasureMode && measurementType === MeasurementType.PERPENDICULAR) {
+        if (
+          isMeasureMode &&
+          (measurementType === MeasurementType.PERPENDICULAR ||
+            measurementType === MeasurementType.AREA)
+        ) {
           return
         }
         if (!args) return zoom()

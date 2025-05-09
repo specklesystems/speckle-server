@@ -26,6 +26,7 @@ export interface InputEventPayload {
 //TO DO: Define proper interface for InputEvent data
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
+  private static readonly MIN_CLICK_TIMING = 150
   private tapTimeout: number = 0
   private lastTap = 0
   private lastClick = 0
@@ -56,7 +57,8 @@ export default class Input extends EventEmitter {
       const delta = now - mdTime
       const deltaClick = now - this.lastClick
 
-      if (delta > 250 || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING) return
+      if (delta > Input.MIN_CLICK_TIMING || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING)
+        return
 
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       this.emit(InputEvent.Click, loc)
