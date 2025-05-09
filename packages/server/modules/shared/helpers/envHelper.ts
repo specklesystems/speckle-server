@@ -1,6 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { has, trimEnd } from 'lodash'
-import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 
 export function getStringFromEnv(

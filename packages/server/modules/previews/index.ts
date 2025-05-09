@@ -19,7 +19,7 @@ import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { previewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
+import { previewResultPayload } from '@speckle/shared/previews'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   storePreviewFactory,

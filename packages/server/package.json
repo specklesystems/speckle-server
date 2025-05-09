@@ -7,6 +7,7 @@
   "author": "AEC Systems",
   "license": "SEE LICENSE IN readme.md",
   "main": "./bin/www",
+  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/specklesystems/Server.git"
@@ -44,7 +45,7 @@
     "stripe:listen": "stripe listen --forward-to 127.0.0.1:3000/api/v1/billing/webhooks"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.0",
+    "@apollo/client": "^3.13.8",
     "@apollo/server": "^4.11.0",
     "@aws-sdk/client-s3": "^3.276.0",
     "@aws-sdk/lib-storage": "^3.100.0",
