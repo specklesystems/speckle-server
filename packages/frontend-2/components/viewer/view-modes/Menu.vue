@@ -132,9 +132,9 @@ const emit = defineEmits<{
 const edgesColorOptions = computed(() => [
   0x3b82f6, // blue-500
   0x8b5cf6, // violet-500
-  0x84cc16, // lime-500
+  0x65a30d, // lime-600
   0xf97316, // orange-500
-  0xf59e0b //amber-500
+  0xf43f5e //rose-500
 ])
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
