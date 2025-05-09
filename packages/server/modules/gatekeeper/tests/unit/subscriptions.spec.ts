@@ -30,7 +30,7 @@ import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/servic
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
-    it('throws if subscription is not found', async () => {
+    it('throws if subscription is not found and status is not incomplete', async () => {
       const subscriptionData = createTestSubscriptionData()
       const err = await expectToThrow(async () => {
         await handleSubscriptionUpdateFactory({
@@ -47,6 +47,22 @@ describe('subscriptions @gatekeeper', () => {
         })({ subscriptionData })
       })
       expect(err.message).to.equal(new WorkspaceSubscriptionNotFoundError().message)
+    })
+    it('returns if subscription is not found and status is incomplete', async () => {
+      const subscriptionData = createTestSubscriptionData()
+      subscriptionData.status = 'incomplete'
+      await handleSubscriptionUpdateFactory({
+        getWorkspaceSubscriptionBySubscriptionId: async () => null,
+        getWorkspacePlan: async () => {
+          expect.fail()
+        },
+        upsertWorkspaceSubscription: async () => {
+          expect.fail()
+        },
+        upsertPaidWorkspacePlan: async () => {
+          expect.fail()
+        }
+      })({ subscriptionData })
     })
     it('throws if workspacePlan is not found', async () => {
       const subscriptionData = createTestSubscriptionData()

@@ -214,7 +214,7 @@ export const getBillingRouter = (): Router => {
             logger,
             operationName: 'handleSubscriptionUpdate',
             operationDescription:
-              'Subscription was deleted; now handling the subscription update'
+              'Subscription was updated or deleted; now handling the subscription update'
           }
         )
         break
