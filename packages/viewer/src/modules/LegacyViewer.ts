@@ -46,6 +46,7 @@ import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
 import { ViewModes } from './extensions/ViewModes.js'
 import { HybridCameraController } from './extensions/HybridCameraController.js'
+import { BoxSelection } from './extensions/BoxSelection.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -132,6 +133,8 @@ export class LegacyViewer extends Viewer {
     this.diffExtension = this.createExtension(DiffExtension)
     this.highlightExtension = this.createExtension(HighlightExtension)
     this.createExtension(ViewModes)
+    const boxSelect = this.createExtension(BoxSelection)
+    boxSelect.realtimeSelection = false
   }
 
   public async init(): Promise<void> {
