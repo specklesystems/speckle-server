@@ -145,7 +145,9 @@ const newStreamAccessRequestHandlerFactory =
     })
   }
 
-const handler: NotificationHandler<NewStreamAccessRequestMessage> = (...args) => {
+export const handler: NotificationHandler<NewStreamAccessRequestMessage> = (
+  ...args
+) => {
   const newStreamAccessRequestHandler = newStreamAccessRequestHandlerFactory({
     getServerInfo: getServerInfoFactory({ db }),
     renderEmail,

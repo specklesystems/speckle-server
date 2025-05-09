@@ -1,5 +1,6 @@
 import { RequestDataLoaders } from '@/modules/core/loaders'
-import { Authz, MaybeAsync } from '@speckle/shared'
+import { MaybeAsync } from '@speckle/shared'
+import { AuthCheckContextLoaders } from '@speckle/shared/authz'
 
 export type ServerLoadersContext = {
   dataLoaders: RequestDataLoaders
@@ -7,7 +8,7 @@ export type ServerLoadersContext = {
 
 // Inject extra argument to all loaders, e.g. for GQL dataloaders
 export type ServerLoaders = Partial<{
-  [K in keyof Authz.AuthCheckContextLoaders]: Authz.AuthCheckContextLoaders[K] extends (
+  [K in keyof AuthCheckContextLoaders]: AuthCheckContextLoaders[K] extends (
     ...args: infer A
   ) => infer R
     ? (...args: [...A, ctx: ServerLoadersContext]) => R

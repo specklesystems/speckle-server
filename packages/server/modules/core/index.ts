@@ -97,7 +97,8 @@ const coreModule: SpeckleModule<{
 
       // Setup test subs
       if (isTestEnv()) {
-        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
+        const { startEmittingTestSubs } =
+          require('@/test/graphqlHelper') as typeof import('@/test/graphqlHelper')
         stopTestSubs = await startEmittingTestSubs()
       }
 

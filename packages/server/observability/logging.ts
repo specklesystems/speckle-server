@@ -1,6 +1,6 @@
 // Note logging is imported by www & ts-www, prior to init() being called
 // so we can't use local imports with '@' etc., as they aren't yet defined.
-import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 
 const { getLogger, extendLoggerComponent } = Observability
 

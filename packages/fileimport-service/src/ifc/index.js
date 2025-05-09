@@ -1,6 +1,6 @@
 import { performance } from 'perf_hooks'
 import { fetch } from 'undici'
-import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import { ServerAPI } from '@/controller/api.js'
 import { logger as parentLogger } from '@/observability/logging.js'
 import { IFCParser } from '@/ifc/parser.js'

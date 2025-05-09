@@ -32,7 +32,7 @@ import {
 } from '@/modules/shared/domain/authz/operations'
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
-import { moduleAuthLoaders } from '@/modules'
+import { moduleAuthLoaders } from '@/modules/index'
 export { AuthContext, AuthParams }
 
 interface AuthFailedResult extends AuthResult {

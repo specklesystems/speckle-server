@@ -223,7 +223,9 @@ const mentionedInCommentHandlerFactory =
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
-const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
+export const handler: NotificationHandler<MentionedInCommentMessage> = async (
+  ...args
+) => {
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),

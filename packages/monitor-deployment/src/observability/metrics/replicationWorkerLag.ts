@@ -1,7 +1,7 @@
 import prometheusClient from 'prom-client'
 import { join } from 'lodash-es'
 import type { MetricInitializer } from '@/observability/types.js'
-import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import * as Environment from '@speckle/shared/environment'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 

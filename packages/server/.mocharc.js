@@ -4,7 +4,7 @@ dotenv.config({ path: `./.env.test` })
 dotenv.config({ path: `./.env` })
 
 // Resolve FF values for ignore patterns
-const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
+const Environment = require('@speckle/shared/environment')
 const featureFlags = Environment.getFeatureFlags()
 const ignore = [
   ...(!featureFlags.FF_AUTOMATE_MODULE_ENABLED ? ['modules/automate/**/*'] : []),

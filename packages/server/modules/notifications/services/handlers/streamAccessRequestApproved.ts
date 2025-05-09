@@ -123,7 +123,7 @@ const streamAccessRequestApprovedHandlerFactory =
     })
   }
 
-const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
+export const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
   ...args
 ) => {
   const streamAccessRequestApprovedHandler = streamAccessRequestApprovedHandlerFactory({

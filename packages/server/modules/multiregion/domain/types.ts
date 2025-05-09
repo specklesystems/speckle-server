@@ -3,7 +3,7 @@ import { Nullable } from '@speckle/shared'
 import {
   DataRegionsConfig,
   RegionServerConfig
-} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
+} from '@speckle/shared/environment/multiRegionConfig'
 
 export { RegionServerConfig, DataRegionsConfig }
 export type ServerRegion = RegionRecord

@@ -26,7 +26,7 @@ import {
 } from '@/modules/shared/helpers/typeHelper'
 import { Authz, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
+import * as Observability from '@speckle/shared/observability'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
@@ -46,7 +46,7 @@ import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
-import { moduleAuthLoaders } from '@/modules'
+import { moduleAuthLoaders } from '@/modules/index'
 
 export const authMiddlewareCreator = (
   steps: AuthPipelineFunction[]

@@ -4,7 +4,7 @@ import {
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
+import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
 export type GetFileInfo = (args: {
   fileId: string
