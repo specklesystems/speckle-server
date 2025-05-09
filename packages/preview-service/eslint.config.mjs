@@ -7,6 +7,9 @@ import tseslint from 'typescript-eslint'
 const configs = [
   ...baseConfigs,
   {
+    ignores: ['dist', 'public', 'docs']
+  },
+  {
     files: ['**/*.js'],
     languageOptions: {
       sourceType: 'module'
