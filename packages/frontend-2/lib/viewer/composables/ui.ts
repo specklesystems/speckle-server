@@ -520,6 +520,8 @@ export function useViewModeUtilities() {
     } else {
       if (edgesColor.value === defaultColor.value) {
         outlineOpacity.value = 0.75
+      } else {
+        outlineOpacity.value = 1
       }
     }
     updateViewMode()

@@ -157,7 +157,7 @@ onUnmounted(() => {
   cancelCloseTimer()
 })
 
-watch([isLightTheme, edgesColor], () => {
+watch([isLightTheme], () => {
   if (edgesColor.value === 0x1a1a1a || edgesColor.value === 0xffffff) {
     setEdgesColor(isLightTheme.value ? 0x1a1a1a : 0xffffff)
   }
