@@ -4,7 +4,6 @@
     :model-card="modelCard"
     :project="project"
     :can-edit="canEdit"
-    :is-explicit-project-reviewer="isExplicitProjectReviewer"
     @manual-publish-or-load="sendOrCancel"
   >
     <div class="flex max-[275px]:w-full overflow-hidden my-2">
@@ -84,7 +83,6 @@ const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
   canEdit: boolean
-  isExplicitProjectReviewer: boolean
 }>()
 
 const store = useHostAppStore()

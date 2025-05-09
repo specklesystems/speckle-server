@@ -22,15 +22,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import type { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
-const props = withDefaults(
-  defineProps<{
-    project: ProjectListProjectItemFragment
-    isSender: boolean
-    disableNoWriteAccessProjects?: boolean
-    workspaceAdmin?: boolean
-  }>(),
-  { disableNoWriteAccessProjects: false, workspaceAdmin: false }
-)
+const props = defineProps<{
+  project: ProjectListProjectItemFragment
+  isSender: boolean
+}>()
 
 const updatedAgo = computed(() => {
   return dayjs(props.project.updatedAt).from(dayjs())
@@ -38,16 +33,17 @@ const updatedAgo = computed(() => {
 
 const cardTippy = computed(() => (!hasAccess.value ? disabledMessage.value : ''))
 
+// Previously we were having hard coded messaging, web team will provide better messaging per permission here instaed common message
 const disabledMessage = computed(() =>
   props.isSender
-    ? "Your role on this project doesn't give you permission to publish."
-    : "Your role on this project doesn't give you permission to load."
+    ? props.project.permissions.canPublish.message
+    : props.project.permissions.canLoad.message
 )
 
-const hasAccess = computed(
-  () =>
-    props.workspaceAdmin ||
-    (props.project.role !== null && props.project.role !== 'stream:reviewer')
+const hasAccess = computed(() =>
+  props.isSender
+    ? props.project.permissions.canPublish.authorized
+    : props.project.permissions.canLoad.authorized
 )
 
 const projectRole = computed(() => {

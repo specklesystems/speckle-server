@@ -117,9 +117,7 @@
           v-for="project in projects"
           :key="project.id"
           :project="project"
-          :disable-no-write-access-projects="disableNoWriteAccessProjects"
           :is-sender="isSender"
-          :workspace-admin="isWorkspaceAdmin"
           @click="handleProjectCardClick(project)"
         />
         <FormButton
@@ -249,10 +247,6 @@ const activeWorkspace = computed(() => {
     ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
 })
 
-const isWorkspaceAdmin = computed(
-  () => activeWorkspace.value.role === 'workspace:admin'
-)
-
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
   activeWorkspace.value
 )
@@ -271,8 +265,9 @@ watch(
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   if (
-    isWorkspaceAdmin.value ||
-    (project.role !== null && project.role !== 'stream:reviewer')
+    props.isSender
+      ? project.permissions.canPublish.authorized
+      : project.permissions.canLoad.authorized
   ) {
     emit('next', accountId.value, project, selectedWorkspace.value)
   }

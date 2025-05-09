@@ -56,16 +56,14 @@
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
-        :can-edit="canEdit"
-        :is-explicit-project-reviewer="isExplicitProjectReviewer"
+        :can-edit="canPublish"
       />
       <ModelReceiver
         v-for="model in project.receivers"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
-        :can-edit="canEdit"
-        :is-explicit-project-reviewer="isExplicitProjectReviewer"
+        :can-edit="canLoad"
       />
     </div>
   </div>
@@ -126,7 +124,7 @@ const props = defineProps<{
 const showModels = ref(true)
 const askDismissProjectQuestionDialog = ref(false)
 const writeAccessRequested = ref(false)
-const projectIsAccesible = ref(undefined)
+const projectIsAccesible = ref<boolean | undefined>(undefined)
 
 const projectAccount = computed(() =>
   accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
@@ -151,24 +149,10 @@ watch(projectDetails, (newValue) => {
   projectIsAccesible.value = newValue !== undefined
 })
 
-const isWorkspaceAdmin = computed(() => {
-  if (!projectDetails.value) return false
-  return (
-    projectDetails.value.workspace?.role &&
-    projectDetails.value.workspace?.role === 'workspace:admin'
-  )
-})
-
-const isExplicitProjectReviewer = computed(() => {
-  if (!projectDetails.value) return true
-  return projectDetails.value.role === 'stream:reviewer'
-})
-
-const canEdit = computed(() => {
-  if (!projectDetails.value) return false
-  if (isWorkspaceAdmin.value) return true
-  return projectDetails.value.role !== 'stream:reviewer'
-})
+const canLoad = computed(() => !!projectDetails.value?.permissions.canLoad.authorized)
+const canPublish = computed(
+  () => !!projectDetails.value?.permissions.canPublish.authorized
+)
 
 const isWorkspaceReadOnly = computed(() => {
   if (!projectDetails.value?.workspace) return false // project is not even in a workspace
