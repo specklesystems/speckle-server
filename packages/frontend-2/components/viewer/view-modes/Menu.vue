@@ -44,19 +44,19 @@
     <div v-if="edgesEnabled" class="p-2 pt-1.5">
       <div>
         <div class="flex items-center justify-between gap-2">
-          <div class="text-body-2xs">Line width</div>
-          <div class="text-body-2xs">{{ lineWeight }}</div>
+          <div class="text-body-2xs">Weight</div>
+          <div class="text-body-2xs">{{ edgesWeight }}</div>
         </div>
         <input
           id="edge-stroke"
-          v-model="lineWeight"
+          v-model="edgesWeight"
           class="w-full mt-1"
           type="range"
           name="edge-stroke"
           :min="0.5"
           :max="3"
           step="0.1"
-          @input="handleEdgesLineWeightChange"
+          @input="handleEdgesWeightChange"
         />
         <div class="flex items-center justify-between gap-2 mt-1.5 mb-1 pr-0.5">
           <div class="text-body-2xs">Color</div>
@@ -94,8 +94,8 @@ const {
   currentViewMode,
   edgesEnabled,
   toggleEdgesEnabled,
-  setEdgesLineWeight,
-  lineWeight,
+  setEdgesWeight,
+  edgesWeight,
   setEdgesColor,
   selectedColor
 } = useViewModeUtilities()
@@ -105,8 +105,8 @@ const { isLightTheme } = useTheme()
 
 const isManuallyOpened = ref(false)
 
-const handleEdgesLineWeightChange = () => {
-  setEdgesLineWeight(Number(lineWeight.value))
+const handleEdgesWeightChange = () => {
+  setEdgesWeight(Number(edgesWeight.value))
 }
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
@@ -135,9 +135,11 @@ const emit = defineEmits<{
 
 const edgesColorOptions = computed(() => [
   isLightTheme.value ? 0x1a1a1a : 0xffffff, // foreground
-  0x98fb98,
-  0x87ceeb,
-  0xffb6c1
+  0x3b82f6, // blue-500
+  0x8b5cf6, // violet-500
+  0x84cc16, // lime-500
+  0xf97316, // orange-500
+  0xf59e0b //amber-500
 ])
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {

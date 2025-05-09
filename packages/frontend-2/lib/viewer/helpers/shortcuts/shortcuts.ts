@@ -59,7 +59,8 @@ export const ToolShortcuts = {
 export const ViewModeShortcuts = {
   SetViewModeDefault: {
     name: 'Rendered',
-    description: 'Colors by render materials',
+    description:
+      'A realistic view of your model rendered with available materials for surfaces.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit1',
     action: 'SetViewModeDefault',
@@ -67,7 +68,8 @@ export const ViewModeShortcuts = {
   },
   SetViewModeShaded: {
     name: 'Shaded',
-    description: 'Colors by layer or object colors. Better for autocad & similar apps',
+    description:
+      'A shaded view of your model using available colors for surfaces and curves.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit2',
     action: 'SetViewModeShaded',
@@ -75,7 +77,8 @@ export const ViewModeShortcuts = {
   },
   SetViewModeArctic: {
     name: 'Arctic',
-    description: 'High contrast',
+    description:
+      'A white conceptual view of your model without any materials or colors.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit3',
     action: 'SetViewModeArctic',
@@ -83,7 +86,8 @@ export const ViewModeShortcuts = {
   },
   SetViewModeSolid: {
     name: 'Solid',
-    description: 'Flat shaded surfaces',
+    description:
+      'A basic shaded view of your model using our default material, with edges.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit4',
     action: 'SetViewModeSolid',
@@ -91,7 +95,8 @@ export const ViewModeShortcuts = {
   },
   SetViewModePen: {
     name: 'Pen',
-    description: 'Technical line drawing style',
+    description:
+      'A stylized black and white drawing view of your model, without any lighting or shadows.',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit5',
     action: 'SetViewModePen',

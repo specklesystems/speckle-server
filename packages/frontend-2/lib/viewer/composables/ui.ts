@@ -491,7 +491,7 @@ export function useViewModeUtilities() {
   const { isLightTheme } = useTheme()
 
   const edgesEnabled = ref(true)
-  const lineWeight = ref(1)
+  const edgesWeight = ref(1)
   const outlineOpacity = ref(1)
   const defaultColor = computed(() => (isLightTheme.value ? 0x1a1a1a : 0xffffff))
   const selectedColor = ref(defaultColor.value)
@@ -503,7 +503,7 @@ export function useViewModeUtilities() {
     if (viewModes) {
       viewModes.setViewMode(currentViewMode.value, {
         edges: edgesEnabled.value,
-        outlineThickness: lineWeight.value,
+        outlineThickness: edgesWeight.value,
         outlineOpacity: outlineOpacity.value,
         outlineColor: selectedColor.value
       })
@@ -528,8 +528,8 @@ export function useViewModeUtilities() {
     updateViewMode()
   }
 
-  const setEdgesLineWeight = (weight: number) => {
-    lineWeight.value = Number(weight)
+  const setEdgesWeight = (weight: number) => {
+    edgesWeight.value = Number(weight)
     updateViewMode()
   }
 
@@ -543,8 +543,8 @@ export function useViewModeUtilities() {
     setViewMode,
     edgesEnabled,
     toggleEdgesEnabled,
-    lineWeight,
-    setEdgesLineWeight,
+    edgesWeight,
+    setEdgesWeight,
     setEdgesColor,
     selectedColor
   }
