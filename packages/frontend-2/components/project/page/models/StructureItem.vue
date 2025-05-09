@@ -55,6 +55,7 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
+          empty-state-variant="default"
           :project-id="project.id"
           :model-name="item.fullName"
           :disabled="!canCreateModel.authorized"
@@ -75,6 +76,9 @@
           />
           <ProjectCardImportFileArea
             v-else
+            :empty-state-variant="
+              props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
+            "
             :project-id="project.id"
             :model-name="item.fullName"
             :disabled="!canCreateModel.authorized"
@@ -238,6 +242,7 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -289,6 +294,7 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
   isSearchResult?: boolean
+  gridOrList?: GridListToggleValue
 }>()
 
 const router = useRouter()
