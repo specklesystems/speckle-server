@@ -24,6 +24,7 @@
       />
       <div v-else-if="!hideFileUpload">
         <ProjectCardImportFileArea
+          empty-state-variant="default"
           :disabled="project?.workspace?.readOnly"
           :project-id="projectId"
           class="h-36 col-span-4"

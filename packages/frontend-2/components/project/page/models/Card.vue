@@ -84,6 +84,7 @@
         >
           <ProjectCardImportFileArea
             ref="importArea"
+            empty-state-variant="modelGrid"
             :project-id="projectId"
             :model-name="model.name"
             class="w-full h-full"
