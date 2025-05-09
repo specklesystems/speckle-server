@@ -66,7 +66,7 @@
               :key="color"
               class="w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-110"
               :class="[
-                selectedColor === color ? 'ring-2 ring-primary' : '',
+                edgesColor === color ? 'ring-2 ring-primary' : '',
                 'border-[1.5px] border-outline-2'
               ]"
               :style="{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }"
@@ -82,7 +82,6 @@
 <script setup lang="ts">
 import { useTimeoutFn } from '@vueuse/core'
 import { ViewMode } from '@speckle/viewer'
-import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
@@ -97,10 +96,9 @@ const {
   setEdgesWeight,
   edgesWeight,
   setEdgesColor,
-  selectedColor
+  edgesColor
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
-const mp = useMixpanel()
 const { isLightTheme } = useTheme()
 
 const isManuallyOpened = ref(false)
@@ -153,15 +151,15 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
     }
     open.value = true
   }
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'set-view-mode',
-    mode
-  })
 }
 
 onUnmounted(() => {
   cancelCloseTimer()
+})
+
+watch([isLightTheme, edgesColor], () => {
+  if (edgesColor.value === 0x1a1a1a || edgesColor.value === 0xffffff) {
+    setEdgesColor(isLightTheme.value ? 0x1a1a1a : 0xffffff)
+  }
 })
 </script>

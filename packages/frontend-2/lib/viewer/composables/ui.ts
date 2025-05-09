@@ -27,6 +27,7 @@ import type {
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
 import { useTheme } from '~/lib/core/composables/theme'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -489,12 +490,13 @@ export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
   const { isLightTheme } = useTheme()
+  const mp = useMixpanel()
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
   const outlineOpacity = ref(1)
   const defaultColor = computed(() => (isLightTheme.value ? 0x1a1a1a : 0xffffff))
-  const selectedColor = ref(defaultColor.value)
+  const edgesColor = ref(defaultColor.value)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -505,7 +507,7 @@ export function useViewModeUtilities() {
         edges: edgesEnabled.value,
         outlineThickness: edgesWeight.value,
         outlineOpacity: outlineOpacity.value,
-        outlineColor: selectedColor.value
+        outlineColor: edgesColor.value
       })
     }
   }
@@ -516,26 +518,46 @@ export function useViewModeUtilities() {
       outlineOpacity.value = 1
       edgesEnabled.value = true
     } else {
-      if (selectedColor.value === defaultColor.value) {
+      if (edgesColor.value === defaultColor.value) {
         outlineOpacity.value = 0.75
       }
     }
     updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-view-mode',
+      mode
+    })
   }
 
   const toggleEdgesEnabled = () => {
     edgesEnabled.value = !edgesEnabled.value
     updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'toggle-edges',
+      enabled: edgesEnabled.value
+    })
   }
 
   const setEdgesWeight = (weight: number) => {
     edgesWeight.value = Number(weight)
     updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-weight',
+      weight: edgesWeight.value
+    })
   }
 
   const setEdgesColor = (color: number) => {
-    selectedColor.value = color
+    edgesColor.value = color
     updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-color',
+      color: color.toString(16).padStart(6, '0')
+    })
   }
 
   return {
@@ -546,7 +568,7 @@ export function useViewModeUtilities() {
     edgesWeight,
     setEdgesWeight,
     setEdgesColor,
-    selectedColor
+    edgesColor
   }
 }
 
