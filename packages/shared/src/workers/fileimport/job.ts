@@ -7,11 +7,13 @@ const job = z.object({
 
 export const jobPayload = job.merge(
   z.object({
-    url: z.string(),
+    serverUrl: z.string().url().describe('The url of the server'),
+    projectId: z.string(),
+    modelId: z.string(),
     token: z.string(),
-    responseUrl: z.string().url(),
     blobId: z.string(),
     fileType: z.string(),
+    fileName: z.string(),
     timeOutSeconds: z
       .number()
       .int()
@@ -39,7 +41,7 @@ export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 const fileImportErrorPayload = job.merge(
   z.object({
     status: z.literal('error'),
-    reasons: z.array(z.string()).min(1),
+    reason: z.string(),
     result: baseFileImportResult
   })
 )
