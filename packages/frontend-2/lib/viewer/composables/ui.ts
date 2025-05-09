@@ -495,8 +495,9 @@ export function useViewModeUtilities() {
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
   const outlineOpacity = ref(1)
-  const defaultColor = computed(() => (isLightTheme.value ? 0x1a1a1a : 0xffffff))
+  const defaultColor = ref(0x1a1a1a)
   const edgesColor = ref(defaultColor.value)
+  const hasChangedEdgesColor = ref(false)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -517,13 +518,18 @@ export function useViewModeUtilities() {
     if (mode === ViewMode.PEN) {
       outlineOpacity.value = 1
       edgesEnabled.value = true
+      if (!hasChangedEdgesColor.value) {
+        if (!isLightTheme.value) {
+          edgesColor.value = 0xffffff
+        }
+      }
     } else {
-      if (edgesColor.value === defaultColor.value) {
-        outlineOpacity.value = 0.75
-      } else {
-        outlineOpacity.value = 1
+      outlineOpacity.value = 0.75
+      if (!hasChangedEdgesColor.value) {
+        edgesColor.value = defaultColor.value
       }
     }
+
     updateViewMode()
     mp.track('Viewer Action', {
       type: 'action',
@@ -553,6 +559,7 @@ export function useViewModeUtilities() {
   }
 
   const setEdgesColor = (color: number) => {
+    hasChangedEdgesColor.value = true
     edgesColor.value = color
     updateViewMode()
     mp.track('Viewer Action', {

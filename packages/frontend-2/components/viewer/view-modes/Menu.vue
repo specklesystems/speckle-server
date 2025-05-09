@@ -85,7 +85,6 @@ import { ViewMode } from '@speckle/viewer'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
-import { useTheme } from '~/lib/core/composables/theme'
 const open = defineModel<boolean>('open', { default: false })
 
 const {
@@ -99,7 +98,6 @@ const {
   edgesColor
 } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
-const { isLightTheme } = useTheme()
 
 const isManuallyOpened = ref(false)
 
@@ -132,7 +130,6 @@ const emit = defineEmits<{
 }>()
 
 const edgesColorOptions = computed(() => [
-  isLightTheme.value ? 0x1a1a1a : 0xffffff, // foreground
   0x3b82f6, // blue-500
   0x8b5cf6, // violet-500
   0x84cc16, // lime-500
@@ -155,11 +152,5 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
 onUnmounted(() => {
   cancelCloseTimer()
-})
-
-watch([isLightTheme], () => {
-  if (edgesColor.value === 0x1a1a1a || edgesColor.value === 0xffffff) {
-    setEdgesColor(isLightTheme.value ? 0x1a1a1a : 0xffffff)
-  }
 })
 </script>
