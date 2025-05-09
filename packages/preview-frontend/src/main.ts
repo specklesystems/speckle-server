@@ -5,7 +5,7 @@ import {
   PreviewGenerator,
   PreviewPageResult,
   TakeScreenshot
-} from '@speckle/shared/dist/esm/previews/interface.js'
+} from '@speckle/shared/workers/previews'
 import {
   Viewer,
   DefaultViewerParams,

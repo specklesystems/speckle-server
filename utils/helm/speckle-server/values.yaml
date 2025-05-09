@@ -61,6 +61,8 @@ featureFlags:
   workspacesNewPlanEnabled: false
   ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
   moveProjectRegionEnabled: false
+  ## @param featureFlags.nextGenFileImporterEnabled Enables the next generation file importer
+  nextGenFileImporterEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
