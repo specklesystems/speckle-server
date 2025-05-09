@@ -94,12 +94,12 @@ export const updateProjectRegionFactory =
 
     // Validate that state after move captures latest state of project
     const targetProjectResources = {
-      models: copiedModelCount[projectId],
-      versions: copiedVersionCount[projectId],
-      objects: copiedObjectCount[projectId],
-      automations: copiedAutomationCount[projectId],
-      comments: copiedCommentCount[projectId],
-      webhooks: copiedWebhookCount[projectId]
+      models: copiedModelCount[projectId] ?? 0,
+      versions: copiedVersionCount[projectId] ?? 0,
+      objects: copiedObjectCount[projectId] ?? 0,
+      automations: copiedAutomationCount[projectId] ?? 0,
+      comments: copiedCommentCount[projectId] ?? 0,
+      webhooks: copiedWebhookCount[projectId] ?? 0
     }
 
     const [isValidCopy, sourceProjectResources] = await deps.validateProjectRegionCopy({

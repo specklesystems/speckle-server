@@ -1108,4 +1108,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"
 {{- end }}
+
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+- name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+  value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+{{- end }}
 {{- end }}
