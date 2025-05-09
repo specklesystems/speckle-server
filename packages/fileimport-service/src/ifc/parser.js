@@ -1,6 +1,6 @@
 import { performance } from 'perf_hooks'
 import WebIFC from 'web-ifc/web-ifc-api-node.js'
-import Observability from '@speckle/shared/observability'
+import * as Observability from '@speckle/shared/observability'
 import { logger as parentLogger } from '@/observability/logging.js'
 import {
   getHash,
