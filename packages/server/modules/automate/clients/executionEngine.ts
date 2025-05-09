@@ -31,7 +31,7 @@ import {
 import { randomUUID } from 'crypto'
 import { automateLogger, type Logger } from '@/observability/logging'
 import { has, isObjectLike, isEmpty } from 'lodash'
-import { getRequestLogger } from '@/observability/components/express/requestContext'
+import { getRequestLogger } from '@/observability/utils/requestContext'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
 

@@ -47,7 +47,7 @@ import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { getRequestLogger } from '@/observability/components/express/requestContext'
+import { getRequestLogger } from '@/observability/utils/requestContext'
 import { logWithErr } from '@/observability/utils/logLevels'
 
 export type OnModelVersionCreateDeps = {

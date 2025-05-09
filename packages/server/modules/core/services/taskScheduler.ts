@@ -7,6 +7,7 @@ import {
   ReleaseTaskLock,
   ScheduleExecution
 } from '@/modules/core/domain/scheduledTasks/operations'
+import { enterNewRequestContext } from '@/observability/utils/requestContext'
 import { TIME_MS } from '@speckle/shared'
 
 export const scheduledCallbackWrapper = async (
@@ -19,6 +20,7 @@ export const scheduledCallbackWrapper = async (
 ) => {
   const taskId = crs({ length: 10 })
   const boundLogger = logger.child({ taskName, taskId })
+  enterNewRequestContext({ taskId, taskName, logger: boundLogger })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
   const lock = await acquireLock({ taskName, lockExpiresAt })
