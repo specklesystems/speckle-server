@@ -1,9 +1,7 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
-import Queue from '../helpers/queue.js'
 import { CustomLogger, Item } from '../types/types.js'
-import { isSafari, TIME } from '@speckle/shared'
+import { isSafari } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
-import { Cache } from './interfaces.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
 
 class ObjectStore extends Dexie {
@@ -19,7 +17,14 @@ class ObjectStore extends Dexie {
   }
 }
 
-export default class IndexedDatabase implements Cache {
+export interface Database {
+  getAll(keys: string[]): Promise<(Item | undefined)[]>
+  getItem(params: { id: string }): Promise<Item | undefined>
+  cacheSaveBatch(params: { batch: Item[] }): Promise<void>
+  disposeAsync(): Promise<void>
+}
+
+export default class IndexedDatabase implements Database {
   #options: BaseDatabaseOptions
   #logger: CustomLogger
 
@@ -30,31 +35,28 @@ export default class IndexedDatabase implements Cache {
   // #count: number = 0
 
   constructor(options: BaseDatabaseOptions) {
-    this.#options = {
-      ...{
-        maxCacheReadSize: 10000,
-        maxCacheBatchWriteWait: 1000
-      },
-      ...options
-    }
+    this.#options = options
     this.#logger = options.logger || (() => {})
   }
 
-  async add(item: Item): Promise<void> {
-    if (!this.#writeQueue) {
-      await this.#setupCacheDb()
-      this.#writeQueue = new BatchingQueue<Item>({
-        batchSize: this.#options.maxCacheWriteSize ?? 10000,
-        maxWaitTime: this.#options.maxCacheBatchWriteWait,
-        processFunction: (batch: Item[]) =>
-          this.#cacheSaveBatch({ batch, cacheDB: this.#cacheDB! })
-      })
-    }
-    this.#writeQueue.add(item)
-  }
+  async getAll(keys: string[]): Promise<(Item | undefined)[]> {
+    await this.#setupCacheDb()
+    let items: (Item | undefined)[] = []
+    //   this.#count++
+    //  const startTime = performance.now()
+    // this.#logger('Start read ' + x + ' ' + batch.length)
 
-  async disposeAsync(): Promise<void> {
-    await this.#writeQueue?.disposeAsync()
+    //faster than BulkGet with dexie
+    await this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
+      const gets = keys.map((key) => this.#cacheDB!.objects.get(key))
+      const cachedData = await Promise.all(gets)
+      items = cachedData
+    })
+    // const endTime = performance.now()
+    // const duration = endTime - startTime
+    //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
+
+    return items
   }
 
   async #openDatabase(): Promise<ObjectStore> {
@@ -77,70 +79,39 @@ export default class IndexedDatabase implements Cache {
     this.#cacheDB = await this.#openDatabase()
   }
 
-  async processItems(params: {
-    ids: string[]
-    foundItems: Queue<Item>
-    notFoundItems: Queue<string>
-  }): Promise<void> {
-    const { ids, foundItems, notFoundItems } = params
+  //this is for testing only - in the real world we will not use this
+  async add(item: Item): Promise<void> {
     await this.#setupCacheDb()
-    const maxCacheReadSize = this.#options.maxCacheReadSize ?? 10000
-
-    for (let i = 0; i < ids.length; ) {
-      if ((this.#writeQueue?.count() ?? 0) > maxCacheReadSize * 2) {
-        this.#logger(
-          'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
-        )
-        await new Promise((resolve) => setTimeout(resolve, TIME.second)) // Pause for 1 second, protects against out of memory
-        continue
-      }
-      const batch = ids.slice(i, i + maxCacheReadSize)
-      //   const x = this.#count
-      //   this.#count++
-      //  const startTime = performance.now()
-      // this.#logger('Start read ' + x + ' ' + batch.length)
-
-      //faster than BulkGet with dexie
-      await this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
-        const gets = batch.map((key) => this.#cacheDB!.objects.get(key))
-        const cachedData = await Promise.all(gets)
-        for (let i = 0; i < cachedData.length; i++) {
-          if (cachedData[i]) {
-            foundItems.add(cachedData[i]!)
-          } else {
-            notFoundItems.add(batch[i])
-          }
-        }
-      })
-      // const endTime = performance.now()
-      // const duration = endTime - startTime
-      // this.#logger('Read batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
-
-      // interate down here to help with pausing
-      i += maxCacheReadSize
-    }
+    await this.#cacheDB!.transaction('rw', this.#cacheDB!.objects, async () => {
+      return await this.#cacheDB?.objects.add(item)
+    })
   }
 
   async getItem(params: { id: string }): Promise<Item | undefined> {
     const { id } = params
     await this.#setupCacheDb()
+    //might not be in the real DB yet, so check the write queue first
+    if (this.#writeQueue) {
+      const item = this.#writeQueue.get(id)
+      if (item) {
+        return item
+      }
+    }
 
     return this.#cacheDB!.transaction('r', this.#cacheDB!.objects, async () => {
       return await this.#cacheDB?.objects.get(id)
     })
   }
 
-  async #cacheSaveBatch(params: {
-    batch: Item[]
-    cacheDB: ObjectStore
-  }): Promise<void> {
-    const { batch, cacheDB } = params
+  async cacheSaveBatch(params: { batch: Item[] }): Promise<void> {
+    await this.#setupCacheDb()
+    const { batch } = params
     //const x = this.#count
     //this.#count++
 
     // const startTime = performance.now()
     //  this.#logger('Start save ' + x + ' ' + batch.length)
-    await cacheDB.objects.bulkPut(batch)
+    await this.#cacheDB!.objects.bulkPut(batch)
     // const endTime = performance.now()
     // const duration = endTime - startTime
     //this.#logger('Saved batch ' + x + ' ' + batch.length + ' ' + duration / TIME_MS.second)
@@ -163,5 +134,12 @@ export default class IndexedDatabase implements Cache {
       }, 100)
       void tryIdb()
     }).finally(() => clearInterval(intervalId))
+  }
+
+  async disposeAsync(): Promise<void> {
+    this.#cacheDB?.close()
+    this.#cacheDB = undefined
+    await this.#writeQueue?.disposeAsync()
+    this.#writeQueue = undefined
   }
 }

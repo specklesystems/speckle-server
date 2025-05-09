@@ -29,7 +29,8 @@ const configs = [
       }
     },
     rules: {
-      '@typescript-eslint/restrict-template-expressions': 'off'
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/await-thenable': 'error'
     }
   },
   {

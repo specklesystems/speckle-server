@@ -2,35 +2,35 @@
 
 exports[`objectloader2 > add extra header 1`] = `
 {
-  "baseId": "baseId",
-}
-`;
-
-exports[`objectloader2 > can get a root object from cache 1`] = `
-{
-  "baseId": "baseId",
-}
-`;
-
-exports[`objectloader2 > can get a root object from downloader 1`] = `
-{
-  "baseId": "baseId",
-}
-`;
-
-exports[`objectloader2 > can get root/child object from cache using iterator 1`] = `
-[
-  {
+  "base": {
     "__closure": {
       "child1Id": 100,
     },
     "id": "rootId",
     "speckle_type": "type",
   },
-  {
-    "id": "child1Id",
+  "baseId": "rootId",
+}
+`;
+
+exports[`objectloader2 > can get a root object from cache 1`] = `
+{
+  "base": {
+    "id": "baseId",
+    "speckle_type": "type",
   },
-]
+  "baseId": "baseId",
+}
+`;
+
+exports[`objectloader2 > can get a root object from downloader 1`] = `
+{
+  "base": {
+    "id": "baseId",
+    "speckle_type": "type",
+  },
+  "baseId": "baseId",
+}
 `;
 
 exports[`objectloader2 > can get root/child object from memory cache using iterator and getObject 1`] = `

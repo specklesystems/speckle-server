@@ -13,7 +13,7 @@ COPY package.json yarn.lock ./
 COPY utils/ensure-tailwind-deps.mjs ./utils/
 
 COPY packages/viewer/package.json ./packages/viewer/
-COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/objectloader2/package.json ./packages/objectloader2/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui-components/package.json ./packages/ui-components/
 COPY packages/ui-components-nuxt/package.json ./packages/ui-components-nuxt/
@@ -21,7 +21,7 @@ COPY packages/tailwind-theme/package.json ./packages/tailwind-theme/
 COPY packages/frontend-2/package.json ./packages/frontend-2/
 COPY packages/frontend-2/type-augmentations ./packages/frontend-2/
 
-COPY packages/objectloader ./packages/objectloader/
+COPY packages/objectloader2 ./packages/objectloader2/
 COPY packages/viewer ./packages/viewer/
 COPY packages/shared ./packages/shared/
 COPY packages/ui-components ./packages/ui-components/
@@ -40,7 +40,7 @@ ARG SPECKLE_SERVER_VERSION=custom
 RUN yarn workspaces foreach --include "packages/frontend-2" -W run build
 
 
-ENV TINI_VERSION v0.19.0
+ENV TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \

@@ -3,13 +3,13 @@ import { Base, Item } from '../types/types.js'
 import { Downloader } from './interfaces.js'
 
 export class MemoryDownloader implements Downloader {
-  #items: Record<string, Base>
+  #items: Map<string, Base>
   #rootId: string
   #results?: AsyncGeneratorQueue<Item>
 
   constructor(
     rootId: string,
-    items: Record<string, Base>,
+    items: Map<string, Base>,
     results?: AsyncGeneratorQueue<Item>
   ) {
     this.#rootId = rootId
@@ -18,7 +18,7 @@ export class MemoryDownloader implements Downloader {
   }
   initializePool(): void {}
   downloadSingle(): Promise<Item> {
-    const root = this.#items[this.#rootId]
+    const root = this.#items.get(this.#rootId)
     if (root) {
       return Promise.resolve({ baseId: this.#rootId, base: root })
     }
@@ -28,7 +28,7 @@ export class MemoryDownloader implements Downloader {
     return Promise.resolve()
   }
   add(id: string): void {
-    const base = this.#items[id]
+    const base = this.#items.get(id)
     if (base) {
       this.#results?.add({ baseId: id, base })
       return

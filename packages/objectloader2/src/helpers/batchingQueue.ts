@@ -1,7 +1,7 @@
-import Queue from './queue.js'
+import KeyedQueue from './keyedQueue.js'
 
-export default class BatchingQueue<T> implements Queue<T> {
-  #queue: T[] = []
+export default class BatchingQueue<T> {
+  #queue: KeyedQueue<string, T> = new KeyedQueue<string, T>()
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
 
@@ -30,28 +30,32 @@ export default class BatchingQueue<T> implements Queue<T> {
     await this.#processingLoop
   }
 
-  add(item: T): void {
-    this.#queue.push(item)
+  add(key: string, item: T): void {
+    this.#queue.enqueue(key, item)
+  }
+
+  get(id: string): T | undefined {
+    return this.#queue.get(id)
   }
 
   count(): number {
-    return this.#queue.length
+    return this.#queue.size
   }
 
   #getBatch(batchSize: number): T[] {
-    return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
+    return this.#queue.spliceValues(0, Math.min(batchSize, this.#queue.size))
   }
 
   async #loop(): Promise<void> {
     let interval = this.#baseInterval
-    while (!this.#finished || this.#queue.length > 0) {
+    while (!this.#finished || this.#queue.size > 0) {
       const startTime = performance.now()
-      if (this.#queue.length > 0) {
+      if (this.#queue.size > 0) {
         const batch = this.#getBatch(this.#batchSize)
         //console.log('running with queue size of ' + this.#queue.length)
         await this.#processFunction(batch)
       }
-      if (this.#queue.length < this.#batchSize / 2) {
+      if (this.#queue.size < this.#batchSize / 2) {
         //refigure interval
         const endTime = performance.now()
         const duration = endTime - startTime
@@ -62,7 +66,7 @@ export default class BatchingQueue<T> implements Queue<T> {
         }
         /*console.log(
           'queue is waiting ' +
-            interval / TIME_MS.second +
+            interval / 1000 +
             ' with queue size of ' +
             this.#queue.length
         )*/

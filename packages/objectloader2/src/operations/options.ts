@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import { Pump } from '../helpers/cachePump.js'
 import Queue from '../helpers/queue.js'
 import { Base, CustomLogger, Fetcher, Item } from '../types/types.js'
-import { Cache, Downloader } from './interfaces.js'
+import { Database } from './indexedDatabase.js'
+import { Downloader } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
@@ -14,8 +16,8 @@ export interface ObjectLoader2Options {
   logger?: CustomLogger
   headers?: Headers
   results?: AsyncGeneratorQueue<Item>
-  cache?: Cache
   downloader?: Downloader
+  database?: Database
 }
 export interface BaseDatabaseOptions {
   logger?: CustomLogger
@@ -25,9 +27,15 @@ export interface BaseDatabaseOptions {
     lowerBound: Function
     upperBound: Function
   }
-  maxCacheReadSize?: number
-  maxCacheWriteSize?: number
-  maxCacheBatchWriteWait?: number
+}
+
+export interface CacheOptions {
+  logger?: CustomLogger
+  maxCacheReadSize: number
+  maxCacheWriteSize: number
+  maxCacheBatchWriteWait: number
+  maxCacheBatchReadWait: number
+  maxWriteQueueSize: number
 }
 
 export interface BaseDownloadOptions {
@@ -38,11 +46,17 @@ export interface BaseDownloadOptions {
   headers?: Headers
 
   fetch?: Fetcher
-  database: Cache
+  pump: Pump
   results: Queue<Item>
 }
 
 export interface MemoryDatabaseOptions {
   logger?: CustomLogger
-  items?: Record<string, Base>
+  items?: Map<string, Base>
+}
+
+export interface DefermentManagerOptions {
+  logger?: CustomLogger
+  maxSize: number
+  ttl: number
 }
