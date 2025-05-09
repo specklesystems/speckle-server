@@ -26,11 +26,11 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
     const testQueueId = argv.testQueueId
 
     cliLogger.info('Initializing bull queues...')
-    const queues = [buildNotificationsQueue(NOTIFICATIONS_QUEUE)]
+    const queues = [await buildNotificationsQueue(NOTIFICATIONS_QUEUE)]
 
     if (testQueueId) {
       cliLogger.info('Also initializing queue %s...', testQueueId)
-      queues.push(buildNotificationsQueue(testQueueId))
+      queues.push(await buildNotificationsQueue(testQueueId))
     }
 
     cliLogger.info('Initializing monitor...')

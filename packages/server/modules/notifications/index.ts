@@ -36,7 +36,7 @@ export async function initializeConsumption(
 
   registerNotificationHandlers(customHandlers || allHandlers)
 
-  initializeQueue()
+  await initializeQueue()
 
   if (shouldDisableNotificationsConsumption()) {
     moduleLogger.info('Skipping notification consumption...')
