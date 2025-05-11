@@ -3,7 +3,6 @@ import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { Optional, TIME_MS } from '@speckle/shared'
-import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
   MultiRegionInvalidJobError,
@@ -23,11 +22,6 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
-import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
-import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
-import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
-import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   upsertProjectRegionKeyFactory,
@@ -35,8 +29,8 @@ import {
 } from '@/modules/multiregion/repositories/projectRegion'
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
 import {
   copyWorkspaceFactory,
   copyProjectsFactory,
@@ -46,9 +40,16 @@ import {
   copyProjectAutomationsFactory,
   copyProjectCommentsFactory,
   copyProjectWebhooksFactory,
-  copyProjectBlobs
+  copyProjectBlobs,
+  countProjectModelsFactory,
+  countProjectVersionsFactory,
+  countProjectObjectsFactory,
+  countProjectAutomationsFactory,
+  countProjectCommentsFactory,
+  countProjectWebhooksFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -77,30 +78,7 @@ type MultiregionJob =
 
 let queue: Optional<Bull.Queue<MultiregionJob>>
 
-export const buildMultiregionQueue = (queueName: string) =>
-  new Bull(queueName, {
-    ...buildBaseQueueOptions(),
-    ...(!isTestEnv()
-      ? {
-          limiter: {
-            max: 10,
-            duration: TIME_MS.second
-          }
-        }
-      : {}),
-    defaultJobOptions: {
-      attempts: 5,
-      timeout: 15 * TIME_MS.minute,
-      backoff: {
-        type: 'fixed',
-        delay: 5 * TIME_MS.minute
-      },
-      removeOnComplete: isProdEnv(),
-      removeOnFail: false
-    }
-  })
-
-export const getQueue = (): Bull.Queue => {
+export const getQueue = (): Bull.Queue<MultiregionJob> => {
   if (!queue) {
     throw new UninitializedResourceAccessError(
       'Attempting to use uninitialized Bull queue'
@@ -110,8 +88,31 @@ export const getQueue = (): Bull.Queue => {
   return queue
 }
 
-export const initializeQueue = () => {
-  queue = buildMultiregionQueue(MULTIREGION_QUEUE_NAME)
+export const initializeQueue = async () => {
+  queue = await setupQueue({
+    queueName: MULTIREGION_QUEUE_NAME,
+    redisUrl: getRedisUrl(),
+    options: {
+      ...(!isTestEnv()
+        ? {
+            limiter: {
+              max: 10,
+              duration: TIME_MS.second
+            }
+          }
+        : {}),
+      defaultJobOptions: {
+        attempts: 5,
+        timeout: 15 * TIME_MS.minute,
+        backoff: {
+          type: 'fixed',
+          delay: 5 * TIME_MS.minute
+        },
+        removeOnComplete: isProdEnv(),
+        removeOnFail: false
+      }
+    }
+  })
 }
 
 /**
@@ -144,6 +145,7 @@ export const startQueue = async () => {
     logger.info(
       {
         jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
         payload: job.data.payload,
         type: job.data.type
       },
@@ -208,22 +210,14 @@ export const startQueue = async () => {
                 targetObjectStorage
               }),
               validateProjectRegionCopy: validateProjectRegionCopyFactory({
-                countProjectModels: getStreamBranchCountFactory({
+                countProjectModels: countProjectModelsFactory({ db: sourceDb }),
+                countProjectVersions: countProjectVersionsFactory({ db: sourceDb }),
+                countProjectObjects: countProjectObjectsFactory({ db: sourceDb }),
+                countProjectAutomations: countProjectAutomationsFactory({
                   db: sourceDb
                 }),
-                countProjectVersions: getStreamCommitCountFactory({
-                  db: sourceDb
-                }),
-                countProjectObjects: getStreamObjectCountFactory({
-                  db: sourceDb
-                }),
-                countProjectAutomations: getProjectAutomationsTotalCountFactory({
-                  db: sourceDb
-                }),
-                countProjectComments: getStreamCommentCountFactory({
-                  db: sourceDb
-                }),
-                getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
+                countProjectComments: countProjectCommentsFactory({ db: sourceDb }),
+                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
               }),
               updateProjectRegionKey: updateProjectRegionKeyFactory({
                 upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
@@ -244,10 +238,23 @@ export const startQueue = async () => {
         throw new MultiRegionNotYetImplementedError()
     }
   })
+  void queue.on('completed', (job) => {
+    const { projectId, regionKey } = job.data.payload
+    logger.info(
+      {
+        jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
+        projectId,
+        regionKey
+      },
+      'Completed multiregion job {jobId}'
+    )
+  })
   void queue.on('failed', (job, err) => {
     logger.error(
       {
         jobId: job.id,
+        jobQueue: MULTIREGION_QUEUE_NAME,
         error: err,
         errorMessage: err.message
       },
@@ -257,6 +264,7 @@ export const startQueue = async () => {
   void queue.on('error', (err) => {
     logger.error(
       {
+        jobQueue: MULTIREGION_QUEUE_NAME,
         error: err,
         errorMessage: err.message
       },

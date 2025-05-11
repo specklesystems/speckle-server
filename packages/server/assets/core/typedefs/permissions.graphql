@@ -13,6 +13,8 @@ type ProjectPermissionChecks {
   canReadWebhooks: PermissionCheckResult!
   canLeave: PermissionCheckResult!
   canRequestRender: PermissionCheckResult!
+  canPublish: PermissionCheckResult!
+  canLoad: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
