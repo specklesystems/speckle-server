@@ -17,10 +17,7 @@ import { z } from 'zod'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
-import {
-  insertNewUploadAndNotifyFactoryV2,
-  pushMessageToFileImporterFactory
-} from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { UploadResult } from '@/modules/blobstorage/domain/types'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
@@ -32,6 +29,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -67,24 +65,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const [model] = await getModelsByIds([modelId], { streamId: projectId })
       if (!model) throw new UnauthorizedError()
 
-      const mapUploadResultToUploadFile = (uploadResult: UploadResult) => {
-        return {
-          projectId,
-          modelId,
-          userId,
-          fileId: uploadResult.blobId,
-          fileName: uploadResult.fileName,
-          fileType: uploadResult.fileName?.split('.').pop() || '', //FIXME
-          fileSize: uploadResult.fileSize
-        }
-      }
-
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
-        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-        publish
-      })
-
-      const pushMessageToFileImporter = pushMessageToFileImporterFactory({
+      const pushJobToFileImporter = pushJobToFileImporterFactory({
         createAppToken: createAppTokenFactory({
           storeApiToken: storeApiTokenFactory({ db }),
           storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -96,6 +77,12 @@ export const nextGenFileImporterRouterFactory = (): Router => {
         })
       })
 
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        pushJobToFileImporter,
+        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        publish
+      })
+
       const onError = () => {
         res.contentType('application/json')
         res.status(400).end(UploadRequestErrorMessage)
@@ -103,12 +90,19 @@ export const nextGenFileImporterRouterFactory = (): Router => {
 
       const onFinishAllFileUploads = async (uploadResults: UploadResult[]) => {
         try {
-          const handleUploadResults = uploadResults
-            .map(mapUploadResultToUploadFile)
-            .map(insertNewUploadAndNotify)
-            .map(pushMessageToFileImporter)
-
-          await Promise.all(handleUploadResults)
+          await Promise.all(
+            uploadResults.map((upload) =>
+              insertNewUploadAndNotify({
+                projectId,
+                userId,
+                fileName: upload.fileName,
+                fileType: upload.fileName?.split('.').pop() || '', //FIXME
+                fileSize: upload.fileSize,
+                fileId: upload.blobId,
+                modelId: ''
+              })
+            )
+          )
           res.status(201).send({ uploadResults })
         } catch (err) {
           logger.error(ensureError(err), 'File importer handling error')

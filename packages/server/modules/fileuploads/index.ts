@@ -34,7 +34,10 @@ import { TIME } from '@speckle/shared'
 import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import { nextGenFileImporterRouterFactory } from '@/modules/fileuploads/rest/nextGenRouter'
-import { initializeQueue, shutdownQueue } from '@/modules/fileuploads/services/queue'
+import {
+  initializeQueue,
+  shutdownQueue
+} from '@/modules/fileuploads/queues/fileimports'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 

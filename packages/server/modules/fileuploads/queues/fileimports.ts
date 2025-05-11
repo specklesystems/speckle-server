@@ -1,32 +1,28 @@
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import { getRedisUrl, isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
-import { Optional, TIME, TIME_MS } from '@speckle/shared'
+import { Optional, TIME_MS } from '@speckle/shared'
 import Bull from 'bull'
 import cryptoRandomString from 'crypto-random-string'
 import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
-import { z } from 'zod'
 
 const FILE_IMPORT_SERVICE_QUEUE_NAME = isTestEnv()
   ? `test:fileimport-service-jobs:${cryptoRandomString({ length: 5 })}`
   : 'fileimport-service-jobs'
 
-export const jobFileImportPayload = z.object({
-  blobId: z.string(),
-  modelId: z.string(),
-  projectId: z.string(),
-  url: z.string(),
-  token: z.string(),
-  fileType: z.string(),
-  timeOutSeconds: z
-    .number()
-    .int()
-    .default(20 * TIME.minute)
-})
+export type JobFileImportPayload = {
+  blobId: string
+  modelId: string
+  projectId: string
+  url: string
+  token: string
+  fileType: string
+  timeOutSeconds: number
+}
 
 type FileImportJob = {
   type: 'file-import'
-  payload: z.infer<typeof jobFileImportPayload>
+  payload: JobFileImportPayload
 }
 
 let queue: Optional<Bull.Queue<FileImportJob>>
