@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative rounded-[6px] overflow-hidden aspect-[896/405] max-h-[405px] w-full"
+    class="relative rounded-md overflow-hidden aspect-[896/405] max-h-[405px] w-full"
   >
     <figure class="dark:hidden absolute w-full">
       <NuxtImg
