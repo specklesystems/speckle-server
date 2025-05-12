@@ -157,6 +157,7 @@ export const getWorkspaceFactory =
   ({ db }: { db: Knex }): GetWorkspace =>
   async ({ workspaceId, userId, completed }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
+    q.where(Workspaces.col.id, workspaceId)
 
     if (completed !== undefined) {
       q.leftJoin(
@@ -168,7 +169,7 @@ export const getWorkspaceFactory =
         .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
     }
 
-    const workspace = await q.where(Workspaces.col.id, workspaceId).first()
+    const workspace = await q.first()
 
     return workspace || null
   }
