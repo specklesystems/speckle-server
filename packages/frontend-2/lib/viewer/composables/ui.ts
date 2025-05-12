@@ -497,7 +497,6 @@ export function useViewModeUtilities() {
   const outlineOpacity = ref(0.75)
   const defaultColor = ref(0x1a1a1a)
   const edgesColor = ref(defaultColor.value)
-  const hasChangedEdgesColor = ref(false)
 
   const currentViewMode = computed(() => viewMode.value)
 
@@ -559,7 +558,6 @@ export function useViewModeUtilities() {
   }
 
   const setEdgesColor = (color: number) => {
-    hasChangedEdgesColor.value = true
     edgesColor.value = color
     updateViewMode()
     mp.track('Viewer Action', {
@@ -575,7 +573,6 @@ export function useViewModeUtilities() {
     edgesWeight.value = 1
     outlineOpacity.value = 0.75
     edgesColor.value = defaultColor.value
-    hasChangedEdgesColor.value = false
 
     // Reset view mode to default
     viewMode.value = ViewMode.SOLID
