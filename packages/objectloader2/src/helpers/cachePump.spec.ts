@@ -4,7 +4,7 @@ import { Base, Item } from '../types/types.js'
 import BufferQueue from './bufferQueue.js'
 import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 import { DefermentManager } from './defermentManager.js'
-import { MemoryDatabase } from '../operations/memoryDatabase.js'
+import { MemoryDatabase } from '../operations/databases/memoryDatabase.js'
 
 describe('CachePump testing', () => {
   test('write two items to queue use pumpItems that are NOT found', async () => {

@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import { Database } from '../operations/indexedDatabase.js'
+import { Database } from '../operations/interfaces.js'
 import { CacheOptions } from '../operations/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
@@ -71,7 +71,7 @@ export class CachePump implements Pump {
     this.#gathered = gathered
     this.#deferments = deferments
     this.#options = options
-    this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || ((): void => {})
   }
 
   add(item: Item): void {
@@ -79,7 +79,8 @@ export class CachePump implements Pump {
       this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
-        processFunction: (batch: Item[]) => this.#database.cacheSaveBatch({ batch })
+        processFunction: (batch: Item[]): Promise<void> =>
+          this.#database.cacheSaveBatch({ batch })
       })
     }
     this.#writeQueue.add(item.baseId, item)

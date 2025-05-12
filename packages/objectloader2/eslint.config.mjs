@@ -30,7 +30,8 @@ const configs = [
     },
     rules: {
       '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/await-thenable': 'error'
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'error'
     }
   },
   {

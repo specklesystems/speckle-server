@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
 import { Pump } from '../helpers/cachePump.js'
-import Queue from '../helpers/queue.js'
-import { Base, CustomLogger, Fetcher, Item } from '../types/types.js'
-import { Database } from './indexedDatabase.js'
-import { Downloader } from './interfaces.js'
+import { Base, CustomLogger, Fetcher } from '../types/types.js'
+import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
@@ -15,7 +12,6 @@ export interface ObjectLoader2Options {
   token?: string
   logger?: CustomLogger
   headers?: Headers
-  results?: AsyncGeneratorQueue<Item>
   downloader?: Downloader
   database?: Database
 }
@@ -47,7 +43,6 @@ export interface BaseDownloadOptions {
 
   fetch?: Fetcher
   pump: Pump
-  results: Queue<Item>
 }
 
 export interface MemoryDatabaseOptions {

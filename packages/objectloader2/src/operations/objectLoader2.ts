@@ -1,11 +1,11 @@
 import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
-import { Downloader } from './interfaces.js'
-import IndexedDatabase, { Database } from './indexedDatabase.js'
-import ServerDownloader from './serverDownloader.js'
+import { Downloader, Database } from './interfaces.js'
+import IndexedDatabase from './databases/indexedDatabase.js'
+import ServerDownloader from './downloaders/serverDownloader.js'
 import { CustomLogger, Base, Item } from '../types/types.js'
 import { CacheOptions, ObjectLoader2Options } from './options.js'
-import { MemoryDownloader } from './memoryDownloader.js'
-import { MemoryDatabase } from './memoryDatabase.js'
+import { MemoryDownloader } from './downloaders/memoryDownloader.js'
+import { MemoryDatabase } from './databases/memoryDatabase.js'
 import { DefermentManager } from '../helpers/defermentManager.js'
 import { CacheReader } from '../helpers/cacheReader.js'
 import { CachePump } from '../helpers/cachePump.js'
@@ -39,7 +39,7 @@ export default class ObjectLoader2 {
       maxCacheBatchReadWait: 3_000
     }
 
-    this.#gathered = options.results || new AsyncGeneratorQueue()
+    this.#gathered = new AsyncGeneratorQueue()
     this.#database =
       options.database ??
       new IndexedDatabase({
@@ -63,7 +63,6 @@ export default class ObjectLoader2 {
       options.downloader ||
       new ServerDownloader({
         pump: this.#pump,
-        results: this.#gathered,
         serverUrl: options.serverUrl,
         streamId: options.streamId,
         objectId: this.#objectId,
@@ -91,7 +90,7 @@ export default class ObjectLoader2 {
     return await this.#cache.getObject({ id: params.id })
   }
 
-  async getTotalObjectCount() {
+  async getTotalObjectCount(): Promise<number> {
     const rootObj = await this.getRootObject()
     const totalChildrenCount = Object.keys(rootObj?.base.__closure || {}).length
     return totalChildrenCount + 1 //count the root
@@ -110,7 +109,7 @@ export default class ObjectLoader2 {
 
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
-    this.#downloader.initializePool({ total })
+    this.#downloader.initializePool({ results: this.#gathered, total })
     for await (const item of this.#pump.gather(children, this.#downloader)) {
       yield item.base
     }

@@ -1,8 +1,9 @@
-import BatchedPool from '../helpers/batchedPool.js'
-import { ObjectLoaderRuntimeError } from '../types/errors.js'
-import { Fetcher, isBase, Item } from '../types/types.js'
-import { Downloader } from './interfaces.js'
-import { BaseDownloadOptions } from './options.js'
+import BatchedPool from '../../helpers/batchedPool.js'
+import Queue from '../../helpers/queue.js'
+import { ObjectLoaderRuntimeError } from '../../types/errors.js'
+import { Fetcher, isBase, Item } from '../../types/types.js'
+import { Downloader } from '../interfaces.js'
+import { BaseDownloadOptions } from '../options.js'
 
 export default class ServerDownloader implements Downloader {
   #requestUrlRootObj: string
@@ -10,12 +11,14 @@ export default class ServerDownloader implements Downloader {
   #headers: HeadersInit
   #options: BaseDownloadOptions
   #fetch: Fetcher
+  #results?: Queue<Item>
 
   #downloadQueue?: BatchedPool<string>
 
   constructor(options: BaseDownloadOptions) {
     this.#options = options
-    this.#fetch = options.fetch ?? ((...args) => globalThis.fetch(...args))
+    this.#fetch =
+      options.fetch ?? ((...args): Promise<Response> => globalThis.fetch(...args))
 
     this.#headers = {}
     if (options.headers) {
@@ -44,12 +47,17 @@ export default class ServerDownloader implements Downloader {
     return [10000, 30000, 10000, 1000]
   }
 
-  initializePool(params: { total: number; maxDownloadBatchWait?: number }) {
-    const { total } = params
+  initializePool(params: {
+    results: Queue<Item>
+    total: number
+    maxDownloadBatchWait?: number
+  }): void {
+    const { results, total } = params
+    this.#results = results
     this.#downloadQueue = new BatchedPool<string>({
       concurrencyAndSizes: this.#getDownloadCountAndSizes(total),
       maxWaitTime: params.maxDownloadBatchWait,
-      processFunction: (batch: string[]) =>
+      processFunction: (batch: string[]): Promise<void> =>
         this.downloadBatch({
           batch,
           url: this.#requestUrlChildren,
@@ -127,7 +135,7 @@ export default class ServerDownloader implements Downloader {
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
           this.#options.pump.add(item)
-          this.#options.results.add(item)
+          this.#results?.add(item)
           count++
           if (count % 1000 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen

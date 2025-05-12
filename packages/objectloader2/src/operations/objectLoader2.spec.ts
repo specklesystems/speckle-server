@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import ObjectLoader2 from './objectLoader2.js'
 import { Base, Item } from '../types/types.js'
-import { MemoryDownloader } from './memoryDownloader.js'
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
+import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { MemoryDatabase } from './memoryDatabase.js'
+import { MemoryDatabase } from './databases/memoryDatabase.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -127,13 +126,11 @@ describe('objectloader2', () => {
     records.set(root.baseId, rootBase)
     records.set(child1.baseId, child1Base)
 
-    const results: AsyncGeneratorQueue<Item> = new AsyncGeneratorQueue<Item>()
     const loader = new ObjectLoader2({
       serverUrl: 'a',
       streamId: 'b',
       objectId: root.baseId,
-      results,
-      downloader: new MemoryDownloader(rootId, records, results),
+      downloader: new MemoryDownloader(rootId, records),
       indexedDB: new IDBFactory(),
       keyRange: IDBKeyRange
     })

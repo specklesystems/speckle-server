@@ -1,22 +1,23 @@
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
-import { Base, Item } from '../types/types.js'
-import { Downloader } from './interfaces.js'
+import Queue from '../../helpers/queue.js'
+import { Base, Item } from '../../types/types.js'
+import { Downloader } from '../interfaces.js'
 
 export class MemoryDownloader implements Downloader {
   #items: Map<string, Base>
   #rootId: string
-  #results?: AsyncGeneratorQueue<Item>
+  #results?: Queue<Item>
 
-  constructor(
-    rootId: string,
-    items: Map<string, Base>,
-    results?: AsyncGeneratorQueue<Item>
-  ) {
+  constructor(rootId: string, items: Map<string, Base>) {
     this.#rootId = rootId
     this.#items = items
-    this.#results = results
   }
-  initializePool(): void {}
+  initializePool(params: {
+    results: Queue<Item>
+    total: number
+    maxDownloadBatchWait?: number
+  }): void {
+    this.#results = params.results
+  }
   downloadSingle(): Promise<Item> {
     const root = this.#items.get(this.#rootId)
     if (root) {

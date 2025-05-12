@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
-import { Item } from '../types/types.js'
+import { Item } from '../../types/types.js'
 import ServerDownloader from './serverDownloader.js'
-import { MemoryPump } from '../helpers/cachePump.js'
+import { MemoryPump } from '../../helpers/cachePump.js'
 
 describe('downloader', () => {
   test('download batch of one', async () => {
