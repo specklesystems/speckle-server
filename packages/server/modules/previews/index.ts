@@ -9,8 +9,6 @@ import {
   getRedisUrl,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import Bull, { type QueueOptions } from 'bull'
-import Redis, { type RedisOptions } from 'ioredis'
 import { createBullBoard } from 'bull-board'
 import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
@@ -19,7 +17,11 @@ import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { previewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
+import {
+  JobPayload,
+  PreviewResultPayload,
+  previewResultPayload
+} from '@speckle/shared/workers/previews'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   storePreviewFactory,
@@ -31,59 +33,32 @@ import {
   PreviewJobDurationStep
 } from '@/modules/previews/observability/metrics'
 import { addRequestQueueListeners } from '@/modules/previews/queues/previews'
-import { isRedisReady } from '@/modules/shared/redis/redis'
+import { initializeQueue } from '@speckle/shared/queue'
+import type Bull from 'bull'
 
 const JobQueueName = 'preview-service-jobs'
 const ResponseQueueNamePrefix = 'preview-service-results'
 
 const getPreviewQueues = async (params: { responseQueueName: string }) => {
   const { responseQueueName } = params
-  let client: Redis
-  let subscriber: Redis
   const redisUrl = getPreviewServiceRedisUrl() ?? getRedisUrl()
 
-  const opts: QueueOptions = {
-    // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
-    createClient(type: string, redisOpts: RedisOptions) {
-      switch (type) {
-        case 'client':
-          if (!client) {
-            client = new Redis(redisUrl, redisOpts)
-          }
-          return client
-        case 'subscriber':
-          if (!subscriber) {
-            subscriber = new Redis(redisUrl, {
-              ...redisOpts,
-              maxRetriesPerRequest: null,
-              enableReadyCheck: false
-            })
-          }
-          return subscriber
-        case 'bclient':
-          return new Redis(redisUrl, {
-            ...redisOpts,
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false
-          })
-        default:
-          throw new Error('Unexpected connection type: ' + type)
-      }
-    }
-  }
-
   // previews are requested on this queue
-  const previewRequestQueue = new Bull(JobQueueName, opts)
-  await isRedisReady(previewRequestQueue.client)
+  const previewRequestQueue = await initializeQueue<JobPayload>({
+    queueName: JobQueueName,
+    redisUrl
+  })
   addRequestQueueListeners({
     logger,
     previewRequestQueue
   })
 
   // rendered previews are sent back on this queue
-  const previewResponseQueue = new Bull(responseQueueName, opts)
+  const previewResponseQueue = await initializeQueue<PreviewResultPayload>({
+    queueName: responseQueueName,
+    redisUrl
+  })
 
-  await isRedisReady(previewResponseQueue.client)
   return { previewRequestQueue, previewResponseQueue }
 }
 
@@ -103,8 +78,8 @@ export const init: SpeckleModule['init'] = async ({
       new URL(getServerOrigin()).hostname
     }`
 
-    let previewRequestQueue: Bull.Queue
-    let previewResponseQueue: Bull.Queue
+    let previewRequestQueue: Bull.Queue<JobPayload>
+    let previewResponseQueue: Bull.Queue<PreviewResultPayload>
 
     try {
       ;({ previewRequestQueue, previewResponseQueue } = await getPreviewQueues({

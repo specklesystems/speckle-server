@@ -11,7 +11,8 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { Nullable } from '@speckle/shared'
+import { ensureError, Nullable } from '@speckle/shared'
+import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -20,27 +21,26 @@ export const fileuploadRouterFactory = (): Router => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    async (req, res, next) => {
-      await authMiddlewareCreator(
-        streamWritePermissionsPipelineFactory({
-          getStream: getStreamFactory({ db })
-        })
-      )(req, res, next)
-    },
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getStream: getStreamFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
-      const streamId = req.params.streamId
+      const projectId = req.params.streamId
       const userId = req.context.userId
       if (!userId) {
         throw new UnauthorizedError('User not authenticated.')
       }
       const logger = req.log.child({
-        streamId,
+        projectId,
+        streamId: projectId, //legacy
         userId,
         branchName
       })
 
-      const projectDb = await getProjectDbClient({ projectId: streamId })
+      const projectDb = await getProjectDbClient({ projectId })
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
@@ -79,25 +79,26 @@ export const fileuploadRouterFactory = (): Router => {
       const busboy = createBusboy(req)
       const newFileStreamProcessor = await processNewFileStream({
         busboy,
-        streamId,
+        streamId: projectId,
         userId,
         logger,
         onFinishAllFileUploads: async (uploadResults) => {
-          await saveFileUploads({
-            userId,
-            streamId,
-            branchName,
-            uploadResults
-          })
+          try {
+            await saveFileUploads({
+              userId,
+              streamId: projectId,
+              branchName,
+              uploadResults
+            })
+          } catch (err) {
+            logger.error(ensureError(err), 'File importer handling error @deprecated')
+            res.status(500)
+          }
           res.status(201).send({ uploadResults })
         },
         onError: () => {
           res.contentType('application/json')
-          res
-            .status(400)
-            .end(
-              '{ "error": "Upload request error. The server logs may have more details." }'
-            )
+          res.status(400).end(UploadRequestErrorMessage)
         }
       })
 

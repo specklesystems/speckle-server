@@ -16480,6 +16480,7 @@ __metadata:
     "@types/node": "npm:^18.19.38"
     "@vitest/coverage-istanbul": "npm:^1.6.0"
     bcrypt: "npm:^5.0.0"
+    bull: "npm:^4.16.5"
     concurrently: "npm:^8.2.2"
     crypto: "npm:^1.0.1"
     crypto-random-string: "npm:^3.2.0"
@@ -16505,6 +16506,7 @@ __metadata:
     valid-filename: "npm:^3.1.0"
     vitest: "npm:^1.6.0"
     web-ifc: "npm:^0.0.36"
+    znv: "npm:^0.5.0"
   languageName: unknown
   linkType: soft
 
@@ -16985,6 +16987,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitest/coverage-v8": "npm:^3.0.9"
     "@vitest/ui": "npm:^3.0.9"
+    bull: "npm:^4.16.5"
     crypto-random-string: "npm:^5.0.0"
     dayjs: "npm:^1.11.13"
     eslint: "npm:^9.4.0"
@@ -17006,6 +17009,7 @@ __metadata:
     zod: "npm:^3.22.4"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    bull: "*"
     knex: "*"
     mixpanel: ^0.17.0
     pino: ^8.7.0
@@ -24810,6 +24814,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bull@npm:^4.16.5":
+  version: 4.16.5
+  resolution: "bull@npm:4.16.5"
+  dependencies:
+    cron-parser: "npm:^4.9.0"
+    get-port: "npm:^5.1.1"
+    ioredis: "npm:^5.3.2"
+    lodash: "npm:^4.17.21"
+    msgpackr: "npm:^1.11.2"
+    semver: "npm:^7.5.2"
+    uuid: "npm:^8.3.0"
+  checksum: 10/3250486db79a99d3cf77f078694b134a4ae66e930e070d05dd099d7f975ab4d70163858641ad1873617ae0b9c0aab0ca5da6cb69e688b9ab91a779997b3b51e3
+  languageName: node
+  linkType: hard
+
 "bundle-name@npm:^4.1.0":
   version: 4.1.0
   resolution: "bundle-name@npm:4.1.0"
@@ -26966,6 +26985,15 @@ __metadata:
   dependencies:
     luxon: "npm:^3.0.1"
   checksum: 10/ec8a3bded8fc0def4cdc60d80b354128651ed4720757e098d93656eeb81a1b93dfb39b178a41684a75ce2c6f7540b8fb056f8d0feb56938a38acee6c7e17839b
+  languageName: node
+  linkType: hard
+
+"cron-parser@npm:^4.9.0":
+  version: 4.9.0
+  resolution: "cron-parser@npm:4.9.0"
+  dependencies:
+    luxon: "npm:^3.2.1"
+  checksum: 10/ffca5e532a5ee0923412ee6e4c7f9bbceacc6ddf8810c16d3e9fb4fe5ec7e2de1b6896d7956f304bb6bc96b0ce37ad7e3935304179d52951c18d84107184faa7
   languageName: node
   linkType: hard
 
@@ -38183,6 +38211,13 @@ __metadata:
   version: 3.2.1
   resolution: "luxon@npm:3.2.1"
   checksum: 10/16340e1b646c8170ff3c747e4ef7948ff9daad6fe2b442f344ccd685d853e2f81bd0b702c77a8dc600dbe9013e16af638ad334cd4551521337c2f19c32c8a527
+  languageName: node
+  linkType: hard
+
+"luxon@npm:^3.2.1":
+  version: 3.6.1
+  resolution: "luxon@npm:3.6.1"
+  checksum: 10/35aad425607708c87af110a52c949190bc35b987770079ec8007ef2365cd29639413db3360d2883777aa01cb3ca5bdb37f42ee3e8e5a0dd277fe22e90cc8a786
   languageName: node
   linkType: hard
 
@@ -54320,6 +54355,15 @@ __metadata:
   peerDependencies:
     zod: ^3.13.2
   checksum: 10/ba0f47b03c8912581cba25adae60ac5437b8506e847a77996a11436d98353aac192cabe51280627ca52abc2fdf011c409ac79733e8187274d223f568ba277940
+  languageName: node
+  linkType: hard
+
+"znv@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "znv@npm:0.5.0"
+  peerDependencies:
+    zod: ^3.24.2
+  checksum: 10/4954b21e2856beca67da60d2f647671381284d5434908d69656ccd93c3e9291149f9b6ac1a8015d0b48604c14916241717f85b5a8c3c41d64423c8baebbf9a18
   languageName: node
   linkType: hard
 

@@ -63,7 +63,8 @@ export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelect
     [AccessSelectItems.Reviewer]: {
       id: AccessSelectItems.Reviewer,
       title: 'Can view',
-      description: 'All workspace members can view and comment on the project'
+      description:
+        'All workspace members can view and comment. Add them as project members to give them edit rights. Make the project private to remove their access.'
     },
     [AccessSelectItems.NoAccess]: {
       id: AccessSelectItems.NoAccess,

@@ -19,7 +19,6 @@ import {
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
-import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
 
@@ -54,7 +53,6 @@ const createViewer = async (containerName: string, _stream: string) => {
   viewer.createExtension(ExplodeExtension)
   viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
-  viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)

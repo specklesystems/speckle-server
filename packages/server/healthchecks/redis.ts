@@ -1,5 +1,5 @@
 import type { CheckResponse, RedisCheck } from '@/healthchecks/types'
-import { isRedisReady } from '@/modules/shared/redis/redis'
+import { isRedisReady } from '@speckle/shared/redis'
 
 export const isRedisAlive: RedisCheck = async (params): Promise<CheckResponse> => {
   const { client } = params
