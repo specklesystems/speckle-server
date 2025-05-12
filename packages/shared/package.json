@@ -87,7 +87,10 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
+      "./environment/multiRegionConfig": "./src/environment/multiRegionConfig.ts",
       "./observability": "./src/observability/index.ts",
+      "./observability/mixpanel": "./src/observability/mixpanel.ts",
+      "./previews": "./src/previews/index.ts",
       "./authz": "./src/authz/index.ts",
       "./queue": "./src/queue/index.ts",
       "./redis": "./src/redis/index.ts",
@@ -130,6 +133,16 @@
         "default": "./dist/commonjs/environment/index.js"
       }
     },
+    "./environment/multiRegionConfig": {
+      "import": {
+        "types": "./dist/esm/environment/multiRegionConfig.d.ts",
+        "default": "./dist/esm/environment/multiRegionConfig.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/multiRegionConfig.d.ts",
+        "default": "./dist/commonjs/environment/multiRegionConfig.js"
+      }
+    },
     "./observability": {
       "import": {
         "types": "./dist/esm/observability/index.d.ts",
@@ -138,6 +151,26 @@
       "require": {
         "types": "./dist/commonjs/observability/index.d.ts",
         "default": "./dist/commonjs/observability/index.js"
+      }
+    },
+    "./observability/mixpanel": {
+      "import": {
+        "types": "./dist/esm/observability/mixpanel.d.ts",
+        "default": "./dist/esm/observability/mixpanel.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/observability/mixpanel.d.ts",
+        "default": "./dist/commonjs/observability/mixpanel.js"
+      }
+    },
+    "./previews": {
+      "import": {
+        "types": "./dist/esm/previews/index.d.ts",
+        "default": "./dist/esm/previews/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/previews/index.d.ts",
+        "default": "./dist/commonjs/previews/index.js"
       }
     },
     "./authz": {
