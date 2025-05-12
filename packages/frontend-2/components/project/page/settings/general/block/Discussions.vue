@@ -9,6 +9,7 @@
       v-model="selectedOption"
       :disabled="!canUpdate.authorized"
       :options="radioOptions"
+      size="sm"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>

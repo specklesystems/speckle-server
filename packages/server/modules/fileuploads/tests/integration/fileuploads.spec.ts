@@ -1,191 +1,25 @@
-/* istanbul ignore file */
 import { expect } from 'chai'
-
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
-
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
 import cryptoRandomString from 'crypto-random-string'
 import { noErrors } from '@/test/helpers'
-import {
-  createStreamFactory,
-  getStreamFactory,
-  grantStreamPermissionsFactory
-} from '@/modules/core/repositories/streams'
-import { db } from '@/db/knex'
-import {
-  createStreamReturnRecordFactory,
-  legacyCreateStreamFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  deleteInvitesByTargetFactory,
-  deleteServerOnlyInvitesFactory,
-  findInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createTokenFactory } from '@/modules/core/services/tokens'
-import {
-  storeApiTokenFactory,
-  storeTokenResourceAccessDefinitionsFactory,
-  storeTokenScopesFactory
-} from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { TIME_MS } from '@speckle/shared'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
+import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
-const getStream = getStreamFactory({ db })
-
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
-const createToken = createTokenFactory({
-  storeApiToken: storeApiTokenFactory({ db }),
-  storeTokenScopes: storeTokenScopesFactory({ db }),
-  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
-    db
-  })
-})
+const { createStream, createUser, createToken } = initUploadTestEnvironment()
+const gqlQueryToListFileUploads = `query ($streamId: String!) {
+  stream(id: $streamId) {
+    id
+    fileUploads {
+      id
+      fileName
+      convertedStatus
+    }
+  }
+}`
 
 describe('FileUploads @fileuploads integration', () => {
   let server: Server
@@ -253,16 +87,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.body.uploadResults).to.have.lengthOf(1)
       expect(response.body.uploadResults[0].fileName).to.equal('test.ifc')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -288,16 +113,7 @@ describe('FileUploads @fileuploads integration', () => {
         response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
       ).to.have.members(['test1.ifc', 'test2.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -329,16 +145,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.headers['content-type']).to.contain('application/json;')
       expect(response.body.error).to.contain('Upload request error.')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -358,16 +165,7 @@ describe('FileUploads @fileuploads integration', () => {
       expect(response.headers['content-type']).to.contain('application/json;')
       expect(response.body.error.message).to.contain('Missing Content-Type')
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -389,16 +187,7 @@ describe('FileUploads @fileuploads integration', () => {
         response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
       ).to.have.members(['toolarge.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -427,16 +216,7 @@ describe('FileUploads @fileuploads integration', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(403)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
@@ -456,16 +236,7 @@ describe('FileUploads @fileuploads integration', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query ($streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUploads {
-              id
-              fileName
-              convertedStatus
-            }
-          }
-        }`,
+        query: gqlQueryToListFileUploads,
         variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))

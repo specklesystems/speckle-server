@@ -20,8 +20,7 @@ export const PlanTitleMap: Record<OnboardingPlan, string> = {
     'Online collaboration (sharing and discussing 3D models online)',
   [OnboardingPlan.DataWarehouse]: 'Data warehouse and common data environment (CDE)',
   [OnboardingPlan.Development]: 'Develop custom functionalities and apps',
-  [OnboardingPlan.Automation]: 'Automation (pre-made or custom automations)',
-  [OnboardingPlan.Other]: 'Other'
+  [OnboardingPlan.Automation]: 'Automation (pre-made or custom automations)'
 }
 
 export const SourceTitleMap: Record<OnboardingSource, string> = {
