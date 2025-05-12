@@ -14,6 +14,18 @@ export abstract class ProgressivePipeline extends Pipeline {
     return [...this.dynamicStage, ...this.progressiveStage, ...this.passthroughStage]
   }
 
+  public get dynamicPasses(): Array<GPass> {
+    return [...this.dynamicStage]
+  }
+
+  public get progressivePasses(): Array<GPass> {
+    return [...this.progressiveStage]
+  }
+
+  public get passthroughPasses(): Array<GPass> {
+    return [...this.passthroughStage]
+  }
+
   public getPass(name: string): GPass[] {
     return [
       ...this.dynamicStage.filter((pass: GPass) => {

@@ -27,6 +27,7 @@
     "build": "tsc -p ./tsconfig.build.json"
   },
   "dependencies": {
+    "@godaddy/terminus": "^4.12.1",
     "@speckle/shared": "workspace:^",
     "bull": "^4.16.4",
     "dotenv": "^16.4.7",

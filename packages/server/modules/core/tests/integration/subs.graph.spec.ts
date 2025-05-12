@@ -92,7 +92,7 @@ import {
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
-import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
+import { Optional, Roles, Scopes, ServerScope, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -107,19 +107,17 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
     deleteStream: deleteStreamFactory({
       db: projectDb
     }),
-    authorizeResolver,
     emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
     getStream: getStreamFactory({ db: projectDb })
   })
-  return async () => deleteStreamAndNotify(projectId, ownerId, null)
+  return async () => deleteStreamAndNotify(projectId, ownerId)
 }
 
 const buildUpdateProject = async (params: { projectId: string }) => {
   const { projectId } = params
   const projectDB = await getProjectDbClient({ projectId })
   const updateStreamAndNotify = updateStreamAndNotifyFactory({
-    authorizeResolver,
     getStream: getStreamFactory({ db: projectDB }),
     updateStream: updateStreamFactory({ db: projectDB }),
     emitEvent: getEventBus().emit
@@ -224,7 +222,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
   ]
 
   modes.forEach(({ isMultiRegion }) => {
-    describe(`W/${!isMultiRegion ? 'o' : ''} multiregion`, () => {
+    describe(`W/${!isMultiRegion ? 'o' : ''} @multiregion`, () => {
       const myMainWorkspace: BasicTestWorkspace = {
         id: '',
         ownerId: '',
@@ -241,10 +239,12 @@ describe('Core GraphQL Subscriptions (New)', () => {
       before(async () => {
         await Promise.all([
           createTestWorkspace(myMainWorkspace, me, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           }),
           createTestWorkspace(otherGuysWorkspace, otherGuy, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           })
         ])
 
@@ -285,8 +285,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             const updateProject = await buildUpdateProject({ projectId })
             await updateProject(
               { id: projectId, name: new Date().toISOString() },
-              me.id,
-              null
+              me.id
             )
           }
 
@@ -592,11 +591,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForMessage(),
@@ -637,11 +632,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await updateProject(
-            { id: myProj.id, name: 'Updated Project Name' },
-            me.id,
-            null
-          )
+          await updateProject({ id: myProj.id, name: 'Updated Project Name' }, me.id)
 
           await Promise.all([
             onUserProjectsUpdated.waitForTimeout(),

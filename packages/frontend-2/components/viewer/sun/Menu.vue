@@ -96,6 +96,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
 import { FormSwitch } from '@speckle/ui-components'
 import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
+import { TIME_MS } from '@speckle/shared'
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -103,9 +104,7 @@ const mp = useMixpanel()
 const { currentViewMode } = useViewModeUtilities()
 
 const isLightingSupported = computed(() => {
-  const supported =
-    currentViewMode.value === ViewMode.DEFAULT ||
-    currentViewMode.value === ViewMode.DEFAULT_EDGES
+  const supported = currentViewMode.value === ViewMode.DEFAULT
   return supported
 })
 
@@ -114,7 +113,7 @@ const debounceTrackLightConfigChange = debounce(() => {
     type: 'action',
     name: 'light-config-change'
   })
-}, 1000)
+}, TIME_MS.second)
 
 const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
   computed({

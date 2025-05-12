@@ -1,4 +1,3 @@
-import { automateLogger } from '@/observability/logging'
 import {
   ExecutionEngineBadResponseBodyError,
   type ExecutionEngineErrorResponse,
@@ -23,14 +22,16 @@ import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/en
 import {
   type Nullable,
   type SourceAppName,
+  TIME_MS,
   isNonNullable,
   isNullOrUndefined,
   retry,
   timeoutAt
 } from '@speckle/shared'
 import { randomUUID } from 'crypto'
-import { Logger } from 'pino'
+import { automateLogger, type Logger } from '@/observability/logging'
 import { has, isObjectLike, isEmpty } from 'lodash'
+import { getRequestLogger } from '@/observability/components/express/requestContext'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
 
@@ -51,8 +52,10 @@ const getApiUrl = (
   path?: string,
   options?: Partial<{
     query: Record<string, string[] | string | number | boolean | undefined>
-  }>
+  }> & { logger?: Logger }
 ) => {
+  const logger = options?.logger || getRequestLogger() || automateLogger
+
   const automateUrl = speckleAutomateUrl()
   if (!automateUrl)
     throw new MisconfiguredEnvironmentError(
@@ -70,7 +73,8 @@ const getApiUrl = (
         const urlValue = typeof val === 'object' ? val.join(',') : val.toString()
         url.searchParams.append(key, urlValue)
       } catch {
-        console.log({ val })
+        logger.warn({ automateUrl: val }, 'Failed to parse query param')
+        //ignore
       }
     })
   }
@@ -119,6 +123,7 @@ const invokeRequest = async (params: {
   retry?: boolean
 }) => {
   const { url, method = 'get', body, token, requestId } = params
+  const logger = getRequestLogger() || automateLogger
 
   const response = await retry(
     async () =>
@@ -134,15 +139,18 @@ const invokeRequest = async (params: {
         }).catch((e) => {
           throw new ExecutionEngineNetworkError({ method, url, body }, e)
         }),
-        timeoutAt(20 * 1000, 'Automate Execution Engine API request timed out')
+        timeoutAt(
+          20 * TIME_MS.second,
+          'Automate Execution Engine API request timed out'
+        )
       ]),
     params.retry !== false ? 3 : 1,
     (i, error) => {
-      automateLogger.warn(
+      logger.warn(
         { url, method, err: error },
         'Automate Execution Engine API call failed, retrying...'
       )
-      return i * 1000
+      return i * TIME_MS.second
     }
   )
 
@@ -408,7 +416,8 @@ export const getFunctionFactory =
       : undefined
 
     const url = getApiUrl(`/api/v1/functions/${functionId}`, {
-      query
+      query,
+      logger
     })
 
     return await invokeSafeJsonRequestFactory<GetFunctionResponse>({
@@ -462,7 +471,10 @@ export const getFunctionReleaseFactory =
     const { logger } = deps
     const { functionId, functionReleaseId } = params
     const url = getApiUrl(
-      `/api/v1/functions/${functionId}/versions/${functionReleaseId}`
+      `/api/v1/functions/${functionId}/versions/${functionReleaseId}`,
+      {
+        logger
+      }
     )
 
     const result = await invokeSafeJsonRequestFactory<GetFunctionReleaseResponse>({
@@ -507,7 +519,8 @@ export const getFunctionsFactory =
       query: {
         requireRelease: true,
         ...params.filters
-      }
+      },
+      logger
     })
 
     const authToken = params.auth
@@ -523,39 +536,6 @@ export const getFunctionsFactory =
       url,
       method: 'get',
       token: authToken
-    })
-  }
-
-export type GetPublicFunctionsResponse = {
-  totalCount: number
-  cursor: Nullable<string>
-  items: FunctionWithVersionsSchemaType[]
-}
-
-export const getPublicFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-      functionsWithoutVersions?: boolean
-    }
-  }) => {
-    const { logger } = deps
-    const { query } = params
-    const url = getApiUrl(`/api/v1/functions`, {
-      query: {
-        ...query,
-        featuredFunctionsOnly: true
-      }
-    })
-
-    return await invokeSafeJsonRequestFactory<GetFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'get'
     })
   }
 
@@ -578,40 +558,9 @@ export const getUserFunctionsFactory =
   }) => {
     const { logger } = deps
     const { userId, query, body } = params
-    const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query })
+    const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query, logger })
 
     return await invokeSafeJsonRequestFactory<GetUserFunctionsResponse>({
-      logger
-    })({
-      url,
-      method: 'POST',
-      body,
-      retry: false
-    })
-  }
-
-type GetWorkspaceFunctionsResponse = {
-  functions: FunctionWithVersionsSchemaType[]
-}
-
-export const getWorkspaceFunctionsFactory =
-  (deps: { logger: Logger }) =>
-  async (params: {
-    workspaceId: string
-    query?: {
-      query?: string
-      cursor?: string
-      limit?: number
-    }
-    body: {
-      speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-    }
-  }) => {
-    const { logger } = deps
-    const { workspaceId, query, body } = params
-    const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, { query })
-
-    return await invokeSafeJsonRequestFactory<GetWorkspaceFunctionsResponse>({
       logger
     })({
       url,

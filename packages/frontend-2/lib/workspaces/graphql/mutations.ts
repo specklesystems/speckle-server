@@ -136,3 +136,19 @@ export const denyWorkspaceJoinRequestMutation = graphql(`
     }
   }
 `)
+
+export const requestToJoinWorkspaceMutation = graphql(`
+  mutation RequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`)
+
+export const dismissDiscoverableWorkspaceMutation = graphql(`
+  mutation DismissDiscoverableWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`)

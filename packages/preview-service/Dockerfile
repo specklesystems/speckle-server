@@ -1,9 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
+
 ARG NODE_ENV=production
-
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
-
-ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -35,7 +33,7 @@ COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN yarn workspaces focus -A && yarn
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus -A
 
 # Onyl copy in the relevant source files for the dependencies
 COPY packages/shared ./packages/shared/
@@ -64,7 +62,10 @@ RUN apt-get update && \
     fonts-thai-tlwg=1:0.7.3-1 \
     fonts-kacst=2.01+mry-15 \
     fonts-freefont-ttf=20120503-10 \
-    libxss1=1:1.2.3-1 && \
+    libxss1=1:1.2.3-1 \
+    # libegl1 & libxext6 are required for hardware accelarated rendering to work
+    libegl1=1.6.0-1 \
+    libxext6=2:1.3.4-1+b1 && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -98,7 +99,7 @@ COPY --link --from=build-stage /speckle-server/packages/preview-frontend/dist ./
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 RUN groupadd -g 30000 -r pptruser && \
     useradd -r -g pptruser -G audio,video -u 800 pptruser && \

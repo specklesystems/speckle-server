@@ -1,252 +1,170 @@
 <template>
-  <div>
+  <div class="pb-24">
+    <CommonAlert color="neutral" hide-icon class="mb-6 mt-2">
+      <template #description>
+        The guest role is meant for external collaborators. Guests can access only the
+        specific projects they're invited to, and their email doesn't need to follow any
+        of the allowed email domains that you may have set up. If on a Viewer seat, they
+        can view projects on web and comment. If on an Editor seat, they can contribute
+        to projects if given the permission. They can never create new projects.
+      </template>
+    </CommonAlert>
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
+      v-model:seat-type="seatTypeFilter"
       search-placeholder="Search guests..."
       :workspace="workspace"
       show-invite-button
+      show-seat-filter
     />
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3' },
-        { id: 'company', header: 'Company', classes: 'col-span-3' },
+        { id: 'name', header: 'Name', classes: 'col-span-4' },
+        { id: 'seat', header: 'Seat', classes: 'col-span-2' },
+        { id: 'joined', header: 'Joined', classes: 'col-span-3' },
         { id: 'projects', header: 'Projects', classes: 'col-span-2' },
-        { id: 'actions', header: '', classes: 'col-span-4 flex justify-end' }
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
       :items="guests"
-      :loading="searchResultLoading"
+      :loading="loading"
       :empty-message="
-        search.length
-          ? `No guests found for '${search}'`
-          : 'This workspace has no guests'
+        search.length || seatTypeFilter ? 'No results' : 'This workspace has no guests'
       "
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar hide-tooltip :user="item.user" />
+          <UserAvatar
+            hide-tooltip
+            :user="item.user"
+            light-style
+            class="bg-foundation"
+            no-bg
+          />
           <span class="truncate text-body-xs text-foreground">
             {{ item.user.name }}
           </span>
         </div>
       </template>
-      <template #company="{ item }">
-        <span class="text-body-xs text-foreground">
-          {{ item.user.company ? item.user.company : '-' }}
+      <template #seat="{ item }">
+        <SettingsWorkspacesMembersTableSeatType
+          :seat-type="item.seatType"
+          :role="Roles.Workspace.Guest"
+        />
+      </template>
+      <template #joined="{ item }">
+        <span class="text-foreground-2">
+          {{ formattedFullDate(item.joinDate) }}
         </span>
       </template>
       <template #projects="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
-            {{ item.projectRoles.length }} project{{
-              item.projectRoles.length !== 1 ? 's' : ''
-            }}
-          </CommonBadge>
-        </span>
+        <FormButton
+          v-if="
+            item.projectRoles.length > 0 &&
+            isWorkspaceAdmin &&
+            item.role !== Roles.Workspace.Admin
+          "
+          color="subtle"
+          size="sm"
+          class="!font-normal !text-foreground-2 -ml-2"
+          @click="
+            () => {
+              targetUser = item
+              showProjectPermissionsDialog = true
+            }
+          "
+        >
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </FormButton>
+        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
+          {{ item.projectRoles.length }}
+          {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
+        </div>
       </template>
       <template #actions="{ item }">
-        <LayoutMenu
+        <SettingsWorkspacesMembersActionsMenu
           v-if="isWorkspaceAdmin"
-          v-model:open="showActionsMenu[item.id]"
-          :items="actionItems"
-          size="lg"
-          mount-menu-on-body
-          :menu-position="HorizontalDirection.Left"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
-        >
-          <FormButton
-            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
-            hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="toggleMenu(item.id)"
-          />
-        </LayoutMenu>
+          :target-user="item"
+          :workspace="workspace"
+        />
         <span v-else />
       </template>
     </LayoutTable>
-
-    <SettingsSharedDeleteUserDialog
-      v-model:open="showDeleteUserRoleDialog"
-      title="Remove guest"
-      :name="userToModify?.user.name ?? ''"
-      :workspace="workspace"
-      @remove-user="onRemoveUser"
+    <InfiniteLoading
+      v-if="guests?.length"
+      :settings="{ identifier }"
+      class="py-4"
+      @infinite="onInfiniteLoad"
     />
-
-    <SettingsWorkspacesMembersGuestsPermissionsDialog
-      v-if="userToModify"
-      v-model:open="showGuestsPermissionsDialog"
-      :user="userToModify"
-      :workspace-id="workspace?.id"
-    />
-
-    <SettingsWorkspacesMembersChangeRoleDialog
-      v-model:open="showChangeUserRoleDialog"
-      :workspace-domain-policy-compliant="
-        userToModify?.user.workspaceDomainPolicyCompliant
-      "
-      :current-role="Roles.Workspace.Guest"
-      :workspace="workspace"
-      @update-role="onUpdateRole"
+    <SettingsWorkspacesMembersActionsProjectPermissionsDialog
+      v-model:open="showProjectPermissionsDialog"
+      :user="targetUser"
+      :workspace-id="workspace?.id || ''"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type {
-  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
-  WorkspaceCollaborator
+import {
+  WorkspaceSeatType,
+  type SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
-import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {
-    id
-    role
-    user {
-      id
-      avatar
-      name
-      company
-    }
-    projectRoles {
-      role
-      project {
-        id
-        name
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {
-    id
-    ...SettingsWorkspacesMembersTableHeader_Workspace
-    ...SettingsSharedDeleteUserDialog_Workspace
-    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
-    team(limit: 250) {
-      items {
-        id
-        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator
-      }
-    }
-  }
-`)
-
-enum ActionTypes {
-  ChangeProjectPermissions = 'change-project-permissions',
-  RemoveMember = 'remove-member',
-  ChangeRole = 'change-role'
-}
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersGuestsTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
-const updateUserRole = useWorkspaceUpdateRole()
-
 const search = ref('')
-const showActionsMenu = ref<Record<string, boolean>>({})
-const showDeleteUserRoleDialog = ref(false)
-const showGuestsPermissionsDialog = ref(false)
-const userIdToModify = ref<string | null>(null)
-const showChangeUserRoleDialog = ref(false)
-
-const userToModify = computed(
-  () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
+const seatTypeFilter = ref<WorkspaceSeatType>()
+const showProjectPermissionsDialog = ref(false)
+const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undefined>(
+  undefined
 )
 
-const { result: searchResult, loading: searchResultLoading } = useQuery(
-  settingsWorkspacesMembersSearchQuery,
-  () => ({
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result, loading }
+} = usePaginatedQuery({
+  query: settingsWorkspacesMembersSearchQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 10,
+    slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: [Roles.Workspace.Guest]
+      roles: [Roles.Workspace.Guest],
+      seatType: seatTypeFilter.value
     },
-    slug: props.workspaceSlug
+    cursor: null as Nullable<string>
+  })),
+  resolveKey: (vars) => [vars.query || '', vars.filter?.seatType || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.team,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
   }),
-  () => ({
-    enabled: !!search.value.length
-  })
-)
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
+
+const workspace = computed(() => result.value?.workspaceBySlug)
 
 const guests = computed(() => {
-  const guestArray = search.value.length
-    ? searchResult.value?.workspaceBySlug?.team.items
-    : props.workspace?.team.items
+  const guestArray = workspace.value?.team.items
 
-  return (guestArray || []).filter(
-    (item): item is WorkspaceCollaborator => item.role === Roles.Workspace.Guest
-  )
+  return (guestArray || [])
+    .map((g) => ({ ...g, seatType: g.seatType || WorkspaceSeatType.Viewer }))
+    .filter((item) => item.role === Roles.Workspace.Guest)
+    .filter((item) => !seatTypeFilter.value || item.seatType === seatTypeFilter.value)
 })
 
-const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
-
-const actionItems = computed(() => {
-  const items: LayoutMenuItem[][] = [
-    [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
-  ]
-
-  if (isWorkspaceAdmin.value) {
-    items.unshift([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
-  }
-
-  if (guests.value.find((guest) => guest.projectRoles.length)) {
-    items.unshift([
-      {
-        title: 'Change project permissions...',
-        id: ActionTypes.ChangeProjectPermissions
-      }
-    ])
-  }
-
-  return items
-})
-
-const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator) => {
-  userIdToModify.value = user.id
-
-  if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
-    showGuestsPermissionsDialog.value = true
-  }
-  if (actionItem.id === ActionTypes.ChangeRole) {
-    showChangeUserRoleDialog.value = true
-  }
-  if (actionItem.id === ActionTypes.RemoveMember) {
-    showDeleteUserRoleDialog.value = true
-  }
-}
-
-const onRemoveUser = async () => {
-  if (!userIdToModify.value || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userIdToModify.value,
-    role: null,
-    workspaceId: props.workspace.id
-  })
-}
-
-const toggleMenu = (itemId: string) => {
-  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
-}
-
-const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
-
-  await updateUserRole({
-    userId: userToModify.value.id,
-    role: newRoleValue,
-    workspaceId: props.workspace.id
-  })
-}
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 </script>

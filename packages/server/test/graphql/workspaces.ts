@@ -10,6 +10,8 @@ export const workspaceFragment = gql`
     updatedAt
     logo
     readOnly
+    discoverabilityEnabled
+    role
   }
 `
 
@@ -101,7 +103,9 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         description
         team {
           items {
-            avatar
+            user {
+              avatar
+            }
           }
           totalCount
           cursor
@@ -229,9 +233,14 @@ export const leaveWorkspaceMutation = gql`
 `
 
 export const getProjectWorkspaceQuery = gql`
-  query ActiveUserProjectsWorkspace {
+  query ActiveUserProjectsWorkspace(
+    $limit: Int
+    $cursor: String
+    $filter: UserProjectsFilter
+  ) {
     activeUser {
-      projects {
+      projects(filter: $filter, limit: $limit, cursor: $cursor) {
+        totalCount
         items {
           id
           workspace {

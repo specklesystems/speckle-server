@@ -4,7 +4,6 @@ import { graphql } from '~/lib/common/generated/gql/gql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
   ProjectPageTeamInternals_ProjectFragment,
-  ProjectPageTeamInternals_WorkspaceFragment,
   ProjectsPageTeamDialogManagePermissions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
@@ -25,25 +24,12 @@ graphql(`
     }
     team {
       role
+      seatType
+      workspaceRole
       user {
         id
         role
         ...LimitedUserAvatar
-      }
-    }
-  }
-`)
-
-graphql(`
-  fragment ProjectPageTeamInternals_Workspace on Workspace {
-    id
-    team {
-      items {
-        id
-        role
-        user {
-          id
-        }
       }
     }
   }
@@ -68,8 +54,7 @@ export function useTeamManagePermissionsInternals(
 }
 
 export function useTeamInternals(
-  projectData: ComputedRef<ProjectPageTeamInternals_ProjectFragment | undefined>,
-  workspace?: Ref<ProjectPageTeamInternals_WorkspaceFragment | undefined>
+  projectData: ComputedRef<ProjectPageTeamInternals_ProjectFragment | undefined>
 ) {
   const { isOwner, activeUser, isServerGuest } =
     useTeamManagePermissionsInternals(projectData)
@@ -85,15 +70,12 @@ export function useTeamInternals(
         role: invitedUser.role,
         inviteId: invitedUser.inviteId,
         serverRole: (invitedUser.user?.role || null) as Nullable<ServerRoles>,
-        workspaceRole: null
+        workspaceRole: null,
+        seatType: null
       })
     }
 
     for (const collaborator of projectData.value?.team ?? []) {
-      const workspaceRole = workspace?.value?.team?.items.find(
-        (role) => role.user.id === collaborator.user.id
-      )?.role
-
       results.push({
         id: collaborator.user.id,
         title: collaborator.user.name,
@@ -101,7 +83,8 @@ export function useTeamInternals(
         role: collaborator.role,
         inviteId: null,
         serverRole: collaborator.user.role as ServerRoles,
-        workspaceRole: workspaceRole as WorkspaceRoles
+        workspaceRole: collaborator.workspaceRole as WorkspaceRoles,
+        seatType: collaborator.seatType
       })
     }
 

@@ -44,7 +44,11 @@ import {
   SelectionExtensionOptions,
   DefaultSelectionExtensionOptions
 } from './modules/extensions/SelectionExtension.js'
-import { CameraController } from './modules/extensions/CameraController.js'
+import {
+  CameraController,
+  CameraControllerOptions,
+  NearPlaneCalculation
+} from './modules/extensions/CameraController.js'
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
@@ -93,16 +97,12 @@ import { PointBatch } from './modules/batching/PointBatch.js'
 import TextBatch from './modules/batching/TextBatch.js'
 import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
 import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
-import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
-import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
+import { SolidViewPipeline } from './modules/pipeline/Pipelines/SolidViewPipeline.js'
 import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
 import SpeckleRenderer from './modules/SpeckleRenderer.js'
-import { MRTEdgesPipeline } from './modules/pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
 import { RenderTree } from './modules/tree/RenderTree.js'
 import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
-import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
-import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
 import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
 import {
   BaseGPass,
@@ -112,17 +112,31 @@ import {
   PassOptions,
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
-import { Pipeline } from './modules/pipeline/Pipelines/Pipeline.js'
+import {
+  DefaultPipelineOptions,
+  Pipeline
+} from './modules/pipeline/Pipelines/Pipeline.js'
 import { ProgressivePipeline } from './modules/pipeline/Pipelines/ProgressivePipeline.js'
-import { DepthPass } from './modules/pipeline/Passes/DepthPass.js'
+import { DepthPass, DepthPassOptions } from './modules/pipeline/Passes/DepthPass.js'
 import { GeometryPass } from './modules/pipeline/Passes/GeometryPass.js'
 import { NormalsPass } from './modules/pipeline/Passes/NormalsPass.js'
-import { InputType, OutputPass } from './modules/pipeline/Passes/OutputPass.js'
-import { ViewportPass } from './modules/pipeline/Passes/ViewportPass.js'
-import { BlendPass } from './modules/pipeline/Passes/BlendPass.js'
+import {
+  InputType,
+  OutputPass,
+  OutputPassOptions
+} from './modules/pipeline/Passes/OutputPass.js'
+import {
+  ViewportPass,
+  ViewportPassOptions
+} from './modules/pipeline/Passes/ViewportPass.js'
+import { BlendPass, BlendPassOptions } from './modules/pipeline/Passes/BlendPass.js'
 import { DepthNormalPass } from './modules/pipeline/Passes/DepthNormalPass.js'
-import { BasitPass } from './modules/pipeline/Passes/BasitPass.js'
-import { ProgressiveAOPass } from './modules/pipeline/Passes/ProgressiveAOPass.js'
+import { ShadedPass } from './modules/pipeline/Passes/ShadedPass.js'
+import {
+  DefaultProgressiveAOPassOptions,
+  ProgressiveAOPass,
+  ProgressiveAOPassOptions
+} from './modules/pipeline/Passes/ProgressiveAOPass.js'
 import { TAAPass } from './modules/pipeline/Passes/TAAPass.js'
 import {
   FilterMaterial,
@@ -133,17 +147,28 @@ import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLo
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
-import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
 import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
-import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
 import SpeckleMesh from './modules/objects/SpeckleMesh.js'
 import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
+import { WebXrViewer } from './modules/WebXrViewer.js'
+import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
+import {
+  DefaultEdgesPassOptions,
+  EdgesPass,
+  EdgesPassOptions
+} from './modules/pipeline/Passes/EdgesPass.js'
+import {
+  DefaultEdgesPipelineOptions,
+  EdgesPipeline
+} from './modules/pipeline/Pipelines/EdgesPipeline.js'
 
 export {
   Viewer,
   LegacyViewer,
+  WebXrViewer,
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
@@ -207,12 +232,21 @@ export {
   ViewportPass,
   BlendPass,
   DepthNormalPass,
-  BasitPass,
+  ShadedPass as BasitPass,
   ProgressiveAOPass,
   TAAPass,
   StencilPass,
   StencilMaskPass,
+  EdgesPass,
   PassOptions,
+  EdgesPassOptions as EdgePassOptions,
+  BlendPassOptions,
+  DepthPassOptions,
+  OutputPassOptions,
+  ProgressiveAOPassOptions,
+  ViewportPassOptions,
+  DefaultEdgesPassOptions,
+  DefaultProgressiveAOPassOptions,
   ClearFlags,
   ObjectVisibility,
   InputType,
@@ -220,14 +254,13 @@ export {
   ProgressivePipeline,
   DefaultPipeline,
   EdgesPipeline,
-  ShadedViewPipeline,
+  SolidViewPipeline,
   PenViewPipeline,
   ArcticViewPipeline,
   TAAPipeline,
-  MRTEdgesPipeline,
-  MRTShadedViewPipeline,
-  MRTPenViewPipeline,
-  BasitPipeline,
+  ShadedViewPipeline,
+  DefaultPipelineOptions,
+  DefaultEdgesPipelineOptions,
   ViewModes,
   ViewMode,
   FilterMaterial,
@@ -239,7 +272,9 @@ export {
   CONTAINED,
   ViewModeEvent,
   SpeckleMesh,
-  SpeckleInstancedMesh
+  SpeckleInstancedMesh,
+  CameraControllerOptions,
+  NearPlaneCalculation
 }
 
 export type {

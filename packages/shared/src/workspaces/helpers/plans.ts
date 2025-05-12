@@ -1,47 +1,18 @@
-import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
-
-/**
- * PLANS
- */
-
-export const TrialEnabledPaidWorkspacePlans = <const>{
-  Starter: 'starter'
-}
-
-export type TrialEnabledPaidWorkspacePlans =
-  (typeof TrialEnabledPaidWorkspacePlans)[keyof typeof TrialEnabledPaidWorkspacePlans]
-
-export const PaidWorkspacePlansOld = <const>{
-  ...TrialEnabledPaidWorkspacePlans,
-  Plus: 'plus',
-  Business: 'business'
-}
-
-export type PaidWorkspacePlansOld =
-  (typeof PaidWorkspacePlansOld)[keyof typeof PaidWorkspacePlansOld]
-
-export const PaidWorkspacePlansNew = <const>{
-  Team: 'team',
-  Pro: 'pro'
-}
-
-export type PaidWorkspacePlansNew =
-  (typeof PaidWorkspacePlansNew)[keyof typeof PaidWorkspacePlansNew]
+import { throwUncoveredError } from '../../core/helpers/error.js'
 
 export const PaidWorkspacePlans = <const>{
-  ...PaidWorkspacePlansOld,
-  ...PaidWorkspacePlansNew
+  Team: 'team', // actually 'Starter'
+  TeamUnlimited: 'teamUnlimited',
+  Pro: 'pro', // actually 'Business'
+  ProUnlimited: 'proUnlimited'
 }
 
 export type PaidWorkspacePlans =
   (typeof PaidWorkspacePlans)[keyof typeof PaidWorkspacePlans]
 
 export const UnpaidWorkspacePlans = <const>{
-  // Old
-  StarterInvoiced: 'starterInvoiced',
-  PlusInvoiced: 'plusInvoiced',
-  BusinessInvoiced: 'businessInvoiced',
-  // New
+  TeamUnlimitedInvoiced: 'teamUnlimitedInvoiced',
+  ProUnlimitedInvoiced: 'proUnlimitedInvoiced',
   Unlimited: 'unlimited',
   Academia: 'academia',
   Free: 'free'
@@ -57,19 +28,63 @@ export const WorkspacePlans = <const>{
 
 export type WorkspacePlans = (typeof WorkspacePlans)[keyof typeof WorkspacePlans]
 
-// TODO: Remove this post workspace migration
-export const WorkspaceGuestSeatType = 'guest'
-export type WorkspaceGuestSeatType = typeof WorkspaceGuestSeatType
-
-// TODO: Remove this post workspace migration, only needed temporarily to differiante between old and new
-export const isNewWorkspacePlan = (
-  plan: MaybeNullOrUndefined<WorkspacePlans>
+export const doesPlanIncludeUnlimitedProjectsAddon = (
+  plan: WorkspacePlans
 ): boolean => {
-  return (
-    plan === PaidWorkspacePlansNew.Team ||
-    plan === PaidWorkspacePlansNew.Pro ||
-    plan === UnpaidWorkspacePlans.Free
-  )
+  switch (plan) {
+    case 'teamUnlimited':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'team':
+    case 'pro':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isSelfServeAvailablePlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'free':
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
+}
+
+export const isPaidPlan = (plan: WorkspacePlans): boolean => {
+  switch (plan) {
+    case 'team':
+    case 'teamUnlimited':
+    case 'pro':
+    case 'proUnlimited':
+      return true
+    case 'free':
+    case 'teamUnlimitedInvoiced':
+    case 'proUnlimitedInvoiced':
+    case 'unlimited':
+    case 'academia':
+      return false
+
+    default:
+      throwUncoveredError(plan)
+  }
 }
 
 /**
@@ -105,19 +120,39 @@ export const PaidWorkspacePlanStatuses = <const>{
 export type PaidWorkspacePlanStatuses =
   (typeof PaidWorkspacePlanStatuses)[keyof typeof PaidWorkspacePlanStatuses]
 
-export const TrialWorkspacePlanStatuses = <const>{
-  Trial: 'trial',
-  Expired: 'expired'
-}
-
-export type TrialWorkspacePlanStatuses =
-  (typeof TrialWorkspacePlanStatuses)[keyof typeof TrialWorkspacePlanStatuses]
-
 export const WorkspacePlanStatuses = <const>{
   ...PaidWorkspacePlanStatuses,
-  ...TrialWorkspacePlanStatuses,
   ...UnpaidWorkspacePlanStatuses
 }
 
 export type WorkspacePlanStatuses =
   (typeof WorkspacePlanStatuses)[keyof typeof WorkspacePlanStatuses]
+
+type BaseWorkspacePlan = {
+  workspaceId: string
+  createdAt: Date
+}
+
+export type PaidWorkspacePlan = BaseWorkspacePlan & {
+  name: PaidWorkspacePlans
+  status: PaidWorkspacePlanStatuses
+}
+
+export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
+  name: UnpaidWorkspacePlans
+  status: UnpaidWorkspacePlanStatuses
+}
+export type WorkspacePlan = PaidWorkspacePlan | UnpaidWorkspacePlan
+
+export const isWorkspacePlanStatusReadOnly = (status: WorkspacePlan['status']) => {
+  switch (status) {
+    case 'cancelationScheduled':
+    case 'valid':
+    case 'paymentFailed':
+      return false
+    case 'canceled':
+      return true
+    default:
+      throwUncoveredError(status)
+  }
+}

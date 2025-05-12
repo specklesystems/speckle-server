@@ -20,8 +20,13 @@ const resolvers: Resolvers = FF_GATEKEEPER_MODULE_ENABLED
           throw new GatekeeperModuleDisabledError()
         }
       },
+      ProjectCollaborator: {
+        seatType: () => {
+          throw new GatekeeperModuleDisabledError()
+        }
+      },
       ServerWorkspacesInfo: {
-        planPrices: () => []
+        planPrices: () => null
       }
     }
 

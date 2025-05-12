@@ -17,7 +17,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
-import { Roles } from '@speckle/shared'
+import { Roles, TIME_MS, WorkspacePlans } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useNavigation } from '~/lib/navigation/composables/navigation'
 
@@ -28,13 +28,15 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: null
+  region: null,
+  enableDomainDiscoverabilityForDomain: undefined
 }
 
 const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
   WizardSteps.Pricing,
+  WizardSteps.AddOns,
   WizardSteps.Region
 ] as const
 
@@ -88,10 +90,26 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    const shouldComplete =
-      wizardState.value.currentStepIndex === steps.length - 1 ||
-      (wizardState.value.currentStep === WizardSteps.Pricing &&
-        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
+    let shouldComplete = false
+
+    if (wizardState.value.currentStep === WizardSteps.Pricing) {
+      if (state.value.plan === WorkspacePlans.Free) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.AddOns) {
+      if (
+        state.value.plan === WorkspacePlans.Team ||
+        state.value.plan === WorkspacePlans.TeamUnlimited
+      ) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.Region) {
+      shouldComplete = true
+    }
 
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
@@ -120,7 +138,7 @@ export const useWorkspacesWizard = () => {
     mixpanel.stop_session_recording()
 
     const needsCheckout =
-      wizardState.value.state.plan !== PaidWorkspacePlans.Starter ||
+      wizardState.value.state.plan !== WorkspacePlans.Free ||
       wizardState.value.state.billingInterval === BillingInterval.Yearly
     const workspaceId = ref(wizardState.value.state.id)
     const isNewWorkspace = !workspaceId.value
@@ -129,7 +147,9 @@ export const useWorkspacesWizard = () => {
       const newWorkspaceResult = await createWorkspace(
         {
           name: wizardState.value.state.name,
-          slug: wizardState.value.state.slug
+          slug: wizardState.value.state.slug,
+          enableDomainDiscoverabilityForDomain:
+            wizardState.value.state.enableDomainDiscoverabilityForDomain || null
         },
         { navigateOnSuccess: false, hideNotifications: true }
       )
@@ -148,7 +168,7 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            wizardState.value.state.plan === PaidWorkspacePlans.Business
+            wizardState.value.state.plan === PaidWorkspacePlans.Pro
               ? wizardState.value.state.region
               : null
         },
@@ -181,10 +201,10 @@ export const useWorkspacesWizard = () => {
       })
     } else {
       // Keep loading state for a second
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       mutateActiveWorkspaceSlug(wizardState.value.state.slug)
       await router.push(workspaceRoute(wizardState.value.state.slug))
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       isLoading.value = false
       resetWizardState()
     }
@@ -193,7 +213,11 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
+    if (
+      state.region?.key &&
+      (state.plan === PaidWorkspacePlans.Pro ||
+        state.plan === PaidWorkspacePlans.ProUnlimited)
+    ) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key
@@ -263,7 +287,7 @@ export const useWorkspacesWizard = () => {
     }
 
     if (
-      state.plan === PaidWorkspacePlans.Starter &&
+      state.plan === WorkspacePlans.Free &&
       state.billingInterval === BillingInterval.Monthly
     ) {
       triggerNotification({

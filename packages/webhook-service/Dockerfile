@@ -15,7 +15,7 @@ COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-aug
 COPY packages/webhook-service/package.json ./packages/webhook-service/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN yarn workspaces focus --all
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --all
 
 COPY packages/shared ./packages/shared/
 COPY packages/webhook-service/src ./packages/webhook-service/
@@ -56,7 +56,7 @@ COPY packages/webhook-service/package.json ./packages/webhook-service/
 COPY packages/shared/package.json ./packages/shared/
 
 WORKDIR /speckle-server/packages/webhook-service
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:ed26b3ab750110c51d9dbdfd6c697561dc40a01c296460c3494d47b550ef4126 AS production-stage
 ARG NODE_ENV

@@ -80,10 +80,11 @@
                 v-if="!hideCloser"
                 color="subtle"
                 size="sm"
-                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0"
+                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0 text-foreground-2"
+                :class="closerClasses"
                 @click="open = false"
               >
-                <XMarkIcon class="h-6 w-6 text-foreground-2" />
+                <XMarkIcon class="h-6 w-6" />
               </FormButton>
               <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
@@ -97,16 +98,24 @@
                 }"
               >
                 <template v-if="buttons">
-                  <FormButton
+                  <div
                     v-for="(button, index) in buttons"
                     :key="button.id || index"
-                    v-bind="button.props || {}"
-                    :disabled="button.props?.disabled || button.disabled"
-                    :submit="button.props?.submit || button.submit"
-                    @click="($event) => button.onClick?.($event)"
+                    v-tippy="
+                      button.props?.disabled || button.disabled
+                        ? button.disabledMessage
+                        : undefined
+                    "
                   >
-                    {{ button.text }}
-                  </FormButton>
+                    <FormButton
+                      v-bind="button.props || {}"
+                      :disabled="button.props?.disabled || button.disabled"
+                      :submit="button.props?.submit || button.submit"
+                      @click="($event) => button.onClick?.($event)"
+                    >
+                      {{ button.text }}
+                    </FormButton>
+                  </div>
                 </template>
                 <template v-else>
                   <slot name="buttons" />
@@ -159,6 +168,7 @@ const props = withDefaults(
      */
     onSubmit?: (e: SubmitEvent) => void
     isTransparent?: boolean
+    closerClasses?: string
   }>(),
   {
     fullscreen: 'mobile'

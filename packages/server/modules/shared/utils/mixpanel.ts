@@ -1,5 +1,5 @@
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel.js'
+import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
 import {
   enableMixpanel,
   getServerOrigin,
@@ -40,6 +40,8 @@ export function initialize() {
 export function getClient() {
   return client
 }
+
+export const getMixpanelClient = getClient
 
 /**
  * Mixpanel tracking helper. An abstraction layer over the client that makes it a bit nicer to work with.

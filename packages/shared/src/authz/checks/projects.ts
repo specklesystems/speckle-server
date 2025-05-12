@@ -1,43 +1,23 @@
-import { StreamRoles, throwUncoveredError } from '../../core/index.js'
-import { ProjectNotFoundError } from '../domain/errors.js'
-import { AuthCheckContext } from '../domain/loaders.js'
-import { isMinimumProjectRole } from '../domain/projects/logic.js'
-import { ProjectVisibility } from '../domain/projects/types.js'
+import { StreamRoles } from '../../core/index.js'
+import { AuthPolicyCheck } from '../domain/policies.js'
+import { isMinimumProjectRole } from '../domain/logic/roles.js'
+import { ProjectContext, UserContext } from '../domain/context.js'
 
-export const requireExactProjectVisibilityFactory =
-  ({ loaders }: AuthCheckContext<'getProject'>) =>
-  async (args: {
-    projectVisibility: ProjectVisibility
-    projectId: string
-  }): Promise<boolean> => {
-    const { projectId, projectVisibility } = args
-
-    const project = await loaders.getProject({ projectId })
-    if (!project) throw new ProjectNotFoundError({ projectId })
-
-    switch (projectVisibility) {
-      case 'linkShareable':
-        return project.isDiscoverable === true
-      case 'public':
-        return project.isPublic === true
-      case 'private':
-        return project.isPublic !== true && project.isDiscoverable !== true
-      default:
-        throwUncoveredError(projectVisibility)
-    }
+export const hasMinimumProjectRole: AuthPolicyCheck<
+  'getProjectRole',
+  UserContext & ProjectContext & { role: StreamRoles }
+> =
+  (loaders) =>
+  async ({ userId, projectId, role: requiredProjectRole }) => {
+    const userProjectRole = await loaders.getProjectRole({ userId, projectId })
+    if (!userProjectRole) return false
+    return isMinimumProjectRole(userProjectRole, requiredProjectRole)
   }
 
-export const requireMinimumProjectRoleFactory =
-  ({ loaders }: AuthCheckContext<'getProjectRole'>) =>
-  async (args: {
-    userId: string
-    projectId: string
-    role: StreamRoles
-  }): Promise<boolean> => {
-    const { userId, projectId, role: requiredProjectRole } = args
-
-    const userProjectRole = await loaders.getProjectRole({ userId, projectId })
-    return userProjectRole
-      ? isMinimumProjectRole(userProjectRole, requiredProjectRole)
-      : false
+export const isPubliclyReadableProject: AuthPolicyCheck<'getProject', ProjectContext> =
+  (loaders) =>
+  async ({ projectId }) => {
+    const project = await loaders.getProject({ projectId })
+    if (!project) return false
+    return project.isPublic || project.isDiscoverable
   }

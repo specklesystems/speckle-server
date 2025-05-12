@@ -1,9 +1,7 @@
 ARG NODE_ENV=production
-ARG SPECKLE_SERVER_VERSION=custom
 
 FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
 ARG NODE_ENV
-ARG SPECKLE_SERVER_VERSION
 WORKDIR /speckle-server
 
 # install wait
@@ -36,7 +34,7 @@ COPY packages/server/package.json ./packages/server/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/objectloader/package.json ./packages/objectloader/
 
-RUN yarn workspaces focus --all
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --all
 
 # build shared libraries
 COPY packages/server ./packages/server/
@@ -62,14 +60,9 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/objectloader/package.json ./packages/objectloader/
 
 WORKDIR /speckle-server/packages/server
-RUN yarn workspaces focus --production
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs22-debian12@sha256:9f0d01f30f6899ac92abb0cba7d394320167f426687eaafd90f2293c97534ee6 AS production-stage
-ARG NODE_ENV
-ARG SPECKLE_SERVER_VERSION
-
-ENV NODE_ENV=${NODE_ENV} \
-    SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 
 COPY --link --from=build-stage /speckle-server/wait /wait
 COPY --link --from=build-stage /speckle-server/tini /tini
@@ -87,6 +80,12 @@ COPY --link --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --link --from=build-stage /speckle-server/packages/server/bin ./bin
 # Copy only if exists https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile/46801962#46801962
 COPY --link --from=dependency-stage /speckle-server/packages/server/node_module[s] ./node_modules
+
+# Only for docker compose version, optimized for caching
+ARG SPECKLE_SERVER_VERSION=custom
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV} \
+  SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
 ENTRYPOINT ["/nodejs/bin/node"]
 CMD ["bin/www"]

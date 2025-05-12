@@ -7,7 +7,7 @@ export const workspaceEventNamespace = 'workspace' as const
 const eventPrefix = `${workspaceEventNamespace}.` as const
 
 export const WorkspaceEvents = {
-  Authorized: `${eventPrefix}authorized`,
+  Authorizing: `${eventPrefix}authorizing`,
   Created: `${eventPrefix}created`,
   Updated: `${eventPrefix}updated`,
   Deleted: `${eventPrefix}deleted`,
@@ -30,11 +30,12 @@ type WorkspaceCreatedPayload = {
 type WorkspaceUpdatedPayload = { workspace: Workspace }
 type WorkspaceRoleDeletedPayload = {
   acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+  updatedByUserId: string
 }
 type WorkspaceRoleUpdatedPayload = {
   acl: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
-  flags?: { skipProjectRoleUpdatesFor: string[] }
   updatedByUserId: string
+  flags?: { skipProjectRoleUpdatesFor: string[] }
 }
 type WorkspaceSeatUpdatedPayload = {
   seat: WorkspaceSeat
@@ -47,7 +48,7 @@ type WorkspaceJoinedFromDiscoveryPayload = {
 }
 
 export type WorkspaceEventsPayloads = {
-  [WorkspaceEvents.Authorized]: WorkspaceAuthorizedPayload
+  [WorkspaceEvents.Authorizing]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
   [WorkspaceEvents.Deleted]: { workspaceId: string }

@@ -1,3 +1,4 @@
+{{- if .Values.frontend_2.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,12 +35,14 @@ spec:
             protocol: TCP
 
         resources:
+          {{- with .Values.frontend_2.requests }}
           requests:
-            cpu: {{ .Values.frontend_2.requests.cpu }}
-            memory: {{ .Values.frontend_2.requests.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.frontend_2.limits }}
           limits:
-            cpu: {{ .Values.frontend_2.limits.cpu }}
-            memory: {{ .Values.frontend_2.limits.memory }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -142,9 +145,14 @@ spec:
             value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLANS_ENABLED
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
+          {{- end }}
+          {{- with .Values.frontend_2.additionalEnvVars }}
+          {{- toYaml . | nindent 10}}
           {{- end }}
 
       priorityClassName: high-priority
@@ -162,4 +170,11 @@ spec:
       {{- end }}
       {{- if .Values.frontend_2.serviceAccount.create }}
       serviceAccountName: {{ include "frontend_2.name" $ }}
+      {{- else }}
+      {{- /* NOTE: If there is a service account, Kubernetes adds the imagePullSecrets to Pods automatically. */}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- end }}
+{{- end }}

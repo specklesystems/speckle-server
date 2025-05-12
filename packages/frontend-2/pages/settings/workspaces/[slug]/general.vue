@@ -145,11 +145,10 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { Roles } from '@speckle/shared'
+import { Roles, WorkspacePlans } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
-import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 
 graphql(`
@@ -217,21 +216,21 @@ const canDeleteWorkspace = computed(
     !needsSsoLogin.value &&
     (!isBillingIntegrationEnabled ||
       !(
-        (
-          [
-            WorkspacePlanStatuses.Valid,
-            WorkspacePlanStatuses.PaymentFailed,
-            WorkspacePlanStatuses.CancelationScheduled
-          ] as string[]
-        ).includes(
-          workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
-        ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
-      ))
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ] as string[]
+      ).includes(
+        workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
+      ) ||
+      workspaceResult.value?.workspaceBySlug?.plan?.name === WorkspacePlans.Free)
 )
 const deleteWorkspaceTooltip = computed(() => {
   if (needsSsoLogin.value)
     return 'You cannot delete a workspace that requires SSO without an active session'
-  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!canDeleteWorkspace.value)
+    return 'You cannot delete a workspace with an active plan. Please cancel your plan before deleting.'
   if (!isAdmin.value) return 'Only admins can delete workspaces'
   return undefined
 })

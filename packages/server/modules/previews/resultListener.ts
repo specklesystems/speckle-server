@@ -3,13 +3,14 @@ import { MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { PreviewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
+import { PreviewResultPayload } from '@speckle/shared/workers/previews'
 import { throwUncoveredError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import crypto from 'crypto'
 import { StorePreview, UpsertObjectPreview } from '@/modules/previews/domain/operations'
 import { joinImages } from 'join-images'
 import { GetObjectCommitsWithStreamIds } from '@/modules/core/domain/commits/operations'
+import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 
@@ -70,13 +71,14 @@ export const consumePreviewResultFactory =
   }) => {
     const streamId = projectId
     const lastUpdate = new Date()
-    const priority = 0
-    const previewStatus = 2
+    const priority = PreviewPriority.LOW
     const log = logger.child({
       jobId: previewResult.jobId,
       status: previewResult.status,
       durationSeconds: previewResult.result.durationSeconds,
-      projectId: streamId
+      projectId: streamId,
+      streamId, // for legacy reasons
+      objectId
     })
 
     const previewMessage =
@@ -84,7 +86,7 @@ export const consumePreviewResultFactory =
 
     switch (previewResult.status) {
       case 'error':
-        log.error(previewMessage)
+        log.error({ reason: previewResult.reason }, previewMessage)
         await upsertObjectPreview({
           objectPreview: {
             objectId,
@@ -92,7 +94,7 @@ export const consumePreviewResultFactory =
             lastUpdate,
             preview: { err: previewResult.reason },
             priority,
-            previewStatus
+            previewStatus: PreviewStatus.ERROR
           }
         })
         break
@@ -141,7 +143,7 @@ export const consumePreviewResultFactory =
             lastUpdate,
             preview,
             priority,
-            previewStatus
+            previewStatus: PreviewStatus.DONE
           }
         })
         const commits = await getObjectCommitsWithStreamIds([objectId], {

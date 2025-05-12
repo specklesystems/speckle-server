@@ -1,11 +1,23 @@
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
+  ExtendedInvite,
   InviteResourceTarget,
   InviteResourceTargetType,
   PrimaryInviteResourceTarget,
+  ProjectInviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+
+/**
+ * Then looking for Workspace target invites, we also return workspace project invites, which are implicitly
+ * workspace invites
+ */
+type ImplicitTarget<Target extends InviteResourceTarget = InviteResourceTarget> =
+  Target['resourceType'] extends typeof WorkspaceInviteResourceType
+    ? Target | ProjectInviteResourceTarget
+    : Target
 
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
@@ -46,42 +58,35 @@ export type QueryServerInvites = (
 ) => Promise<ServerInviteRecord[]>
 
 export type QueryAllUserResourceInvites = <
-  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
-  RoleType extends string = string
+  Target extends InviteResourceTarget = InviteResourceTarget
 >(params: {
   userId: string
-  resourceType: TargetType
-}) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
+  resourceType: Target['resourceType']
+}) => Promise<ServerInviteRecord<ImplicitTarget<Target>>[]>
 
 export type QueryAllResourceInvites = <
-  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
-  RoleType extends string = string
+  Target extends InviteResourceTarget = InviteResourceTarget
 >(
-  filter: Pick<
-    InviteResourceTarget<TargetType, RoleType>,
-    'resourceId' | 'resourceType'
-  > & { search?: string }
-) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
+  filter: Pick<Target, 'resourceId' | 'resourceType'> & { search?: string }
+) => Promise<ServerInviteRecord<ImplicitTarget<Target>>[]>
 
+/**
+ * Only deletes explicit invites
+ */
 export type DeleteAllResourceInvites = <
-  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
-  RoleType extends string = string
+  Target extends InviteResourceTarget = InviteResourceTarget
 >(
-  filter: Pick<
-    InviteResourceTarget<TargetType, RoleType>,
-    'resourceId' | 'resourceType'
-  >
+  filter: Pick<Target, 'resourceId' | 'resourceType'>
 ) => Promise<boolean>
 
 export type FindInvite = <
-  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
-  RoleType extends string = string
+  Target extends InviteResourceTarget = InviteResourceTarget
 >(params: {
   inviteId?: string
   token?: string
   target?: string
-  resourceFilter?: ServerInviteResourceFilter<TargetType, RoleType>
-}) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>> | null>
+  resourceFilter?: ServerInviteResourceFilter<Target>
+}) => Promise<ExtendedInvite<ImplicitTarget<Target>> | null>
 
 export type FindInviteByToken = (params: {
   token: string
@@ -89,6 +94,9 @@ export type FindInviteByToken = (params: {
 
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
 
+/**
+ * Only deletes explicit invites
+ */
 export type DeleteInvitesByTarget = (
   targets: string | string[],
   resourceType: InviteResourceTargetType,

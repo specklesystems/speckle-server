@@ -26,6 +26,7 @@ import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
 import { SetOptional } from 'type-fest'
 import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -106,6 +107,9 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
 }
 export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
+export type GetProjectWorkspace = (args: {
+  projectId: string
+}) => Promise<Workspace | null>
 
 /** Workspace Roles */
 
@@ -123,6 +127,10 @@ export type GetWorkspaceCollaboratorsArgs = {
      */
     search?: string
     seatType?: WorkspaceSeatType
+    /**
+     * Optionally filter by user id
+     */
+    excludeUserIds?: string[]
   }
 }
 
@@ -179,16 +187,25 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+export type GetWorkspacesRolesForUsers = (
+  reqs: Array<{
+    userId: string
+    workspaceId: string
+  }>
+) => Promise<{
+  [workspaceId: string]:
+    | {
+        [userId: string]: WorkspaceAcl | undefined
+      }
+    | undefined
+}>
+
 /** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Service-level change with protection against invalid role changes */
 export type UpdateWorkspaceRole = (
   args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
-    /**
-     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
-     */
-    skipProjectRoleUpdatesFor?: string[]
     /**
      * Only add or upgrade role, prevent downgrades
      */
@@ -220,6 +237,20 @@ export type GetWorkspaceSeatTypeToProjectRoleMapping = (args: {
   }
 }>
 
+export type ValidateWorkspaceMemberProjectRole = (params: {
+  workspaceId: string
+  userId: string
+  projectRole: StreamRoles
+  /**
+   * Instead of resolving actual workspace role/seatType, use this one. Useful when checking
+   * if a planned workspace member will have valid access to a project
+   */
+  workspaceAccess?: {
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }
+}) => Promise<void>
+
 /** Workspace Projects */
 
 type QueryAllWorkspaceProjectsArgs = {
@@ -233,6 +264,61 @@ type QueryAllWorkspaceProjectsArgs = {
 export type QueryAllWorkspaceProjects = (
   args: QueryAllWorkspaceProjectsArgs
 ) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
+
+export type GetWorkspacesProjectsCounts = (params: {
+  workspaceIds: string[]
+}) => Promise<{
+  [workspaceId: string]: number
+}>
+
+export type GetWorkspaceModelCount = (params: {
+  workspaceId: string
+}) => Promise<number>
+
+export type GetPaginatedWorkspaceProjectsArgs = {
+  workspaceId: string
+  /**
+   * If set, will take the user's workspace role into account when fetching projects.
+   * E.g. guests will only see projects they have explicit access to.
+   */
+  userId?: string
+  cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 25, if unset
+   */
+  limit?: MaybeNullOrUndefined<number>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      /**
+       * Search for projects by name
+       */
+      search: MaybeNullOrUndefined<string>
+      /**
+       * Only get projects that the active user has an explicit role in
+       */
+      withProjectRoleOnly: MaybeNullOrUndefined<boolean>
+    }>
+  >
+}
+
+export type GetPaginatedWorkspaceProjectsItems = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  items: Stream[]
+  cursor: string | null
+}>
+
+export type GetPaginatedWorkspaceProjectsTotalCount = (
+  params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>
+) => Promise<number>
+
+export type GetPaginatedWorkspaceProjects = (
+  params: GetPaginatedWorkspaceProjectsArgs
+) => Promise<{
+  cursor: string | null
+  items: Stream[]
+  totalCount: number
+}>
 
 /** Workspace Project Roles */
 
@@ -392,7 +478,7 @@ export type ValidateProjectRegionCopy = (params: {
     comments: number
     webhooks: number
   }
-}) => Promise<boolean>
+}) => Promise<[boolean, Record<string, number>]>
 
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
@@ -408,6 +494,13 @@ export type CopyProjectObjects = (params: {
 export type CopyProjectAutomations = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+
+export type CountProjectModels = (params: { projectId: string }) => Promise<number>
+export type CountProjectVersions = (params: { projectId: string }) => Promise<number>
+export type CountProjectObjects = (params: { projectId: string }) => Promise<number>
+export type CountProjectAutomations = (params: { projectId: string }) => Promise<number>
+export type CountProjectComments = (params: { projectId: string }) => Promise<number>
+export type CountProjectWebhooks = (params: { projectId: string }) => Promise<number>
 
 export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
@@ -439,3 +532,8 @@ export type SetUserActiveWorkspace = (args: {
   /** Is the user in a "personal project" outside of a workspace? */
   isProjectsActive?: boolean
 }) => Promise<void>
+
+export type IntersectProjectCollaboratorsAndWorkspaceCollaborators = (params: {
+  projectId: string
+  workspaceId: string
+}) => Promise<UserRecord[]>

@@ -13,42 +13,51 @@
           class="bg-foundation relative w-full h-full select-none rounded-md border shadow"
           :class="[
             selected === option.value ? 'border-outline-4' : 'border-outline-2',
-            disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-outline-1'
+            disabled || option.disabled
+              ? 'opacity-60 cursor-not-allowed'
+              : 'hover:border-outline-1'
           ]"
-          :disabled="disabled"
+          :disabled="disabled || option.disabled"
           @click="selectItem(option.value)"
         >
-          <div class="p-4 flex flex-col space-y-2 h-full">
+          <div
+            class="flex flex-col space-y-2 h-full"
+            :class="props.size === 'sm' ? 'p-3' : 'p-4 '"
+          >
             <div
-              class="flex justify-between min-h-12"
+              class="flex justify-between gap-x-3"
               :class="option.icon ? 'items-start' : 'items-center'"
             >
-              <div class="flex flex-col items-start text-left">
+              <div class="flex flex-1 items-center text-left gap-x-2">
                 <component
                   :is="option.icon"
                   v-if="option.icon"
-                  class="text-foreground h-8 w-8 -mt-1 stroke-[1px]"
-                ></component>
-                <h4 class="font-medium text-foreground text-body">
-                  {{ option.title }}
-                </h4>
-                <h5 v-if="option.subtitle" class="text-foreground-3 text-body-xs">
-                  {{ option.subtitle }}
-                </h5>
+                  class="text-foreground h-5 w-5"
+                />
+                <div class="flex flex-col">
+                  <h4
+                    class="text-foreground"
+                    :class="props.size === 'sm' ? 'text-heading-sm' : 'text-heading'"
+                  >
+                    {{ option.title }}
+                  </h4>
+                  <h5 v-if="option.subtitle" class="text-foreground-3 text-body-xs">
+                    {{ option.subtitle }}
+                  </h5>
+                </div>
               </div>
               <div
-                class="h-6 w-6 rounded-full flex items-center justify-center border-[1.5px] border-outline-5"
-                :class="isStacked ? 'mr-4' : ''"
+                class="h-5 w-5 rounded-full flex items-center justify-center border-[1.5px] border-outline-5"
               >
                 <div
                   v-if="selected === option.value"
-                  class="h-3 w-3 rounded-full bg-primary flex"
+                  class="h-2.5 w-2.5 rounded-full bg-primary flex"
                 ></div>
               </div>
             </div>
             <div
               v-if="option.introduction"
-              class="text-body-2xs text-foreground pb-1 select-none text-left pr-20"
+              class="text-body-2xs text-foreground-2 select-none text-left pr-8"
             >
               {{ option.introduction }}
             </div>
@@ -80,7 +89,7 @@
 
 <script setup lang="ts" generic="Value extends string">
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import type { ConcreteComponent } from 'vue'
+import { type ConcreteComponent } from 'vue'
 
 type OptionType = {
   value: Value
@@ -89,13 +98,20 @@ type OptionType = {
   introduction?: string
   icon?: ConcreteComponent
   help?: string
+  disabled?: boolean
 }
 
-defineProps<{
-  options: OptionType[]
-  disabled?: boolean
-  isStacked?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    options: OptionType[]
+    disabled?: boolean
+    isStacked?: boolean
+    size?: 'sm' | 'base'
+  }>(),
+  {
+    size: 'base'
+  }
+)
 
 const selected = defineModel<Value>()
 

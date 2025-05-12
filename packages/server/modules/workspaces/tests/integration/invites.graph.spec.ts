@@ -49,7 +49,10 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
-import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceInvalidRoleError,
+  WorkspaceProtectedError
+} from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
@@ -63,6 +66,7 @@ import {
   buildInvitesGraphqlOperations
 } from '@/modules/workspaces/tests/helpers/invites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 
 enum InviteByTarget {
   Email = 'email',
@@ -186,9 +190,7 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors(
-          'Attempting to invite into a non-existant workspace'
-        )
+        expect(res).to.haveGraphQLErrors('You do not have access to the workspace')
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -226,7 +228,9 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
@@ -245,17 +249,17 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
-      it('batch inviting fails if more than 10 invites', async () => {
+      it('batch inviting fails if more than 200 invites', async () => {
         const res = await gqlHelpers.batchCreateInvites({
           workspaceId: myFirstWorkspace.id,
-          input: times(11, () => ({
+          input: times(201, () => ({
             email: `asdasasd${Math.random()}@example.org`,
             role: WorkspaceRole.Member
           }))
         })
 
         expect(res).to.haveGraphQLErrors(
-          'Maximum 10 invites can be sent at once by non admins'
+          'Maximum 200 invites can be sent at once by non admins'
         )
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })
@@ -269,7 +273,9 @@ describe('Workspaces Invites GQL', () => {
           }))
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })
 
@@ -467,6 +473,13 @@ describe('Workspaces Invites GQL', () => {
         ownerId: ''
       }
 
+      const myProjectInviteTargetWorkspaceWithNewPlan: BasicTestWorkspace = {
+        name: 'My Project Invite Target Workspace w/ New Plan #1',
+        id: '',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+
       const myProjectInviteTargetBasicProject: BasicTestStream = {
         name: 'My Project Invite Target Basic Project #1',
         id: '',
@@ -476,6 +489,13 @@ describe('Workspaces Invites GQL', () => {
 
       const myProjectInviteTargetWorkspaceProject: BasicTestStream = {
         name: 'My Project Invite Target Workspace Project #1',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
+      const myProjectInviteTargetWorkspaceNewPlanProject: BasicTestStream = {
+        name: 'My Project Invite Target Workspace New Plan Project #1',
         id: '',
         ownerId: '',
         isPublic: false
@@ -495,21 +515,46 @@ describe('Workspaces Invites GQL', () => {
 
       before(async () => {
         await createTestUsers([workspaceMemberWithNoProjectAccess, workspaceGuest])
-        await createTestWorkspaces([[myProjectInviteTargetWorkspace, me]])
+        await createTestWorkspaces([
+          [myProjectInviteTargetWorkspace, me],
+          [
+            myProjectInviteTargetWorkspaceWithNewPlan,
+            me,
+            {
+              addPlan: {
+                name: 'teamUnlimited',
+                status: 'valid'
+              }
+            }
+          ]
+        ])
         await assignToWorkspaces([
-          [myProjectInviteTargetWorkspace, myWorkspaceFriend, Roles.Workspace.Member],
+          [
+            myProjectInviteTargetWorkspace,
+            myWorkspaceFriend,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          ],
           [
             myProjectInviteTargetWorkspace,
             workspaceMemberWithNoProjectAccess,
             Roles.Workspace.Member
           ],
-          [myProjectInviteTargetWorkspace, workspaceGuest, Roles.Workspace.Guest]
+          [myProjectInviteTargetWorkspace, workspaceGuest, Roles.Workspace.Guest],
+          [
+            myProjectInviteTargetWorkspaceWithNewPlan,
+            workspaceGuest,
+            Roles.Workspace.Guest
+          ]
         ])
 
+        myProjectInviteTargetWorkspaceNewPlanProject.workspaceId =
+          myProjectInviteTargetWorkspaceWithNewPlan.id
         myProjectInviteTargetWorkspaceProject.workspaceId =
           myProjectInviteTargetWorkspace.id
         await createTestStreams([
           [myProjectInviteTargetWorkspaceProject, me],
+          [myProjectInviteTargetWorkspaceNewPlanProject, me],
           [myProjectInviteTargetBasicProject, me]
         ])
 
@@ -520,7 +565,9 @@ describe('Workspaces Invites GQL', () => {
           Roles.Stream.Owner,
           me.id
         )
+      })
 
+      beforeEach(async () => {
         // Remove all project access from workspaceMemberWithNoProjectAccess
         await Promise.all([
           leaveStream(
@@ -574,7 +621,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: otherGuy.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -591,6 +638,38 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
+      it('can invite to workspace project as admin, even if target doesnt belong to workspace', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          inputs: [
+            {
+              userId: otherGuy.id,
+              role: Roles.Stream.Reviewer
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // no auto-accept, since target is not a workspace member
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
+        const emailParams = sendEmailInvocations.args[0][0]
+        await validateInviteExistanceFromEmail(emailParams)
+
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: false,
+          userId: otherGuy.id,
+          workspaceId: myProjectInviteTargetWorkspace.id,
+          streamId: myProjectInviteTargetWorkspaceProject.id
+        })
+      })
+
       it('can invite to workspace project even if not workspace admin, if target already belongs to workspace', async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite(
           {
@@ -598,7 +677,7 @@ describe('Workspaces Invites GQL', () => {
             inputs: [
               {
                 userId: workspaceMemberWithNoProjectAccess.id,
-                role: Roles.Stream.Owner
+                role: Roles.Stream.Reviewer
               }
             ]
           },
@@ -613,6 +692,38 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
       })
 
+      it('invite auto-accepted if both users already belong to the workspace', async () => {
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
+
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceProject.id,
+          inputs: [
+            {
+              userId: workspaceMemberWithNoProjectAccess.id,
+              role: Roles.Stream.Reviewer
+            }
+          ]
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+
+        // No invite email should be sent out, due to auto-accept
+        expect(sendEmailInvocations.length()).to.eq(0)
+
+        // Should have project role
+        await gqlHelpers.validateResourceAccess({
+          shouldHaveAccess: true,
+          userId: workspaceMemberWithNoProjectAccess.id,
+          workspaceId: myProjectInviteTargetWorkspace.id,
+          streamId: myProjectInviteTargetWorkspaceProject.id,
+          expectedProjectRole: Roles.Stream.Reviewer
+        })
+      })
+
       it("can't invite a workspace guest to be a workspace project owner", async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite({
           projectId: myProjectInviteTargetWorkspaceProject.id,
@@ -624,9 +735,22 @@ describe('Workspaces Invites GQL', () => {
           ]
         })
 
-        expect(res).to.haveGraphQLErrors(
-          'Workspace guests cannot be owners of workspace projects'
-        )
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
+        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
+      })
+
+      it("can't invite someone with a viewer seat to be a contributor", async () => {
+        const res = await gqlHelpers.createWorkspaceProjectInvite({
+          projectId: myProjectInviteTargetWorkspaceNewPlanProject.id,
+          inputs: [
+            {
+              userId: workspaceGuest.id,
+              role: Roles.Stream.Contributor
+            }
+          ]
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: WorkspaceInvalidRoleError.code })
         expect(res.data?.projectMutations.invites.createForWorkspace.id).to.not.be.ok
       })
 
@@ -657,11 +781,36 @@ describe('Workspaces Invites GQL', () => {
     })
 
     describe('and administrating invites', () => {
+      const BATCH_INVITE_COUNT = 10
+      const EXPLICIT_INVITE_COUNT = BATCH_INVITE_COUNT + 1 // + 1 in beforeEach
+      const IMPLICIT_INVITE_COUNT = EXPLICIT_INVITE_COUNT + 1 // 1 from project invite
+
+      const unrelatedWorkspace: BasicTestWorkspace = {
+        name: 'Unrelated Workspace',
+        id: '',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+
+      const unrelatedWorkspaceStream: BasicTestStream = {
+        name: 'Unrelated Workspace Stream',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
         id: '',
         slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
+      }
+
+      const myAdministrationProject: BasicTestStream = {
+        name: 'My Administration Project',
+        id: '',
+        ownerId: '',
+        isPublic: false
       }
 
       const cancelableInvite = {
@@ -670,17 +819,62 @@ describe('Workspaces Invites GQL', () => {
       }
 
       before(async () => {
-        await createTestWorkspaces([[myAdministrationWorkspace, me]])
+        await createTestWorkspaces([
+          [myAdministrationWorkspace, me],
+          [unrelatedWorkspace, me]
+        ])
         await assignToWorkspaces([
           [myAdministrationWorkspace, myWorkspaceFriend, Roles.Workspace.Guest]
         ])
         await gqlHelpers.batchCreateInvites(
           {
             workspaceId: myAdministrationWorkspace.id,
-            input: times(10, () => ({
+            input: times(BATCH_INVITE_COUNT, () => ({
               email: `aszzzdasasd${Math.random()}@example.org`,
               role: WorkspaceRole.Member
             }))
+          },
+          { assertNoErrors: true }
+        )
+
+        // Create project and an invite to it too
+        myAdministrationProject.workspaceId = myAdministrationWorkspace.id
+        await createTestStreams([[myAdministrationProject, me]])
+        await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: myAdministrationProject.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Reviewer
+              }
+            ]
+          },
+          { assertNoErrors: true }
+        )
+
+        // Create unrelated invites, to ensure they dont show up where they shouldnt
+        unrelatedWorkspaceStream.workspaceId = unrelatedWorkspace.id
+        await createTestStreams([[unrelatedWorkspaceStream, me]])
+        await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: unrelatedWorkspaceStream.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Reviewer
+              }
+            ]
+          },
+          { assertNoErrors: true }
+        )
+        await gqlHelpers.createInvite(
+          {
+            workspaceId: unrelatedWorkspace.id,
+            input: {
+              email: 'aaasdasjdhasdjasd@aaa.com',
+              role: WorkspaceRole.Member
+            }
           },
           { assertNoErrors: true }
         )
@@ -729,7 +923,35 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace).to.be.ok
-        expect(res.data?.workspace.invitedTeam).to.have.length(11)
+        expect(res.data?.workspace.invitedTeam?.length || 0).to.be.equal(
+          IMPLICIT_INVITE_COUNT
+        )
+      })
+
+      it('invite list includes implicit one from project invite', async () => {
+        const res = await gqlHelpers.getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const otherGuyInvite = res.data?.workspace.invitedTeam?.find(
+          (t) => t.user?.id === otherGuy.id
+        )
+        expect(otherGuyInvite).to.be.ok
+      })
+
+      it("invite list doesn't include unrelated invites", async () => {
+        const res = await gqlHelpers.getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const unrelatedInvite = res.data?.workspace.invitedTeam?.find(
+          (t) => t.workspaceId === unrelatedWorkspace.id
+        )
+        expect(unrelatedInvite).to.be.not.ok
       })
 
       it("can't cancel invite, if not admin", async () => {
@@ -739,7 +961,9 @@ describe('Workspaces Invites GQL', () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res).to.haveGraphQLErrors(
+          'You do not have enough permissions in the workspace to perform this action'
+        )
         expect(res.data?.workspaceMutations?.invites?.cancel).to.not.be.ok
 
         const invite = await findInviteFactory({ db })({
@@ -906,7 +1130,7 @@ describe('Workspaces Invites GQL', () => {
                 inputs: [
                   {
                     userId: otherGuy.id,
-                    role: Roles.Stream.Owner
+                    role: Roles.Stream.Reviewer
                   }
                 ]
               },
@@ -1043,7 +1267,7 @@ describe('Workspaces Invites GQL', () => {
           },
           me.id
         )
-        expect(brokenInvite.inviteId).to.be.ok
+        expect(brokenInvite.id).to.be.ok
 
         // Db query directly, cause this isn't a supported use case
         await Workspaces.knex()
@@ -1129,7 +1353,7 @@ describe('Workspaces Invites GQL', () => {
           expect(res.data?.activeUser?.workspaceInvites).to.be.ok
 
           if (test.hasSome) {
-            expect(res.data?.activeUser?.workspaceInvites).to.have.length(1)
+            expect(res.data?.activeUser?.workspaceInvites).to.have.length(2) // 1 workspace + 1 workspace project (implicit workspace invite)
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
               processableWorkspaceInvite.inviteId
             )
@@ -1386,7 +1610,7 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
-          expectedProjectRole: Roles.Stream.Owner
+          expectedProjectRole: Roles.Stream.Reviewer
         })
       })
 
@@ -1405,7 +1629,7 @@ describe('Workspaces Invites GQL', () => {
                   inputs: [
                     {
                       userId: otherGuy.id,
-                      role: Roles.Stream.Owner,
+                      role: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
                       workspaceRole: withRole ? Roles.Workspace.Admin : undefined
                     }
                   ]
@@ -1442,7 +1666,7 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
-            expectedProjectRole: Roles.Stream.Owner
+            expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer
           })
         }
       )
@@ -1515,8 +1739,7 @@ describe('Workspaces Invites GQL', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.workspaceMutations.invites.use).to.be.ok
-      expect(await findInviteFactory({ db })({ inviteId: invite.inviteId })).to.be.not
-        .ok
+      expect(await findInviteFactory({ db })({ inviteId: invite.id })).to.be.not.ok
 
       await gqlHelpers.validateResourceAccess({
         shouldHaveAccess: true,

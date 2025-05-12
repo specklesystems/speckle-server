@@ -75,11 +75,6 @@
           "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
           "default": false
         },
-        "fileImportIFCDotNetEnabled": {
-          "type": "boolean",
-          "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
-          "default": false
-        },
         "forceEmailVerification": {
           "type": "boolean",
           "description": "Forces email verification for all users",
@@ -103,6 +98,11 @@
         "moveProjectRegionEnabled": {
           "type": "boolean",
           "description": "Enables the ability to move a project region (manually or automatically)",
+          "default": false
+        },
+        "nextGenFileImporterEnabled": {
+          "type": "boolean",
+          "description": "Enables the next generation file importer",
           "default": false
         }
       }
@@ -140,6 +140,11 @@
     "ingress": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the ingress resources will be deployed",
+          "default": true
+        },
         "namespace": {
           "type": "string",
           "description": "The namespace in which the ingress controller is deployed.",
@@ -154,7 +159,7 @@
     },
     "docker_image_tag": {
       "type": "string",
-      "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
+      "description": "DEPRECATED: Use `{service}.image` with full image name instead. Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
       "default": "2"
     },
     "imagePullPolicy": {
@@ -171,6 +176,11 @@
       "type": "number",
       "description": "This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle",
       "default": 100
+    },
+    "file_import_time_limit_min": {
+      "type": "number",
+      "description": "The maximum time (unit is minutes) that a file import can take before it is considered to have failed",
+      "default": 10
     },
     "enable_prometheus_monitoring": {
       "type": "boolean",
@@ -239,7 +249,7 @@
         "maxConnectionsServer": {
           "type": "number",
           "description": "The number of connections to the Postgres database to provide in the connection pool",
-          "default": 4
+          "default": 8
         },
         "certificate": {
           "type": "string",
@@ -613,9 +623,210 @@
         }
       }
     },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "The name of the Kubernetes Secret resource in which the Docker image pull secrets are stored. This is expected to be an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+      "default": [],
+      "items": {}
+    },
+    "billing": {
+      "type": "object",
+      "properties": {
+        "secretName": {
+          "type": "string",
+          "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+          "default": ""
+        },
+        "stripeApiKey": {
+          "type": "object",
+          "properties": {
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the stripeApiKey secret as its value.",
+              "default": "stripeApiKey"
+            }
+          }
+        },
+        "stripeEndpointSigningKey": {
+          "type": "object",
+          "properties": {
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.",
+              "default": "stripeEndpointSigningKey"
+            }
+          }
+        },
+        "workspaceGuestSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Guest Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyGuestSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Guest Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyGuestSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Guest Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceStarterSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Starter Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyStarterSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Starter Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyStarterSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Starter Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspacePlusSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Plus Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyPlusSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Plus Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyPlusSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Plus Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceBusinessSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Business Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyBusinessSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Business Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyBusinessSeatStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Business Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceTeamSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Team Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceTeamUnlimitedSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Team Unlimited Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyTeamUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyTeamUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Team Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceProSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Pro Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceProUnlimitedSeatStripeProductId": {
+          "type": "string",
+          "description": "The workspace Pro Unlimited Seat Product Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProUnlimitedSeatGbpStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceMonthlyProUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Monthly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        },
+        "workspaceYearlyProUnlimitedSeatUsdStripePriceId": {
+          "type": "string",
+          "description": "The workspace Yearly Pro Unlimited Seat Price Id as configured in Stripe.",
+          "default": ""
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -783,216 +994,6 @@
               "type": "string",
               "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
               "default": ""
-            }
-          }
-        },
-        "billing": {
-          "type": "object",
-          "properties": {
-            "secretName": {
-              "type": "string",
-              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": ""
-            },
-            "stripeApiKey": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the stripeApiKey secret as its value.",
-                  "default": "stripeApiKey"
-                }
-              }
-            },
-            "stripeEndpointSigningKey": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.",
-                  "default": "stripeEndpointSigningKey"
-                }
-              }
-            },
-            "workspaceGuestSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.",
-                  "default": "workspaceGuestSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyGuestSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyGuestSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyGuestSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyGuestSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceStarterSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceStarterSeatStripeProductId secret as its value.",
-                  "default": "workspaceStarterSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyStarterSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyStarterSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyStarterSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyStarterSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyStarterSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyStarterSeatStripePriceId"
-                }
-              }
-            },
-            "workspacePlusSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspacePlusSeatStripeProductId secret as its value.",
-                  "default": "workspacePlusSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyPlusSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyPlusSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyPlusSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyPlusSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyPlusSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyPlusSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceBusinessSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.",
-                  "default": "workspaceBusinessSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyBusinessSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyBusinessSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyBusinessSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceTeamSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
-                  "default": "workspaceTeamSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyTeamSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyTeamSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyTeamSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyTeamSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceProSeatStripeProductId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
-                  "default": "workspaceProSeatStripeProductId"
-                }
-              }
-            },
-            "workspaceMonthlyProSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceMonthlyProSeatStripePriceId"
-                }
-              }
-            },
-            "workspaceYearlyProSeatStripePriceId": {
-              "type": "object",
-              "properties": {
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
-                  "default": "workspaceYearlyProSeatStripePriceId"
-                }
-              }
             }
           }
         },
@@ -1604,12 +1605,23 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the server pod",
+          "default": [],
+          "items": {}
         }
       }
     },
     "objects": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Speckle server will be deployed with the Objects component enabled.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
@@ -1751,6 +1763,12 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the objects pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -1878,13 +1896,19 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the frontend_2 pod",
+          "default": [],
+          "items": {}
         }
       }
     },
     "preview_service": {
       "type": "object",
       "properties": {
-        "deployInCluster": {
+        "enabled": {
           "type": "boolean",
           "description": "If enabled, the Preview Service will be deployed within the cluster and speckle-server will be configured to send the kubernetes service url of the objects server to the Preview Service.",
           "default": true
@@ -1894,10 +1918,30 @@
           "description": "Allows using a dedicated redis url for the preview service job queue",
           "default": false
         },
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, the Preview Service will be deployed with GPU support. Assumes Vulkan driver is available on the host node.",
+              "default": false
+            }
+          }
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the Preview Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as preview service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
         },
         "logLevel": {
           "type": "string",
@@ -1969,6 +2013,31 @@
             }
           }
         },
+        "autoscaling": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "minReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 1
+            },
+            "maxReplicas": {
+              "type": "number",
+              "description": "",
+              "default": 10
+            },
+            "targetCPUUtilizationPercentage": {
+              "type": "number",
+              "description": "",
+              "default": 80
+            }
+          }
+        },
         "networkPolicy": {
           "type": "object",
           "properties": {
@@ -2010,16 +2079,37 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Preview service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
     "webhook_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Webhook Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Webhook Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the Webhook Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as webhook service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
         },
         "logLevel": {
           "type": "string",
@@ -2112,16 +2202,37 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Webhook service pod",
+          "default": [],
+          "items": {}
         }
       }
     },
     "fileimport_service": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the File Import Service will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "deploymentStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "The deployment strategy type to be used for the FileImport Service. This can be set to either `Recreate` or `RollingUpdate`. The default is `Recreate` as file import service does not require 100% availability.",
+              "default": "Recreate"
+            }
+          }
         },
         "logLevel": {
           "type": "string",
@@ -2230,9 +2341,15 @@
             }
           }
         },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the FileImport service pod",
+          "default": [],
+          "items": {}
+        },
         "time_limit_min": {
           "type": "number",
-          "description": "The maximum time that a file can take to be processed by the FileImport Service.",
+          "description": "DEPRECATED, use file_import_time_limit_min instead. The maximum time that a file can take to be processed by the FileImport Service.",
           "default": 10
         }
       }
@@ -2240,6 +2357,11 @@
     "monitoring": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, database monitoring will be deployed within the cluster.",
+          "default": true
+        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Monitoring pod to be deployed within the cluster.",
@@ -2346,6 +2468,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Monitoring pod",
+          "default": [],
+          "items": {}
         }
       }
     },
@@ -2421,6 +2549,12 @@
               "default": true
             }
           }
+        },
+        "additionalEnvVars": {
+          "type": "array",
+          "description": "Additional environment variables to be passed to the Test pod",
+          "default": [],
+          "items": {}
         }
       }
     }

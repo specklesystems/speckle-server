@@ -5,7 +5,7 @@ import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
 import { getRequestContext } from '@/observability/components/express/requestContext'
-import { collectLongTrace, TIME } from '@speckle/shared'
+import { collectLongTrace, TIME, TIME_MS } from '@speckle/shared'
 
 let metricQueryDuration: Summary<string>
 let metricQueryErrors: Counter<string>
@@ -191,7 +191,7 @@ export const initKnexPrometheusMetrics = async (params: {
   // configure hooks on knex
   for (const dbClient of await params.getAllDbClients()) {
     if (initializedRegions.includes(dbClient.regionKey)) continue
-    initKnexPrometheusMetricsForRegionEvents({
+    await initKnexPrometheusMetricsForRegionEvents({
       logger: params.logger,
       region: dbClient.regionKey,
       db: dbClient.client
@@ -240,7 +240,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
 
     const durationMs = performance.now() - startTime
-    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
+    const durationSec = toNDecimalPlaces(durationMs / TIME_MS.second, 2)
     delete queryMetadata[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
@@ -260,7 +260,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     }
 
     const trace = stackTrace || collectLongTrace()
-    params.logger.info(
+    params.logger.debug(
       {
         region,
         sql: data.sql,
@@ -280,7 +280,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
 
     const durationMs = performance.now() - startTime
-    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
+    const durationSec = toNDecimalPlaces(durationMs / TIME_MS.second, 2)
     delete queryMetadata[queryId]
 
     if (!isNaN(durationSec))

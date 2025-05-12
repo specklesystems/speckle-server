@@ -1,10 +1,9 @@
 import { BaseError } from '@/modules/shared/errors'
 import { isUserGraphqlError } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloError } from '@apollo/client/core'
+import { ApolloError } from '@apollo/client/core/core.cjs'
 import { ensureError } from '@speckle/shared'
 import { GraphQLError } from 'graphql'
 import type { Logger } from 'pino'
-
 interface LogFn {
   (logger: Logger, e: unknown, obj?: unknown, msg?: string, ...args: unknown[]): void
 }

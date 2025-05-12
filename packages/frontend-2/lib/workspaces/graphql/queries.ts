@@ -8,23 +8,24 @@ export const workspaceAccessCheckQuery = graphql(`
   }
 `)
 
-export const workspacePageQuery = graphql(`
-  query WorkspacePageQuery(
+export const workspaceSidebarQuery = graphql(`
+  query WorkspaceSidebar(
     $workspaceSlug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
-    $token: String
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      ...WorkspaceProjectList_Workspace
+      ...WorkspaceSidebar_Workspace
     }
-    workspaceInvite(
-      workspaceId: $workspaceSlug
-      token: $token
-      options: { useSlug: true }
-    ) {
-      id
-      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
-      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
+  }
+`)
+
+export const workspaceDashboardQuery = graphql(`
+  query WorkspaceDashboard(
+    $workspaceSlug: String!
+    $invitesFilter: PendingWorkspaceCollaboratorsFilter
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceDashboard_Workspace
     }
   }
 `)
@@ -38,7 +39,7 @@ export const workspaceProjectsQuery = graphql(`
     workspaceBySlug(slug: $workspaceSlug) {
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
-        ...WorkspaceProjectList_ProjectCollection
+        ...WorkspaceDashboardProjectList_ProjectCollection
       }
     }
   }
@@ -70,14 +71,6 @@ export const workspaceInviteQuery = graphql(`
     workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
-    }
-  }
-`)
-
-export const moveProjectsDialogQuery = graphql(`
-  query MoveProjectsDialog($cursor: String, $filter: UserProjectsFilter) {
-    activeUser {
-      ...MoveProjectsDialog_User
     }
   }
 `)
@@ -128,16 +121,14 @@ export const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
     activeUser {
       id
-      ...DiscoverableList_Discoverable
-    }
-  }
-`)
-
-export const discoverableWorkspacesRequestsQuery = graphql(`
-  query DiscoverableWorkspacesRequests {
-    activeUser {
-      id
-      ...DiscoverableList_Requests
+      discoverableWorkspaces {
+        ...DiscoverableWorkspace_LimitedWorkspace
+      }
+      workspaceJoinRequests {
+        items {
+          ...WorkspaceJoinRequests_LimitedWorkspaceJoinRequest
+        }
+      }
     }
   }
 `)
@@ -146,6 +137,75 @@ export const workspacePlanQuery = graphql(`
   query WorkspacePlan($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...WorkspacesPlan_Workspace
+    }
+  }
+`)
+
+export const activeWorkspaceQuery = graphql(`
+  query activeWorkspace($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...ActiveWorkspace_Workspace
+    }
+  }
+`)
+
+export const workspaceLastAdminCheckQuery = graphql(`
+  query WorkspaceLastAdminCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      teamByRole {
+        admins {
+          totalCount
+        }
+      }
+    }
+  }
+`)
+
+export const workspaceLimitsQuery = graphql(`
+  query WorkspaceLimits($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspacePlanLimits_Workspace
+    }
+  }
+`)
+
+export const workspaceUsageQuery = graphql(`
+  query WorkspaceUsage($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceUsage_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerProjectQuery = graphql(`
+  query WorkspaceMoveProjectManagerProject($projectId: String!, $workspaceId: String) {
+    project(id: $projectId) {
+      ...WorkspaceMoveProjectManager_Project
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerWorkspaceQuery = graphql(`
+  query WorkspaceMoveProjectManagerWorkspace(
+    $workspaceSlug: String!
+    $projectId: String
+  ) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      ...WorkspaceMoveProjectManager_Workspace
+    }
+  }
+`)
+
+export const workspaceMoveProjectManagerUserQuery = graphql(`
+  query WorkspaceMoveProjectManagerUser(
+    $cursor: String
+    $filter: UserProjectsFilter
+    $projectId: String
+    $sortBy: [String!]
+    $workspaceId: String
+  ) {
+    activeUser {
+      ...WorkspaceMoveProjectSelectWorkspace_User
     }
   }
 `)

@@ -12,6 +12,10 @@ import {
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
+  GetPaginatedWorkspaceProjects,
+  GetPaginatedWorkspaceProjectsArgs,
+  GetPaginatedWorkspaceProjectsItems,
+  GetPaginatedWorkspaceProjectsTotalCount,
   GetUserDiscoverableWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
@@ -26,6 +30,8 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesProjectsCounts,
+  GetWorkspacesRolesForUsers,
   QueryWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
@@ -34,36 +40,37 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  ServerAclRecord,
+  BranchRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
-import {
-  knex,
-  ServerAcl,
-  ServerInvites,
-  StreamAcl,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
-  filterByResource,
-  InvitesRetrievalValidityFilter
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { clamp } from 'lodash'
+
+import { clamp, has, isObjectLike } from 'lodash'
 import {
   WorkspaceCreationState,
   WorkspaceTeamMember
 } from '@/modules/workspaces/domain/types'
+import {
+  decodeCompositeCursor,
+  encodeCompositeCursor
+} from '@/modules/shared/helpers/graphqlHelper'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const tables = {
+  branches: (db: Knex) => db<BranchRecord>('branches'),
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
@@ -254,6 +261,26 @@ export const getWorkspaceRoleForUserFactory =
     )
   }
 
+export const getWorkspacesRolesForUsersFactory =
+  (deps: { db: Knex }): GetWorkspacesRolesForUsers =>
+  async (reqs) => {
+    const query = tables.workspacesAcl(deps.db).whereIn(
+      [DbWorkspaceAcl.col.userId, DbWorkspaceAcl.col.workspaceId],
+      reqs.map(({ userId, workspaceId }) => [userId, workspaceId])
+    )
+    const results = await query
+
+    return results.reduce((acc, acl) => {
+      const { userId, workspaceId } = acl
+      if (!acc[workspaceId]) {
+        acc[workspaceId] = {}
+      }
+
+      acc[workspaceId][userId] = acl
+      return acc
+    }, {} as Awaited<ReturnType<GetWorkspacesRolesForUsers>>)
+  }
+
 export const getWorkspaceRolesForUserFactory =
   ({ db }: { db: Knex }): GetWorkspaceRolesForUser =>
   async ({ userId }, options) => {
@@ -326,7 +353,7 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, roles, seatType } = filter || {}
+    const { search, roles, seatType, excludeUserIds } = filter || {}
 
     if (seatType) {
       query
@@ -349,6 +376,12 @@ export const getWorkspaceCollaboratorsFactory =
       })
     }
 
+    if (excludeUserIds?.length) {
+      query.andWhere((w) => {
+        w.whereNotIn(Users.col.id, excludeUserIds)
+      })
+    }
+
     if (cursor) {
       query.andWhere(DbWorkspaceAcl.col.createdAt, '<', cursor)
     }
@@ -367,26 +400,6 @@ export const getWorkspaceCollaboratorsFactory =
 
     return items
   }
-
-export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
-  return q
-    .leftJoin(
-      knex.raw(
-        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
-        {
-          workspaces: Workspaces.name,
-          resourceCol: ServerInvites.col.resource,
-          resourceType: WorkspaceInviteResourceType,
-          workspaceIdCol: Workspaces.col.id
-        }
-      )
-    )
-    .where((w1) => {
-      w1.whereNot((w2) =>
-        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
-      ).orWhereNotNull(Workspaces.col.id)
-    })
-}
 
 export const storeWorkspaceDomainFactory =
   ({ db }: { db: Knex }): StoreWorkspaceDomain =>
@@ -507,4 +520,181 @@ export const upsertWorkspaceCreationStateFactory =
       .insert(workspaceCreationState)
       .onConflict('workspaceId')
       .merge()
+  }
+
+export const getWorkspacesProjectsCountsFactory =
+  (deps: { db: Knex }): GetWorkspacesProjectsCounts =>
+  async ({ workspaceIds }) => {
+    const ret = workspaceIds.reduce((acc, workspaceId) => {
+      acc[workspaceId] = 0
+      return acc
+    }, {} as Record<string, number>)
+
+    const q = tables
+      .streams(deps.db)
+      .select<
+        {
+          workspaceId: string
+          count: string
+        }[]
+      >([Streams.col.workspaceId, knex.raw('count(*) as count')])
+      .whereIn(Streams.col.workspaceId, workspaceIds)
+      .groupBy(Streams.col.workspaceId)
+
+    const res = await q
+
+    for (const { workspaceId, count } of res) {
+      ret[workspaceId] = parseInt(count)
+    }
+
+    return ret
+  }
+
+const getPaginatedWorkspaceProjectsBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (params: Omit<GetPaginatedWorkspaceProjectsArgs, 'cursor' | 'limit'>) => {
+    const { workspaceId, userId, filter } = params
+    const { search, withProjectRoleOnly } = filter || {}
+
+    const query = tables
+      .streams(deps.db)
+      .where(Streams.col.workspaceId, workspaceId)
+      .select<StreamRecord[]>(Streams.cols)
+
+    /**
+     * If userId is set:
+     * - If no workspace role, user should be server admin w/ admin override enabled
+     * - If workspace role is guest, user should have explicit stream roles
+     * - If workspace role other than guest, just get all workspace streams
+     *
+     * If withProjectRoleOnly is set: Require project role always
+     */
+    if (userId) {
+      query
+        .leftJoin(DbWorkspaceAcl.name, (j) => {
+          j.on(DbWorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOnVal(
+            DbWorkspaceAcl.col.userId,
+            userId
+          )
+        })
+        .andWhere((w) => {
+          // Check server_acl exist first, so subsequent checks can be optimized away
+          if (adminOverrideEnabled() && !withProjectRoleOnly) {
+            w.whereExists(
+              tables
+                .serverAcl(deps.db)
+                .select('*')
+                .where(ServerAcl.col.userId, userId)
+                .andWhere(ServerAcl.col.role, Roles.Server.Admin)
+            )
+          }
+
+          w.orWhere((w2) => {
+            // Ensure workspace role exists and its not guest or the user has explicit stream roles
+            w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
+              if (!withProjectRoleOnly) {
+                w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest)
+              }
+
+              w3.orWhereExists(
+                tables
+                  .streamAcl(deps.db)
+                  .select('*')
+                  .where(StreamAcl.col.userId, userId)
+                  .andWhere(StreamAcl.col.resourceId, knex.ref(Streams.col.id))
+              )
+            })
+          })
+        })
+    }
+
+    if (search?.length) {
+      query.andWhere((w) => {
+        w.where(Streams.col.name, 'ILIKE', `%${search}%`).orWhere(
+          Streams.col.description,
+          'ILIKE',
+          `%${search}%`
+        )
+      })
+    }
+
+    return query
+  }
+
+export const getPaginatedWorkspaceProjectsItemsFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjectsItems =>
+  async (params) => {
+    type CursorType = { updatedAt: string; id: string }
+    const query = getPaginatedWorkspaceProjectsBaseQueryFactory(deps)(params)
+
+    const limit = clamp(params.limit || 25, 1, 50)
+    const cursor = decodeCompositeCursor<CursorType>(
+      params.cursor,
+      (c) => isObjectLike(c) && has(c, 'id') && has(c, 'updatedAt')
+    )
+
+    if (cursor) {
+      // filter by date, and if there's duplicate dates, filter by id too
+      query.andWhereRaw('(??, ??) < (?, ?)', [
+        Streams.col.updatedAt,
+        Streams.col.id,
+        cursor.updatedAt,
+        cursor.id
+      ])
+    }
+
+    query
+      .orderBy([
+        { column: Streams.col.updatedAt, order: 'desc' },
+        { column: Streams.col.id, order: 'desc' }
+      ])
+      .limit(limit)
+
+    const rows = await query
+    const newCursorRow = rows.at(-1)
+    const newCursor = newCursorRow
+      ? encodeCompositeCursor<CursorType>({
+          updatedAt: newCursorRow.updatedAt.toISOString(),
+          id: newCursorRow.id
+        })
+      : null
+
+    return {
+      items: rows,
+      cursor: newCursor
+    }
+  }
+
+export const getPaginatedWorkspaceProjectsTotalCountFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjectsTotalCount =>
+  async (params) => {
+    const query = getPaginatedWorkspaceProjectsBaseQueryFactory(deps)(params)
+    const [res] = await query.clearSelect().count()
+    const count = parseInt(res.count.toString())
+    return count
+  }
+
+export const getPaginatedWorkspaceProjectsFactory =
+  (deps: { db: Knex }): GetPaginatedWorkspaceProjects =>
+  async (params) => {
+    const getItems = getPaginatedWorkspaceProjectsItemsFactory(deps)
+    const getTotalCount = getPaginatedWorkspaceProjectsTotalCountFactory(deps)
+
+    const [items, totalCount] = await Promise.all([
+      params.limit !== 0 ? getItems(params) : undefined,
+      getTotalCount(params)
+    ])
+
+    if (!items) {
+      return {
+        items: [],
+        cursor: null,
+        totalCount
+      }
+    }
+
+    return {
+      ...items,
+      totalCount
+    }
   }

@@ -1,9 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock
-    background
-    title="Access"
-    :disabled-message="disabled ? 'You must be a project owner' : undefined"
-  >
+  <ProjectPageSettingsBlock background title="Access" :auth-check="canUpdate">
     <template #introduction>
       <p class="text-body-xs text-foreground">
         Choose how you want to share this project with others.
@@ -12,7 +8,8 @@
     <FormRadioGroup
       v-model="selectedOption"
       :options="radioOptions"
-      :disabled="disabled"
+      size="sm"
+      :disabled="!canUpdate.authorized"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>
@@ -29,12 +26,16 @@ graphql(`
   fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {
     id
     visibility
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockAccess_ProjectFragment
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -57,6 +58,7 @@ const radioOptions = computed(() => [
     icon: LockClosedIcon
   }
 ])
+const canUpdate = computed(() => props.project.permissions.canUpdate)
 
 watch(
   () => props.project.visibility,

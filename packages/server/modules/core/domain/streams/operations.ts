@@ -97,6 +97,10 @@ export type GetStreamsCollaboratorCounts = (params: {
 
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
+export type GetImplicitUserProjectsCountFactory = (params: {
+  userId: string
+}) => Promise<number>
+
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{
@@ -178,7 +182,21 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string | null
+  /**
+   * Only allow streams in the specified workspace to be returned
+   */
+  workspaceId?: MaybeNullOrUndefined<string>
+
+  /**
+   * Only allow personal (non-workspace) streams to be returned
+   */
+  personalOnly?: MaybeNullOrUndefined<boolean>
+
+  /**
+   * If set to true, will also include streams that the user may not have an explicit role on,
+   * but has implicit access to because of workspaces
+   */
+  includeImplicitAccess?: MaybeNullOrUndefined<boolean>
 
   /**
    * Only with active sso session
@@ -195,6 +213,10 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
    * Pagination cursor
    */
   cursor?: MaybeNullOrUndefined<string>
+  /**
+   * Fields used to sort the result (supports any UserRecord field plus role field of the StreamAcl)
+   */
+  sortBy?: MaybeNullOrUndefined<string[]>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
@@ -288,19 +310,11 @@ export type LegacyCreateStream = (
   params: StreamCreateInput & { ownerId: string }
 ) => Promise<string>
 
-export type DeleteStream = (
-  streamId: string,
-  deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules,
-  options?: {
-    skipAccessChecks?: boolean
-  }
-) => Promise<boolean>
+export type DeleteStream = (streamId: string, deleterId: string) => Promise<boolean>
 
 export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string,
-  updaterResourceAccessRules: ContextResourceAccessRules
+  updaterId: string
 ) => Promise<Stream>
 
 export type LegacyUpdateStream = (

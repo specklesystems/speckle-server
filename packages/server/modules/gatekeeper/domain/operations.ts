@@ -1,8 +1,8 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import {
   Optional,
+  WorkspacePlan,
   WorkspacePlanFeatures,
   WorkspacePlans,
   WorkspacePlanStatuses
@@ -16,10 +16,6 @@ export type CanWorkspaceAccessFeature = (args: {
 export type WorkspaceFeatureAccessFunction = (args: {
   workspaceId: string
 }) => Promise<boolean>
-
-export type ChangeExpiredTrialWorkspacePlanStatuses = (args: {
-  numberOfDays: number
-}) => Promise<WorkspacePlan[]>
 
 export type GetWorkspacesByPlanDaysTillExpiry = (args: {
   daysTillExpiry: number
@@ -59,3 +55,25 @@ export type GetWorkspaceUserSeat = (params: {
   workspaceId: string
   userId: string
 }) => Promise<Optional<WorkspaceSeat>>
+
+export type GetWorkspacesUsersSeats = (params: {
+  requests: Array<{
+    userId: string
+    workspaceId: string
+  }>
+}) => Promise<{
+  [workspaceId: string]: {
+    [userId: string]: WorkspaceSeat
+  }
+}>
+
+export type GetProjectsUsersSeats = (params: {
+  requests: Array<{
+    userId: string
+    projectId: string
+  }>
+}) => Promise<{
+  [projectId: string]: {
+    [userId: string]: WorkspaceSeat
+  }
+}>

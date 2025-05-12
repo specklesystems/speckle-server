@@ -1,8 +1,8 @@
-import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import type {
-  TreeNode,
-  MeasurementOptions,
-  PropertyInfo,
+import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
+import {
+  type TreeNode,
+  type MeasurementOptions,
+  type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
@@ -26,6 +26,8 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
+import { useTheme } from '~/lib/core/composables/theme'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -230,7 +232,7 @@ export function useFilterUtilities(
     key: string,
     options?: Partial<{ timeout: number }>
   ) => {
-    const timeout = options?.timeout || 10000
+    const timeout = options?.timeout || 10 * TIME_MS.second
 
     const res = await Promise.race([
       until(viewer.metadata.availableFilters).toMatch(
@@ -487,19 +489,95 @@ export function useHighlightedObjectsUtilities() {
 export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
+  const { isLightTheme } = useTheme()
+  const mp = useMixpanel()
+
+  const edgesEnabled = ref(true)
+  const edgesWeight = ref(1)
+  const outlineOpacity = ref(1)
+  const defaultColor = ref(0x1a1a1a)
+  const edgesColor = ref(defaultColor.value)
+  const hasChangedEdgesColor = ref(false)
 
   const currentViewMode = computed(() => viewMode.value)
 
-  const setViewMode = (mode: ViewMode) => {
+  const updateViewMode = () => {
     const viewModes = instance.getExtension(ViewModes)
     if (viewModes) {
-      viewModes.setViewMode(mode)
+      viewModes.setViewMode(currentViewMode.value, {
+        edges: edgesEnabled.value,
+        outlineThickness: edgesWeight.value,
+        outlineOpacity: outlineOpacity.value,
+        outlineColor: edgesColor.value
+      })
     }
+  }
+
+  const setViewMode = (mode: ViewMode) => {
+    viewMode.value = mode
+    if (mode === ViewMode.PEN) {
+      outlineOpacity.value = 1
+      edgesEnabled.value = true
+      if (!hasChangedEdgesColor.value) {
+        if (!isLightTheme.value) {
+          edgesColor.value = 0xffffff
+        }
+      }
+    } else {
+      outlineOpacity.value = 0.75
+      if (!hasChangedEdgesColor.value) {
+        edgesColor.value = defaultColor.value
+      }
+    }
+
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-view-mode',
+      mode
+    })
+  }
+
+  const toggleEdgesEnabled = () => {
+    edgesEnabled.value = !edgesEnabled.value
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'toggle-edges',
+      enabled: edgesEnabled.value
+    })
+  }
+
+  const setEdgesWeight = (weight: number) => {
+    edgesWeight.value = Number(weight)
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-weight',
+      weight: edgesWeight.value
+    })
+  }
+
+  const setEdgesColor = (color: number) => {
+    hasChangedEdgesColor.value = true
+    edgesColor.value = color
+    updateViewMode()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'set-edges-color',
+      color: color.toString(16).padStart(6, '0')
+    })
   }
 
   return {
     currentViewMode,
-    setViewMode
+    setViewMode,
+    edgesEnabled,
+    toggleEdgesEnabled,
+    edgesWeight,
+    setEdgesWeight,
+    setEdgesColor,
+    edgesColor
   }
 }
 

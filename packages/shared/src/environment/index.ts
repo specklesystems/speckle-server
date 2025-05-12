@@ -13,11 +13,6 @@ export const parseFeatureFlags = (
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
   const res = parseEnv(input, {
-    // Enables the admin override feature
-    FF_ADMIN_OVERRIDE_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -32,14 +27,6 @@ export const parseFeatureFlags = (
     FF_WORKSPACES_MODULE_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
-    },
-    FF_WORKSPACES_NEW_PLANS_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: true }
-    },
-    FF_GATEKEEPER_FORCE_FREE_PLAN: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
     },
     FF_GATEKEEPER_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -64,11 +51,6 @@ export const parseFeatureFlags = (
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Toggles IFC parsing with experimental .Net parser
-    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Forces onboarding for all users
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
@@ -88,6 +70,16 @@ export const parseFeatureFlags = (
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Enable limits on personal projects
+    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
+    // Enables the new file importer
+    FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -104,21 +96,19 @@ export const parseFeatureFlags = (
 let parsedFlags: FeatureFlags | undefined
 
 export type FeatureFlags = {
-  FF_ADMIN_OVERRIDE_ENABLED: boolean
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
-  FF_WORKSPACES_NEW_PLANS_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
-  FF_GATEKEEPER_FORCE_FREE_PLAN: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
+  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

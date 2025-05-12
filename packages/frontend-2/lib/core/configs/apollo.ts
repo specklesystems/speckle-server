@@ -134,6 +134,9 @@ function createCache(): InMemoryCache {
       },
       User: {
         fields: {
+          meta: {
+            merge: mergeAsObjectsFunction
+          },
           timeline: {
             keyArgs: ['after', 'before'],
             merge: buildAbstractCollectionMergeFunction('ActivityCollection')
@@ -153,6 +156,9 @@ function createCache(): InMemoryCache {
           versions: {
             keyArgs: ['authoredOnly', 'limit'],
             merge: buildAbstractCollectionMergeFunction('CountOnlyCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -202,6 +208,9 @@ function createCache(): InMemoryCache {
           },
           pendingImportedModels: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -213,6 +222,16 @@ function createCache(): InMemoryCache {
           },
           pendingImportedVersions: {
             merge: (_existing, incoming) => incoming
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
+          }
+        }
+      },
+      Version: {
+        fields: {
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -220,6 +239,9 @@ function createCache(): InMemoryCache {
         fields: {
           replies: {
             keyArgs: ['limit']
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -302,6 +324,12 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
           },
           subscription: {
+            merge: mergeAsObjectsFunction
+          },
+          creationState: {
+            merge: mergeAsObjectsFunction
+          },
+          permissions: {
             merge: mergeAsObjectsFunction
           }
         }

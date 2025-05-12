@@ -1,51 +1,21 @@
-import { LoaderConfigurationError } from '@/modules/shared/errors'
-import { Authz } from '@speckle/shared'
+import { RequestDataLoaders } from '@/modules/core/loaders'
+import { MaybeAsync } from '@speckle/shared'
+import { AuthCheckContextLoaders } from '@speckle/shared/authz'
 
-let cachedLoaders: Partial<Authz.AuthCheckContextLoaders> = {}
-
-const loaderKeys: (keyof Authz.AuthCheckContextLoaders)[] = [
-  'getEnv',
-  'getProject',
-  'getProjectRole',
-  'getServerRole',
-  'getWorkspace',
-  'getWorkspaceRole',
-  'getWorkspaceSsoProvider',
-  'getWorkspaceSsoSession'
-]
-
-export const defineLoaders = (
-  loaders: Partial<Authz.AuthCheckContextLoaders>
-): void => {
-  for (const key of Object.keys(loaders)) {
-    if (!loaderKeys.includes(key as keyof Authz.AuthCheckContextLoaders)) {
-      throw new LoaderConfigurationError(
-        `Attempted to define loader with unknown key: ${key}`
-      )
-    }
-  }
-
-  cachedLoaders = {
-    ...cachedLoaders,
-    ...loaders
-  }
+export type ServerLoadersContext = {
+  dataLoaders: RequestDataLoaders
 }
 
-const isValidLoaders = (
-  loaders: Partial<Authz.AuthCheckContextLoaders>
-): loaders is Authz.AuthCheckContextLoaders => {
-  return loaderKeys.every((key) => !!loaders[key])
-}
+// Inject extra argument to all loaders, e.g. for GQL dataloaders
+export type ServerLoaders = Partial<{
+  [K in keyof AuthCheckContextLoaders]: AuthCheckContextLoaders[K] extends (
+    ...args: infer A
+  ) => infer R
+    ? (...args: [...A, ctx: ServerLoadersContext]) => R
+    : never
+}>
 
-export const validateLoaders = () => {
-  if (!isValidLoaders(cachedLoaders)) {
-    throw new LoaderConfigurationError()
-  }
-}
-
-export const getLoaders = (): Authz.AuthCheckContextLoaders => {
-  if (!isValidLoaders(cachedLoaders)) {
-    throw new LoaderConfigurationError('Attempted to reference invalid loaders.')
-  }
-  return cachedLoaders
+// define being an arg simplifes usage in export default calls
+export const defineModuleLoaders = (define: () => MaybeAsync<ServerLoaders>) => {
+  return async () => await define()
 }

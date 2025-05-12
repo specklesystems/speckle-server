@@ -1,7 +1,4 @@
-import {
-  extendLoggerComponent,
-  getLogger
-} from '@speckle/shared/dist/commonjs/observability/index.js'
+import { extendLoggerComponent, getLogger } from '@speckle/shared/observability'
 import { LOG_LEVEL, LOG_PRETTY } from '@/config.js'
 
 export const logger = extendLoggerComponent(

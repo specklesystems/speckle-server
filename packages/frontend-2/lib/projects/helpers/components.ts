@@ -3,7 +3,9 @@ import type {
   Nullable,
   ServerRoles,
   StreamRoles,
-  WorkspaceRoles
+  WorkspaceRoles,
+  WorkspaceSeatType,
+  MaybeNullOrUndefined
 } from '@speckle/shared'
 import type { LimitedUserAvatarFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -14,7 +16,8 @@ export type ProjectCollaboratorListItem = {
   role: string
   inviteId: Nullable<string>
   serverRole: Nullable<ServerRoles>
-  workspaceRole: Nullable<WorkspaceRoles>
+  workspaceRole: MaybeNullOrUndefined<WorkspaceRoles>
+  seatType: MaybeNullOrUndefined<WorkspaceSeatType>
 }
 
 export type SelectableStreamRoleSelectItem = {
@@ -43,6 +46,32 @@ export const roleSelectItems: Record<
     description: RoleInfo.Stream[Roles.Stream.Reviewer].description
   }
 }
+
+export enum AccessSelectItems {
+  NoAccess = 'no-access',
+  Reviewer = 'reviewer'
+}
+
+export type SelectableAccessSelectItem = {
+  id: AccessSelectItems
+  title: string
+  description?: string
+}
+
+export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelectItem> =
+  {
+    [AccessSelectItems.Reviewer]: {
+      id: AccessSelectItems.Reviewer,
+      title: 'Can view',
+      description:
+        'All workspace members can view and comment. Add them as project members to give them edit rights. Make the project private to remove their access.'
+    },
+    [AccessSelectItems.NoAccess]: {
+      id: AccessSelectItems.NoAccess,
+      title: 'No access',
+      description: 'Only admins and invited project members can access the project'
+    }
+  }
 
 export enum CommentPermissions {
   Anyone = 'anyone',

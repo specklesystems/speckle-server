@@ -21,6 +21,7 @@
     "dev:docker": "docker compose -f ./docker-compose-deps.yml",
     "dev:docker:up": "docker compose -f ./docker-compose-deps.yml up -d",
     "dev:docker:down": "docker compose -f ./docker-compose-deps.yml down",
+    "dev:docker:down:volumes": "docker compose -f ./docker-compose-deps.yml down --volumes",
     "dev:docker:restart": "yarn dev:docker:down && yarn dev:docker:up",
     "dev:kind:up": "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml",
     "dev:kind:down": "ctlptl delete -f ./.circleci/deployment/cluster-config.yaml",
@@ -38,7 +39,8 @@
     "postinstall": "husky install",
     "cm": "cz",
     "eslint:inspect": "eslint-config-inspector",
-    "eslint:projectwide": "node ./utils/eslint-projectwide.mjs"
+    "eslint:projectwide": "node ./utils/eslint-projectwide.mjs",
+    "npkill": "npkill"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.4.10",

@@ -22,8 +22,28 @@ import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
-import { defineModuleLoaders } from '@/modules/core/authz'
+import {
+  getImplicitUserProjectsCountFactory,
+  getStreamCollaboratorsFactory
+} from '@/modules/core/repositories/streams'
+import { reportUserEventsFactory } from '@/modules/core/events/userTracking'
+import { coreLogger } from '@/modules/core/logger'
+import { updateUserMixpanelProfileFactory } from '@/modules/core/services/users/tracking'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  getTotalWorkspaceCountFactory,
+  getUserWorkspaceCountFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
+import { getUserAuthoredCommitCountsFactory } from '@/modules/core/repositories/commits'
+import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
+import { updateServerMixpanelProfileFactory } from '@/modules/core/services/server/tracking'
+import { getCachedServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getTotalStreamCountFactory,
+  getTotalUserCountFactory
+} from '@/modules/stats/repositories'
+import { getServerTotalModelCountFactory } from '@/modules/core/services/branch/retrieval'
+import { getServerTotalVersionCountFactory } from '@/modules/core/services/commit/retrieval'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -77,19 +97,44 @@ const coreModule: SpeckleModule<{
 
       // Setup test subs
       if (isTestEnv()) {
-        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
+        const { startEmittingTestSubs } =
+          require('@/test/graphqlHelper') as typeof import('@/test/graphqlHelper')
         stopTestSubs = await startEmittingTestSubs()
       }
 
-      // Setup GQL sub emits
+      // Setup up various eventBus listeners
       reportSubscriptionEventsFactory({
         eventListen: getEventBus().listen,
         publish,
         getStreamCollaborators: getStreamCollaboratorsFactory({ db })
       })()
-    }
 
-    defineModuleLoaders()
+      reportUserEventsFactory({
+        eventBus: getEventBus(),
+        logger: coreLogger,
+        updateUserMixpanelProfileFactory: updateUserMixpanelProfileFactory({
+          getUser: getUserFactory({ db }),
+          getImplicitUserProjectsCount: getImplicitUserProjectsCountFactory({ db }),
+          getUserWorkspaceCount: getUserWorkspaceCountFactory({ db }),
+          getUserAuthoredCommitCounts: getUserAuthoredCommitCountsFactory({ db }),
+          getMixpanelClient,
+          logger: coreLogger
+        })
+      })()
+    }
+  },
+  async finalize() {
+    // Update server profile in mp
+    await updateServerMixpanelProfileFactory({
+      getServerInfo: getCachedServerInfoFactory({ db }),
+      getMixpanelClient,
+      getTotalStreamCount: getTotalStreamCountFactory({ db }),
+      getTotalWorkspaceCount: getTotalWorkspaceCountFactory({ db }),
+      getTotalUserCount: getTotalUserCountFactory({ db }),
+      getServerTotalModelCount: getServerTotalModelCountFactory(),
+      getServerTotalVersionCount: getServerTotalVersionCountFactory(),
+      logger: coreLogger
+    })()
   },
   async shutdown() {
     await shutdownResultListener()
