@@ -569,6 +569,19 @@ export function useViewModeUtilities() {
     })
   }
 
+  onBeforeUnmount(() => {
+    // Reset edges settings
+    edgesEnabled.value = true
+    edgesWeight.value = 1
+    outlineOpacity.value = 1
+    edgesColor.value = defaultColor.value
+    hasChangedEdgesColor.value = false
+
+    // Reset view mode to default
+    viewMode.value = ViewMode.SOLID
+    updateViewMode()
+  })
+
   return {
     currentViewMode,
     setViewMode,
