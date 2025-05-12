@@ -13,6 +13,7 @@ import {
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { times } from 'lodash'
 import { Roles } from '@speckle/shared'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 describe('Projects', () => {
   const me: BasicTestUser = {
@@ -54,6 +55,9 @@ describe('Projects', () => {
       expect(res.data?.projectMutations.create.id).to.be.ok
       expect(res.data?.projectMutations.create.name).to.equal(input.name)
       expect(res.data?.projectMutations.create.description).to.equal(input.description)
+      expect(res.data?.projectMutations.create.visibility).to.equal(
+        ProjectRecordVisibility.Private
+      ) // private by default
     })
 
     describe('after creation', () => {
