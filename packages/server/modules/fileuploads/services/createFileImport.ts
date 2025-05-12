@@ -9,7 +9,11 @@ import { PushJobToFileImporter } from '@/modules/fileuploads/domain/operations'
 const twentyMinutes = 20 * TIME.minute
 
 export const pushJobToFileImporterFactory =
-  (deps: { createAppToken: CreateAndStoreAppToken }): PushJobToFileImporter =>
+  (deps: {
+    createAppToken: CreateAndStoreAppToken
+    getServerOrigin: typeof getServerOrigin
+    scheduleJob: typeof scheduleJob
+  }): PushJobToFileImporter =>
   async ({ modelId, projectId, userId, fileType, blobId, jobId }): Promise<void> => {
     const token = await deps.createAppToken({
       appId: DefaultAppIds.Web,
@@ -27,10 +31,10 @@ export const pushJobToFileImporterFactory =
 
     const url = new URL(
       `/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-      getServerOrigin()
+      deps.getServerOrigin()
     ).toString()
 
-    await scheduleJob({
+    await deps.scheduleJob({
       type: 'file-import',
       payload: {
         token,

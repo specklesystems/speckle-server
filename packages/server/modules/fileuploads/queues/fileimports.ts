@@ -20,7 +20,7 @@ export type JobFileImportPayload = {
   timeOutSeconds: number
 }
 
-type FileImportJob = {
+export type FileImportJob = {
   type: 'file-import'
   payload: JobFileImportPayload
 }

@@ -30,6 +30,8 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -66,6 +68,8 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       if (!model) throw new UnauthorizedError()
 
       const pushJobToFileImporter = pushJobToFileImporterFactory({
+        getServerOrigin,
+        scheduleJob,
         createAppToken: createAppTokenFactory({
           storeApiToken: storeApiTokenFactory({ db }),
           storeTokenScopes: storeTokenScopesFactory({ db }),
