@@ -12,6 +12,7 @@ import {
   OutputPass,
   Pipeline,
   SectionTool,
+  SpeckleMesh,
   SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
@@ -489,8 +490,23 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
 
+      const batches = this.viewer
+        .getRenderer()
+        .batcher.getBatches(undefined, GeometryType.MESH)
+      const fp32 = new Float32Array(3)
+      for (let k = 0; k < batches.length; k++) {
+        const tas = (batches[k].renderObject as SpeckleMesh).TAS
+        const box = tas.getBoundingBox(new Box3())
+
+        const min = box.min
+        console.log(min)
+        const vec64 = min //box.getCenter(new Vector3())
+        vec64.toArray(fp32)
+        const vec32 = new Vector3().fromArray(fp32)
+        console.log(vec32.sub(vec64).length())
+      }
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
