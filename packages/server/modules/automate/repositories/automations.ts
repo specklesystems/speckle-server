@@ -653,6 +653,7 @@ const getAutomationRunsTotalCountBaseQueryFactory =
         AutomationRevisions.col.automationId
       )
       .where(AutomationRevisions.col.automationId, args.automationId)
+      .where(Automations.col.isDeleted, false)
 
     if (args.revisionId?.length) {
       q.andWhere(AutomationRuns.col.automationRevisionId, args.revisionId)

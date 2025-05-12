@@ -9,19 +9,41 @@ import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
 import { StencilPass } from '../Passes/StencilPass.js'
 import { StencilMaskPass } from '../Passes/StencilMaskPass.js'
+import { DefaultPipelineOptions, PipelineOptions } from './Pipeline.js'
+import { EdgesPipeline } from './EdgesPipeline.js'
 
 export class ArcticViewPipeline extends ProgressivePipeline {
   protected accumulationFrameCount: number = 16
 
-  constructor(speckleRenderer: SpeckleRenderer) {
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: PipelineOptions = DefaultPipelineOptions
+  ) {
     super(speckleRenderer)
 
-    const depthPass = new DepthPass()
-    depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setVisibility(ObjectVisibility.DEPTH)
-    depthPass.setJitter(true)
-    depthPass.setClearColor(0x000000, 1)
-    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const edgesPipeline = options.edges ? new EdgesPipeline(speckleRenderer) : null
+
+    const depthPass = !options.edges ? new DepthPass() : null
+    if (depthPass) {
+      depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+      depthPass.setVisibility(ObjectVisibility.DEPTH)
+      depthPass.setJitter(true)
+      depthPass.setClearColor(0x000000, 1)
+      depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    }
+
+    const depthTex = options.edges
+      ? edgesPipeline?.depthPass.depthTexture
+      : depthPass?.outputTarget?.texture
+
+    const depthSubPipelineDynamic =
+      (options.edges ? edgesPipeline?.dynamicPasses : []) || []
+    const depthSubPipelineProgressive =
+      (options.edges
+        ? edgesPipeline?.progressivePasses
+        : depthPass
+        ? [depthPass]
+        : []) || []
 
     const viewportPass = new ViewportPass()
     viewportPass.setLayers([
@@ -50,7 +72,7 @@ export class ArcticViewPipeline extends ProgressivePipeline {
     viewportTransparentPass.options = { minIntensity: 0.25, opacity: 0.5 }
 
     const progressiveAOPass = new ProgressiveAOPass()
-    progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
+    progressiveAOPass.setTexture('tDepth', depthTex)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
     progressiveAOPass.options = {
       kernelRadius: 100,
@@ -59,9 +81,21 @@ export class ArcticViewPipeline extends ProgressivePipeline {
     progressiveAOPass.setClearColor(0xffffff, 1)
 
     const blendPass = new BlendPass()
-    blendPass.options = { blendAO: true, blendEdges: false }
+    blendPass.options = { blendAO: true, blendEdges: options.edges }
     blendPass.setTexture('tAo', progressiveAOPass.outputTarget?.texture)
+    blendPass.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.outputTexture : undefined
+    )
     blendPass.accumulationFrames = this.accumulationFrameCount
+
+    const blendPassDynamic = new BlendPass()
+    blendPassDynamic.options = { blendAO: false, blendEdges: options.edges }
+    blendPassDynamic.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.outputTextureDynamic : undefined
+    )
+    blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
@@ -76,14 +110,16 @@ export class ArcticViewPipeline extends ProgressivePipeline {
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
+      ...depthSubPipelineDynamic,
       stencilPass,
       viewportPass,
       viewportTransparentPass,
+      ...(options.edges ? [blendPassDynamic] : []),
       stencilMaskPass,
       overlayPass
     )
     this.progressiveStage.push(
-      depthPass,
+      ...depthSubPipelineProgressive,
       stencilPass,
       viewportPass,
       viewportTransparentPass,

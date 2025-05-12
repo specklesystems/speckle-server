@@ -3,14 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
-  ArcticViewPipeline,
   ClearFlags,
   DefaultLightConfiguration,
-  DefaultPipeline,
+  GPass,
   InputType,
-  MRTEdgesPipeline,
-  MRTPenViewPipeline,
-  MRTShadedViewPipeline,
   NormalsPass,
   ObjectLayers,
   OutputPass,
@@ -20,7 +16,9 @@ import {
   SpeckleRenderer,
   SpeckleStandardMaterial,
   TAAPipeline,
-  TreeNode
+  TreeNode,
+  ViewMode,
+  ViewModes
 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -523,50 +521,23 @@ export default class Sandbox {
     })
     this.tabs.pages[0].addSeparator()
 
-    const pipeline = { output: 0 }
-    this.tabs.pages[0]
-      .addInput(pipeline, 'output', {
-        label: 'Pipeline',
-        options: {
-          DEFAULT: 0,
-          EDGED: 1,
-          SHADED: 2,
-          PEN: 3,
-          ARCTIC: 4,
-          TAA: 5,
-          DEBUG_NORMALS: 6
-        }
-      })
-      .on('change', (value) => {
-        switch (value.value) {
-          case 0:
-            this.viewer.getRenderer().pipeline = new DefaultPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 1:
-            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 2:
-            this.viewer.getRenderer().pipeline = new MRTShadedViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 3:
-            this.viewer.getRenderer().pipeline = new MRTPenViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
-          case 4:
-            this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
-              this.viewer.getRenderer()
-            )
-            break
+    const pipeline = {
+      output: 0,
+      edges: false,
+      outlineThickness: 1,
+      outlineColor: 0x323232,
+      outlineDensity: 0.75
+    }
+    const setPipeline = (value: number) => {
+      const viewModes = this.viewer.getExtension(ViewModes)
+      if (value in ViewMode) {
+        viewModes.setViewMode(value, pipeline)
+      } else
+        switch (value) {
           case 5:
             this.viewer.getRenderer().pipeline = new TAAPipeline(
-              this.viewer.getRenderer()
+              this.viewer.getRenderer(),
+              { edges: pipeline.edges }
             )
             break
           case 6:
@@ -590,14 +561,80 @@ export default class Sandbox {
                 this.passList.push(normalPass, outputPass)
               }
             })(this.viewer.getRenderer())
-
+            break
           default:
             break
         }
+      this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+    }
+    this.tabs.pages[0]
+      .addInput(pipeline, 'output', {
+        label: 'Pipeline',
+        options: {
+          DEFAULT: ViewMode.DEFAULT,
+          SOLID: ViewMode.SOLID,
+          PEN: ViewMode.PEN,
+          ARCTIC: ViewMode.ARCTIC,
+          SHADED: ViewMode.SHADED,
+          TAA: 5,
+          DEBUG_NORMALS: 6
+        }
+      })
+      .on('change', (value) => {
+        setPipeline(value.value)
+      })
+
+    this.tabs.pages[0]
+      .addInput(pipeline, 'edges', {
+        label: 'Show Edges'
+      })
+      .on('change', () => {
+        setPipeline(pipeline.output)
+      })
+
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineThickness', {
+        label: 'Outline Thickness',
+        min: 0.5,
+        max: 5,
+        step: 0.25
+      })
+      .on('change', () => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineColor', {
+        label: 'Outline Color',
+        view: 'color'
+      })
+      .on('change', () => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
         this.viewer.requestRender(UpdateFlags.RENDER_RESET)
       })
 
+    this.tabs.pages[0]
+      .addInput(pipeline, 'outlineDensity', {
+        label: 'Outline Density',
+        min: 0.01,
+        max: 1,
+        step: 0.01
+      })
+      .on('change', () => {
+        const edgesPasses = this.viewer.getRenderer().pipeline.getPass('EDGES')
+        edgesPasses.forEach((pass: GPass) => {
+          pass.options = pipeline
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
     this.tabs.pages[0].addSeparator()
+
     const colors = this.tabs.pages[0].addButton({
       title: `PM's Colors`
     })

@@ -497,6 +497,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'streamId',
   'branchName',
   'userId',
+  'modelId',
   'fileName',
   'fileType',
   'fileSize',

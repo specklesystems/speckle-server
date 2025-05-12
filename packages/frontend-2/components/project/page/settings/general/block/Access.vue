@@ -8,6 +8,7 @@
     <FormRadioGroup
       v-model="selectedOption"
       :options="radioOptions"
+      size="sm"
       :disabled="!canUpdate.authorized"
       @update:model-value="emitUpdate"
     />
