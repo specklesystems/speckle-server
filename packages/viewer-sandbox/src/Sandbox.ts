@@ -1320,9 +1320,21 @@ export default class Sandbox {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
           progress = p
-          console.log(`Loading ${p}%`)
+          console.log(`Loading Data ${p}%`)
         }
       })
+      loader.on(
+        LoaderEvent.ConvertGeometry,
+        (arg: { progress: number; id: string }) => {
+          const p = Math.floor(arg.progress * 100)
+          if (p > progress) {
+            if (colorImage)
+              colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+            progress = p
+            console.log(`Converting Data ${p}%`)
+          }
+        }
+      )
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })

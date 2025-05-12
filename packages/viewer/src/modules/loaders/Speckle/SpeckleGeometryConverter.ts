@@ -5,12 +5,21 @@ import { type NodeData } from '../../tree/WorldTree.js'
 import { Box3, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
 import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
 import Logger from '../../utils/Logger.js'
+import { Loader, LoaderEvent } from '../Loader.js'
 
 export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
   public meshTriangulationTime = 0
   public actualTriangulateTime = 0
   public pushTime = 0
+  #total: number
+  #eventEmitter: Loader
+
+  constructor(total: number, eventEmitter: Loader) {
+    super()
+    this.#total = total
+    this.#eventEmitter = eventEmitter
+  }
 
   public getSpeckleType(node: NodeData): SpeckleType {
     const rawType = node.raw.speckle_type ? node.raw.speckle_type : 'Base'
@@ -35,8 +44,17 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     this.typeLookupTable[rawType] = typeRet
     return typeRet
   }
+  count = 0
 
   public convertNodeToGeometryData(node: NodeData): GeometryData | null {
+    this.count++
+    this.#eventEmitter.emit(LoaderEvent.ConvertGeometry, {
+      progress: this.count / (this.#total + 1),
+      id: node.raw.id
+    })
+    if (this.count % 100 === 0) {
+      console.info('conversion', this.count / (this.#total + 1))
+    }
     const type = this.getSpeckleType(node)
     switch (type) {
       case SpeckleType.BlockInstance:
