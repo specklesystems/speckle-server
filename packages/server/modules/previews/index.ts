@@ -21,7 +21,7 @@ import {
   JobPayload,
   PreviewResultPayload,
   previewResultPayload
-} from '@speckle/shared/dist/commonjs/workers/previews/job.js'
+} from '@speckle/shared/workers/previews'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   storePreviewFactory,
@@ -33,7 +33,7 @@ import {
   PreviewJobDurationStep
 } from '@/modules/previews/observability/metrics'
 import { addRequestQueueListeners } from '@/modules/previews/queues/previews'
-import { initializeQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
+import { initializeQueue } from '@speckle/shared/queue'
 import type Bull from 'bull'
 
 const JobQueueName = 'preview-service-jobs'
