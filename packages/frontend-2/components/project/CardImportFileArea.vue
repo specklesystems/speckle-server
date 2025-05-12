@@ -35,13 +35,12 @@
         />
       </div>
       <div v-else :class="containerClasses">
-        <div
-          class="hidden min-[1400px]:block"
-          :class="emptyStateVariant === 'modelGrid' ? 'h-12' : 'h-32'"
-        >
-          <ProjectEmptyStateIllustration />
+        <div :class="emptyStateVariant === 'modelGrid' ? 'h-12' : 'h-32'">
+          <ProjectEmptyStateIllustration
+            :class="emptyStateVariant === 'modelGrid' ? 'hidden' : 'block'"
+          />
         </div>
-        <div class="max-w-[460px] text-center min-[1400px]:text-left">
+        <div>
           <h2
             class="text-foreground-2 p-0 m-0 inline-block"
             :class="
@@ -52,35 +51,21 @@
           </h2>
           <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
             Use
-            <NuxtLink :to="connectorsRoute" class="font-medium">
-              <span class="underline">connectors</span>
-            </NuxtLink>
-            to publish a {{ modelName ? '' : 'new model' }} version to
+            <!-- <NuxtLink :to="connectorsRoute" class="font-medium">
+              <span class="underline">-->
+            connectors to publish a {{ modelName ? '' : 'new model' }} version to
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
             IFC/OBJ/STL file here.
           </p>
           <p
             class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
           >
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-right="ChevronRightIcon"
-              @click="openFilePicker"
-            >
-              Upload a model
-            </FormButton>
-            <FormButton
-              :to="connectorsRoute"
-              size="sm"
-              color="outline"
-              :icon-right="ChevronRightIcon"
-            >
+            <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
-            <!-- <FormButton size="sm" color="outline" :icon-right="ChevronRightIcon">
-              Getting started video
-            </FormButton> -->
+            <FormButton size="sm" color="outline" @click="openFilePicker">
+              Upload a model
+            </FormButton>
           </p>
         </div>
       </div>
@@ -90,7 +75,7 @@
 <script setup lang="ts">
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
-import { ExclamationTriangleIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
@@ -124,7 +109,7 @@ const containerClasses = computed(() => {
   const classes = 'w-full flex p-3 gap-2'
 
   if (props.emptyStateVariant === 'modelGrid') {
-    return `${classes} flex-col`
+    return `${classes} flex-col text-2xs-400`
   } else if (props.emptyStateVariant === 'modelList') {
     return `${classes} `
   } else if (props.emptyStateVariant === 'modelsSection') {
