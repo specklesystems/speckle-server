@@ -18,7 +18,7 @@
         location="workspace_switcher"
       />
       <FormButton
-        v-if="!showAllWorkspaces && needsPagination"
+        v-if="!showAllWorkspaces"
         color="subtle"
         size="lg"
         full-width
@@ -42,10 +42,6 @@ const {
 const open = defineModel<boolean>('open', { required: true })
 
 const showAllWorkspaces = ref(false)
-
-const needsPagination = computed(() => {
-  return discoverableWorkspacesAndJoinRequests.value.length > 3
-})
 
 const workspacesToShow = computed(() => {
   return showAllWorkspaces.value
