@@ -40,7 +40,7 @@
           />
         </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
+        <section v-if="showAddOnsSection" class="flex flex-col gap-y-4 md:gap-y-6">
           <SettingsSectionHeader title="Add-ons" subheading />
           <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
         </section>
@@ -52,7 +52,11 @@
 <script lang="ts" setup>
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import { type WorkspaceRoles, workspaceReachedPlanLimit } from '@speckle/shared'
+import {
+  type WorkspaceRoles,
+  workspaceReachedPlanLimit,
+  isSelfServeAvailablePlan
+} from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -107,4 +111,8 @@ const reachedPlanLimit = computed(() =>
     workspace.value?.plan?.usage?.modelCount
   )
 )
+const showAddOnsSection = computed(() => {
+  if (!workspace.value?.plan?.name) return false
+  return isSelfServeAvailablePlan(workspace.value.plan.name)
+})
 </script>
