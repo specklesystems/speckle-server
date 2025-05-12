@@ -494,7 +494,7 @@ export function useViewModeUtilities() {
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
-  const outlineOpacity = ref(1)
+  const outlineOpacity = ref(0.75)
   const defaultColor = ref(0x1a1a1a)
   const edgesColor = ref(defaultColor.value)
   const hasChangedEdgesColor = ref(false)
