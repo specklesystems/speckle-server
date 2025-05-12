@@ -15,6 +15,7 @@ type ProjectPermissionChecks {
   canRequestRender: PermissionCheckResult!
   canPublish: PermissionCheckResult!
   canLoad: PermissionCheckResult!
+  canInvite: PermissionCheckResult!
 }
 
 type RootPermissionChecks {
