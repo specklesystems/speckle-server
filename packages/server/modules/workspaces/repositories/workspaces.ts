@@ -28,6 +28,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceSeatsCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
@@ -50,7 +51,8 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
-  Workspaces
+  Workspaces,
+  WorkspaceSeats
 } from '@/modules/workspaces/helpers/db'
 import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
@@ -499,6 +501,19 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
 
     const [res] = await query
     return parseInt(res.count.toString())
+  }
+
+export const getWorkspaceSeatCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSeatsCount =>
+  async ({ workspaceId, type }) => {
+    const query = db(WorkspaceSeats.name).where(
+      WorkspaceSeats.col.workspaceId,
+      workspaceId
+    )
+
+    if (type !== undefined) query.andWhere(WorkspaceSeats.col.type, type)
+
+    return query.count()
   }
 
 export const getWorkspaceCreationStateFactory =
