@@ -53,10 +53,20 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
+import {
+  Euler,
+  Vector3,
+  Box3,
+  Color,
+  LinearFilter,
+  Vector2,
+  PerspectiveCamera,
+  OrthographicCamera
+} from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader2 from '@speckle/objectloader2'
+import { Geometry } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -495,17 +505,18 @@ export default class Sandbox {
       const batches = this.viewer
         .getRenderer()
         .batcher.getBatches(undefined, GeometryType.MESH)
-      const fp32 = new Float32Array(3)
+      const camera = this.viewer.getRenderer().renderingCamera as
+        | PerspectiveCamera
+        | OrthographicCamera
+      const screenSize = this.viewer.getRenderer().renderer.getSize(new Vector2())
       for (let k = 0; k < batches.length; k++) {
         const tas = (batches[k].renderObject as SpeckleMesh).TAS
         const box = tas.getBoundingBox(new Box3())
 
-        const min = box.min
-        console.log(min)
-        const vec64 = min //box.getCenter(new Vector3())
-        vec64.toArray(fp32)
-        const vec32 = new Vector3().fromArray(fp32)
-        console.log(vec32.sub(vec64).length())
+        console.log(
+          'Delta projection -> ',
+          Geometry.getFP32ProjectionDelta(box.min, camera, screenSize, 100)
+        )
       }
       /** Read depth */
       // const pass = [

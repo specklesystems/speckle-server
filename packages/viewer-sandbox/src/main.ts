@@ -470,7 +470,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
 
     // FAR OFF
-    'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
 
     // SUPER TINY
     // 'https://latest.speckle.systems/projects/6631c0378c/models/4fed65a49c'
@@ -518,6 +518,9 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/16ce7b208c/models/e9f8edeb13@dc0b9471e9'
 
     // 'https://app.speckle.systems/projects/40df04e516/models/5658c83729'
+
+    // 'https://latest.speckle.systems/projects/46e3e0e1ec/models/ac0e624478'
+    'https://app.speckle.systems/projects/16ce7b208c/models/07065dc527'
   )
 }
 
