@@ -26,25 +26,30 @@
         <SettingsWorkspacesBillingUsage :slug="slug" />
       </section>
 
-      <ClientOnly>
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Upgrade your plan" subheading />
-          <PricingTable
-            :slug="slug"
-            :workspace-id="workspace?.id"
-            :role="workspace?.role as WorkspaceRoles"
-            :currency="workspace?.subscription?.currency"
-            :is-yearly-interval-selected="
-              workspace?.subscription?.billingInterval === BillingInterval.Yearly
-            "
-          />
-        </section>
+      <template v-if="showPricingInfo">
+        <ClientOnly>
+          <section class="flex flex-col gap-y-4 md:gap-y-6">
+            <SettingsSectionHeader title="Upgrade your plan" subheading />
+            <PricingTable
+              :slug="slug"
+              :workspace-id="workspace?.id"
+              :role="workspace?.role as WorkspaceRoles"
+              :currency="workspace?.subscription?.currency"
+              :is-yearly-interval-selected="
+                workspace?.subscription?.billingInterval === BillingInterval.Yearly
+              "
+            />
+          </section>
 
-        <section v-if="showAddOnsSection" class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Add-ons" subheading />
-          <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
-        </section>
-      </ClientOnly>
+          <section class="flex flex-col gap-y-4 md:gap-y-6">
+            <SettingsSectionHeader title="Add-ons" subheading />
+            <SettingsWorkspacesBillingAddOns
+              :slug="slug"
+              :workspace-id="workspace?.id"
+            />
+          </section>
+        </ClientOnly>
+      </template>
     </div>
   </div>
 </template>
@@ -111,7 +116,7 @@ const reachedPlanLimit = computed(() =>
     workspace.value?.plan?.usage?.modelCount
   )
 )
-const showAddOnsSection = computed(() => {
+const showPricingInfo = computed(() => {
   if (!workspace.value?.plan?.name) return false
   return isSelfServeAvailablePlan(workspace.value.plan.name)
 })
