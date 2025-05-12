@@ -518,15 +518,15 @@ export function useViewModeUtilities() {
     if (mode === ViewMode.PEN) {
       outlineOpacity.value = 1
       edgesEnabled.value = true
-      if (!hasChangedEdgesColor.value) {
+      if (edgesColor.value === defaultColor.value) {
         if (!isLightTheme.value) {
           edgesColor.value = 0xffffff
         }
       }
     } else {
       outlineOpacity.value = 0.75
-      if (!hasChangedEdgesColor.value) {
-        edgesColor.value = defaultColor.value
+      if (edgesColor.value === 0xffffff) {
+        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
       }
     }
 
@@ -573,7 +573,7 @@ export function useViewModeUtilities() {
     // Reset edges settings
     edgesEnabled.value = true
     edgesWeight.value = 1
-    outlineOpacity.value = 1
+    outlineOpacity.value = 0.75
     edgesColor.value = defaultColor.value
     hasChangedEdgesColor.value = false
 
