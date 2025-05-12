@@ -52,7 +52,8 @@ import {
   Nullable,
   Optional,
   PaidWorkspacePlans,
-  Roles
+  Roles,
+  WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -871,7 +872,9 @@ describe('Workspace project GQL CRUD', () => {
     }
 
     before(async () => {
-      await createTestWorkspace(targetWorkspace, serverAdminUser)
+      await createTestWorkspace(targetWorkspace, serverAdminUser, {
+        addPlan: WorkspacePlans.Unlimited
+      })
     })
 
     beforeEach(async () => {
@@ -893,7 +896,7 @@ describe('Workspace project GQL CRUD', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(project?.workspaceId).to.equal(targetWorkspace.id)
-      expect(project?.visibility).to.equal(ProjectRecordVisibility.Workspace)
+      expect(project?.visibility).to.equal(ProjectVisibility.Workspace)
     })
 
     it('should move a public project to the target workspace and keep same visibility', async () => {
@@ -914,7 +917,7 @@ describe('Workspace project GQL CRUD', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(project?.workspaceId).to.equal(targetWorkspace.id)
-      expect(project?.visibility).to.equal(ProjectRecordVisibility.Public)
+      expect(project?.visibility).to.equal(ProjectVisibility.Public)
     })
 
     it('should preserve project roles for project members with editor seats', async () => {
