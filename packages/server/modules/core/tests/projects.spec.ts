@@ -56,8 +56,8 @@ describe('Projects', () => {
       expect(res.data?.projectMutations.create.name).to.equal(input.name)
       expect(res.data?.projectMutations.create.description).to.equal(input.description)
       expect(res.data?.projectMutations.create.visibility).to.equal(
-        ProjectVisibility.Private
-      ) // private by default
+        ProjectVisibility.Private // private by default
+      )
     })
 
     describe('after creation', () => {
