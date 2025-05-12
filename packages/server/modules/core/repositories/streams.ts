@@ -1040,8 +1040,10 @@ export const updateStreamFactory =
         )
       }
     } else {
-      if (has(update, 'isPublic') && !update.isPublic) {
-        validUpdate.visibility = ProjectRecordVisibility.Private
+      if (has(update, 'isPublic')) {
+        validUpdate.visibility = update.isPublic
+          ? ProjectRecordVisibility.Public
+          : ProjectRecordVisibility.Private
       }
     }
 
