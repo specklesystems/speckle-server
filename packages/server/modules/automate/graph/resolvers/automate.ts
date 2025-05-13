@@ -268,12 +268,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async automationsStatus(parent, _args, ctx) {
           const projectDb = await getProjectDbClient({ projectId: parent.streamId })
 
-          const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({
-            db: projectDb
-          })
-
           const getStatus = getAutomationsStatusFactory({
-            getLatestVersionAutomationRuns
+            getLatestVersionAutomationRuns: getLatestVersionAutomationRunsFactory({
+              db: projectDb
+            })
           })
 
           const modelId = parent.id
