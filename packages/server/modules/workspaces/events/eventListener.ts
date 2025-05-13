@@ -541,13 +541,21 @@ export const workspaceTrackingFactory =
         getWorkspaceProjectCount({ workspaceIds: [workspaceId] }),
         getWorkspaceModelCount({ workspaceId })
       ])
-      const seats = subscription?.subscriptionData
-        ? calculateSubscriptionSeats({
-            subscriptionData: subscription?.subscriptionData
-          })
-        : 0
 
-      const billingPeriod = '' // TODO: not sure with this one
+      let seats = 0
+      let subscriptionBillingInterval = null
+      let subscriptionCurrentBillingCycleEnd = null
+      let subscriptionCreatedAt = null
+
+      if (subscription !== null) {
+        seats = calculateSubscriptionSeats({
+          subscriptionData: subscription.subscriptionData
+        })
+
+        subscriptionBillingInterval = subscription.billingInterval
+        subscriptionCurrentBillingCycleEnd = subscription.currentBillingCycleEnd
+        subscriptionCreatedAt = subscription.createdAt
+      }
 
       return {
         name: workspace.name,
@@ -562,9 +570,10 @@ export const workspaceTrackingFactory =
         teamGuestCount: guestCount,
         planName: plan?.name || '',
         planStatus: plan?.status || '',
-        planCreatedAt: plan?.createdAt, // TODO: test that when subscription is change the createdAt field is kept
-        subscriptionBillingInterval: subscription?.billingInterval,
-        subscriptionCurrentBillingCycleEnd: subscription?.currentBillingCycleEnd,
+        planCreatedAt: plan?.createdAt,
+        subscriptionCreatedAt,
+        subscriptionBillingInterval,
+        subscriptionCurrentBillingCycleEnd,
         seats,
         seatsGuest: 0,
         seatsViewerCount,
@@ -572,7 +581,6 @@ export const workspaceTrackingFactory =
         createdAt: workspace.createdAt,
         projectCount: projectCount[0],
         modelsCount,
-        billingPeriod,
         ...getBaseTrackingProperties()
       }
     }
