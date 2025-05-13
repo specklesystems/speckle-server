@@ -145,6 +145,8 @@ const main = async () => {
 
   const skippedProjects: StreamRecord[] = []
 
+  const { targetRegionDb: largeProjectDb } = await getTargetServerConnection(TARGET_WORKSPACE_ID)
+
   for await (const sourceProjects of executeBatchedSelect(
     sourceDb.table<StreamRecord>('streams').select('*')
   )) {
@@ -217,14 +219,12 @@ const main = async () => {
         })({ streamId: sourceProject.id })
         let movedObjectsCount = 0
 
-        if (sourceProjectObjectCount > 1_000_000) {
-          await regionTrx.commit()
-        }
+        const objectDb = sourceProjectObjectCount > 1_000_000 ? largeProjectDb : regionTrx
 
         for await (const objectsBatch of getBatchedStreamObjectsFactory({
           db: sourceDb
         })(sourceProject.id, { batchSize: 500 })) {
-          await insertObjectsFactory({ db: regionTrx })(objectsBatch)
+          await insertObjectsFactory({ db: objectDb })(objectsBatch)
 
           movedObjectsCount = movedObjectsCount + objectsBatch.length
           console.log(
@@ -234,10 +234,6 @@ const main = async () => {
                 .toString()
                 .padStart(6, '0')} objects moved`
           )
-        }
-
-        if (sourceProjectObjectCount > 1_000_000) {
-          await regionTrx.transaction()
         }
 
         // object previews are ignored, they will be regenerated when requested
