@@ -55,7 +55,6 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          empty-state-variant="default"
           :project-id="project.id"
           :model-name="item.fullName"
           :disabled="!canCreateModel.authorized"
