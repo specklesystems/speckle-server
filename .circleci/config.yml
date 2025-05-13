@@ -789,7 +789,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     <<: *docker-node-image
-    resource_class: medium
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
