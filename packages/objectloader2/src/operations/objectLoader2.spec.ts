@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import ObjectLoader2 from './objectLoader2.js'
+import { ObjectLoader2 } from './objectLoader2.js'
 import { Base, Item } from '../types/types.js'
 import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { MemoryDatabase } from './databases/memoryDatabase.js'
+import IndexedDatabase from './databases/indexedDatabase.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -14,12 +15,12 @@ describe('objectloader2', () => {
       new Map<string, Base>([[rootId, rootBase]])
     )
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: rootId,
+      rootId,
       downloader,
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
+      database: new IndexedDatabase({
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      })
     })
     const x = await loader.getRootObject()
     expect(x).toMatchSnapshot()
@@ -33,12 +34,12 @@ describe('objectloader2', () => {
       new Map<string, Base>([[rootId, rootBase]])
     )
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: rootId,
+      rootId,
       downloader,
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
+      database: new IndexedDatabase({
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      })
     })
     const x = await loader.getRootObject()
     expect(x).toMatchSnapshot()
@@ -53,12 +54,12 @@ describe('objectloader2', () => {
       new Map<string, Base>([[rootId, rootBase]])
     )
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: rootId,
+      rootId,
       downloader,
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
+      database: new IndexedDatabase({
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      })
     })
     const r = []
     for await (const x of loader.getObjectIterator()) {
@@ -88,12 +89,11 @@ describe('objectloader2', () => {
     records.set(child1.baseId, child1Base)
 
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: root.baseId,
+      rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
       database: new MemoryDatabase({ items: records })
     })
+
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
     for await (const x of loader.getObjectIterator()) {
@@ -127,12 +127,12 @@ describe('objectloader2', () => {
     records.set(child1.baseId, child1Base)
 
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: root.baseId,
+      rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
+      database: new IndexedDatabase({
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      })
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
@@ -164,13 +164,12 @@ describe('objectloader2', () => {
     const headers = new Headers()
     headers.set('x-test', 'asdf')
     const loader = new ObjectLoader2({
-      serverUrl: 'a',
-      streamId: 'b',
-      objectId: root.baseId,
-      headers,
+      rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
-      indexedDB: new IDBFactory(),
-      keyRange: IDBKeyRange
+      database: new IndexedDatabase({
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      })
     })
     const x = await loader.getRootObject()
     expect(x).toMatchSnapshot()

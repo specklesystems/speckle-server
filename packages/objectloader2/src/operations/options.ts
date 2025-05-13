@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { Base, CustomLogger } from '../types/types.js'
 import { Downloader, Database } from './interfaces.js'
 
