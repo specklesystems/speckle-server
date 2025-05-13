@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import { Pump } from '../helpers/cachePump.js'
 import { Base, CustomLogger, Fetcher } from '../types/types.js'
 import { Downloader, Database } from './interfaces.js'
 
@@ -40,9 +39,7 @@ export interface BaseDownloadOptions {
   objectId: string
   token?: string
   headers?: Headers
-
   fetch?: Fetcher
-  pump: Pump
 }
 
 export interface MemoryDatabaseOptions {

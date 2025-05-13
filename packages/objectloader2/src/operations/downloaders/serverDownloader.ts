@@ -134,7 +134,6 @@ export default class ServerDownloader implements Downloader {
           const pieces = jsonString.split('\t')
           const [id, unparsedObj] = pieces
           const item = this.#processJson(id, unparsedObj)
-          this.#options.pump.add(item)
           this.#results?.add(item)
           count++
           if (count % 1000 === 0) {

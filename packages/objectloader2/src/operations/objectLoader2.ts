@@ -9,6 +9,7 @@ import { MemoryDatabase } from './databases/memoryDatabase.js'
 import { DefermentManager } from '../helpers/defermentManager.js'
 import { CacheReader } from '../helpers/cacheReader.js'
 import { CachePump } from '../helpers/cachePump.js'
+import AggregateQueue from '../helpers/AggregateQueue.js'
 
 export default class ObjectLoader2 {
   #objectId: string
@@ -62,7 +63,6 @@ export default class ObjectLoader2 {
     this.#downloader =
       options.downloader ||
       new ServerDownloader({
-        pump: this.#pump,
         serverUrl: options.serverUrl,
         streamId: options.streamId,
         objectId: this.#objectId,
@@ -109,7 +109,7 @@ export default class ObjectLoader2 {
 
     const children = Object.keys(rootItem.base.__closure)
     const total = children.length
-    this.#downloader.initializePool({ results: this.#gathered, total })
+    this.#downloader.initializePool({ results: new AggregateQueue(this.#gathered, this.#pump), total })
     for await (const item of this.#pump.gather(children, this.#downloader)) {
       yield item.base
     }

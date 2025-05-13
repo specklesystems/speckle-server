@@ -7,49 +7,9 @@ import Queue from './queue.js'
 import { Downloader } from '../operations/interfaces.js'
 import { DefermentManager } from './defermentManager.js'
 import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
+import { Pump } from './pump.js'
 
-export class MemoryPump implements Pump {
-  #items: Map<string, Item> = new Map()
 
-  add(item: Item): void {
-    this.#items.set(item.baseId, item)
-  }
-
-  async pumpItems(params: {
-    ids: string[]
-    foundItems: Queue<Item>
-    notFoundItems: Queue<string>
-  }): Promise<void> {
-    const { ids, foundItems, notFoundItems } = params
-    for (const id of ids) {
-      const item = this.#items.get(id)
-      if (item) {
-        foundItems.add(item)
-      } else {
-        notFoundItems.add(id)
-      }
-    }
-    return Promise.resolve()
-  }
-
-  async *gather(ids: string[]): AsyncGenerator<Item> {
-    for (const id of ids) {
-      const item = this.#items.get(id)
-      if (item) {
-        yield item
-      }
-    }
-    return Promise.resolve()
-  }
-
-  async disposeAsync(): Promise<void> {}
-}
-
-export interface Pump {
-  add(item: Item): void
-  gather(ids: string[], downloader: Downloader): AsyncGenerator<Item>
-  disposeAsync(): Promise<void>
-}
 
 export class CachePump implements Pump {
   #writeQueue: BatchingQueue<Item> | undefined

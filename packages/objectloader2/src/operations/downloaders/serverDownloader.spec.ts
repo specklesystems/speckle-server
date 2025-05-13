@@ -3,7 +3,7 @@ import createFetchMock from 'vitest-fetch-mock'
 import { vi } from 'vitest'
 import { Item } from '../../types/types.js'
 import ServerDownloader from './serverDownloader.js'
-import { MemoryPump } from '../../helpers/cachePump.js'
+import { MemoryPump } from '../../helpers/memoryPump.js'
 
 describe('downloader', () => {
   test('download batch of one', async () => {
@@ -16,10 +16,9 @@ describe('downloader', () => {
       streamId: 'streamId',
       objectId: 'objectId',
       token: 'token',
-      pump,
       fetch: fetchMocker
     })
-    downloader.initializePool({ total: 1, maxDownloadBatchWait: 200 })
+    downloader.initializePool({ results: pump, total: 1, maxDownloadBatchWait: 200 })
     downloader.add('id')
     await downloader.disposeAsync()
     const r = []
@@ -40,7 +39,6 @@ describe('downloader', () => {
 
     const pump = new MemoryPump()
     const downloader = new ServerDownloader({
-      pump,
       serverUrl: 'http://speckle.test',
       streamId: 'streamId',
       objectId: 'objectId',
@@ -48,7 +46,7 @@ describe('downloader', () => {
 
       fetch: fetchMocker
     })
-    downloader.initializePool({ total: 2, maxDownloadBatchWait: 200 })
+    downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
     downloader.add('id')
     await downloader.disposeAsync()
     const r = []
@@ -66,9 +64,7 @@ describe('downloader', () => {
       base: { id: 'id', speckle_type: 'type', __closure: { childIds: 1 } }
     }
     fetchMocker.mockResponseOnce(JSON.stringify(i.base))
-    const pump = new MemoryPump()
     const downloader = new ServerDownloader({
-      pump,
       serverUrl: 'http://speckle.test',
       streamId: 'streamId',
       objectId: i.baseId,
@@ -90,11 +86,9 @@ describe('downloader', () => {
       (req) => req.headers.get('x-test') === 'asdf',
       JSON.stringify(i.base)
     )
-    const pump = new MemoryPump()
     const headers = new Headers()
     headers.set('x-test', 'asdf')
     const downloader = new ServerDownloader({
-      pump,
       serverUrl: 'http://speckle.test',
       headers,
       streamId: 'streamId',
