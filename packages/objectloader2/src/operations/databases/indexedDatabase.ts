@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import BatchingQueue from '../../helpers/batchingQueue.js'
 import { CustomLogger, Item } from '../../types/types.js'
 import { isSafari } from '@speckle/shared'
-import { BaseDatabaseOptions } from '../options.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
 import { Database } from '../interfaces.js'
 
@@ -18,8 +18,19 @@ class ObjectStore extends Dexie {
   }
 }
 
+
+export interface IndexedDatabaseOptions {
+  logger?: CustomLogger
+  indexedDB?: IDBFactory
+  keyRange?: {
+    bound: Function
+    lowerBound: Function
+    upperBound: Function
+  }
+}
+
 export default class IndexedDatabase implements Database {
-  #options: BaseDatabaseOptions
+  #options: IndexedDatabaseOptions
   #logger: CustomLogger
 
   #cacheDB?: ObjectStore
@@ -28,7 +39,7 @@ export default class IndexedDatabase implements Database {
 
   // #count: number = 0
 
-  constructor(options: BaseDatabaseOptions) {
+  constructor(options: IndexedDatabaseOptions) {
     this.#options = options
     this.#logger = options.logger || ((): void => {})
   }

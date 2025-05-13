@@ -1,27 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import { Base, CustomLogger, Fetcher } from '../types/types.js'
+import { Base, CustomLogger } from '../types/types.js'
 import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {
-  keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
-  indexedDB?: IDBFactory
-  serverUrl: string
-  streamId: string
-  objectId: string
-  token?: string
+  rootId: string
+  downloader: Downloader
+  database: Database
   logger?: CustomLogger
-  headers?: Headers
-  downloader?: Downloader
-  database?: Database
-}
-export interface BaseDatabaseOptions {
-  logger?: CustomLogger
-  indexedDB?: IDBFactory
-  keyRange?: {
-    bound: Function
-    lowerBound: Function
-    upperBound: Function
-  }
 }
 
 export interface CacheOptions {
@@ -31,15 +16,6 @@ export interface CacheOptions {
   maxCacheBatchWriteWait: number
   maxCacheBatchReadWait: number
   maxWriteQueueSize: number
-}
-
-export interface BaseDownloadOptions {
-  serverUrl: string
-  streamId: string
-  objectId: string
-  token?: string
-  headers?: Headers
-  fetch?: Fetcher
 }
 
 export interface MemoryDatabaseOptions {

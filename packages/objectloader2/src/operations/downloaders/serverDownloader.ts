@@ -3,19 +3,29 @@ import Queue from '../../helpers/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
 import { Fetcher, isBase, Item } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
-import { BaseDownloadOptions } from '../options.js'
+
+
+
+export interface ServerDownloaderOptions {
+  serverUrl: string
+  streamId: string
+  objectId: string
+  token?: string
+  headers?: Headers
+  fetch?: Fetcher
+}
 
 export default class ServerDownloader implements Downloader {
   #requestUrlRootObj: string
   #requestUrlChildren: string
   #headers: HeadersInit
-  #options: BaseDownloadOptions
+  #options: ServerDownloaderOptions
   #fetch: Fetcher
   #results?: Queue<Item>
 
   #downloadQueue?: BatchedPool<string>
 
-  constructor(options: BaseDownloadOptions) {
+  constructor(options: ServerDownloaderOptions) {
     this.#options = options
     this.#fetch =
       options.fetch ?? ((...args): Promise<Response> => globalThis.fetch(...args))
