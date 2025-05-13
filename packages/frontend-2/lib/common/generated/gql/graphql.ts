@@ -2586,6 +2586,7 @@ export type ProjectPermissionChecks = {
   canCreateComment: PermissionCheckResult;
   canCreateModel: PermissionCheckResult;
   canDelete: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
   canLeave: PermissionCheckResult;
   canLoad: PermissionCheckResult;
   canMoveToWorkspace: PermissionCheckResult;
@@ -4850,6 +4851,7 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
 };
 
@@ -8414,6 +8416,7 @@ export type ProjectPermissionChecksFieldArgs = {
   canCreateComment: {},
   canCreateModel: {},
   canDelete: {},
+  canInvite: {},
   canLeave: {},
   canLoad: {},
   canMoveToWorkspace: ProjectPermissionChecksCanMoveToWorkspaceArgs,
@@ -9016,6 +9019,7 @@ export type WorkspacePaidPlanPricesFieldArgs = {
 }
 export type WorkspacePermissionChecksFieldArgs = {
   canCreateProject: {},
+  canInvite: {},
   canMoveProjectToWorkspace: WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs,
 }
 export type WorkspacePlanFieldArgs = {
