@@ -217,6 +217,10 @@ const main = async () => {
         })({ streamId: sourceProject.id })
         let movedObjectsCount = 0
 
+        if (sourceProjectObjectCount > 1_000_000) {
+          await regionTrx.commit()
+        }
+
         for await (const objectsBatch of getBatchedStreamObjectsFactory({
           db: sourceDb
         })(sourceProject.id, { batchSize: 500 })) {
@@ -230,6 +234,10 @@ const main = async () => {
                 .toString()
                 .padStart(6, '0')} objects moved`
           )
+        }
+
+        if (sourceProjectObjectCount > 1_000_000) {
+          await regionTrx.transaction()
         }
 
         // object previews are ignored, they will be regenerated when requested
