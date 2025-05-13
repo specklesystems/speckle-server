@@ -513,7 +513,9 @@ export const getWorkspaceSeatCountFactory =
 
     if (type !== undefined) query.andWhere(WorkspaceSeats.col.type, type)
 
-    return query.count()
+    const [{ count }] = await query.count()
+
+    return parseInt(String(count))
   }
 
 export const getWorkspaceCreationStateFactory =

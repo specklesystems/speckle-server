@@ -563,7 +563,7 @@ export const workspaceTrackingFactory =
         domainBasedMembershipProtectionEnabled:
           workspace.domainBasedMembershipProtectionEnabled,
         discoverabilityEnabled: workspace.discoverabilityEnabled,
-        defaultRegionKey: defaultRegion?.key,
+        defaultRegionKey: defaultRegion?.key || null,
         teamTotalCount: adminCount + memberCount + guestCount,
         teamAdminCount: adminCount,
         teamMemberCount: memberCount,
@@ -579,7 +579,7 @@ export const workspaceTrackingFactory =
         seatsViewerCount,
         seatsEditorCount,
         createdAt: workspace.createdAt,
-        projectCount: projectCount[0],
+        projectCount: projectCount[0] || 0,
         modelsCount,
         ...getBaseTrackingProperties()
       }
