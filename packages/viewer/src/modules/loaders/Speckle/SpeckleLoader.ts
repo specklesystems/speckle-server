@@ -144,7 +144,7 @@ export class SpeckleLoader extends Loader {
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-      current = 0
+    current = 0
     const p = renderTree.buildRenderTree(geometryConverter, () => {
       current++
       this.emit(LoaderEvent.ConvertGeometry, {
