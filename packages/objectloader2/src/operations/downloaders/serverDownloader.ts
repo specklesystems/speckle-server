@@ -130,14 +130,15 @@ export default class ServerDownloader implements Downloader {
       const { done, value } = await reader.read()
       if (done) break
 
+      //this concat will allocate a new array
       const combined = this.concatUint8Arrays(leftover, value)
       let start = 0
 
+      //subarray isn't allocate
       for (let i = 0; i < combined.length; i++) {
         if (combined[i] === 0x0a) {
-          // \n
           const line = combined.subarray(start, i) // line without \n
-
+          //strings are allocated here
           const item = this.processLine(line)
           this.#results?.add(item)
           start = i + 1
