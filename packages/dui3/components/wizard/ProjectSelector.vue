@@ -117,9 +117,7 @@
           v-for="project in projects"
           :key="project.id"
           :project="project"
-          :disable-no-write-access-projects="disableNoWriteAccessProjects"
           :is-sender="isSender"
-          :workspace-admin="isWorkspaceAdmin"
           @click="handleProjectCardClick(project)"
         />
         <FormButton
@@ -144,9 +142,10 @@ import {
   activeWorkspaceQuery,
   projectsListQuery,
   serverInfoQuery,
+  setActiveWorkspaceMutation,
   workspacesListQuery
 } from '~/lib/graphql/mutationsAndQueries'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, provideApolloClient, useQuery } from '@vue/apollo-composable'
 import type {
   ProjectListProjectItemFragment,
   WorkspaceListWorkspaceItemFragment
@@ -249,10 +248,6 @@ const activeWorkspace = computed(() => {
     ?.activeWorkspace as WorkspaceListWorkspaceItemFragment
 })
 
-const isWorkspaceAdmin = computed(
-  () => activeWorkspace.value.role === 'workspace:admin'
-)
-
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment | undefined>(
   activeWorkspace.value
 )
@@ -271,17 +266,33 @@ watch(
 
 const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
   if (
-    isWorkspaceAdmin.value ||
-    (project.role !== null && project.role !== 'stream:reviewer')
+    props.isSender
+      ? project.permissions.canPublish.authorized
+      : project.permissions.canLoad.authorized
   ) {
     emit('next', accountId.value, project, selectedWorkspace.value)
   }
 }
 
-const handleWorkspaceSelected = (
+const handleWorkspaceSelected = async (
   newSelectedWorkspace: WorkspaceListWorkspaceItemFragment
 ) => {
   selectedWorkspace.value = newSelectedWorkspace
+  const account = computed(() => {
+    return accountStore.accounts.find(
+      (acc) => acc.accountInfo.id === accountId.value
+    ) as DUIAccount
+  })
+  const { mutate } = provideApolloClient(account.value.client)(() =>
+    useMutation(setActiveWorkspaceMutation)
+  )
+  try {
+    await mutate({ slug: newSelectedWorkspace.slug })
+  } catch (error) {
+    // I dont believe we should throw toast for this, but good to be critical on console
+    console.error(error)
+  }
+
   configStore.setUserSelectedWorkspace(newSelectedWorkspace.id)
 }
 

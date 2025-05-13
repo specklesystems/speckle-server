@@ -19,7 +19,7 @@
             "
             hide-text
             class=""
-            :disabled="!canDoOperation"
+            :disabled="!canEdit"
             @click.stop="$emit('manual-publish-or-load')"
           ></FormButton>
         </div>
@@ -96,7 +96,7 @@
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
     <!-- class="px-2 h-0 group-hover:h-auto transition-all overflow-hidden" -->
-    <div v-if="canDoOperation" class="px-1">
+    <div v-if="canEdit" class="px-1">
       <slot></slot>
     </div>
 
@@ -120,7 +120,7 @@
         }}
       </div>
     </div>
-    <div v-if="canDoOperation">
+    <div v-if="canEdit">
       <!-- Card States: Expiry, errors, new version created, etc. -->
       <slot name="states"></slot>
       <div class="relative">
@@ -219,7 +219,6 @@ const props = defineProps<{
   modelCard: IModelCard
   project: ProjectModelGroup
   canEdit: boolean
-  isExplicitProjectReviewer: boolean
 }>()
 
 defineEmits<{
@@ -229,8 +228,6 @@ defineEmits<{
 const isSender = computed(() => {
   return props.modelCard.typeDiscriminator.includes('SenderModelCard')
 })
-
-const canDoOperation = computed(() => !props.isExplicitProjectReviewer && props.canEdit)
 
 const buttonTooltip = computed(() => {
   return props.modelCard.progress
@@ -349,7 +346,7 @@ defineExpose({
 })
 
 const cardBgColor = computed(() => {
-  // if (props.modelCard.error || !canDoOperation.value)
+  // if (props.modelCard.error || !props.canEdit)
   //   return 'bg-red-500/10 hover:bg-red-500/20'
   // if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   // if (

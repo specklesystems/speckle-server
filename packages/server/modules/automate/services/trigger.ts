@@ -633,10 +633,27 @@ export const createTestAutomationRunFactory =
       }
     })
 
+    // Create test automation function run with "empty" data
     const automationRunRecord = await createAutomationRunDataFactory(deps)({
       manifests: triggerManifests,
       automationWithRevision: automationRevisionRecord
     })
+    automationRunRecord.functionRuns = [
+      {
+        functionId: '',
+        id: cryptoRandomString({ length: 15 }),
+        status: 'pending' as const,
+        elapsed: 0,
+        results: null,
+        contextView: null,
+        statusMessage: null,
+        resultVersions: [],
+        functionReleaseId: '',
+        functionInputs: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]
     await upsertAutomationRun(automationRunRecord)
 
     await emitEvent({

@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const setActiveWorkspaceMutation = graphql(`
+  mutation SetActiveWorkspaceMutation($slug: String) {
+    activeUserMutations {
+      setActiveWorkspace(slug: $slug)
+    }
+  }
+`)
+
 export const createVersionMutation = graphql(`
   mutation VersionMutations($input: CreateVersionInput!) {
     versionMutations {
@@ -203,7 +211,6 @@ export const canCreateModelInProjectQuery = graphql(`
           authorized
           code
           message
-          payload
         }
       }
     }
@@ -235,6 +242,18 @@ export const projectListFragment = graphql(`
     }
     models {
       totalCount
+    }
+    permissions {
+      canLoad {
+        authorized
+        code
+        message
+      }
+      canPublish {
+        authorized
+        code
+        message
+      }
     }
   }
 `)
@@ -390,6 +409,18 @@ export const projectDetailsQuery = graphql(`
         }
       }
       visibility
+      permissions {
+        canLoad {
+          authorized
+          code
+          message
+        }
+        canPublish {
+          authorized
+          code
+          message
+        }
+      }
     }
   }
 `)

@@ -105,16 +105,15 @@ export function useAddByUrl() {
     if (project && model && acc) {
       const errorMessage =
         type === 'sender'
-          ? 'Publish is not permitted by your role on this project.'
-          : 'Load is not permitted by your role on this project.'
+          ? project.permissions.canPublish.message
+          : project.permissions.canLoad.message
 
-      // TODO: we should align these permissions when web team's helper logic is ready!
-      const isWorkspaceAdmin = project.workspace?.role === 'workspace:admin'
+      const hasAccess =
+        type === 'sender'
+          ? project.permissions.canPublish.authorized
+          : project.permissions.canLoad.authorized
 
-      const isExplicitProjectReviewer = project.role === 'stream:reviewer'
-      const canEdit = isWorkspaceAdmin ? true : project.role !== 'stream:reviewer'
-      const canDoOperation = !isExplicitProjectReviewer && canEdit
-      if (!canDoOperation) {
+      if (!hasAccess) {
         urlParseError.value = errorMessage
         return
       }
