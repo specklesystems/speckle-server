@@ -9,8 +9,6 @@ import { DefermentManager } from './defermentManager.js'
 import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
 import { Pump } from './pump.js'
 
-
-
 export class CachePump implements Pump {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database

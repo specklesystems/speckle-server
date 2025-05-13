@@ -4,8 +4,6 @@ import { ObjectLoaderRuntimeError } from '../../types/errors.js'
 import { Fetcher, isBase, Item } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
-
-
 export interface ServerDownloaderOptions {
   serverUrl: string
   streamId: string

@@ -18,7 +18,6 @@ class ObjectStore extends Dexie {
   }
 }
 
-
 export interface IndexedDatabaseOptions {
   logger?: CustomLogger
   indexedDB?: IDBFactory
