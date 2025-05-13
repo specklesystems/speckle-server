@@ -104,9 +104,6 @@ export class SpeckleLoader extends Loader {
           obj as SpeckleObject,
           async () => {
             viewerLoads++
-            if (viewerLoads % 100 === 0) {
-              console.log('viewerLoads total', viewerLoads, total)
-            }
           }
         )
         first = false
@@ -143,11 +140,17 @@ export class SpeckleLoader extends Loader {
     await this.converter.applyMaterials()
 
     const t0 = performance.now()
-    const geometryConverter = new SpeckleGeometryConverter(total, this)
+    const geometryConverter = new SpeckleGeometryConverter()
 
     const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
-    const p = renderTree.buildRenderTree(geometryConverter)
+      current = 0
+    const p = renderTree.buildRenderTree(geometryConverter, () => {
+      current++
+      this.emit(LoaderEvent.ConvertGeometry, {
+        progress: current / (total + 1)
+      })
+    })
 
     void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)

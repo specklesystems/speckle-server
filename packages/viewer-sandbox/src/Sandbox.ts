@@ -1312,14 +1312,15 @@ export default class Sandbox {
         true,
         undefined
       )
-      let progress = 0
+      let dataProgress = 0
+      let renderProgress = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
-        if (p > progress) {
+        if (p > dataProgress) {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
-          progress = p
+          dataProgress = p
           console.log(`Loading Data ${p}%`)
         }
       })
@@ -1327,11 +1328,11 @@ export default class Sandbox {
         LoaderEvent.ConvertGeometry,
         (arg: { progress: number; id: string }) => {
           const p = Math.floor(arg.progress * 100)
-          if (p > progress) {
+          if (p > renderProgress) {
             if (colorImage)
               colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
-            progress = p
-            console.log(`Converting Data ${p}%`)
+            renderProgress = p
+            console.log(`Rendering Data ${p}%`)
           }
         }
       )
