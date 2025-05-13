@@ -1,8 +1,9 @@
-import BatchingQueue from '../helpers/batchingQueue.js'
-import { CustomLogger, Item } from '../types/types.js'
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+import BatchingQueue from '../../helpers/batchingQueue.js'
+import { CustomLogger, Item } from '../../types/types.js'
 import { isSafari } from '@speckle/shared'
-import { BaseDatabaseOptions } from './options.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
+import { Database } from '../interfaces.js'
 
 class ObjectStore extends Dexie {
   static #databaseName: string = 'speckle-cache'
@@ -17,15 +18,18 @@ class ObjectStore extends Dexie {
   }
 }
 
-export interface Database {
-  getAll(keys: string[]): Promise<(Item | undefined)[]>
-  getItem(params: { id: string }): Promise<Item | undefined>
-  cacheSaveBatch(params: { batch: Item[] }): Promise<void>
-  disposeAsync(): Promise<void>
+export interface IndexedDatabaseOptions {
+  logger?: CustomLogger
+  indexedDB?: IDBFactory
+  keyRange?: {
+    bound: Function
+    lowerBound: Function
+    upperBound: Function
+  }
 }
 
 export default class IndexedDatabase implements Database {
-  #options: BaseDatabaseOptions
+  #options: IndexedDatabaseOptions
   #logger: CustomLogger
 
   #cacheDB?: ObjectStore
@@ -34,9 +38,9 @@ export default class IndexedDatabase implements Database {
 
   // #count: number = 0
 
-  constructor(options: BaseDatabaseOptions) {
+  constructor(options: IndexedDatabaseOptions) {
     this.#options = options
-    this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || ((): void => {})
   }
 
   async getAll(keys: string[]): Promise<(Item | undefined)[]> {
@@ -128,7 +132,8 @@ export default class IndexedDatabase implements Database {
     let intervalId: ReturnType<typeof setInterval>
 
     return new Promise<void>((resolve: () => void) => {
-      const tryIdb = () => this.#options.indexedDB?.databases().finally(resolve)
+      const tryIdb = (): Promise<IDBDatabaseInfo[]> | undefined =>
+        this.#options.indexedDB?.databases().finally(resolve)
       intervalId = setInterval(() => {
         void tryIdb()
       }, 100)

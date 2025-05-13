@@ -9,7 +9,7 @@ export class DefermentManager {
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
-    this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || ((): void => {})
   }
 
   private now(): number {
@@ -46,7 +46,7 @@ export class DefermentManager {
   }
 
   private resetGlobalTimer(): void {
-    const run = () => {
+    const run = (): void => {
       this.cleanDeferments()
       this.#timer = setTimeout(run, this.options.ttl)
     }

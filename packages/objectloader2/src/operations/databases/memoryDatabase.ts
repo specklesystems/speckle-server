@@ -1,6 +1,6 @@
-import { Base, Item } from '../types/types.js'
-import { Database } from './indexedDatabase.js'
-import { MemoryDatabaseOptions } from './options.js'
+import { Base, Item } from '../../types/types.js'
+import { Database } from '../interfaces.js'
+import { MemoryDatabaseOptions } from '../options.js'
 
 export class MemoryDatabase implements Database {
   private items: Map<string, Base>

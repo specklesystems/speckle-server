@@ -1,5 +1,5 @@
 import { Base, DataChunk, isBase, isReference, isScalar } from '../types/types.js'
-import ObjectLoader2 from './objectLoader2.js'
+import { ObjectLoader2 } from './objectLoader2.js'
 
 export type ProgressStage = 'download' | 'construction'
 export type OnProgress = (e: {

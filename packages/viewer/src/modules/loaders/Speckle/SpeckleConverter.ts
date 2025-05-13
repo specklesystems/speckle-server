@@ -4,7 +4,7 @@ import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
 import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
-import ObjectLoader2 from '@speckle/objectloader2'
+import { ObjectLoader2 } from '@speckle/objectloader2'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =

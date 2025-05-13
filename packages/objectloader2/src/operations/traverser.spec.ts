@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { Base } from '../types/types.js'
-import ObjectLoader2 from './objectLoader2.js'
+import { ObjectLoader2 } from './objectLoader2.js'
 import Traverser from './traverser.js'
 
 describe('Traverser', () => {

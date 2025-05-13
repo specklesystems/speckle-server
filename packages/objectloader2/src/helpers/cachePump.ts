@@ -1,5 +1,5 @@
 import { TIME } from '@speckle/shared'
-import { Database } from '../operations/indexedDatabase.js'
+import { Database } from '../operations/interfaces.js'
 import { CacheOptions } from '../operations/options.js'
 import { CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
@@ -7,49 +7,7 @@ import Queue from './queue.js'
 import { Downloader } from '../operations/interfaces.js'
 import { DefermentManager } from './defermentManager.js'
 import AsyncGeneratorQueue from './asyncGeneratorQueue.js'
-
-export class MemoryPump implements Pump {
-  #items: Map<string, Item> = new Map()
-
-  add(item: Item): void {
-    this.#items.set(item.baseId, item)
-  }
-
-  async pumpItems(params: {
-    ids: string[]
-    foundItems: Queue<Item>
-    notFoundItems: Queue<string>
-  }): Promise<void> {
-    const { ids, foundItems, notFoundItems } = params
-    for (const id of ids) {
-      const item = this.#items.get(id)
-      if (item) {
-        foundItems.add(item)
-      } else {
-        notFoundItems.add(id)
-      }
-    }
-    return Promise.resolve()
-  }
-
-  async *gather(ids: string[]): AsyncGenerator<Item> {
-    for (const id of ids) {
-      const item = this.#items.get(id)
-      if (item) {
-        yield item
-      }
-    }
-    return Promise.resolve()
-  }
-
-  async disposeAsync(): Promise<void> {}
-}
-
-export interface Pump {
-  add(item: Item): void
-  gather(ids: string[], downloader: Downloader): AsyncGenerator<Item>
-  disposeAsync(): Promise<void>
-}
+import { Pump } from './pump.js'
 
 export class CachePump implements Pump {
   #writeQueue: BatchingQueue<Item> | undefined
@@ -71,7 +29,7 @@ export class CachePump implements Pump {
     this.#gathered = gathered
     this.#deferments = deferments
     this.#options = options
-    this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || ((): void => {})
   }
 
   add(item: Item): void {
@@ -79,7 +37,8 @@ export class CachePump implements Pump {
       this.#writeQueue = new BatchingQueue({
         batchSize: this.#options.maxCacheWriteSize,
         maxWaitTime: this.#options.maxCacheBatchWriteWait,
-        processFunction: (batch: Item[]) => this.#database.cacheSaveBatch({ batch })
+        processFunction: (batch: Item[]): Promise<void> =>
+          this.#database.cacheSaveBatch({ batch })
       })
     }
     this.#writeQueue.add(item.baseId, item)

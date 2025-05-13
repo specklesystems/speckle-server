@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { Base, Item } from '../types/types.js'
 import { DefermentManager } from './defermentManager.js'
 import { CacheReader } from './cacheReader.js'
-import { MemoryDatabase } from '../operations/memoryDatabase.js'
+import { MemoryDatabase } from '../operations/databases/memoryDatabase.js'
 
 describe('CacheReader testing', () => {
   test('deferred getObject', async () => {

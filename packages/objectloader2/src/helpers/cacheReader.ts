@@ -1,4 +1,4 @@
-import { Database } from '../operations/indexedDatabase.js'
+import { Database } from '../operations/interfaces.js'
 import { CacheOptions } from '../operations/options.js'
 import { Base, CustomLogger, Item } from '../types/types.js'
 import BatchingQueue from './batchingQueue.js'
@@ -19,7 +19,7 @@ export class CacheReader {
     this.#database = database
     this.#defermentManager = defermentManager
     this.#options = options
-    this.#logger = options.logger || (() => {})
+    this.#logger = options.logger || ((): void => {})
   }
 
   async getObject(params: { id: string }): Promise<Base> {

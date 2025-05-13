@@ -1,32 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import AsyncGeneratorQueue from '../helpers/asyncGeneratorQueue.js'
-import { Pump } from '../helpers/cachePump.js'
-import Queue from '../helpers/queue.js'
-import { Base, CustomLogger, Fetcher, Item } from '../types/types.js'
-import { Database } from './indexedDatabase.js'
-import { Downloader } from './interfaces.js'
+import { Base, CustomLogger } from '../types/types.js'
+import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {
-  keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
-  indexedDB?: IDBFactory
-  serverUrl: string
-  streamId: string
-  objectId: string
-  token?: string
+  rootId: string
+  downloader: Downloader
+  database: Database
   logger?: CustomLogger
-  headers?: Headers
-  results?: AsyncGeneratorQueue<Item>
-  downloader?: Downloader
-  database?: Database
-}
-export interface BaseDatabaseOptions {
-  logger?: CustomLogger
-  indexedDB?: IDBFactory
-  keyRange?: {
-    bound: Function
-    lowerBound: Function
-    upperBound: Function
-  }
 }
 
 export interface CacheOptions {
@@ -36,18 +15,6 @@ export interface CacheOptions {
   maxCacheBatchWriteWait: number
   maxCacheBatchReadWait: number
   maxWriteQueueSize: number
-}
-
-export interface BaseDownloadOptions {
-  serverUrl: string
-  streamId: string
-  objectId: string
-  token?: string
-  headers?: Headers
-
-  fetch?: Fetcher
-  pump: Pump
-  results: Queue<Item>
 }
 
 export interface MemoryDatabaseOptions {

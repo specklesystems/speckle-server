@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import IndexedDatabase from './indexedDatabase.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import { Item } from '../types/types.js'
+import { Item } from '../../types/types.js'
 
 describe('database cache', () => {
   test('write single item to queue use getItem', async () => {
