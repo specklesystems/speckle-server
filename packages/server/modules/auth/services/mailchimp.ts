@@ -5,6 +5,7 @@ import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
+import { MailchimpResourceError } from '@/modules/auth/errors'
 
 let mailchimpInitialized = false
 
@@ -76,8 +77,11 @@ export async function updateMailchimpMemberTags(
   try {
     await mailchimp.lists.getListMember(listId, subscriberHash)
   } catch {
-    throw new Error(
-      `User ${user.email} not found in Mailchimp audience. They should have been added during registration.`
+    throw new MailchimpResourceError(
+      'User not found in Mailchimp audience. They should have been added during registration.',
+      {
+        info: { userEmailHash: subscriberHash }
+      }
     )
   }
 
