@@ -35,31 +35,27 @@
         />
       </div>
       <div v-else :class="containerClasses">
-        <div :class="emptyStateVariant === 'modelGrid' ? 'h-12' : 'h-32'">
-          <ProjectEmptyStateIllustration
-            :class="emptyStateVariant === 'modelGrid' ? 'hidden' : 'block'"
-          />
+        <div class="max-w-lg">
+          <IllustrationEmptystateProject />
         </div>
         <div>
-          <h2
-            class="text-foreground-2 p-0 m-0 inline-block"
-            :class="
-              emptyStateVariant === 'modelGrid' ? 'text-heading' : 'text-heading-sm'
-            "
-          >
-            {{ emptyStateVariant }}
+          <h2 v-if="shouldShow" class="text-foreground-2 text-heading-sm p-0 m-0">
+            {{
+              emptyStateVariant === 'modelsSection'
+                ? 'The project has no models, yet.'
+                : 'No models, yet.'
+            }}
           </h2>
-          <p class="text-body-xs text-foreground-2 mt-2 p-0 text-balance">
+          <p class="text-body-xs text-foreground-2 mt-2 p-0">
             Use
-            <!-- <NuxtLink :to="connectorsRoute" class="font-medium">
-              <span class="underline">-->
-            connectors to publish a {{ modelName ? '' : 'new model' }} version to
+            <NuxtLink :to="connectorsRoute" class="font-medium">
+              <span class="underline">connectors</span>
+            </NuxtLink>
+            to publish a {{ modelName ? '' : 'new model' }} version to
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
             IFC/OBJ/STL file here.
           </p>
-          <p
-            class="w-full flex flex-row gap-2 mt-3 flex-wrap justify-center min-[1400px]:justify-normal"
-          >
+          <p v-if="shouldShow" class="w-full flex flex-row gap-2 mt-3 flex-wrap">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
@@ -105,17 +101,21 @@ const uploadZone = ref(
   }>
 )
 
+const shouldShow = computed(
+  () => !['modelGrid', 'modelList'].includes(props.emptyStateVariant || '')
+)
+
 const containerClasses = computed(() => {
-  const classes = 'w-full flex p-3 gap-2'
+  const classes = 'w-full flex gap-4 justify-center p-4 items-center'
 
   if (props.emptyStateVariant === 'modelGrid') {
-    return `${classes} flex-col text-2xs-400`
+    return `${classes} [&>div:first-child]:hidden`
   } else if (props.emptyStateVariant === 'modelList') {
-    return `${classes} `
+    return `${classes} text-center [&>div:first-child]:hidden `
   } else if (props.emptyStateVariant === 'modelsSection') {
-    return `${classes} `
+    return `${classes} text-balance [&>div>p]:max-w-sm [&>div:first-child]:hidden min-[1350px]:[&>div:first-child]:block`
   } else {
-    return `${classes} flex-row justify-center items-center`
+    return `${classes} text-balance [&>div>p]:max-w-sm [&>div:first-child]:hidden md:h-64 md:[&>div:first-child]:block`
   }
   return classes
 })

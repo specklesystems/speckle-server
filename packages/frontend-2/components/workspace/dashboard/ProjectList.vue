@@ -22,7 +22,7 @@
       v-if="showEmptyState"
       class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
     >
-      <WorkspaceEmptyStateIllustration />
+      <IllustrationEmptystateWorkspace />
       <h2 class="text-heading-sm text-foreground-2 text-center">Workspace is empty</h2>
       <WorkspaceAddProjectMenu
         :workspace="workspace"

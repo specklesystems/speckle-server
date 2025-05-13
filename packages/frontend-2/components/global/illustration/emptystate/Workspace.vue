@@ -156,7 +156,7 @@
 }
 
 .fade-in-y-delay {
-  animation-delay: 0.25s; /* 500ms delay */
+  animation-delay: 0.25s;
 }
 
 @keyframes fade-in-y {
