@@ -93,23 +93,29 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       }
 
       const onFinishAllFileUploads = async (uploadResults: UploadResult[]) => {
+        if (!uploadResults.length) {
+          logger.error('File import failed to upload')
+          onError()
+          return
+        }
+
         try {
           await Promise.all(
             uploadResults.map((upload) =>
               insertNewUploadAndNotify({
                 projectId,
                 userId,
+                modelId,
                 fileName: upload.fileName,
                 fileType: upload.fileName?.split('.').pop() || '', //FIXME
                 fileSize: upload.fileSize,
-                fileId: upload.blobId,
-                modelId: ''
+                fileId: upload.blobId
               })
             )
           )
           res.status(201).send({ uploadResults })
         } catch (err) {
-          logger.error(ensureError(err), 'File importer handling error')
+          logger.error(ensureError(err), 'File import post upload error')
           onError()
         }
       }

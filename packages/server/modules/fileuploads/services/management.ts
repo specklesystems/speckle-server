@@ -67,14 +67,25 @@ export const insertNewUploadAndNotifyFactoryV2 =
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
 
-    // TODO: add FE notification
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          branchName: '' // @deprecated
+        }
+      },
+      projectId: file.projectId
+    })
 
     await deps.pushJobToFileImporter({
       fileType: file.fileType,
       projectId: file.projectId,
       modelId: upload.modelId,
       blobId: file.id,
-      jobId: '', // TODO: ??
+      jobId: file.id,
       userId: upload.userId
     })
   }

@@ -1,5 +1,10 @@
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
-import { getRedisUrl, isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import {
+  getFileUploadTimeLimitMinutes,
+  getRedisUrl,
+  isProdEnv,
+  isTestEnv
+} from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
 import { Optional, TIME_MS } from '@speckle/shared'
 import Bull from 'bull'
@@ -41,7 +46,7 @@ const limiter = {
 
 const defaultJobOptions = {
   attempts: 5,
-  timeout: 15 * TIME_MS.minute,
+  timeout: getFileUploadTimeLimitMinutes() * TIME_MS.minute,
   backoff: {
     type: 'fixed',
     delay: 5 * TIME_MS.minute
