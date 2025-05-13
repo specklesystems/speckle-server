@@ -57,6 +57,41 @@ describe('downloader', () => {
     expect(r).toMatchSnapshot()
   })
 
+  test('download batch of three', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const i1: Item = { baseId: 'id1', base: { id: 'id1', speckle_type: 'type' } }
+    const i2: Item = { baseId: 'id2', base: { id: 'id2', speckle_type: 'type' } }
+    const i3: Item = { baseId: 'id3', base: { id: 'id3', speckle_type: 'type' } }
+    fetchMocker.mockResponseOnce(
+      'id1\t' +
+        JSON.stringify(i1.base) +
+        '\nid2\t' +
+        JSON.stringify(i2.base) +
+        '\nid3\t' +
+        JSON.stringify(i3.base) +
+        '\n'
+    )
+
+    const pump = new MemoryPump()
+    const downloader = new ServerDownloader({
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'token',
+
+      fetch: fetchMocker
+    })
+    downloader.initializePool({ results: pump, total: 2, maxDownloadBatchWait: 200 })
+    downloader.add('id')
+    await downloader.disposeAsync()
+    const r = []
+    for await (const x of pump.gather([i1.baseId, i2.baseId, i3.baseId])) {
+      r.push(x)
+    }
+
+    expect(r).toMatchSnapshot()
+  })
+
   test('download single exists', async () => {
     const fetchMocker = createFetchMock(vi)
     const i: Item = {
