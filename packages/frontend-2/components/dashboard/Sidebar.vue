@@ -130,8 +130,6 @@
         </LayoutSidebar>
       </div>
     </template>
-
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -159,7 +157,6 @@ const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const { $intercom } = useNuxtApp()
 
 const isOpenMobile = ref(false)
-const showFeedbackDialog = ref(false)
 
 const openChat = () => {
   $intercom.show()

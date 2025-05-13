@@ -112,7 +112,6 @@
       </Transition>
     </Menu>
     <InviteDialogServer v-model:open="showInviteDialog" />
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -139,7 +138,6 @@ const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { $intercom } = useNuxtApp()
 
 const showInviteDialog = ref(false)
-const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
