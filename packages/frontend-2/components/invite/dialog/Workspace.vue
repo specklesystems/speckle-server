@@ -188,6 +188,7 @@ watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectingRole.value = true
     selectedRole.value = Roles.Workspace.Member
+    project.value = undefined
     invites.value = [
       {
         ...emptyInviteWorkspaceItem,
