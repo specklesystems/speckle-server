@@ -16594,7 +16594,6 @@ __metadata:
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
     "@speckle/viewer": "workspace:^"
-    "@survicate/survicate-web-surveys-wrapper": "npm:^1.2.1"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/line-clamp": "npm:^0.4.2"
     "@tailwindcss/typography": "npm:^0.5.12"
@@ -18274,13 +18273,6 @@ __metadata:
   peerDependencies:
     eslint: ">=9.0.0"
   checksum: 10/32616032e45e9166840828c3f4e041b16d425a7803c8cf9519798dbc522b6d8eca110749f62b90c3c5635c55a729ff4b0519604acf96ee12a90d2fe1cd6c5494
-  languageName: node
-  linkType: hard
-
-"@survicate/survicate-web-surveys-wrapper@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@survicate/survicate-web-surveys-wrapper@npm:1.2.1"
-  checksum: 10/bd2f6fd69c7876e914650d9ac12627c90751bdd3165b653538ee729cd3fdfde922594e58ab43204a0577639fc15717af0b088696485392f724807c58c8aa3bf7
   languageName: node
   linkType: hard
 
