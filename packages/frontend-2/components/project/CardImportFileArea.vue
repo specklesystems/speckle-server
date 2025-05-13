@@ -35,18 +35,18 @@
         />
       </div>
       <div v-else :class="containerClasses">
-        <div class="max-w-lg">
+        <div :class="illustrationClasses" class="max-w-lg">
           <IllustrationEmptystateProject />
         </div>
         <div>
-          <h2 v-if="shouldShow" class="text-foreground-2 text-heading-sm p-0 m-0">
+          <p v-if="showEmptyState" class="text-foreground-2 text-heading-sm p-0 m-0">
             {{
               emptyStateVariant === 'modelsSection'
                 ? 'The project has no models, yet.'
                 : 'No models, yet.'
             }}
-          </h2>
-          <p class="text-body-xs text-foreground-2 mt-2 p-0">
+          </p>
+          <p :class="paragraphClasses" class="text-body-xs text-foreground-2 mt-2 p-0">
             Use
             <NuxtLink :to="connectorsRoute" class="font-medium">
               <span class="underline">connectors</span>
@@ -55,14 +55,14 @@
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
             IFC/OBJ/STL file here.
           </p>
-          <p v-if="shouldShow" class="w-full flex flex-row gap-2 mt-3 flex-wrap">
+          <div v-if="showEmptyState" class="w-full flex flex-row gap-2 mt-3 flex-wrap">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
             <FormButton size="sm" color="outline" @click="openFilePicker">
               Upload a model
             </FormButton>
-          </p>
+          </div>
         </div>
       </div>
     </div>
@@ -75,11 +75,13 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
+type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
+
 const props = defineProps<{
   projectId: string
   modelName?: string
   disabled?: boolean
-  emptyStateVariant?: 'modelGrid' | 'modelList' | 'modelsSection'
+  emptyStateVariant?: EmptyStateVariants
 }>()
 
 const {
@@ -101,23 +103,42 @@ const uploadZone = ref(
   }>
 )
 
-const shouldShow = computed(
-  () => !['modelGrid', 'modelList'].includes(props.emptyStateVariant || '')
+const showEmptyState = computed(
+  () =>
+    props.emptyStateVariant !== 'modelGrid' && props.emptyStateVariant !== 'modelList'
 )
 
-const containerClasses = computed(() => {
-  const classes = 'w-full flex gap-4 justify-center p-4 items-center'
+const baseContainerClasses = 'w-full flex gap-4 justify-center p-4 items-center'
 
-  if (props.emptyStateVariant === 'modelGrid') {
-    return `${classes} [&>div:first-child]:hidden`
-  } else if (props.emptyStateVariant === 'modelList') {
-    return `${classes} text-center [&>div:first-child]:hidden `
-  } else if (props.emptyStateVariant === 'modelsSection') {
-    return `${classes} text-balance [&>div>p]:max-w-sm [&>div:first-child]:hidden min-[1350px]:[&>div:first-child]:block`
-  } else {
-    return `${classes} text-balance [&>div>p]:max-w-sm [&>div:first-child]:hidden md:h-64 md:[&>div:first-child]:block`
+const illustrationClasses = computed(() => {
+  const variants = {
+    modelGrid: 'hidden',
+    modelList: 'hidden',
+    modelsSection: 'hidden min-[1350px]:block',
+    default: 'hidden md:block'
   }
-  return classes
+  return variants[props.emptyStateVariant || 'default']
+})
+
+const paragraphClasses = computed(() => {
+  const variants = {
+    modelGrid: '',
+    modelList: '',
+    modelsSection: 'max-w-sm',
+    default: 'max-w-sm'
+  }
+  return variants[props.emptyStateVariant || 'default']
+})
+
+const containerClasses = computed(() => {
+  const variants = {
+    modelGrid: '',
+    modelList: 'text-center',
+    modelsSection: 'text-balance',
+    default: 'text-balance md:h-64'
+  }
+
+  return `${baseContainerClasses} ${variants[props.emptyStateVariant || 'default']}`
 })
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
