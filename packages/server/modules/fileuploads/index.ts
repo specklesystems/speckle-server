@@ -97,7 +97,7 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
   app.use(fileuploadRouterFactory())
 
   if (isInitial) {
-    await initializeQueue()
+    if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await initializeQueue()
     const scheduleExecution = scheduleExecutionFactory({
       acquireTaskLock: acquireTaskLockFactory({ db }),
       releaseTaskLock: releaseTaskLockFactory({ db })
@@ -136,5 +136,5 @@ export const init: SpeckleModule['init'] = async ({ app, isInitial }) => {
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
   scheduledTasks.forEach((task) => task.stop())
-  await shutdownQueue()
+  if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) await shutdownQueue()
 }
