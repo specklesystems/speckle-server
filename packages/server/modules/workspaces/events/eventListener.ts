@@ -496,7 +496,7 @@ export const workspaceTrackingFactory =
     getWorkspaceSubscription,
     getUserEmails,
     getWorkspaceModelCount,
-    getWorkspaceProjectCount,
+    getWorkspacesProjectCount,
     getWorkspaceSeatCount
   }: {
     getWorkspace: GetWorkspace
@@ -506,7 +506,7 @@ export const workspaceTrackingFactory =
     getWorkspaceSubscription: GetWorkspaceSubscription
     getUserEmails: FindEmailsByUserId
     getWorkspaceModelCount: GetWorkspaceModelCount
-    getWorkspaceProjectCount: GetWorkspacesProjectsCounts
+    getWorkspacesProjectCount: GetWorkspacesProjectsCounts
     getWorkspaceSeatCount: GetWorkspaceSeatCount
   }) =>
   async (params: EventPayload<'workspace.*'> | EventPayload<'gatekeeper.*'>) => {
@@ -527,8 +527,8 @@ export const workspaceTrackingFactory =
         defaultRegion,
         plan,
         subscription,
-        projectCount,
-        modelsCount
+        workspacesProjectCount,
+        modelCount
       ] = await Promise.all([
         countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
         countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
@@ -538,7 +538,7 @@ export const workspaceTrackingFactory =
         getDefaultRegion({ workspaceId }),
         getWorkspacePlan({ workspaceId }),
         getWorkspaceSubscription({ workspaceId }),
-        getWorkspaceProjectCount({ workspaceIds: [workspaceId] }),
+        getWorkspacesProjectCount({ workspaceIds: [workspaceId] }),
         getWorkspaceModelCount({ workspaceId })
       ])
 
@@ -579,8 +579,8 @@ export const workspaceTrackingFactory =
         seatsViewerCount,
         seatsEditorCount,
         createdAt: workspace.createdAt,
-        projectCount: projectCount[0] || 0,
-        modelsCount,
+        projectCount: workspacesProjectCount[workspace.id] || 0,
+        modelCount,
         ...getBaseTrackingProperties()
       }
     }
@@ -794,7 +794,7 @@ export const initializeEventListenersFactory =
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
-          getWorkspaceProjectCount: getWorkspacesProjectsCountsFactory({ db }),
+          getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
           getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
         })(payload)
       }),
@@ -813,7 +813,7 @@ export const initializeEventListenersFactory =
             getPaginatedProjectModelsTotalCount:
               getPaginatedProjectModelsTotalCountFactory({ db })
           }),
-          getWorkspaceProjectCount: getWorkspacesProjectsCountsFactory({ db }),
+          getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
           getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
         })(payload)
       }),
