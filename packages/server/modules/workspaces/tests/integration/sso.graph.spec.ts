@@ -1,3 +1,4 @@
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   assignToWorkspaces,
   BasicTestWorkspace,
@@ -29,7 +30,9 @@ import { AllScopes, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-describe('Workspace SSO', () => {
+const { FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
+
+;(FF_WORKSPACES_SSO_ENABLED ? describe : describe.skip)('Workspace SSO', () => {
   let memberApollo: TestApolloServer
   let guestApollo: TestApolloServer
 
