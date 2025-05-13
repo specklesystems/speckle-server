@@ -12,6 +12,7 @@ import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/s
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { ExecuteHooks } from '@/modules/core/hooks'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 
@@ -179,7 +180,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             objects: objs,
             logger: req.log
           }).catch((e) => {
-            req.log.error(
+            logWithErr(
+              req.log,
+              e,
               {
                 ...calculateLogMetadata({
                   batchSizeMb: gunzippedBufferMegabyteSize,
@@ -187,8 +190,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                   batchStartTime,
                   totalObjectsProcessed
                 }),
-                objectCount: objs.length,
-                err: e
+                objectCount: objs.length
               },
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
@@ -318,15 +320,16 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             objects: objs,
             logger: req.log
           }).catch((e) => {
-            req.log.error(
+            logWithErr(
+              req.log,
+              e,
               {
                 ...calculateLogMetadata({
                   batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                   start,
                   batchStartTime,
                   totalObjectsProcessed
-                }),
-                err: e
+                })
               },
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
