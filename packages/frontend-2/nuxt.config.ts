@@ -73,8 +73,7 @@ export default defineNuxtConfig({
       datadogClientToken: '',
       datadogSite: '',
       datadogService: '',
-      datadogEnv: '',
-      ghostApiKey: ''
+      datadogEnv: ''
     }
   },
 
