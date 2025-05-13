@@ -1,16 +1,19 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
-// import { useNavigation } from '~/lib/navigation/composables/navigation'
-import { watch, computed } from 'vue'
-import Intercom, { shutdown, show, hide } from '@intercom/messenger-js-sdk'
+import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { watch, computed, ref } from 'vue'
+import Intercom, { shutdown, show, hide, update } from '@intercom/messenger-js-sdk'
+import { useApolloClient } from '@vue/apollo-composable'
+import { navigationActiveWorkspaceQuery } from '~~/lib/navigation/graphql/queries'
 
-// Routes where Intercom should never be enabled
-const intercomDisabledRoutes = ['/auth', '/models/']
+const disabledRoutes = ['/auth', '/models/']
 
 export const useIntercom = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
+  const { activeWorkspaceSlug } = useNavigation()
   const route = useRoute()
   const { activeUser: user } = useActiveUser()
+  const apollo = useApolloClient().client
 
   const isInitialized = ref(false)
 
@@ -18,7 +21,7 @@ export const useIntercom = () => {
     ({ isReset }) => {
       if (isReset) {
         shutdownIntercom()
-      } else if (user) {
+      } else if (user.value) {
         bootIntercom()
       }
     },
@@ -26,9 +29,7 @@ export const useIntercom = () => {
   )
 
   const isRouteBlacklisted = computed(() => {
-    return intercomDisabledRoutes.some((disabledRoute) =>
-      route.path.includes(disabledRoute)
-    )
+    return disabledRoutes.some((disabledRoute) => route.path.includes(disabledRoute))
   })
 
   const shouldEnableIntercom = computed(
@@ -49,14 +50,9 @@ export const useIntercom = () => {
       /* eslint-enable camelcase */
       name: user.value.name || undefined,
       email: user.value.email || undefined
-      // company: activeWorkspaceData.value
-      //   ? {
-      //       id: activeWorkspaceData.value.id,
-      //       name: activeWorkspaceData.value.name,
-      //       plan: activeWorkspaceData.value.plan?.name
-      //     }
-      //   : undefined
     })
+
+    updateCompany()
   }
 
   const showIntercom = () => {
@@ -75,6 +71,25 @@ export const useIntercom = () => {
     isInitialized.value = false
   }
 
+  const updateCompany = async () => {
+    const workspace = await apollo.query({
+      query: navigationActiveWorkspaceQuery,
+      variables: {
+        slug: activeWorkspaceSlug.value
+      }
+    })
+
+    if (!workspace.data?.workspaceBySlug) return
+
+    update({
+      company: {
+        id: workspace.data?.workspaceBySlug.id,
+        name: workspace.data?.workspaceBySlug.name,
+        plan: workspace.data?.workspaceBySlug.plan?.name
+      }
+    })
+  }
+
   watch(route, () => {
     if (isRouteBlacklisted.value) {
       shutdownIntercom()
@@ -83,28 +98,19 @@ export const useIntercom = () => {
     }
   })
 
-  // watch(
-  //   () => activeWorkspaceData.value,
-  //   (newWorkspace) => {
-  //     if (!isInitialized.value || !import.meta.client) return
-
-  //     update({
-  //       company: newWorkspace
-  //         ? {
-  //             id: newWorkspace.id,
-  //             name: newWorkspace.name,
-  //             plan: newWorkspace.plan?.name
-  //           }
-  //         : undefined
-  //     })
-  //   },
-  //   { deep: true }
-  // )
+  watch(
+    () => activeWorkspaceSlug.value,
+    async () => {
+      if (!isInitialized.value) return
+      updateCompany()
+    }
+  )
 
   return {
     show: showIntercom,
     hide: hideIntercom,
-    shutdown: shutdownIntercom
+    shutdown: shutdownIntercom,
+    updateCompany
   }
 }
 
