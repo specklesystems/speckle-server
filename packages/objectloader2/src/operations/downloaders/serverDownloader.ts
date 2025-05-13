@@ -22,6 +22,7 @@ export default class ServerDownloader implements Downloader {
   #results?: Queue<Item>
 
   #downloadQueue?: BatchedPool<string>
+  #decoder = new TextDecoder()
 
   constructor(options: ServerDownloaderOptions) {
     this.#options = options
@@ -122,34 +123,53 @@ export default class ServerDownloader implements Downloader {
     }
 
     const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = '' // Temporary buffer to store incoming chunks
+    let leftover = new Uint8Array(0)
 
     let count = 0
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      // Decode the chunk and add to buffer
-      buffer += decoder.decode(value, { stream: true })
 
-      // Try to process JSON objects from the buffer
-      let boundary = buffer.indexOf('\n')
-      while (boundary !== -1) {
-        const jsonString = buffer.slice(0, boundary)
-        buffer = buffer.slice(boundary + 1)
-        boundary = buffer.indexOf('\n')
-        if (jsonString) {
-          const pieces = jsonString.split('\t')
-          const [id, unparsedObj] = pieces
-          const item = this.#processJson(id, unparsedObj)
+      const combined = this.concatUint8Arrays(leftover, value)
+      let start = 0
+
+      for (let i = 0; i < combined.length; i++) {
+        if (combined[i] === 0x0a) {
+          // \n
+          const line = combined.subarray(start, i) // line without \n
+
+          const item = this.processLine(line)
           this.#results?.add(item)
+          start = i + 1
           count++
           if (count % 1000 === 0) {
             await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
           }
         }
+        leftover = combined.subarray(start) // carry over remainder
       }
     }
+  }
+
+  processLine(line: Uint8Array): Item {
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === 0x09) {
+        //this is a tab
+        const baseId = this.#decoder.decode(line.subarray(0, i))
+        const base = this.#decoder.decode(line.subarray(i + 1))
+        return this.#processJson(baseId, base)
+      }
+    }
+    throw new ObjectLoaderRuntimeError(
+      'Invalid line format: ' + this.#decoder.decode(line)
+    )
+  }
+
+  concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {
+    const c = new Uint8Array(a.length + b.length)
+    c.set(a, 0)
+    c.set(b, a.length)
+    return c
   }
 
   async downloadSingle(): Promise<Item> {
