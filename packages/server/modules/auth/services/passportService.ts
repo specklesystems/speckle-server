@@ -45,6 +45,7 @@ export const passportAuthenticationCallbackFactory =
     const { strategy, req, res, next } = context
 
     if (user && !e) {
+      req.user = user
       // user authenticated successfully
       next()
       return
