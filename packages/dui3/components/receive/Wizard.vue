@@ -59,7 +59,7 @@ import { getSlugFromHostAppNameAndVersion } from '~/lib/common/helpers/hostAppSl
 
 const { trackEvent } = useMixpanel()
 
-const showReceiveDialog = defineModel<boolean>({ default: false })
+const showReceiveDialog = defineModel<boolean>('open', { default: false })
 
 const emit = defineEmits(['close'])
 
@@ -96,6 +96,12 @@ watch(urlParsedData, (newVal) => {
   selectProject(newVal.account?.accountInfo.id, newVal.project)
   selectModel(newVal.model)
   if (newVal.version) urlParsedVersionId.value = newVal.version.id
+})
+
+watch(showReceiveDialog, (newVal) => {
+  if (newVal) {
+    urlParseError.value = undefined
+  }
 })
 
 const selectProject = (

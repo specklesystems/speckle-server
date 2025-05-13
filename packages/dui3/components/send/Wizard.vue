@@ -1,6 +1,6 @@
 <template>
   <CommonDialog
-    :open="showSendDialog"
+    v-model:open="showSendDialog"
     fullscreen="none"
     :title="title"
     :show-back-button="step !== 1"
@@ -58,7 +58,7 @@ import { useAddByUrl } from '~/lib/core/composables/addByUrl'
 
 const { trackEvent } = useMixpanel()
 
-const showSendDialog = ref(false)
+const showSendDialog = defineModel<boolean>('open', { default: false })
 
 const emit = defineEmits(['close'])
 
@@ -83,6 +83,12 @@ watch(urlParsedData, (newVal) => {
   if (!newVal) return
   selectProject(newVal.account?.accountInfo.id, newVal.project)
   selectModel(newVal.model)
+})
+
+watch(showSendDialog, (newVal) => {
+  if (newVal) {
+    urlParseError.value = undefined
+  }
 })
 
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
