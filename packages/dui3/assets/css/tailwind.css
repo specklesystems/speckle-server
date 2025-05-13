@@ -23,3 +23,8 @@ body,
 div#__nuxt {
   height: 100%;
 }
+
+.tippy-content {
+  @apply text-body-3xs;
+  @apply !px-2 !py-1;
+}
