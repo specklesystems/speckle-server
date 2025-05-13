@@ -390,6 +390,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateFunctionRun: {
         async function(parent, _args, ctx) {
+          if (!parent.functionId) {
+            return null
+          }
           const fn = await ctx.loaders.automationsApi.getFunction.load(
             parent.functionId
           )
@@ -538,6 +541,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateFunctionRelease: {
         async function(parent, _args, ctx) {
+          if (!parent.functionId) {
+            return null
+          }
           const fn = await ctx.loaders.automationsApi.getFunction.load(
             parent.functionId
           )
