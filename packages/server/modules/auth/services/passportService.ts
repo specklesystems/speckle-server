@@ -52,7 +52,7 @@ export const passportAuthenticationCallbackFactory =
     }
 
     const infoMsg = resolveInfoMessage(info)
-    if (!user && !e) {
+    if (!user) {
       // no user despite there being no error, so authentication failed
       const message = infoMsg || 'Failed to authenticate, contact server admins'
       res.redirect(new URL(defaultErrorPath(message), getFrontendOrigin()).toString())
