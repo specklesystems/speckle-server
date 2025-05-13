@@ -1,7 +1,7 @@
 import { SpeckleLoader } from './SpeckleLoader.js'
 import { WorldTree } from '../../tree/WorldTree.js'
 import Logger from '../../utils/Logger.js'
-import { ObjectLoader2, ObjectLoaderFactory } from '@speckle/objectloader2'
+import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export class SpeckleOfflineLoader extends SpeckleLoader {
   constructor(targetTree: WorldTree, resourceData: unknown, resourceId?: string) {
@@ -19,7 +19,7 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
     _enableCaching
     resourceData
     /** TO DO: Implement either as part of ObjectLoader2 either separate */
-    return ObjectLoaderFactory.createFromObjects([])
+    return ObjectLoader2Factory.createFromObjects([])
   }
 
   public async load(): Promise<boolean> {

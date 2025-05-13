@@ -3,7 +3,7 @@ import { Loader, LoaderEvent } from '../Loader.js'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
-import { ObjectLoader2, ObjectLoaderFactory } from '@speckle/objectloader2'
+import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
 export class SpeckleLoader extends Loader {
@@ -80,7 +80,7 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    return ObjectLoaderFactory.createFromUrl({ serverUrl, streamId, objectId, token })
+    return ObjectLoader2Factory.createFromUrl({ serverUrl, streamId, objectId, token })
   }
 
   public async load(): Promise<boolean> {

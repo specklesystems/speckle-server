@@ -6,7 +6,7 @@ import { DefermentManager } from '../helpers/defermentManager.js'
 import { CacheReader } from '../helpers/cacheReader.js'
 import { CachePump } from '../helpers/cachePump.js'
 import AggregateQueue from '../helpers/aggregateQueue.js'
-import { ObjectLoaderFactory } from './objectLoaderFactory.js'
+import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 
 export class ObjectLoader2 {
   #rootId: string
@@ -102,10 +102,10 @@ export class ObjectLoader2 {
   }
 
   static createFromObjects(objects: Base[]): ObjectLoader2 {
-    return ObjectLoaderFactory.createFromObjects(objects)
+    return ObjectLoader2Factory.createFromObjects(objects)
   }
 
   static createFromJSON(json: string): ObjectLoader2 {
-    return ObjectLoaderFactory.createFromJSON(json)
+    return ObjectLoader2Factory.createFromJSON(json)
   }
 }

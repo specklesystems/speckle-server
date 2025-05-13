@@ -55,7 +55,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { ObjectLoader2, ObjectLoaderFactory } from '@speckle/objectloader2'
+import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1378,7 +1378,7 @@ export default class Sandbox {
       options: { enableCaching: true }
     })*/
 
-    const loader = ObjectLoaderFactory.createFromUrl({
+    const loader = ObjectLoader2Factory.createFromUrl({
       serverUrl,
       streamId,
       objectId,

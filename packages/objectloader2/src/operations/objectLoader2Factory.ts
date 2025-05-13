@@ -5,7 +5,7 @@ import { MemoryDownloader } from './downloaders/memoryDownloader.js'
 import ServerDownloader from './downloaders/serverDownloader.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 
-export class ObjectLoaderFactory {
+export class ObjectLoader2Factory {
   static createFromObjects(objects: Base[]): ObjectLoader2 {
     const root = objects[0]
     const records: Map<string, Base> = new Map<string, Base>()
