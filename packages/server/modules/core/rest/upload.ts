@@ -329,14 +329,12 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             logWithErr(
               req.log,
               e,
-              {
-                ...calculateLogMetadata({
-                  batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
-                  start,
-                  batchStartTime,
-                  totalObjectsProcessed
-                })
-              },
+              calculateLogMetadata({
+                batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
+                start,
+                batchStartTime,
+                totalObjectsProcessed
+              }),
               `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
             )
             if (!requestDropped)
