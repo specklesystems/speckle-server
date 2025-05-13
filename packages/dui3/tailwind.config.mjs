@@ -1,4 +1,4 @@
-import speckleTheme from '@speckle/tailwind-theme'
+import { plugin as speckleTheme } from '@speckle/tailwind-theme'
 import { tailwindContentEntries as themeEntries } from '@speckle/tailwind-theme/tailwind-configure'
 import { tailwindContentEntries as uiLibEntries } from '@speckle/ui-components/tailwind-configure'
 import formsPlugin from '@tailwindcss/forms'
