@@ -130,26 +130,36 @@ export default class ServerDownloader implements Downloader {
       const { done, value } = await reader.read()
       if (done) break
 
-      //this concat will allocate a new array
-      const combined = this.concatUint8Arrays(leftover, value)
-      let start = 0
-
-      //subarray isn't allocate
-      for (let i = 0; i < combined.length; i++) {
-        if (combined[i] === 0x0a) {
-          const line = combined.subarray(start, i) // line without \n
-          //strings are allocated here
-          const item = this.processLine(line)
-          this.#results?.add(item)
-          start = i + 1
-          count++
-          if (count % 1000 === 0) {
-            await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
-          }
+      leftover = await this.processArray(leftover, value, async () => {
+        count++
+        if (count % 1000 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen
         }
-        leftover = combined.subarray(start) // carry over remainder
+      })
+    }
+  }
+
+  async processArray(
+    leftover: Uint8Array,
+    value: Uint8Array,
+    callback: () => Promise<void>
+  ): Promise<Uint8Array> {
+    //this concat will allocate a new array
+    const combined = this.concatUint8Arrays(leftover, value)
+    let start = 0
+
+    //subarray doesn't allocate
+    for (let i = 0; i < combined.length; i++) {
+      if (combined[i] === 0x0a) {
+        const line = combined.subarray(start, i) // line without \n
+        //strings are allocated here
+        const item = this.processLine(line)
+        this.#results?.add(item)
+        start = i + 1
+        await callback()
       }
     }
+    return combined.subarray(start) // carry over remainder
   }
 
   processLine(line: Uint8Array): Item {
