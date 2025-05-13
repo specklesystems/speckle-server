@@ -11,8 +11,10 @@
           />
         </button>
       </div>
-      <ProjectPageTeamAccessSelect v-if="canEdit" :model-value="generalAccessRole" />
-      <div v-else class="flex items-center justify-end text-body-2xs">
+      <div
+        v-tippy="accessSelectItems[generalAccessRole].description"
+        class="flex items-center justify-end text-body-2xs"
+      >
         {{ accessSelectItems[generalAccessRole].title }}
       </div>
     </div>

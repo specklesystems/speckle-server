@@ -854,6 +854,7 @@ export const getLatestVersionAutomationRunsFactory =
       .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
       .andWhere(Automations.col.projectId, projectId)
       .andWhere(BranchCommits.col.branchId, modelId)
+      .andWhere(Automations.col.isDeleted, false)
       .distinctOn(AutomationRevisions.col.automationId)
       .orderBy([
         { column: AutomationRevisions.col.automationId },

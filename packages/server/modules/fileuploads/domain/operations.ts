@@ -1,16 +1,30 @@
 import {
   FileUploadConvertedStatus,
-  FileUploadRecord
+  FileUploadRecord,
+  FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
+import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
 export type GetFileInfo = (args: {
   fileId: string
 }) => Promise<Optional<FileUploadRecord>>
 
+export type SaveUploadFileInput = Pick<
+  FileUploadRecord,
+  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+> & { fileId: string }
+
+export type SaveUploadFileInputV2 = Pick<
+  FileUploadRecordV2,
+  'projectId' | 'modelId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+> & { fileId: string }
+
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
+
+export type SaveUploadFileV2 = (
+  args: SaveUploadFileInputV2
+) => Promise<FileUploadRecordV2>
 
 export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number

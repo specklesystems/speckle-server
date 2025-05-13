@@ -4,7 +4,7 @@ import {
   metricInputFileSize,
   metricOperationErrors
 } from '../controller/prometheusMetrics.js'
-import { getDbClients } from '../knex.js'
+import { getDbClients } from '../clients/knex.js'
 
 import { downloadFile } from '../controller/filesApi.js'
 import fs from 'fs'

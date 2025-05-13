@@ -150,7 +150,7 @@ export abstract class BaseGPass implements GPass {
     }
   }
 
-  public setVisibility(objectVisibility: ObjectVisibility) {
+  public setVisibility(objectVisibility: ObjectVisibility | null) {
     this._objectVisibility = objectVisibility
   }
 
