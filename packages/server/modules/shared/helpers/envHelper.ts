@@ -1,6 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { has, trimEnd } from 'lodash'
-import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 
 export function getStringFromEnv(
@@ -391,6 +391,13 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 
 export function maximumObjectUploadFileSizeMb() {
   return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
+}
+
+export function isFileUploadsEnabled() {
+  // the env var should ideally be written as a positive
+  // (e.g. ENABLE_FILE_UPLOADS),
+  // but for legacy reasons is the negation.
+  return !getBooleanFromEnv('DISABLE_FILE_UPLOADS', false)
 }
 
 export function getS3AccessKey() {

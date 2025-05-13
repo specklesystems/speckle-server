@@ -92,6 +92,27 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canRequestRender)
+    },
+    canPublish: async (parent, _args, ctx) => {
+      const canPublish = await ctx.authPolicies.project.canPublish({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canPublish)
+    },
+    canLoad: async (parent, _args, ctx) => {
+      const canLoad = await ctx.authPolicies.project.canLoad({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canLoad)
+    },
+    canInvite: async (parent, _args, ctx) => {
+      const canInvite = await ctx.authPolicies.project.canInvite({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canInvite)
     }
   },
   ModelPermissionChecks: {

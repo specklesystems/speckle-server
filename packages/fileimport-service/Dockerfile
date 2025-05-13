@@ -15,17 +15,17 @@ WORKDIR /speckle-server
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
 
+# hadolint ignore=DL3008
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
-    && chmod +x ./nodesource_setup.sh \
-    && ./nodesource_setup.sh \
-    && rm ./nodesource_setup.sh \
+     gosu=1.17-1ubuntu0.24.04.2 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
+    && gosu root:root bash nodesource_setup.sh \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      nodejs=22.14.0-1nodesource1 \
@@ -44,7 +44,7 @@ COPY packages/frontend-2/type-augmentations/stubs packages/frontend-2/type-augme
 COPY packages/shared/package.json packages/shared/
 COPY packages/fileimport-service/package.json packages/fileimport-service/
 
-RUN yarn workspaces focus --all
+RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --all
 
 # build shared libraries
 COPY packages/shared packages/shared/

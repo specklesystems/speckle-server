@@ -1,57 +1,20 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
-import { watch } from 'vue'
+// import { useNavigation } from '~/lib/navigation/composables/navigation'
+// import { watch } from 'vue'
+import Intercom, { shutdown, show, hide } from '@intercom/messenger-js-sdk'
 
-declare global {
-  interface Window {
-    Intercom: {
-      (
-        command: 'boot',
-        options: {
-          app_id: string
-          user_id?: string
-          created_at?: number
-          name?: string
-          email?: string
-          company?: {
-            id: string
-            name: string
-            plan?: string
-          }
-        }
-      ): void
-      (
-        command: 'update',
-        options: {
-          company?: {
-            id: string
-            name: string
-            plan?: string
-          }
-        }
-      ): void
-      (command: 'shutdown'): void
-      (command: 'show'): void
-    }
-  }
-}
-
-export default defineNuxtPlugin(() => {
+export const useIntercom = () => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const { activeWorkspaceData } = useNavigation()
-
-  // Only run Intercom if workspaces are enabled
-  if (!isWorkspacesEnabled.value) return
 
   useOnAuthStateChange()(
-    async (user, { isReset }) => {
-      if (typeof window.Intercom !== 'function') {
-        return
-      }
+    (user, { isReset }) => {
+      if (!import.meta.client) return
 
-      if (user) {
-        window.Intercom('boot', {
+      if (isReset) {
+        shutdownIntercom()
+      } else if (user) {
+        Intercom({
           /* eslint-disable camelcase */
           app_id: 'hoiaq4wn',
           user_id: user.id || undefined,
@@ -60,37 +23,64 @@ export default defineNuxtPlugin(() => {
             : undefined,
           /* eslint-enable camelcase */
           name: user.name || undefined,
-          email: user.email || undefined,
-          company: activeWorkspaceData.value
-            ? {
-                id: activeWorkspaceData.value.id,
-                name: activeWorkspaceData.value.name,
-                plan: activeWorkspaceData.value.plan?.name
-              }
-            : undefined
+          email: user.email || undefined
+          // company: activeWorkspaceData.value
+          //   ? {
+          //       id: activeWorkspaceData.value.id,
+          //       name: activeWorkspaceData.value.name,
+          //       plan: activeWorkspaceData.value.plan?.name
+          //     }
+          //   : undefined
         })
-      } else if (isReset) {
-        window.Intercom('shutdown')
       }
     },
     { immediate: true }
   )
 
-  // Update Intercom when active workspace changes
-  watch(
-    () => activeWorkspaceData.value,
-    (newWorkspace) => {
-      if (typeof window.Intercom !== 'function') return
+  const showIntercom = () => {
+    if (!isWorkspacesEnabled.value) return
+    show()
+  }
 
-      window.Intercom('update', {
-        company: newWorkspace
-          ? {
-              id: newWorkspace.id,
-              name: newWorkspace.name,
-              plan: newWorkspace.plan?.name
-            }
-          : undefined
-      })
+  const hideIntercom = () => {
+    if (!isWorkspacesEnabled.value) return
+    hide()
+  }
+
+  const shutdownIntercom = () => {
+    if (!isWorkspacesEnabled.value) return
+    shutdown()
+  }
+
+  // watch(
+  //   () => activeWorkspaceData.value,
+  //   (newWorkspace) => {
+  //     if (!isInitialized.value || !import.meta.client) return
+
+  //     update({
+  //       company: newWorkspace
+  //         ? {
+  //             id: newWorkspace.id,
+  //             name: newWorkspace.name,
+  //             plan: newWorkspace.plan?.name
+  //           }
+  //         : undefined
+  //     })
+  //   },
+  //   { deep: true }
+  // )
+
+  return {
+    show: showIntercom,
+    hide: hideIntercom,
+    shutdown: shutdownIntercom
+  }
+}
+
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      intercom: useIntercom()
     }
-  )
+  }
 })

@@ -7,7 +7,7 @@ import {
 import { has, reduce } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 
-import { moduleMockConfigs } from '@/modules'
+import { moduleMockConfigs } from '@/modules/index'
 import { isNonNullable, Roles, SourceAppNames } from '@speckle/shared'
 import {
   getRandomDbRecords,
@@ -21,7 +21,7 @@ import { Streams } from '@/modules/core/dbSchema'
  */
 const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
   // Async import so that we only import this when envs actually have mocks on
-  const faker = (await import('@faker-js/faker')).faker
+  const { faker } = require('@faker-js/faker') as typeof import('@faker-js/faker')
 
   return {
     resolvers: ({ helpers: { getFieldValue }, store }) => ({

@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="group h-full">
-    <template v-if="isLoggedIn">
+    <template v-if="showSidebar">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -73,6 +73,14 @@
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <CalPopUp v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem label="Book an intro call">
+                    <template #icon>
+                      <IconCalendar class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </CalPopUp>
+
                 <div v-if="isWorkspacesEnabled" @click="openChat">
                   <LayoutSidebarMenuGroupItem label="Give us feedback">
                     <template #icon>
@@ -80,14 +88,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </div>
-
-                <CalPopUp v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem label="Book an intro call">
-                    <template #icon>
-                      <CalendarDaysIcon class="size-5 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
 
                 <NuxtLink
                   to="https://speckle.community/"
@@ -151,18 +151,18 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug } = useNavigation()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { $intercom } = useNuxtApp()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
 
 const openChat = () => {
-  window.Intercom('show')
+  $intercom.show()
   isOpenMobile.value = false
 }
 
@@ -173,6 +173,13 @@ const projectsLink = computed(() => {
       : projectsRoute
     : projectsRoute
 })
+
+const showSidebar = computed(() => {
+  return isWorkspacesEnabled.value
+    ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
+    : isLoggedIn.value
+})
+
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }

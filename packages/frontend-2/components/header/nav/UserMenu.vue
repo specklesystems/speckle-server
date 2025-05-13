@@ -136,6 +136,7 @@ const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const menuButtonId = useId()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { $intercom } = useNuxtApp()
 
 const showInviteDialog = ref(false)
 const showFeedbackDialog = ref(false)
@@ -148,6 +149,6 @@ const toggleInviteDialog = () => {
 }
 
 const openChat = () => {
-  window.Intercom('show')
+  $intercom.show()
 }
 </script>

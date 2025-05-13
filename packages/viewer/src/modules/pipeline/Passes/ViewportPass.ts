@@ -4,7 +4,11 @@ import {
   Material,
   NoBlending,
   NormalBlending,
-  Texture
+  OrthographicCamera,
+  PerspectiveCamera,
+  Scene,
+  Texture,
+  WebGLRenderer
 } from 'three'
 import { PassOptions } from './GPass.js'
 import SpeckleViewportMaterial from '../../materials/SpeckleViewportMaterial.js'
@@ -27,6 +31,7 @@ export const DefaultViewportPassOptions: Required<ViewportPassOptions> = {
 
 export class ViewportPass extends GeometryPass {
   protected viewportMaterial: SpeckleViewportMaterial
+  protected pendingTexture: boolean
 
   public _options: Required<ViewportPassOptions> = Object.assign(
     {},
@@ -66,14 +71,25 @@ export class ViewportPass extends GeometryPass {
 
   protected setMatcapTexture(asset: Asset | null) {
     if (!asset) return
+    this.pendingTexture = true
 
     Assets.getTexture(asset)
       .then((value: Texture) => {
         this.viewportMaterial.matcapTexture = value
         this.viewportMaterial.needsCopy = true
+        this.pendingTexture = false
       })
       .catch((reason) => {
         Logger.error(`Matcap texture failed to load ${reason}`)
+        this.pendingTexture = false
       })
+  }
+
+  public render(
+    renderer: WebGLRenderer,
+    camera: PerspectiveCamera | OrthographicCamera | null,
+    scene?: Scene
+  ): boolean {
+    return super.render(renderer, camera, scene) || this.pendingTexture
   }
 }

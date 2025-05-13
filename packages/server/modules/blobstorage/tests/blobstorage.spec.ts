@@ -366,6 +366,7 @@ describe('Blob storage @blobstorage', () => {
     expect(markResult).to.deep.equal({
       blobId,
       fileName: blob.fileName,
+      fileSize: null,
       uploadStatus: 2,
       uploadError: 'File size limit reached'
     })

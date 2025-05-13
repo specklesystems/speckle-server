@@ -69,6 +69,10 @@
       "name": "🌟 ui-components-nuxt"
     },
     {
+      "path": "packages/monitor-deployment",
+      "name": "📊 monitor-deployment"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
