@@ -11877,15 +11877,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsonforms/core@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@jsonforms/core@npm:3.3.0"
+"@jsonforms/core@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@jsonforms/core@npm:3.5.1"
   dependencies:
     "@types/json-schema": "npm:^7.0.3"
     ajv: "npm:^8.6.1"
     ajv-formats: "npm:^2.1.0"
     lodash: "npm:^4.17.21"
-  checksum: 10/75e183195111cd376d44001edb0d60ba1160754bf5409d20444148464acfeb188cb3632650f2d41a1665292239bc22b27cd0097def19618c3acbedf1e0440db2
+  checksum: 10/f8ef9f86e07d20d1d3feec5bc96fff85a743b8ae98558c57ca8991945d58167c1f04ea701919f39d1b2453bdd340c7b469d71927ded3a079eadd947af4695686
   languageName: node
   linkType: hard
 
@@ -11902,15 +11902,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsonforms/vue@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@jsonforms/vue@npm:3.3.0"
+"@jsonforms/vue@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@jsonforms/vue@npm:3.5.1"
   dependencies:
     lodash: "npm:^4.17.21"
   peerDependencies:
-    "@jsonforms/core": 3.3.0
+    "@jsonforms/core": 3.5.1
     vue: ^3.2.26
-  checksum: 10/3cea4a4f2a5267cbf045972a416045b34cee376e1eb60c268d4882b676c83b87e7f34eb2038fe4df8b8e41e6e28240ea524b458afca38f3552059d037f9c577d
+  checksum: 10/55717175334d1634cb9079426f738c1b7d62aca0d5eb60824e2ee4e8a753bc979173ccefc1621fe045504330a3fd0bf60641076ff045decd4230bae48ac0e15a
   languageName: node
   linkType: hard
 
@@ -15669,8 +15669,8 @@ __metadata:
     "@graphql-codegen/visitor-plugin-common": "npm:^5.7.1"
     "@headlessui/vue": "npm:^1.7.13"
     "@heroicons/vue": "npm:^2.0.12"
-    "@jsonforms/core": "npm:^3.3.0"
-    "@jsonforms/vue": "npm:^3.3.0"
+    "@jsonforms/core": "npm:^3.5.1"
+    "@jsonforms/vue": "npm:^3.5.1"
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
     "@nuxt/devtools": "npm:^1.7.0"
     "@nuxt/eslint": "npm:^1.1.0"
@@ -15721,6 +15721,7 @@ __metadata:
     "@vue/apollo-composable": "npm:@speckle/apollo-composable@4.2.1-patch.1"
     "@vue/apollo-ssr": "npm:4.0.0"
     "@vueuse/core": "npm:^10.9.0"
+    ajv: "npm:^8.17.1"
     apollo-upload-client: "npm:^18.0.1"
     autoprefixer: "npm:^10.4.14"
     browserify-zlib: "npm:^0.2.0"
@@ -21812,6 +21813,18 @@ __metadata:
     require-from-string: "npm:^2.0.2"
     uri-js: "npm:^4.4.1"
   checksum: 10/4ada268c9a6e44be87fd295df0f0a91267a7bae8dbc8a67a2d5799c3cb459232839c99d18b035597bb6e3ffe88af6979f7daece854f590a81ebbbc2dfa80002c
+  languageName: node
+  linkType: hard
+
+"ajv@npm:^8.17.1":
+  version: 8.17.1
+  resolution: "ajv@npm:8.17.1"
+  dependencies:
+    fast-deep-equal: "npm:^3.1.3"
+    fast-uri: "npm:^3.0.1"
+    json-schema-traverse: "npm:^1.0.0"
+    require-from-string: "npm:^2.0.2"
+  checksum: 10/ee3c62162c953e91986c838f004132b6a253d700f1e51253b99791e2dbfdb39161bc950ebdc2f156f8568035bb5ed8be7bd78289cd9ecbf3381fe8f5b82e3f33
   languageName: node
   linkType: hard
 
@@ -29356,6 +29369,13 @@ __metadata:
   version: 2.1.1
   resolution: "fast-safe-stringify@npm:2.1.1"
   checksum: 10/dc1f063c2c6ac9533aee14d406441f86783a8984b2ca09b19c2fe281f9ff59d315298bc7bc22fd1f83d26fe19ef2f20e2ddb68e96b15040292e555c5ced0c1e4
+  languageName: node
+  linkType: hard
+
+"fast-uri@npm:^3.0.1":
+  version: 3.0.6
+  resolution: "fast-uri@npm:3.0.6"
+  checksum: 10/43c87cd03926b072a241590e49eca0e2dfe1d347ddffd4b15307613b42b8eacce00a315cf3c7374736b5f343f27e27ec88726260eb03a758336d507d6fbaba0a
   languageName: node
   linkType: hard
 
