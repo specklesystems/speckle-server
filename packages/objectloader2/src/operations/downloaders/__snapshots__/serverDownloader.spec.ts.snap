@@ -10,6 +10,7 @@ exports[`downloader > add extra header 1`] = `
     "speckle_type": "type",
   },
   "baseId": "id",
+  "size": 0,
 }
 `;
 
@@ -21,6 +22,7 @@ exports[`downloader > download batch of one 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id",
+    "size": 33,
   },
 ]
 `;
@@ -33,6 +35,7 @@ exports[`downloader > download batch of three 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id1",
+    "size": 34,
   },
   {
     "base": {
@@ -40,6 +43,7 @@ exports[`downloader > download batch of three 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id2",
+    "size": 34,
   },
   {
     "base": {
@@ -47,6 +51,7 @@ exports[`downloader > download batch of three 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id3",
+    "size": 34,
   },
 ]
 `;
@@ -59,6 +64,7 @@ exports[`downloader > download batch of two 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id1",
+    "size": 34,
   },
   {
     "base": {
@@ -66,6 +72,7 @@ exports[`downloader > download batch of two 1`] = `
       "speckle_type": "type",
     },
     "baseId": "id2",
+    "size": 34,
   },
 ]
 `;
@@ -80,5 +87,6 @@ exports[`downloader > download single exists 1`] = `
     "speckle_type": "type",
   },
   "baseId": "id",
+  "size": 0,
 }
 `;

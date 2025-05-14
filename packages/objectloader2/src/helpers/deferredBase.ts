@@ -1,16 +1,18 @@
-import { Base } from '../types/types.js'
+import { Base, Item } from '../types/types.js'
 
 export class DeferredBase {
-  promise: Promise<Base>
-  resolve!: (value: Base) => void
-  reject!: (reason?: Error) => void
-  base?: Base
+  private promise: Promise<Base>
+  private resolve!: (value: Base) => void
+  private reject!: (reason?: Error) => void
+  private item?: Item
 
-  readonly id: string
-  lastAccess: number // Timestamp in ms
+  private readonly id: string
+  private expiresAt: number // Timestamp in ms
+  private ttl: number // ttl in ms
 
-  constructor(id: string, lastAccess: number) {
-    this.lastAccess = lastAccess
+  constructor(ttl: number, id: string, expiresAt: number) {
+    this.expiresAt = expiresAt
+    this.ttl = ttl
     this.id = id
     this.promise = new Promise<Base>((resolve, reject) => {
       this.resolve = resolve
@@ -18,13 +20,34 @@ export class DeferredBase {
     })
   }
 
-  found(value: Base): void {
-    this.base = value
-    this.resolve(value)
+  getId(): string {
+    return this.id
   }
-  done(expired: number): boolean {
-    if (this.lastAccess < expired && this.base) {
-      this.resolve(this.base)
+
+  getItem(): Item | undefined {
+    return this.item
+  }
+
+  getPromise(): Promise<Base> {
+    return this.promise
+  }
+
+  isExpired(now: number): boolean {
+    return this.item !== undefined && now > this.expiresAt
+  }
+  setAccess(now: number): void {
+    this.expiresAt = now + this.ttl
+  }
+
+  found(value: Item): void {
+    this.item = value
+    this.resolve(value.base)
+  }
+  done(now: number): boolean {
+    if (this.item) {
+      this.resolve(this.item.base)
+    }
+    if (this.isExpired(now)) {
       return true
     }
     return false
