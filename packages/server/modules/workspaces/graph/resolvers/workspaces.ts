@@ -74,7 +74,7 @@ import {
   countWorkspacesFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getPaginatedWorkspaceProjectsFactory,
-  getWorkspacesFactory
+  getWorkspaceRolesForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -104,7 +104,10 @@ import {
   queryAllWorkspaceProjectsFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { getDiscoverableWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
+import {
+  getDiscoverableWorkspacesForUserFactory,
+  getWorkspacesForUserFactory
+} from '@/modules/workspaces/services/retrieval'
 import {
   Roles,
   WorkspaceRoles,
@@ -1834,7 +1837,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             throw new WorkspacesNotAuthorizedError()
           }
 
-          const workspaces = await getWorkspacesFactory({ db })({
+          const getWorkspaces = getWorkspacesForUserFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaceRolesForUser: getWorkspaceRolesForUserFactory({ db })
+          })
+
+          const workspaces = await getWorkspaces({
             userId: context.userId,
             search: args.filter?.search ?? undefined,
             completed: args.filter?.completed ?? undefined

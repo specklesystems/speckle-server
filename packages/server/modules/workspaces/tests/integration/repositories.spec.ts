@@ -19,10 +19,16 @@ import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import {
+  BasicTestUser,
+  buildBasicTestUser,
+  createTestUser,
+  createTestUsers
+} from '@/test/authHelper'
 import {
   BasicTestWorkspace,
   assignToWorkspace,
+  buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import {
@@ -91,6 +97,103 @@ describe('Workspace repositories', () => {
       expect(workspace).to.be.null
     })
     // not testing get here, we're going to use that for testing upsert
+
+    describe('getWorkspace filters', () => {
+      it('is able to select them by name', async () => {
+        const testUserA = buildBasicTestUser()
+        await createTestUsers([testUserA])
+        const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
+        const myGarageWorkspace = buildBasicTestWorkspace({
+          name: 'My Garage Workspace'
+        })
+
+        await createTestWorkspace(myHouseWorkspace, testUserA)
+        await createTestWorkspace(myGarageWorkspace, testUserA)
+
+        const workspace = await getWorkspace({
+          userId: testUserA.id,
+          workspaceId: myHouseWorkspace.id,
+          search: 'house'
+        })
+
+        expect(workspace).not.to.be.null
+        expect(workspace?.id).to.eq(myHouseWorkspace.id)
+      })
+
+      it('is able to filter them out by name', async () => {
+        const testUserA = buildBasicTestUser()
+        await createTestUsers([testUserA])
+        const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
+        const myGarageWorkspace = buildBasicTestWorkspace({
+          name: 'My Garage Workspace'
+        })
+
+        await createTestWorkspace(myHouseWorkspace, testUserA)
+        await createTestWorkspace(myGarageWorkspace, testUserA)
+
+        const workspace = await getWorkspace({
+          userId: testUserA.id,
+          workspaceId: myHouseWorkspace.id,
+          search: 'park'
+        })
+
+        expect(workspace).to.be.null
+      })
+
+      it('is able to filer them by completed status', async () => {
+        const testUserA = buildBasicTestUser()
+        await createTestUsers([testUserA])
+
+        const nonCompleteWorkspace = buildBasicTestWorkspace()
+        await createTestWorkspace(nonCompleteWorkspace, testUserA, {
+          addCreationState: { completed: true, state: {} }
+        })
+
+        const workspace = await getWorkspace({
+          userId: testUserA.id,
+          workspaceId: nonCompleteWorkspace.id,
+          completed: true
+        })
+
+        expect(workspace).not.to.be.null
+        expect(workspace?.id).to.eq(nonCompleteWorkspace.id)
+      })
+
+      it('is able to filer them out by completed status', async () => {
+        const testUserA = buildBasicTestUser()
+        await createTestUsers([testUserA])
+
+        const nonCompleteWorkspace = buildBasicTestWorkspace()
+        await createTestWorkspace(nonCompleteWorkspace, testUserA, {
+          addCreationState: { completed: true, state: {} }
+        })
+
+        const workspace = await getWorkspace({
+          userId: testUserA.id,
+          workspaceId: nonCompleteWorkspace.id,
+          completed: false
+        })
+
+        expect(workspace).to.be.null
+      })
+
+      it('does not filter when there is no workspace_completed entry as safety mechanism', async () => {
+        const testUserA = buildBasicTestUser()
+        await createTestUsers([testUserA])
+
+        const nonCompleteWorkspace = buildBasicTestWorkspace()
+        await createTestWorkspace(nonCompleteWorkspace, testUserA)
+
+        const workspace = await getWorkspace({
+          userId: testUserA.id,
+          workspaceId: nonCompleteWorkspace.id,
+          completed: false
+        })
+
+        expect(workspace).not.to.be.null
+        expect(workspace?.id).to.eq(nonCompleteWorkspace.id)
+      })
+    })
   })
 
   describe('getWorkspaceBySlugFactory creates a function, that', () => {

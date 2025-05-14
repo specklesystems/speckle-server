@@ -756,9 +756,9 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
-          // filter: {
-          //   complete: true
-          // }
+          filter: {
+            completed: true
+          }
         })
 
         expect(res).to.not.haveGraphQLErrors()
@@ -789,9 +789,9 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
-          // filter: {
-          //   search: 'B2'
-          // }
+          filter: {
+            search: 'B2'
+          }
         })
 
         expect(res).to.not.haveGraphQLErrors()

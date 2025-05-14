@@ -144,9 +144,21 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async ({ workspaceIds, userId, search, completed }) => {
+  async ({ workspaceIds, userId }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
     if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+
+    const results = await q
+    return results
+  }
+
+export const getWorkspaceFactory =
+  ({ db }: { db: Knex }): GetWorkspace =>
+  async ({ workspaceId, userId, search, completed }) => {
+    const q = workspaceWithRoleBaseQuery({ db, userId }).where(
+      Workspaces.col.id,
+      workspaceId
+    )
 
     if (search) {
       q.andWhere((builder) => {
@@ -161,22 +173,14 @@ export const getWorkspacesFactory =
         DbWorkspaceCreationState.name,
         Workspaces.col.id,
         DbWorkspaceCreationState.col.workspaceId
-      )
-        .where({ [DbWorkspaceCreationState.col.completed]: completed })
-        .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+      ).andWhere((builder) => {
+        builder
+          .where({ [DbWorkspaceCreationState.col.completed]: completed })
+          .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+      })
     }
 
-    const results = await q
-    return results
-  }
-
-export const getWorkspaceFactory =
-  ({ db }: { db: Knex }): GetWorkspace =>
-  async ({ workspaceId, userId }) => {
-    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
-      .where(Workspaces.col.id, workspaceId)
-      .first()
-
+    const workspace = await q.first()
     return workspace || null
   }
 

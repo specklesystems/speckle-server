@@ -127,9 +127,9 @@ export const updateWorkspaceQuery = gql`
 `
 
 export const getActiveUserWorkspacesQuery = gql`
-  query GetActiveUserWorkspaces {
+  query GetActiveUserWorkspaces($filter: UserWorkspacesFilter) {
     activeUser {
-      workspaces {
+      workspaces(filter: $filter) {
         items {
           ...TestWorkspace
         }

@@ -160,7 +160,7 @@ export type CreateTestUsersParams = {
 export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>) =>
   buildTestObject(
     {
-      id: '',
+      id: createRandomString(),
       name: createRandomString(),
       email: createRandomEmail(),
       verified: true
