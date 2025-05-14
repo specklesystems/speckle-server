@@ -128,8 +128,7 @@ const SpecklePowerBi = {
   id: DefaultAppIds.PowerBI,
   secret: DefaultAppIds.PowerBI,
   name: 'Speckle Connector For PowerBI',
-  description:
-    'The Speckle Connector For Excel. For more info check the docs here: https://speckle.guide/user/powerbi.html.',
+  description: 'The Speckle Connector for Power BI.',
   trustByDefault: true,
   public: true,
   redirectUrl: 'https://oauth.powerbi.com/views/oauthredirect.html',

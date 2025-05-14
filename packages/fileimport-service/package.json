@@ -13,7 +13,7 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "engines": {
-    "node": "^18.19.0"
+    "node": "^22.6.0"
   },
   "scripts": {
     "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
@@ -33,6 +33,7 @@
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "bcrypt": "^5.0.0",
+    "bull": "^4.16.5",
     "crypto": "^1.0.1",
     "crypto-random-string": "^3.2.0",
     "dotenv": "^16.4.5",
@@ -47,7 +48,8 @@
     "tarn": "^3.0.2",
     "undici": "^5.28.4",
     "valid-filename": "^3.1.0",
-    "web-ifc": "^0.0.36"
+    "web-ifc": "^0.0.36",
+    "znv": "^0.5.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

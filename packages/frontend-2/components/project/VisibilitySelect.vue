@@ -38,38 +38,43 @@
 </template>
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: SimpleProjectVisibility): void
+  (e: 'update:modelValue', v: SupportedProjectVisibility): void
 }>()
 
 const props = defineProps<{
-  modelValue: SimpleProjectVisibility
+  modelValue: SupportedProjectVisibility
   showLabel?: boolean
   name?: string
   disabled?: boolean
+  workspaceId?: string
 }>()
 
 const labelId = useId()
 const buttonId = useId()
-const items = ref<
-  Record<
-    SimpleProjectVisibility,
-    { id: SimpleProjectVisibility; description: string; title: string }
-  >
->({
-  [SimpleProjectVisibility.Unlisted]: {
-    id: SimpleProjectVisibility.Unlisted,
-    description: 'Anyone with the link can view',
-    title: 'Link shareable'
+const items = computed(() => ({
+  [SupportedProjectVisibility.Public]: {
+    id: SupportedProjectVisibility.Public,
+    description: 'Anyone with the link can access',
+    title: 'Public'
   },
-  [SimpleProjectVisibility.Private]: {
-    id: SimpleProjectVisibility.Private,
+  [SupportedProjectVisibility.Private]: {
+    id: SupportedProjectVisibility.Private,
     description: 'Only collaborators can access',
     title: 'Private'
-  }
-})
+  },
+  ...(props.workspaceId
+    ? {
+        [SupportedProjectVisibility.Workspace]: {
+          id: SupportedProjectVisibility.Workspace,
+          description: 'Only workspace members can access',
+          title: 'Workspace'
+        }
+      }
+    : {})
+}))
 
 const selectedValue = computed({
   get: () => props.modelValue,
@@ -77,7 +82,8 @@ const selectedValue = computed({
 })
 
 const selectValue = computed({
-  get: () => items.value[selectedValue.value],
+  get: () =>
+    items.value[selectedValue.value] || items.value[SupportedProjectVisibility.Private],
   set: (newVal) => (selectedValue.value = newVal.id)
 })
 </script>

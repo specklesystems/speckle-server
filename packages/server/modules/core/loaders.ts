@@ -1,6 +1,6 @@
 import DataLoader from 'dataloader'
 import { AuthContext } from '@/modules/shared/authz'
-import { graphDataloadersBuilders } from '@/modules'
+import { graphDataloadersBuilders } from '@/modules/index'
 import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
 import { Knex } from 'knex'
 import { isNonNullable, Optional } from '@speckle/shared'

@@ -2,7 +2,6 @@ import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
   LoaderEvent,
-  ViewMode,
   type PropertyInfo,
   type StringPropertyInfo,
   type SunLightConfiguration
@@ -15,8 +14,6 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  ViewModes,
-  ViewModeEvent,
   SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -657,44 +654,6 @@ function useViewerFiltersIntegration() {
   )
 }
 
-function useViewerViewModeIntegration() {
-  const {
-    ui: { viewMode },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const viewModes = instance.getExtension(ViewModes)
-  const onViewModeChanged = (mode: ViewMode) => {
-    viewMode.value = mode
-  }
-
-  onMounted(() => {
-    if (!viewMode.value) {
-      viewMode.value = ViewMode.DEFAULT
-    }
-    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  onBeforeUnmount(() => {
-    // Reset view mode to default
-    viewModes.setViewMode(ViewMode.DEFAULT)
-    viewMode.value = ViewMode.DEFAULT
-
-    // Clean up event listener
-    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  watch(
-    () => viewMode.value,
-    (newMode) => {
-      if (viewModes && newMode) {
-        viewModes.setViewMode(newMode)
-      }
-    },
-    { immediate: true }
-  )
-}
-
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -931,7 +890,6 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
-  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()

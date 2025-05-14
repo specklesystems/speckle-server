@@ -18,7 +18,7 @@
         location="workspace_switcher"
       />
       <FormButton
-        v-if="!showAllWorkspaces"
+        v-if="!showAllWorkspaces && discoverableWorkspacesAndJoinRequestsCount > 3"
         color="subtle"
         size="lg"
         full-width

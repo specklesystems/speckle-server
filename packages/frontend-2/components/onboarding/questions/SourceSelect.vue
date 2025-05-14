@@ -11,7 +11,7 @@
     show-label
     allow-unset
     clearable
-    :items="sources"
+    :items="shuffledSources"
   >
     <template #option="{ item }">
       <div class="label label--light">
@@ -29,6 +29,7 @@ import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { SourceTitleMap } from '~/lib/auth/helpers/onboarding'
 import { OnboardingSource } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { shuffle } from 'lodash-es'
 
 const props = defineProps<{
   modelValue?: OnboardingSource
@@ -46,5 +47,15 @@ const sources = Object.values(OnboardingSource)
 const { selectedValue, isArrayValue } = useFormSelectChildInternals<OnboardingSource>({
   props: toRefs(props),
   emit
+})
+
+const shuffledSources = computed(() => {
+  // Filter out "Other" and shuffle the remaining sources
+  const sourcesWithoutOther = sources.filter(
+    (source) => source !== OnboardingSource.Other
+  )
+  const shuffled = shuffle([...sourcesWithoutOther])
+  // Add "Other" at the end
+  return [...shuffled, OnboardingSource.Other]
 })
 </script>

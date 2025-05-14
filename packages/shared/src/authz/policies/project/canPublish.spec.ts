@@ -12,6 +12,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { TIME_MS } from '../../../core/index.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 const buildCanPublishPolicy = (
   overrides?: Partial<Parameters<typeof canPublishPolicy>[0]>
@@ -21,8 +22,7 @@ const buildCanPublishPolicy = (
     getProject: async () => ({
       id: 'project-id',
       workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false,
+      visibility: ProjectVisibility.Private,
       allowPublicComments: false
     }),
     getProjectRole: async () => Roles.Stream.Owner,
@@ -116,8 +116,7 @@ describe('canPublish', () => {
       getProject: async () => ({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
+        visibility: ProjectVisibility.Workspace,
         allowPublicComments: false
       }),
       getWorkspace: async () => ({

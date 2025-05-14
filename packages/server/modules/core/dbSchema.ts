@@ -266,14 +266,13 @@ export const Streams = buildTableHelper(
     'id',
     'name',
     'description',
-    'isPublic',
     'clonedFrom',
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable',
     'workspaceId',
-    'regionKey'
+    'regionKey',
+    'visibility'
   ],
   StreamsMeta
 )
@@ -498,6 +497,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'streamId',
   'branchName',
   'userId',
+  'modelId',
   'fileName',
   'fileType',
   'fileSize',
