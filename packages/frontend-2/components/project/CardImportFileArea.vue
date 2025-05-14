@@ -66,7 +66,7 @@
               Install connectors
             </FormButton>
             <FormButton size="sm" color="outline" @click="openFilePicker">
-              Upload a model
+              Upload a file
             </FormButton>
           </div>
         </div>
