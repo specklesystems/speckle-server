@@ -18,7 +18,6 @@ import type { JsonSchema, UISchemaElement } from '@jsonforms/core'
 import { JsonForms, type JsonFormsChangeEvent } from '@jsonforms/vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useMounted } from '@vueuse/core'
-import type Ajv from 'ajv'
 import { omit } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { renderers } from '~/lib/form/jsonRenderers'
@@ -42,8 +41,7 @@ const { validate } = useForm()
 const isMounted = useMounted()
 const internalRef = ref<Nullable<{ jsonforms: { core: JsonFormsChangeEvent } }>>(null)
 const data = defineModel<Record<string, unknown>>('data')
-// @jsonforms/core vendors ajv with incorrect types for this util
-const ajv = createAjv({ useDefaults: true }) as unknown as Ajv
+const ajv = createAjv({ useDefaults: true })
 
 const finalSchema = computed(() => {
   const base = props.schema
