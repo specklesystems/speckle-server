@@ -33,7 +33,7 @@ import {
   GetActiveUserDiscoverableWorkspacesDocument,
   GetWorkspaceWithMembersByRoleDocument
 } from '@/test/graphql/generated/graphql'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   assignToWorkspace,
@@ -701,8 +701,7 @@ describe('Workspaces GQL CRUD', () => {
 
     describe('query activeUser.workspaces', () => {
       beforeEach(async () => {
-        // db is polluted from prev tests
-        await db.table(Workspaces.name).delete()
+        await truncateTables([Workspaces.name])
       })
 
       it('should return all workspaces for a user', async () => {
@@ -1294,8 +1293,7 @@ describe('Workspaces GQL CRUD', () => {
 
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
       beforeEach(async () => {
-        // db is polluted from prev tests
-        await db.table(Workspaces.name).delete()
+        await truncateTables([Workspaces.name])
       })
 
       describe('leave', () => {
