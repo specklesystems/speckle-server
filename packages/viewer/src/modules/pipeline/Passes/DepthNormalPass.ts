@@ -82,7 +82,7 @@ export class DepthNormalPass extends BaseGPass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
+      ['ALPHATEST_REJECTION']
     )
     this.mrtMaterial.blending = NoBlending
     this.mrtMaterial.side = DoubleSide

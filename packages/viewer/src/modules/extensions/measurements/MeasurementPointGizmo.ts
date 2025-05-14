@@ -161,7 +161,7 @@ export class MeasurementPointGizmo extends Group {
         opacity: 1,
         side: DoubleSide
       },
-      ['USE_RTE', 'BILLBOARD_FIXED']
+      ['BILLBOARD_FIXED']
     )
     material.toneMapped = false
     material.color.convertSRGBToLinear()

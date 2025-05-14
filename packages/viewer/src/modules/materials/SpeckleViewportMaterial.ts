@@ -17,7 +17,7 @@ class SpeckleViewportMaterial extends SpeckleBasicMaterial {
     return { ...super.uniformsDef, minIntensity: 0.01, tMatcap: null }
   }
 
-  constructor(parameters: MeshBasicMaterialParameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshBasicMaterialParameters, defines = []) {
     super(parameters, defines)
   }
 

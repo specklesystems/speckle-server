@@ -628,7 +628,7 @@ export default class SpeckleRenderer {
             {
               depthPacking: RGBADepthPacking
             },
-            ['USE_RTE', 'ALPHATEST_REJECTION']
+            ['ALPHATEST_REJECTION']
           )
         }
       })
