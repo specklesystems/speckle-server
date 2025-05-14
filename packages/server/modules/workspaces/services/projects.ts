@@ -1,4 +1,4 @@
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility, StreamRecord } from '@/modules/core/helpers/types'
 import {
   GetDefaultRegion,
   GetWorkspaceDomains,
@@ -6,7 +6,7 @@ import {
   GetWorkspaceSeatTypeToProjectRoleMapping,
   IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
-  UpdateWorkspaceRole,
+  AddOrUpdateWorkspaceRole,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
 import {
@@ -112,7 +112,7 @@ export const moveProjectToWorkspaceFactory =
     getProjectCollaborators: GetStreamCollaborators
     getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
-    updateWorkspaceRole: UpdateWorkspaceRole
+    updateWorkspaceRole: AddOrUpdateWorkspaceRole
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceWithPlan: GetWorkspaceWithPlan
     getUserEmails: FindEmailsByUserId
@@ -211,7 +211,17 @@ export const moveProjectToWorkspaceFactory =
     }
 
     // Assign project to workspace
-    return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
+    return await updateProject({
+      projectUpdate: {
+        id: projectId,
+        workspaceId,
+        visibility:
+          // Migrate from Private -> Workspace visibility
+          project.visibility === ProjectRecordVisibility.Private
+            ? ProjectRecordVisibility.Workspace
+            : project.visibility
+      }
+    })
   }
 
 export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =

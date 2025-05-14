@@ -7,7 +7,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
-  ProjectVisibility,
   Resolvers,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
@@ -116,6 +115,8 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -251,6 +252,12 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
       const canQuery = await context.authPolicies.project.canRead({
         projectId: args.id,
         userId: context.userId
@@ -259,8 +266,7 @@ export = {
 
       const project = await getStream({ streamId: args.id })
 
-      // TODO: Should scopes & token resource access rules be checked in authz policy?
-      if (!project?.isPublic && !project?.isDiscoverable) {
+      if (project?.visibility !== ProjectRecordVisibility.Public) {
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
@@ -614,12 +620,9 @@ export = {
           .streams.getSourceApps.load(parent.id) || []
       )
     },
-
     async visibility(parent) {
-      const { isPublic } = parent
-
-      // Ignore discoverability for now
-      return isPublic ? ProjectVisibility.Unlisted : ProjectVisibility.Private
+      const { visibility } = parent
+      return mapDbToGqlProjectVisibility(visibility)
     }
   },
   PendingStreamCollaborator: {

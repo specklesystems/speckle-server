@@ -11,12 +11,12 @@ import {
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
+  AddOrUpdateWorkspaceRole,
   CreateWorkspaceJoinRequest,
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus,
-  UpsertWorkspaceRole
+  UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import {
   denyWorkspaceJoinRequestFactory,
@@ -245,9 +245,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => null,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
             emit: async () => Promise.resolve(),
-            ensureValidWorkspaceRoleSeat: async () => {
+            addOrUpdateWorkspaceRole: async () => {
               throw new Error('Should not happen')
             }
           })({
@@ -269,9 +268,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
             emit: async () => Promise.resolve(),
-            ensureValidWorkspaceRoleSeat: async () => {
+            addOrUpdateWorkspaceRole: async () => {
               throw new Error('Should not happen')
             }
           })({
@@ -301,9 +299,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve(),
             emit: async () => Promise.resolve(),
-            ensureValidWorkspaceRoleSeat: async () => {
+            addOrUpdateWorkspaceRole: async () => {
               throw new Error('Should not happen')
             }
           })({
@@ -322,11 +319,12 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
           args: Parameters<SendWorkspaceJoinRequestApprovedEmail>[number]
         ) => sendWorkspaceJoinRequestApprovedEmailCalls.push(args)
 
-        const upsertWorkspaceRoleCalls: Parameters<UpsertWorkspaceRole>[number][] = []
-        const upsertWorkspaceRole = async (
-          args: Parameters<UpsertWorkspaceRole>[number]
+        const addOrUpdateWorkspaceRoleCalls: Parameters<AddOrUpdateWorkspaceRole>[number][] =
+          []
+        const addOrUpdateWorkspaceRole = async (
+          args: Parameters<AddOrUpdateWorkspaceRole>[number]
         ) => {
-          upsertWorkspaceRoleCalls.push(args)
+          addOrUpdateWorkspaceRoleCalls.push(args)
         }
 
         const user: BasicTestUser = {
@@ -367,15 +365,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => request,
-            upsertWorkspaceRole,
             emit: async () => Promise.resolve(),
-            ensureValidWorkspaceRoleSeat: async () => ({
-              type: 'editor',
-              workspaceId: workspace.id,
-              userId: user.id,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            })
+            addOrUpdateWorkspaceRole
           })({ workspaceId: workspace.id, userId: user.id, approvedByUserId: user.id })
         ).to.equal(true)
 
@@ -389,10 +380,10 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             .first())!.status
         ).to.equal('approved')
 
-        expect(upsertWorkspaceRoleCalls).to.have.length(1)
-        expect(upsertWorkspaceRoleCalls[0].workspaceId).to.equal(workspace.id)
-        expect(upsertWorkspaceRoleCalls[0].userId).to.equal(user.id)
-        expect(upsertWorkspaceRoleCalls[0].role).to.equal(Roles.Workspace.Member)
+        expect(addOrUpdateWorkspaceRoleCalls).to.have.length(1)
+        expect(addOrUpdateWorkspaceRoleCalls[0].workspaceId).to.equal(workspace.id)
+        expect(addOrUpdateWorkspaceRoleCalls[0].userId).to.equal(user.id)
+        expect(addOrUpdateWorkspaceRoleCalls[0].role).to.equal(Roles.Workspace.Member)
 
         expect(sendWorkspaceJoinRequestApprovedEmailCalls).to.have.length(1)
         expect(sendWorkspaceJoinRequestApprovedEmailCalls[0].workspace).to.equal(

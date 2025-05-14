@@ -37,7 +37,7 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory,
   updateWorkspaceFactory,
   addDomainToWorkspaceFactory,
@@ -182,12 +182,20 @@ export const createTestWorkspace = async (
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
     }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
-    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-      eventEmit: getEventBus().emit
+    addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+      getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+        db
+      }),
+      getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+      upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+      emitWorkspaceEvent: getEventBus().emit,
+      ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+        eventEmit: getEventBus().emit
+      })
     })
   })
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
@@ -325,7 +333,7 @@ export const assignToWorkspace = async (
 ) => {
   const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
 
-  const updateWorkspaceRole = updateWorkspaceRoleFactory({
+  const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -457,7 +465,7 @@ export const createWorkspaceInviteDirectly = async (
       }),
       processInvite: processFinalizedWorkspaceInviteFactory({
         getWorkspace: getWorkspaceFactory({ db }),
-        updateWorkspaceRole: updateWorkspaceRoleFactory({
+        updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
           getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
           findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db }),

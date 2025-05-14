@@ -11,7 +11,7 @@ import {
   StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import { isProjectCreateInput } from '@/modules/core/helpers/project'
 import { has } from 'lodash'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import {
