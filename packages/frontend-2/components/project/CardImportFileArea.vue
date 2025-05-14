@@ -55,7 +55,11 @@
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
             IFC/OBJ/STL file here.
           </p>
-          <div v-if="showEmptyState" class="w-full flex flex-row gap-2 mt-3 flex-wrap">
+          <div
+            v-if="showEmptyState"
+            :class="buttonsClasses"
+            class="w-full flex flex-row gap-2 flex-wrap"
+          >
             <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
@@ -108,14 +112,14 @@ const showEmptyState = computed(
     props.emptyStateVariant !== 'modelGrid' && props.emptyStateVariant !== 'modelList'
 )
 
-const baseContainerClasses = 'w-full flex gap-4 justify-center p-4 items-center'
+const baseContainerClasses = 'w-full flex justify-center items-center'
 
 const illustrationClasses = computed(() => {
   const variants = {
     modelGrid: 'hidden',
     modelList: 'hidden',
     modelsSection: 'hidden min-[1350px]:block',
-    default: 'hidden md:block'
+    default: ''
   }
   return variants[props.emptyStateVariant || 'default']
 })
@@ -130,12 +134,22 @@ const paragraphClasses = computed(() => {
   return variants[props.emptyStateVariant || 'default']
 })
 
+const buttonsClasses = computed(() => {
+  const variants = {
+    modelGrid: 'mt-3',
+    modelList: 'mt-3',
+    modelsSection: 'mt-3',
+    default: 'justify-center mt-6'
+  }
+  return variants[props.emptyStateVariant || 'default']
+})
+
 const containerClasses = computed(() => {
   const variants = {
-    modelGrid: '',
-    modelList: 'text-center',
-    modelsSection: 'text-balance',
-    default: 'text-balance md:h-64'
+    modelGrid: 'p-4 gap-4',
+    modelList: 'p-4 gap-4 text-center ',
+    modelsSection: 'p-4 gap-4 text-balance ',
+    default: 'p-20 gap-8 text-balance flex-col text-center'
   }
 
   return `${baseContainerClasses} ${variants[props.emptyStateVariant || 'default']}`
