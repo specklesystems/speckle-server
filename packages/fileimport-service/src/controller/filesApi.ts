@@ -1,4 +1,4 @@
-import { ensureError } from '@speckle/shared/dist/esm/index.js'
+import { ensureError } from '@speckle/shared'
 import fs from 'fs'
 import path from 'node:path'
 import { pipeline } from 'node:stream/promises'

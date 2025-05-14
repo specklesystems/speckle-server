@@ -1,5 +1,5 @@
 import buildPlugin from 'tailwindcss/plugin.js'
-import preset from './preset.js'
+import { config as preset } from './preset.js'
 
 export const lightThemeVariables = {
   /* used only as the page background */
@@ -385,5 +385,4 @@ const plugin = buildPlugin(({ addComponents, addBase }) => {
   })
 }, preset)
 
-export default plugin
 export { plugin }
