@@ -6,7 +6,7 @@ import {
   GetWorkspaceSeatTypeToProjectRoleMapping,
   IntersectProjectCollaboratorsAndWorkspaceCollaborators,
   QueryAllWorkspaceProjects,
-  UpdateWorkspaceRole,
+  AddOrUpdateWorkspaceRole,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
 import {
@@ -112,7 +112,7 @@ export const moveProjectToWorkspaceFactory =
     getProjectCollaborators: GetStreamCollaborators
     getWorkspaceDomains: GetWorkspaceDomains
     getWorkspaceRolesAndSeats: GetWorkspaceRolesAndSeats
-    updateWorkspaceRole: UpdateWorkspaceRole
+    updateWorkspaceRole: AddOrUpdateWorkspaceRole
     createWorkspaceSeat: CreateWorkspaceSeat
     getWorkspaceWithPlan: GetWorkspaceWithPlan
     getUserEmails: FindEmailsByUserId
