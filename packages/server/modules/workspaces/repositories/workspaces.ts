@@ -30,6 +30,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  GetWorkspacesNonComplete,
   GetWorkspacesProjectsCounts,
   GetWorkspacesRolesForUsers,
   QueryWorkspaces,
@@ -50,6 +51,7 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
+  WorkspaceCreationState as DbWorkspaceCreationState,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
@@ -65,6 +67,7 @@ import {
   encodeCompositeCursor
 } from '@/modules/shared/helpers/graphqlHelper'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import dayjs from 'dayjs'
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>('branches'),
@@ -152,10 +155,21 @@ export const getWorkspacesFactory =
 
 export const getWorkspaceFactory =
   ({ db }: { db: Knex }): GetWorkspace =>
-  async ({ workspaceId, userId }) => {
-    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
-      .where(Workspaces.col.id, workspaceId)
-      .first()
+  async ({ workspaceId, userId, completed }) => {
+    const q = workspaceWithRoleBaseQuery({ db, userId })
+    q.where(Workspaces.col.id, workspaceId)
+
+    if (completed !== undefined) {
+      q.leftJoin(
+        DbWorkspaceCreationState.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+        .where({ [DbWorkspaceCreationState.col.completed]: completed })
+        .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+    }
+
+    const workspace = await q.first()
 
     return workspace || null
   }
@@ -447,6 +461,23 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
+  }
+
+export const getWorkspacesNonCompleteFactory =
+  ({ db }: { db: Knex }): GetWorkspacesNonComplete =>
+  async () => {
+    const thirtyMinutesAgo = dayjs().subtract(30, 'minutes')
+
+    return tables
+      .workspaceCreationState(db)
+      .where({ [DbWorkspaceCreationState.col.completed]: false })
+      .innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      )
+      .where(Workspaces.col.createdAt, '<', thirtyMinutesAgo.toISOString())
+      .select([DbWorkspaceCreationState.col.workspaceId])
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =
