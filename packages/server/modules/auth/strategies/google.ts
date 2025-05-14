@@ -147,7 +147,8 @@ const googleStrategyBuilderFactory =
             case ExpectedAuthFailure.InviteNotFoundError:
               logger.info({ err: e }, 'Auth error for Google strategy')
               // note; passportjs suggests err should be null for user input errors.
-              // We also need to pass the error type so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
               return done(null, false, {
                 message: e.message,
                 failureType: e.constructor.name as ExpectedAuthFailure
@@ -155,7 +156,8 @@ const googleStrategyBuilderFactory =
             case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
               logger.info({ err: e }, 'Auth error for Google strategy')
               // note; passportjs suggests err should be null for user input errors.
-              // We also need to pass the error type (failureType) so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
               return done(null, false, {
                 message: e.message,
                 failureType: e.constructor.name as ExpectedAuthFailure,

@@ -165,6 +165,9 @@ const githubStrategyBuilderFactory =
             case InviteNotFoundError:
             case UnverifiedEmailSSOLoginError:
               logger.info({ err: e }, 'Auth error for GitHub strategy')
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
               return done(null, false, {
                 message: e.message,
                 failureType: e.constructor.name as ExpectedAuthFailure
