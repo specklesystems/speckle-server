@@ -1059,6 +1059,7 @@ jobs:
   publish-npm:
     <<: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - attach_workspace:

@@ -8,6 +8,7 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
@@ -37,7 +38,6 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { StoreBranch } from '@/modules/core/domain/branches/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { LogicError } from '@/modules/shared/errors'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
@@ -118,7 +118,9 @@ export const deleteStreamAndNotifyFactory =
   async (streamId: string, deleterId: string) => {
     const stream = await deps.getStream({ streamId })
     if (!stream)
-      throw new LogicError('Unexpectedly stream that should exist is not found...')
+      throw new StreamNotFoundError(
+        'Stream which we are attempting to delete cannot been found.'
+      )
 
     await deps.emitEvent({
       eventName: ProjectEvents.Deleted,
