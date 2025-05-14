@@ -28,7 +28,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
+import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -142,14 +142,25 @@ const googleStrategyBuilderFactory =
             err,
             'Unexpected issue occured while authenticating with Google'
           )
-          switch (e.constructor) {
-            case UnverifiedEmailSSOLoginError:
-            case UserInputError:
-            case InviteNotFoundError:
+          switch (e.constructor.name) {
+            case ExpectedAuthFailure.UserInputError:
+            case ExpectedAuthFailure.InviteNotFoundError:
               logger.info({ err: e }, 'Auth error for Google strategy')
-              // note; passportjs suggests that err should be null for user input errors.
-              // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
-              return done(e, false, { message: e.message })
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure
+              })
+            case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
+              logger.info({ err: e }, 'Auth error for Google strategy')
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type (failureType) so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure,
+                email: (e as UnverifiedEmailSSOLoginError).info().email
+              })
             default:
               logger.error({ err: e }, 'Auth error for Google strategy')
               return done(e, false, { message: e.message })
