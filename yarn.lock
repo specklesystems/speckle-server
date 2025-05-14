@@ -15839,17 +15839,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@npm:^2.24.0":
-  version: 2.24.0
-  resolution: "@speckle/objectloader@npm:2.24.0"
+"@speckle/objectloader@npm:^2.24.2":
+  version: 2.24.2
+  resolution: "@speckle/objectloader@npm:2.24.2"
   dependencies:
     "@babel/core": "npm:^7.17.9"
-    "@speckle/shared": "npm:^2.24.0"
+    "@speckle/shared": "npm:^2.24.2"
     core-js: "npm:^3.21.1"
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     regenerator-runtime: "npm:^0.13.7"
-  checksum: 10/e5d69154364e44aa0f19f41291b1088903bec6b8c48444294910ab9c3cf70f636c055ce21d322cdca8c3016f0290b028b602634e169fb248b68dfc93734f3a07
+  checksum: 10/30f9c0791f7b7fd20a76d01fde6b1a9c6b418241ea81e084f59460b7f25508aef976f65ecbbf20e679f2f8cc8b897818da762061c2025a2c5fd664d77286f9e5
   languageName: node
   linkType: hard
 
@@ -15909,7 +15909,7 @@ __metadata:
   resolution: "@speckle/preview-frontend@workspace:packages/preview-frontend"
   dependencies:
     "@speckle/shared": "workspace:^"
-    "@speckle/viewer": "npm:2.24.0"
+    "@speckle/viewer": "npm:2.24.2"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     typescript: "npm:^5.7.2"
@@ -16132,9 +16132,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/shared@npm:^2.24.0":
-  version: 2.24.0
-  resolution: "@speckle/shared@npm:2.24.0"
+"@speckle/shared@npm:^2.24.2":
+  version: 2.24.2
+  resolution: "@speckle/shared@npm:2.24.2"
   dependencies:
     dayjs: "npm:^1.11.13"
     lodash: "npm:^4.17.21"
@@ -16144,6 +16144,7 @@ __metadata:
     type-fest: "npm:^3.11.1"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    bull: "*"
     knex: "*"
     mixpanel: ^0.17.0
     pino: ^8.7.0
@@ -16152,7 +16153,7 @@ __metadata:
     ua-parser-js: ^1.0.38
     znv: ^0.4.0
     zod: ^3.22.4
-  checksum: 10/c31419083105400bdf82a1e1f723a8bf967fd8dc9b2b03df53fe37f0c185d5f7d891d0799d9c3e50df99ce16d031ad05c240301064f16a60bab3d793ca918ac1
+  checksum: 10/a4dad06de48dda1ff92aba9b71958278fe4001e7c21e5e00978c17c0de47e59caec0159de11a0b9bc49e55b5a8ff058642300cde78973972851eadaf2ea8b8a7
   languageName: node
   linkType: hard
 
@@ -16320,12 +16321,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/viewer@npm:2.24.0":
-  version: 2.24.0
-  resolution: "@speckle/viewer@npm:2.24.0"
+"@speckle/viewer@npm:2.24.2":
+  version: 2.24.2
+  resolution: "@speckle/viewer@npm:2.24.2"
   dependencies:
-    "@speckle/objectloader": "npm:^2.24.0"
-    "@speckle/shared": "npm:^2.24.0"
+    "@speckle/objectloader": "npm:^2.24.2"
+    "@speckle/shared": "npm:^2.24.2"
     "@types/flat": "npm:^5.0.2"
     flat: "npm:^5.0.2"
     js-logger: "npm:1.6.1"
@@ -16336,7 +16337,7 @@ __metadata:
     tree-model: "npm:1.0.7"
     troika-three-text: "npm:0.47.2"
     type-fest: "npm:^4.15.0"
-  checksum: 10/bb3f442636017829eada51137a8174e0568104d2b54e077328947277e47e99c6de4f54e4fd6cd309286bb9835c0c20754fdf870d7e004c056d3c48bff260e5a9
+  checksum: 10/08eb79a4e8bf48b5dbab1ad0fc7ee5df188aa0be3e01affefe38b702a580cdc4a4afc29d322eb49d394eda23311fa8ca1d84be1ddd7f44783f9357855a288f0b
   languageName: node
   linkType: hard
 
