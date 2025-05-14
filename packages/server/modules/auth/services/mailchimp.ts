@@ -6,6 +6,7 @@ import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
 import { MailchimpResourceError } from '@/modules/auth/errors'
+import { ensureError } from '@speckle/shared'
 
 let mailchimpInitialized = false
 
@@ -76,11 +77,12 @@ export async function updateMailchimpMemberTags(
   // Check if user is already in audience (meaning they consented to marketing emails)
   try {
     await mailchimp.lists.getListMember(listId, subscriberHash)
-  } catch {
+  } catch (e) {
     throw new MailchimpResourceError(
       'User not found in Mailchimp audience. They should have been added during registration.',
       {
-        info: { userEmailHash: subscriberHash }
+        info: { userEmailHash: subscriberHash },
+        cause: ensureError(e, 'Mailchimp API error')
       }
     )
   }

@@ -9,7 +9,7 @@ cd "${SCRIPT_DIR}"
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 echo "Setting up environment variables by copying .env files"
-cp -n "${GIT_ROOT}/packages/server/.env-example" "${GIT_ROOT}/packages/server/.env" || true
+cp -n "${GIT_ROOT}/packages/server/.env.example" "${GIT_ROOT}/packages/server/.env" || true
 cp -n "${GIT_ROOT}/packages/frontend-2/.env.example" "${GIT_ROOT}/packages/frontend-2/.env" || true
 
 echo "Installing nodejs dependencies and building shared packages"
