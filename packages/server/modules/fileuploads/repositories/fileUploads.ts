@@ -108,12 +108,13 @@ export const saveUploadFileFactoryV2 =
     userId,
     fileName,
     fileType,
-    fileSize
+    fileSize,
+    modelName
   }: SaveUploadFileInputV2) => {
     const dbFile: Partial<SaveUploadFileV2> = {
       id: fileId,
       streamId: projectId,
-      branchName: '@deprecated',
+      branchName: modelName, // @deprecated
       userId,
       modelId,
       fileName,
