@@ -6,8 +6,6 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
-  OrthographicCamera,
-  PerspectiveCamera,
   Vector2,
   Vector3,
   Vector4
@@ -15,6 +13,7 @@ import {
 import { type SpeckleObject } from '../../IViewer.js'
 
 const vecBuff0: Vector3 = new Vector3()
+const floatArrayBuff: Float32Array = new Float32Array(16)
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -40,8 +39,6 @@ export interface GeometryData {
 }
 
 export class Geometry {
-  private static readonly floatArrayBuff: Float32Array = new Float32Array(3)
-
   public static updateRTEGeometry(
     geometry: BufferGeometry,
     doublePositions: Float64Array | Float32Array
@@ -238,37 +235,37 @@ export class Geometry {
   public static DoubleToHighLowVector(input: Vector3, low: Vector3, high: Vector3) {
     let doubleValue = input.x
     if (doubleValue >= 0.0) {
-      this.floatArrayBuff[0] = doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.x = doubleHigh
       low.x = doubleValue - doubleHigh
     } else {
-      this.floatArrayBuff[0] = -doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = -doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.x = -doubleHigh
       low.x = doubleValue + doubleHigh
     }
     doubleValue = input.y
     if (doubleValue >= 0.0) {
-      this.floatArrayBuff[0] = doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.y = doubleHigh
       low.y = doubleValue - doubleHigh
     } else {
-      this.floatArrayBuff[0] = -doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = -doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.y = -doubleHigh
       low.y = doubleValue + doubleHigh
     }
     doubleValue = input.z
     if (doubleValue >= 0.0) {
-      this.floatArrayBuff[0] = doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.z = doubleHigh
       low.z = doubleValue - doubleHigh
     } else {
-      this.floatArrayBuff[0] = -doubleValue
-      const doubleHigh = this.floatArrayBuff[0]
+      floatArrayBuff[0] = -doubleValue
+      const doubleHigh = floatArrayBuff[0]
       high.z = -doubleHigh
       low.z = doubleValue + doubleHigh
     }
@@ -282,13 +279,13 @@ export class Geometry {
     for (let k = 0; k < input.length; k++) {
       const doubleValue = input[k]
       if (doubleValue >= 0.0) {
-        this.floatArrayBuff[0] = doubleValue
-        const doubleHigh = this.floatArrayBuff[0]
+        floatArrayBuff[0] = doubleValue
+        const doubleHigh = floatArrayBuff[0]
         position_high[k] = doubleHigh
         position_low[k] = doubleValue - doubleHigh
       } else {
-        this.floatArrayBuff[0] = -doubleValue
-        const doubleHigh = this.floatArrayBuff[0]
+        floatArrayBuff[0] = -doubleValue
+        const doubleHigh = floatArrayBuff[0]
         position_high[k] = -doubleHigh
         position_low[k] = doubleValue + doubleHigh
       }
@@ -297,42 +294,50 @@ export class Geometry {
 
   public static getFP32ProjectionDelta(
     point: Vector3,
-    camera: PerspectiveCamera | OrthographicCamera,
+    projection: Matrix4,
     screenSize: Vector2,
     relativeOffset: number = 1
   ) {
     /** Cast to float, loose precision */
-    this.floatArrayBuff[0] = point.x
-    this.floatArrayBuff[1] = point.y
-    this.floatArrayBuff[2] = point.z
+    floatArrayBuff[0] = point.x
+    floatArrayBuff[1] = point.y
+    floatArrayBuff[2] = point.z
 
     /** Single precision version */
     const floatVector = vecBuff0.set(
-      this.floatArrayBuff[0],
-      this.floatArrayBuff[1],
-      this.floatArrayBuff[2]
+      floatArrayBuff[0],
+      floatArrayBuff[1],
+      floatArrayBuff[2]
     )
 
-    const camPos = new Vector3().copy(point).add(new Vector3(0, 0, -relativeOffset))
+    /** A bit of randomness so camera has a rotation */
+    const camPos = new Vector3()
+      .copy(point)
+      .add(
+        new Vector3(
+          Math.random() * relativeOffset,
+          Math.random() * relativeOffset,
+          -relativeOffset
+        )
+      )
     /** Double precision */
-    const viewFp64 = new Matrix4().lookAt(camPos, point, new Vector3(0, 1, 0))
-    viewFp64.setPosition(camPos)
-    viewFp64.invert()
-    viewFp64.premultiply(camera.projectionMatrix)
+    const viewProjectionFp64 = new Matrix4().lookAt(camPos, point, new Vector3(0, 1, 0))
+    viewProjectionFp64.setPosition(camPos)
+    viewProjectionFp64.invert()
+    viewProjectionFp64.premultiply(projection)
     /** Single precision */
-    const floatArray = new Float32Array(16)
-    const viewFp32 = new Matrix4().copy(viewFp64)
-    viewFp32.toArray(floatArray)
-    viewFp32.fromArray(floatArray)
+    const viewProjectionFp32 = new Matrix4().copy(viewProjectionFp64)
+    viewProjectionFp32.toArray(floatArrayBuff)
+    viewProjectionFp32.fromArray(floatArrayBuff)
 
     /** Project and turn into pixels */
     const float4 = new Vector4(floatVector.x, floatVector.y, floatVector.z, 1)
     const double4 = new Vector4(floatVector.x, floatVector.y, floatVector.z, 1)
-    float4.applyMatrix4(viewFp32)
+    float4.applyMatrix4(viewProjectionFp32)
     float4.multiplyScalar(0.5 / float4.w)
     float4.addScalar(0.5)
     float4.multiply(new Vector4(screenSize.x, screenSize.y, 0, 0))
-    double4.applyMatrix4(viewFp64)
+    double4.applyMatrix4(viewProjectionFp64)
     double4.multiplyScalar(0.5 / double4.w)
     double4.addScalar(0.5)
     double4.multiply(new Vector4(screenSize.x, screenSize.y, 0, 0))

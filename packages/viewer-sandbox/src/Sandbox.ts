@@ -61,12 +61,14 @@ import {
   LinearFilter,
   Vector2,
   PerspectiveCamera,
-  OrthographicCamera
+  OrthographicCamera,
+  Matrix4
 } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import ObjectLoader2 from '@speckle/objectloader2'
 import { Geometry } from '@speckle/viewer'
+import { DEG2RAD } from 'three/src/math/MathUtils'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -505,17 +507,37 @@ export default class Sandbox {
       const batches = this.viewer
         .getRenderer()
         .batcher.getBatches(undefined, GeometryType.MESH)
-      const camera = this.viewer.getRenderer().renderingCamera as
-        | PerspectiveCamera
-        | OrthographicCamera
+
       const screenSize = this.viewer.getRenderer().renderer.getSize(new Vector2())
+      const aspect = screenSize.x / screenSize.y
+      const fov = 50
+      const near = this.viewer.World.getRelativeOffset(0.009)
+      const top = near * Math.tan(DEG2RAD * 0.5 * fov)
+      const height = 2 * top
+      const width = aspect * height
+      const left = -0.5 * width
+
+      const projection = new Matrix4().makePerspective(
+        left,
+        left + width,
+        top,
+        top - height,
+        near,
+        near * 10
+      )
+
       for (let k = 0; k < batches.length; k++) {
         const tas = (batches[k].renderObject as SpeckleMesh).TAS
         const box = tas.getBoundingBox(new Box3())
 
         console.log(
           'Delta projection -> ',
-          Geometry.getFP32ProjectionDelta(box.min, camera, screenSize, 100)
+          Geometry.getFP32ProjectionDelta(
+            box.min,
+            projection,
+            screenSize,
+            this.viewer.World.getRelativeOffset(0.01)
+          )
         )
       }
       /** Read depth */
@@ -550,7 +572,7 @@ export default class Sandbox {
 
     const pipeline = {
       output: 0,
-      edges: false,
+      edges: true,
       outlineThickness: 1,
       outlineColor: 0x323232,
       outlineDensity: 0.75
