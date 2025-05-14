@@ -79,7 +79,7 @@ type Documents = {
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": typeof types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": typeof types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canCreateVersion {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageModelsActionsFragmentDoc,
-    "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    ...ProjectsModelPageEmbed_Project\n  }\n": typeof types.ProjectPageModelsActions_ProjectFragmentDoc,
+    "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    workspace {\n      id\n      slug\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n": typeof types.ProjectPageModelsActions_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n    ...ProjectPageModelsActions_Project\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageModelsCardProjectFragmentDoc,
     "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    models {\n      totalCount\n    }\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n    workspace {\n      id\n      role\n      slug\n      name\n      readOnly\n      plan {\n        name\n      }\n    }\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectModelsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectModelsPageResults_Project on Project {\n    ...ProjectPageLatestItemsModels\n  }\n": typeof types.ProjectModelsPageResults_ProjectFragmentDoc,
@@ -490,7 +490,7 @@ const documents: Documents = {
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n      canCreateVersion {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
-    "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectPageModelsActions_ProjectFragmentDoc,
+    "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    workspace {\n      id\n      slug\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectPageModelsActions_ProjectFragmentDoc,
     "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n    ...ProjectPageModelsActions_Project\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageModelsCardProjectFragmentDoc,
     "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    models {\n      totalCount\n    }\n    team {\n      id\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n    workspace {\n      id\n      role\n      slug\n      name\n      readOnly\n      plan {\n        name\n      }\n    }\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectModelsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectModelsPageResults_Project on Project {\n    ...ProjectPageLatestItemsModels\n  }\n": types.ProjectModelsPageResults_ProjectFragmentDoc,
@@ -1113,7 +1113,7 @@ export function graphql(source: "\n  fragment ProjectPageModelsActions on Model 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    ...ProjectsModelPageEmbed_Project\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    ...ProjectsModelPageEmbed_Project\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    workspace {\n      id\n      slug\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsActions_Project on Project {\n    id\n    workspace {\n      id\n      slug\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
