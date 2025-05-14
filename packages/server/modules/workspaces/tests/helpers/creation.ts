@@ -26,7 +26,8 @@ import {
   getWorkspaceDomainsFactory,
   storeWorkspaceDomainFactory,
   getWorkspaceBySlugFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  upsertWorkspaceCreationStateFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -127,6 +128,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { buildTestObject, createRandomString } from '@/modules/core/helpers/testHelpers'
+import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -159,9 +162,16 @@ export const createTestWorkspace = async (
     addPlan?: Partial<Pick<WorkspacePlan, 'name' | 'status'>> | boolean | WorkspacePlans
     addSubscription?: boolean
     regionKey?: string
+    addCreationState?: Pick<WorkspaceCreationState, 'completed' | 'state'>
   }
 ) => {
-  const { domain, addPlan = true, regionKey, addSubscription } = options || {}
+  const {
+    domain,
+    addPlan = true,
+    regionKey,
+    addSubscription,
+    addCreationState
+  } = options || {}
   const useRegion = isMultiRegionTestMode() && regionKey
 
   if (!FF_WORKSPACES_MODULE_ENABLED) {
@@ -287,6 +297,17 @@ export const createTestWorkspace = async (
     })
   }
 
+  if (addCreationState) {
+    const upsertWorkspaceState = upsertWorkspaceCreationStateFactory({ db })
+    await upsertWorkspaceState({
+      workspaceCreationState: {
+        workspaceId: newWorkspace.id,
+        state: addCreationState.state,
+        completed: addCreationState.completed
+      }
+    })
+  }
+
   const updateWorkspace = updateWorkspaceFactory({
     validateSlug: validateSlugFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
@@ -316,6 +337,17 @@ export const createTestWorkspace = async (
     })
   }
 }
+
+export const buildBasicTestWorkspace = (overrides?: Partial<BasicTestWorkspace>) =>
+  buildTestObject(
+    {
+      id: createRandomString(),
+      name: createRandomString(),
+      slug: createRandomString(),
+      ownerId: ''
+    },
+    overrides
+  )
 
 export const assignToWorkspace = async (
   workspace: BasicTestWorkspace,

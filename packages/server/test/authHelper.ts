@@ -1,5 +1,10 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import {
+  buildTestObject,
+  createRandomString,
+  createRandomEmail
+} from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -151,6 +156,17 @@ export type CreateTestUsersParams = {
    */
   serial?: boolean
 }
+
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>) =>
+  buildTestObject(
+    {
+      id: '',
+      name: createRandomString(),
+      email: createRandomEmail(),
+      verified: true
+    },
+    overrides
+  )
 
 /**
  * Create multiple users for tests and update them to include their ID
