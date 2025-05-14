@@ -18,7 +18,7 @@ export const useIntercom = () => {
   const isInitialized = ref(false)
 
   useOnAuthStateChange()(
-    ({ isReset }) => {
+    (_user, { isReset }) => {
       if (isReset) {
         shutdownIntercom()
       } else if (user.value) {
@@ -72,6 +72,8 @@ export const useIntercom = () => {
   }
 
   const updateCompany = async () => {
+    if (!activeWorkspaceSlug.value) return
+
     const workspace = await apollo.query({
       query: navigationActiveWorkspaceQuery,
       variables: {
