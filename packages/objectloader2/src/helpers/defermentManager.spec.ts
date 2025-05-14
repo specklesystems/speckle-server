@@ -5,7 +5,7 @@ import { DefermentManager } from './defermentManager.js'
 
 describe('deferments', () => {
   test('defer one', async () => {
-    const deferments = new DefermentManager({ maxSize: 1, ttlms: 1 })
+    const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     const x = deferments.defer({ id: 'id' })
     expect(x).toBeInstanceOf(Promise)
     deferments.undefer({ baseId: 'id', base: { id: 'id', speckle_type: 'type' } })
@@ -15,7 +15,7 @@ describe('deferments', () => {
 
   test('expireAt timeout', async () => {
     const now = 1
-    const deferments = new DefermentManager({ maxSize: 1, ttlms: 1 })
+    const deferments = new DefermentManager({ maxSizeInMb: 1, ttlms: 1 })
     deferments['now'] = () => now
     const x = deferments.defer({ id: 'id' })
     expect(x).toBeInstanceOf(Promise)
@@ -24,14 +24,14 @@ describe('deferments', () => {
     expect(d?.getId()).toBe('id')
     expect((d as any).expiresAt).toBe(2)
     expect((d as any).ttl).toBe(1)
-    expect((d as any).base).toBeUndefined()
+    expect((d as any).item).toBeUndefined()
     expect(d?.isExpired(1)).toBe(false)
     deferments.undefer({ baseId: 'id', base: { id: 'id', speckle_type: 'type' } })
     const b = await x
 
     expect((d as any).expiresAt).toBe(2)
     expect((d as any).ttl).toBe(1)
-    expect((d as any).base).toBeDefined()
+    expect((d as any).item).toBeDefined()
     expect(d?.isExpired(1)).toBe(false)
     expect(d?.isExpired(3)).toBe(true)
   })

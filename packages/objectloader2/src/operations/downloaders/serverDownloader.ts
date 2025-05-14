@@ -167,8 +167,11 @@ export default class ServerDownloader implements Downloader {
       if (line[i] === 0x09) {
         //this is a tab
         const baseId = this.#decoder.decode(line.subarray(0, i))
-        const base = this.#decoder.decode(line.subarray(i + 1))
-        return this.#processJson(baseId, base)
+        const json = line.subarray(i + 1)
+        const base = this.#decoder.decode(json)
+        const item = this.#processJson(baseId, base)
+        item.size = json.length
+        return item
       }
     }
     throw new ObjectLoaderRuntimeError(
@@ -190,6 +193,7 @@ export default class ServerDownloader implements Downloader {
     this.#validateResponse(response)
     const responseText = await response.text()
     const item = this.#processJson(this.#options.objectId, responseText)
+    item.size = 0
     return item
   }
 

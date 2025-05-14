@@ -40,8 +40,8 @@ export class ObjectLoader2 {
     this.#gathered = new AsyncGeneratorQueue()
     this.#database = options.database
     this.#deferments = new DefermentManager({
-      maxSize: 200_000,
-      ttlms: 5_000,
+      maxSizeInMb: 2_000, // 2 GBs
+      ttlms: 5_000, //
       logger: this.#logger
     })
     this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)

@@ -6,6 +6,7 @@ export class DefermentManager {
   private deferments: Map<string, DeferredBase> = new Map()
   private timer?: ReturnType<typeof setTimeout>
   private logger: CustomLogger
+  private currentSize = 0
 
   constructor(private options: DefermentManagerOptions) {
     this.resetGlobalTimer()
@@ -42,14 +43,15 @@ export class DefermentManager {
 
   undefer(item: Item): void {
     const now = this.now()
+    this.currentSize += item.size || 0
     //order matters here with found before undefer
     const deferredBase = this.deferments.get(item.baseId)
     if (deferredBase) {
-      deferredBase.found(item.base)
+      deferredBase.found(item)
       deferredBase.setAccess(now)
     } else {
       const existing = new DeferredBase(this.options.ttlms, item.baseId, now)
-      existing.found(item.base)
+      existing.found(item)
       this.deferments.set(item.baseId, existing)
     }
   }
@@ -74,16 +76,23 @@ export class DefermentManager {
     let waiting = 0
     for (const deferredBase of this.deferments.values()) {
       deferredBase.done(0)
-      if (deferredBase.getBase() === undefined) {
+      if (deferredBase.getItem() === undefined) {
         waiting++
       }
     }
+    this.currentSize = 0
     this.deferments.clear()
     this.logger('cleared deferments, left', waiting)
   }
 
   private cleanDeferments(): void {
-    if (this.deferments.size < this.options.maxSize) {
+    const maxSizeBytes = this.options.maxSizeInMb * 1024 * 1024
+    if (this.currentSize < maxSizeBytes) {
+      this.logger(
+        'deferments size is ok, no need to clean',
+        this.currentSize,
+        maxSizeBytes
+      )
       return
     }
     const now = this.now()
@@ -91,11 +100,12 @@ export class DefermentManager {
     const start = performance.now()
     for (const deferredBase of Array.from(this.deferments.values())
       .filter((x) => x.isExpired(now))
-      .sort((a, b) => this.compareMaybeBasesByClosureCount(a.getBase(), b.getBase()))) {
+      .sort((a, b) => this.compareMaybeBasesBySize(a.getItem(), b.getItem()))) {
       if (deferredBase.done(now)) {
+        this.currentSize -= deferredBase.getItem()?.size || 0
         this.deferments.delete(deferredBase.getId())
         cleaned++
-        if (this.deferments.size < this.options.maxSize) {
+        if (this.currentSize < maxSizeBytes) {
           break
         }
       }
@@ -109,11 +119,11 @@ export class DefermentManager {
     return
   }
 
-  compareMaybeBasesByClosureCount(a: Base | undefined, b: Base | undefined): number {
+  compareMaybeBasesBySize(a: Item | undefined, b: Item | undefined): number {
     if (a === undefined && b === undefined) return 0
     if (a === undefined) return -1
     if (b === undefined) return 1
-    return this.compareMaybe(a.__closure?.length, b.__closure?.length)
+    return this.compareMaybe(a.size, b.size)
   }
 
   compareMaybe(a: number | undefined, b: number | undefined): number {

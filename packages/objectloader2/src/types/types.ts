@@ -8,6 +8,7 @@ export type Fetcher = (
 export interface Item {
   baseId: string
   base: Base
+  size?: number
 }
 
 export interface Base {
