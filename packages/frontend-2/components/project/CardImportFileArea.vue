@@ -36,8 +36,10 @@
       </div>
       <div v-else :class="containerClasses">
         <div :class="illustrationClasses" class="max-w-lg">
-          <IllustrationEmptystateProject />
+          <IllustrationEmptystateProject v-if="emptyStateVariant === 'modelsSection'" />
+          <IllustrationEmptystateProjectTab v-else />
         </div>
+
         <div>
           <p v-if="showEmptyState" class="text-foreground-2 text-heading-sm p-0 m-0">
             {{

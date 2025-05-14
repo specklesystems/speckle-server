@@ -25,7 +25,7 @@
       stroke-dasharray="3 4"
       stroke-dashoffset="25"
       fill="transparent"
-      class="dash-moving stroke-outline-5"
+      class="stroke-outline-5"
     />
     <mask id="path-4-inside-2_3194_60474" fill="currentColor" class="fill-foundation">
       <path
@@ -74,14 +74,3 @@
     />
   </svg>
 </template>
-<style scoped>
-.dash-moving {
-  animation: dash 2s ease-in-out 0s 1 normal forwards running;
-}
-
-@keyframes dash {
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-</style>
