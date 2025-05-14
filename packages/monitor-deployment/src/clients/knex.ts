@@ -14,7 +14,7 @@ import {
   loadMultiRegionsConfig,
   configureKnexClient
 } from '@speckle/shared/environment/multiRegionConfig'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
