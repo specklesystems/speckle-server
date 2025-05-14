@@ -4204,7 +4204,6 @@ export type UserUpdateInput = {
 };
 
 export type UserWorkspacesFilter = {
-  completed?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
