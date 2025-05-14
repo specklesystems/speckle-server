@@ -5,7 +5,6 @@ import { WorldTree, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2, ObjectLoader2Factory } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
-import { countBy } from 'lodash-es'
 
 export class SpeckleLoader extends Loader {
   protected loader: ObjectLoader2
