@@ -476,7 +476,8 @@ export const addOrUpdateWorkspaceRoleFactory =
       userId,
       workspaceId,
       role: nextWorkspaceRole,
-      updatedByUserId
+      updatedByUserId,
+      skipEvent
     })
 
     if (!skipEvent) {

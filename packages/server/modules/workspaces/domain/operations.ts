@@ -518,6 +518,7 @@ export type EnsureValidWorkspaceRoleSeat = (params: {
   userId: string
   role: WorkspaceRoles
   updatedByUserId: string
+  skipEvent?: boolean
 }) => Promise<WorkspaceSeat>
 
 export type CopyProjectComments = (params: {
