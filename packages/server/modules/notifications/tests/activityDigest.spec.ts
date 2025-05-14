@@ -126,9 +126,7 @@ describe('Activity digest notifications @notifications', () => {
         updatedAt: new Date(),
         allowPublicComments: true,
         workspaceId: null,
-        regionKey: null,
-        isPublic: true,
-        isDiscoverable: true
+        regionKey: null
       },
       activity: activities ?? [createActivity()]
     })
