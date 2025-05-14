@@ -35,7 +35,7 @@
         />
       </div>
       <div v-else :class="containerClasses">
-        <div :class="illustrationClasses" class="max-w-lg">
+        <div :class="illustrationClasses">
           <IllustrationEmptystateProject v-if="emptyStateVariant === 'modelsSection'" />
           <IllustrationEmptystateProjectTab v-else />
         </div>
@@ -48,7 +48,7 @@
                 : 'No models, yet.'
             }}
           </p>
-          <p :class="paragraphClasses" class="text-body-xs text-foreground-2 mt-2 p-0">
+          <p :class="paragraphClasses">
             Use
             <NuxtLink :to="connectorsRoute" class="font-medium">
               <span class="underline">connectors</span>
@@ -57,11 +57,7 @@
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
             IFC/OBJ/STL file here.
           </p>
-          <div
-            v-if="showEmptyState"
-            :class="buttonsClasses"
-            class="w-full flex flex-row gap-2 flex-wrap"
-          >
+          <div v-if="showEmptyState" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
               Install connectors
             </FormButton>
@@ -114,47 +110,68 @@ const showEmptyState = computed(
     props.emptyStateVariant !== 'modelGrid' && props.emptyStateVariant !== 'modelList'
 )
 
-const baseContainerClasses = 'w-full flex justify-center items-center'
+const containerClasses = computed(() => {
+  const classParts = ['w-full flex justify-center items-center']
+
+  if (props.emptyStateVariant === 'modelGrid') {
+    classParts.push('p-4 gap-4')
+  } else if (props.emptyStateVariant === 'modelList') {
+    classParts.push('p-4 gap-4 text-center')
+  } else if (props.emptyStateVariant === 'modelsSection') {
+    classParts.push('p-4 gap-4 text-balance')
+  } else {
+    classParts.push('p-20 gap-8 text-balance flex-col text-center')
+  }
+
+  return classParts.join(' ')
+})
 
 const illustrationClasses = computed(() => {
-  const variants = {
-    modelGrid: 'hidden',
-    modelList: 'hidden',
-    modelsSection: 'hidden min-[1350px]:block',
-    default: ''
+  const classParts = ['max-w-lg']
+
+  if (props.emptyStateVariant === 'modelGrid') {
+    classParts.push('hidden')
+  } else if (props.emptyStateVariant === 'modelList') {
+    classParts.push('hidden')
+  } else if (props.emptyStateVariant === 'modelsSection') {
+    classParts.push('hidden min-[1350px]:block')
+  } else {
+    classParts.push('')
   }
-  return variants[props.emptyStateVariant || 'default']
+
+  return classParts.join(' ')
 })
 
 const paragraphClasses = computed(() => {
-  const variants = {
-    modelGrid: '',
-    modelList: '',
-    modelsSection: 'max-w-sm',
-    default: 'max-w-sm'
+  const classParts = ['text-body-xs text-foreground-2 mt-2 p-0']
+
+  if (props.emptyStateVariant === 'modelGrid') {
+    classParts.push('')
+  } else if (props.emptyStateVariant === 'modelList') {
+    classParts.push('')
+  } else if (props.emptyStateVariant === 'modelsSection') {
+    classParts.push('max-w-sm')
+  } else {
+    classParts.push('max-w-sm')
   }
-  return variants[props.emptyStateVariant || 'default']
+
+  return classParts.join(' ')
 })
 
 const buttonsClasses = computed(() => {
-  const variants = {
-    modelGrid: 'mt-3',
-    modelList: 'mt-3',
-    modelsSection: 'mt-3',
-    default: 'justify-center mt-6'
-  }
-  return variants[props.emptyStateVariant || 'default']
-})
+  const classParts = ['w-full flex flex-row gap-2 flex-wrap']
 
-const containerClasses = computed(() => {
-  const variants = {
-    modelGrid: 'p-4 gap-4',
-    modelList: 'p-4 gap-4 text-center ',
-    modelsSection: 'p-4 gap-4 text-balance ',
-    default: 'p-20 gap-8 text-balance flex-col text-center'
+  if (props.emptyStateVariant === 'modelGrid') {
+    classParts.push('mt-3')
+  } else if (props.emptyStateVariant === 'modelList') {
+    classParts.push('mt-3')
+  } else if (props.emptyStateVariant === 'modelsSection') {
+    classParts.push('mt-3')
+  } else {
+    classParts.push('justify-center mt-6')
   }
 
-  return `${baseContainerClasses} ${variants[props.emptyStateVariant || 'default']}`
+  return classParts.join(' ')
 })
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
