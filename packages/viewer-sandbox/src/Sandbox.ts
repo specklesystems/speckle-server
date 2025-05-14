@@ -1313,7 +1313,8 @@ export default class Sandbox {
         undefined
       )
       let dataProgress = 0
-      let renderProgress = 0
+      let renderedCount = 0
+      let traversedCount = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
@@ -1324,18 +1325,22 @@ export default class Sandbox {
           console.log(`Loading Data ${p}%`)
         }
       })
-      loader.on(
-        LoaderEvent.ConvertGeometry,
-        (arg: { progress: number; id: string }) => {
-          const p = Math.floor(arg.progress * 100)
-          if (p > renderProgress) {
-            if (colorImage)
-              colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
-            renderProgress = p
-            console.log(`Rendering Data ${p}%`)
+      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+        if (arg.count > traversedCount) {
+          traversedCount = arg.count
+          if (traversedCount % 777 === 0) {
+            console.log(`Traversed Data ${traversedCount}`)
           }
         }
-      )
+      })
+      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+        if (arg.count > renderedCount) {
+          renderedCount = arg.count
+          if (traversedCount % 777 === 0) {
+            console.log(`Rendering Data ${renderedCount}`)
+          }
+        }
+      })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })

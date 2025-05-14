@@ -4,12 +4,14 @@ export enum LoaderEvent {
   LoadProgress = 'load-progress',
   LoadCancelled = 'load-cancelled',
   LoadWarning = 'load-warning',
-  ConvertGeometry = 'convert-geometry'
+  Converted = 'converted',
+  Traversed = 'traversed'
 }
 
 export interface LoaderEventPayload {
   [LoaderEvent.LoadProgress]: { progress: number; id: string }
-  [LoaderEvent.ConvertGeometry]: { progress: number; id: string }
+  [LoaderEvent.Converted]: { count: number }
+  [LoaderEvent.Traversed]: { count: number }
   [LoaderEvent.LoadCancelled]: string
   [LoaderEvent.LoadWarning]: { message: string }
 }

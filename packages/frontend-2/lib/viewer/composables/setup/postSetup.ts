@@ -129,9 +129,6 @@ function useViewerObjectAutoLoading() {
       )
 
       loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThrottled(args))
-      loader.on(LoaderEvent.ConvertGeometry, (args) =>
-        consolidateProgressThrottled(args)
-      )
       loader.on(LoaderEvent.LoadCancelled, (id) => {
         delete loadingProgressMap[id]
         consolidateProgressInternal({ id, progress: 1 })
