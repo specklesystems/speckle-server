@@ -64,18 +64,6 @@
                 Invite to Speckle
               </NuxtLink>
             </MenuItem>
-            <MenuItem v-if="isWorkspacesEnabled" v-slot="{ active }">
-              <NuxtLink
-                :class="[
-                  active ? 'bg-highlight-1' : '',
-                  'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
-                ]"
-                class="text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded"
-                @click="openChat"
-              >
-                Give us feedback
-              </NuxtLink>
-            </MenuItem>
           </div>
           <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -134,8 +122,6 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const menuButtonId = useId()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { $intercom } = useNuxtApp()
 
 const showInviteDialog = ref(false)
 
@@ -144,9 +130,5 @@ const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const openChat = () => {
-  $intercom.show()
 }
 </script>

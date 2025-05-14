@@ -56,7 +56,9 @@ export const useIntercom = () => {
   }
 
   const showIntercom = () => {
-    if (!isInitialized.value) return
+    if (!isInitialized.value) {
+      bootIntercom()
+    }
     show()
   }
 
@@ -71,6 +73,7 @@ export const useIntercom = () => {
     isInitialized.value = false
   }
 
+  // Fetch active workspace and add to the user as a company
   const updateCompany = async () => {
     if (!activeWorkspaceSlug.value) return
 
@@ -92,6 +95,7 @@ export const useIntercom = () => {
     })
   }
 
+  // On route change, check if we need to shutodwn or boot Intercom
   watch(route, () => {
     if (isRouteBlacklisted.value) {
       shutdownIntercom()
