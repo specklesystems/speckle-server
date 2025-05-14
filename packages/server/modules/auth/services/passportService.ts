@@ -86,10 +86,10 @@ export const passportAuthenticationCallbackFactory =
     // WORKAROUND
     // passportjs states that 'verify' method of the strategy should not pass in
     // an error for user input problems.
-    // Unfortunately openid-client <6.0.0 relies on user-input problems
-    // being passed to callback as errors.
+    // Unfortunately openid-client <6.0.0 does not provide a third 'info' parameter
+    // so we rely on user-input problems being passed to callback as errors.
     // This is a workaround until we upgrade to openid-client >=6.0.0
-    if (e && strategy === 'oidc') {
+    if (e && strategy === 'oidc' && failureType === null) {
       switch (e.constructor.name) {
         case ExpectedAuthFailure.UserInputError:
         case ExpectedAuthFailure.InviteNotFoundError:
