@@ -14,6 +14,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../domain/authErrors.js'
 import { canUpdateProjectPolicy } from './canUpdate.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
   | typeof Loaders.getProject
@@ -54,7 +55,7 @@ export const canUpdateProjectAllowPublicCommentsPolicy: AuthPolicy<
       return err(new ProjectNotFoundError())
     }
 
-    const isPublic = project.isPublic || project.isDiscoverable
+    const isPublic = project.visibility === ProjectVisibility.Public
     return isPublic
       ? ok()
       : err(

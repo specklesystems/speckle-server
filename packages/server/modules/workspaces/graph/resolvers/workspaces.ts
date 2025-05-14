@@ -93,7 +93,7 @@ import {
   deleteWorkspaceRoleFactory,
   generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import {
@@ -275,7 +275,7 @@ const buildFinalizeWorkspaceInvite = () =>
     }),
     processInvite: processFinalizedWorkspaceInviteFactory({
       getWorkspace: getWorkspaceFactory({ db }),
-      updateWorkspaceRole: updateWorkspaceRoleFactory({
+      updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
         getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
         findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
         getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -601,12 +601,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
                 }),
                 upsertWorkspace: upsertWorkspaceFactory({ db }),
-                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: emit,
-                ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                  createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                  getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-                  eventEmit: emit
+                addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                    db
+                  }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  emitWorkspaceEvent: emit,
+                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    eventEmit: emit
+                  })
                 })
               })
 
@@ -832,7 +840,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             await asOperation(
               async ({ db: trx, emit }) => {
-                const updateWorkspaceRole = updateWorkspaceRoleFactory({
+                const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory({
                   upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
                   getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
                   findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
@@ -990,12 +998,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const joinWorkspace = joinWorkspaceFactory({
             getUserEmails: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit,
-            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-              createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-              eventEmit: getEventBus().emit
+            addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                db
+              }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              emitWorkspaceEvent: getEventBus().emit,
+              ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                eventEmit: getEventBus().emit
+              })
             })
           })
 
@@ -1471,7 +1487,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 updateProjectRole: updateStreamRoleAndNotify,
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({ db }),
-                updateWorkspaceRole: updateWorkspaceRoleFactory({
+                updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
                   getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                   getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
                   findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
