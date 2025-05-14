@@ -175,36 +175,38 @@ const main = async () => {
       const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
 
       // TODO: Why is initial write wrapped in a transaction?
-      await storeProjectFactory({ db: targetRegionDb })({
-        project: {
-          ...sourceProject,
-          regionKey: targetWorkspaceRegionKey,
-          workspaceId: TARGET_WORKSPACE_ID
-        }
-      })
+      if (sourceProject.id !== '80643e0e3c') {
+        await storeProjectFactory({ db: targetRegionDb })({
+          project: {
+            ...sourceProject,
+            regionKey: targetWorkspaceRegionKey,
+            workspaceId: TARGET_WORKSPACE_ID
+          }
+        })
 
-      try {
-        await retry(
-          async () => {
-            await getProjectFactory({ db: targetMainDb })({
+        try {
+          await retry(
+            async () => {
+              await getProjectFactory({ db: targetMainDb })({
+                projectId: sourceProject.id
+              })
+            },
+            { maxAttempts: 100 }
+          )
+        } catch (err) {
+          if (err instanceof StreamNotFoundError) {
+            // delete from region
+            await deleteProjectFactory({ db: targetRegionDb })({
               projectId: sourceProject.id
             })
-          },
-          { maxAttempts: 100 }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          // delete from region
-          await deleteProjectFactory({ db: targetRegionDb })({
-            projectId: sourceProject.id
-          })
-          throw new RegionalProjectCreationError()
+            throw new RegionalProjectCreationError()
+          }
+          // else throw as is
+          throw err
         }
-        // else throw as is
-        throw err
-      }
 
-      console.log(`${logKey} Replicated ${sourceProject.name}`)
+        console.log(`${logKey} Replicated ${sourceProject.name}`)
+      }
 
       // Move project data
       const regionTrx = await targetRegionDb.transaction()
