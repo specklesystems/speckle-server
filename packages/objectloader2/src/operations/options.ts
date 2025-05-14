@@ -25,5 +25,5 @@ export interface MemoryDatabaseOptions {
 export interface DefermentManagerOptions {
   logger?: CustomLogger
   maxSize: number
-  ttl: number
+  ttlms: number
 }
