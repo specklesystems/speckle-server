@@ -60,6 +60,29 @@
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
 
+                <div v-if="isWorkspacesEnabled">
+                  <div @click="showExplainerVideoDialog = true">
+                    <LayoutSidebarMenuGroupItem label="Getting started">
+                      <template #icon>
+                        <IconPlay class="size-4 text-foreground-2" />
+                      </template>
+                    </LayoutSidebarMenuGroupItem>
+                  </div>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
+              </LayoutSidebarMenuGroup>
+
+              <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <CalPopUp v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem label="Book an intro call">
+                    <template #icon>
+                      <IconCalendar class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </CalPopUp>
+
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Tutorials"
@@ -70,29 +93,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-              </LayoutSidebarMenuGroup>
-
-              <LayoutSidebarMenuGroup title="Resources" collapsible>
-                <div v-if="isWorkspacesEnabled">
-                  <div @click="showExplainerVideoDialog = true">
-                    <LayoutSidebarMenuGroupItem label="Get started">
-                      <template #icon>
-                        <IconPlay class="size-4 text-foreground-2" />
-                      </template>
-                    </LayoutSidebarMenuGroupItem>
-                  </div>
-                  <WorkspaceExplainerVideoDialog
-                    v-model:open="showExplainerVideoDialog"
-                  />
-                </div>
-
-                <CalPopUp v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem label="Book an intro call">
-                    <template #icon>
-                      <IconCalendar class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
 
                 <NuxtLink
                   to="https://speckle.community/"
