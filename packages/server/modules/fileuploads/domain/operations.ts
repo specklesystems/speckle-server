@@ -4,7 +4,9 @@ import {
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
+import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
+import { JobFileImportPayload } from '@/modules/fileuploads/queues/fileimports'
+import { UploadResult } from '@/modules/blobstorage/domain/types'
 
 export type GetFileInfo = (args: {
   fileId: string
@@ -17,10 +19,14 @@ export type SaveUploadFileInput = Pick<
 
 export type SaveUploadFileInputV2 = Pick<
   FileUploadRecordV2,
-  'projectId' | 'modelId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
+  'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
+> & { fileId: string; modelId: string }
 
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
+
+export type InsertNewUploadAndNotify = (
+  uploadResults: SaveUploadFileInputV2
+) => Promise<void>
 
 export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
@@ -44,3 +50,12 @@ export type UpdateFileStatus = (params: {
   status: FileUploadConvertedStatus
   convertedMessage: string
 }) => Promise<FileUploadRecord>
+
+export type UploadedFile = UploadResult & { userId: string }
+
+export type FileImportMessage = Pick<
+  JobFileImportPayload,
+  'modelId' | 'projectId' | 'fileType' | 'blobId'
+> & { jobId: string; userId: string }
+
+export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>

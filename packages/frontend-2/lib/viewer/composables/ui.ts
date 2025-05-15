@@ -575,7 +575,7 @@ export function useViewModeUtilities() {
     edgesColor.value = defaultColor.value
 
     // Reset view mode to default
-    viewMode.value = ViewMode.SOLID
+    viewMode.value = ViewMode.DEFAULT
     updateViewMode()
   })
 

@@ -9,10 +9,6 @@
       "name": "🏬 frontend"
     },
     {
-      "path": "packages/dui3",
-      "name": "🥉 dui 3.0"
-    },
-    {
       "path": "packages/tailwind-theme",
       "name": "🎨 tailwind-theme"
     },
@@ -67,6 +63,10 @@
     {
       "path": "packages/ui-components-nuxt",
       "name": "🌟 ui-components-nuxt"
+    },
+    {
+      "path": "packages/monitor-deployment",
+      "name": "📊 monitor-deployment"
     },
     {
       "path": ".",

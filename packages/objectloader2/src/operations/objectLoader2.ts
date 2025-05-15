@@ -41,7 +41,7 @@ export class ObjectLoader2 {
     this.#database = options.database
     this.#deferments = new DefermentManager({
       maxSizeInMb: 2_000, // 2 GBs
-      ttlms: 5_000, //
+      ttlms: 5_000, // 5 seconds
       logger: this.#logger
     })
     this.#cache = new CacheReader(this.#database, this.#deferments, cacheOptions)

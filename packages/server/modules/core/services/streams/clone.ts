@@ -43,6 +43,7 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
@@ -124,8 +125,7 @@ const cloneStreamEntityFactory =
       {
         name: targetStream.name,
         description: targetStream.description,
-        isPublic: targetStream.isPublic,
-        isDiscoverable: targetStream.isDiscoverable
+        visibility: mapDbToGqlProjectVisibility(targetStream.visibility)
       },
       {
         ownerId: user.id,

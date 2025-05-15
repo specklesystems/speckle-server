@@ -38,6 +38,7 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    visibility
     team {
       id
       role
@@ -271,6 +272,7 @@ export const moveProjectToWorkspaceMutation = gql`
         moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
           id
           workspaceId
+          visibility
           team {
             id
             role

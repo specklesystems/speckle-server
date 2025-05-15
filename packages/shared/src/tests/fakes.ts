@@ -1,5 +1,5 @@
 import { merge } from '#lodash'
-import { Project } from '../authz/domain/projects/types.js'
+import { Project, ProjectVisibility } from '../authz/domain/projects/types.js'
 import { Comment } from '../authz/domain/comments/types.js'
 import { nanoid } from 'nanoid'
 import { Model } from '../authz/domain/models/types.js'
@@ -19,8 +19,7 @@ export const fakeGetFactory =
 
 export const getProjectFake = fakeGetFactory<Project>(() => ({
   id: nanoid(10),
-  isPublic: false,
-  isDiscoverable: false,
+  visibility: ProjectVisibility.Private,
   workspaceId: null,
   allowPublicComments: false
 }))

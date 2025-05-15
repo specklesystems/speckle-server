@@ -86,13 +86,15 @@ export const ensureValidWorkspaceRoleSeatFactory =
       type: getDefaultWorkspaceSeatTypeByWorkspaceRole({ workspaceRole: params.role })
     })
 
-    await deps.eventEmit({
-      eventName: WorkspaceEvents.SeatUpdated,
-      payload: {
-        seat,
-        updatedByUserId: params.updatedByUserId
-      }
-    })
+    if (!params.skipEvent) {
+      await deps.eventEmit({
+        eventName: WorkspaceEvents.SeatUpdated,
+        payload: {
+          seat,
+          updatedByUserId: params.updatedByUserId
+        }
+      })
+    }
 
     return seat
   }

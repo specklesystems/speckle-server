@@ -14,6 +14,7 @@ import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
 import { PreviewPriority, PreviewStatus } from '@/modules/previews/domain/consts'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
@@ -164,11 +165,14 @@ export const checkStreamPermissionsFactory =
       return { hasPermissions: false, httpErrorCode: 404 }
     }
 
-    if (!stream.isPublic && req.context.auth === false) {
+    if (
+      stream.visibility !== ProjectRecordVisibility.Public &&
+      req.context.auth === false
+    ) {
       return { hasPermissions: false, httpErrorCode: 401 }
     }
 
-    if (!stream.isPublic) {
+    if (stream.visibility !== ProjectRecordVisibility.Public) {
       try {
         await deps.validateScopes(req.context.scopes, Scopes.Streams.Read)
       } catch {

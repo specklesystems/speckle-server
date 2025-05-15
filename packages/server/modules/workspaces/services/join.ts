@@ -1,9 +1,8 @@
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import {
-  EnsureValidWorkspaceRoleSeat,
-  GetWorkspaceWithDomains,
-  UpsertWorkspaceRole
+  AddOrUpdateWorkspaceRole,
+  GetWorkspaceWithDomains
 } from '@/modules/workspaces/domain/operations'
 import {
   WorkspaceJoinNotAllowedError,
@@ -17,15 +16,13 @@ export const joinWorkspaceFactory =
   ({
     getUserEmails,
     getWorkspaceWithDomains,
-    upsertWorkspaceRole,
     emitWorkspaceEvent,
-    ensureValidWorkspaceRoleSeat
+    addOrUpdateWorkspaceRole
   }: {
     getUserEmails: FindEmailsByUserId
     getWorkspaceWithDomains: GetWorkspaceWithDomains
-    upsertWorkspaceRole: UpsertWorkspaceRole
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
-    ensureValidWorkspaceRoleSeat: EnsureValidWorkspaceRoleSeat
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     const userEmails = await getUserEmails({ userId })
@@ -47,8 +44,7 @@ export const joinWorkspaceFactory =
 
     const role = Roles.Workspace.Member
 
-    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
-    await ensureValidWorkspaceRoleSeat({
+    await addOrUpdateWorkspaceRole({
       userId,
       workspaceId,
       role,
@@ -58,12 +54,5 @@ export const joinWorkspaceFactory =
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.JoinedFromDiscovery,
       payload: { userId, workspaceId, role }
-    })
-    await emitWorkspaceEvent({
-      eventName: WorkspaceEvents.RoleUpdated,
-      payload: {
-        acl: { userId, workspaceId, role },
-        updatedByUserId: userId
-      }
     })
   }

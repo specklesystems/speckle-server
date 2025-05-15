@@ -15,6 +15,13 @@ export default {
       })
       return Authz.toGraphqlResult(canCreateProject)
     },
+    canInvite: async (parent, _args, ctx) => {
+      const canInvite = await ctx.authPolicies.workspace.canInvite({
+        workspaceId: parent.workspaceId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canInvite)
+    },
     canMoveProjectToWorkspace: async (parent, args, ctx) => {
       const canMoveProjectToWorkspace =
         await ctx.authPolicies.project.canMoveToWorkspace({

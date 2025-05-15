@@ -3,6 +3,7 @@ import { isPubliclyReadableProject, hasMinimumProjectRole } from './projects.js'
 import cryptoRandomString from 'crypto-random-string'
 import { Roles } from '../../core/index.js'
 import { getProjectFake } from '../../tests/fakes.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 describe('project checks', () => {
   describe('isPubliclyReadableProject returns a function, that', () => {
@@ -14,13 +15,7 @@ describe('project checks', () => {
     })
     it('returns true for public projects', async () => {
       const result = await isPubliclyReadableProject({
-        getProject: getProjectFake({ isPublic: true })
-      })({ projectId: cryptoRandomString({ length: 10 }) })
-      expect(result).toEqual(true)
-    })
-    it('returns true for discoverable projects', async () => {
-      const result = await isPubliclyReadableProject({
-        getProject: getProjectFake({ isDiscoverable: true })
+        getProject: getProjectFake({ visibility: ProjectVisibility.Public })
       })({ projectId: cryptoRandomString({ length: 10 }) })
       expect(result).toEqual(true)
     })

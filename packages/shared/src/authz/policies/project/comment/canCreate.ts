@@ -16,6 +16,7 @@ import {
 } from '../../../domain/authErrors.js'
 import { ensureImplicitProjectMemberWithWriteAccessFragment } from '../../../fragments/projects.js'
 import { Roles } from '../../../../core/constants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 export const canCreateProjectCommentPolicy: AuthPolicy<
   | typeof Loaders.getProject
@@ -53,7 +54,7 @@ export const canCreateProjectCommentPolicy: AuthPolicy<
     const project = await loaders.getProject({ projectId })
     if (!project) return err(new ProjectNotFoundError())
     const allowPublicCommenting =
-      (project.isPublic || project.isDiscoverable) && project.allowPublicComments
+      project.visibility === ProjectVisibility.Public && project.allowPublicComments
     if (allowPublicCommenting) return ok()
 
     // Not public, ensure proper project write access

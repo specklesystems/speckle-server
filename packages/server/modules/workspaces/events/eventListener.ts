@@ -26,7 +26,7 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/observability/logging'
-import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
@@ -121,7 +121,7 @@ export const onInviteFinalizedFactory =
   (deps: {
     getStream: GetStream
     logger: typeof logger
-    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof addOrUpdateWorkspaceRoleFactory>
     getWorkspaceRole: GetWorkspaceRoleForUser
     upsertProjectRole: UpsertProjectRole
   }) =>
@@ -721,7 +721,7 @@ export const initializeEventListenersFactory =
         const onInviteFinalized = onInviteFinalizedFactory({
           getStream: getStreamFactory({ db }),
           logger: moduleLogger,
-          updateWorkspaceRole: updateWorkspaceRoleFactory({
+          updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
             findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),

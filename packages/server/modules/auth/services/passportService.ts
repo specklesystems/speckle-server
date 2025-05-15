@@ -5,9 +5,10 @@ import {
   UserInputError
 } from '@/modules/core/errors/userinput'
 import type { Request, Response, NextFunction, RequestHandler } from 'express'
-import { Optional } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
 import { get, isArray, isObjectLike, isString } from 'lodash'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const resolveInfoMessage = (
   info?: Optional<string | Record<string, unknown> | Array<string | undefined>>
@@ -26,6 +27,9 @@ const resolveInfoMessage = (
   return null
 }
 
+const defaultErrorPath = (message: string) => `/error?message=${message}`
+const unverifiedEmailPath = (email: string) => `/error-email-verify?email=${email}`
+
 export const passportAuthenticationCallbackFactory =
   (context: {
     strategy: Strategy | string
@@ -34,38 +38,51 @@ export const passportAuthenticationCallbackFactory =
     next: NextFunction
   }) =>
   (
-    err: unknown,
+    e: unknown,
     user: Optional<Express.User>,
     info: Optional<string | Record<string, unknown> | Array<string | undefined>>
   ) => {
     const { strategy, req, res, next } = context
-    if (err && !(err instanceof UserInputError))
-      req.log.error({ err, strategy }, 'Authentication error for strategy "{strategy}"')
 
-    if (!user) {
-      const infoMsg = resolveInfoMessage(info)
-      const errMsg = err instanceof UserInputError ? err.message : null
-      const finalMessage =
-        infoMsg ||
-        errMsg ||
-        (err
-          ? 'An issue occurred during authentication, contact server admins'
-          : 'Failed to authenticate, contact server admins')
-
-      let errPath = `/error?message=${finalMessage}`
-
-      if (err instanceof UnverifiedEmailSSOLoginError) {
-        const email = err.info()?.email || ''
-        errPath = `/error-email-verify?email=${email}`
-      }
-
-      res.redirect(new URL(errPath, getFrontendOrigin()).toString())
+    if (user && !e) {
+      req.user = user
+      // user authenticated successfully
+      next()
       return
     }
 
-    if (err && !(err instanceof UserInputError)) return next(err)
-    req.user = user
-    next()
+    const infoMsg = resolveInfoMessage(info)
+    if (!user && !e) {
+      // no user despite there being no error, so authentication failed
+      const message = infoMsg || 'Failed to authenticate, contact server admins'
+      res.redirect(new URL(defaultErrorPath(message), getFrontendOrigin()).toString())
+      return
+    }
+
+    const err = ensureError(
+      e,
+      'Unknown authentication error. Please contact server admins'
+    )
+    switch (err.constructor) {
+      case UserInputError:
+      case InviteNotFoundError:
+        const message = infoMsg || err.message
+        res.redirect(new URL(defaultErrorPath(message), getFrontendOrigin()).toString())
+        return
+      case UnverifiedEmailSSOLoginError:
+        const email = (err as UnverifiedEmailSSOLoginError).info()?.email || ''
+        res.redirect(
+          new URL(unverifiedEmailPath(email), getFrontendOrigin()).toString()
+        )
+        return
+      default:
+        req.log.error(
+          { err, strategy },
+          'Authentication error for strategy "{strategy}"'
+        )
+        return next(err)
+      // throwUncoveredError(err) //TODO at some point in the future, ideally change error handling to use this
+    }
   }
 
 /**

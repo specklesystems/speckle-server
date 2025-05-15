@@ -8,12 +8,14 @@ import {
   CountUsers,
   ListPaginatedUsersPage
 } from '@/modules/core/domain/users/operations'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   CountServerInvites,
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
+import { Nullable } from '@speckle/shared'
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
@@ -86,6 +88,7 @@ export const adminProjectListFactory =
     const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
     const { streams, totalCount, cursorDate } = await deps.getStreams({
       ...args,
+      visibility: args.visibility as Nullable<ProjectRecordVisibility>,
       searchQuery: args.query,
       cursor: parsedCursor,
       streamIdWhitelist: args.streamIdWhitelist,

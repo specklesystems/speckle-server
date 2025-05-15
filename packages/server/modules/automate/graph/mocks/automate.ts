@@ -355,7 +355,23 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required Boolean': {
                   description: faker.lorem.sentence(5),
+                  default: true,
                   type: 'boolean'
+                },
+                Enum: {
+                  description: faker.lorem.sentence(5),
+                  type: 'string',
+                  default: 'bar',
+                  oneOf: [
+                    {
+                      const: 'foo',
+                      title: 'FOO'
+                    },
+                    {
+                      const: 'bar',
+                      title: 'BAR'
+                    }
+                  ]
                 },
                 Integer: {
                   description: faker.lorem.sentence(5),
@@ -363,6 +379,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required Integer': {
                   description: faker.lorem.sentence(5),
+                  default: 2,
                   type: 'integer'
                 },
                 String: {
@@ -371,6 +388,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
                 },
                 'Required String': {
                   description: faker.lorem.sentence(5),
+                  default: 'Foobar',
                   type: 'string'
                 }
               },

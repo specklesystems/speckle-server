@@ -1,5 +1,6 @@
 import { Streams } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -283,7 +284,6 @@ describe('Workspaces Roles/Seats GQL', () => {
     })
   })
 
-  // TODO: Viewer vs Editor
   describe('in a workspace with projects', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
@@ -326,35 +326,43 @@ describe('Workspaces Roles/Seats GQL', () => {
       id: '',
       ownerId: '',
       name: 'Project A',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Workspace
     }
 
     const workspaceProjectB: BasicTestStream = {
       id: '',
       ownerId: '',
       name: 'Project B',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Workspace
     }
 
     const workspaceProjectC: BasicTestStream = {
       id: '',
       ownerId: '',
       name: 'Project C',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Workspace
     }
 
     const workspaceProjectD: BasicTestStream = {
       id: '',
       ownerId: '',
       name: 'Project D',
-      isPublic: false
+      visibility: ProjectRecordVisibility.Workspace
+    }
+
+    const workspaceProjectE: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: 'Project E (Fully private)',
+      visibility: ProjectRecordVisibility.Private
     }
 
     const workspaceProjects = [
       workspaceProjectA,
       workspaceProjectB,
       workspaceProjectC,
-      workspaceProjectD
+      workspaceProjectD,
+      workspaceProjectE
     ]
 
     before(async () => {
@@ -424,13 +432,13 @@ describe('Workspaces Roles/Seats GQL', () => {
        *
        * Initial explicit workspace project roles:
        *
-       * |                           | Project A   | Project B   | Project C | Project D |
-       * |---------------------------|-------------|-------------|-----------|-----------|
-       * | workspaceAdminUser        | Owner       | None        | None      | None      |
-       * | workspaceMemberUser       | Owner       | Contributor | Reviewer  | None      |
-       * | workspaceGuestUser        | Contributor | Reviewer    | None      | None      |
-       * | workspaceMemberViewerUser | Reviewer    | None        | None      | None      |
-       * | workspaceGuestViewerUser  | None        | Reviewer    | None      | None      |
+       * |                           | Project A   | Project B   | Project C | Project D | Project E (private) |
+       * |---------------------------|-------------|-------------|-----------|-----------|---------------------|
+       * | workspaceAdminUser        | Owner       | None        | None      | None      | None
+       * | workspaceMemberUser       | Owner       | Contributor | Reviewer  | None      | None
+       * | workspaceGuestUser        | Contributor | Reviewer    | None      | None      | Reviewer
+       * | workspaceMemberViewerUser | Reviewer    | None        | None      | None      | Reviewer
+       * | workspaceGuestViewerUser  | None        | Reviewer    | None      | None      | Reviewer
        */
 
       await Promise.all([
@@ -448,7 +456,15 @@ describe('Workspaces Roles/Seats GQL', () => {
         addToStream(workspaceProjectB, workspaceGuestUser, Roles.Stream.Reviewer),
         addToStream(workspaceProjectB, workspaceGuestViewerUser, Roles.Stream.Reviewer),
         // C
-        addToStream(workspaceProjectC, workspaceMemberUser, Roles.Stream.Reviewer)
+        addToStream(workspaceProjectC, workspaceMemberUser, Roles.Stream.Reviewer),
+        // E
+        addToStream(workspaceProjectE, workspaceGuestUser, Roles.Stream.Reviewer),
+        addToStream(
+          workspaceProjectE,
+          workspaceMemberViewerUser,
+          Roles.Stream.Reviewer
+        ),
+        addToStream(workspaceProjectE, workspaceGuestViewerUser, Roles.Stream.Reviewer)
       ])
     })
 
@@ -470,15 +486,16 @@ describe('Workspaces Roles/Seats GQL', () => {
           user: workspaceAdminUser
         })
 
-        expect(projects.length).to.eq(4)
+        expect(projects.length).to.eq(5)
         expect(checkAllProjects((p) => p.isOwner)).to.be.ok
         expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
         expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectE).hasExplicitRole).to.be.not.ok
       })
 
-      it('workspaceMemberUser is implicit reviewer in all of them, and also has explicit roles in some', async () => {
+      it('workspaceMemberUser is implicit reviewer in all of them, except E, and also has explicit roles in some', async () => {
         const { projects, checkAllProjects, checkProject } = await getProjects({
           user: workspaceMemberUser
         })
@@ -489,42 +506,46 @@ describe('Workspaces Roles/Seats GQL', () => {
         expect(checkProject(workspaceProjectB).isExplicitContributor).to.be.ok
         expect(checkProject(workspaceProjectC).isExplicitReviewer).to.be.ok
         expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectE).hasAccess).to.be.not.ok
       })
 
-      it('workspaceGuestUser only has explicit roles in 2 projects', async () => {
+      it('workspaceGuestUser only has explicit roles in 3 projects', async () => {
         const { projects, checkProject } = await getProjects({
           user: workspaceGuestUser
         })
 
-        expect(projects.length).to.eq(2)
+        expect(projects.length).to.eq(3)
         expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
         expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
-        expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
-        expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectC).hasAccess).to.be.not.ok
+        expect(checkProject(workspaceProjectD).hasAccess).to.be.not.ok
+        expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
       })
 
-      it('workspaceMemberViewerUser is only explicit reviewer in 1 project, and has implicit roles elsewhere', async () => {
+      it('workspaceMemberViewerUser is only explicit reviewer in 2 projects, and has implicit roles elsewhere', async () => {
         const { projects, checkAllProjects, checkProject } = await getProjects({
           user: workspaceMemberViewerUser
         })
-        expect(projects.length).to.eq(4)
+        expect(projects.length).to.eq(5)
         expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
         expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
         expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
       })
 
-      it('workspaceGuestViewerUser is only explicit reviewer in 1 project', async () => {
+      it('workspaceGuestViewerUser is only explicit reviewer in 2 projects', async () => {
         const { projects, checkProject } = await getProjects({
           user: workspaceGuestViewerUser
         })
 
-        expect(projects.length).to.eq(1)
+        expect(projects.length).to.eq(2)
         expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
         expect(checkProject(workspaceProjectA).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
         expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+        expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
       })
     })
 
@@ -582,9 +603,10 @@ describe('Workspaces Roles/Seats GQL', () => {
           user: workspaceGuestUser
         })
 
-        expect(projects.length).to.eq(2)
+        expect(projects.length).to.eq(3)
         expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
         expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
+        expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
       })
     })
 
@@ -605,17 +627,18 @@ describe('Workspaces Roles/Seats GQL', () => {
             )
           })
 
-          it('should still remain explicit owner and be implicit reviewer elsewhere', async () => {
+          it('should still remain explicit owner and be implicit reviewer elsewhere, except private E', async () => {
             const { projects, checkAllProjects, checkProject } = await getProjects({
               user: workspaceAdminUser
             })
 
             expect(projects.length).to.eq(4)
+            expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
             expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectB).hasExplicitRole).to.be.not.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
-            expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
+            expect(checkProject(workspaceProjectE).hasAccess).to.be.not.ok
           })
         })
 
@@ -670,12 +693,13 @@ describe('Workspaces Roles/Seats GQL', () => {
               user: workspaceMemberUser
             })
 
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isOwner)).to.be.ok
             expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectC).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectE).hasExplicitRole).to.not.be.ok
           })
         })
 
@@ -704,6 +728,7 @@ describe('Workspaces Roles/Seats GQL', () => {
             expect(checkProject(workspaceProjectB).isExplicitContributor).to.be.ok
             expect(checkProject(workspaceProjectC).isExplicitReviewer).to.be.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectE).hasExplicitRole).to.be.not.ok
           })
         })
       })
@@ -729,12 +754,13 @@ describe('Workspaces Roles/Seats GQL', () => {
               user: workspaceGuestUser
             })
 
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isOwner)).to.be.ok
             expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectE).isExplicitOwner).to.be.ok
           })
         })
 
@@ -758,12 +784,13 @@ describe('Workspaces Roles/Seats GQL', () => {
               user: workspaceGuestUser
             })
 
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
             expect(checkProject(workspaceProjectA).isExplicitContributor).to.be.ok
             expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
           })
         })
       })
@@ -791,12 +818,13 @@ describe('Workspaces Roles/Seats GQL', () => {
               })
 
             expect(workspace.seatType).to.eq(WorkspaceSeatType.Editor)
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isOwner)).to.be.ok
             expect(checkProject(workspaceProjectA).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectB).hasExplicitRole).to.not.be.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.not.be.ok
+            expect(checkProject(workspaceProjectE).isExplicitOwner).to.be.ok
           })
         })
 
@@ -821,8 +849,9 @@ describe('Workspaces Roles/Seats GQL', () => {
             })
 
             expect(workspace.seatType).to.eq(WorkspaceSeatType.Viewer)
-            expect(projects.length).to.eq(1)
+            expect(projects.length).to.eq(2)
             expect(checkProject(workspaceProjectA).isExplicitReviewer).to.be.ok
+            expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
           })
         })
       })
@@ -850,12 +879,13 @@ describe('Workspaces Roles/Seats GQL', () => {
               })
 
             expect(workspace.seatType).to.eq(WorkspaceSeatType.Editor)
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isOwner)).to.be.ok
             expect(checkProject(workspaceProjectA).hasExplicitRole).to.not.be.ok
             expect(checkProject(workspaceProjectB).isExplicitOwner).to.be.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.not.be.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectE).isExplicitOwner).to.be.ok
           })
         })
 
@@ -874,19 +904,20 @@ describe('Workspaces Roles/Seats GQL', () => {
             )
           })
 
-          it('should retain viewer seat, same explicit access and get full implicit acccess', async () => {
+          it('should retain viewer seat, same explicit access and get full workspace visibility implicit acccess', async () => {
             const { workspace, projects, checkProject, checkAllProjects } =
               await getProjects({
                 user: workspaceGuestViewerUser
               })
 
             expect(workspace.seatType).to.eq(WorkspaceSeatType.Viewer)
-            expect(projects.length).to.eq(4)
+            expect(projects.length).to.eq(5)
             expect(checkAllProjects((p) => p.isReviewer)).to.be.ok
             expect(checkProject(workspaceProjectA).hasExplicitRole).to.be.not.ok
             expect(checkProject(workspaceProjectB).isExplicitReviewer).to.be.ok
             expect(checkProject(workspaceProjectC).hasExplicitRole).to.be.not.ok
             expect(checkProject(workspaceProjectD).hasExplicitRole).to.be.not.ok
+            expect(checkProject(workspaceProjectE).isExplicitReviewer).to.be.ok
           })
         })
       })

@@ -7,6 +7,7 @@ import {
   knex
 } from '@/modules/core/dbSchema'
 import {
+  ProjectRecordVisibility,
   ServerAclRecord,
   StreamAclRecord,
   StreamRecord,
@@ -526,7 +527,9 @@ export const lookupUsersFactory =
     if (projectId) {
       // Workspace implicit roles logic:
       // - User must have an explicit stream acl OR
-      // - User must have a project workspace acl w/ non-guest role
+      // - User must have a project workspace acl AND:
+      //   - must be a workspace admin
+      //   - or must be a workspace member and the project must not be fully private
       query
         .innerJoin(Streams.name, (j1) => {
           j1.onVal(Streams.col.id, projectId)
@@ -544,11 +547,20 @@ export const lookupUsersFactory =
           )
         })
         .andWhere((w1) => {
-          w1.whereNotNull(StreamAcl.col.role).orWhere(
-            WorkspaceAcl.col.role,
-            '!=',
-            Roles.Workspace.Guest
-          )
+          w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
+            // Implicit workspace role conditions
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere((w2) => {
+              w2.andWhere(WorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                (w4) => {
+                  w4.where(
+                    WorkspaceAcl.col.role,
+                    '!=',
+                    Roles.Workspace.Guest
+                  ).andWhereNot(Streams.col.visibility, ProjectRecordVisibility.Private)
+                }
+              )
+            })
+          })
         })
     }
 

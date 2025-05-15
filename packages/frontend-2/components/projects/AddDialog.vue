@@ -25,7 +25,11 @@
         />
         <div>
           <h3 class="label mb-2">Access permissions</h3>
-          <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
+          <ProjectVisibilitySelect
+            v-model="visibility"
+            mount-menu-on-body
+            :workspace-id="workspaceId"
+          />
         </div>
       </div>
     </form>
@@ -34,7 +38,7 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
-import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import { SupportedProjectVisibility } from '~/lib/projects/helpers/visibility'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
@@ -56,7 +60,11 @@ const createProject = useCreateProject()
 const logger = useLogger()
 const { handleSubmit, isSubmitting } = useForm<FormValues>()
 
-const visibility = ref(SimpleProjectVisibility.Unlisted)
+const visibility = ref(
+  props.workspaceId
+    ? SupportedProjectVisibility.Workspace
+    : SupportedProjectVisibility.Private
+)
 const isLoading = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
@@ -116,6 +124,9 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
     isLoading.value = false
+    visibility.value = props.workspaceId
+      ? SupportedProjectVisibility.Workspace
+      : SupportedProjectVisibility.Private
   }
 })
 </script>

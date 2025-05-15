@@ -1,5 +1,4 @@
 import { isStringOfLength, stringContains } from '~~/lib/common/helpers/validation'
-import { blockedDomains } from '@speckle/shared'
 
 export const passwordLongEnough = isStringOfLength({ minLength: 8 })
 export const passwordHasAtLeastOneNumber = stringContains({
@@ -21,10 +20,3 @@ export const passwordRules = [
   passwordHasAtLeastOneLowercaseLetter,
   passwordHasAtLeastOneUppercaseLetter
 ]
-
-export const doesNotContainBlockedDomain = (val: string) => {
-  const domain = val.split('@')[1]?.toLowerCase()
-  return domain && blockedDomains.includes(domain)
-    ? 'Please use your work email instead of a personal email address'
-    : true
-}

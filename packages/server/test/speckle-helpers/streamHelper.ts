@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
+import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -161,7 +162,10 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 
 export type BasicTestStream = {
   name: string
-  isPublic: boolean
+  /**
+   * @deprecated Use visibility instead
+   */
+  isPublic?: boolean
   /**
    * The ID of the owner user. Will be filled in by createTestStream().
    */
@@ -189,6 +193,13 @@ export async function createTestStream(
   owner: BasicTestUser
 ) {
   let id: string
+
+  const visibility = streamObj.isPublic
+    ? ProjectVisibility.Public
+    : (streamObj.visibility
+        ? mapDbToGqlProjectVisibility(streamObj.visibility)
+        : undefined) || ProjectVisibility.Private
+
   if (streamObj.workspaceId) {
     const createWorkspaceProject = createWorkspaceProjectFactory({
       getDefaultRegion: getDefaultRegionFactory({ db })
@@ -197,9 +208,7 @@ export async function createTestStream(
       input: {
         name: streamObj.name || faker.commerce.productName(),
         description: streamObj.description,
-        visibility: streamObj.isPublic
-          ? ProjectVisibility.Public
-          : ProjectVisibility.Private,
+        visibility,
         workspaceId: streamObj.workspaceId
       },
       ownerId: owner.id
@@ -207,7 +216,8 @@ export async function createTestStream(
     id = newProject.id
   } else {
     id = await createStream({
-      ...omit(streamObj, ['id', 'ownerId']),
+      ...omit(streamObj, ['id', 'ownerId', 'visibility']),
+      isPublic: visibility === ProjectVisibility.Public,
       ownerId: owner.id
     })
   }

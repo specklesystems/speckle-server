@@ -89,13 +89,16 @@
 
 <script setup lang="ts">
 import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { SimpleProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -183,7 +186,10 @@ const iframeCode = computed(() => {
 })
 
 const isPrivate = computed(() => {
-  return props.project.visibility === SimpleProjectVisibility.Private
+  return (
+    castToSupportedVisibility(props.project.visibility) !==
+    SupportedProjectVisibility.Public
+  )
 })
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
@@ -231,7 +237,7 @@ const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
 }
 
-const handleChangeVisibility = (newVisibility: SimpleProjectVisibility) => {
+const handleChangeVisibility = (newVisibility: SupportedProjectVisibility) => {
   projectVisibility.value = newVisibility
 }
 

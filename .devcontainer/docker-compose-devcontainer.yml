@@ -14,10 +14,6 @@ services:
         target: /workspaces/speckle-server/node_modules
         read_only: false
       - type: volume
-        source: dui3-node_modules
-        target: /workspaces/speckle-server/packages/dui3/node_modules
-        read_only: false
-      - type: volume
         source: fileimport-service-node_modules
         target: /workspaces/speckle-server/packages/fileimport-service/node_modules
         read_only: false
@@ -105,10 +101,6 @@ services:
         target: /workspaces/speckle-server/node_modules
         read_only: false
       - type: volume
-        source: dui3-node_modules
-        target: /workspaces/speckle-server/packages/dui3/node_modules
-        read_only: false
-      - type: volume
         source: fileimport-service-node_modules
         target: /workspaces/speckle-server/packages/fileimport-service/node_modules
         read_only: false
@@ -176,7 +168,6 @@ volumes:
   # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
   # If you add a new package with a new `node_modules`, it needs to be added here
   node_modules:
-  dui3-node_modules:
   fileimport-service-node_modules:
   frontend-2-node_modules:
   monitor-deployment-node_modules:

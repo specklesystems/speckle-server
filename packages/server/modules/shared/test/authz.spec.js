@@ -22,6 +22,7 @@ const { Roles } = require('@speckle/shared')
 const {
   TokenResourceIdentifierType
 } = require('@/modules/core/graph/generated/graphql')
+const { ProjectRecordVisibility } = require('@/modules/core/helpers/types')
 
 describe('AuthZ @shared', () => {
   describe('Auth pipeline', () => {
@@ -411,7 +412,10 @@ describe('AuthZ @shared', () => {
         expect(result).to.deep.equal(input)
       })
       it('public stream, no auth returns same context ', async () => {
-        const input = { context: { stream: { isPublic: true } }, authResult: 'fake' }
+        const input = {
+          context: { stream: { visibility: ProjectRecordVisibility.Public } },
+          authResult: 'fake'
+        }
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
           input
         )
@@ -419,7 +423,10 @@ describe('AuthZ @shared', () => {
       })
       it('not public stream, with auth returns same context ', async () => {
         const input = {
-          context: { auth: true, stream: { isPublic: false } },
+          context: {
+            auth: true,
+            stream: { visibility: ProjectRecordVisibility.Private }
+          },
           authResult: 'fake'
         }
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
@@ -429,7 +436,10 @@ describe('AuthZ @shared', () => {
       })
       it('public stream, with auth returns authSuccess', async () => {
         const input = {
-          context: { auth: true, stream: { isPublic: true } },
+          context: {
+            auth: true,
+            stream: { visibility: ProjectRecordVisibility.Public }
+          },
           authResult: 'fake'
         }
         const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
@@ -447,7 +457,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: true,
-              stream: { isPublic: false, allowPublicComments: false }
+              stream: {
+                visibility: ProjectRecordVisibility.Private,
+                allowPublicComments: false
+              }
             },
             authResult: 'fake'
           }
@@ -457,7 +470,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: true,
-              stream: { isPublic: false, allowPublicComments: true }
+              stream: {
+                visibility: ProjectRecordVisibility.Private,
+                allowPublicComments: true
+              }
             },
             authResult: 'fake'
           }
@@ -467,7 +483,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: true,
-              stream: { isPublic: false, allowPublicComments: true }
+              stream: {
+                visibility: ProjectRecordVisibility.Private,
+                allowPublicComments: true
+              }
             },
             authResult: 'fake'
           }
@@ -477,7 +496,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: false,
-              stream: { isPublic: false, allowPublicComments: false }
+              stream: {
+                visibility: ProjectRecordVisibility.Private,
+                allowPublicComments: false
+              }
             },
             authResult: 'fake'
           }
@@ -487,7 +509,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: false,
-              stream: { isPublic: true, allowPublicComments: false }
+              stream: {
+                visibility: ProjectRecordVisibility.Public,
+                allowPublicComments: false
+              }
             },
             authResult: 'fake'
           }
@@ -497,7 +522,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: false,
-              stream: { isPublic: true, allowPublicComments: true }
+              stream: {
+                visibility: ProjectRecordVisibility.Public,
+                allowPublicComments: true
+              }
             },
             authResult: 'fake'
           }
@@ -507,7 +535,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: false,
-              stream: { isPublic: true, allowPublicComments: false }
+              stream: {
+                visibility: ProjectRecordVisibility.Public,
+                allowPublicComments: false
+              }
             },
             authResult: 'fake'
           }
@@ -517,7 +548,10 @@ describe('AuthZ @shared', () => {
           {
             context: {
               auth: false,
-              stream: { isPublic: true, allowPublicComments: false }
+              stream: {
+                visibility: ProjectRecordVisibility.Public,
+                allowPublicComments: false
+              }
             },
             authResult: 'fake'
           }
@@ -534,7 +568,10 @@ describe('AuthZ @shared', () => {
         const input = {
           context: {
             auth: true,
-            stream: { isPublic: true, allowPublicComments: true }
+            stream: {
+              visibility: ProjectRecordVisibility.Public,
+              allowPublicComments: true
+            }
           },
           authResult: 'fake'
         }

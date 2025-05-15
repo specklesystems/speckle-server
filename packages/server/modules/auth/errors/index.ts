@@ -35,3 +35,10 @@ export class RefreshTokenError extends BaseError {
   static defaultMessage = 'An issue occurred while refreshing a token'
   static statusCode = 400
 }
+
+export class MailchimpResourceError extends BaseError {
+  static code = 'MAILCHIMP'
+  static defaultMessage =
+    'An issue occurred while trying to reconcile Mailchimp resources'
+  static statusCode = 500
+}

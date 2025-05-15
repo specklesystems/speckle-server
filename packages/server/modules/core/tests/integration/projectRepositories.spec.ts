@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { Project } from '@/modules/core/domain/streams/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   deleteProjectFactory,
   getProjectFactory,
@@ -22,11 +23,12 @@ const createTestProject = (overrides?: Partial<Project>): Project => {
     createdAt: new Date(),
     updatedAt: new Date(),
     description: 'a test project',
-    isDiscoverable: true,
-    isPublic: true,
+    visibility: ProjectRecordVisibility.Public,
     name: cryptoRandomString({ length: 10 }),
     regionKey: null,
-    workspaceId: null
+    workspaceId: null,
+    isPublic: true,
+    isDiscoverable: true
   }
   return assign(defaults, overrides || {})
 }

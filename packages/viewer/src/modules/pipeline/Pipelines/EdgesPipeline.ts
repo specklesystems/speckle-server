@@ -5,7 +5,7 @@ import { TAAPass } from '../Passes/TAAPass.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { DepthNormalIdPass } from '../Passes/DepthNormalIdPass.js'
-import { Texture } from 'three'
+import { Texture, WebGLMultipleRenderTargets } from 'three'
 import { DepthPass } from '../Passes/DepthPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
 import { BasePipelineOptions } from './Pipeline.js'
@@ -50,11 +50,26 @@ export class EdgesPipeline extends ProgressivePipeline {
     depthNormalIdPass.setJitter(true)
     depthNormalIdPass.setClearColor(0x000000, 1)
     depthNormalIdPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    depthNormalIdPass.setVisibility(ObjectVisibility.DEPTH)
+
+    const depthNormalIdPassTransparent = new DepthNormalIdPass()
+    depthNormalIdPassTransparent.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthNormalIdPassTransparent.setJitter(true)
+    depthNormalIdPassTransparent.setVisibility(ObjectVisibility.TRANSPARENT)
+    depthNormalIdPassTransparent.outputTarget =
+      depthNormalIdPass.outputTarget as unknown as WebGLMultipleRenderTargets
 
     const depthPassNormalIdDynamic = new DepthNormalIdPass()
     depthPassNormalIdDynamic.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthPassNormalIdDynamic.setClearColor(0x000000, 1)
     depthPassNormalIdDynamic.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    depthPassNormalIdDynamic.setVisibility(ObjectVisibility.DEPTH)
+
+    const depthPassNormalIdDynamicTransparent = new DepthNormalIdPass()
+    depthPassNormalIdDynamicTransparent.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    depthPassNormalIdDynamicTransparent.setVisibility(ObjectVisibility.TRANSPARENT)
+    depthPassNormalIdDynamicTransparent.outputTarget =
+      depthPassNormalIdDynamic.outputTarget as unknown as WebGLMultipleRenderTargets
 
     const edgesPass = new EdgesPass()
     edgesPass.setTexture('tDepth', depthNormalIdPass.depthTexture)
@@ -80,8 +95,17 @@ export class EdgesPipeline extends ProgressivePipeline {
     taaPass.inputTexture = edgesPass.outputTarget?.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
 
-    this.dynamicStage.push(depthPassNormalIdDynamic, edgesPassDynamic)
-    this.progressiveStage.push(depthNormalIdPass, edgesPass, taaPass)
+    this.dynamicStage.push(
+      depthPassNormalIdDynamic,
+      depthPassNormalIdDynamicTransparent,
+      edgesPassDynamic
+    )
+    this.progressiveStage.push(
+      depthNormalIdPass,
+      depthNormalIdPassTransparent,
+      edgesPass,
+      taaPass
+    )
 
     this.passList = this.dynamicStage
 

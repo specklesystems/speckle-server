@@ -50,6 +50,7 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { asOperation } from '@/modules/shared/command'
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -147,7 +148,7 @@ export = {
       return { cursor, items: users }
     },
 
-    async users(_parent, args) {
+    async users(_parent, args, context) {
       if (args.input.query.length < 1)
         throw new BadRequestError('Search query must be at least 1 character.')
 
@@ -155,6 +156,14 @@ export = {
         throw new BadRequestError(
           'Cannot return more than 100 items, please use pagination.'
         )
+
+      if (args.input.projectId) {
+        const canRead = await context.authPolicies.project.canRead({
+          projectId: args.input.projectId,
+          userId: context.userId
+        })
+        throwIfAuthNotOk(canRead)
+      }
 
       const { cursor, users } = await lookupUsers(args.input)
       return { cursor, items: users }

@@ -97,4 +97,4 @@ const config: Config = {
   plugins: [FormsPlugin]
 }
 
-export default config
+export { config }

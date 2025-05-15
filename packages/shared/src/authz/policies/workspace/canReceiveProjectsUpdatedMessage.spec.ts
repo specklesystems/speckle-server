@@ -10,6 +10,7 @@ import {
   ServerNoSessionError,
   WorkspaceNoAccessError
 } from '../../domain/authErrors.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
   const buildSUT = (
@@ -20,8 +21,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.Guest,
@@ -73,8 +73,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => null
     })
@@ -95,8 +94,7 @@ describe('canReceiveWorkspaceProjectsUpdatedMessagePolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: true,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getServerRole: async () => null
     })

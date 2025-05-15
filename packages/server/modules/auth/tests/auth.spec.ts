@@ -71,6 +71,9 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import cryptoRandomString from 'crypto-random-string'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -685,10 +688,12 @@ describe('Auth @auth', () => {
         next
       })
 
-      SUT(null, { id: '123', email: 'weLoveAuth@example.org' }, undefined)
+      const userId = cryptoRandomString({ length: 4 })
+
+      SUT(null, { id: userId, email: createRandomEmail() }, undefined)
 
       expect(req).to.have.property('user')
-      expect(req.user?.id).to.equal('123')
+      expect(req.user?.id).to.equal(userId)
       expect(
         errorCalledCounter,
         'error request handler "next(err)" should not have been called'
@@ -698,41 +703,7 @@ describe('Auth @auth', () => {
         'next request handler should have been called'
       ).to.equal(1)
     })
-    it('Should handle case where there is an error but no user', async () => {
-      const req = httpMocks.createRequest()
-      req.log = logger
-      const res = httpMocks.createResponse()
-      let errorCalledCounter = 0
-      let nextCalledCounter = 0
-      const next = (err: unknown) => {
-        if (err) {
-          errorCalledCounter++
-        }
-        nextCalledCounter++
-      }
-      const SUT = passportAuthenticationCallbackFactory({
-        strategy: 'wotStrategy',
-        req,
-        res,
-        next
-      })
-
-      SUT(new Error('I brrrrroke'), undefined, undefined)
-      expect(
-        res._getRedirectUrl().includes('/error'),
-        `Redirect url was '${res._getRedirectUrl()}'`
-      ).to.be.true
-      expect(req).not.to.have.property('user')
-      expect(
-        errorCalledCounter,
-        'error request handler "next(err)" should not have been called'
-      ).to.equal(0)
-      expect(
-        nextCalledCounter,
-        'next request handler should not have been called'
-      ).to.equal(0)
-    })
-    it('Should handle case where there is an error and a user', async () => {
+    it('Should handle case where there is an unexpected error and a user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -753,7 +724,7 @@ describe('Auth @auth', () => {
 
       SUT(
         new Error('I brrrrrooooken'),
-        { id: '1234', email: 'allFizzy@example.org' },
+        { id: cryptoRandomString({ length: 4 }), email: createRandomEmail() },
         undefined
       )
 
@@ -767,6 +738,44 @@ describe('Auth @auth', () => {
         nextCalledCounter,
         'next request handler should have been called'
       ).to.equal(1)
+    })
+    it('Should handle case where there is a user-derived error and a user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(
+        new UserInputError('I brrrrroke'),
+        { id: cryptoRandomString({ length: 4 }), email: createRandomEmail() },
+        undefined
+      )
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
     })
     it('Should handle the case where there is no user and no error', async () => {
       const req = httpMocks.createRequest()
@@ -801,6 +810,70 @@ describe('Auth @auth', () => {
         nextCalledCounter,
         'next request handler should not have been called'
       ).to.equal(0)
+    })
+    it('Should handle case where there is a user-derived error but no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(new UserInputError('I brrrrroke'), undefined, undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
+    })
+    it('Should handle case where there is an unexpected error and no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(new Error('surprise!!!'), undefined, undefined)
+      expect(req).not.to.have.property('user')
+      expect(
+        nextCalledCounter,
+        'next request handler should have been called'
+      ).to.equal(1)
+      expect(
+        errorCalledCounter,
+        'next request handler should have been called with an error "next(err)"'
+      ).to.equal(1)
     })
   })
 })

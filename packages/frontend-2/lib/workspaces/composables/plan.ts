@@ -107,8 +107,8 @@ export const useWorkspacePlan = (slug: string) => {
   // Seat information
   const seats = computed(() => result.value?.workspaceBySlug?.seats)
   const hasAvailableEditorSeats = computed(() => {
-    if (seats.value?.editors.available && seats.value?.editors.assigned) {
-      return seats.value?.editors.available - seats.value?.editors.assigned > 0
+    if (seats.value?.editors.available) {
+      return seats.value.editors.available > 0
     }
     return false
   })

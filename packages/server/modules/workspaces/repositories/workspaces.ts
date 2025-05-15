@@ -44,7 +44,8 @@ import {
   ServerAclRecord,
   BranchRecord,
   StreamAclRecord,
-  StreamRecord
+  StreamRecord,
+  ProjectRecordVisibility
 } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
@@ -564,8 +565,11 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
     /**
      * If userId is set:
      * - If no workspace role, user should be server admin w/ admin override enabled
-     * - If workspace role is guest, user should have explicit stream roles
-     * - If workspace role other than guest, just get all workspace streams
+     * - If workspace role is admin: user can get all workspace streams
+     * - If workspace role is guest: user should have explicit stream roles
+     * - If workspace role is member:
+     *  - Public/Workspace visibility: get stream
+     *  - Private visibility: user should have explicit stream roles
      *
      * If withProjectRoleOnly is set: Require project role always
      */
@@ -590,10 +594,21 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
           }
 
           w.orWhere((w2) => {
-            // Ensure workspace role exists and its not guest or the user has explicit stream roles
+            // Ensure workspace role exists and:
+            // user has explicit stream role or is admin or is a non-guest in a non-private project
             w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
               if (!withProjectRoleOnly) {
-                w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest)
+                w3.where(DbWorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                  (w4) => {
+                    w4.whereNot(
+                      DbWorkspaceAcl.col.role,
+                      Roles.Workspace.Guest
+                    ).andWhereNot(
+                      Streams.col.visibility,
+                      ProjectRecordVisibility.Private
+                    )
+                  }
+                )
               }
 
               w3.orWhereExists(

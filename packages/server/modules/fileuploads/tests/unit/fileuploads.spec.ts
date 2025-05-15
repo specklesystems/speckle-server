@@ -13,8 +13,14 @@ import { expect } from 'chai'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { TIME } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import { assign } from 'lodash'
+import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
+import { getFeatureFlags } from '@speckle/shared/environment'
 
 const { createStream, createUser, garbageCollector } = initUploadTestEnvironment()
+
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 describe('FileUploads @fileuploads', () => {
   const userOne = {
@@ -36,6 +42,7 @@ describe('FileUploads @fileuploads', () => {
   afterEach(async () => {
     createdStreamId = ''
   })
+
   describe('Convert files', () => {
     it('Should garbage collect expired files', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
@@ -89,4 +96,44 @@ describe('FileUploads @fileuploads', () => {
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
     })
   })
+  ;(FF_NEXT_GEN_FILE_IMPORTER_ENABLED ? describe : describe.skip)(
+    'how file upload pushes a message to file-import service',
+    () => {
+      it('uses a fn that given the necessary ids, tokens and url pushes a message to the queue', async () => {
+        let usedUserId = undefined
+        const result = {}
+        const token = cryptoRandomString({ length: 40 })
+        const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
+        const upload = buildFileUploadMessage()
+
+        const pushJobToFileImporter = pushJobToFileImporterFactory({
+          getServerOrigin: () => serverOrigin,
+          scheduleJob: async (jobData) => {
+            assign(result, jobData)
+            return Promise.resolve(cryptoRandomString({ length: 10 }))
+          },
+          createAppToken: (args) => {
+            usedUserId = args.userId
+            return Promise.resolve(token)
+          }
+        })
+
+        await pushJobToFileImporter(upload)
+
+        expect(usedUserId).to.equal(upload.userId)
+        expect(result).to.deep.equal({
+          type: 'file-import',
+          payload: {
+            token,
+            url: `${serverOrigin}/projects/${upload.projectId}/fileimporter/jobs/${upload.jobId}/results`,
+            modelId: upload.modelId,
+            fileType: upload.fileType,
+            projectId: upload.projectId,
+            timeOutSeconds: 1200,
+            blobId: upload.blobId
+          }
+        })
+      })
+    }
+  )
 })

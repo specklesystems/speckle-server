@@ -141,8 +141,6 @@ spec:
             value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_FORCE_ONBOARDING
             value: {{ .Values.featureFlags.forceOnboarding | quote }}
-          - name: NUXT_PUBLIC_FF_NO_PERSONAL_EMAILS_ENABLED
-            value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLANS_ENABLED
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
