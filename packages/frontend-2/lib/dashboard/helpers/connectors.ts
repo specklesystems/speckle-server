@@ -32,15 +32,6 @@ export const connectorItems: ConnectorItem[] = [
     images: ['/images/connectors/rhino.png', '/images/connectors/grasshopper.png'],
     categories: [ConnectorCategory.NextGen, ConnectorCategory.CADAndModeling]
   },
-  // {
-  //   title: 'Grasshopper',
-  //   slug: 'rhino',
-  //   description:
-  //     'Publish and load models to boost design coordination and BI workflows.',
-  //   images: ['/images/connectors/grasshopper.png'],
-  //   url: 'https://www.speckle.systems/connectors/grasshopper',
-  //   categories: [ConnectorCategory.VisualProgramming]
-  // },
   {
     title: 'Power BI',
     slug: 'powerbi',

@@ -17,12 +17,6 @@
             <img :src="image" :alt="`${connector.title} logo`" class="w-[48px]" />
           </div>
         </div>
-        <!-- <img
-          v-if="connector.images"
-          :src="connector.images[0]"
-          :alt="`${connector.title} logo`"
-          class="w-[48px] -ml-1"
-        /> -->
         <div class="flex flex-col gap-y-1.5">
           <h2 class="text-body-xs text-foreground font-medium leading-none">
             {{ connector.title }}
