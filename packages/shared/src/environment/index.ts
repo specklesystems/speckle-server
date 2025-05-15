@@ -72,7 +72,7 @@ export const parseFeatureFlags = (
       defaults: { production: false, _: true }
     },
     // Enable limits on personal projects
-    FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
+    FF_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
     },
@@ -107,7 +107,7 @@ export type FeatureFlags = {
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-  FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
