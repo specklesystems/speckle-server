@@ -61,7 +61,7 @@
                 </NuxtLink>
 
                 <div v-if="isWorkspacesEnabled">
-                  <div @click="showExplainerVideoDialog = true">
+                  <div @click="openExplainerVideoDialog">
                     <LayoutSidebarMenuGroupItem label="Getting started">
                       <template #icon>
                         <IconPlay class="size-4 text-foreground-2" />
@@ -164,11 +164,13 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { mixpanel } = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
@@ -187,6 +189,14 @@ const showSidebar = computed(() => {
     ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
     : isLoggedIn.value
 })
+
+const openExplainerVideoDialog = () => {
+  showExplainerVideoDialog.value = true
+  isOpenMobile.value = false
+  mixpanel.track('Getting Started Video Opened', {
+    location: 'sidebar'
+  })
+}
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)

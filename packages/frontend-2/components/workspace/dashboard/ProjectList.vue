@@ -34,7 +34,7 @@
       <FormButton
         class="flex items-center gap-1"
         color="subtle"
-        @click="isExplainerVideoOpen = true"
+        @click="openExplainerVideoDialog"
       >
         <IconPlay class="h-4 w-4 text-foreground-2" />
         <span class="text-body-2xs text-foreground font-medium">
@@ -64,6 +64,7 @@ import type {
   WorkspaceProjectsQueryQueryVariables,
   WorkspaceDashboardProjectList_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceDashboardProjectList_ProjectCollection on ProjectCollection {
@@ -97,6 +98,7 @@ const {
   debouncedBy: 800
 })
 
+const { mixpanel } = useMixpanel()
 const {
   query: projectsQuery,
   identifier,
@@ -130,6 +132,13 @@ const showLoadingBar = computed(() => projectsQuery.loading.value)
 const showEmptyState = computed(() =>
   search.value ? false : projects.value && !projects.value?.items?.length
 )
+
+const openExplainerVideoDialog = () => {
+  isExplainerVideoOpen.value = true
+  mixpanel.track('Getting Started Video Opened', {
+    location: 'project_list'
+  })
+}
 
 const clearSearch = () => {
   search.value = ''
