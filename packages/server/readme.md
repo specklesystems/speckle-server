@@ -27,7 +27,7 @@ The external dependencies are **PostgreSQL** and **Redis**. To get the dependenc
 
 After you have PostgreSQL and Redis running, in the `packages/server` folder:
 
-- copy the `.env-example` file to `.env`,
+- copy the `.env.example` file to `.env`,
 - (if you plan to run tests) copy the `.env.test-example` file to `.env.test`
 - If you have a custom setup, open and edit the `.env` & `.env.test` files, filling in the required variables,
 - run `yarn install`,

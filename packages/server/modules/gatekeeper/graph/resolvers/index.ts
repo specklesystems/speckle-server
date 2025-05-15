@@ -155,7 +155,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
 
           // Defaults to Editor for old plans that don't have seat types
-          return seat?.type || WorkspaceSeatType.Editor
+          return seat?.type || WorkspaceSeatType.Viewer
         },
         seats: async (parent) => {
           return { workspaceId: parent.id }
