@@ -16,6 +16,12 @@ interface MeasurementOptions {
   precision?: number
 }
 
+export interface SectionBoxData {
+  min: number[]
+  max: number[]
+  rotation?: number[]
+}
+
 /**
  * v1 -> v1.1
  * - ui.filters.propertyFilter.isApplied field added
@@ -75,10 +81,7 @@ export type SerializedViewerState = {
       zoom: number
     }
     viewMode: number
-    sectionBox: Nullable<{
-      min: number[]
-      max: number[]
-    }>
+    sectionBox: Nullable<SectionBoxData>
     lightConfig: {
       intensity?: number
       indirectLightIntensity?: number
@@ -202,10 +205,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       viewMode: state.ui?.viewMode || 0,
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
-          ? {
-              min: state.ui.sectionBox.min,
-              max: state.ui.sectionBox.max
-            }
+          ? // Complains otherwise
+            (state.ui.sectionBox as SectionBoxData)
           : null,
       lightConfig: {
         ...(state.ui?.lightConfig || {}),

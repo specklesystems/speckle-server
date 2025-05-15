@@ -6,22 +6,24 @@ import {
   InterleavedBufferAttribute,
   Line3,
   Material,
+  Matrix4,
   Plane,
   Vector2,
   Vector3
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { Geometry } from '../converter/Geometry.js'
-import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial.js'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
-import { Extension } from './Extension.js'
-import { type IViewer } from '../../index.js'
-import { SectionTool, SectionToolEvent } from './SectionTool.js'
-import { GeometryType } from '../batching/Batch.js'
-import { ObjectLayers } from '../../IViewer.js'
-import { MeshBatch } from '../batching/MeshBatch.js'
-import Logger from '../utils/Logger.js'
+import { Geometry } from '../../converter/Geometry.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
+import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
+import { Extension } from '../Extension.js'
+import { OrientedSectionTool, SectionTool, type IViewer } from '../../../index.js'
+import { GeometryType } from '../../batching/Batch.js'
+import { ObjectLayers } from '../../../IViewer.js'
+import { MeshBatch } from '../../batching/MeshBatch.js'
+import Logger from '../../utils/Logger.js'
+import { SectionToolEvent } from './SectionTool.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 export enum PlaneId {
   POSITIVE_X = 'POSITIVE_X',
@@ -55,7 +57,7 @@ export class SectionOutlines extends Extension {
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
 
-  public constructor(viewer: IViewer, protected sectionProvider: SectionTool) {
+  public constructor(viewer: IViewer, protected sectionProvider: OrientedSectionTool) {
     super(viewer)
     this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
     this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)
@@ -117,9 +119,11 @@ export class SectionOutlines extends Extension {
     }
   }
 
-  public requestUpdate() {
+  public requestUpdate(force: boolean = false) {
     this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
-    this.updateOutlines(this.sectionPlanesChanged)
+    this.updateOutlines(
+      force ? this.viewer.getRenderer().clippingPlanes : this.sectionPlanesChanged
+    )
   }
 
   private updatePlaneOutline(
@@ -135,7 +139,7 @@ export class SectionOutlines extends Extension {
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
     if (!planeId) {
-      Logger.error(`Invalid plane! Aborting section outline update`)
+      Logger.error(`Invalid plane! Aborting section outline update`, _plane.normal)
       return
     }
     const clipOutline = this.planeOutlines[planeId].renderable
@@ -327,6 +331,7 @@ export class SectionOutlines extends Extension {
     clipOutline.frustumCulled = false
     clipOutline.renderOrder = 1
     clipOutline.layers.set(ObjectLayers.PROPS)
+    clipOutline.visible = false
 
     return {
       renderable: clipOutline
@@ -338,18 +343,26 @@ export class SectionOutlines extends Extension {
   }
 
   private onSectionBoxDragEnd() {
-    const generate = () => {
-      this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
-      this.updateOutlines(this.sectionPlanesChanged)
-      this.sectionProvider.removeListener(SectionToolEvent.Updated, generate)
-    }
-    this.sectionProvider.on(SectionToolEvent.Updated, generate)
+    this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    this.updateOutlines(this.sectionPlanesChanged)
+    /** 22.03.2025: This became obsolete once we switched to OrientedSectionTool */
+    // const generate = () => {
+    //   this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    //   this.updateOutlines(this.sectionPlanesChanged)
+    //   this.sectionProvider.removeListener(SectionToolEvent.Updated, generate)
+    // }
+    // this.sectionProvider.on(SectionToolEvent.Updated, generate)
   }
 
   private setSectionPlaneChanged(planes: Plane[]) {
     this.sectionPlanesChanged.length = 0
     for (let k = 0; k < planes.length; k++) {
-      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+      if (
+        Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001 ||
+        Math.abs(
+          this.lastSectionPlanes[k].normal.length() - planes[k].normal.length()
+        ) > 0.0001
+      )
         this.sectionPlanesChanged.push(planes[k])
       this.lastSectionPlanes[k].copy(planes[k])
     }
@@ -386,10 +399,15 @@ export class SectionOutlines extends Extension {
   }
 
   private getPlaneId(plane: Plane): PlaneId | undefined {
+    this.tmpVec.set(plane.normal.x, plane.normal.y, plane.normal.z)
+    let box = this.sectionProvider.getBox()
+    if (box instanceof Box3) box = new OBB().fromBox3(box)
+    const invRotation = new Matrix4().setFromMatrix3(box.rotation).invert()
+    this.tmpVec.applyMatrix4(invRotation).normalize()
     this.tmpVec.set(
-      Math.round(plane.normal.x),
-      Math.round(plane.normal.y),
-      Math.round(plane.normal.z)
+      Math.round(this.tmpVec.x),
+      Math.round(this.tmpVec.y),
+      Math.round(this.tmpVec.z)
     )
     if (this.tmpVec.equals(this.right)) return PlaneId.POSITIVE_X
     if (this.tmpVec.equals(this.left)) return PlaneId.NEGATIVE_X

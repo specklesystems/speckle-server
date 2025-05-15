@@ -50,7 +50,6 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
-import type { Box3 } from 'three'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
@@ -66,6 +65,7 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -267,7 +267,7 @@ export type InjectableViewerState = Readonly<{
       result: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
       enabled: Ref<boolean>
     }
-    sectionBox: Ref<Nullable<Box3>>
+    sectionBox: Ref<Nullable<SectionBoxData>>
     sectionBoxContext: {
       visible: Ref<boolean>
       edited: Ref<boolean>
@@ -996,7 +996,7 @@ function setupInterfaceState(
         isOrthoProjection
       },
       viewMode,
-      sectionBox: ref(null as Nullable<Box3>),
+      sectionBox: ref(null as Nullable<SectionBoxData>),
       sectionBoxContext: {
         visible: ref(false),
         edited: ref(false)
