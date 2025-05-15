@@ -28,7 +28,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
-  GetWorkspaceSeatsCount,
+  GetWorkspaceSeatCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
@@ -505,7 +505,7 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
   }
 
 export const getWorkspaceSeatCountFactory =
-  ({ db }: { db: Knex }): GetWorkspaceSeatsCount =>
+  ({ db }: { db: Knex }): GetWorkspaceSeatCount =>
   async ({ workspaceId, type }) => {
     const query = db(WorkspaceSeats.name).where(
       WorkspaceSeats.col.workspaceId,

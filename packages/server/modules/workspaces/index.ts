@@ -1,3 +1,4 @@
+import cron from 'node-cron'
 import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -10,10 +11,21 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
+import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
+import {
+  acquireTaskLockFactory,
+  releaseTaskLockFactory
+} from '@/modules/core/repositories/scheduledTasks'
+import { scheduleUpdateWorkspacesTracking } from '@/modules/workspaces/services/tracking'
 
-const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
+const {
+  FF_WORKSPACES_MODULE_ENABLED,
+  FF_WORKSPACES_SSO_ENABLED,
+  FF_BILLING_INTEGRATION_ENABLED
+} = getFeatureFlags()
 
 let quitListeners: Optional<() => void> = undefined
+let scheduledTasks: cron.ScheduledTask[] = []
 
 const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
@@ -41,6 +53,14 @@ const workspacesModule: SpeckleModule = {
     if (FF_WORKSPACES_SSO_ENABLED) app.use(getSsoRouter())
 
     if (isInitial) {
+      const scheduleExecution = scheduleExecutionFactory({
+        acquireTaskLock: acquireTaskLockFactory({ db }),
+        releaseTaskLock: releaseTaskLockFactory({ db })
+      })
+
+      if (FF_BILLING_INTEGRATION_ENABLED)
+        scheduledTasks = [scheduleUpdateWorkspacesTracking({ scheduleExecution })]
+
       quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])
@@ -48,6 +68,9 @@ const workspacesModule: SpeckleModule = {
   shutdown() {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     quitListeners?.()
+    scheduledTasks.forEach((task) => {
+      task.stop()
+    })
   }
 }
 

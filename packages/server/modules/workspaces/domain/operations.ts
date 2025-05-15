@@ -368,7 +368,7 @@ export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   skipUserIds?: string[]
 }) => Promise<number>
 
-export type GetWorkspaceSeatsCount = (args: {
+export type GetWorkspaceSeatCount = (args: {
   workspaceId: string
   type?: WorkspaceSeatType
 }) => Promise<number>
