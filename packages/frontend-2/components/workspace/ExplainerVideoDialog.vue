@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="lg" title="Intro to Speckle">
     <CommonVimeoEmbed
-      vimeo-id="76979871"
+      vimeo-id="1084612464"
       title="Speckle explained in 5 minutes"
       controls
       dark-placeholder="/images/workspace/explainer-video-dark.png"
