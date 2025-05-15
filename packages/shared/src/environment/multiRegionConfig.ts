@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import fs from 'node:fs/promises'
-import { Knex, knex } from 'knex'
+import * as Knex from 'knex' // knex has broken types, hence the * as import
 import { Logger } from 'pino'
-import { isUndefined } from '#lodash'
+import { isUndefined, get } from '#lodash'
+
+// cause of knex's ESM/CJS interop issues
+const knex = get(Knex, 'knex') || get(Knex, 'default')
 
 const regionConfigSchema = z.object({
   postgres: z.object({
@@ -115,7 +118,7 @@ export const createKnexConfig = ({
 }: {
   connectionString?: string | undefined
   caCertificate?: string | undefined
-} & KnexConfigArgs): Knex.Config => {
+} & KnexConfigArgs): Knex.Knex.Config => {
   const shouldEnableAsyncStackTraces = isUndefined(asyncStackTraces)
     ? isDevOrTestEnv
     : asyncStackTraces
@@ -164,7 +167,7 @@ export const createKnexConfig = ({
 export const configureKnexClient = (
   config: Pick<RegionServerConfig, 'postgres'>,
   configArgs: KnexConfigArgs
-): { public: Knex; private?: Knex } => {
+): { public: Knex.Knex; private?: Knex.Knex } => {
   const knexConfig = createKnexConfig({
     connectionString: config.postgres.connectionUri,
     caCertificate: config.postgres.publicTlsCertificate,

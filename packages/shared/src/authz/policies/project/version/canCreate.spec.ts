@@ -14,15 +14,14 @@ import {
 } from '../../../domain/authErrors.js'
 import { canCreateProjectVersionPolicy } from './canCreate.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
-describe('canReceiveProjectVersionPolicy', () => {
+describe('canCreateProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canCreateProjectVersionPolicy>) =>
     canCreateProjectVersionPolicy({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Contributor,
       getEnv: async () => parseFeatureFlags({}),
@@ -41,8 +40,7 @@ describe('canReceiveProjectVersionPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

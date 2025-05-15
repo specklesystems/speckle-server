@@ -1,7 +1,10 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import {
+  findEmailsByUserIdFactory,
+  findVerifiedEmailsByUserIdFactory
+} from '@/modules/core/repositories/userEmails'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -27,8 +30,11 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import {
   getWorkspaceFactory,
+  getWorkspaceRolesFactory,
+  getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { sendWorkspaceJoinRequestApprovedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/approved'
 import { sendWorkspaceJoinRequestDeniedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/denied'
 import {
@@ -160,12 +166,20 @@ export default FF_WORKSPACES_MODULE_ENABLED
                   getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
                     db
                   }),
-                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                   emit,
-                  ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-                    eventEmit: emit
+                  addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+                    getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                    findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                      db
+                    }),
+                    getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                    emitWorkspaceEvent: emit,
+                    ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                      eventEmit: emit
+                    })
                   })
                 })
               }

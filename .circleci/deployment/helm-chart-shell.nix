@@ -1,9 +1,9 @@
-{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") {} }:
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/63dacb46bf939521bdc93981b4cbb7ecb58427a0.tar.gz") {} }:
 
 let
   corepack = pkgs.stdenv.mkDerivation {
     name = "corepack";
-    buildInputs = [ pkgs.nodejs-18_x ];
+    buildInputs = [ pkgs.nodejs_22 ];
     phases = [ "installPhase" ];
     installPhase = ''
       mkdir -p $out/bin
@@ -15,7 +15,7 @@ in pkgs.mkShell {
     pkgs.docker
     pkgs.kind
     pkgs.kubectl
-    pkgs.nodejs-18_x
+    pkgs.nodejs_22
     pkgs.ctlptl
     pkgs.crane
     pkgs.kubernetes-helm

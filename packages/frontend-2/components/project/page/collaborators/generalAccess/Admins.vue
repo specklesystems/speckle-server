@@ -3,20 +3,22 @@
     <div
       class="bg-foundation gap-2 p-3 border-t border-x border-outline-3 rounded-t-lg flex flex-col"
     >
-      <div class="flex flex-1 items-center justify-between">
-        <button class="flex items-center gap-1 cursor-pointer" @click="toggleAdmins">
+      <div class="flex items-center justify-between">
+        <button
+          class="flex flex-grow items-center gap-1 cursor-pointer"
+          @click="toggleAdmins"
+        >
           <p class="text-body-xs">Workspace admins</p>
           <ChevronDownIcon
             :class="`h-4 w-4 ${expanded ? '-rotate-180' : 'rotate-0'}`"
           />
         </button>
-        <ProjectPageTeamPermissionSelect
-          v-if="canEdit"
-          :model-value="adminRole"
-          :disabled-roles="[Roles.Stream.Contributor, Roles.Stream.Reviewer]"
-          disabled-item-tooltip="Admin roles can't be changed"
-        />
-        <div v-else class="flex items-center justify-end text-body-2xs">
+        <div
+          v-tippy="
+            'Workspace admins are automatically owners of all projects in the workspace. This project role cannot be changed.'
+          "
+          class="flex items-center justify-end text-body-2xs"
+        >
           {{ roleSelectItems[Roles.Stream.Owner].title }}
         </div>
       </div>
@@ -46,18 +48,16 @@
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectPageCollaborators_WorkspaceCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
-import { Roles, type StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 defineProps<{
-  canEdit: boolean
   admins: ProjectPageCollaborators_WorkspaceCollaboratorFragment[]
 }>()
 
 const { activeUser: user } = useActiveUser()
 
 const expanded = ref(false)
-const adminRole = ref<StreamRoles>(Roles.Stream.Owner)
 
 const adminIsYou = (id: string) => id === user.value?.id
 const toggleAdmins = () => {

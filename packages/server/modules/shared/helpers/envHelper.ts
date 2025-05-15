@@ -1,6 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { has, trimEnd } from 'lodash'
-import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import * as Environment from '@speckle/shared/environment'
 import { ensureError, Nullable } from '@speckle/shared'
 
 export function getStringFromEnv(
@@ -102,6 +102,10 @@ export function getFileSizeLimitMB() {
 
 export function getFileImportTimeLimitMinutes() {
   return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
+}
+
+export function getFileUploadTimeLimitMinutes() {
+  return getIntFromEnv('FILE_UPLOAD_TIME_LIMIT_MIN', '10')
 }
 
 export function getMaximumRequestBodySizeMB() {

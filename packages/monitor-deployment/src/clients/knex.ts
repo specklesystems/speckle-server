@@ -9,12 +9,12 @@ import {
   isDevOrTestEnv,
   isTest
 } from '@/utils/env.js'
-import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+import * as Environment from '@speckle/shared/environment'
 import {
   loadMultiRegionsConfig,
   configureKnexClient
-} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
-import { Knex } from 'knex'
+} from '@speckle/shared/environment/multiRegionConfig'
+import type { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
