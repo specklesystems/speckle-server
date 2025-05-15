@@ -141,6 +141,10 @@ spec:
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
+          {{- if .Values.analytics.intercom_app_id }}
+          - name: NUXT_PUBLIC_INTERCOM_APP_ID
+            value: {{ .Values.analytics.intercom_app_id | quote }}
+          {{- end }}
           {{- with .Values.frontend_2.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}

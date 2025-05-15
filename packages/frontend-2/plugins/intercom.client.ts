@@ -14,6 +14,9 @@ export const useIntercom = () => {
   const route = useRoute()
   const { activeUser: user } = useActiveUser()
   const apollo = useApolloClient().client
+  const {
+    public: { intercomAppId }
+  } = useRuntimeConfig()
 
   const isInitialized = ref(false)
 
@@ -37,19 +40,23 @@ export const useIntercom = () => {
   )
 
   const bootIntercom = () => {
-    if (!shouldEnableIntercom.value || !user.value || isInitialized.value) return
+    if (
+      !shouldEnableIntercom.value ||
+      !user.value ||
+      isInitialized.value ||
+      !intercomAppId
+    )
+      return
     isInitialized.value = true
 
     Intercom({
       /* eslint-disable camelcase */
-      app_id: 'hoiaq4wn',
-      user_id: user.value.id || undefined,
-      created_at: user.value.createdAt
-        ? Math.floor(new Date(user.value.createdAt).getTime() / 1000)
-        : undefined,
+      app_id: intercomAppId,
+      user_id: user.value.id,
+      created_at: Math.floor(new Date(user.value.createdAt).getTime() / 1000),
       /* eslint-enable camelcase */
-      name: user.value.name || undefined,
-      email: user.value.email || undefined
+      name: user.value.name,
+      email: user.value.email
     })
 
     updateCompany()
@@ -57,18 +64,22 @@ export const useIntercom = () => {
 
   const showIntercom = () => {
     if (!isInitialized.value) {
-      bootIntercom()
+      throw new Error('Intercom is not initialized')
     }
     show()
   }
 
   const hideIntercom = () => {
-    if (!isInitialized.value) return
+    if (!isInitialized.value) {
+      throw new Error('Intercom is not initialized')
+    }
     hide()
   }
 
   const shutdownIntercom = () => {
-    if (!isInitialized.value) return
+    if (!isInitialized.value) {
+      throw new Error('Intercom is not initialized')
+    }
     shutdown()
     isInitialized.value = false
   }
