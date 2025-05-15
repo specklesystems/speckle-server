@@ -34,8 +34,8 @@ const onUserCreatedFactory =
       // Set up mailchimp
       if (getMailchimpStatus()) {
         try {
-          const { listId: onboadringListId } = getMailchimpOnboardingIds()
-          await addToMailchimpAudience(user, onboadringListId)
+          const { listId: onboardingListId } = getMailchimpOnboardingIds()
+          await addToMailchimpAudience(user, onboardingListId)
 
           if (newsletterConsent) {
             const { listId: newsletterListId } = getMailchimpNewsletterIds()
