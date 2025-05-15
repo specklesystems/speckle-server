@@ -39,7 +39,8 @@ describe('Object repository functions', () => {
     id: '',
     objectId: '',
     streamId: '',
-    authorId: ''
+    authorId: '',
+    branchId: ''
   }
 
   before(async () => {

@@ -116,7 +116,8 @@ isMultiRegionTestMode()
         id: '',
         objectId: '',
         streamId: '',
-        authorId: ''
+        authorId: '',
+        branchId: ''
       }
 
       let testAutomation: AutomationRecord

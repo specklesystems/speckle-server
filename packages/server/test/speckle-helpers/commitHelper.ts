@@ -22,6 +22,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestCommit = {
   /**
@@ -41,6 +42,10 @@ export type BasicTestCommit = {
    */
   authorId: string
   /**
+   * Can be left empty, will be filled on creation. Takes precedence over branchName
+   */
+  branchId: string
+  /**
    * Defaults to 'main'
    */
   branchName?: string
@@ -53,6 +58,11 @@ export type BasicTestCommit = {
    * Empty array by default
    */
   parents?: string[]
+
+  /**
+   * Optionally override the createdAt date
+   */
+  createdAt?: Date
 }
 
 export async function createTestObject(params: { projectId: string }) {
@@ -85,7 +95,7 @@ async function ensureObjects(commits: BasicTestCommit[]) {
 
       return createObject({
         streamId: c.streamId,
-        object: { foo: 'bar' }
+        object: { foo: cryptoRandomString({ length: 256 }) }
       }).then((oid) => (c.objectId = oid))
     })
   )
@@ -128,7 +138,7 @@ export async function createTestCommits(
         getBranchById: getBranchByIdFactory({ db: projectDb })
       })
 
-      return createCommitByBranchName({
+      const baseArgs = {
         streamId: c.streamId,
         branchName: c.branchName || 'main',
         message: c.message || 'this message is auto generated',
@@ -136,8 +146,20 @@ export async function createTestCommits(
         objectId: c.objectId,
         authorId: c.authorId,
         totalChildrenCount: 0,
-        parents: c.parents || []
-      }).then((newCommit) => (c.id = newCommit.id))
+        parents: c.parents || [],
+        createdAt: c.createdAt
+      }
+
+      const commit = await (c.branchId.length
+        ? createCommitByBranchId({
+            ...baseArgs,
+            branchId: c.branchId
+          })
+        : createCommitByBranchName(baseArgs))
+      c.id = commit.id
+      c.branchId = commit.branchId
+
+      return c
     })
   )
 }

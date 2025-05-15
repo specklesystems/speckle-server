@@ -69,6 +69,8 @@ export type InsertCommentPayload = MarkNullableOptional<
     text: SmartTextEditorValueSchema
     archived?: boolean
     id?: string
+    createdAt?: Date
+    updatedAt?: Date
   }
 >
 
@@ -239,7 +241,13 @@ export type ConvertLegacyDataToState = (
 
 export type CreateCommentThreadAndNotify = (
   input: CreateCommentInput,
-  userId: string
+  userId: string,
+  options?: Partial<{
+    /**
+     * Used in tests: Override createdAt date
+     */
+    createdAt: Date
+  }>
 ) => Promise<CommentRecord>
 
 export type CreateCommentReplyAndNotify = (
