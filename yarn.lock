@@ -15645,7 +15645,7 @@ __metadata:
     tarn: "npm:^3.0.2"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
-    undici: "npm:^5.28.4"
+    undici: "npm:^5.29.0"
     valid-filename: "npm:^3.1.0"
     vitest: "npm:^1.6.0"
     web-ifc: "npm:^0.0.36"
@@ -16119,7 +16119,7 @@ __metadata:
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
     ua-parser-js: "npm:^1.0.38"
-    undici: "npm:^5.28.4"
+    undici: "npm:^5.29.0"
     verror: "npm:^1.10.1"
     ws: "npm:^8.17.1"
     xml-escape: "npm:^1.1.0"
@@ -47821,12 +47821,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.28.2, undici@npm:^5.28.4":
+"undici@npm:^5.28.2":
   version: 5.28.4
   resolution: "undici@npm:5.28.4"
   dependencies:
     "@fastify/busboy": "npm:^2.0.0"
   checksum: 10/a666a9f5ac4270c659fafc33d78b6b5039a0adbae3e28f934774c85dcc66ea91da907896f12b414bd6f578508b44d5dc206fa636afa0e49a4e1c9e99831ff065
+  languageName: node
+  linkType: hard
+
+"undici@npm:^5.29.0":
+  version: 5.29.0
+  resolution: "undici@npm:5.29.0"
+  dependencies:
+    "@fastify/busboy": "npm:^2.0.0"
+  checksum: 10/0ceca8924a32acdcc0cfb8dd2d368c217840970aa3f5e314fc169608474be6341c5b8e50cad7bd257dbe3b4e432bc5d0a0d000f83644b54fa11a48735ec52b93
   languageName: node
   linkType: hard
 
