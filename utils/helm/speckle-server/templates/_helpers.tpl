@@ -959,6 +959,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAILCHIMP_ONBOARDING_LIST_ID
   value: "{{ .Values.server.mailchimp.onboardingListId}}"
+{{- end }}
 
 # Monitoring - Apollo
 {{- if .Values.server.monitoring.apollo.enabled }}
