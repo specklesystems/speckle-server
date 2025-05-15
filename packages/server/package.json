@@ -127,7 +127,7 @@
     "subscriptions-transport-ws": "^0.11.0",
     "true-myth": "^8.5.0",
     "ua-parser-js": "^1.0.38",
-    "undici": "^5.28.4",
+    "undici": "^5.29.0",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "znv": "^0.4.0",
