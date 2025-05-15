@@ -4752,7 +4752,6 @@ export type WorkspaceMutations = {
   /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
   dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
-  join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
   requestToJoin: Scalars['Boolean']['output'];
@@ -4792,11 +4791,6 @@ export type WorkspaceMutationsDeleteSsoProviderArgs = {
 
 export type WorkspaceMutationsDismissArgs = {
   input: WorkspaceDismissInput;
-};
-
-
-export type WorkspaceMutationsJoinArgs = {
-  input: JoinWorkspaceInput;
 };
 
 
