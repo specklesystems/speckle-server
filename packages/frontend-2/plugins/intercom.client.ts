@@ -4,7 +4,7 @@ import { useNavigation } from '~/lib/navigation/composables/navigation'
 import { watch, computed, ref } from 'vue'
 import Intercom, { shutdown, show, hide, update } from '@intercom/messenger-js-sdk'
 import { useApolloClient } from '@vue/apollo-composable'
-import { navigationActiveWorkspaceQuery } from '~~/lib/navigation/graphql/queries'
+import { intercomActiveWorkspaceQuery } from '~~/lib/intercom/graphql/queries'
 
 const disabledRoutes = ['/auth', '/models/']
 
@@ -89,7 +89,7 @@ export const useIntercom = () => {
     if (!activeWorkspaceSlug.value) return
 
     const workspace = await apollo.query({
-      query: navigationActiveWorkspaceQuery,
+      query: intercomActiveWorkspaceQuery,
       variables: {
         slug: activeWorkspaceSlug.value
       }
@@ -101,7 +101,17 @@ export const useIntercom = () => {
       company: {
         id: workspace.data?.workspaceBySlug.id,
         name: workspace.data?.workspaceBySlug.name,
-        plan: workspace.data?.workspaceBySlug.plan?.name
+        people: workspace.data?.workspaceBySlug.team?.totalCount,
+        /* eslint-disable camelcase */
+        plan_name: workspace.data?.workspaceBySlug.plan?.name,
+        plan_status: workspace.data?.workspaceBySlug.plan?.status,
+        subscription_created_at:
+          workspace.data?.workspaceBySlug.subscription?.createdAt,
+        subscription_updated_at:
+          workspace.data?.workspaceBySlug.subscription?.updatedAt,
+        subscription_current_billing_cycle_end:
+          workspace.data?.workspaceBySlug.subscription?.currentBillingCycleEnd
+        /* eslint-enable camelcase */
       }
     })
   }
