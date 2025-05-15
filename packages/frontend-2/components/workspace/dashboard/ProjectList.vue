@@ -20,15 +20,27 @@
 
     <section
       v-if="showEmptyState"
-      class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-4"
+      class="bg-foundation-page h-96 flex flex-col items-center justify-center gap-3"
     >
       <IllustrationEmptystateWorkspace />
-      <h2 class="text-heading-sm text-foreground-2 text-center">Workspace is empty</h2>
+      <h2 class="text-heading-sm text-foreground-2 text-center mb-1">
+        Workspace is empty
+      </h2>
       <WorkspaceAddProjectMenu
         :workspace="workspace"
         :workspace-slug="workspaceSlug"
         cta-label="Add your first project"
       />
+      <FormButton
+        class="flex items-center gap-1"
+        color="subtle"
+        @click="isExplainerVideoOpen = true"
+      >
+        <IconPlay class="h-4 w-4 text-foreground-2" />
+        <span class="text-body-2xs text-foreground font-medium">
+          Speckle explained in 5 minutes →
+        </span>
+      </FormButton>
     </section>
 
     <section v-else-if="projects?.items?.length">
@@ -37,6 +49,7 @@
     </section>
 
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
+    <WorkspaceExplainerVideoDialog v-model:open="isExplainerVideoOpen" />
   </div>
 </template>
 
@@ -73,6 +86,8 @@ const props = defineProps<{
   workspaceSlug: string
   workspace: MaybeNullOrUndefined<WorkspaceDashboardProjectList_WorkspaceFragment>
 }>()
+
+const isExplainerVideoOpen = ref(false)
 
 const {
   on,
