@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
@@ -11,6 +12,7 @@ import {
   Vector4
 } from 'three'
 import { type SpeckleObject } from '../../IViewer.js'
+import { getRelativeOffset, makePerspectiveProjection } from '../Helpers.js'
 
 const vecBuff0: Vector3 = new Vector3()
 const floatArrayBuff: Float32Array = new Float32Array(16)
@@ -290,6 +292,33 @@ export class Geometry {
         position_low[k] = doubleValue + doubleHigh
       }
     }
+  }
+
+  public static needsRTE(bounds: Box3) {
+    const cameraDistance = getRelativeOffset(bounds, 0.01)
+    const cameraNear = getRelativeOffset(bounds, 0.009)
+    const screenSize = new Vector2(1920, 1080)
+    const cameraProjection = makePerspectiveProjection(
+      screenSize,
+      50,
+      cameraNear,
+      cameraNear * 10
+    )
+
+    const pixelDelta = new Vector2(-1, -1)
+    const points = [bounds.min, bounds.max, bounds.getCenter(new Vector3())]
+    for (let k = 0; k < points.length; k++) {
+      const delta = Geometry.getFP32ProjectionDelta(
+        points[k],
+        cameraProjection,
+        screenSize,
+        cameraDistance
+      )
+      pixelDelta.x = Math.max(pixelDelta.x, delta.x)
+      pixelDelta.y = Math.max(pixelDelta.y, delta.y)
+    }
+
+    return pixelDelta.x >= 0.5 || pixelDelta.y >= 0.5
   }
 
   public static getFP32ProjectionDelta(
