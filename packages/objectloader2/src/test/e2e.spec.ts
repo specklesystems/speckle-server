@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
-import ObjectLoader2 from '../operations/objectLoader2.js'
 import { Base } from '../types/types.js'
-import { TIME } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
+import { ObjectLoader2Factory } from '../operations/objectLoader2Factory.js'
 
 describe('e2e', () => {
   test(
@@ -10,7 +10,7 @@ describe('e2e', () => {
     async () => {
       // Revit sample house (good for bim-like stuff with many display meshes)
       //const resource = 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
-      const loader = new ObjectLoader2({
+      const loader = ObjectLoader2Factory.createFromUrl({
         serverUrl: 'https://app.speckle.systems',
         streamId: 'da9e320dad',
         objectId: '31d10c0cea569a1e26809658ed27e281',
@@ -36,6 +36,6 @@ describe('e2e', () => {
       expect(base2).toBeDefined()
       expect(base2.id).toBe('3841e3cbc45d52c47bc2f1b7b0ad4eb9')
     },
-    10 * TIME.second
+    10 * TIME_MS.second
   )
 })

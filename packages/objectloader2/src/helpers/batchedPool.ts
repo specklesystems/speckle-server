@@ -27,7 +27,7 @@ export default class BatchedPool<T> {
     return this.#queue.splice(0, Math.min(batchSize, this.#queue.length))
   }
 
-  async #runWorker(batchSize: number) {
+  async #runWorker(batchSize: number): Promise<void> {
     while (!this.#finished || this.#queue.length > 0) {
       if (this.#queue.length > 0) {
         const batch = this.getBatch(batchSize)

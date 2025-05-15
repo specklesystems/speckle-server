@@ -55,7 +55,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import ObjectLoader2 from '@speckle/objectloader2'
+import { ObjectLoader2Factory } from '@speckle/objectloader2'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1312,10 +1312,16 @@ export default class Sandbox {
         true,
         undefined
       )
+      let progress = 0
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
-        if (colorImage)
-          colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+        const p = Math.floor(arg.progress * 100)
+        if (p > progress) {
+          if (colorImage)
+            colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
+          progress = p
+          console.log(`Loading ${p}%`)
+        }
       })
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
@@ -1372,7 +1378,7 @@ export default class Sandbox {
       options: { enableCaching: true }
     })*/
 
-    const loader = new ObjectLoader2({
+    const loader = ObjectLoader2Factory.createFromUrl({
       serverUrl,
       streamId,
       objectId,
