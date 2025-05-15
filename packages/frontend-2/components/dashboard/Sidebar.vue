@@ -73,6 +73,19 @@
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <div v-if="isWorkspacesEnabled">
+                  <div @click="showExplainerVideoDialog = true">
+                    <LayoutSidebarMenuGroupItem label="Get started">
+                      <template #icon>
+                        <IconPlay class="size-4 text-foreground-2" />
+                      </template>
+                    </LayoutSidebarMenuGroupItem>
+                  </div>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
+
                 <CalPopUp v-if="isWorkspacesEnabled">
                   <LayoutSidebarMenuGroupItem label="Book an intro call">
                     <template #icon>
@@ -159,6 +172,7 @@ const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
+const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value

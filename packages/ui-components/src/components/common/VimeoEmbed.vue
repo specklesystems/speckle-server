@@ -11,9 +11,10 @@
       class="w-full h-full"
     ></iframe>
 
-    <div
+    <button
       v-if="!isPlaying && (darkPlaceholder || lightPlaceholder)"
-      class="absolute top-0 left-0 w-full h-full flex items-center justify-center"
+      class="group absolute top-0 left-0 w-full h-full flex items-center justify-center"
+      @click="play"
     >
       <div
         class="absolute top-0 left-0 w-full h-full bg-foundation pointer-events-none"
@@ -31,13 +32,12 @@
           :alt="placeholderAlt || 'Play video'"
         />
       </div>
-      <button
-        class="relative z-10 bg-primary hover:bg-primary-focus h-28 w-28 rounded-full border-[4px] border-white flex items-center justify-center shadow-md"
-        @click="play"
+      <div
+        class="relative z-10 bg-primary group-hover:bg-primary-focus h-28 w-28 rounded-full border-[4px] border-white flex items-center justify-center shadow-md"
       >
         <IconPlay class="h-10 w-10 ml-2 text-white" />
-      </button>
-    </div>
+      </div>
+    </button>
   </div>
 </template>
 
