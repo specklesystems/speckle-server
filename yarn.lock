@@ -11877,15 +11877,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsonforms/core@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@jsonforms/core@npm:3.3.0"
+"@jsonforms/core@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@jsonforms/core@npm:3.5.1"
   dependencies:
     "@types/json-schema": "npm:^7.0.3"
     ajv: "npm:^8.6.1"
     ajv-formats: "npm:^2.1.0"
     lodash: "npm:^4.17.21"
-  checksum: 10/75e183195111cd376d44001edb0d60ba1160754bf5409d20444148464acfeb188cb3632650f2d41a1665292239bc22b27cd0097def19618c3acbedf1e0440db2
+  checksum: 10/f8ef9f86e07d20d1d3feec5bc96fff85a743b8ae98558c57ca8991945d58167c1f04ea701919f39d1b2453bdd340c7b469d71927ded3a079eadd947af4695686
   languageName: node
   linkType: hard
 
@@ -11902,15 +11902,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsonforms/vue@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@jsonforms/vue@npm:3.3.0"
+"@jsonforms/vue@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@jsonforms/vue@npm:3.5.1"
   dependencies:
     lodash: "npm:^4.17.21"
   peerDependencies:
-    "@jsonforms/core": 3.3.0
+    "@jsonforms/core": 3.5.1
     vue: ^3.2.26
-  checksum: 10/3cea4a4f2a5267cbf045972a416045b34cee376e1eb60c268d4882b676c83b87e7f34eb2038fe4df8b8e41e6e28240ea524b458afca38f3552059d037f9c577d
+  checksum: 10/55717175334d1634cb9079426f738c1b7d62aca0d5eb60824e2ee4e8a753bc979173ccefc1621fe045504330a3fd0bf60641076ff045decd4230bae48ac0e15a
   languageName: node
   linkType: hard
 
@@ -15669,8 +15669,8 @@ __metadata:
     "@graphql-codegen/visitor-plugin-common": "npm:^5.7.1"
     "@headlessui/vue": "npm:^1.7.13"
     "@heroicons/vue": "npm:^2.0.12"
-    "@jsonforms/core": "npm:^3.3.0"
-    "@jsonforms/vue": "npm:^3.3.0"
+    "@jsonforms/core": "npm:^3.5.1"
+    "@jsonforms/vue": "npm:^3.5.1"
     "@jsonforms/vue-vanilla": "npm:^3.3.0"
     "@nuxt/devtools": "npm:^1.7.0"
     "@nuxt/eslint": "npm:^1.1.0"
@@ -21791,19 +21791,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.0.1":
-  version: 8.11.0
-  resolution: "ajv@npm:8.11.0"
-  dependencies:
-    fast-deep-equal: "npm:^3.1.1"
-    json-schema-traverse: "npm:^1.0.0"
-    require-from-string: "npm:^2.0.2"
-    uri-js: "npm:^4.2.2"
-  checksum: 10/aa0dfd6cebdedde8e77747e84e7b7c55921930974b8547f54b4156164ff70445819398face32dafda4bd4c61bbc7513d308d4c2bf769f8ea6cb9c8449f9faf54
-  languageName: node
-  linkType: hard
-
-"ajv@npm:^8.12.0, ajv@npm:~8.13.0":
+"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.12.0, ajv@npm:^8.6.1, ajv@npm:~8.13.0":
   version: 8.13.0
   resolution: "ajv@npm:8.13.0"
   dependencies:
@@ -21815,7 +21803,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.6.1, ajv@npm:~8.12.0":
+"ajv@npm:~8.12.0":
   version: 8.12.0
   resolution: "ajv@npm:8.12.0"
   dependencies:

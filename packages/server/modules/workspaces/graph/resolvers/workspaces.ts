@@ -46,7 +46,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   WorkspaceInvalidRoleError,
-  WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacePaidPlanActiveError,
   WorkspacesNotAuthorizedError
@@ -122,7 +121,6 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import {
@@ -986,48 +984,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           return true
-        },
-        async join(_parent, args, context) {
-          if (!context.userId) throw new WorkspaceJoinNotAllowedError()
-          const workspaceId = args.input.workspaceId
-
-          const logger = context.log.child({
-            workspaceId
-          })
-
-          const joinWorkspace = joinWorkspaceFactory({
-            getUserEmails: findEmailsByUserIdFactory({ db }),
-            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit,
-            addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
-              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                db
-              }),
-              getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-              emitWorkspaceEvent: getEventBus().emit,
-              ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-                eventEmit: getEventBus().emit
-              })
-            })
-          })
-
-          await withOperationLogging(
-            async () => await joinWorkspace({ userId: context.userId!, workspaceId }),
-            {
-              logger,
-              operationName: 'joinWorkspace',
-              operationDescription: 'Join workspace'
-            }
-          )
-
-          return await getWorkspaceFactory({ db })({
-            workspaceId,
-            userId: context.userId
-          })
         },
         leave: async (_parent, args, context) => {
           const workspaceId = args.id
