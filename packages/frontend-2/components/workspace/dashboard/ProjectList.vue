@@ -98,7 +98,7 @@ const {
   debouncedBy: 800
 })
 
-const { mixpanel } = useMixpanel()
+const mixpanel = useMixpanel()
 const {
   query: projectsQuery,
   identifier,

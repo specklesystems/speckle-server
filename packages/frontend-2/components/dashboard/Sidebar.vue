@@ -170,7 +170,7 @@ const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
-const { mixpanel } = useMixpanel()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
