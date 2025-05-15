@@ -18,6 +18,7 @@
             :can-edit="!!canUpdate?.authorized"
             :admins="workspaceAdmins"
             :workspace-id="project.workspaceId"
+            :project="project"
           />
         </div>
         <div
@@ -80,6 +81,7 @@ const projectPageCollaboratorsQuery = graphql(`
   query ProjectPageCollaborators($projectId: String!, $filter: WorkspaceTeamFilter!) {
     project(id: $projectId) {
       id
+      visibility
       ...ProjectPageTeamInternals_Project
       ...InviteDialogProject_Project
       ...ProjectPageCollaborators_Project

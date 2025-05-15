@@ -1,9 +1,7 @@
 <template>
   <ProjectPageSettingsBlock background title="Access" :auth-check="canUpdate">
     <template #introduction>
-      <p class="text-body-xs text-foreground">
-        Choose how you want to share this project with others.
-      </p>
+      <p class="text-body-xs text-foreground">Choose who can access this project.</p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"
@@ -16,7 +14,11 @@
 </template>
 
 <script setup lang="ts">
-import { LockClosedIcon, LinkIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
+import {
+  LockClosedIcon,
+  GlobeAltIcon,
+  BuildingOfficeIcon
+} from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import {
   castToSupportedVisibility,
@@ -56,22 +58,22 @@ const radioOptions = computed(() => [
     value: SupportedProjectVisibility.Public,
     title: 'Public',
     introduction: 'Anyone with the link can view',
-    icon: LinkIcon
+    icon: GlobeAltIcon
   },
   ...(props.project.workspaceId
     ? [
         {
           value: SupportedProjectVisibility.Workspace,
-          introduction: 'Only workspace members can access',
+          introduction: 'All workspace members can view',
           title: 'Workspace',
-          icon: BriefcaseIcon
+          icon: BuildingOfficeIcon
         }
       ]
     : []),
   {
     value: SupportedProjectVisibility.Private,
     title: 'Private',
-    introduction: 'Only collaborators can access',
+    introduction: 'Only for project members and admins',
     icon: LockClosedIcon
   }
 ])
