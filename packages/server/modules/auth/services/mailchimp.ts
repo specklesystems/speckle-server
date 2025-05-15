@@ -47,17 +47,6 @@ export async function addToMailchimpAudience(user: UserRecord, listId: string) {
   })
 }
 
-export async function triggerMailchimpCustomerJourney(
-  user: UserRecord,
-  {
-    listId
-  }: {
-    listId: string
-  }
-) {
-  await addToMailchimpAudience(user, listId)
-}
-
 export async function updateMailchimpMemberTags(
   user: UserRecord,
   listId: string,
