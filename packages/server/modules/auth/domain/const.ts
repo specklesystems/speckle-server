@@ -1,7 +1,8 @@
 export const ExpectedAuthFailure = {
   UnverifiedEmailSSOLoginError: 'UnverifiedEmailSSOLoginError',
   UserInputError: 'UserInputError',
-  InviteNotFoundError: 'InviteNotFoundError'
+  InviteNotFoundError: 'InviteNotFoundError',
+  InvalidGrantError: 'InvalidGrantError'
 } as const
 
 export type ExpectedAuthFailure =

@@ -111,6 +111,8 @@ export const passportAuthenticationCallbackFactory =
         e,
         'Unknown authentication error. Please contact server admins'
       )
+
+      // unknown and unexpected error
       req.log.error({ err, strategy }, 'Authentication error for strategy "{strategy}"')
       return next(err)
     }
@@ -146,6 +148,15 @@ export const passportAuthenticationCallbackFactory =
           })
         )
         return
+      case ExpectedAuthFailure.InvalidGrantError:
+        res.redirect(
+          buildRedirectUrl({
+            resolveAuthRedirectPath,
+            path: defaultErrorPath(
+              'Invalid grant error. Please try again or contact server admins'
+            )
+          })
+        )
       case null:
         // unexpected error or missing info
         req.log.error(
