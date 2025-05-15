@@ -47,13 +47,10 @@ describe('Workspace join services', () => {
           getWorkspaceWithDomains: async () => {
             return createTestWorkspaceWithDomains()
           },
-          upsertWorkspaceRole: async () => {
-            expect.fail()
-          },
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
-          ensureValidWorkspaceRoleSeat: async () => {
+          addOrUpdateWorkspaceRole: async () => {
             throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
@@ -72,14 +69,11 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: false }] as WorkspaceDomain[]
             })
           },
-          upsertWorkspaceRole: async () => {
+          addOrUpdateWorkspaceRole: async () => {
             expect.fail()
           },
           emitWorkspaceEvent: async () => {
             expect.fail()
-          },
-          ensureValidWorkspaceRoleSeat: async () => {
-            throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
       })
@@ -98,13 +92,10 @@ describe('Workspace join services', () => {
               domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
             })
           },
-          upsertWorkspaceRole: async () => {
-            expect.fail()
-          },
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
-          ensureValidWorkspaceRoleSeat: async () => {
+          addOrUpdateWorkspaceRole: async () => {
             throw new Error('Should not be called')
           }
         })({ userId, workspaceId })
@@ -114,7 +105,9 @@ describe('Workspace join services', () => {
     it('creates a workspace member role and emits workspace events', async () => {
       const userId = createRandomPassword()
       const workspaceId = createRandomPassword()
-      let storedWorkspaceRole: WorkspaceAcl | undefined = undefined
+      let storedWorkspaceRole:
+        | Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
+        | undefined = undefined
       const firedEvents: string[] = []
       await joinWorkspaceFactory({
         getUserEmails: async () =>
@@ -125,28 +118,18 @@ describe('Workspace join services', () => {
             domains: [{ domain: 'example.com', verified: true }] as WorkspaceDomain[]
           })
         },
-        upsertWorkspaceRole: async (workspaceRole) => {
-          storedWorkspaceRole = workspaceRole
+        addOrUpdateWorkspaceRole: async (acl) => {
+          storedWorkspaceRole = acl
         },
         emitWorkspaceEvent: async ({ eventName }) => {
           firedEvents.push(eventName)
-        },
-        ensureValidWorkspaceRoleSeat: async () => ({
-          type: 'editor',
-          workspaceId,
-          userId,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
+        }
       })({ userId, workspaceId })
 
       expect(storedWorkspaceRole!.userId).to.equal(userId)
       expect(storedWorkspaceRole!.workspaceId).to.equal(workspaceId)
       expect(storedWorkspaceRole!.role).to.equal(Roles.Workspace.Member)
-      expect(firedEvents).deep.equal([
-        WorkspaceEvents.JoinedFromDiscovery,
-        WorkspaceEvents.RoleUpdated
-      ])
+      expect(firedEvents).deep.equal([WorkspaceEvents.JoinedFromDiscovery])
     })
   })
 })

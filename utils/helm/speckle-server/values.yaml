@@ -55,8 +55,6 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
-  ## @param featureFlags.noPersonalEmailsEnabled Disables the ability sign up with personal email addresses
-  noPersonalEmailsEnabled: false
   ## @param featureFlags.workspacesNewPlanEnabled Toggles whether the new (Q1 2025) plans for workspaces are available. workspacesModuleEnabled must also be enabled for this to take effect.
   workspacesNewPlanEnabled: false
   ## @param featureFlags.moveProjectRegionEnabled Enables the ability to move a project region (manually or automatically)
