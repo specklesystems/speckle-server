@@ -36,7 +36,7 @@ const mixpanel = useMixpanel()
 const { isGuest } = useActiveUser()
 
 const handlePlusClick = () => {
-  navigateTo(workspaceCreateRoute())
+  navigateTo(workspaceCreateRoute)
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'navigation'
   })

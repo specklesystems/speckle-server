@@ -81,6 +81,14 @@
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
 
+                <div v-if="isWorkspacesEnabled" @click="openChat">
+                  <LayoutSidebarMenuGroupItem label="Give us feedback">
+                    <template #icon>
+                      <IconFeedback class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </div>
+
                 <NuxtLink
                   to="https://speckle.community/"
                   target="_blank"
@@ -92,14 +100,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div @click="openFeedbackDialog">
-                  <LayoutSidebarMenuGroupItem label="Give us feedback">
-                    <template #icon>
-                      <IconFeedback class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </div>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -130,8 +130,6 @@
         </LayoutSidebar>
       </div>
     </template>
-
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -156,9 +154,14 @@ const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { $intercom } = useNuxtApp()
 
 const isOpenMobile = ref(false)
-const showFeedbackDialog = ref(false)
+
+const openChat = () => {
+  $intercom.show()
+  isOpenMobile.value = false
+}
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
@@ -176,10 +179,5 @@ const showSidebar = computed(() => {
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
-  isOpenMobile.value = false
 }
 </script>

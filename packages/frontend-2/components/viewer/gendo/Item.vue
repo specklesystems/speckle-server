@@ -92,7 +92,6 @@
         </div>
       </div>
     </div>
-    <FeedbackDialog v-model:open="isFeedbackOpen" :intro="feedbackIntro" type="gendo" />
     <ViewerGendoDialog
       v-model:open="isPreviewOpen"
       :render-url="renderUrl"
@@ -141,11 +140,6 @@ const { copy } = useClipboard()
 const { triggerNotification } = useGlobalToast()
 
 const isPreviewOpen = ref(false)
-const isFeedbackOpen = ref(false)
-
-const feedbackIntro = ref(
-  'How can we improve the AI rendering experience? Let us know about the quality of renders, prompts that you have had success with, or any features that would make Gendo more useful for your workflow'
-)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string

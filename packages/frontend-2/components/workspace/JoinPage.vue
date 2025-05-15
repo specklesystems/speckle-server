@@ -45,7 +45,7 @@
           size="lg"
           full-width
           color="outline"
-          @click="navigateTo(workspaceCreateRoute())"
+          @click="navigateTo(workspaceCreateRoute)"
         >
           Create a new workspace
         </FormButton>

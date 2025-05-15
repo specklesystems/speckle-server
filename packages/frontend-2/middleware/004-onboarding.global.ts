@@ -122,7 +122,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     (workspaceExistenceData?.activeUser?.projects?.totalCount ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
-  const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
+  const isGoingToCreateWorkspace = to.path === workspaceCreateRoute
 
   // If user has discoverable workspaces, or has pending requests, go to join. Otherwise, we go to create.
   if (!hasWorkspaces && !hasLegacyProjects) {
@@ -134,7 +134,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo(workspaceJoinRoute)
     }
     if (!hasDiscoverableWorkspaces && !isGoingToCreateWorkspace) {
-      return navigateTo(workspaceCreateRoute())
+      return navigateTo(workspaceCreateRoute)
     }
   }
 
