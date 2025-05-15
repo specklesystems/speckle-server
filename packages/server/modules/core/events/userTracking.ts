@@ -5,6 +5,7 @@ import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   enableMixpanel,
   getMailchimpNewsletterIds,
+  getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
 import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
@@ -33,9 +34,12 @@ const onUserCreatedFactory =
       // Set up mailchimp
       if (getMailchimpStatus()) {
         try {
+          const { listId: onboadringListId } = getMailchimpOnboardingIds()
+          await addToMailchimpAudience(user, onboadringListId)
+
           if (newsletterConsent) {
-            const { listId } = getMailchimpNewsletterIds()
-            await addToMailchimpAudience(user, listId)
+            const { listId: newsletterListId } = getMailchimpNewsletterIds()
+            await addToMailchimpAudience(user, newsletterListId)
           }
         } catch (error) {
           logger.warn({ err: error }, 'Failed to sign up user to mailchimp lists')
