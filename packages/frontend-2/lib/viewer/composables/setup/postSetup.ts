@@ -108,7 +108,7 @@ function useViewerObjectAutoLoading() {
     loadProgress.value = min
   }
 
-  const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
+  const consolidateProgressThrottled = useThrottleFn(consolidateProgressInternal, 250)
 
   const loadObject = (
     objectId: string,
@@ -128,7 +128,7 @@ function useViewerObjectAutoLoading() {
         undefined
       )
 
-      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThrottled(args))
       loader.on(LoaderEvent.LoadCancelled, (id) => {
         delete loadingProgressMap[id]
         consolidateProgressInternal({ id, progress: 1 })
