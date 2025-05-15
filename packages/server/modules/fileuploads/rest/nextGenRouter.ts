@@ -106,6 +106,7 @@ export const nextGenFileImporterRouterFactory = (): Router => {
                 projectId,
                 userId,
                 modelId,
+                modelName: model.name,
                 fileName: upload.fileName,
                 fileType: upload.fileName?.split('.').pop() || '', //FIXME
                 fileSize: upload.fileSize,
