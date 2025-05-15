@@ -28,6 +28,7 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
+  GetWorkspaceSeatsCount,
   GetWorkspaceWithDomains,
   GetWorkspaces,
   GetWorkspacesProjectsCounts,
@@ -44,28 +45,19 @@ import {
   ServerAclRecord,
   BranchRecord,
   StreamAclRecord,
-  StreamRecord
+  StreamRecord,
+  ProjectRecordVisibility
 } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
-  Workspaces
+  Workspaces,
+  WorkspaceSeats
 } from '@/modules/workspaces/helpers/db'
-import {
-  knex,
-  ServerAcl,
-  ServerInvites,
-  StreamAcl,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { knex, ServerAcl, StreamAcl, Streams, Users } from '@/modules/core/dbSchema'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
-  filterByResource,
-  InvitesRetrievalValidityFilter
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+
 import { clamp, has, isObjectLike } from 'lodash'
 import {
   WorkspaceCreationState,
@@ -412,26 +404,6 @@ export const getWorkspaceCollaboratorsFactory =
     return items
   }
 
-export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
-  return q
-    .leftJoin(
-      knex.raw(
-        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
-        {
-          workspaces: Workspaces.name,
-          resourceCol: ServerInvites.col.resource,
-          resourceType: WorkspaceInviteResourceType,
-          workspaceIdCol: Workspaces.col.id
-        }
-      )
-    )
-    .where((w1) => {
-      w1.whereNot((w2) =>
-        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
-      ).orWhereNotNull(Workspaces.col.id)
-    })
-}
-
 export const storeWorkspaceDomainFactory =
   ({ db }: { db: Knex }): StoreWorkspaceDomain =>
   async ({ workspaceDomain }): Promise<void> => {
@@ -532,6 +504,21 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
     return parseInt(res.count.toString())
   }
 
+export const getWorkspaceSeatCountFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSeatsCount =>
+  async ({ workspaceId, type }) => {
+    const query = db(WorkspaceSeats.name).where(
+      WorkspaceSeats.col.workspaceId,
+      workspaceId
+    )
+
+    if (type) query.andWhere(WorkspaceSeats.col.type, type)
+
+    const [{ count }] = await query.count()
+
+    return parseInt(String(count))
+  }
+
 export const getWorkspaceCreationStateFactory =
   ({ db }: { db: Knex }): GetWorkspaceCreationState =>
   async ({ workspaceId }) => {
@@ -595,8 +582,11 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
     /**
      * If userId is set:
      * - If no workspace role, user should be server admin w/ admin override enabled
-     * - If workspace role is guest, user should have explicit stream roles
-     * - If workspace role other than guest, just get all workspace streams
+     * - If workspace role is admin: user can get all workspace streams
+     * - If workspace role is guest: user should have explicit stream roles
+     * - If workspace role is member:
+     *  - Public/Workspace visibility: get stream
+     *  - Private visibility: user should have explicit stream roles
      *
      * If withProjectRoleOnly is set: Require project role always
      */
@@ -621,10 +611,21 @@ const getPaginatedWorkspaceProjectsBaseQueryFactory =
           }
 
           w.orWhere((w2) => {
-            // Ensure workspace role exists and its not guest or the user has explicit stream roles
+            // Ensure workspace role exists and:
+            // user has explicit stream role or is admin or is a non-guest in a non-private project
             w2.whereNotNull(DbWorkspaceAcl.col.role).andWhere((w3) => {
               if (!withProjectRoleOnly) {
-                w3.whereNot(DbWorkspaceAcl.col.role, Roles.Workspace.Guest)
+                w3.where(DbWorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                  (w4) => {
+                    w4.whereNot(
+                      DbWorkspaceAcl.col.role,
+                      Roles.Workspace.Guest
+                    ).andWhereNot(
+                      Streams.col.visibility,
+                      ProjectRecordVisibility.Private
+                    )
+                  }
+                )
               }
 
               w3.orWhereExists(

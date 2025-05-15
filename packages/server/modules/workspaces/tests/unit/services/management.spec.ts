@@ -10,7 +10,7 @@ import {
   deleteWorkspaceRoleFactory,
   generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory,
+  addOrUpdateWorkspaceRoleFactory,
   validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import { Roles, validateWorkspaceSlug } from '@speckle/shared'
@@ -43,7 +43,7 @@ import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/ope
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
-  storedRoles: WorkspaceAcl[]
+  storedRoles: Pick<WorkspaceAcl, 'role' | 'userId' | 'workspaceId'>[]
   eventData: {
     isCalled: boolean
     eventName: string
@@ -70,22 +70,13 @@ const buildCreateWorkspaceWithTestContext = (
     },
     validateSlug: async () => {},
     generateValidSlug: async () => cryptoRandomString({ length: 10 }),
-    upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
+    addOrUpdateWorkspaceRole: async (workspaceAcl) => {
       context.storedRoles.push(workspaceAcl)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
       context.eventData.isCalled = true
       context.eventData.eventName = eventName
       context.eventData.payload = payload
-    },
-    ensureValidWorkspaceRoleSeat: async () => {
-      return {
-        type: 'editor',
-        workspaceId: 'test',
-        userId: 'test',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
     },
     ...dependencyOverrides
   }
@@ -593,14 +584,16 @@ const buildDeleteWorkspaceRoleAndTestContext = (
 
 const buildUpdateWorkspaceRoleAndTestContext = (
   contextOverrides: Partial<WorkspaceRoleTestContext> = {},
-  dependencyOverrides: Partial<Parameters<typeof updateWorkspaceRoleFactory>[0]> = {}
+  dependencyOverrides: Partial<
+    Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0]
+  > = {}
 ) => {
   const context = {
     ...getDefaultWorkspaceRoleTestContext(),
     ...contextOverrides
   }
 
-  const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
+  const deps: Parameters<typeof addOrUpdateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
     getWorkspaceWithDomains: async () =>
       context.workspace as unknown as Workspace & { domains: WorkspaceDomain[] },
@@ -671,7 +664,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     ...dependencyOverrides
   }
 
-  const updateWorkspaceRole = updateWorkspaceRoleFactory(deps)
+  const updateWorkspaceRole = addOrUpdateWorkspaceRoleFactory(deps)
 
   return { updateWorkspaceRole, context }
 }
@@ -834,10 +827,7 @@ describe('Workspace role services', () => {
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(payload).to.deep.equal({
         acl: role,
-        updatedByUserId: workspaceOwnerId,
-        flags: {
-          skipProjectRoleUpdatesFor: []
-        }
+        updatedByUserId: workspaceOwnerId
       })
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {

@@ -11,6 +11,7 @@ import {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
+  ProjectRecordVisibility,
   StreamAclRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
@@ -527,7 +528,7 @@ export const getUserStreamCommitCountsFactory =
     if (publicOnly) {
       q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
       q.andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -560,7 +561,7 @@ export const getUserAuthoredCommitCountsFactory =
       q.join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
       q.join(Streams.name, Streams.col.id, StreamCommits.col.streamId)
       q.andWhere((q1) => {
-        q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+        q1.where(Streams.col.visibility, ProjectRecordVisibility.Public)
       })
     }
 
@@ -610,7 +611,7 @@ const getCommitsByUserIdBaseFactory =
       .leftJoin('users', 'commits.author', 'users.id')
       .where('author', userId)
 
-    if (publicOnly) query.andWhere('streams.isPublic', true)
+    if (publicOnly) query.andWhere('streams.visibility', ProjectRecordVisibility.Public)
     if (streamIdWhitelist?.length) query.whereIn('streams.streamId', streamIdWhitelist)
 
     return query

@@ -2,7 +2,6 @@ import SpeckleRenderer from '../../SpeckleRenderer.js'
 import { BlendPass } from '../Passes/BlendPass.js'
 import { GeometryPass } from '../Passes/GeometryPass.js'
 import { DepthPass } from '../Passes/DepthPass.js'
-import { NormalsPass } from '../Passes/NormalsPass.js'
 import { OutputPass, InputType } from '../Passes/OutputPass.js'
 import { ClearFlags, ObjectVisibility } from '../Passes/GPass.js'
 import { ProgressiveAOPass } from '../Passes/ProgressiveAOPass.js'
@@ -11,26 +10,30 @@ import { ObjectLayers } from '../../../IViewer.js'
 import { ProgressivePipeline } from './ProgressivePipeline.js'
 import { StencilPass } from '../Passes/StencilPass.js'
 import { StencilMaskPass } from '../Passes/StencilMaskPass.js'
-import { Pipeline } from './Pipeline.js'
+import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './Pipeline.js'
 import { LinearFilter } from 'three'
+import { EdgesPipeline } from './EdgesPipeline.js'
 
 export class TAAPipeline extends ProgressivePipeline {
-  constructor(speckleRenderer: SpeckleRenderer) {
+  constructor(
+    speckleRenderer: SpeckleRenderer,
+    options: PipelineOptions = DefaultPipelineOptions
+  ) {
     super(speckleRenderer)
 
-    const depthPass = new DepthPass()
-    depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPass.setVisibility(ObjectVisibility.DEPTH)
-    depthPass.setJitter(true)
-    depthPass.setClearColor(0x000000, 1)
-    depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const edgesPipeline = options.edges ? new EdgesPipeline(speckleRenderer) : null
 
-    const normalPass = new NormalsPass()
-    normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    normalPass.setVisibility(ObjectVisibility.OPAQUE)
-    normalPass.setJitter(true)
-    normalPass.setClearColor(0x000000, 1)
-    normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    const depthPass = !options.edges ? new DepthPass() : null
+    if (depthPass) {
+      depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+      depthPass.setVisibility(ObjectVisibility.DEPTH)
+      depthPass.setJitter(true)
+      depthPass.setClearColor(0x000000, 1)
+      depthPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+    }
+    const depthTex = options.edges
+      ? edgesPipeline?.depthPass.depthTexture
+      : depthPass?.outputTarget?.texture
 
     const opaqueColorPass = new GeometryPass()
     opaqueColorPass.setLayers([
@@ -56,8 +59,19 @@ export class TAAPipeline extends ProgressivePipeline {
     ])
     transparentColorPass.setVisibility(ObjectVisibility.TRANSPARENT)
 
+    const blendPassDynamic = new BlendPass()
+    blendPassDynamic.options = { blendAO: false, blendEdges: options.edges }
+    blendPassDynamic.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.outputTextureDynamic : undefined
+    )
+    blendPassDynamic.accumulationFrames = this.accumulationFrameCount
+
+    const depthSubPipelineDynamic =
+      (options.edges ? edgesPipeline?.dynamicPasses : []) || []
+
     const progressiveAOPass = new ProgressiveAOPass()
-    progressiveAOPass.setTexture('tDepth', depthPass.outputTarget?.texture)
+    progressiveAOPass.setTexture('tDepth', depthTex)
     progressiveAOPass.accumulationFrames = this.accumulationFrameCount
     progressiveAOPass.setClearColor(0xffffff, 1)
 
@@ -97,6 +111,15 @@ export class TAAPipeline extends ProgressivePipeline {
     jitterTransparentPass.setJitter(true)
     jitterTransparentPass.outputTarget = renderTarget
 
+    const blendEdgesPass = new BlendPass()
+    blendEdgesPass.options = { blendAO: false, blendEdges: options.edges }
+    blendEdgesPass.setTexture(
+      'tEdges',
+      options.edges ? edgesPipeline?.edgePass.outputTarget?.texture : undefined
+    )
+    blendEdgesPass.accumulationFrames = this.accumulationFrameCount
+    blendEdgesPass.outputTarget = renderTarget
+
     const taaPass = new TAAPass()
     taaPass.inputTexture = renderTarget.texture
     taaPass.accumulationFrames = this.accumulationFrameCount
@@ -134,19 +157,30 @@ export class TAAPipeline extends ProgressivePipeline {
     const overlayPass = new GeometryPass()
     overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
+    const depthSubPipelineProgressive = options.edges
+      ? [edgesPipeline?.depthPass, edgesPipeline?.edgePass]
+      : depthPass
+      ? [depthPass]
+      : []
+
     this.dynamicStage.push(
+      ...depthSubPipelineDynamic,
       stencilPass,
       opaqueColorPass,
       transparentColorPass,
+      ...(options.edges ? [blendPassDynamic] : []),
       stencilMaskPass,
       overlayPass
     )
     this.progressiveStage.push(
-      depthPass,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      ...depthSubPipelineProgressive,
       jitteredStencilPass,
       jitterOpaquePass,
       jitterTransparentPass,
       jitteredStencilMaskPass,
+      ...(options.edges ? [blendEdgesPass] : []),
       taaPass,
       outputPass,
       progressiveAOPass,

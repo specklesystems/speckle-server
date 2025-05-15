@@ -52,7 +52,6 @@ import {
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
 import {
-  ProjectInviteResourceType,
   ServerInviteLimit,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
@@ -110,6 +109,35 @@ const buildCollectAndValidateResourceTargets = () =>
     getStream
   })
 
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaborator
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
+  })
+
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory({ db }),
@@ -124,7 +152,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeProjectInvite()
   })
 
 export = {
@@ -375,33 +404,7 @@ export = {
         streamId: projectId //legacy
       })
       const useProjectInvite = useProjectInviteAndNotifyFactory({
-        finalizeInvite: finalizeResourceInviteFactory({
-          findInvite: findInviteFactory({ db }),
-          validateInvite: validateProjectInviteBeforeFinalizationFactory({
-            getProject: getStream
-          }),
-          processInvite: processFinalizedProjectInviteFactory({
-            getProject: getStream,
-            addProjectRole: addOrUpdateStreamCollaborator
-          }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args),
-          findEmail: findEmailFactory({ db }),
-          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-            createUserEmail: createUserEmailFactory({ db }),
-            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-            findEmail: findEmailFactory({ db }),
-            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            }),
-            requestNewEmailVerification
-          }),
-          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-          getUser,
-          getServerInfo
-        })
+        finalizeInvite: buildFinalizeProjectInvite()
       })
 
       await withOperationLogging(
@@ -438,8 +441,6 @@ export = {
         async () =>
           await cancelInvite({
             inviteId,
-            resourceId: streamId,
-            resourceType: ProjectInviteResourceType,
             cancelerId: userId!,
             cancelerResourceAccessLimits: resourceAccessRules
           }),
@@ -617,33 +618,7 @@ export = {
     async use(_parent, args, ctx) {
       const logger = ctx.log
       const useProjectInvite = useProjectInviteAndNotifyFactory({
-        finalizeInvite: finalizeResourceInviteFactory({
-          findInvite: findInviteFactory({ db }),
-          validateInvite: validateProjectInviteBeforeFinalizationFactory({
-            getProject: getStream
-          }),
-          processInvite: processFinalizedProjectInviteFactory({
-            getProject: getStream,
-            addProjectRole: addOrUpdateStreamCollaborator
-          }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args),
-          findEmail: findEmailFactory({ db }),
-          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-            createUserEmail: createUserEmailFactory({ db }),
-            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-            findEmail: findEmailFactory({ db }),
-            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            }),
-            requestNewEmailVerification
-          }),
-          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-          getUser,
-          getServerInfo
-        })
+        finalizeInvite: buildFinalizeProjectInvite()
       })
 
       await withOperationLogging(
@@ -692,10 +667,8 @@ export = {
       await withOperationLogging(
         async () =>
           await cancelInvite({
-            resourceId: projectId,
             inviteId,
             cancelerId: ctx.userId!,
-            resourceType: ProjectInviteResourceType,
             cancelerResourceAccessLimits: ctx.resourceAccessRules
           }),
         {

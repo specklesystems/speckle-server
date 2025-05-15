@@ -5,13 +5,14 @@ import {
   PreviewGenerator,
   PreviewPageResult,
   TakeScreenshot
-} from '@speckle/shared/dist/esm/previews/interface.js'
+} from '@speckle/shared/workers/previews'
 import {
   Viewer,
   DefaultViewerParams,
   SpeckleLoader,
   UrlHelper,
-  UpdateFlags
+  UpdateFlags,
+  DefaultPipeline
 } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 
@@ -75,6 +76,9 @@ const takeScreenshot: TakeScreenshot = async () => {
   viewer.resize()
   const cameraController = viewer.getExtension(CameraController)
   cameraController.setCameraView([], false)
+  viewer.getRenderer().pipeline = new DefaultPipeline(viewer.getRenderer(), {
+    edges: false
+  })
   await waitForAnimation(100)
 
   for (let i = 0; i < 24; i++) {

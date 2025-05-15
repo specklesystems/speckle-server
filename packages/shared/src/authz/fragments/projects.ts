@@ -24,11 +24,16 @@ import {
   checkIfAdminOverrideEnabledFragment,
   ensureMinimumServerRoleFragment
 } from './server.js'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
-const workspaceRoleImplicitProjectRoleMap = <const>{
-  [Roles.Workspace.Admin]: Roles.Stream.Owner,
-  [Roles.Workspace.Member]: Roles.Stream.Reviewer,
-  [Roles.Workspace.Guest]: null
+const workspaceRoleImplicitProjectRoleMap = (projectVisibility: ProjectVisibility) => {
+  const isFullyPrivate = projectVisibility === ProjectVisibility.Private
+
+  return <const>{
+    [Roles.Workspace.Admin]: Roles.Stream.Owner,
+    [Roles.Workspace.Member]: isFullyPrivate ? null : Roles.Stream.Reviewer,
+    [Roles.Workspace.Guest]: null
+  }
 }
 
 /**
@@ -79,13 +84,14 @@ export const ensureMinimumProjectRoleFragment: AuthPolicyEnsureFragment<
 
     // Now check if there's an implicit one
     const { workspaceId } = project
+
     if (env.FF_WORKSPACES_MODULE_ENABLED && !!workspaceId) {
       // Check for implicit workspace project role
       const userWorkspaceRole = await loaders.getWorkspaceRole({ userId, workspaceId })
       if (userWorkspaceRole) {
         const implicitProjectRole = explicit
           ? null
-          : workspaceRoleImplicitProjectRoleMap[userWorkspaceRole]
+          : workspaceRoleImplicitProjectRoleMap(project.visibility)[userWorkspaceRole]
         if (implicitProjectRole) {
           // Does it fit minimum?
           if (isMinimumProjectRole(implicitProjectRole, requiredProjectRole)) {
