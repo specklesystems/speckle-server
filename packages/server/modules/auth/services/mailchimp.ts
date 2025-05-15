@@ -50,20 +50,12 @@ export async function addToMailchimpAudience(user: UserRecord, listId: string) {
 export async function triggerMailchimpCustomerJourney(
   user: UserRecord,
   {
-    listId,
-    journeyId,
-    stepId
+    listId
   }: {
     listId: string
-    journeyId: number
-    stepId: number
   }
 ) {
   await addToMailchimpAudience(user, listId)
-  // @ts-expect-error the mailchimp api typing sucks
-  await mailchimp.customerJourneys.trigger(journeyId, stepId, {
-    email_address: user.email
-  })
 }
 
 export async function updateMailchimpMemberTags(

@@ -1,14 +1,10 @@
 import { authLogger, type Logger } from '@/observability/logging'
 import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
-import {
-  addToMailchimpAudience,
-  triggerMailchimpCustomerJourney
-} from '@/modules/auth/services/mailchimp'
+import { addToMailchimpAudience } from '@/modules/auth/services/mailchimp'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   enableMixpanel,
   getMailchimpNewsletterIds,
-  getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
 import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
@@ -37,9 +33,6 @@ const onUserCreatedFactory =
       // Set up mailchimp
       if (getMailchimpStatus()) {
         try {
-          const onboardingIds = getMailchimpOnboardingIds()
-          await triggerMailchimpCustomerJourney(user, onboardingIds)
-
           if (newsletterConsent) {
             const { listId } = getMailchimpNewsletterIds()
             await addToMailchimpAudience(user, listId)
