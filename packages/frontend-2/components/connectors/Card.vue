@@ -4,12 +4,25 @@
       class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full hover:bg-foundation"
     >
       <div class="flex gap-2 items-center">
-        <img
-          v-if="connector.image"
-          :src="connector.image"
+        <div v-if="connector.images" class="relative flex items-start mr-2">
+          <div
+            v-for="(image, index) in connector.images"
+            :key="image"
+            :class="[
+              'relative -ml-2 -mr-4',
+              `-mb-[${index * 2}]`,
+              `z-[${connector.images.length - index}]`
+            ]"
+          >
+            <img :src="image" :alt="`${connector.title} logo`" class="w-[48px]" />
+          </div>
+        </div>
+        <!-- <img
+          v-if="connector.images"
+          :src="connector.images[0]"
           :alt="`${connector.title} logo`"
           class="w-[48px] -ml-1"
-        />
+        /> -->
         <div class="flex flex-col gap-y-1.5">
           <h2 class="text-body-xs text-foreground font-medium leading-none">
             {{ connector.title }}
