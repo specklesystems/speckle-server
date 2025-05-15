@@ -178,7 +178,7 @@ export const moveProjectToWorkspaceFactory =
             const workspaceSeat = await createWorkspaceSeat({
               userId,
               workspaceId,
-              type: 'viewer'
+              type: WorkspaceSeatType.Viewer
             })
 
             // Update workspace team in-memory
@@ -193,7 +193,8 @@ export const moveProjectToWorkspaceFactory =
           const requiresEditorSeat =
             currentProjectRole === Roles.Stream.Owner ||
             currentProjectRole === Roles.Stream.Contributor
-          const hasEditorSeat = workspaceTeam[userId]?.seat?.type === 'editor'
+          const hasEditorSeat =
+            workspaceTeam[userId]?.seat?.type === WorkspaceSeatType.Editor
 
           if (requiresEditorSeat && !hasEditorSeat) {
             await updateProjectRole(
