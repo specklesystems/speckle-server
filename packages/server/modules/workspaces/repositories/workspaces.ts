@@ -147,21 +147,9 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async ({ workspaceIds, userId }) => {
+  async ({ workspaceIds, userId, search, completed }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
     if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
-
-    const results = await q
-    return results
-  }
-
-export const getWorkspaceFactory =
-  ({ db }: { db: Knex }): GetWorkspace =>
-  async ({ workspaceId, userId, search, completed }) => {
-    const q = workspaceWithRoleBaseQuery({ db, userId }).where(
-      Workspaces.col.id,
-      workspaceId
-    )
 
     if (search) {
       q.andWhere((builder) => {
@@ -183,7 +171,17 @@ export const getWorkspaceFactory =
       })
     }
 
-    const workspace = await q.first()
+    const results = await q
+    return results
+  }
+
+export const getWorkspaceFactory =
+  ({ db }: { db: Knex }): GetWorkspace =>
+  async ({ workspaceId, userId }) => {
+    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
+      .where(Workspaces.col.id, workspaceId)
+      .first()
+
     return workspace || null
   }
 

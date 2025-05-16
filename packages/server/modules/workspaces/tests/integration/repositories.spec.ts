@@ -12,7 +12,8 @@ import {
   getWorkspaceWithDomainsFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -52,6 +53,7 @@ import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/works
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const getWorkspace = getWorkspaceFactory({ db })
+const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
@@ -98,100 +100,115 @@ describe('Workspace repositories', () => {
     })
     // not testing get here, we're going to use that for testing upsert
 
-    describe('getWorkspace filters', () => {
+    describe('getWorkspaces filters', () => {
       it('is able to select them by name', async () => {
         const testUserA = buildBasicTestUser()
-        await createTestUsers([testUserA])
+        const testUserB = buildBasicTestUser()
+        await createTestUsers([testUserA, testUserB])
         const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
         const myGarageWorkspace = buildBasicTestWorkspace({
           name: 'My Garage Workspace'
         })
+        const workspaceB = buildBasicTestWorkspace()
+        await createTestWorkspace(workspaceB, testUserB)
 
         await createTestWorkspace(myHouseWorkspace, testUserA)
         await createTestWorkspace(myGarageWorkspace, testUserA)
 
-        const workspace = await getWorkspace({
+        const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceId: myHouseWorkspace.id,
+          workspaceIds: [myHouseWorkspace.id],
           search: 'house'
         })
 
-        expect(workspace).not.to.be.null
-        expect(workspace?.id).to.eq(myHouseWorkspace.id)
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(myHouseWorkspace.id)
       })
 
       it('is able to filter them out by name', async () => {
         const testUserA = buildBasicTestUser()
-        await createTestUsers([testUserA])
+        const testUserB = buildBasicTestUser()
+        await createTestUsers([testUserA, testUserB])
         const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
         const myGarageWorkspace = buildBasicTestWorkspace({
           name: 'My Garage Workspace'
         })
+        const workspaceB = buildBasicTestWorkspace()
+        await createTestWorkspace(workspaceB, testUserB)
 
         await createTestWorkspace(myHouseWorkspace, testUserA)
         await createTestWorkspace(myGarageWorkspace, testUserA)
 
-        const workspace = await getWorkspace({
+        const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceId: myHouseWorkspace.id,
+          workspaceIds: [myHouseWorkspace.id],
           search: 'park'
         })
 
-        expect(workspace).to.be.null
+        expect(workspaces).to.have.lengthOf(0)
       })
 
       it('is able to filer them by completed status', async () => {
         const testUserA = buildBasicTestUser()
-        await createTestUsers([testUserA])
+        const testUserB = buildBasicTestUser()
+        await createTestUsers([testUserA, testUserB])
 
+        const workspaceB = buildBasicTestWorkspace()
+        await createTestWorkspace(workspaceB, testUserB)
         const nonCompleteWorkspace = buildBasicTestWorkspace()
         await createTestWorkspace(nonCompleteWorkspace, testUserA, {
           addCreationState: { completed: true, state: {} }
         })
 
-        const workspace = await getWorkspace({
+        const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceId: nonCompleteWorkspace.id,
+          workspaceIds: [nonCompleteWorkspace.id],
           completed: true
         })
 
-        expect(workspace).not.to.be.null
-        expect(workspace?.id).to.eq(nonCompleteWorkspace.id)
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(nonCompleteWorkspace.id)
       })
 
       it('is able to filer them out by completed status', async () => {
         const testUserA = buildBasicTestUser()
-        await createTestUsers([testUserA])
+        const testUserB = buildBasicTestUser()
+        await createTestUsers([testUserA, testUserB])
 
+        const workspaceB = buildBasicTestWorkspace()
+        await createTestWorkspace(workspaceB, testUserB)
         const nonCompleteWorkspace = buildBasicTestWorkspace()
         await createTestWorkspace(nonCompleteWorkspace, testUserA, {
           addCreationState: { completed: true, state: {} }
         })
 
-        const workspace = await getWorkspace({
+        const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceId: nonCompleteWorkspace.id,
+          workspaceIds: [nonCompleteWorkspace.id],
           completed: false
         })
 
-        expect(workspace).to.be.null
+        expect(workspaces).to.have.lengthOf(0)
       })
 
       it('does not filter when there is no workspace_completed entry as safety mechanism', async () => {
         const testUserA = buildBasicTestUser()
-        await createTestUsers([testUserA])
+        const testUserB = buildBasicTestUser()
+        await createTestUsers([testUserA, testUserB])
 
+        const workspaceB = buildBasicTestWorkspace()
+        await createTestWorkspace(workspaceB, testUserB)
         const nonCompleteWorkspace = buildBasicTestWorkspace()
         await createTestWorkspace(nonCompleteWorkspace, testUserA)
 
-        const workspace = await getWorkspace({
+        const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceId: nonCompleteWorkspace.id,
+          workspaceIds: [nonCompleteWorkspace.id],
           completed: false
         })
 
-        expect(workspace).not.to.be.null
-        expect(workspace?.id).to.eq(nonCompleteWorkspace.id)
+        expect(workspaces).to.have.lengthOf(1)
+        expect(workspaces[0].id).to.eq(nonCompleteWorkspace.id)
       })
     })
   })

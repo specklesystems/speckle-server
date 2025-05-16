@@ -73,7 +73,8 @@ import {
   countWorkspacesFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getPaginatedWorkspaceProjectsFactory,
-  getWorkspaceRolesForUserFactory
+  getWorkspaceRolesForUserFactory,
+  getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -1810,7 +1811,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           }
 
           const getWorkspaces = getWorkspacesForUserFactory({
-            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaces: getWorkspacesFactory({ db }),
             getWorkspaceRolesForUser: getWorkspaceRolesForUserFactory({ db })
           })
 
