@@ -575,7 +575,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-{{- if .Values.featureFlags.workspacesModuleEnabled }}
+{{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
     secretKeyRef:
