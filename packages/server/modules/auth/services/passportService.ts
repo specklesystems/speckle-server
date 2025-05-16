@@ -130,6 +130,7 @@ export const passportAuthenticationCallbackFactory =
     switch (failureType) {
       case ExpectedAuthFailure.UserInputError:
       case ExpectedAuthFailure.InviteNotFoundError:
+      case ExpectedAuthFailure.InvalidGrantError:
         res.redirect(
           buildRedirectUrl({
             resolveAuthRedirectPath,
@@ -148,15 +149,6 @@ export const passportAuthenticationCallbackFactory =
           })
         )
         return
-      case ExpectedAuthFailure.InvalidGrantError:
-        res.redirect(
-          buildRedirectUrl({
-            resolveAuthRedirectPath,
-            path: defaultErrorPath(
-              'Invalid grant error. Please try again or contact server admins'
-            )
-          })
-        )
       case null:
         // unexpected error or missing info
         req.log.error(

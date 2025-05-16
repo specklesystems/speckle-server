@@ -705,7 +705,7 @@ describe('Auth @auth', () => {
         'next request handler should have been called'
       ).to.equal(1)
     })
-    it('Should handle case where there is an unexpected error and a user', async () => {
+    it('Should handle case where there is an unexpected error but also a user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -742,7 +742,7 @@ describe('Auth @auth', () => {
         'next request handler should have been called'
       ).to.equal(1)
     })
-    it('Should handle case where there is a user-derived error and a user', async () => {
+    it('Should handle case where there is a user-derived failure but also a user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -816,7 +816,7 @@ describe('Auth @auth', () => {
         'next request handler should not have been called'
       ).to.equal(0)
     })
-    it('Should handle case where there is a user-derived error but no user', async () => {
+    it('Should handle case where there is a user-derived failure and no user', async () => {
       const req = httpMocks.createRequest()
       req.log = logger
       const res = httpMocks.createResponse()
@@ -881,6 +881,44 @@ describe('Auth @auth', () => {
         errorCalledCounter,
         'next request handler should have been called with an error "next(err)"'
       ).to.equal(1)
+    })
+    it('should handle invalid grant user-derived failure and no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'google',
+        req,
+        res,
+        next,
+        resolveAuthRedirectPath: () => getFrontendOrigin()
+      })
+
+      SUT(null, undefined, {
+        failureType: 'InvalidGrantError',
+        message: 'Some kind of invalid grant'
+      })
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
     })
     //TODO remove this if we upgrade to openid-client >=6.0.0
     it('should handle case for OIDC with a user-derived error and no user', async () => {
