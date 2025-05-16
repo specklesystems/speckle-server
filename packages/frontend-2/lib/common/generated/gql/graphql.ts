@@ -5103,6 +5103,7 @@ export type WorkspaceTeamFilter = {
 
 export type WorkspaceUpdateEmbedOptionsInput = {
   hideSpeckleBranding: Scalars['Boolean']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdateInput = {

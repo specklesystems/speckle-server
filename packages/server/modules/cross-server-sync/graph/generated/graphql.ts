@@ -4867,6 +4867,7 @@ export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof 
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
   canCreateProject: PermissionCheckResult;
+  canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
 };
