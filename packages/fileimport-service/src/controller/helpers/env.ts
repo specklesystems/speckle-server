@@ -42,7 +42,7 @@ export const getIfcDllPath = () => {
   if (isDevOrTestEnv()) {
     const possiblePath = path.resolve(
       getPackageRootDirPath(),
-      './src/ifc-dotnet/output/ifc-converter.dll'
+      './src/ifc-dotnet/bin/Release/net8.0/ifc-converter.dll'
     )
     if (file.existsSync(possiblePath)) {
       cachedIfcDllPath = absolutePath
