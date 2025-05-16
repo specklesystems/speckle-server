@@ -14,7 +14,6 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspace: async () => {
           throw new WorkspacesModuleDisabledError()
         },
-
         workspaceBySlug: async () => {
           throw new WorkspacesModuleDisabledError()
         },
@@ -109,6 +108,11 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         workspace: async () => {
           // Return type is always workspace or null, to make the FE implementation easier we force return null in this case
           return null
+        },
+        embedOptions: async () => {
+          return {
+            hideSpeckleBranding: false
+          }
         }
       },
       AdminQueries: {
