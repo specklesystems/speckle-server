@@ -28,7 +28,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
+import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -142,15 +142,47 @@ const googleStrategyBuilderFactory =
             err,
             'Unexpected issue occured while authenticating with Google'
           )
-          switch (e.constructor) {
-            case UnverifiedEmailSSOLoginError:
-            case UserInputError:
-            case InviteNotFoundError:
+          switch (e.constructor.name) {
+            case ExpectedAuthFailure.UserInputError:
+            case ExpectedAuthFailure.InviteNotFoundError:
               logger.info({ err: e }, 'Auth error for Google strategy')
-              // note; passportjs suggests that err should be null for user input errors.
-              // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
-              return done(e, false, { message: e.message })
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure
+              })
+            case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
+              logger.info({ err: e }, 'Auth error for Google strategy')
+              // note; passportjs suggests err should be null for user input errors.
+              // We also need to pass the error type in the info parameter
+              // so `passportAuthenticationCallbackFactory` can handle redirects appropriately
+              return done(null, false, {
+                message: e.message,
+                failureType: e.constructor.name as ExpectedAuthFailure,
+                email: (e as UnverifiedEmailSSOLoginError).info().email
+              })
             default:
+              // handle other common errors thrown by the underlying client libraries
+              if (
+                e.name === 'TokenError' &&
+                'code' in e &&
+                e.code === 'invalid_grant'
+              ) {
+                req.log.warn(
+                  { err: e },
+                  "Authentication error for strategy 'google' encountered an Invalid Grant error"
+                )
+                // This is a common error from Google and a number of reasons
+                // can cause it. Many user-related issues, so we will treat it as user-related.
+                // https://blog.timekit.io/google-oauth-invalid-grant-nightmare-and-how-to-fix-it-9f4efaf1da35
+                return done(null, false, {
+                  message: e.message,
+                  failureType: ExpectedAuthFailure.InvalidGrantError
+                })
+              }
+
               logger.error({ err: e }, 'Auth error for Google strategy')
               return done(e, false, { message: e.message })
           }
