@@ -56,7 +56,6 @@ import {
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRolesFactory,
-  getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   getWorkspaceCollaboratorsTotalCountFactory,
@@ -73,7 +72,9 @@ import {
   queryWorkspacesFactory,
   countWorkspacesFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getPaginatedWorkspaceProjectsFactory
+  getPaginatedWorkspaceProjectsFactory,
+  getWorkspaceRolesForUserFactory,
+  getWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -1804,18 +1805,20 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await listExpiredSsoSessions({ userId: context.userId })
         },
-        workspaces: async (_parent, _args, context) => {
+        workspaces: async (_parent, args, context) => {
           if (!context.userId) {
             throw new WorkspacesNotAuthorizedError()
           }
 
           const getWorkspaces = getWorkspacesForUserFactory({
-            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaces: getWorkspacesFactory({ db }),
             getWorkspaceRolesForUser: getWorkspaceRolesForUserFactory({ db })
           })
 
           const workspaces = await getWorkspaces({
-            userId: context.userId
+            userId: context.userId,
+            search: args.filter?.search ?? undefined,
+            completed: args.filter?.completed ?? undefined
           })
 
           // TODO: Pagination

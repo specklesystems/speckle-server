@@ -583,6 +583,7 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
+  completed: Boolean
 }
 
 extend type Project {
