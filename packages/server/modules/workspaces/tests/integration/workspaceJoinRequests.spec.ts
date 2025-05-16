@@ -287,7 +287,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         })
 
         expect(
-          requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+          await requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
         expect(
