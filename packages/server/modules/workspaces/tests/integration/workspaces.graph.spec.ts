@@ -778,7 +778,7 @@ describe('Workspaces GQL CRUD', () => {
         })
 
         const workspace1 = buildBasicTestWorkspace({ name: 'Workspace A1' })
-        const workspace2 = buildBasicTestWorkspace({ name: 'Workspace B2' })
+        const workspace2 = buildBasicTestWorkspace({ name: 'A loooooooooong name' })
         const nonCompleteWorkspace3 = buildBasicTestWorkspace({ name: 'Workspace C3' })
 
         await createTestWorkspace(workspace1, testUser)
@@ -789,7 +789,7 @@ describe('Workspaces GQL CRUD', () => {
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
           filter: {
-            search: 'B2'
+            search: 'loooooooooong'
           }
         })
 
