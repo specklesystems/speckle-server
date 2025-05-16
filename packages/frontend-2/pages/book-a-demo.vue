@@ -9,7 +9,7 @@
           class="opacity-70 hover:opacity-100 p-1"
           size="sm"
           color="subtle"
-          @click="navigateTo(workspaceJoinRoute)"
+          @click="navigateTo(homeRoute)"
         >
           Skip
         </FormButton>
@@ -49,7 +49,7 @@
             Continue
           </FormButton>
         </div>
-        <FormButton v-else size="lg" full-width @click="navigateTo(workspaceJoinRoute)">
+        <FormButton v-else size="lg" full-width @click="navigateTo(homeRoute)">
           Continue
         </FormButton>
       </div>
@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { useAuthManager } from '~/lib/auth/composables/auth'
-import { workspaceJoinRoute } from '~/lib/common/helpers/route'
+import { homeRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type BookDemoSelect = 'yes' | 'no'
@@ -96,7 +96,7 @@ const onCtaClick = () => {
     })
   } else {
     mixpanel.track('Book a Demo Skipped')
-    navigateTo(workspaceJoinRoute)
+    navigateTo(homeRoute)
   }
 }
 
