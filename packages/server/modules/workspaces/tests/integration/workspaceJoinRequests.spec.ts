@@ -5,6 +5,7 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
+  DuplicateWorkspaceJoinRequestError,
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
@@ -44,6 +45,7 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { get } from 'lodash'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -310,7 +312,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         const err = await expectToThrow(() =>
           requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
         )
-        expect(err.message).to.equal(WorkspaceNotDiscoverableError.defaultMessage)
+
+        expect(get(err, 'code')).to.equal(DuplicateWorkspaceJoinRequestError.code)
       })
     })
 

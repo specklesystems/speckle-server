@@ -84,6 +84,12 @@ export class WorkspaceNotJoinableError extends BaseError {
   static statusCode = 400
 }
 
+export class DuplicateWorkspaceJoinRequestError extends BaseError {
+  static defaultMessage = 'Duplicate workspace join request'
+  static code = 'DUPLICATE_WORKSPACE_JOIN_REQUEST'
+  static statusCode = 400
+}
+
 export class WorkspaceUnverifiedDomainError extends BaseError {
   static defaultMessage = 'Cannot add unverified domain to workspace'
   static code = 'WORKSPACE_UNVERIFIED_DOMAIN_ERROR'
