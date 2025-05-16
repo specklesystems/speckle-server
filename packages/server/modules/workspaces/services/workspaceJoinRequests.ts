@@ -1,4 +1,5 @@
 import {
+  DuplicateWorkspaceJoinRequestError,
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError,
   WorkspaceNotJoinableError,
@@ -19,7 +20,7 @@ import {
   SendWorkspaceJoinRequestReceivedEmail,
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
-import { Roles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { EventBus } from '@/modules/shared/services/eventBus'
@@ -84,13 +85,26 @@ export const requestToJoinWorkspaceFactory =
       throw new WorkspaceProtectedError()
     }
 
-    await createWorkspaceJoinRequest({
-      workspaceJoinRequest: {
-        userId,
-        workspaceId,
-        status: 'pending'
+    try {
+      await createWorkspaceJoinRequest({
+        workspaceJoinRequest: {
+          userId,
+          workspaceId,
+          status: 'pending'
+        }
+      })
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('duplicate key')) {
+        throw new DuplicateWorkspaceJoinRequestError(
+          'A workspace join request already exists',
+          { cause: e }
+        )
       }
-    })
+      throw ensureError(
+        e,
+        'Unknown error when attempting to create a new workspace join request'
+      )
+    }
 
     await sendWorkspaceJoinRequestReceivedEmail({
       workspace,
