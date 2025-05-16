@@ -52,13 +52,13 @@ export const sanitizeQueryParams = (
 
 const shouldBeLoggedAsDebug = (req: IncomingMessage) => {
   const path = getRequestPath(req)
-  const shouldBeDebug = [
+  if (!path) return false
+  return [
     '/metrics',
     '/readiness',
     '/liveness',
     '/graphql' // graphql endpoint is logged by the graphql middleware
-  ].includes(path || '')
-  return shouldBeDebug
+  ].includes(path)
 }
 
 export const LoggingExpressMiddleware = HttpLogger({
