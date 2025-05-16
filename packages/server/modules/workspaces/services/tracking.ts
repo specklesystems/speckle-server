@@ -4,19 +4,21 @@ import {
   GetWorkspacePlan,
   GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { getBaseTrackingProperties, getClient } from '@/modules/shared/utils/mixpanel'
+import { getBaseTrackingProperties } from '@/modules/shared/utils/mixpanel'
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetWorkspaceModelCount,
   GetWorkspacesProjectsCounts,
-  GetWorkspaceSeatCount
+  GetWorkspaceSeatCount,
+  GetAllWorkspaces
 } from '@/modules/workspaces/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Logger } from '@/observability/logging'
 import { Nullable, Roles, SeatTypes } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getAllWorkspacesFactory,
   getWorkspaceSeatCountFactory,
   getWorkspacesProjectsCountsFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -30,7 +32,9 @@ import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repos
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { assign } from 'lodash'
+import { Mixpanel } from 'mixpanel'
+
+export const WORKSPACE_TRACKING_ID_KEY = 'workspace_id'
 
 export type WorkspaceTrackingProperties = {
   name: string
@@ -136,7 +140,7 @@ export const buildWorkspaceTrackingPropertiesFactory =
     }
   }
 
-export const updateWorkspacesTackingPropertiesFactory =
+export const updateAllWorkspacesTackingPropertiesFactory =
   (deps: {
     countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
     getDefaultRegion: GetDefaultRegion
@@ -145,48 +149,81 @@ export const updateWorkspacesTackingPropertiesFactory =
     getWorkspaceModelCount: GetWorkspaceModelCount
     getWorkspacesProjectCount: GetWorkspacesProjectsCounts
     getWorkspaceSeatCount: GetWorkspaceSeatCount
-  }): (({ logger }: { logger: Logger }) => Promise<void>) =>
-  ({ logger }) => {
-    const mixpanel = getClient()
-    if (!mixpanel) return Promise.resolve()
+    getAllWorkspaces: GetAllWorkspaces
+  }): (({
+    logger,
+    mixpanel
+  }: {
+    logger: Logger
+    mixpanel: Mixpanel
+  }) => Promise<void>) =>
+  async ({ logger, mixpanel }) => {
+    logger.info('Start full workspace tracking update')
 
-    assign({}, deps)
-    logger.info('Starting batch tracking update')
+    const buildWorkspaceTrackingProperties = buildWorkspaceTrackingPropertiesFactory({
+      countWorkspaceRole: deps.countWorkspaceRole,
+      getDefaultRegion: deps.getDefaultRegion,
+      getWorkspacePlan: deps.getWorkspacePlan,
+      getWorkspaceSubscription: deps.getWorkspaceSubscription,
+      getWorkspaceModelCount: deps.getWorkspaceModelCount,
+      getWorkspacesProjectCount: deps.getWorkspacesProjectCount,
+      getWorkspaceSeatCount: deps.getWorkspaceSeatCount
+    })
 
-    // TODO: get bached workspaces
-    // buildWorkspaceTrackingProperties and push them to mixpanel
-    // iterate untill the end
+    const bultPropertiesAndPushThenToMixpanel = async (workspace: Workspace) => {
+      mixpanel.groups.set(
+        WORKSPACE_TRACKING_ID_KEY,
+        workspace.id,
+        await buildWorkspaceTrackingProperties(workspace)
+      )
+    }
 
-    return Promise.resolve()
+    let cursor = null
+    let items = []
+    do {
+      const batchedWorkspaces = await deps.getAllWorkspaces({ cursor, limit: 25 })
+      cursor = batchedWorkspaces.cursor
+      items = batchedWorkspaces.items
+
+      await Promise.all(items.map(bultPropertiesAndPushThenToMixpanel))
+    } while (cursor && items.length)
+
+    logger.info('Finished full workspace tracking update')
   }
 
-export const scheduleUpdateWorkspacesTracking = ({
-  scheduleExecution
+export const scheduleUpdateAllWorkspacesTracking = ({
+  scheduleExecution,
+  mixpanel
 }: {
   scheduleExecution: ScheduleExecution
+  mixpanel: Mixpanel
 }) => {
-  const updateWorkspacesTackingProperties = updateWorkspacesTackingPropertiesFactory({
-    countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
-    getDefaultRegion: getDefaultRegionFactory({ db }),
-    getWorkspacePlan: getWorkspacePlanFactory({ db }),
-    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-    getWorkspaceModelCount: getWorkspaceModelCountFactory({
-      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
+  const updateAllWorkspacesTackingProperties =
+    updateAllWorkspacesTackingPropertiesFactory({
+      countWorkspaceRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
+      getDefaultRegion: getDefaultRegionFactory({ db }),
+      getWorkspacePlan: getWorkspacePlanFactory({ db }),
+      getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+      getWorkspaceModelCount: getWorkspaceModelCountFactory({
+        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+          getStreams: legacyGetStreamsFactory({ db })
+        }),
+        getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(
+          {
+            db
+          }
+        )
       }),
-      getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory({
-        db
-      })
-    }),
-    getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
-    getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
-  })
+      getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
+      getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db }),
+      getAllWorkspaces: getAllWorkspacesFactory({ db })
+    })
 
-  const at2AMonMondaysAndSubdays = '0 2 * * 0,3'
+  const dailyAt2AM = '0 2 * * *'
   return scheduleExecution(
-    at2AMonMondaysAndSubdays,
+    dailyAt2AM,
     'UpdateWorkspacestracking',
     async (_scheduledTime, { logger }) =>
-      await updateWorkspacesTackingProperties({ logger })
+      await updateAllWorkspacesTackingProperties({ logger, mixpanel })
   )
 }

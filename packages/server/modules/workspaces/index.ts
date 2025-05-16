@@ -16,7 +16,8 @@ import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import { scheduleUpdateWorkspacesTracking } from '@/modules/workspaces/services/tracking'
+import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
+import { getClient } from '@/modules/shared/utils/mixpanel'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -53,13 +54,16 @@ const workspacesModule: SpeckleModule = {
     if (FF_WORKSPACES_SSO_ENABLED) app.use(getSsoRouter())
 
     if (isInitial) {
+      const mixpanel = getClient()
       const scheduleExecution = scheduleExecutionFactory({
         acquireTaskLock: acquireTaskLockFactory({ db }),
         releaseTaskLock: releaseTaskLockFactory({ db })
       })
 
-      if (FF_BILLING_INTEGRATION_ENABLED)
-        scheduledTasks = [scheduleUpdateWorkspacesTracking({ scheduleExecution })]
+      if (FF_BILLING_INTEGRATION_ENABLED && mixpanel)
+        scheduledTasks = [
+          scheduleUpdateAllWorkspacesTracking({ scheduleExecution, mixpanel })
+        ]
 
       quitListeners = initializeEventListenersFactory({ db })()
     }
