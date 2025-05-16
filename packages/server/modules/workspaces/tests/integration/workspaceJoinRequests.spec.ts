@@ -233,6 +233,85 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         )
         expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
       })
+      it('gracefully handles a duplicate request', async () => {
+        // insert into "workspace_join_requests" ("status", "userId", "workspaceId") values ($1, $2, $3) returning * - duplicate key value violates unique constraint "workspace_join_requests_pkey"
+        const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({ db })
+
+        const sendWorkspaceJoinRequestReceivedEmailCalls: Parameters<SendWorkspaceJoinRequestReceivedEmail>[number][] =
+          []
+        const sendWorkspaceJoinRequestReceivedEmail = async (
+          args: Parameters<SendWorkspaceJoinRequestReceivedEmail>[number]
+        ) => sendWorkspaceJoinRequestReceivedEmailCalls.push(args)
+
+        const user: BasicTestUser = {
+          id: '',
+          name: 'John Speckle',
+          email: `${createRandomString()}@example.org`,
+          role: Roles.Server.Admin,
+          verified: true
+        }
+
+        await createTestUser(user)
+
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 }),
+          discoverabilityEnabled: true
+        }
+        await createTestWorkspace(workspace, user, { domain: 'example.org' })
+        const domain = {
+          id: cryptoRandomString({ length: 10 }),
+          workspaceId: workspace.id,
+          domain: 'example.org',
+          verified: true,
+          createdAt: new Date(),
+          createdByUserId: user.id,
+          updatedAt: new Date()
+        }
+
+        const requestToJoinWorkspace = await requestToJoinWorkspaceFactory({
+          createWorkspaceJoinRequest,
+          sendWorkspaceJoinRequestReceivedEmail:
+            sendWorkspaceJoinRequestReceivedEmail as unknown as SendWorkspaceJoinRequestReceivedEmail,
+          getUserById: async () => user as unknown as UserWithOptionalRole,
+          getWorkspaceWithDomains: async () =>
+            ({
+              ...workspace,
+              domains: [domain]
+            } as unknown as WorkspaceWithDomains),
+          getUserEmails: async () =>
+            [{ email: user.email, verified: true }] as unknown as UserEmail[]
+        })
+
+        expect(
+          requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+        ).to.equal(true)
+
+        expect(
+          (await db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
+            .where({
+              workspaceId: workspace.id,
+              userId: user.id
+            })
+            .select('status')
+            .first())!.status
+        ).to.equal('pending')
+
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls).to.have.length(1)
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].workspace.id).to.equal(
+          workspace.id
+        )
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
+
+        // attempt to join again
+        const err = await expectToThrow(() =>
+          requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+        )
+        expect(err.message).to.equal(WorkspaceNotDiscoverableError.defaultMessage)
+      })
     })
 
     describe('approveWorkspaceJoinRequestFactory, returns a function that ', () => {
