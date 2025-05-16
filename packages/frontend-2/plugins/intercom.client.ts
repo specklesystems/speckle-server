@@ -52,11 +52,11 @@ export const useIntercom = () => {
     Intercom({
       /* eslint-disable camelcase */
       app_id: intercomAppId,
-      user_id: user.value.id,
-      created_at: Math.floor(new Date(user.value.createdAt).getTime() / 1000),
+      user_id: user.value.id || '',
+      created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
       /* eslint-enable camelcase */
-      name: user.value.name,
-      email: user.value.email
+      name: user.value.name || '',
+      email: user.value.email || ''
     })
 
     updateCompany()
