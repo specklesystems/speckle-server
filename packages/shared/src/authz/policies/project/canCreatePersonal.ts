@@ -5,7 +5,7 @@ import { AuthPolicy } from '../../domain/policies.js'
 import { Roles } from '../../../core/constants.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import {
-  PersonalProjectsDisabledError,
+  PersonalProjectsLimitedError,
   ServerNoAccessError,
   ServerNoSessionError,
   ServerNotEnoughPermissionsError
@@ -18,7 +18,7 @@ export const canCreatePersonalProjectPolicy: AuthPolicy<
     | typeof ServerNoAccessError
     | typeof ServerNoSessionError
     | typeof ServerNotEnoughPermissionsError
-    | typeof PersonalProjectsDisabledError
+    | typeof PersonalProjectsLimitedError
   >
 > =
   (loaders) =>
@@ -26,7 +26,7 @@ export const canCreatePersonalProjectPolicy: AuthPolicy<
     const env = await loaders.getEnv()
     if (env.FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
       return err(
-        new PersonalProjectsDisabledError({
+        new PersonalProjectsLimitedError({
           message: "Projects can't be created outside of workspaces"
         })
       )

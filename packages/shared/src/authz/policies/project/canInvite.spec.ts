@@ -4,7 +4,7 @@ import { canInviteToProjectPolicy } from './canInvite.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import { getProjectFake } from '../../../tests/fakes.js'
-import { PersonalProjectsDisabledError } from '../../domain/authErrors.js'
+import { PersonalProjectsLimitedError } from '../../domain/authErrors.js'
 
 const buildSUT = (overrides?: OverridesOf<typeof canInviteToProjectPolicy>) =>
   canInviteToProjectPolicy({
@@ -42,7 +42,7 @@ describe('canInviteToProjectPolicy', () => {
 
     const result = await canInvite({ userId: 'user-id', projectId: 'project-id' })
     expect(result).toBeAuthErrorResult({
-      code: PersonalProjectsDisabledError.code
+      code: PersonalProjectsLimitedError.code
     })
   })
 })

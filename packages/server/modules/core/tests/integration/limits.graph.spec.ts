@@ -6,6 +6,7 @@ import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectDocument,
   CreateProjectInviteDocument,
+  CreateProjectModelDocument,
   GetLimitedPersonalProjectCommentDocument,
   GetLimitedPersonalProjectCommentsDocument,
   GetLimitedPersonalProjectVersionDocument,
@@ -275,6 +276,20 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
         'No new collaborators can be added to personal projects'
       )
       expect(res.data?.projectMutations.invites.create.id).to.not.be.ok
+    })
+
+    it('prevent new models in personal projects', async () => {
+      const res = await apollo.execute(CreateProjectModelDocument, {
+        input: {
+          projectId: preexistingProject.id,
+          name: 'test personal project model'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors(
+        'No new models can be added to personal projects'
+      )
+      expect(res.data?.modelMutations.create.id).to.not.be.ok
     })
   }
 )

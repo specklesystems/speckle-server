@@ -12,7 +12,7 @@ import {
   ServerNotEnoughPermissionsError,
   ProjectNotEnoughPermissionsError,
   WorkspaceNotEnoughPermissionsError,
-  PersonalProjectsDisabledError
+  PersonalProjectsLimitedError
 } from '../../domain/authErrors.js'
 import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 import { Roles } from '../../../core/constants.js'
@@ -40,7 +40,7 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceSsoSessionNoAccessError>
   | InstanceType<typeof WorkspaceNoAccessError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
-  | InstanceType<typeof PersonalProjectsDisabledError>
+  | InstanceType<typeof PersonalProjectsLimitedError>
 
 export const canInviteToProjectPolicy: AuthPolicy<
   PolicyLoaderKeys,
@@ -70,7 +70,7 @@ export const canInviteToProjectPolicy: AuthPolicy<
     if (project && !project.workspaceId && env.FF_PERSONAL_PROJECTS_LIMITS_ENABLED) {
       // Prevent inviting collaborators to personal projects
       return err(
-        new PersonalProjectsDisabledError({
+        new PersonalProjectsLimitedError({
           message: 'No new collaborators can be added to personal projects'
         })
       )

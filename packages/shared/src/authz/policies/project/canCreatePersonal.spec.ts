@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { canCreatePersonalProjectPolicy } from './canCreatePersonal.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import {
-  PersonalProjectsDisabledError,
+  PersonalProjectsLimitedError,
   ServerNoAccessError,
   ServerNoSessionError,
   ServerNotEnoughPermissionsError
@@ -37,7 +37,7 @@ describe('canCreatePersonalProject', () => {
 
     const result = await canCreateProject({ userId: 'user-id' })
     expect(result).toBeAuthErrorResult({
-      code: PersonalProjectsDisabledError.code
+      code: PersonalProjectsLimitedError.code
     })
   })
 
