@@ -45,6 +45,10 @@
 import { ref } from 'vue'
 import IconPlay from '../global/icon/Play.vue'
 
+const emit = defineEmits<{
+  (e: 'onPlay'): void
+}>()
+
 const props = defineProps<{
   vimeoId: string
   title: string
@@ -60,6 +64,7 @@ const isPlaying = ref(props.autoplay || false)
 
 const play = () => {
   isPlaying.value = true
+  emit('onPlay')
 }
 
 defineExpose({
