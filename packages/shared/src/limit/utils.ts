@@ -3,7 +3,7 @@ import { GetWorkspaceLimits } from '../authz/domain/workspaces/operations.js'
 import { GetHistoryLimits, HistoryLimitTypes, HistoryLimits } from './domain.js'
 import { Project } from '../authz/domain/projects/types.js'
 
-export const isCreatedBeyondHistoryLimitCutoff =
+export const isCreatedBeyondHistoryLimitCutoffFactory =
   ({ getProjectLimitDate }: { getProjectLimitDate: GetProjectLimitDate }) =>
   async ({
     entity,
@@ -21,6 +21,10 @@ export const isCreatedBeyondHistoryLimitCutoff =
     return limitDate ? dayjs(limitDate).isAfter(entity.createdAt) : false
   }
 
+export type IsCreatedBeyondHistoryLimitCutoff = ReturnType<
+  typeof isCreatedBeyondHistoryLimitCutoffFactory
+>
+
 export const calculateLimitCutoffDate = (
   historyLimits: HistoryLimits | null,
   limitType: HistoryLimitTypes
@@ -32,12 +36,12 @@ export const calculateLimitCutoffDate = (
     .toDate()
 }
 
-type GetProjectLimitDate = (args: {
+export type GetProjectLimitDate = (args: {
   project: Pick<Project, 'workspaceId'>
   limitType: HistoryLimitTypes
 }) => Promise<Date | null>
 
-export const getProjectLimitDate =
+export const getProjectLimitDateFactory =
   ({
     getWorkspaceLimits,
     getPersonalProjectLimits

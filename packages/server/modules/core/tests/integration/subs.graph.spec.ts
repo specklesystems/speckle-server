@@ -688,6 +688,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message
           }
 
@@ -708,6 +709,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Commit to Delete'
           }
           await createTestCommits([commitToDelete], {
@@ -761,6 +763,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Commit to Update'
           }
           await createTestCommits([commitToUpdate], {
@@ -846,6 +849,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             objectId: '',
             id: '',
             authorId: '',
+            branchId: '',
             message: 'Random Commit'
           }
           await createTestCommits([commit], {

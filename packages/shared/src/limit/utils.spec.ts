@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   calculateLimitCutoffDate,
-  getProjectLimitDate,
-  isCreatedBeyondHistoryLimitCutoff
+  getProjectLimitDateFactory,
+  isCreatedBeyondHistoryLimitCutoffFactory
 } from './utils.js'
 import dayjs from 'dayjs'
 
@@ -30,7 +30,7 @@ describe('Limits utils', () => {
   })
   describe('getProjectLimitDate', () => {
     it('returns workspaceLimits for workspace projects', async () => {
-      const cutoffDate = await getProjectLimitDate({
+      const cutoffDate = await getProjectLimitDateFactory({
         getPersonalProjectLimits: () => {
           expect.fail()
         },
@@ -39,7 +39,7 @@ describe('Limits utils', () => {
       expect(cutoffDate).toBeNull()
     })
     it('returns projectLimits for non workspaceProjects', async () => {
-      const cutoffDate = await getProjectLimitDate({
+      const cutoffDate = await getProjectLimitDateFactory({
         getPersonalProjectLimits: async () => null,
         getWorkspaceLimits: async () => {
           expect.fail()
@@ -50,40 +50,43 @@ describe('Limits utils', () => {
   })
   describe('isCreatedBeyondHistoryLimitCutoff', () => {
     it('returns false if there are no limits', async () => {
-      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
-        getProjectLimitDate: async () => null
-      })({
-        entity: { createdAt: new Date() },
-        limitType: 'commentHistory',
-        project: { workspaceId: null }
-      })
+      const isCreatedBeyondHistoryLimit =
+        await isCreatedBeyondHistoryLimitCutoffFactory({
+          getProjectLimitDate: async () => null
+        })({
+          entity: { createdAt: new Date() },
+          limitType: 'commentHistory',
+          project: { workspaceId: null }
+        })
       expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
     it('returns false if entity is newer than the limit cutoff date', async () => {
-      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
-        getProjectLimitDate: async () => new Date(1999)
-      })({
-        entity: { createdAt: new Date() },
-        limitType: 'commentHistory',
-        project: { workspaceId: null }
-      })
+      const isCreatedBeyondHistoryLimit =
+        await isCreatedBeyondHistoryLimitCutoffFactory({
+          getProjectLimitDate: async () => new Date(1999)
+        })({
+          entity: { createdAt: new Date() },
+          limitType: 'commentHistory',
+          project: { workspaceId: null }
+        })
       expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
     it('returns false if entity is right on the limit cutoff date', async () => {
       const date = new Date()
-      const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
-        getProjectLimitDate: async () => date
-      })({
-        entity: { createdAt: date },
-        limitType: 'commentHistory',
-        project: { workspaceId: null }
-      })
+      const isCreatedBeyondHistoryLimit =
+        await isCreatedBeyondHistoryLimitCutoffFactory({
+          getProjectLimitDate: async () => date
+        })({
+          entity: { createdAt: date },
+          limitType: 'commentHistory',
+          project: { workspaceId: null }
+        })
       expect(isCreatedBeyondHistoryLimit).to.be.toBeFalsy()
     })
   })
   it('returns true of entity is older than the limit cutoff date', async () => {
     const date = new Date()
-    const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoff({
+    const isCreatedBeyondHistoryLimit = await isCreatedBeyondHistoryLimitCutoffFactory({
       getProjectLimitDate: async () => date
     })({
       entity: { createdAt: new Date(1999) },

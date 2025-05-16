@@ -83,7 +83,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 
-const { FF_BILLING_INTEGRATION_ENABLED, FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } =
+const { FF_BILLING_INTEGRATION_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
   getFeatureFlags()
 
 describe('Versions graphql @core', () => {
@@ -136,7 +136,7 @@ describe('Versions graphql @core', () => {
       }
     )
   })
-  ;(FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe : describe.skip)(
+  ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe : describe.skip)(
     'Version.referencedObject',
     () => {
       const tenDaysAgo = dayjs().subtract(10, 'day').toDate()

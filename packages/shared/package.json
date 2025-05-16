@@ -97,6 +97,8 @@
       "./workers": "./src/workers/index.ts",
       "./workers/previews": "./src/workers/previews/index.ts",
       "./workers/fileimport": "./src/workers/fileimport/index.ts",
+      "./viewer": "./src/viewer/index.ts",
+      "./viewer/route": "./src/viewer/helpers/route.ts",
       "./dist/*": "./dist/*"
     },
     "exclude": [
@@ -231,6 +233,26 @@
       "require": {
         "types": "./dist/commonjs/workers/fileimport/index.d.ts",
         "default": "./dist/commonjs/workers/fileimport/index.js"
+      }
+    },
+    "./viewer": {
+      "import": {
+        "types": "./dist/esm/viewer/index.d.ts",
+        "default": "./dist/esm/viewer/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/index.d.ts",
+        "default": "./dist/commonjs/viewer/index.js"
+      }
+    },
+    "./viewer/route": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/route.d.ts",
+        "default": "./dist/esm/viewer/helpers/route.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/route.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/route.js"
       }
     },
     "./dist/*": "./dist/*"

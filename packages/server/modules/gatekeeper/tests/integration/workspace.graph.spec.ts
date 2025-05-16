@@ -298,7 +298,8 @@ describe('Workspaces Billing', () => {
           authorId: user.id,
           objectId,
           streamId: project.id,
-          branchName: modelWithVersions.name
+          branchName: modelWithVersions.name,
+          branchId: ''
         })
 
         const session = await login(user)

@@ -1051,7 +1051,8 @@ describe('Workspaces GQL CRUD', () => {
           id: cryptoRandomString({ length: 10 }),
           streamId: workspaceProject.id,
           objectId: '',
-          authorId: ''
+          authorId: '',
+          branchId: ''
         }
 
         await createTestCommit(testVersion, {

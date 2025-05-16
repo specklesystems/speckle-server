@@ -1,6 +1,5 @@
 import { ensureError, SpeckleViewer } from '@speckle/shared'
 import {
-  CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput
 } from '@/modules/core/graph/generated/graphql'
@@ -44,7 +43,7 @@ export const createCommentThreadAndNotifyFactory =
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
   }): CreateCommentThreadAndNotify =>
-  async (input: CreateCommentInput, userId: string) => {
+  async (input, userId, options) => {
     const [resources] = await Promise.all([
       deps.getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
       deps.validateInputAttachments(input.projectId, input.content.blobIds || [])
@@ -68,7 +67,10 @@ export const createCommentThreadAndNotifyFactory =
         blobIds: input.content.blobIds || undefined
       }),
       screenshot: input.screenshot,
-      data: dataStruct
+      data: dataStruct,
+      ...(options?.createdAt
+        ? { createdAt: options.createdAt, updatedAt: options.createdAt }
+        : {})
     }
 
     let comment: CommentRecord

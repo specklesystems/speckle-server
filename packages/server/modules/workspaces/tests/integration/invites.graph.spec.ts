@@ -68,11 +68,14 @@ import {
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 enum InviteByTarget {
   Email = 'email',
   Id = 'id'
 }
+
+const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
@@ -598,22 +601,24 @@ describe('Workspaces Invites GQL', () => {
         expect(res).to.haveGraphQLErrors('Target project belongs to a workspace')
         expect(res.data?.projectMutations.invites.create.id).to.not.be.ok
       })
+      ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? it.skip : it)(
+        'can invite to non-workspace project through workspace project invite resolver',
+        async () => {
+          const res = await gqlHelpers.createWorkspaceProjectInvite({
+            projectId: myProjectInviteTargetBasicProject.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Owner,
+                workspaceRole: Roles.Workspace.Admin // should be ignored
+              }
+            ]
+          })
 
-      it('can invite to non-workspace project through workspace project invite resolver', async () => {
-        const res = await gqlHelpers.createWorkspaceProjectInvite({
-          projectId: myProjectInviteTargetBasicProject.id,
-          inputs: [
-            {
-              userId: otherGuy.id,
-              role: Roles.Stream.Owner,
-              workspaceRole: Roles.Workspace.Admin // should be ignored
-            }
-          ]
-        })
-
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
-      })
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.projectMutations.invites.createForWorkspace.id).to.be.ok
+        }
+      )
 
       it("can't indirectly invite to workspace if not workspace admin", async () => {
         const res = await gqlHelpers.createWorkspaceProjectInvite(

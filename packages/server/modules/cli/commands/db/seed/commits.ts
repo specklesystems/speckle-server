@@ -63,6 +63,7 @@ const command: CommandModule<
         (i): BasicTestCommit => ({
           id: '',
           objectId: '',
+          branchId: '',
           streamId,
           authorId,
           message: `#${i} - ${date} - Fake commit batch`

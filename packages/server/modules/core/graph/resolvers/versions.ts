@@ -3,7 +3,7 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -54,16 +54,7 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { Version } from '@/modules/core/domain/commits/types'
 import { GraphQLResolveInfo } from 'graphql'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import {
-  Authz,
-  getProjectLimitDate,
-  isCreatedBeyondHistoryLimitCutoff
-} from '@speckle/shared'
-
-const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
-const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
-  : () => Promise.resolve(null)
+import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
 
 /**
  * Simple utility to check if version is inside a Model or a Project
@@ -134,12 +125,12 @@ export = {
         })
       }
 
-      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoff({
-        getProjectLimitDate: getProjectLimitDate({
-          getWorkspaceLimits: ctx.authLoaders.getWorkspaceLimits,
-          getPersonalProjectLimits
-        })
-      })({ entity: parent, limitType: 'versionsHistory', project })
+      const isBeyondLimit = await isCreatedBeyondHistoryLimitCutoffFactory({ ctx })({
+        entity: parent,
+        limitType: 'versionsHistory',
+        project
+      })
+
       let lastVersion: Version | null
       if (getTypeFromPath(info) === 'Model') {
         lastVersion = await ctx.loaders
@@ -150,6 +141,7 @@ export = {
           .forRegion({ db: projectDB })
           .streams.getLastVersion.load(parent.streamId)
       }
+
       if (lastVersion?.id === parent.id) return parent.referencedObject
       if (isBeyondLimit) return null
       return parent.referencedObject

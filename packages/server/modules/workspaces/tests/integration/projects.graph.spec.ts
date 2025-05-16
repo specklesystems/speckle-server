@@ -21,7 +21,6 @@ import {
 import {
   ActiveUserProjectsDocument,
   ActiveUserProjectsWorkspaceDocument,
-  CreateProjectDocument,
   CreateWorkspaceProjectDocument,
   GetProjectDocument,
   GetWorkspaceDocument,
@@ -1019,13 +1018,14 @@ describe('Workspace project GQL CRUD', () => {
       )
       expect(createProjectInWorkspaceRes).to.not.haveGraphQLErrors()
 
-      const createProjectNonInWorkspaceRes = await session.execute(
-        CreateProjectDocument,
-        { input: { name: 'project' } }
-      )
-      expect(createProjectNonInWorkspaceRes).to.not.haveGraphQLErrors()
-      const projectNonInWorkspace =
-        createProjectNonInWorkspaceRes.data!.projectMutations.create
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
 
       const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
         filter: { personalOnly: true }
@@ -1071,11 +1071,14 @@ describe('Workspace project GQL CRUD', () => {
       const projectInWorkspace =
         createProjectInWorkspaceRes.data!.workspaceMutations.projects.create
 
-      const createProjectNonInWorkspaceRes = await session.execute(
-        CreateProjectDocument,
-        { input: { name: 'project' } }
-      )
-      expect(createProjectNonInWorkspaceRes).to.not.haveGraphQLErrors()
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
 
       const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
         filter: { workspaceId }
@@ -1119,11 +1122,14 @@ describe('Workspace project GQL CRUD', () => {
       )
       expect(createProjectInWorkspaceRes).to.not.haveGraphQLErrors()
 
-      const createProjectNonInWorkspaceRes = await session.execute(
-        CreateProjectDocument,
-        { input: { name: 'project' } }
-      )
-      expect(createProjectNonInWorkspaceRes).to.not.haveGraphQLErrors()
+      // create w/o GQL, to not mess w/ personal project limits
+      const projectNonInWorkspace: BasicTestStream = {
+        id: '',
+        name: 'project',
+        ownerId: '',
+        isPublic: false
+      }
+      await createTestStream(projectNonInWorkspace, testAdminUser)
 
       const userProjectsRes = await session.execute(ActiveUserProjectsDocument, {
         filter: {}

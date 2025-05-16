@@ -97,7 +97,8 @@ describe('Commits (GraphQL)', () => {
         id: '',
         objectId: '',
         streamId: usePrivateStream ? myStream.id : myPrivateStream.id,
-        authorId: me.id
+        authorId: me.id,
+        branchId: ''
       })
 
       // other guys commit
@@ -105,7 +106,8 @@ describe('Commits (GraphQL)', () => {
         id: '',
         objectId: '',
         streamId: usePrivateStream ? myStream.id : myPrivateStream.id,
-        authorId: otherGuy.id
+        authorId: otherGuy.id,
+        branchId: ''
       })
     }
   })

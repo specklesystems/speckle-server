@@ -1,3 +1,7 @@
+import {
+  BasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateModelInput,
@@ -18,6 +22,13 @@ describe('Models', () => {
     id: ''
   }
 
+  const workspace: BasicTestWorkspace = {
+    id: '',
+    slug: '',
+    ownerId: '',
+    name: 'private workspace'
+  }
+
   const myPrivateStream: BasicTestStream = {
     name: 'this is my private stream #1',
     isPublic: false,
@@ -28,6 +39,11 @@ describe('Models', () => {
   before(async () => {
     await beforeEachContext()
     await createTestUsers([me])
+
+    // workspace, to avoid personal project limits
+    await createTestWorkspace(workspace, me)
+    myPrivateStream.workspaceId = workspace.id
+
     await createTestStreams([[myPrivateStream, me]])
   })
 

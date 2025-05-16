@@ -12,7 +12,7 @@ import type { ConditionalKeys, SetRequired } from 'type-fest'
 import type { Logger } from 'pino'
 import type { BaseContext } from '@apollo/server'
 import type { Registry } from 'prom-client'
-import { AuthCheckContextLoaders, AuthPolicies } from '@speckle/shared/authz'
+import { AuthPolicies } from '@speckle/shared/authz'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -62,10 +62,6 @@ export type GraphQLContext = BaseContext &
      */
     loaders: RequestDataLoaders
     log: Logger
-    /**
-     * @deprecated Should be cleaned up soon, just use dataloaders
-     */
-    authLoaders: AuthCheckContextLoaders
     /**
      * Clear dataloader, auth policy loader etc. caches. Usually necessary after mutations
      * are done in resolvers

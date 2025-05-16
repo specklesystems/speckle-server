@@ -1,61 +1,54 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { noErrors } = require('@/test/helpers')
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { noErrors } from '@/test/helpers'
 
-const { Roles, Scopes } = require('@speckle/shared')
-const { getUserActivityFactory } = require('@/modules/activitystream/repositories')
-const { db } = require('@/db/knex')
-const {
+import { Roles, Scopes } from '@speckle/shared'
+import { getUserActivityFactory } from '@/modules/activitystream/repositories'
+import { db } from '@/db/knex'
+import {
   validateStreamAccessFactory,
   addOrUpdateStreamCollaboratorFactory
-} = require('@/modules/core/services/streams/access')
-const { authorizeResolver } = require('@/modules/shared')
-const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
   storePersonalApiTokenFactory,
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { createObjectFactory } = require('@/modules/core/services/objects/management')
-const {
-  storeSingleObjectIfNotFoundFactory
-} = require('@/modules/core/repositories/objects')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { storeSingleObjectIfNotFoundFactory } from '@/modules/core/repositories/objects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import type http from 'node:http'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -107,36 +100,40 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
-let server
-let sendRequest
+let server: http.Server
+let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
 describe('Activity @activity', () => {
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
     password: 'sp0ckle sucks 9001',
-    id: undefined
+    id: '',
+    token: ''
   }
 
   const userCr = {
     name: 'Cristi Balas',
     email: 'cristib@speckle.systems',
     password: 'hack3r man 666',
-    id: undefined
+    id: '',
+    token: ''
   }
 
   const userX = {
     name: 'Mystery User',
     email: 'mysteriousDude@speckle.systems',
     password: 'super $ecret pw0rd',
-    id: undefined
+    id: '',
+    token: ''
   }
 
-  const streamPublic = {
+  const streamPublic: BasicTestStream = {
     name: 'a fun stream for sharing',
     description: 'for all to see!',
     isPublic: true,
-    id: undefined
+    id: '',
+    ownerId: ''
   }
 
   // const collaboratorTestStream = {
@@ -146,24 +143,32 @@ describe('Activity @activity', () => {
   //   id: undefined
   // }
 
-  const branchPublic = { name: '🍁maple branch' }
+  const branchPublic: BasicTestBranch = {
+    name: '🍁maple branch',
+    id: '',
+    streamId: '',
+    authorId: ''
+  }
 
-  const streamSecret = {
+  const streamSecret: BasicTestStream = {
     name: 'a secret stream for me',
     description: 'for no one to see!',
     isPublic: false,
-    id: undefined
+    id: '',
+    ownerId: ''
   }
 
   const testObj = {
     hello: 'hallo',
     cool: 'kult',
-    bunny: 'kanin'
+    bunny: 'kanin',
+    id: ''
   }
   const testObj2 = {
     goodbye: 'ha det bra',
     warm: 'varmt',
-    bunny: 'kanin'
+    bunny: 'kanin',
+    id: ''
   }
 
   before(async () => {
@@ -211,15 +216,10 @@ describe('Activity @activity', () => {
     // It's definitely not great that there's a full on test case in the before() hook, but that's because
     // these tests were originally written incorrectly - they depend on each other. So this is a temporary fix that
     // ensures tests can be ran in any order
+    // + Avoiding GQL to bypass personal project limits, if any
 
     // create stream (cr1)
-    const resStream1 = await sendRequest(userCr.token, {
-      query:
-        'mutation createStream($myStream:StreamCreateInput!) { streamCreate(stream: $myStream) }',
-      variables: { myStream: streamSecret }
-    })
-    expect(noErrors(resStream1))
-    streamSecret.id = resStream1.body.data.streamCreate
+    await createTestStream(streamSecret, userCr)
 
     // create commit (cr2)
     testObj2.id = await createObject({ streamId: streamSecret.id, object: testObj2 })
@@ -229,20 +229,14 @@ describe('Activity @activity', () => {
     expect(noErrors(resCommit1))
 
     // create stream #2 (iz1)
-    const resStream2 = await sendRequest(userIz.token, {
-      query:
-        'mutation createStream($myStream:StreamCreateInput!) { streamCreate(stream: $myStream) }',
-      variables: { myStream: streamPublic }
-    })
-    expect(noErrors(resStream2))
-    streamPublic.id = resStream2.body.data.streamCreate
+    await createTestStream(streamPublic, userIz)
 
     // create branch (iz2)
-    const resBranch = await sendRequest(userIz.token, {
-      query: `mutation { branchCreate(branch: { streamId: "${streamPublic.id}", name: "${branchPublic.name}" }) }`
+    await createTestBranch({
+      branch: branchPublic,
+      stream: streamPublic,
+      owner: userIz
     })
-    expect(noErrors(resBranch))
-    branchPublic.id = resBranch.body.data.branchCreate
 
     // create commit #2 (iz3)
     testObj.id = await createObject({ streamId: streamPublic.id, object: testObj })

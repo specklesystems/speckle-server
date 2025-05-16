@@ -37,7 +37,11 @@ type PolicyErrors =
   | InstanceType<typeof WorkspaceNoAccessError>
   | InstanceType<typeof WorkspaceNotEnoughPermissionsError>
 
-export const canInvitePolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
+export const canInviteToWorkspacePolicy: AuthPolicy<
+  PolicyLoaderKeys,
+  PolicyArgs,
+  PolicyErrors
+> =
   (loaders) =>
   async ({ userId, workspaceId }) => {
     const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
