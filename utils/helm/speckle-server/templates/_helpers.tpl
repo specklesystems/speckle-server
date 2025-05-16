@@ -575,7 +575,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-{{- if .Values.featureFlags.workspacesModuleEnabled }}
+{{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
     secretKeyRef:
@@ -959,12 +959,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: MAILCHIMP_ONBOARDING_LIST_ID
   value: "{{ .Values.server.mailchimp.onboardingListId}}"
-
-- name: MAILCHIMP_ONBOARDING_JOURNEY_ID
-  value: "{{ .Values.server.mailchimp.onboardingJourneyId}}"
-
-- name: MAILCHIMP_ONBOARDING_STEP_ID
-  value: "{{ .Values.server.mailchimp.onboardingStepId}}"
 {{- end }}
 
 # Monitoring - Apollo

@@ -1,3 +1,4 @@
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   assignToWorkspaces,
@@ -110,9 +111,9 @@ const { FF_WORKSPACES_SSO_ENABLED } = getFeatureFlags()
     const testProject: BasicTestStream = {
       id: '',
       ownerId: '',
-      isPublic: false,
       name: 'Workspace Project',
-      workspaceId: testWorkspaceWithSso.id
+      workspaceId: testWorkspaceWithSso.id,
+      visibility: ProjectRecordVisibility.Workspace
     }
 
     await createTestStream(testProject, workspaceAdmin)

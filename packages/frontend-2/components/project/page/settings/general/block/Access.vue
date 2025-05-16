@@ -1,9 +1,7 @@
 <template>
   <ProjectPageSettingsBlock background title="Access" :auth-check="canUpdate">
     <template #introduction>
-      <p class="text-body-xs text-foreground">
-        Choose how you want to share this project with others.
-      </p>
+      <p class="text-body-xs text-foreground">Choose who can access this project.</p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"
@@ -16,9 +14,16 @@
 </template>
 
 <script setup lang="ts">
-import { LockClosedIcon, LinkIcon } from '@heroicons/vue/24/outline'
+import {
+  LockClosedIcon,
+  GlobeAltIcon,
+  BuildingOfficeIcon
+} from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
-import { SimpleProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  castToSupportedVisibility,
+  SupportedProjectVisibility
+} from '~/lib/projects/helpers/visibility'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsGeneralBlockAccess_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -26,6 +31,7 @@ graphql(`
   fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {
     id
     visibility
+    workspaceId
     permissions {
       canUpdate {
         ...FullPermissionCheckResult
@@ -39,22 +45,35 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update-visibility', v: SimpleProjectVisibility): void
+  (e: 'update-visibility', v: SupportedProjectVisibility): void
 }>()
 
-const selectedOption = ref(props.project.visibility || SimpleProjectVisibility.Private)
+const selectedOption = ref(
+  castToSupportedVisibility(props.project.visibility) ||
+    SupportedProjectVisibility.Private
+)
 
 const radioOptions = computed(() => [
   {
-    value: SimpleProjectVisibility.Unlisted,
-    title: 'Link shareable',
+    value: SupportedProjectVisibility.Public,
+    title: 'Public',
     introduction: 'Anyone with the link can view',
-    icon: LinkIcon
+    icon: GlobeAltIcon
   },
+  ...(props.project.workspaceId
+    ? [
+        {
+          value: SupportedProjectVisibility.Workspace,
+          introduction: 'All workspace members can view',
+          title: 'Workspace',
+          icon: BuildingOfficeIcon
+        }
+      ]
+    : []),
   {
-    value: SimpleProjectVisibility.Private,
+    value: SupportedProjectVisibility.Private,
     title: 'Private',
-    introduction: 'Only collaborators can access',
+    introduction: 'Only for project members and admins',
     icon: LockClosedIcon
   }
 ])
@@ -63,11 +82,12 @@ const canUpdate = computed(() => props.project.permissions.canUpdate)
 watch(
   () => props.project.visibility,
   (newVal) => {
-    selectedOption.value = newVal ?? SimpleProjectVisibility.Private
+    selectedOption.value =
+      castToSupportedVisibility(newVal) || SupportedProjectVisibility.Private
   }
 )
 
-const emitUpdate = (value: SimpleProjectVisibility) => {
+const emitUpdate = (value: SupportedProjectVisibility) => {
   emit('update-visibility', value)
 }
 </script>

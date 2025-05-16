@@ -395,7 +395,7 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: workspace.id,
           userId: memberEditor.id,
-          type: 'editor',
+          type: WorkspaceSeatType.Editor,
           assignedByUserId: admin.id
         })
         // Assign the same user editor to another workspace
@@ -407,7 +407,7 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: otherWorkspace.id,
           userId: memberEditor.id,
-          type: 'editor',
+          type: WorkspaceSeatType.Editor,
           assignedByUserId: admin.id
         })
 
@@ -425,14 +425,14 @@ describe('Workspaces GQL CRUD', () => {
         })({
           workspaceId: workspace.id,
           userId: memberViewer.id,
-          type: 'viewer',
+          type: WorkspaceSeatType.Viewer,
           assignedByUserId: admin.id
         })
 
         const res = await session.execute(GetWorkspaceTeamDocument, {
           workspaceId: workspace.id,
           filter: {
-            seatType: 'editor'
+            seatType: WorkspaceSeatType.Editor
           }
         })
 

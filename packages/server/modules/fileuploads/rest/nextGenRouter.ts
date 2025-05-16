@@ -22,6 +22,16 @@ import { UploadResult } from '@/modules/blobstorage/domain/types'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { ensureError } from '@speckle/shared'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { scheduleJob } from '@/modules/fileuploads/queues/fileimports'
 
 export const nextGenFileImporterRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -57,26 +67,25 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       const [model] = await getModelsByIds([modelId], { streamId: projectId })
       if (!model) throw new UnauthorizedError()
 
+      const pushJobToFileImporter = pushJobToFileImporterFactory({
+        getServerOrigin,
+        scheduleJob,
+        createAppToken: createAppTokenFactory({
+          storeApiToken: storeApiTokenFactory({ db }),
+          storeTokenScopes: storeTokenScopesFactory({ db }),
+          storeTokenResourceAccessDefinitions:
+            storeTokenResourceAccessDefinitionsFactory({
+              db
+            }),
+          storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+        })
+      })
+
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        pushJobToFileImporter,
         saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
         publish
       })
-
-      const storeFileResultsAsFileUploads = async (data: UploadResult[]) => {
-        await Promise.all(
-          data.map(async (result) => {
-            await insertNewUploadAndNotify({
-              projectId,
-              modelId,
-              userId,
-              fileId: result.blobId,
-              fileName: result.fileName,
-              fileType: result.fileName?.split('.').pop() || '', //FIXME
-              fileSize: result.fileSize
-            })
-          })
-        )
-      }
 
       const onError = () => {
         res.contentType('application/json')
@@ -84,11 +93,30 @@ export const nextGenFileImporterRouterFactory = (): Router => {
       }
 
       const onFinishAllFileUploads = async (uploadResults: UploadResult[]) => {
+        if (!uploadResults.length) {
+          logger.error('File import failed to upload')
+          onError()
+          return
+        }
+
         try {
-          await storeFileResultsAsFileUploads(uploadResults)
+          await Promise.all(
+            uploadResults.map((upload) =>
+              insertNewUploadAndNotify({
+                projectId,
+                userId,
+                modelId,
+                modelName: model.name,
+                fileName: upload.fileName,
+                fileType: upload.fileName?.split('.').pop() || '', //FIXME
+                fileSize: upload.fileSize,
+                fileId: upload.blobId
+              })
+            )
+          )
           res.status(201).send({ uploadResults })
         } catch (err) {
-          logger.error(ensureError(err), 'File importer handling error')
+          logger.error(ensureError(err), 'File import post upload error')
           onError()
         }
       }

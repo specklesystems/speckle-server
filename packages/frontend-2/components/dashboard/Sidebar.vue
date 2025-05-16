@@ -60,16 +60,18 @@
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
 
-                <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
-                  <LayoutSidebarMenuGroupItem
-                    label="Tutorials"
-                    :active="isActive(tutorialsRoute)"
-                  >
-                    <template #icon>
-                      <IconTutorials class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
+                <div v-if="isWorkspacesEnabled">
+                  <div @click="showExplainerVideoDialog = true">
+                    <LayoutSidebarMenuGroupItem label="Getting started">
+                      <template #icon>
+                        <IconPlay class="size-4 text-foreground-2" />
+                      </template>
+                    </LayoutSidebarMenuGroupItem>
+                  </div>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -80,6 +82,17 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
+
+                <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
+                  <LayoutSidebarMenuGroupItem
+                    label="Tutorials"
+                    :active="isActive(tutorialsRoute)"
+                  >
+                    <template #icon>
+                      <IconTutorials class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
                 <NuxtLink
                   to="https://speckle.community/"
@@ -159,6 +172,7 @@ const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
+const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value

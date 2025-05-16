@@ -1,3 +1,4 @@
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   assignToWorkspaces,
@@ -19,7 +20,8 @@ import { waitForRegionUsers } from '@/test/speckle-helpers/regions'
 import {
   addAllToStream,
   BasicTestStream,
-  createTestStream
+  createTestStream,
+  createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -68,11 +70,26 @@ describe('Users @graphql', () => {
       id: '',
       slug: ''
     }
+
     const myWorkspaceCollaboratorProject: BasicTestStream = {
       name: 'My Workspace Collaborator Project #1',
       ownerId: '',
       id: '',
-      isPublic: true
+      visibility: ProjectRecordVisibility.Workspace
+    }
+
+    const myPrivateWorkspaceCollaboratorProject: BasicTestStream = {
+      name: 'My Private Workspace Collaborator Project #1',
+      ownerId: '',
+      id: '',
+      visibility: ProjectRecordVisibility.Private
+    }
+
+    const myNoCollaboratorProject: BasicTestStream = {
+      name: 'My No Collaborator Project #1',
+      ownerId: '',
+      id: '',
+      visibility: ProjectRecordVisibility.Private
     }
 
     const myBasicCollaboratorProject: BasicTestStream = {
@@ -95,11 +112,18 @@ describe('Users @graphql', () => {
     before(async () => {
       await Promise.all([
         createTestStream(myBasicCollaboratorProject, me),
+        createTestStream(myNoCollaboratorProject, me),
         createTestWorkspace(myWorkspace, me, {
           regionKey: getMainTestRegionKeyIfMultiRegion()
-        }).then(() => (myWorkspaceCollaboratorProject.workspaceId = myWorkspace.id))
+        })
       ])
-      await createTestStream(myWorkspaceCollaboratorProject, me)
+
+      myWorkspaceCollaboratorProject.workspaceId = myWorkspace.id
+      myPrivateWorkspaceCollaboratorProject.workspaceId = myWorkspace.id
+      await createTestStreams([
+        [myWorkspaceCollaboratorProject, me],
+        [myPrivateWorkspaceCollaboratorProject, me]
+      ])
 
       // Seed in users
       let remainingBasicProjectCollaborators = BASIC_COLLABORATOR_PROJECT_USER_COUNT
@@ -164,6 +188,15 @@ describe('Users @graphql', () => {
           }
         )
       }
+
+      // Add specific user to myPrivateWorkspaceCollaboratorProject
+      await addAllToStream(
+        myPrivateWorkspaceCollaboratorProject,
+        [{ user: secondSpecificUser, role: Roles.Stream.Reviewer }],
+        {
+          owner: me
+        }
+      )
     })
 
     it('works with basic query', async () => {
@@ -235,7 +268,7 @@ describe('Users @graphql', () => {
       ])
     })
 
-    it('works with a projectId from a workspace', async () => {
+    it('works with a workspace visibility projectId from a workspace', async () => {
       const res = await search(
         {
           query: 'user',
@@ -245,6 +278,7 @@ describe('Users @graphql', () => {
         { assertNoErrors: true }
       )
 
+      // workspace visibility, so: find all members (implicit access) - guests cause none have explicit access + 1 explicit access user
       expect(res.data?.users.items || []).to.have.lengthOf(
         WORKSPACE_COLLABORATOR_USER_COUNT - WORKSPACE_GUEST_USER_COUNT + 1 // +1 for the secondSpecificUser
       )
@@ -252,6 +286,37 @@ describe('Users @graphql', () => {
         ...getWorkspaceNonGuestRandomizedUsers().map((u) => u.id),
         secondSpecificUser.id
       ])
+    })
+
+    it('works with a private visibility projectId from a workspace', async () => {
+      const res = await search(
+        {
+          query: 'user',
+          projectId: myPrivateWorkspaceCollaboratorProject.id,
+          limit: 100
+        },
+        { assertNoErrors: true }
+      )
+
+      // private visibility, so: only 1 explicit access user
+      expect(res.data?.users.items || []).to.have.lengthOf(1)
+      expect((res.data?.users.items || []).map((u) => u.id)).to.deep.equal([
+        secondSpecificUser.id
+      ])
+    })
+
+    it('doesnt work if user doesnt have access to the project specified', async () => {
+      const res = await search(
+        {
+          query: 'user',
+          projectId: myNoCollaboratorProject.id,
+          limit: 100
+        },
+        { authUserId: firstSpecificUser.id }
+      )
+
+      expect(res).to.haveGraphQLErrors('You do not have access to the project')
+      expect(res.data?.users).to.not.be.ok
     })
 
     it('works with pagination', async () => {

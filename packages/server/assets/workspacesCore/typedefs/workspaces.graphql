@@ -141,7 +141,6 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
-  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
