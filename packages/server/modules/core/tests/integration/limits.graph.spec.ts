@@ -5,6 +5,7 @@ import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectDocument,
+  CreateProjectInviteDocument,
   GetLimitedPersonalProjectCommentDocument,
   GetLimitedPersonalProjectCommentsDocument,
   GetLimitedPersonalProjectVersionDocument,
@@ -34,23 +35,24 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
       name: 'meeeeeee'
     }
 
+    const preexistingProject: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: 'preexisting project',
+      description: 'preexisting project',
+      visibility: ProjectRecordVisibility.Private
+    }
+
     let apollo: TestApolloServer
 
     before(async () => {
       await beforeEachContext()
       await createTestUsers([me])
+      await createTestStreams([[preexistingProject, me]])
       apollo = await testApolloServer({ authUserId: me.id })
     })
 
     describe('history limits', () => {
-      const preexistingProject: BasicTestStream = {
-        id: '',
-        ownerId: '',
-        name: 'preexisting project',
-        description: 'preexisting project',
-        visibility: ProjectRecordVisibility.Private
-      }
-
       const oldVersion: BasicTestCommit = {
         id: '',
         objectId: '',
@@ -71,8 +73,6 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
       let comments: CommentRecord[]
 
       before(async () => {
-        await createTestStreams([[preexistingProject, me]])
-
         // old & new commit
         await createTestCommits([oldVersion, newVersion], {
           owner: me,
@@ -261,6 +261,20 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
         "Projects can't be created outside of workspaces"
       )
       expect(res.data?.projectMutations.create.id).to.not.be.ok
+    })
+
+    it('prevent new invites to personal projects', async () => {
+      const res = await apollo.execute(CreateProjectInviteDocument, {
+        projectId: preexistingProject.id,
+        input: {
+          email: 'personalprojectlimitsinvite@example.com'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors(
+        'No new collaborators can be added to personal projects'
+      )
+      expect(res.data?.projectMutations.invites.create.id).to.not.be.ok
     })
   }
 )

@@ -64,6 +64,11 @@ export const ProjectNoAccessError = defineAuthError({
   message: 'You do not have access to the project'
 })
 
+export const PersonalProjectsDisabledError = defineAuthError({
+  code: 'PersonalProjectsDisabled',
+  message: 'Non-workspaced/personal projects are disabled'
+})
+
 export const ProjectNotEnoughPermissionsError = defineAuthError({
   code: 'ProjectNotEnoughPermissions',
   message: 'You do not have enough permissions in the project to perform this action'

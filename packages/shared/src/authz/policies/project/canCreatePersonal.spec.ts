@@ -2,25 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { canCreatePersonalProjectPolicy } from './canCreatePersonal.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import {
-  ProjectNoAccessError,
+  PersonalProjectsDisabledError,
   ServerNoAccessError,
   ServerNoSessionError,
   ServerNotEnoughPermissionsError
 } from '../../domain/authErrors.js'
+import { OverridesOf } from '../../../tests/helpers/types.js'
 
-const buildSUT = (
-  overrides?: Partial<Parameters<typeof canCreatePersonalProjectPolicy>[0]>
-) =>
+const buildSUT = (overrides?: OverridesOf<typeof canCreatePersonalProjectPolicy>) =>
   canCreatePersonalProjectPolicy({
     getEnv: async () =>
       parseFeatureFlags({
-        FF_WORKSPACES_MODULE_ENABLED: 'false'
+        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
       }),
     getServerRole: async () => 'server:user',
     ...(overrides || {})
   })
 
-describe('canCreateProject', () => {
+describe('canCreatePersonalProject', () => {
   it('returns error if user is not logged in', async () => {
     const canCreateProject = buildSUT()
 
@@ -30,15 +29,15 @@ describe('canCreateProject', () => {
     })
   })
 
-  // TODO: Re-enable when ready
-  it.skip('returns error if workspaces module is enabled', async () => {
+  it('returns error if workspaces module is enabled', async () => {
     const canCreateProject = buildSUT({
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' })
+      getEnv: async () =>
+        parseFeatureFlags({ FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'true' })
     })
 
     const result = await canCreateProject({ userId: 'user-id' })
     expect(result).toBeAuthErrorResult({
-      code: ProjectNoAccessError.code
+      code: PersonalProjectsDisabledError.code
     })
   })
 
