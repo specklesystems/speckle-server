@@ -135,11 +135,16 @@ describe('canCreateModelPolicy returns a function, that', () => {
     const result = await buildCanCreateModelPolicy({
       getProject: async () => {
         return {} as Project
-      }
+      },
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+        })
     })(canCreateArgs())
 
     expect(result).toBeAuthOKResult()
   })
+
   // Hold the workspace to a higher standard than myself
   it('requires the workspace to have a plan', async () => {
     const result = await buildCanCreateModelPolicy({
