@@ -218,7 +218,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           const assigned = await countSeatsByTypeInWorkspaceFactory({ db })({
             workspaceId,
-            type: 'editor'
+            type: WorkspaceSeatType.Editor
           })
           let available = 0
 
@@ -261,7 +261,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return {
             assigned: await countSeatsByTypeInWorkspaceFactory({ db })({
               workspaceId,
-              type: 'viewer'
+              type: WorkspaceSeatType.Viewer
             }),
             available: 0
           }
@@ -274,8 +274,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             userId: parent.id
           })
 
-          // Defaults to Editor for old plans that don't have seat types
-          return seat?.type || WorkspaceSeatType.Editor
+          return seat?.type || WorkspaceSeatType.Viewer
         }
       },
       ServerWorkspacesInfo: {

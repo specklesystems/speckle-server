@@ -593,8 +593,6 @@ export const workspaceTrackingFactory =
           ...(speckleMembers.hasSpeckleMembers ? speckleMembers : {})
         })
         break
-      case 'workspace.joined-from-discovery':
-        break
       default:
         throwUncoveredError(eventName)
     }
