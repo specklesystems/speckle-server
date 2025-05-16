@@ -1135,7 +1135,8 @@ const createAppToken = createAppTokenFactory({
             id: '',
             objectId: '',
             streamId: testUserStream.id,
-            authorId: testUser.id
+            authorId: testUser.id,
+            branchId: ''
           })
         })
 
@@ -1223,7 +1224,8 @@ const createAppToken = createAppTokenFactory({
           authorId: testUser.id,
           streamId: testUserStream.id,
           branchName: testUserStreamModel.name,
-          objectId: ''
+          objectId: '',
+          branchId: ''
         }
 
         await createTestCommit(testVersion)

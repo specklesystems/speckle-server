@@ -4,6 +4,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
+  CreateProjectDocument,
   GetLimitedPersonalProjectCommentDocument,
   GetLimitedPersonalProjectCommentsDocument,
   GetLimitedPersonalProjectVersionDocument,
@@ -247,6 +248,19 @@ const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
         await Promise.all(comments.map(test))
       })
+    })
+
+    it('prevent new personal project creation', async () => {
+      const res = await apollo.execute(CreateProjectDocument, {
+        input: {
+          name: 'test personal project'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors(
+        "Projects can't be created outside of workspaces"
+      )
+      expect(res.data?.projectMutations.create.id).to.not.be.ok
     })
   }
 )

@@ -150,7 +150,7 @@ export async function createTestCommits(
         createdAt: c.createdAt
       }
 
-      const commit = await (c.branchId.length
+      const commit = await (c.branchId?.length
         ? createCommitByBranchId({
             ...baseArgs,
             branchId: c.branchId

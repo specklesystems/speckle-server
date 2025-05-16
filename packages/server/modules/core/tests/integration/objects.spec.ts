@@ -55,6 +55,7 @@ describe('Object repository functions', () => {
       owner: adminUser
     })
 
+    testVersion.branchId = ''
     testVersion.branchName = testModel.name
     testVersion.objectId = await createTestObject({ projectId: testProject.id })
 
