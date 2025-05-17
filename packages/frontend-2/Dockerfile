@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
+FROM node:22-bookworm-slim@sha256:ec318fe0dc46b56bcc1ca42a202738aeb4f3e347a7b4dd9f9f1df12ea7aa385a AS build-stage
 ARG NODE_ENV=production
 ARG BUILD_SOURCEMAPS=false
 
@@ -53,7 +53,7 @@ RUN apt-get update -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:ed26b3ab750110c51d9dbdfd6c697561dc40a01c296460c3494d47b550ef4126 AS production-stage
+FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:92c2a6c01faeda49fab04f4c3c2fd3c652271bf19e99e5a0e8f2974622b9274f AS production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
