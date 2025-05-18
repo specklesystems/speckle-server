@@ -260,6 +260,7 @@ describe('Workspace services', () => {
         logo: null,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
+        isEmbedSpeckleBrandingHidden: false,
         domains: []
       }
       return merge(workspace, input)
@@ -1139,7 +1140,8 @@ describe('Workspace role services', () => {
                   updatedAt: new Date(),
                   description: null,
                   discoverabilityEnabled: false,
-                  domainBasedMembershipProtectionEnabled: false
+                  domainBasedMembershipProtectionEnabled: false,
+                  isEmbedSpeckleBrandingHidden: false
                 }
               },
               getDomains: async () => {
@@ -1178,7 +1180,8 @@ describe('Workspace role services', () => {
           updatedAt: new Date(),
           description: null,
           discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false
+          domainBasedMembershipProtectionEnabled: false,
+          isEmbedSpeckleBrandingHidden: false
         }
 
         await addDomainToWorkspaceFactory({
