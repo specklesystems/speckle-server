@@ -160,6 +160,7 @@ isMultiRegionTestMode()
           owner: adminUser
         })
 
+        testVersion.branchId = testModel.id
         testVersion.branchName = testModel.name
         testVersion.objectId = await createTestObject({ projectId: testProject.id })
 
