@@ -116,7 +116,6 @@ export const jobProcessor = async ({
 
     const versionId = output.data.commitId
     return {
-      jobId: job.jobId,
       status: 'success',
       result: { versionId, durationSeconds: getElapsed() },
       warnings: []
@@ -132,7 +131,6 @@ export const jobProcessor = async ({
     const reason = err instanceof Error ? err.stack ?? err.toString() : 'unknown error'
 
     return {
-      jobId: job.jobId,
       status: 'error',
       result: {
         durationSeconds: getElapsed()

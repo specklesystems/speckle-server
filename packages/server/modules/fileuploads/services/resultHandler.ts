@@ -34,12 +34,21 @@ export const onFileImportResultFactory =
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
+    let convertedCommitId = null
+    switch (jobResult.status) {
+      case 'error':
+        break
+      case 'success':
+        convertedCommitId = jobResult.result.versionId
+    }
+
     let updatedFile
     try {
       updatedFile = await deps.updateFileStatus({
         fileId: jobId,
         status,
-        convertedMessage
+        convertedMessage,
+        convertedCommitId
       })
     } catch (e) {
       const err = ensureError(e)

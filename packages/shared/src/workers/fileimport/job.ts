@@ -36,13 +36,11 @@ const fileImportSuccessPayload = z.object({
 
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
 
-const fileImportErrorPayload = job.merge(
-  z.object({
-    status: z.literal('error'),
-    reason: z.string(),
-    result: baseFileImportResult
-  })
-)
+const fileImportErrorPayload = z.object({
+  status: z.literal('error'),
+  reason: z.string(),
+  result: baseFileImportResult
+})
 
 export const fileImportResultPayload = z.discriminatedUnion('status', [
   fileImportSuccessPayload,

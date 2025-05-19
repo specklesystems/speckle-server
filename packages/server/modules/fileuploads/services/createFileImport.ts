@@ -14,12 +14,20 @@ export const pushJobToFileImporterFactory =
     getServerOrigin: typeof getServerOrigin
     scheduleJob: typeof scheduleJob
   }): PushJobToFileImporter =>
-  async ({ modelId, projectId, userId, fileType, blobId, jobId }): Promise<void> => {
+  async ({
+    modelId,
+    projectId,
+    userId,
+    fileName,
+    fileType,
+    blobId,
+    jobId
+  }): Promise<void> => {
     const token = await deps.createAppToken({
       appId: DefaultAppIds.Web,
       name: `fileimport-${projectId}@${modelId}`,
       userId,
-      scopes: [Scopes.Streams.Write],
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
       lifespan: 2 * TIME_MS.hour,
       limitResources: [
         {
@@ -29,21 +37,20 @@ export const pushJobToFileImporterFactory =
       ]
     })
 
-    const url = new URL(
-      `/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
-      deps.getServerOrigin()
-    ).toString()
+    // const url = new URL(
+    //   `/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
+    //   deps.getServerOrigin()
+    // ).toString()
 
     await deps.scheduleJob({
-      type: 'file-import',
-      payload: {
-        token,
-        url,
-        modelId,
-        fileType,
-        projectId,
-        timeOutSeconds: twentyMinutes,
-        blobId
-      }
+      jobId,
+      fileName,
+      token,
+      serverUrl: deps.getServerOrigin(),
+      modelId,
+      fileType,
+      projectId,
+      timeOutSeconds: twentyMinutes,
+      blobId
     })
   }

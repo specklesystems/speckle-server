@@ -4,9 +4,8 @@ import {
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Optional } from '@speckle/shared'
-import { FileImportResultPayload } from '@speckle/shared/dist/commonjs/workers/fileimport/job.js'
-import { JobFileImportPayload } from '@/modules/fileuploads/queues/fileimports'
 import { UploadResult } from '@/modules/blobstorage/domain/types'
+import { FileImportResultPayload, JobPayload } from '@speckle/shared/workers/fileimport'
 
 export type GetFileInfo = (args: {
   fileId: string
@@ -49,13 +48,16 @@ export type UpdateFileStatus = (params: {
   fileId: string
   status: FileUploadConvertedStatus
   convertedMessage: string
+  convertedCommitId: string | null
 }) => Promise<FileUploadRecord>
 
 export type UploadedFile = UploadResult & { userId: string }
 
 export type FileImportMessage = Pick<
-  JobFileImportPayload,
-  'modelId' | 'projectId' | 'fileType' | 'blobId'
+  JobPayload,
+  'modelId' | 'projectId' | 'fileType' | 'fileName' | 'blobId'
 > & { jobId: string; userId: string }
+
+export type ScheduleFileimportJob = (args: JobPayload) => Promise<void>
 
 export type PushJobToFileImporter = (args: FileImportMessage) => Promise<void>

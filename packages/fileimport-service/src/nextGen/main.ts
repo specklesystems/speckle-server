@@ -81,7 +81,6 @@ export const main = async () => {
         await sendResult({
           ...job,
           result: {
-            jobId: job.jobId,
             status: 'error',
             reason: err.message,
             result: {
@@ -102,20 +101,25 @@ export const main = async () => {
 const sendResult = async ({
   serverUrl,
   projectId,
+  jobId,
   token,
   result
 }: {
   serverUrl: string
   projectId: string
+  jobId: string
   token: string
   result: FileImportResultPayload
 }) => {
-  console.log('foobar', result)
-  const response = await fetch(`${serverUrl}/api/projects/${projectId}/asdfasdf`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(result)
-  })
+  const response = await fetch(
+    `${serverUrl}/api/projects/${projectId}/fileimporter/jobs/${jobId}/results`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+
+      body: JSON.stringify(result)
+    }
+  )
   if (!response.ok) {
     const text = await response.text()
     console.log(text)

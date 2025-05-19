@@ -217,13 +217,14 @@ export const getBranchPendingVersionsFactory =
 export const updateFileStatusFactory =
   (deps: { db: Knex }): UpdateFileStatus =>
   async (params) => {
-    const { fileId, status, convertedMessage } = params
+    const { fileId, status, convertedMessage, convertedCommitId } = params
     const fileInfos = await tables
       .fileUploads(deps.db)
       .update<FileUploadRecord[]>({
         [FileUploads.withoutTablePrefix.col.convertedStatus]: status,
         [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now(),
-        [FileUploads.withoutTablePrefix.col.convertedMessage]: convertedMessage
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: convertedMessage,
+        [FileUploads.withoutTablePrefix.col.convertedCommitId]: convertedCommitId
       })
       .where({ [FileUploads.withoutTablePrefix.col.id]: fileId })
       .returning<FileUploadRecord[]>('*')
