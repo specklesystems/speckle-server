@@ -24,7 +24,7 @@ import {
 import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
-import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
+import { AddOrUpdateWorkspaceRole } from '@/modules/workspaces/domain/operations'
 import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
@@ -124,14 +124,14 @@ export const saveSsoProviderRegistrationFactory =
 export const createWorkspaceUserFromSsoProfileFactory =
   ({
     createUser,
-    upsertWorkspaceRole,
     findInvite,
-    deleteInvite
+    deleteInvite,
+    addOrUpdateWorkspaceRole
   }: {
     createUser: CreateValidatedUser
-    upsertWorkspaceRole: UpsertWorkspaceRole
     findInvite: FindInvite
     deleteInvite: DeleteInvite
+    addOrUpdateWorkspaceRole: AddOrUpdateWorkspaceRole
   }) =>
   async (args: {
     ssoProfile: UserinfoResponse<OidcProfile>
@@ -173,11 +173,11 @@ export const createWorkspaceUserFromSsoProfileFactory =
 
     if (!isWorkspaceRole(workspaceRole)) throw new WorkspaceInvalidRoleError()
 
-    await upsertWorkspaceRole({
+    await addOrUpdateWorkspaceRole({
       userId: newSpeckleUserId,
       workspaceId: args.workspaceId,
       role: workspaceRole,
-      createdAt: new Date()
+      updatedByUserId: newSpeckleUserId
     })
 
     // Delete invite (i.e. we implicitly "use" the invite during this sign up flow)

@@ -1,5 +1,8 @@
 <template>
   <ProjectEmptyState :small="small" title="No discussions, yet." :text="text">
+    <template #illustration>
+      <IllustrationEmptystateDiscussionTab />
+    </template>
     <template #cta>
       <div v-if="showButton" class="mt-3">
         <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">

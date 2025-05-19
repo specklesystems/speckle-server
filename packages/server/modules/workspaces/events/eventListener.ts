@@ -9,10 +9,13 @@ import {
 import {
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
+  GetProjectWorkspace,
   GetWorkspace,
   GetWorkspaceCollaborators,
   GetWorkspaceRoleForUser,
+  GetWorkspaceSeatsCount as GetWorkspaceSeatCount,
   GetWorkspaceSeatTypeToProjectRoleMapping,
+  GetWorkspacesProjectsCounts,
   QueryAllWorkspaceProjects,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
@@ -25,11 +28,13 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/observability/logging'
-import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
+  MaybeNullOrUndefined,
   Roles,
+  SeatTypes,
   StreamRoles,
   throwUncoveredError,
   WorkspaceRoles
@@ -43,6 +48,8 @@ import {
   getWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
+  getWorkspaceSeatCountFactory,
+  getWorkspacesProjectsCountsFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -111,6 +118,10 @@ import {
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getProjectWorkspaceFactory } from '@/modules/workspaces/repositories/projects'
+import { GetWorkspaceModelCount } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations.js'
+import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
+import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -118,7 +129,7 @@ export const onInviteFinalizedFactory =
   (deps: {
     getStream: GetStream
     logger: typeof logger
-    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof addOrUpdateWorkspaceRoleFactory>
     getWorkspaceRole: GetWorkspaceRoleForUser
     upsertProjectRole: UpsertProjectRole
   }) =>
@@ -483,7 +494,10 @@ export const workspaceTrackingFactory =
     getDefaultRegion,
     getWorkspacePlan,
     getWorkspaceSubscription,
-    getUserEmails
+    getUserEmails,
+    getWorkspaceModelCount,
+    getWorkspacesProjectCount,
+    getWorkspaceSeatCount
   }: {
     getWorkspace: GetWorkspace
     countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
@@ -491,6 +505,9 @@ export const workspaceTrackingFactory =
     getWorkspacePlan: GetWorkspacePlan
     getWorkspaceSubscription: GetWorkspaceSubscription
     getUserEmails: FindEmailsByUserId
+    getWorkspaceModelCount: GetWorkspaceModelCount
+    getWorkspacesProjectCount: GetWorkspacesProjectsCounts
+    getWorkspaceSeatCount: GetWorkspaceSeatCount
   }) =>
   async (params: EventPayload<'workspace.*'> | EventPayload<'gatekeeper.*'>) => {
     // temp ignoring tracking for this, if billing is not enabled
@@ -501,27 +518,52 @@ export const workspaceTrackingFactory =
     if (!mixpanel) return
     const calculateProperties = async (workspace: Workspace) => {
       const workspaceId = workspace.id
-      const [adminCount, memberCount, guestCount, defaultRegion, plan, subscription] =
-        await Promise.all([
-          countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
-          countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
-          countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Guest }),
-          getDefaultRegion({ workspaceId }),
-          getWorkspacePlan({ workspaceId }),
-          getWorkspaceSubscription({ workspaceId })
-        ])
-      const seats = subscription?.subscriptionData
-        ? calculateSubscriptionSeats({
-            subscriptionData: subscription?.subscriptionData
-          })
-        : 0
+      const [
+        adminCount,
+        memberCount,
+        guestCount,
+        seatsViewerCount,
+        seatsEditorCount,
+        defaultRegion,
+        plan,
+        subscription,
+        workspacesProjectCount,
+        modelCount
+      ] = await Promise.all([
+        countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Admin }),
+        countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Member }),
+        countWorkspaceRole({ workspaceId, workspaceRole: Roles.Workspace.Guest }),
+        getWorkspaceSeatCount({ workspaceId, type: SeatTypes.Editor }),
+        getWorkspaceSeatCount({ workspaceId, type: SeatTypes.Viewer }),
+        getDefaultRegion({ workspaceId }),
+        getWorkspacePlan({ workspaceId }),
+        getWorkspaceSubscription({ workspaceId }),
+        getWorkspacesProjectCount({ workspaceIds: [workspaceId] }),
+        getWorkspaceModelCount({ workspaceId })
+      ])
+
+      let seats = 0
+      let subscriptionBillingInterval = null
+      let subscriptionCurrentBillingCycleEnd = null
+      let subscriptionCreatedAt = null
+
+      if (subscription !== null) {
+        seats = calculateSubscriptionSeats({
+          subscriptionData: subscription.subscriptionData
+        })
+
+        subscriptionBillingInterval = subscription.billingInterval
+        subscriptionCurrentBillingCycleEnd = subscription.currentBillingCycleEnd
+        subscriptionCreatedAt = subscription.createdAt
+      }
+
       return {
         name: workspace.name,
         description: workspace.description,
         domainBasedMembershipProtectionEnabled:
           workspace.domainBasedMembershipProtectionEnabled,
         discoverabilityEnabled: workspace.discoverabilityEnabled,
-        defaultRegionKey: defaultRegion?.key,
+        defaultRegionKey: defaultRegion?.key || null,
         teamTotalCount: adminCount + memberCount + guestCount,
         teamAdminCount: adminCount,
         teamMemberCount: memberCount,
@@ -529,10 +571,16 @@ export const workspaceTrackingFactory =
         planName: plan?.name || '',
         planStatus: plan?.status || '',
         planCreatedAt: plan?.createdAt,
-        subscriptionBillingInterval: subscription?.billingInterval,
-        subscriptionCurrentBillingCycleEnd: subscription?.currentBillingCycleEnd,
+        subscriptionCreatedAt,
+        subscriptionBillingInterval,
+        subscriptionCurrentBillingCycleEnd,
         seats,
         seatsGuest: 0,
+        seatsViewerCount,
+        seatsEditorCount,
+        createdAt: workspace.createdAt,
+        projectCount: workspacesProjectCount[workspace.id] || 0,
+        modelCount,
         ...getBaseTrackingProperties()
       }
     }
@@ -602,15 +650,14 @@ export const workspaceTrackingFactory =
           ...(speckleMembers.hasSpeckleMembers ? speckleMembers : {})
         })
         break
-      case 'workspace.joined-from-discovery':
-        break
       default:
         throwUncoveredError(eventName)
     }
   }
 
 const emitWorkspaceGraphqlSubscriptionsFactory =
-  (deps: { getWorkspace: GetWorkspace }) => async (params: EventPayload<'**'>) => {
+  (deps: { getWorkspace: GetWorkspace; getProjectWorkspace: GetProjectWorkspace }) =>
+  async (params: EventPayload<'**'>) => {
     const { eventName, payload } = params
     switch (eventName) {
       case WorkspaceEvents.Updated:
@@ -638,17 +685,22 @@ const emitWorkspaceGraphqlSubscriptionsFactory =
       case ServerInvitesEvents.Canceled:
       case ServerInvitesEvents.Finalized:
         const { invite } = payload
-        if (!isWorkspaceResourceTarget(invite.resource)) return
+        let workspace: MaybeNullOrUndefined<Workspace> = undefined
+        if (isWorkspaceResourceTarget(invite.resource)) {
+          workspace = await deps.getWorkspace({
+            workspaceId: invite.resource.resourceId
+          })
+        } else if (isProjectResourceTarget(invite.resource)) {
+          workspace = await deps.getProjectWorkspace({
+            projectId: invite.resource.resourceId
+          })
+        }
 
-        const res = invite.resource
-        const newInviteWorkspace = await deps.getWorkspace({
-          workspaceId: res.resourceId
-        })
-        if (newInviteWorkspace) {
+        if (workspace) {
           await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
             workspaceUpdated: {
-              workspace: newInviteWorkspace,
-              id: newInviteWorkspace.id
+              workspace,
+              id: workspace.id
             }
           })
         }
@@ -680,7 +732,8 @@ export const initializeEventListenersFactory =
     const getStreams = legacyGetStreamsFactory({ db })
     const getWorkspace = getWorkspaceFactory({ db })
     const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
-      getWorkspace
+      getWorkspace,
+      getProjectWorkspace: getProjectWorkspaceFactory({ db })
     })
     const getStream = getStreamFactory({ db })
     const getWorkspaceUserSeat = getWorkspaceUserSeatFactory({ db })
@@ -711,7 +764,7 @@ export const initializeEventListenersFactory =
         const onInviteFinalized = onInviteFinalizedFactory({
           getStream: getStreamFactory({ db }),
           logger: moduleLogger,
-          updateWorkspaceRole: updateWorkspaceRoleFactory({
+          updateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
             findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
@@ -731,7 +784,16 @@ export const initializeEventListenersFactory =
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
-          getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
+          getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+          getWorkspaceModelCount: getWorkspaceModelCountFactory({
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams
+            }),
+            getPaginatedProjectModelsTotalCount:
+              getPaginatedProjectModelsTotalCountFactory({ db })
+          }),
+          getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
         })(payload)
       }),
       eventBus.listen('gatekeeper.*', async (payload) => {
@@ -741,7 +803,16 @@ export const initializeEventListenersFactory =
           getUserEmails: findEmailsByUserIdFactory({ db }),
           getWorkspace: getWorkspaceFactory({ db }),
           getWorkspacePlan,
-          getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db })
+          getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+          getWorkspaceModelCount: getWorkspaceModelCountFactory({
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams
+            }),
+            getPaginatedProjectModelsTotalCount:
+              getPaginatedProjectModelsTotalCountFactory({ db })
+          }),
+          getWorkspacesProjectCount: getWorkspacesProjectsCountsFactory({ db }),
+          getWorkspaceSeatCount: getWorkspaceSeatCountFactory({ db })
         })(payload)
       }),
       eventBus.listen(WorkspaceEvents.Authorizing, async ({ payload }) => {

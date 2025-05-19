@@ -380,40 +380,39 @@ export const storeAutomationRevisionFactory =
         id
       })
       .returning('*')
-    const [functions, triggers] = await Promise.all([
-      tables
-        .automationRevisionFunctions(deps.db)
-        .insert(
-          revision.functions.map(
-            (f): AutomationRevisionFunctionRecord => ({
-              ...f,
-              automationRevisionId: id
-            })
-          )
+    const functions =
+      revision.functions.length > 0
+        ? await tables
+            .automationRevisionFunctions(deps.db)
+            .insert(
+              revision.functions.map(
+                (f): AutomationRevisionFunctionRecord => ({
+                  ...f,
+                  automationRevisionId: id
+                })
+              )
+            )
+            .returning('*')
+        : []
+    const triggers = await tables
+      .automationTriggers(deps.db)
+      .insert(
+        revision.triggers.map(
+          (t): AutomationTriggerDefinitionRecord => ({
+            ...t,
+            automationRevisionId: id
+          })
         )
-        .returning('*'),
-      tables
-        .automationTriggers(deps.db)
-        .insert(
-          revision.triggers.map(
-            (t): AutomationTriggerDefinitionRecord => ({
-              ...t,
-              automationRevisionId: id
-            })
-          )
-        )
-        .returning('*'),
-      // Unset 'active in revision' for all other revisions
-      ...(revision.active
-        ? [
-            tables
-              .automationRevisions(deps.db)
-              .where(AutomationRevisions.col.automationId, newRev.automationId)
-              .andWhereNot(AutomationRevisions.col.id, newRev.id)
-              .update(AutomationRevisions.withoutTablePrefix.col.active, false)
-          ]
-        : [])
-    ])
+      )
+      .returning('*')
+    // Unset 'active in revision' for all other revisions
+    if (revision.active) {
+      await tables
+        .automationRevisions(deps.db)
+        .where(AutomationRevisions.col.automationId, newRev.automationId)
+        .andWhereNot(AutomationRevisions.col.id, newRev.id)
+        .update(AutomationRevisions.withoutTablePrefix.col.active, false)
+    }
 
     return {
       ...newRev,
@@ -654,6 +653,7 @@ const getAutomationRunsTotalCountBaseQueryFactory =
         AutomationRevisions.col.automationId
       )
       .where(AutomationRevisions.col.automationId, args.automationId)
+      .where(Automations.col.isDeleted, false)
 
     if (args.revisionId?.length) {
       q.andWhere(AutomationRuns.col.automationRevisionId, args.revisionId)
@@ -854,6 +854,7 @@ export const getLatestVersionAutomationRunsFactory =
       .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
       .andWhere(Automations.col.projectId, projectId)
       .andWhere(BranchCommits.col.branchId, modelId)
+      .andWhere(Automations.col.isDeleted, false)
       .distinctOn(AutomationRevisions.col.automationId)
       .orderBy([
         { column: AutomationRevisions.col.automationId },

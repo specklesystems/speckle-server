@@ -67,6 +67,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/invites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 enum InviteByTarget {
   Email = 'email',
@@ -781,11 +782,36 @@ describe('Workspaces Invites GQL', () => {
     })
 
     describe('and administrating invites', () => {
+      const BATCH_INVITE_COUNT = 10
+      const EXPLICIT_INVITE_COUNT = BATCH_INVITE_COUNT + 1 // + 1 in beforeEach
+      const IMPLICIT_INVITE_COUNT = EXPLICIT_INVITE_COUNT + 1 // 1 from project invite
+
+      const unrelatedWorkspace: BasicTestWorkspace = {
+        name: 'Unrelated Workspace',
+        id: '',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: ''
+      }
+
+      const unrelatedWorkspaceStream: BasicTestStream = {
+        name: 'Unrelated Workspace Stream',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
+
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
         id: '',
         slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
+      }
+
+      const myAdministrationProject: BasicTestStream = {
+        name: 'My Administration Project',
+        id: '',
+        ownerId: '',
+        isPublic: false
       }
 
       const cancelableInvite = {
@@ -794,17 +820,62 @@ describe('Workspaces Invites GQL', () => {
       }
 
       before(async () => {
-        await createTestWorkspaces([[myAdministrationWorkspace, me]])
+        await createTestWorkspaces([
+          [myAdministrationWorkspace, me],
+          [unrelatedWorkspace, me]
+        ])
         await assignToWorkspaces([
           [myAdministrationWorkspace, myWorkspaceFriend, Roles.Workspace.Guest]
         ])
         await gqlHelpers.batchCreateInvites(
           {
             workspaceId: myAdministrationWorkspace.id,
-            input: times(10, () => ({
+            input: times(BATCH_INVITE_COUNT, () => ({
               email: `aszzzdasasd${Math.random()}@example.org`,
               role: WorkspaceRole.Member
             }))
+          },
+          { assertNoErrors: true }
+        )
+
+        // Create project and an invite to it too
+        myAdministrationProject.workspaceId = myAdministrationWorkspace.id
+        await createTestStreams([[myAdministrationProject, me]])
+        await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: myAdministrationProject.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Reviewer
+              }
+            ]
+          },
+          { assertNoErrors: true }
+        )
+
+        // Create unrelated invites, to ensure they dont show up where they shouldnt
+        unrelatedWorkspaceStream.workspaceId = unrelatedWorkspace.id
+        await createTestStreams([[unrelatedWorkspaceStream, me]])
+        await gqlHelpers.createWorkspaceProjectInvite(
+          {
+            projectId: unrelatedWorkspaceStream.id,
+            inputs: [
+              {
+                userId: otherGuy.id,
+                role: Roles.Stream.Reviewer
+              }
+            ]
+          },
+          { assertNoErrors: true }
+        )
+        await gqlHelpers.createInvite(
+          {
+            workspaceId: unrelatedWorkspace.id,
+            input: {
+              email: 'aaasdasjdhasdjasd@aaa.com',
+              role: WorkspaceRole.Member
+            }
           },
           { assertNoErrors: true }
         )
@@ -853,7 +924,35 @@ describe('Workspaces Invites GQL', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace).to.be.ok
-        expect(res.data?.workspace.invitedTeam).to.have.length(11)
+        expect(res.data?.workspace.invitedTeam?.length || 0).to.be.equal(
+          IMPLICIT_INVITE_COUNT
+        )
+      })
+
+      it('invite list includes implicit one from project invite', async () => {
+        const res = await gqlHelpers.getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const otherGuyInvite = res.data?.workspace.invitedTeam?.find(
+          (t) => t.user?.id === otherGuy.id
+        )
+        expect(otherGuyInvite).to.be.ok
+      })
+
+      it("invite list doesn't include unrelated invites", async () => {
+        const res = await gqlHelpers.getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const unrelatedInvite = res.data?.workspace.invitedTeam?.find(
+          (t) => t.workspaceId === unrelatedWorkspace.id
+        )
+        expect(unrelatedInvite).to.be.not.ok
       })
 
       it("can't cancel invite, if not admin", async () => {
@@ -919,7 +1018,14 @@ describe('Workspaces Invites GQL', () => {
         name: 'My Invite Target Workspace Stream 1',
         id: '',
         ownerId: '',
-        isPublic: false
+        visibility: ProjectRecordVisibility.Workspace
+      }
+
+      const myInviteTargetPrivateWorkspaceStream1: BasicTestStream = {
+        name: 'My Invite Target Private Workspace Stream 1',
+        id: '',
+        ownerId: '',
+        visibility: ProjectRecordVisibility.Private
       }
 
       const processableWorkspaceInvite = {
@@ -952,15 +1058,16 @@ describe('Workspaces Invites GQL', () => {
       }
 
       const validateResourceAccess = async (params: {
-        shouldHaveAccess: boolean
+        shouldHaveAccess: boolean | { workspace: boolean; project: boolean }
         expectedWorkspaceRole?: WorkspaceRoles
         expectedProjectRole?: StreamRoles
+        streamId: string
       }) => {
         return gqlHelpers.validateResourceAccess({
           ...params,
           userId: otherGuy.id,
           workspaceId: myInviteTargetWorkspace.id,
-          streamId: myInviteTargetWorkspaceStream1.id
+          streamId: params.streamId
         })
       }
 
@@ -969,7 +1076,11 @@ describe('Workspaces Invites GQL', () => {
         await createTestWorkspaces([[myInviteTargetWorkspace, me]])
 
         myInviteTargetWorkspaceStream1.workspaceId = myInviteTargetWorkspace.id
-        await createTestStreams([[myInviteTargetWorkspaceStream1, me]])
+        myInviteTargetPrivateWorkspaceStream1.workspaceId = myInviteTargetWorkspace.id
+        await createTestStreams([
+          [myInviteTargetWorkspaceStream1, me],
+          [myInviteTargetPrivateWorkspaceStream1, me]
+        ])
       })
 
       beforeEach(async () => {
@@ -1255,7 +1366,7 @@ describe('Workspaces Invites GQL', () => {
           expect(res.data?.activeUser?.workspaceInvites).to.be.ok
 
           if (test.hasSome) {
-            expect(res.data?.activeUser?.workspaceInvites).to.have.length(1)
+            expect(res.data?.activeUser?.workspaceInvites).to.have.length(2) // 1 workspace + 1 workspace project (implicit workspace invite)
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
               processableWorkspaceInvite.inviteId
             )
@@ -1294,7 +1405,15 @@ describe('Workspaces Invites GQL', () => {
           })
           expect(invite).to.be.not.ok
 
-          await validateResourceAccess({ shouldHaveAccess: accept })
+          // Should have access to workspace visibility stream, not the other one
+          await validateResourceAccess({
+            shouldHaveAccess: accept,
+            streamId: myInviteTargetWorkspaceStream1.id
+          })
+          await validateResourceAccess({
+            shouldHaveAccess: { workspace: accept, project: false },
+            streamId: myInviteTargetPrivateWorkspaceStream1.id
+          })
         }
       )
 
@@ -1342,7 +1461,10 @@ describe('Workspaces Invites GQL', () => {
           expect(res).to.not.haveGraphQLErrors()
           expect(res.data?.workspaceMutations.invites.use).to.be.ok
 
-          await validateResourceAccess({ shouldHaveAccess: accept })
+          await validateResourceAccess({
+            shouldHaveAccess: accept,
+            streamId: myInviteTargetWorkspaceStream1.id
+          })
 
           const verifiedEmails = await findVerifiedEmailsByUserIdFactory({
             db
@@ -1389,7 +1511,8 @@ describe('Workspaces Invites GQL', () => {
 
           await validateResourceAccess({
             shouldHaveAccess: true,
-            expectedWorkspaceRole: Roles.Workspace.Member
+            expectedWorkspaceRole: Roles.Workspace.Member,
+            streamId: myInviteTargetWorkspaceStream1.id
           })
 
           const targetInvite = roleChanged
@@ -1418,7 +1541,8 @@ describe('Workspaces Invites GQL', () => {
             shouldHaveAccess: true,
             expectedWorkspaceRole: roleChanged
               ? Roles.Workspace.Admin
-              : Roles.Workspace.Member
+              : Roles.Workspace.Member,
+            streamId: myInviteTargetWorkspaceStream1.id
           })
 
           const email = targetInvite.email
@@ -1512,7 +1636,8 @@ describe('Workspaces Invites GQL', () => {
         await validateResourceAccess({
           shouldHaveAccess: true,
           expectedWorkspaceRole: Roles.Workspace.Guest,
-          expectedProjectRole: Roles.Stream.Reviewer
+          expectedProjectRole: Roles.Stream.Reviewer,
+          streamId: myInviteTargetWorkspaceStream1.id
         })
       })
 
@@ -1568,7 +1693,14 @@ describe('Workspaces Invites GQL', () => {
             expectedWorkspaceRole: withRole
               ? Roles.Workspace.Admin
               : Roles.Workspace.Guest,
-            expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer
+            expectedProjectRole: withRole ? Roles.Stream.Owner : Roles.Stream.Reviewer,
+            streamId: myInviteTargetWorkspaceStream1.id
+          })
+
+          // ws admin will have access to everything
+          await validateResourceAccess({
+            shouldHaveAccess: { workspace: true, project: withRole ? true : false },
+            streamId: myInviteTargetPrivateWorkspaceStream1.id
           })
         }
       )

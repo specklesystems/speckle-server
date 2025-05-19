@@ -6,9 +6,12 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   SaveUploadFile,
-  NotifyChangeInFileStatus
+  NotifyChangeInFileStatus,
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  PushJobToFileImporter,
+  InsertNewUploadAndNotify
 } from '@/modules/fileuploads/domain/operations'
-import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
   PublishSubscription
@@ -52,6 +55,38 @@ export const insertNewUploadAndNotifyFactory =
         upload: file
       },
       projectId: file.streamId
+    })
+  }
+
+export const insertNewUploadAndNotifyFactoryV2 =
+  (deps: {
+    pushJobToFileImporter: PushJobToFileImporter
+    saveUploadFile: SaveUploadFileV2
+    publish: PublishSubscription
+  }): InsertNewUploadAndNotify =>
+  async (upload) => {
+    const file = await deps.saveUploadFile(upload)
+
+    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+      projectFileImportUpdated: {
+        id: file.id,
+        type: ProjectFileImportUpdatedMessageType.Created,
+        upload: {
+          ...file,
+          streamId: upload.projectId,
+          branchName: upload.modelName
+        }
+      },
+      projectId: file.projectId
+    })
+
+    await deps.pushJobToFileImporter({
+      fileType: file.fileType,
+      projectId: file.projectId,
+      modelId: upload.modelId,
+      blobId: file.id,
+      jobId: file.id,
+      userId: upload.userId
     })
   }
 

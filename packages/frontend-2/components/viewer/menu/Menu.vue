@@ -25,7 +25,7 @@
           </span>
         </div>
       </div>
-      <div class="max-h-64 simple-scrollbar overflow-y-auto">
+      <div class="max-h-68 simple-scrollbar overflow-y-auto">
         <slot />
       </div>
     </div>

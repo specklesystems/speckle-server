@@ -1,4 +1,5 @@
 import {
+  Color,
   LinearFilter,
   Matrix4,
   OrthographicCamera,
@@ -21,9 +22,9 @@ export interface EdgesPassOptions extends PassOptions {
   normalMultiplier?: number
   normalBias?: number
   outlineThickness?: number
-  outlineDensity?: number
-  backgroundTexture?: Texture | null
-  backgroundTextureIntensity: number
+  outlineOpacity?: number
+  outlineColor?: number
+  backgroundColor?: number
 }
 
 export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
@@ -32,9 +33,9 @@ export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
   normalMultiplier: 1,
   normalBias: 15,
   outlineThickness: 1,
-  outlineDensity: 0.75,
-  backgroundTexture: null,
-  backgroundTextureIntensity: 0
+  outlineOpacity: 0.75,
+  outlineColor: 0x323232,
+  backgroundColor: 0xfffffff
 }
 
 export class EdgesPass extends BaseGPass {
@@ -48,9 +49,23 @@ export class EdgesPass extends BaseGPass {
 
   public set options(value: EdgesPassOptions) {
     super.options = value
-    this.setBackground(
-      this._options.backgroundTexture,
-      this._options.backgroundTextureIntensity
+    this.edgesMaterial.uniforms.uDepthMultiplier.value =
+      this._options.depthMultiplier ?? DefaultEdgesPassOptions.depthMultiplier
+    this.edgesMaterial.uniforms.uDepthBias.value =
+      this._options.depthBias ?? DefaultEdgesPassOptions.depthBias
+    this.edgesMaterial.uniforms.uNormalMultiplier.value =
+      this._options.normalMultiplier ?? DefaultEdgesPassOptions.normalMultiplier
+    this.edgesMaterial.uniforms.uNormalBias.value =
+      this._options.normalBias ?? DefaultEdgesPassOptions.normalBias
+    this.edgesMaterial.uniforms.uOutlineThickness.value =
+      this._options.outlineThickness ?? DefaultEdgesPassOptions.outlineThickness
+    this.edgesMaterial.uniforms.uOutlineDensity.value =
+      this._options.outlineOpacity ?? DefaultEdgesPassOptions.outlineOpacity
+    this.edgesMaterial.uniforms.uOutlineColor.value = new Color(
+      this._options.outlineColor ?? DefaultEdgesPassOptions.outlineColor
+    )
+    this.edgesMaterial.uniforms.uBackgroundColor.value = new Color(
+      this._options.backgroundColor ?? DefaultEdgesPassOptions.backgroundColor
     )
   }
 
@@ -76,15 +91,14 @@ export class EdgesPass extends BaseGPass {
         uNormalMultiplier: { value: this._options.normalMultiplier },
         uNormalBias: { value: this._options.normalBias },
         uOutlineThickness: { value: this._options.outlineThickness },
-        uOutlineDensity: { value: this._options.outlineDensity },
+        uOutlineDensity: { value: this._options.outlineOpacity },
+        uOutlineColor: { value: new Color(this._options.outlineColor) },
+        uBackgroundColor: { value: new Color(this._options.backgroundColor) },
 
         cameraNear: { value: 1 },
         cameraFar: { value: 100 },
         cameraProjectionMatrix: { value: new Matrix4() },
-        cameraInverseProjectionMatrix: { value: new Matrix4() },
-
-        tBackground: { value: null },
-        tBackgroundIntensity: { value: this._options.backgroundTextureIntensity }
+        cameraInverseProjectionMatrix: { value: new Matrix4() }
       }
     })
     this.edgesMaterial.depthWrite = false
@@ -95,16 +109,6 @@ export class EdgesPass extends BaseGPass {
   public setTexture(uName: string, texture: Texture | undefined) {
     this.edgesMaterial.uniforms[uName].value = texture
     this.edgesMaterial.needsUpdate = true
-  }
-
-  protected setBackground(texture: Texture | null, intensity: number) {
-    if (!texture) {
-      delete this.edgesMaterial.defines['TEXTURE_BACKGROUND']
-    } else {
-      this.edgesMaterial.defines['TEXTURE_BACKGROUND'] = ''
-      this.setTexture('tBackground', texture)
-      this.edgesMaterial.uniforms.tBackgroundIntensity.value = intensity
-    }
   }
 
   public get displayName(): string {

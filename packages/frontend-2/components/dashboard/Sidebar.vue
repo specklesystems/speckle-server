@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="group h-full">
-    <template v-if="isLoggedIn">
+    <template v-if="showSidebar">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -60,6 +60,29 @@
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
 
+                <div v-if="isWorkspacesEnabled">
+                  <div @click="openExplainerVideoDialog">
+                    <LayoutSidebarMenuGroupItem label="Getting started">
+                      <template #icon>
+                        <IconPlay class="size-4 text-foreground-2" />
+                      </template>
+                    </LayoutSidebarMenuGroupItem>
+                  </div>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
+              </LayoutSidebarMenuGroup>
+
+              <LayoutSidebarMenuGroup title="Resources" collapsible>
+                <CalPopUp v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem label="Book an intro call">
+                    <template #icon>
+                      <IconCalendar class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </CalPopUp>
+
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Tutorials"
@@ -70,9 +93,7 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-              </LayoutSidebarMenuGroup>
 
-              <LayoutSidebarMenuGroup title="Resources" collapsible>
                 <NuxtLink
                   to="https://speckle.community/"
                   target="_blank"
@@ -92,14 +113,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </div>
-
-                <CalPopUp v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem label="Book an intro call">
-                    <template #icon>
-                      <CalendarDaysIcon class="size-5 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -151,15 +164,17 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
-import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug } = useNavigation()
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
+const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
@@ -168,6 +183,21 @@ const projectsLink = computed(() => {
       : projectsRoute
     : projectsRoute
 })
+
+const showSidebar = computed(() => {
+  return isWorkspacesEnabled.value
+    ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
+    : isLoggedIn.value
+})
+
+const openExplainerVideoDialog = () => {
+  showExplainerVideoDialog.value = true
+  isOpenMobile.value = false
+  mixpanel.track('Getting Started Video Opened', {
+    location: 'sidebar'
+  })
+}
+
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
