@@ -1,14 +1,20 @@
 import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
+  UpdateFileStatus,
   GarbageCollectPendingUploadedFiles,
   GetFileInfo,
-  SaveUploadFile
+  SaveUploadFile,
+  SaveUploadFileV2,
+  SaveUploadFileInput,
+  SaveUploadFileInputV2
 } from '@/modules/fileuploads/domain/operations'
 import {
   FileUploadConvertedStatus,
-  FileUploadRecord
+  FileUploadRecord,
+  FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
 import { Knex } from 'knex'
+import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 
 const tables = {
   fileUploads: (db: Knex) => db<FileUploadRecord>(FileUploads.name)
@@ -49,10 +55,24 @@ export const getStreamFileUploadsFactory =
     return fileInfos
   }
 
-export type SaveUploadFileInput = Pick<
-  FileUploadRecord,
-  'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string }
+// While we haven't fully migrated to new endpoint
+const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 => {
+  return {
+    id: record.id,
+    projectId: record.streamId,
+    modelId: record.modelId,
+    userId: record.userId,
+    fileName: record.fileName,
+    fileType: record.fileType,
+    fileSize: record.fileSize,
+    uploadComplete: record.uploadComplete,
+    uploadDate: record.uploadDate,
+    convertedStatus: record.convertedStatus,
+    convertedLastUpdate: record.convertedLastUpdate,
+    convertedMessage: record.convertedMessage,
+    convertedCommitId: record.convertedCommitId
+  } as FileUploadRecordV2
+}
 
 export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
@@ -77,6 +97,33 @@ export const saveUploadFileFactory =
     }
     const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
     return newRecord as FileUploadRecord
+  }
+
+export const saveUploadFileFactoryV2 =
+  (deps: { db: Knex }): SaveUploadFileV2 =>
+  async ({
+    fileId,
+    projectId,
+    modelId,
+    userId,
+    fileName,
+    fileType,
+    fileSize,
+    modelName
+  }: SaveUploadFileInputV2) => {
+    const dbFile: Partial<SaveUploadFileV2> = {
+      id: fileId,
+      streamId: projectId,
+      branchName: modelName, // @deprecated
+      userId,
+      modelId,
+      fileName,
+      fileType,
+      fileSize,
+      uploadComplete: true
+    }
+    const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
+    return mapFileUploadRecordToV2(newRecord)
   }
 
 export const expireOldPendingUploadsFactory =
@@ -166,4 +213,24 @@ export const getBranchPendingVersionsFactory =
       )
 
     return await q
+  }
+
+export const updateFileStatusFactory =
+  (deps: { db: Knex }): UpdateFileStatus =>
+  async (params) => {
+    const { fileId, status, convertedMessage } = params
+    const fileInfos = await tables
+      .fileUploads(deps.db)
+      .update<FileUploadRecord[]>({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]: status,
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: knex.fn.now(),
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: convertedMessage
+      })
+      .where({ [FileUploads.withoutTablePrefix.col.id]: fileId })
+      .returning<FileUploadRecord[]>('*')
+
+    if (fileInfos.length === 0) {
+      throw new FileImportJobNotFoundError(`File with id ${fileId} not found`)
+    }
+    return fileInfos[0]
   }

@@ -22,9 +22,7 @@ const buildSUT = (overrides?: OverridesOf<typeof canUpdateProjectVersionPolicy>)
     getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: null,
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: null
     }),
     getVersion: getVersionFake({
       id: 'version-id',
@@ -46,9 +44,7 @@ const buildWorkspaceSUT = (
   buildSUT({
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: 'workspace-id',
-      isDiscoverable: false,
-      isPublic: false
+      workspaceId: 'workspace-id'
     }),
     getWorkspace: async () => ({
       id: 'workspace-id',

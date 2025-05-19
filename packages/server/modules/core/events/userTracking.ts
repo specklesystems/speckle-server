@@ -1,9 +1,6 @@
 import { authLogger, type Logger } from '@/observability/logging'
 import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
-import {
-  addToMailchimpAudience,
-  triggerMailchimpCustomerJourney
-} from '@/modules/auth/services/mailchimp'
+import { addToMailchimpAudience } from '@/modules/auth/services/mailchimp'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   enableMixpanel,
@@ -37,12 +34,12 @@ const onUserCreatedFactory =
       // Set up mailchimp
       if (getMailchimpStatus()) {
         try {
-          const onboardingIds = getMailchimpOnboardingIds()
-          await triggerMailchimpCustomerJourney(user, onboardingIds)
+          const { listId: onboardingListId } = getMailchimpOnboardingIds()
+          await addToMailchimpAudience(user, onboardingListId)
 
           if (newsletterConsent) {
-            const { listId } = getMailchimpNewsletterIds()
-            await addToMailchimpAudience(user, listId)
+            const { listId: newsletterListId } = getMailchimpNewsletterIds()
+            await addToMailchimpAudience(user, newsletterListId)
           }
         } catch (error) {
           logger.warn({ err: error }, 'Failed to sign up user to mailchimp lists')

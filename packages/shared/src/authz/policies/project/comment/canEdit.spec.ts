@@ -14,6 +14,7 @@ import {
 } from '../../../domain/authErrors.js'
 import { canEditProjectCommentPolicy } from './canEdit.js'
 import { TIME_MS } from '../../../../core/helpers/timeConstants.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canEditProjectCommentPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canEditProjectCommentPolicy>) =>
@@ -21,9 +22,7 @@ describe('canEditProjectCommentPolicy', () => {
       getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getServerRole: async () => Roles.Server.User,
@@ -46,9 +45,8 @@ describe('canEditProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false,
-        allowPublicComments: false
+        allowPublicComments: false,
+        visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
       getWorkspace: async () => ({
@@ -84,8 +82,7 @@ describe('canEditProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: true
       }),
       getProjectRole: async () => null
@@ -160,8 +157,7 @@ describe('canEditProjectCommentPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true,
+        visibility: ProjectVisibility.Public,
         allowPublicComments: false
       })
     })

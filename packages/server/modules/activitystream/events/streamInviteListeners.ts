@@ -49,7 +49,7 @@ const addStreamInviteAcceptedActivityFactory =
     getProjectInviteProject: GetProjectInviteProject
   }) =>
   async (payload: EventPayload<typeof ServerInvitesEvents.Finalized>) => {
-    const { invite } = payload.payload
+    const { invite, trueFinalizerUserId } = payload.payload
     const project = await deps.getProjectInviteProject({ invite })
     if (!project) return
 
@@ -58,14 +58,18 @@ const addStreamInviteAcceptedActivityFactory =
       getResourceTypeRole(invite.resource, ProjectInviteResourceType) ||
       Roles.Stream.Contributor
 
+    const differentFinalizer = trueFinalizerUserId !== userTarget.userId
+
     await deps.saveActivity({
       streamId: project.id,
       resourceType: ResourceTypes.Stream,
       resourceId: project.id,
       actionType: ActionTypes.Stream.InviteAccepted,
-      userId: userTarget.userId!,
-      info: { inviterUser: invite.inviterId, role },
-      message: `User ${userTarget.userId!} has accepted an invitation to become a ${role}`
+      userId: trueFinalizerUserId,
+      info: { inviterUser: invite.inviterId, role, targetUserId: userTarget.userId! },
+      message: differentFinalizer
+        ? `User ${trueFinalizerUserId} has auto-accepted ${userTarget.userId!} invitation to become a ${role}`
+        : `User ${userTarget.userId!} has accepted an invitation to become a ${role}`
     })
   }
 

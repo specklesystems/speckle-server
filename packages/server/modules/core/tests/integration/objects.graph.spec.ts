@@ -38,6 +38,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { PaidWorkspacePlanStatuses } from '@speckle/shared'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -106,7 +107,7 @@ describe('Objects graphql @core', () => {
 
         // Make the project read-only
         await db('workspace_plans')
-          .update({ status: 'expired' })
+          .update({ status: PaidWorkspacePlanStatuses.Canceled })
           .where({ workspaceId: workspace!.id })
 
         const objectCreateRes = await apollo.execute(CreateObjectDocument, {

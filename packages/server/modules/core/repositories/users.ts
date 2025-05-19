@@ -1,5 +1,19 @@
-import { ServerAcl, StreamAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
-import { ServerAclRecord, UserRecord, UserWithRole } from '@/modules/core/helpers/types'
+import {
+  ServerAcl,
+  StreamAcl,
+  Streams,
+  UserEmails,
+  Users,
+  knex
+} from '@/modules/core/dbSchema'
+import {
+  ProjectRecordVisibility,
+  ServerAclRecord,
+  StreamAclRecord,
+  StreamRecord,
+  UserRecord,
+  UserWithRole
+} from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
@@ -36,11 +50,14 @@ import {
   UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),
-  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name)
+  serverAcl: (db: Knex) => db<ServerAclRecord>(ServerAcl.name),
+  streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name),
+  streams: (db: Knex) => db<StreamRecord>(Streams.name)
 }
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -508,9 +525,43 @@ export const lookupUsersFactory =
 
     // limit to given project
     if (projectId) {
+      // Workspace implicit roles logic:
+      // - User must have an explicit stream acl OR
+      // - User must have a project workspace acl AND:
+      //   - must be a workspace admin
+      //   - or must be a workspace member and the project must not be fully private
       query
-        .innerJoin(StreamAcl.name, StreamAcl.col.userId, Users.col.id)
-        .andWhere(StreamAcl.col.resourceId, projectId)
+        .innerJoin(Streams.name, (j1) => {
+          j1.onVal(Streams.col.id, projectId)
+        })
+        .leftJoin(StreamAcl.name, (j1) => {
+          j1.on(StreamAcl.col.resourceId, Streams.col.id).andOn(
+            StreamAcl.col.userId,
+            Users.col.id
+          )
+        })
+        .leftJoin(WorkspaceAcl.name, (j1) => {
+          j1.on(WorkspaceAcl.col.workspaceId, Streams.col.workspaceId).andOn(
+            WorkspaceAcl.col.userId,
+            Users.col.id
+          )
+        })
+        .andWhere((w1) => {
+          w1.whereNotNull(StreamAcl.col.role).orWhere((w2) => {
+            // Implicit workspace role conditions
+            w2.whereNotNull(WorkspaceAcl.col.role).andWhere((w2) => {
+              w2.andWhere(WorkspaceAcl.col.role, Roles.Workspace.Admin).orWhere(
+                (w4) => {
+                  w4.where(
+                    WorkspaceAcl.col.role,
+                    '!=',
+                    Roles.Workspace.Guest
+                  ).andWhereNot(Streams.col.visibility, ProjectRecordVisibility.Private)
+                }
+              )
+            })
+          })
+        })
     }
 
     const rows = (await query) as UserRecord[]

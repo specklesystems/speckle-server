@@ -13,9 +13,7 @@ describe('canDeleteProjectPolicy', () => {
       getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Owner,
       getServerRole: async () => Roles.Server.User,
@@ -32,9 +30,7 @@ describe('canDeleteProjectPolicy', () => {
     buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: 'workspace-id',
-        isDiscoverable: false,
-        isPublic: false
+        workspaceId: 'workspace-id'
       }),
       getWorkspace: async () => ({
         id: 'workspace-id',

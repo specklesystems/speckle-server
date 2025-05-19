@@ -90,6 +90,12 @@ export const parseFeatureFlags = (
     // Enable limits on personal projects
     FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: {
       schema: z.boolean(),
+      description: "Enables limits on personal projects",
+      defaults: { _: false }
+    },
+    // Enables the new file importer
+    FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
+      schema: z.boolean(),
       defaults: { _: false }
     }
   })
@@ -118,6 +124,7 @@ export type FeatureFlags = {
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
   FF_NO_PERSONAL_EMAILS_ENABLED: boolean
   FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

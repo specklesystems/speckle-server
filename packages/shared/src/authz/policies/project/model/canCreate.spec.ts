@@ -23,8 +23,6 @@ const buildCanCreateModelPolicy = (
     getEnv: async () => parseFeatureFlags({}),
     getProject: getProjectFake({
       id: cryptoRandomString({ length: 9 }),
-      isPublic: false,
-      isDiscoverable: false,
       workspaceId: cryptoRandomString({ length: 9 })
     }),
     getProjectRole: async () => {

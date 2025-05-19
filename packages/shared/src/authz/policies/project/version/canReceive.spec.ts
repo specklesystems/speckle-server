@@ -13,15 +13,14 @@ import {
 } from '../../../domain/authErrors.js'
 import { canReceiveProjectVersionPolicy } from './canReceive.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 describe('canReceiveProjectVersionPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canReceiveProjectVersionPolicy>) =>
     canReceiveProjectVersionPolicy({
       getProject: getProjectFake({
         id: 'project-id',
-        workspaceId: null,
-        isPublic: false,
-        isDiscoverable: false
+        workspaceId: null
       }),
       getProjectRole: async () => Roles.Stream.Reviewer,
       getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
@@ -40,8 +39,7 @@ describe('canReceiveProjectVersionPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

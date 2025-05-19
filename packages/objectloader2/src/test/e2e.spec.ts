@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import ObjectLoader2 from '../operations/objectLoader2.js'
 import { Base } from '../types/types.js'
-import { TIME_MS } from '@speckle/shared'
+import { TIME } from '@speckle/shared'
 
 describe('e2e', () => {
   test(
@@ -36,6 +36,6 @@ describe('e2e', () => {
       expect(base2).toBeDefined()
       expect(base2.id).toBe('3841e3cbc45d52c47bc2f1b7b0ad4eb9')
     },
-    10 * TIME_MS.second
+    10 * TIME.second
   )
 })

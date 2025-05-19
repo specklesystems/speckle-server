@@ -44,6 +44,7 @@
         :plan="workspace?.plan?.name"
         :workspace-role="workspace?.role"
         :workspace-slug="workspaceSlug"
+        location="add-project-menu"
       />
     </ClientOnly>
   </div>

@@ -21,7 +21,7 @@ export const forumPageUrl = 'https://speckle.community/'
 export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
-
+export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {
@@ -132,8 +132,7 @@ export const automateFunctionRoute = (functionId: string) =>
 export const workspaceRoute = (slug?: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
-export const workspaceCreateRoute = (slug?: string) =>
-  slug ? `/workspaces/${slug}/create` : '/workspaces/actions/create'
+export const workspaceCreateRoute = '/workspaces/actions/create'
 
 export const workspaceJoinRoute = '/workspaces/actions/join'
 

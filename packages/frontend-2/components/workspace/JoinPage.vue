@@ -28,6 +28,7 @@
         v-for="workspace in discoverableWorkspacesAndJoinRequests"
         :key="`discoverable-${workspace.id}`"
         :workspace="workspace"
+        :request-status="workspace.requestStatus"
         location="workspace_join_page"
       />
       <div class="mt-2 w-full flex flex-col gap-2">
@@ -44,7 +45,7 @@
           size="lg"
           full-width
           color="outline"
-          @click="navigateTo(workspaceCreateRoute())"
+          @click="navigateTo(workspaceCreateRoute)"
         >
           Create a new workspace
         </FormButton>

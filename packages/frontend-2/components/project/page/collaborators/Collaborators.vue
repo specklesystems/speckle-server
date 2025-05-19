@@ -2,28 +2,29 @@
   <div>
     <div v-if="project" class="pt-3">
       <div class="flex justify-between space-x-2 items-center">
-        <h1 class="block text-heading-lg md:text-heading-xl">Collaborators</h1>
+        <h1 class="block text-heading-lg">Collaborators</h1>
         <div v-tippy="tooltipText">
           <FormButton :disabled="!canInvite" @click="toggleInviteDialog">
             Invite to project
           </FormButton>
         </div>
       </div>
-      <div class="flex flex-col mt-6 gap-y-6">
-        <template v-if="project.workspace">
-          <div class="flex flex-col gap-y-3">
-            <p class="text-body-2xs text-foreground-2 font-medium">
-              General project access
-            </p>
-            <ProjectPageCollaboratorsGeneralAccess
-              :name="project.workspace?.name"
-              :logo="project.workspace?.logo"
-              :can-edit="!!canUpdate?.authorized"
-              :admins="workspaceAdmins"
-            />
-          </div>
-        </template>
-        <div class="flex flex-col gap-y-3">
+      <div class="grid xl:grid-cols-3 gap-6 mt-6">
+        <div v-if="project.workspace" class="xl:col-span-1">
+          <p class="text-body-2xs text-foreground-2 font-medium mb-3">General access</p>
+          <ProjectPageCollaboratorsGeneralAccess
+            :name="project.workspace?.name"
+            :logo="project.workspace?.logo"
+            :can-edit="!!canUpdate?.authorized"
+            :admins="workspaceAdmins"
+            :workspace-id="project.workspaceId"
+            :project="project"
+          />
+        </div>
+        <div
+          class="flex flex-col flex-grow gap-y-3"
+          :class="project.workspace ? 'xl:col-span-2' : 'col-span-3'"
+        >
           <p class="text-body-2xs text-foreground-2 font-medium">Project members</p>
           <div>
             <ProjectPageCollaboratorsRow
@@ -80,6 +81,7 @@ const projectPageCollaboratorsQuery = graphql(`
   query ProjectPageCollaborators($projectId: String!, $filter: WorkspaceTeamFilter!) {
     project(id: $projectId) {
       id
+      visibility
       ...ProjectPageTeamInternals_Project
       ...InviteDialogProject_Project
       ...ProjectPageCollaborators_Project
