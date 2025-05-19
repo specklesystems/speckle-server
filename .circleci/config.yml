@@ -925,7 +925,7 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Push
           command: ./.circleci/build.sh
 
   docker-build-server:
@@ -954,7 +954,7 @@ jobs:
           version: default
           docker_layer_caching: true
       - run:
-          name: Build and Save
+          name: Build and Publish sourcemaps
           command: ./.circleci/build_publish_fe2_sourcemaps.sh
 
   docker-build-previews:
