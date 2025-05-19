@@ -5,7 +5,6 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
-  DuplicateWorkspaceJoinRequestError,
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError
 } from '@/modules/workspaces/errors/workspace'
@@ -45,7 +44,6 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { get } from 'lodash'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -235,8 +233,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         )
         expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
       })
-      it('gracefully handles a duplicate request', async () => {
-        // insert into "workspace_join_requests" ("status", "userId", "workspaceId") values ($1, $2, $3) returning * - duplicate key value violates unique constraint "workspace_join_requests_pkey"
+      it('duplicate request is idempotent', async () => {
         const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({ db })
 
         const sendWorkspaceJoinRequestReceivedEmailCalls: Parameters<SendWorkspaceJoinRequestReceivedEmail>[number][] =
@@ -309,11 +306,21 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
 
         // attempt to join again
-        const err = await expectToThrow(() =>
-          requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
-        )
+        expect(
+          await requestToJoinWorkspace({ workspaceId: workspace.id, userId: user.id })
+        ).to.equal(true)
 
-        expect(get(err, 'code')).to.equal(DuplicateWorkspaceJoinRequestError.code)
+        expect(
+          (await db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
+            .where({
+              workspaceId: workspace.id,
+              userId: user.id
+            })
+            .select('status')
+            .first())!.status
+        ).to.equal('pending')
+
+        expect(sendWorkspaceJoinRequestReceivedEmailCalls).to.have.length(1)
       })
     })
 

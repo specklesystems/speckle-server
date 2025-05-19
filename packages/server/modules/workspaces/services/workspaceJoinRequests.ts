@@ -1,5 +1,4 @@
 import {
-  DuplicateWorkspaceJoinRequestError,
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError,
   WorkspaceNotJoinableError,
@@ -95,10 +94,8 @@ export const requestToJoinWorkspaceFactory =
       })
     } catch (e) {
       if (e instanceof Error && e.message.includes('duplicate key')) {
-        throw new DuplicateWorkspaceJoinRequestError(
-          'A workspace join request already exists',
-          { cause: e }
-        )
+        // This is a duplicate request, so confirm its existence without resending the email
+        return true
       }
       throw ensureError(
         e,
