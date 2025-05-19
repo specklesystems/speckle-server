@@ -22,7 +22,7 @@ export interface EdgesPassOptions extends PassOptions {
   normalMultiplier?: number
   normalBias?: number
   outlineThickness?: number
-  outlineDensity?: number
+  outlineOpacity?: number
   outlineColor?: number
   backgroundColor?: number
 }
@@ -33,7 +33,7 @@ export const DefaultEdgesPassOptions: Required<EdgesPassOptions> = {
   normalMultiplier: 1,
   normalBias: 15,
   outlineThickness: 1,
-  outlineDensity: 0.75,
+  outlineOpacity: 0.75,
   outlineColor: 0x323232,
   backgroundColor: 0xfffffff
 }
@@ -60,7 +60,7 @@ export class EdgesPass extends BaseGPass {
     this.edgesMaterial.uniforms.uOutlineThickness.value =
       this._options.outlineThickness ?? DefaultEdgesPassOptions.outlineThickness
     this.edgesMaterial.uniforms.uOutlineDensity.value =
-      this._options.outlineDensity ?? DefaultEdgesPassOptions.outlineDensity
+      this._options.outlineOpacity ?? DefaultEdgesPassOptions.outlineOpacity
     this.edgesMaterial.uniforms.uOutlineColor.value = new Color(
       this._options.outlineColor ?? DefaultEdgesPassOptions.outlineColor
     )
@@ -91,7 +91,7 @@ export class EdgesPass extends BaseGPass {
         uNormalMultiplier: { value: this._options.normalMultiplier },
         uNormalBias: { value: this._options.normalBias },
         uOutlineThickness: { value: this._options.outlineThickness },
-        uOutlineDensity: { value: this._options.outlineDensity },
+        uOutlineDensity: { value: this._options.outlineOpacity },
         uOutlineColor: { value: new Color(this._options.outlineColor) },
         uBackgroundColor: { value: new Color(this._options.backgroundColor) },
 

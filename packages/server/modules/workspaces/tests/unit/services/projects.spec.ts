@@ -114,34 +114,34 @@ describe('Project management services', () => {
       [
         Roles.Stream.Owner,
         Roles.Workspace.Admin,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Owner,
         Roles.Workspace.Admin,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Owner,
         Roles.Workspace.Member,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Owner,
         Roles.Workspace.Member,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Owner,
         Roles.Workspace.Member,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Owner,
         Roles.Workspace.Guest,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Guest,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Owner,
@@ -149,39 +149,39 @@ describe('Project management services', () => {
         null,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Contributor,
         Roles.Workspace.Admin,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Contributor,
         Roles.Workspace.Admin,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Contributor,
         Roles.Workspace.Member,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Contributor,
         Roles.Workspace.Member,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Contributor,
         Roles.Workspace.Member,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Contributor,
         Roles.Workspace.Guest,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Guest,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Contributor,
@@ -189,39 +189,39 @@ describe('Project management services', () => {
         null,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Reviewer,
         Roles.Workspace.Admin,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Reviewer,
         Roles.Workspace.Admin,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'editor',
+        WorkspaceSeatType.Editor,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'editor'
+        WorkspaceSeatType.Editor
       ],
       [
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Reviewer,
         Roles.Workspace.Guest,
-        'viewer',
+        WorkspaceSeatType.Viewer,
         Roles.Stream.Reviewer,
         Roles.Workspace.Guest,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ],
       [
         Roles.Stream.Reviewer,
@@ -229,7 +229,7 @@ describe('Project management services', () => {
         null,
         Roles.Stream.Reviewer,
         Roles.Workspace.Member,
-        'viewer'
+        WorkspaceSeatType.Viewer
       ]
     ]
 

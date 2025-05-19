@@ -5,6 +5,7 @@ import { parseFeatureFlags } from '../../../environment/index.js'
 import { Roles } from '../../../core/constants.js'
 import { ProjectNoAccessError } from '../../domain/authErrors.js'
 import { getProjectFake } from '../../../tests/fakes.js'
+import { ProjectVisibility } from '../../domain/projects/types.js'
 
 describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
   const buildSUT = (
@@ -15,8 +16,7 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: true
+        visibility: ProjectVisibility.Public
       }),
       getProjectRole: async () => Roles.Stream.Owner,
       getServerRole: async () => Roles.Server.User,
@@ -29,24 +29,6 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
 
   it('succeeds if public project', async () => {
     const sut = buildSUT()
-
-    const result = await sut({
-      userId: 'user-id',
-      projectId: 'project-id'
-    })
-
-    expect(result).toBeOKResult()
-  })
-
-  it('succeeds if discoverable project', async () => {
-    const sut = buildSUT({
-      getProject: getProjectFake({
-        id: 'project-id',
-        workspaceId: null,
-        isDiscoverable: true,
-        isPublic: false
-      })
-    })
 
     const result = await sut({
       userId: 'user-id',
@@ -71,13 +53,12 @@ describe('canUpdateProjectAllowPublicCommentsPolicy', () => {
     })
   })
 
-  it('fails if project is neither public nor discoverable', async () => {
+  it('fails if project is not public', async () => {
     const sut = buildSUT({
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: null,
-        isDiscoverable: false,
-        isPublic: false
+        visibility: ProjectVisibility.Private
       })
     })
 

@@ -67,6 +67,9 @@ const configs = [
         }
       ],
 
+      // Until we fully move to ESM, we can't have this:
+      '@typescript-eslint/no-require-imports': 'off',
+
       // TODO: Enable these
       '@typescript-eslint/require-await': 'off', // can be turned on, but there's a lot of fixing to do
       '@typescript-eslint/await-thenable': 'off', // can be turned on, but there's a lot of fixing to do

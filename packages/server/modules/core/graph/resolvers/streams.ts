@@ -36,12 +36,16 @@ import {
   updateStreamAndNotifyFactory,
   updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { Roles, Scopes } from '@speckle/shared'
+import { Nullable, Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
-import { toProjectIdWhitelist, isResourceAllowed } from '@/modules/core/helpers/token'
+import {
+  toProjectIdWhitelist,
+  isResourceAllowed,
+  throwIfResourceAccessNotAllowed
+} from '@/modules/core/helpers/token'
 import {
   Resolvers,
   TokenResourceIdentifierType
@@ -97,6 +101,7 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -228,6 +233,12 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async stream(_, args, context) {
+      throwIfResourceAccessNotAllowed({
+        resourceId: args.id,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: context.resourceAccessRules
+      })
+
       const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) {
         throw new StreamNotFoundError('Stream not found')
@@ -240,7 +251,7 @@ export = {
         context.resourceAccessRules
       )
 
-      if (!stream.isPublic) {
+      if (stream.visibility !== ProjectRecordVisibility.Public) {
         await throwForNotHavingServerRole(context, Roles.Server.Guest)
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }
@@ -303,7 +314,7 @@ export = {
         orderBy: args.orderBy,
         publicOnly: null,
         searchQuery: args.query,
-        visibility: args.visibility,
+        visibility: args.visibility as Nullable<ProjectRecordVisibility>,
         streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
         cursor: null
       })
@@ -312,6 +323,10 @@ export = {
   },
 
   Stream: {
+    isPublic(parent) {
+      return parent.visibility === ProjectRecordVisibility.Public
+    },
+    isDiscoverable: () => false,
     async collaborators(parent, _args, ctx) {
       const collaborators = await ctx.loaders.streams.getCollaborators.load(parent.id)
 
@@ -355,13 +370,6 @@ export = {
       }
 
       return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
-    },
-
-    async isDiscoverable(parent) {
-      const { isPublic, isDiscoverable } = parent
-
-      if (!isPublic) return false
-      return isDiscoverable
     },
 
     async role(parent, _args, ctx) {

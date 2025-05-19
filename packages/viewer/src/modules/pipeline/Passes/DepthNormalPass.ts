@@ -53,6 +53,10 @@ export class DepthNormalPass extends BaseGPass {
     return this.mrt as unknown as WebGLRenderTarget
   }
 
+  set outputTarget(target: WebGLMultipleRenderTargets) {
+    this.mrt = target
+  }
+
   public set options(value: DepthNormalPassOptions) {
     super.options = value
     this.depthType = this._options.depthType

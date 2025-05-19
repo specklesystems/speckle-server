@@ -67,6 +67,14 @@ export type GetWorkspaces = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+export type GetAllWorkspaces = (args: {
+  limit: number
+  cursor: Nullable<string>
+}) => Promise<{
+  items: Workspace[]
+  cursor: Nullable<string>
+}>
+
 export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
   userId?: string
@@ -204,12 +212,16 @@ export type GetWorkspacesRolesForUsers = (
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Service-level change with protection against invalid role changes */
-export type UpdateWorkspaceRole = (
+export type AddOrUpdateWorkspaceRole = (
   args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
     /**
      * Only add or upgrade role, prevent downgrades
      */
     preventRoleDowngrade?: boolean
+    /**
+     * Whether to skip event emit
+     */
+    skipEvent?: boolean
 
     updatedByUserId: string
   }
@@ -364,6 +376,11 @@ export type CountWorkspaceRoleWithOptionalProjectRole = (args: {
   skipUserIds?: string[]
 }) => Promise<number>
 
+export type GetWorkspaceSeatCount = (args: {
+  workspaceId: string
+  type?: WorkspaceSeatType
+}) => Promise<number>
+
 export type GetUserIdsWithRoleInWorkspace = (
   args: {
     workspaceId: string
@@ -514,6 +531,7 @@ export type EnsureValidWorkspaceRoleSeat = (params: {
   userId: string
   role: WorkspaceRoles
   updatedByUserId: string
+  skipEvent?: boolean
 }) => Promise<WorkspaceSeat>
 
 export type CopyProjectComments = (params: {

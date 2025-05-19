@@ -32,6 +32,7 @@ import { expect } from 'chai'
 import { MaybeAsync, StreamRoles, WorkspaceRoles } from '@speckle/shared'
 import { expectToThrow } from '@/test/assertionHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
+import { isBoolean } from 'lodash'
 
 export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps
@@ -80,7 +81,7 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
   ) => apollo.execute(UseWorkspaceProjectInviteDocument, args, options)
 
   const validateResourceAccess = async (params: {
-    shouldHaveAccess: boolean
+    shouldHaveAccess: boolean | { workspace: boolean; project: boolean }
     userId: string
     workspaceId: string
     streamId?: string
@@ -88,8 +89,17 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
     expectedProjectRole?: StreamRoles
   }) => {
     const { shouldHaveAccess, userId, workspaceId, streamId } = params
+    const shouldHaveWorkspaceAccess = isBoolean(shouldHaveAccess)
+      ? shouldHaveAccess
+      : shouldHaveAccess.workspace
+    const shouldHaveProjectAccess = isBoolean(shouldHaveAccess)
+      ? shouldHaveAccess
+      : shouldHaveAccess.project
 
-    const wrapAccessCheck = async (fn: () => MaybeAsync<unknown>) => {
+    const wrapAccessCheck = async (
+      fn: () => MaybeAsync<unknown>,
+      shouldHaveAccess: boolean
+    ) => {
       if (shouldHaveAccess) {
         await fn()
       } else {
@@ -113,7 +123,7 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
           `Unexpected workspace role! Expected: ${params.expectedWorkspaceRole}, real: ${workspace.role}`
         )
       }
-    })
+    }, shouldHaveWorkspaceAccess)
 
     if (streamId?.length) {
       await wrapAccessCheck(async () => {
@@ -133,7 +143,7 @@ export const buildInvitesGraphqlOperations = (deps: { apollo: TestApolloServer }
             `Unexpected project role! Expected: ${params.expectedProjectRole}, real: ${project?.role}`
           )
         }
-      })
+      }, shouldHaveProjectAccess)
     }
   }
 

@@ -18,7 +18,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { Vector3, Box3 } from 'three'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import type {
@@ -46,8 +45,12 @@ export function useSectionBoxUtilities() {
 
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = instance.getSectionBoxFromObjects(objectIds)
-    sectionBox.value = box
+    const box = instance.getRenderer().boxFromObjects(objectIds)
+    /** When generating a section box from selection we don't apply any rotation */
+    sectionBox.value = {
+      min: box.min.toArray(),
+      max: box.max.toArray()
+    }
   }
 
   const toggleSectionBox = () => {
@@ -69,18 +72,11 @@ export function useSectionBoxUtilities() {
 
     if (serializedSectionBox) {
       // Same logic we have in deserialization
-      sectionBox.value = new Box3(
-        new Vector3(
-          serializedSectionBox.min[0],
-          serializedSectionBox.min[1],
-          serializedSectionBox.min[2]
-        ),
-        new Vector3(
-          serializedSectionBox.max[0],
-          serializedSectionBox.max[1],
-          serializedSectionBox.max[2]
-        )
-      )
+      sectionBox.value = {
+        min: serializedSectionBox.min,
+        max: serializedSectionBox.max,
+        rotation: serializedSectionBox.rotation
+      }
     }
   }
 
@@ -494,8 +490,8 @@ export function useViewModeUtilities() {
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
-  const outlineOpacity = ref(1)
-  const defaultColor = computed(() => (isLightTheme.value ? 0x1a1a1a : 0xffffff))
+  const outlineOpacity = ref(0.75)
+  const defaultColor = ref(0x1a1a1a)
   const edgesColor = ref(defaultColor.value)
 
   const currentViewMode = computed(() => viewMode.value)
@@ -517,13 +513,18 @@ export function useViewModeUtilities() {
     if (mode === ViewMode.PEN) {
       outlineOpacity.value = 1
       edgesEnabled.value = true
-    } else {
       if (edgesColor.value === defaultColor.value) {
-        outlineOpacity.value = 0.75
-      } else {
-        outlineOpacity.value = 1
+        if (!isLightTheme.value) {
+          edgesColor.value = 0xffffff
+        }
+      }
+    } else {
+      outlineOpacity.value = 0.75
+      if (edgesColor.value === 0xffffff) {
+        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
       }
     }
+
     updateViewMode()
     mp.track('Viewer Action', {
       type: 'action',
@@ -561,6 +562,18 @@ export function useViewModeUtilities() {
       color: color.toString(16).padStart(6, '0')
     })
   }
+
+  onBeforeUnmount(() => {
+    // Reset edges settings
+    edgesEnabled.value = true
+    edgesWeight.value = 1
+    outlineOpacity.value = 0.75
+    edgesColor.value = defaultColor.value
+
+    // Reset view mode to default
+    viewMode.value = ViewMode.DEFAULT
+    updateViewMode()
+  })
 
   return {
     currentViewMode,

@@ -64,7 +64,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
-import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
@@ -591,7 +591,7 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
 export const processFinalizedWorkspaceInviteFactory =
   (deps: {
     getWorkspace: GetWorkspace
-    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof addOrUpdateWorkspaceRoleFactory>
     processFinalizedProjectInvite: ProcessFinalizedResourceInvite
   }): ProcessFinalizedResourceInvite =>
   async (params) => {

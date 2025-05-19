@@ -62,14 +62,23 @@
           <div class="text-body-2xs">Color</div>
           <div class="flex items-center gap-1">
             <button
-              v-for="color in edgesColorOptions"
+              v-for="(color, index) in edgesColorOptions"
               :key="color"
               class="w-3 h-3 rounded-full cursor-pointer transition-all duration-200 hover:scale-110"
               :class="[
                 edgesColor === color ? 'ring-2 ring-primary' : '',
                 'border-[1.5px] border-outline-2'
               ]"
-              :style="{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }"
+              :style="
+                index === 0
+                  ? {
+                      background:
+                        'linear-gradient(to top left, #1a1a1a 50%, #ffffff 50%)'
+                    }
+                  : {
+                      backgroundColor: `#${color.toString(16).padStart(6, '0')}`
+                    }
+              "
               @click="setEdgesColor(color)"
             />
           </div>
@@ -86,6 +95,7 @@ import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composab
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
 import { useTheme } from '~/lib/core/composables/theme'
+
 const open = defineModel<boolean>('open', { default: false })
 
 const {
@@ -132,12 +142,12 @@ const emit = defineEmits<{
 }>()
 
 const edgesColorOptions = computed(() => [
-  isLightTheme.value ? 0x1a1a1a : 0xffffff, // foreground
+  isLightTheme.value || currentViewMode.value !== ViewMode.PEN ? 0x1a1a1a : 0xffffff, // black or white
   0x3b82f6, // blue-500
   0x8b5cf6, // violet-500
-  0x84cc16, // lime-500
+  0x65a30d, // lime-600
   0xf97316, // orange-500
-  0xf59e0b //amber-500
+  0xf43f5e //rose-500
 ])
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
@@ -155,11 +165,5 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
 onUnmounted(() => {
   cancelCloseTimer()
-})
-
-watch([isLightTheme], () => {
-  if (edgesColor.value === 0x1a1a1a || edgesColor.value === 0xffffff) {
-    setEdgesColor(isLightTheme.value ? 0x1a1a1a : 0xffffff)
-  }
 })
 </script>
