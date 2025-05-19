@@ -61,7 +61,7 @@ describe('Workspace workspaceSeat services', () => {
         .where({ userId: user.id, workspaceId: workspace.id })
         .first()
 
-      expect(workspaceSeat.type).to.eq('viewer')
+      expect(workspaceSeat.type).to.eq(WorkspaceSeatType.Viewer)
 
       // Change workspace role
       await assignToWorkspace(workspace, user, Roles.Workspace.Admin)
@@ -70,7 +70,7 @@ describe('Workspace workspaceSeat services', () => {
         .where({ userId: user.id, workspaceId: workspace.id })
         .first()
 
-      expect(workspaceSeatUpdated.type).to.eq('editor')
+      expect(workspaceSeatUpdated.type).to.eq(WorkspaceSeatType.Editor)
     })
   })
 

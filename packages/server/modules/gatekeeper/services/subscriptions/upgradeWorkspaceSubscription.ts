@@ -6,7 +6,8 @@ import {
   ReconcileSubscriptionData,
   SubscriptionDataInput,
   UpsertPaidWorkspacePlan,
-  UpsertWorkspaceSubscription
+  UpsertWorkspaceSubscription,
+  WorkspaceSeatType
 } from '@/modules/gatekeeper/domain/billing'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
@@ -151,7 +152,7 @@ export const upgradeWorkspaceSubscriptionFactory =
 
     const editorsCount = await countSeatsByTypeInWorkspace({
       workspaceId,
-      type: 'editor'
+      type: WorkspaceSeatType.Editor
     })
 
     workspaceSubscription.updatedAt = new Date()
