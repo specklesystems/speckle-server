@@ -889,10 +889,6 @@ server:
     newsletterListId: ''
     ## @param server.mailchimp.onboardingListId Audience id for the onboarding list
     onboardingListId: ''
-    ## @param server.mailchimp.onboardingJourneyId Id of the onboarding journey
-    onboardingJourneyId: ''
-    ## @param server.mailchimp.onboardingStepId Id of the onboarding journey step we trigger
-    onboardingStepId: ''
 
   migration:
     ## @param server.migration.movedFrom Indicate the URL where the server moved from

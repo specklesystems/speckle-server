@@ -60,16 +60,18 @@
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
 
-                <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
-                  <LayoutSidebarMenuGroupItem
-                    label="Tutorials"
-                    :active="isActive(tutorialsRoute)"
-                  >
-                    <template #icon>
-                      <IconTutorials class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </NuxtLink>
+                <div v-if="isWorkspacesEnabled">
+                  <div @click="openExplainerVideoDialog">
+                    <LayoutSidebarMenuGroupItem label="Getting started">
+                      <template #icon>
+                        <IconPlay class="size-4 text-foreground-2" />
+                      </template>
+                    </LayoutSidebarMenuGroupItem>
+                  </div>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -88,6 +90,17 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </div>
+
+                <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
+                  <LayoutSidebarMenuGroupItem
+                    label="Tutorials"
+                    :active="isActive(tutorialsRoute)"
+                  >
+                    <template #icon>
+                      <IconTutorials class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
 
                 <NuxtLink
                   to="https://speckle.community/"
@@ -149,19 +162,17 @@ import {
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const { $intercom } = useNuxtApp()
+const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-
-const openChat = () => {
-  $intercom.show()
-  isOpenMobile.value = false
-}
+const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
@@ -176,6 +187,19 @@ const showSidebar = computed(() => {
     ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
     : isLoggedIn.value
 })
+
+const openChat = () => {
+  $intercom.show()
+  isOpenMobile.value = false
+}
+
+const openExplainerVideoDialog = () => {
+  showExplainerVideoDialog.value = true
+  isOpenMobile.value = false
+  mixpanel.track('Getting Started Video Opened', {
+    location: 'sidebar'
+  })
+}
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)

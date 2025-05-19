@@ -122,6 +122,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {\n    id\n    slug\n    role\n    ...InviteDialogWorkspace_Workspace\n  }\n": typeof types.SettingsWorkspacesMembersTableHeader_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersActionsMenu_User on WorkspaceCollaborator {\n    id\n    role\n    seatType\n    joinDate\n    user {\n      id\n      name\n      avatar\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    ...SettingsWorkspacesMembersActionsProjectPermissionsDialog_User\n  }\n": typeof types.SettingsWorkspacesMembersActionsMenu_UserFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {\n    projectRoles {\n      project {\n        id\n        name\n      }\n      role\n    }\n  }\n": typeof types.SettingsWorkspacesMembersActionsProjectPermissionsDialog_UserFragmentDoc,
+    "\n  query WorkspaceAvailableEditorSeats($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      seats {\n        editors {\n          available\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceAvailableEditorSeatsDocument,
     "\n  fragment SettingsWorkspacesRegionsSelect_ServerRegionItem on ServerRegionItem {\n    id\n    key\n    name\n    description\n  }\n": typeof types.SettingsWorkspacesRegionsSelect_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n": typeof types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": typeof types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
@@ -534,6 +535,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {\n    id\n    slug\n    role\n    ...InviteDialogWorkspace_Workspace\n  }\n": types.SettingsWorkspacesMembersTableHeader_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersActionsMenu_User on WorkspaceCollaborator {\n    id\n    role\n    seatType\n    joinDate\n    user {\n      id\n      name\n      avatar\n      workspaceDomainPolicyCompliant(workspaceSlug: $slug)\n    }\n    ...SettingsWorkspacesMembersActionsProjectPermissionsDialog_User\n  }\n": types.SettingsWorkspacesMembersActionsMenu_UserFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {\n    projectRoles {\n      project {\n        id\n        name\n      }\n      role\n    }\n  }\n": types.SettingsWorkspacesMembersActionsProjectPermissionsDialog_UserFragmentDoc,
+    "\n  query WorkspaceAvailableEditorSeats($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      seats {\n        editors {\n          available\n        }\n      }\n    }\n  }\n": types.WorkspaceAvailableEditorSeatsDocument,
     "\n  fragment SettingsWorkspacesRegionsSelect_ServerRegionItem on ServerRegionItem {\n    id\n    key\n    name\n    description\n  }\n": types.SettingsWorkspacesRegionsSelect_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {\n    id\n    domain\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
@@ -1284,6 +1286,10 @@ export function graphql(source: "\n  fragment SettingsWorkspacesMembersActionsMe
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {\n    projectRoles {\n      project {\n        id\n        name\n      }\n      role\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {\n    projectRoles {\n      project {\n        id\n        name\n      }\n      role\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceAvailableEditorSeats($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      seats {\n        editors {\n          available\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceAvailableEditorSeats($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      seats {\n        editors {\n          available\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

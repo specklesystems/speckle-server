@@ -63,23 +63,17 @@ export const useIntercom = () => {
   }
 
   const showIntercom = () => {
-    if (!isInitialized.value) {
-      throw new Error('Intercom is not initialized')
-    }
+    if (!isInitialized.value) return
     show()
   }
 
   const hideIntercom = () => {
-    if (!isInitialized.value) {
-      throw new Error('Intercom is not initialized')
-    }
+    if (!isInitialized.value) return
     hide()
   }
 
   const shutdownIntercom = () => {
-    if (!isInitialized.value) {
-      throw new Error('Intercom is not initialized')
-    }
+    if (!isInitialized.value) return
     shutdown()
     isInitialized.value = false
   }
