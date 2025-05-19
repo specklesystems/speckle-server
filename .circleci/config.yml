@@ -131,6 +131,7 @@ workflows:
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
+            - docker-hub
           filters: &filters-build
             tags:
               only: /.*/
