@@ -41,6 +41,8 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
+  ## @param featureFlags.personalProjectLimitsEnabled High level flag toggles personal (non-workspace) project limits
+  personalProjectLimitsEnabled: false
   ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
   workspacesSSOEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
