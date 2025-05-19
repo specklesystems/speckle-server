@@ -1,0 +1,98 @@
+name: Run builds
+
+on: pull_request
+
+jobs:
+  docker-build-server:
+    runs-on: blacksmith
+    name: Docker build server
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-server:test # TODO: fix tag
+          file: ./packages/server/Dockerfile
+
+  docker-build-frontend2:
+    runs-on: blacksmith
+    name: Docker build frontend2
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-frontend-2:test # TODO: fix tag
+          file: ./packages/frontend-2/Dockerfile
+
+  # TODO:
+  # docker-publish-frontend-2-sourcemaps
+
+  docker-build-preview-service:
+    runs-on: blacksmith
+    name: Docker build preview service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-preview-service:test # TODO: fix tag
+          file: ./packages/preview-service/Dockerfile
+
+  docker-build-webhook-service:
+    runs-on: blacksmith
+    name: Docker build webhook service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-webhook-service:test # TODO: fix tag
+          file: ./packages/webhook-service/Dockerfile
+
+  docker-build-fileimport-service:
+    runs-on: blacksmith
+    name: Docker build file import service
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-fileimport-service:test # TODO: fix tag
+          file: ./packages/fileimport-service/Dockerfile
+
+  docker-build-test-deploy:
+    runs-on: blacksmith
+    name: Docker build test deploy util
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: # TODO: fix tag
+          file: ./utils/test-deployment
+
+  # docker-build-postgres-container
+  # TODO:
+
+  docker-build-monitor-deployment:
+    runs-on: blacksmith
+    name: Docker build monitor container
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-monitor-deployment:test # TODO: fix tag
+          file: ./packages/monitor-deployment
+
+  docker-build-docker-compose-ingress:
+    runs-on: blacksmith
+    name: Docker build docker compose ingress
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: # TODO: fix tag
+          file: ./utils/docker-compose-ingress/Dockerfile

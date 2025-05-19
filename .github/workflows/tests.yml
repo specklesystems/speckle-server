@@ -1,0 +1,134 @@
+name: Run tests
+
+on: pull_request
+
+jobs:
+  # TODO:
+  # pre-commit
+
+  # TODO:
+  # test-server:
+
+  # TODO:
+  # test-server-no-ff
+
+  # TODO:
+  # test-server-multiregion
+
+  test-frontend-2:
+    name: Test Frontend
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
+
+  test-viewer:
+    name: Test Viwer
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint viewer
+        run: yarn lint:ci
+        working-directory: 'packages/viewer'
+      - name: Run tests
+        run: yarn test
+        working-directory: 'packages/viewer'
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+
+  # TODO
+  # test-preview-service
+
+  test-shared:
+    name: Test Shared
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/shared'
+      # TODO: (codecov)
+      - name: Build
+        run: yarn build
+        working-directory: 'packages/shared'
+      - name: Ensure ESM import works
+        run: node ./e2e/testEsm.mjs
+        working-directory: 'packages/shared'
+      - name: Ensure CJS require works
+        run: node ./e2e/testCjs.cjs
+        working-directory: 'packages/shared'
+
+  test-objectsender:
+    name: Test Object Sender
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn test:ci
+        working-directory: 'packages/objectsender'
+      # TODO: (codecov) store artifact
+
+  test-ui-components:
+    name: Test UI Components
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint tailwind theme
+        run: yarn test:ci
+        working-directory: 'packages/tailwind-theme'
+      - name: Lint ui components
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components'
+      - name: Lint component nuxt package
+        run: yarn lint:ci
+        working-directory: 'packages/ui-components-nuxt'
+      - name: Test via Storybook
+        run: yarn storybook:test:ci
+        working-directory: 'packages/ui-components'
+
+  # TODO:
+  # ui-components-chromatic
