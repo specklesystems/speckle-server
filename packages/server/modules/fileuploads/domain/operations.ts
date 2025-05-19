@@ -19,7 +19,7 @@ export type SaveUploadFileInput = Pick<
 export type SaveUploadFileInputV2 = Pick<
   FileUploadRecordV2,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
-> & { fileId: string; modelId: string }
+> & { fileId: string; modelId: string; modelName: string }
 
 export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
 

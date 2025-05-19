@@ -50,10 +50,7 @@ export const createNewProjectFactory =
       updatedAt: new Date(),
       workspaceId: workspaceId || null,
       regionKey: regionKey || null,
-      allowPublicComments: false,
-      // TODO: Will be removed in a moment
-      isPublic: false,
-      isDiscoverable: false
+      allowPublicComments: false
     }
 
     await storeProject({ project })
