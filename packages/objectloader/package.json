@@ -13,7 +13,7 @@
         "default": "./dist/objectloader.esm.js"
       },
       "require": {
-        "types": "./types/index.d.ts",
+        "types": "./types/index.d.cts",
         "default": "./dist/objectloader.cjs"
       }
     },

@@ -19,7 +19,8 @@ export const WorkspacePlanFeatures = <const>{
   // Optional/plan specific
   DomainSecurity: 'domainBasedSecurityPolicies',
   SSO: 'oidcSso',
-  CustomDataRegion: 'workspaceDataRegionSpecificity'
+  CustomDataRegion: 'workspaceDataRegionSpecificity',
+  CustomViewerEmbed: 'customViewerEmbed'
 }
 
 export type WorkspacePlanFeatures =
@@ -46,6 +47,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.CustomDataRegion]: {
     displayName: 'Custom data residency',
     description: 'Store your data in EU, UK, North America, or Asia Pacific'
+  },
+  [WorkspacePlanFeatures.CustomViewerEmbed]: {
+    displayName: 'Customised viewer',
+    description: 'Configure the branding of the embedded Speckle viewer'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -86,26 +91,6 @@ const baseFeatures = [
 export const WorkspacePaidPlanConfigs: {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
-  [PaidWorkspacePlans.Starter]: {
-    plan: PaidWorkspacePlans.Starter,
-    features: [...baseFeatures],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Plus]: {
-    plan: PaidWorkspacePlans.Plus,
-    features: [...baseFeatures, WorkspacePlanFeatures.SSO],
-    limits: unlimited
-  },
-  [PaidWorkspacePlans.Business]: {
-    plan: PaidWorkspacePlans.Business,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
-    ],
-    limits: unlimited
-  },
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
@@ -116,7 +101,6 @@ export const WorkspacePaidPlanConfigs: {
       commentHistory: { value: 30, unit: 'day' }
     }
   },
-  // New
   [PaidWorkspacePlans.TeamUnlimited]: {
     plan: PaidWorkspacePlans.TeamUnlimited,
     features: [...baseFeatures],
@@ -133,7 +117,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: {
       projectCount: 10,
@@ -148,7 +133,8 @@ export const WorkspacePaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: {
       projectCount: null,
@@ -162,14 +148,14 @@ export const WorkspacePaidPlanConfigs: {
 export const WorkspaceUnpaidPlanConfigs: {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
 } = {
-  // Old
   [UnpaidWorkspacePlans.Unlimited]: {
     plan: UnpaidWorkspacePlans.Unlimited,
     features: [
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: unlimited
   },
@@ -179,23 +165,11 @@ export const WorkspaceUnpaidPlanConfigs: {
       ...baseFeatures,
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion
+      WorkspacePlanFeatures.CustomDataRegion,
+      WorkspacePlanFeatures.CustomViewerEmbed
     ],
     limits: unlimited
   },
-  [UnpaidWorkspacePlans.StarterInvoiced]: {
-    ...WorkspacePaidPlanConfigs.starter,
-    plan: UnpaidWorkspacePlans.StarterInvoiced
-  },
-  [UnpaidWorkspacePlans.PlusInvoiced]: {
-    ...WorkspacePaidPlanConfigs.plus,
-    plan: UnpaidWorkspacePlans.PlusInvoiced
-  },
-  [UnpaidWorkspacePlans.BusinessInvoiced]: {
-    ...WorkspacePaidPlanConfigs.business,
-    plan: UnpaidWorkspacePlans.BusinessInvoiced
-  },
-  // New
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
     ...WorkspacePaidPlanConfigs.teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced

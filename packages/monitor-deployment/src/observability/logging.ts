@@ -1,9 +1,7 @@
 import { getLogLevel, isLogPretty } from '@/utils/env.js'
-import {
-  extendLoggerComponent as elc,
-  getLogger
-} from '@speckle/shared/dist/commonjs/observability/index.js'
-export const extendLoggerComponent = elc
+import { extendLoggerComponent, getLogger } from '@speckle/shared/observability'
+
+export { extendLoggerComponent }
 
 export const logger = extendLoggerComponent(
   getLogger(getLogLevel(), isLogPretty()),

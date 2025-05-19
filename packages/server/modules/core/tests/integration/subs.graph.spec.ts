@@ -92,7 +92,7 @@ import {
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
-import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
+import { Optional, Roles, Scopes, ServerScope, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -239,10 +239,12 @@ describe('Core GraphQL Subscriptions (New)', () => {
       before(async () => {
         await Promise.all([
           createTestWorkspace(myMainWorkspace, me, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           }),
           createTestWorkspace(otherGuysWorkspace, otherGuy, {
-            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined,
+            addPlan: WorkspacePlans.Pro
           })
         ])
 

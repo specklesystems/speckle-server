@@ -80,7 +80,7 @@ onResult((result) => {
       id: props.workspaceId ?? (route.query.workspaceId as string)
     }
 
-    // If the users comes back from Stripe, we need to go to the last relevant step and show an error
+    // If the user comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
       if (
         newState.plan === PaidWorkspacePlans.Pro ||

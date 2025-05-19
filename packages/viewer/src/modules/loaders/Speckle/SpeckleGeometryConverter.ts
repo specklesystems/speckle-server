@@ -336,7 +336,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    */
   protected TextToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
-    const plane = node.raw.plane
+    /** TEMPORARY UNTIL PROPER IMPLEMENTATION FOR TEXT V3 */
+    const plane = node.raw.plane || {
+      origin: node.raw.origin,
+      xdir: new Vector3(1, 0, 0),
+      ydir: new Vector3(0, 1, 0),
+      normal: new Vector3(0, 0, 1)
+    }
     const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
     const scale = new Matrix4().makeScale(
       conversionFactor,

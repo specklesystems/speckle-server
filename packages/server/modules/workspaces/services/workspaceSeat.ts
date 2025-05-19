@@ -21,23 +21,29 @@ const getDefaultWorkspaceSeatTypeByWorkspaceRole = ({
   workspaceRole: WorkspaceRoles
 }): WorkspaceSeatType => {
   if (workspaceRole === Roles.Workspace.Admin) {
-    return 'editor'
+    return WorkspaceSeatType.Editor
   }
-  return 'viewer'
+  return WorkspaceSeatType.Viewer
 }
 
 const WorkspaceRoleWorkspaceSeatTypeMapping = z.union([
   z.object({
     workspaceRole: z.literal(Roles.Workspace.Admin),
-    workspaceSeatType: z.literal('editor')
+    workspaceSeatType: z.literal(WorkspaceSeatType.Editor)
   }),
   z.object({
     workspaceRole: z.literal(Roles.Workspace.Member),
-    workspaceSeatType: z.union([z.literal('editor'), z.literal('viewer')])
+    workspaceSeatType: z.union([
+      z.literal(WorkspaceSeatType.Editor),
+      z.literal(WorkspaceSeatType.Viewer)
+    ])
   }),
   z.object({
     workspaceRole: z.literal(Roles.Workspace.Guest),
-    workspaceSeatType: z.union([z.literal('editor'), z.literal('viewer')])
+    workspaceSeatType: z.union([
+      z.literal(WorkspaceSeatType.Editor),
+      z.literal(WorkspaceSeatType.Viewer)
+    ])
   })
 ])
 
@@ -86,13 +92,15 @@ export const ensureValidWorkspaceRoleSeatFactory =
       type: getDefaultWorkspaceSeatTypeByWorkspaceRole({ workspaceRole: params.role })
     })
 
-    await deps.eventEmit({
-      eventName: WorkspaceEvents.SeatUpdated,
-      payload: {
-        seat,
-        updatedByUserId: params.updatedByUserId
-      }
-    })
+    if (!params.skipEvent) {
+      await deps.eventEmit({
+        eventName: WorkspaceEvents.SeatUpdated,
+        payload: {
+          seat,
+          updatedByUserId: params.updatedByUserId
+        }
+      })
+    }
 
     return seat
   }

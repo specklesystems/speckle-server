@@ -58,8 +58,12 @@ export const getProjectQuery = gql`
       id
       name
       workspaceId
+      role
+      ...BasicProjectFields
     }
   }
+
+  ${basicProjectFieldsFragment}
 `
 
 export const createProjectMutation = gql`

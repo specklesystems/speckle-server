@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { type PaidWorkspacePlansNew, WorkspacePlans } from '@speckle/shared'
+import { type PaidWorkspacePlans, WorkspacePlans } from '@speckle/shared'
 import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
 import { Currency, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { formatPrice } from '~/lib/billing/helpers/plan'
@@ -46,7 +46,7 @@ const includeUnlimitedAddon = ref<AddonIncludedSelect | undefined>(undefined)
 const addOnPrice = computed(() => {
   if (!state.value.plan) return null
   const price =
-    addonPrices.value?.[Currency.Usd]?.[state.value.plan as PaidWorkspacePlansNew]
+    addonPrices.value?.[Currency.Usd]?.[state.value.plan as PaidWorkspacePlans]
   if (!price) return null
 
   return formatPrice({
@@ -72,12 +72,18 @@ const options = computed(() => [
 ])
 
 const onCtaClick = () => {
-  if (includeUnlimitedAddon.value) {
-    state.value.plan =
-      state.value.plan === WorkspacePlans.Team
+  const isTeamPlan =
+    state.value.plan === WorkspacePlans.Team ||
+    state.value.plan === WorkspacePlans.TeamUnlimited
+
+  state.value.plan =
+    includeUnlimitedAddon.value === 'yes'
+      ? isTeamPlan
         ? WorkspacePlans.TeamUnlimited
         : WorkspacePlans.ProUnlimited
-  }
+      : isTeamPlan
+      ? WorkspacePlans.Team
+      : WorkspacePlans.Pro
 
   mixpanel.track('Workspace Unlimited Addon Step Completed', {
     plan: state.value.plan,

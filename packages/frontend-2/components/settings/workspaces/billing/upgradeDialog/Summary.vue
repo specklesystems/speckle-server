@@ -134,13 +134,13 @@ import {
   WorkspacePlans,
   isPaidPlan,
   doesPlanIncludeUnlimitedProjectsAddon,
-  type PaidWorkspacePlansNew
+  type PaidWorkspacePlans
 } from '@speckle/shared'
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   slug: string
-  plan: PaidWorkspacePlansNew
+  plan: PaidWorkspacePlans
   billingInterval: BillingInterval
   editorSeatCount: number
 }>()
@@ -176,8 +176,7 @@ const currentEditorPrice = computed(() => {
     })
   }
 
-  const planPrice =
-    activeWorkspacePrices.value?.[plan.value.name as PaidWorkspacePlansNew]
+  const planPrice = activeWorkspacePrices.value?.[plan.value.name as PaidWorkspacePlans]
   if (!planPrice) return null
 
   return formatPrice({
@@ -222,7 +221,7 @@ const newEditorPrice = computed(() => {
 
 const totalPrice = computed(() => {
   const planPrice =
-    activeWorkspacePrices.value?.[plan.value?.name as PaidWorkspacePlansNew]
+    activeWorkspacePrices.value?.[plan.value?.name as PaidWorkspacePlans]
   if (!planPrice) return null
 
   return formatPrice({
@@ -253,7 +252,7 @@ const newTotalPriceFormatted = computed(() => {
 const currentAddonPrice = computed(() => {
   if (!plan.value?.name) return null
   const addonPrice =
-    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlansNew]
+    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlans]
   if (!addonPrice) return null
 
   return intervalIsYearly.value

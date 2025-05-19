@@ -2,7 +2,6 @@ import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
   LoaderEvent,
-  ViewMode,
   type PropertyInfo,
   type StringPropertyInfo,
   type SunLightConfiguration
@@ -15,8 +14,6 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  ViewModes,
-  ViewModeEvent,
   SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -53,6 +50,7 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -312,6 +310,16 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
+function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
+  const isEqual = (a: number[], b: number[]) =>
+    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
+  return (
+    isEqual(a.min, b.min) &&
+    isEqual(a.max, b.max) &&
+    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
+  )
+}
+
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -335,7 +343,7 @@ function useViewerSectionBoxIntegration() {
   watch(
     sectionBox,
     (newVal, oldVal) => {
-      if (newVal && oldVal && newVal.equals(oldVal)) return
+      if (newVal && oldVal && sectionBoxDataEquals(newVal, oldVal)) return
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
@@ -347,14 +355,11 @@ function useViewerSectionBoxIntegration() {
         return
       }
 
-      if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+      if (newVal && (!oldVal || !sectionBoxDataEquals(newVal, oldVal))) {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox({
-          min: newVal.min,
-          max: newVal.max
-        })
+        instance.setSectionBox(newVal)
         instance.sectionBoxOn()
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
@@ -649,44 +654,6 @@ function useViewerFiltersIntegration() {
   )
 }
 
-function useViewerViewModeIntegration() {
-  const {
-    ui: { viewMode },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const viewModes = instance.getExtension(ViewModes)
-  const onViewModeChanged = (mode: ViewMode) => {
-    viewMode.value = mode
-  }
-
-  onMounted(() => {
-    if (!viewMode.value) {
-      viewMode.value = ViewMode.DEFAULT
-    }
-    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  onBeforeUnmount(() => {
-    // Reset view mode to default
-    viewModes.setViewMode(ViewMode.DEFAULT)
-    viewMode.value = ViewMode.DEFAULT
-
-    // Clean up event listener
-    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
-  })
-
-  watch(
-    () => viewMode.value,
-    (newMode) => {
-      if (viewModes && newMode) {
-        viewModes.setViewMode(newMode)
-      }
-    },
-    { immediate: true }
-  )
-}
-
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -923,7 +890,6 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
-  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
