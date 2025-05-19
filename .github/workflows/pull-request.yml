@@ -7,19 +7,15 @@ jobs:
     name: Test Viewer
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      - &checkout
-        name: Check out repository code
+      - name: Check out repository code
         uses: actions/checkout@v4.2.2
-      - &setup-yarn
-        uses: useblacksmith/setup-node@v5
+      - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
           cache: yarn
-      - &yarn-install-browserless
-        name: Install dependencies
+      - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - &build-public
-        name: Build public packages
+      - name: Build public packages
         run: yarn build:public
       - name: Lint viewer
         run: yarn lint:ci
@@ -38,9 +34,14 @@ jobs:
     name: Test Shared
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      - *checkout
-      - *setup-yarn
-      - *yarn-install-browserless
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Lint
         run: yarn lint:ci
         working-directory: 'packages/shared'
@@ -59,10 +60,16 @@ jobs:
     name: Test Frontend
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      - *checkout
-      - *setup-yarn
-      - *yarn-install-browserless
-      - *build-public
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
       - name: Lint everything
         run: yarn lint:ci
         working-directory: 'packages/frontend-2'
@@ -71,10 +78,16 @@ jobs:
     name: Test Object Sender
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      - *checkout
-      - *setup-yarn
-      - *yarn-install-browserless
-      - *build-public
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
       - name: Lint everything
         run: yarn test:ci
         working-directory: 'packages/objectsender'
@@ -84,11 +97,16 @@ jobs:
     name: Test UI Components
     runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
-      - *checkout
-      - *setup-yarn
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
       - name: Install dependencies
         run: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
-      - *build-public
+      - name: Build public packages
+        run: yarn build:public
       - name: Lint everything
         run: yarn test:ci
         working-directory: 'packages/objectsender'
