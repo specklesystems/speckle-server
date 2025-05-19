@@ -51,4 +51,4 @@ export const getVersionFake = fakeGetFactory<Version>(() => ({
 }))
 
 export const getEnvFake = (overrides?: Partial<FeatureFlags>) =>
-  parseFeatureFlags(mapValues(overrides || {}, (v) => `${v}`))
+  parseFeatureFlags(mapValues(overrides || {}, (v) => `${v}` as 'true' | 'false'))
