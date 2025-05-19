@@ -118,7 +118,7 @@ jobs:
       - name: Build public packages
         run: yarn build:public
       - name: Lint tailwind theme
-        run: yarn test:ci
+        run: yarn lint:ci
         working-directory: 'packages/tailwind-theme'
       - name: Lint ui components
         run: yarn lint:ci

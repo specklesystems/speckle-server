@@ -69,7 +69,7 @@ jobs:
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: # TODO: fix tag
+          tags: speckle/speckle-test-deployment # TODO: fix tag,
           file: ./utils/test-deployment
 
   # docker-build-postgres-container
@@ -94,5 +94,5 @@ jobs:
         uses: useblacksmith/build-push-action@v1
         with:
           push: false
-          tags: # TODO: fix tag
+          tags: speckle/speckle-docker-compose-ingress:test # TODO: fix tag
           file: ./utils/docker-compose-ingress/Dockerfile
