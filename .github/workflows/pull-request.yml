@@ -12,6 +12,7 @@ jobs:
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
+          cache: yarn
       - name: Mount NPM Cache
         uses: useblacksmith/stickydisk@v1
         with:
@@ -25,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: sudo yarn --immutable
       - name: Build public packages
-        run: yarn build:public
+        run: sudo yarn build:public
 
   test-viewer:
     needs: install-and-build
