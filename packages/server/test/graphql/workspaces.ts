@@ -282,3 +282,35 @@ export const moveProjectToWorkspaceMutation = gql`
     }
   }
 `
+
+export const updateWorkspaceEmbedOptionsMutation = gql`
+  mutation UpdateEmbedOptions($input: WorkspaceUpdateEmbedOptionsInput!) {
+    workspaceMutations {
+      updateEmbedOptions(input: $input) {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getWorkspaceEmbedOptions = gql`
+  query WorkspaceEmbedOptions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
+      }
+    }
+  }
+`
+
+export const getProjectEmbedOptions = gql`
+  query ProjectEmbedOptions($projectId: String!) {
+    project(id: $projectId) {
+      id
+      embedOptions {
+        hideSpeckleBranding
+      }
+    }
+  }
+`

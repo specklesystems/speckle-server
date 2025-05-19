@@ -2029,6 +2029,8 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  /** Public project-level configuration for embedded viewer */
+  embedOptions: ProjectEmbedOptions;
   id: Scalars['ID']['output'];
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -2360,6 +2362,11 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectEmbedOptions = {
+  __typename?: 'ProjectEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -4469,6 +4476,8 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
   domains?: Maybe<Array<WorkspaceDomain>>;
+  /** Workspace-level configuration for models in embedded viewer */
+  embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
@@ -4620,6 +4629,11 @@ export type WorkspaceDomainDeleteInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceEmbedOptions = {
+  __typename?: 'WorkspaceEmbedOptions';
+  hideSpeckleBranding: Scalars['Boolean']['output'];
+};
+
 export const WorkspaceFeatureName = {
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
   OidcSso: 'oidcSso',
@@ -4756,6 +4770,7 @@ export type WorkspaceMutations = {
   setDefaultRegion: Workspace;
   update: Workspace;
   updateCreationState: Scalars['Boolean']['output'];
+  updateEmbedOptions: WorkspaceEmbedOptions;
   updateRole: Workspace;
   updateSeatType: Workspace;
 };
@@ -4814,6 +4829,11 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateCreationStateArgs = {
   input: WorkspaceCreationStateInput;
+};
+
+
+export type WorkspaceMutationsUpdateEmbedOptionsArgs = {
+  input: WorkspaceUpdateEmbedOptionsInput;
 };
 
 
@@ -5079,6 +5099,11 @@ export type WorkspaceTeamFilter = {
   /** Search for team members by name or email */
   search?: InputMaybe<Scalars['String']['input']>;
   seatType?: InputMaybe<WorkspaceSeatType>;
+};
+
+export type WorkspaceUpdateEmbedOptionsInput = {
+  hideSpeckleBranding: Scalars['Boolean']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceUpdateInput = {
@@ -7594,6 +7619,7 @@ export type AllObjectTypes = {
   ProjectCollection: ProjectCollection,
   ProjectCommentCollection: ProjectCommentCollection,
   ProjectCommentsUpdatedMessage: ProjectCommentsUpdatedMessage,
+  ProjectEmbedOptions: ProjectEmbedOptions,
   ProjectFileImportUpdatedMessage: ProjectFileImportUpdatedMessage,
   ProjectInviteMutations: ProjectInviteMutations,
   ProjectModelsUpdatedMessage: ProjectModelsUpdatedMessage,
@@ -7669,6 +7695,7 @@ export type AllObjectTypes = {
   WorkspaceCollection: WorkspaceCollection,
   WorkspaceCreationState: WorkspaceCreationState,
   WorkspaceDomain: WorkspaceDomain,
+  WorkspaceEmbedOptions: WorkspaceEmbedOptions,
   WorkspaceInviteMutations: WorkspaceInviteMutations,
   WorkspaceJoinRequest: WorkspaceJoinRequest,
   WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollection,
@@ -8292,6 +8319,7 @@ export type ProjectFieldArgs = {
   commentThreads: ProjectCommentThreadsArgs,
   createdAt: {},
   description: {},
+  embedOptions: {},
   id: {},
   invitableCollaborators: ProjectInvitableCollaboratorsArgs,
   invitedTeam: {},
@@ -8367,6 +8395,9 @@ export type ProjectCommentsUpdatedMessageFieldArgs = {
   comment: {},
   id: {},
   type: {},
+}
+export type ProjectEmbedOptionsFieldArgs = {
+  hideSpeckleBranding: {},
 }
 export type ProjectFileImportUpdatedMessageFieldArgs = {
   id: {},
@@ -8919,6 +8950,7 @@ export type WorkspaceFieldArgs = {
   discoverabilityEnabled: {},
   domainBasedMembershipProtectionEnabled: {},
   domains: {},
+  embedOptions: {},
   hasAccessToFeature: WorkspaceHasAccessToFeatureArgs,
   id: {},
   invitedTeam: WorkspaceInvitedTeamArgs,
@@ -8970,6 +9002,9 @@ export type WorkspaceDomainFieldArgs = {
   domain: {},
   id: {},
 }
+export type WorkspaceEmbedOptionsFieldArgs = {
+  hideSpeckleBranding: {},
+}
 export type WorkspaceInviteMutationsFieldArgs = {
   batchCreate: WorkspaceInviteMutationsBatchCreateArgs,
   cancel: WorkspaceInviteMutationsCancelArgs,
@@ -9008,6 +9043,7 @@ export type WorkspaceMutationsFieldArgs = {
   setDefaultRegion: WorkspaceMutationsSetDefaultRegionArgs,
   update: WorkspaceMutationsUpdateArgs,
   updateCreationState: WorkspaceMutationsUpdateCreationStateArgs,
+  updateEmbedOptions: WorkspaceMutationsUpdateEmbedOptionsArgs,
   updateRole: WorkspaceMutationsUpdateRoleArgs,
   updateSeatType: WorkspaceMutationsUpdateSeatTypeArgs,
 }
@@ -9179,6 +9215,7 @@ export type AllObjectFieldArgTypes = {
   ProjectCollection: ProjectCollectionFieldArgs,
   ProjectCommentCollection: ProjectCommentCollectionFieldArgs,
   ProjectCommentsUpdatedMessage: ProjectCommentsUpdatedMessageFieldArgs,
+  ProjectEmbedOptions: ProjectEmbedOptionsFieldArgs,
   ProjectFileImportUpdatedMessage: ProjectFileImportUpdatedMessageFieldArgs,
   ProjectInviteMutations: ProjectInviteMutationsFieldArgs,
   ProjectModelsUpdatedMessage: ProjectModelsUpdatedMessageFieldArgs,
@@ -9254,6 +9291,7 @@ export type AllObjectFieldArgTypes = {
   WorkspaceCollection: WorkspaceCollectionFieldArgs,
   WorkspaceCreationState: WorkspaceCreationStateFieldArgs,
   WorkspaceDomain: WorkspaceDomainFieldArgs,
+  WorkspaceEmbedOptions: WorkspaceEmbedOptionsFieldArgs,
   WorkspaceInviteMutations: WorkspaceInviteMutationsFieldArgs,
   WorkspaceJoinRequest: WorkspaceJoinRequestFieldArgs,
   WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollectionFieldArgs,

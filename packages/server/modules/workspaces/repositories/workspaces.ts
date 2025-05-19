@@ -262,7 +262,8 @@ export const upsertWorkspaceFactory =
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
-        'discoverabilityEnabled'
+        'discoverabilityEnabled',
+        'isEmbedSpeckleBrandingHidden'
       ])
   }
 

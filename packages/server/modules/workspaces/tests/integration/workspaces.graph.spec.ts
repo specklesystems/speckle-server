@@ -30,7 +30,10 @@ import {
   CreateWorkspaceProjectDocument,
   DismissWorkspaceDocument,
   GetActiveUserDiscoverableWorkspacesDocument,
-  GetWorkspaceWithMembersByRoleDocument
+  GetWorkspaceWithMembersByRoleDocument,
+  UpdateEmbedOptionsDocument,
+  WorkspaceEmbedOptionsDocument,
+  ProjectEmbedOptionsDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -1357,6 +1360,73 @@ describe('Workspaces GQL CRUD', () => {
           deleteDomainRes.data?.workspaceMutations.deleteDomain
             .domainBasedMembershipProtectionEnabled
         ).to.false
+      })
+    })
+
+    describe('mutation workspaceMutations.updateEmbedOptions', () => {
+      const workspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: cryptoRandomString({ length: 10 }),
+        name: 'My Test Workspace'
+      }
+
+      const workspaceProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'My Test Project',
+        isPublic: false
+      }
+
+      before(async () => {
+        await createTestWorkspace(workspace, testAdminUser, { addPlan: false })
+        workspaceProject.workspaceId = workspace.id
+        await createTestStream(workspaceProject, testAdminUser)
+      })
+
+      beforeEach(async () => {
+        await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: false
+          }
+        })
+      })
+
+      it('should update options at workspace level', async () => {
+        const resA = await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: true
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(WorkspaceEmbedOptionsDocument, {
+          workspaceId: workspace.id
+        })
+
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resB?.data?.workspace.embedOptions.hideSpeckleBranding).to.equal(true)
+      })
+
+      it('should update options at workspace project level', async () => {
+        const resA = await apollo.execute(UpdateEmbedOptionsDocument, {
+          input: {
+            workspaceId: workspace.id,
+            hideSpeckleBranding: true
+          }
+        })
+
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(ProjectEmbedOptionsDocument, {
+          projectId: workspaceProject.id
+        })
+
+        expect(resB).to.not.haveGraphQLErrors()
+        expect(resB.data?.project.embedOptions.hideSpeckleBranding).to.equal(true)
       })
     })
   })

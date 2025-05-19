@@ -1042,6 +1042,44 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           return true
         },
+        updateEmbedOptions: async (parent, args, context) => {
+          const { workspaceId, hideSpeckleBranding } = args.input
+
+          const logger = context.log.child({ workspaceId })
+
+          return await asOperation(
+            async ({ db, emit }) => {
+              const workspace = await updateWorkspaceFactory({
+                validateSlug: validateSlugFactory({
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+                }),
+                getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+                getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+                  db,
+                  decrypt: getDecryptor()
+                }),
+                upsertWorkspace: upsertWorkspaceFactory({ db }),
+                emitWorkspaceEvent: emit
+              })({
+                workspaceId,
+                workspaceInput: {
+                  isEmbedSpeckleBrandingHidden: hideSpeckleBranding
+                }
+              })
+
+              return {
+                hideSpeckleBranding: workspace.isEmbedSpeckleBrandingHidden
+              }
+            },
+            {
+              logger,
+              name: 'updateWorkspaceEmbedOptions',
+              description:
+                'Update workspace-level configuration for the embedded viewer',
+              transaction: true
+            }
+          )
+        },
         invites: () => ({}),
         projects: () => ({}),
         dismiss: async (_parent, args, ctx) => {
@@ -1652,6 +1690,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
+        },
+        embedOptions: async (parent) => {
+          return {
+            hideSpeckleBranding: parent.isEmbedSpeckleBrandingHidden
+          }
         }
       },
       WorkspaceSso: {
