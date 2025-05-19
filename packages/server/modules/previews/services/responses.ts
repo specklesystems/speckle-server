@@ -1,5 +1,4 @@
 import { ensureError, TIME } from '@speckle/shared'
-import { previewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
 import { PreviewJobDurationStep } from '@/modules/previews/observability/metrics'
 import type { Summary } from 'prom-client'
 import type { Logger } from '@/observability/logging'
@@ -7,6 +6,7 @@ import type { DoneCallback, Job } from 'bull'
 import type { BuildConsumePreviewResult } from '@/modules/previews/domain/operations'
 import { DatabaseError } from 'pg'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { previewResultPayload } from '@speckle/shared/workers/previews'
 
 const parseMessage = (data: string) =>
   previewResultPayload
