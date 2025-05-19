@@ -73,6 +73,25 @@ jobs:
       - name: Lint everything
         run: yarn lint:ci
         working-directory: 'packages/frontend-2'
+
+  test-objectsender:
+    name: Test Object Sender
+    runs-on: blacksmith-8vcpu-ubuntu-2204
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/objectsender'
+      # todo: store artifact
 # get_version: # maybe there is a github action / param / or we do not even need it
 
 # # gha https://github.com/pre-commit/action
