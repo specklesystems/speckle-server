@@ -178,15 +178,13 @@ export const updateAllWorkspacesTackingPropertiesFactory =
       )
     }
 
-    const MAX_ITERATIONS = 1_000_000
+    const MAX_ITERATIONS = 100_000
     let cursor = null
     let items = []
     let iterationCount = 0
     do {
       if (iterationCount++ >= MAX_ITERATIONS) {
-        console.error(
-          `Reached max iteration limit of ${MAX_ITERATIONS}. Exiting loop to prevent infinite execution.`
-        )
+        console.error(`Reached max iteration limit of ${MAX_ITERATIONS}.`)
         break
       }
 
