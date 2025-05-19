@@ -6,7 +6,8 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  HybridCameraController
+  HybridCameraController,
+  OrientedSectionTool
 } from '@speckle/viewer'
 
 import './style.css'
@@ -17,7 +18,6 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
@@ -46,7 +46,7 @@ const createViewer = async (containerName: string, _stream: string) => {
 
   viewer.createExtension(HybridCameraController)
   viewer.createExtension(SelectionExtension)
-  viewer.createExtension(SectionTool)
+  viewer.createExtension(OrientedSectionTool)
   viewer.createExtension(SectionOutlines)
   viewer.createExtension(MeasurementsExtension)
   viewer.createExtension(FilteringExtension)
@@ -64,7 +64,9 @@ const createViewer = async (containerName: string, _stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    if (event) console.log(event.hits[0].node.model.id)
+    if (event) {
+      console.log(event.hits[0].node.model.id)
+    }
   })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
@@ -488,6 +490,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8be1007be1/models/33fbee921f'
 
     // Dim's meshed together non instanced + instanced
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be@ee21745e43'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/338afee6be'
 
     // A LOT of text objects
@@ -498,6 +501,7 @@ const getStream = () => {
     // REGIONS
     // https://app.speckle.systems/projects/16ce7b208c/models/1c14e37363@0614bb2957
 
+    // 'https://app.speckle.systems/projects/63bb691d0f/models/a64da9072d'
     // 'https://app.speckle.systems/projects/7591c56179/models/82b94108a3'
 
     // SUPER slow tree build time (LARGE N-GONS TRIANGULATION)
