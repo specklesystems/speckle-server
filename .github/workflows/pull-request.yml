@@ -21,6 +21,115 @@ jobs:
   #-  run: cat workspace/env-vars >> $BASH_EN
   # - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
 
+  test-viewer:
+    name: Test Viewer
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Mount NPM Cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-npm-cache
+          path: ~/.npm
+      - name: Mount node_modules
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-node-modules
+          path: ./node_modules
+      - name: Lint viewer
+        run: yarn lint:ci
+        working-directory: 'packages/viewer'
+      - name: Run tests
+        run: yarn test
+        working-directory: 'packages/viewer'
+      - name: Lint viewer-sandbox
+        run: yarn lint:ci
+        working-directory: 'packages/viewer-sandbox'
+      - name: Build viewer-sandbox
+        run: yarn build
+        working-directory: 'packages/viewer-sandbox'
+
+  test-shared:
+    name: Test Shared
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/shared'
+      # TODO: (codecov)
+      - name: Build
+        run: yarn build
+        working-directory: 'packages/shared'
+      - name: Ensure ESM import works
+        run: node ./e2e/testEsm.mjs
+        working-directory: 'packages/shared'
+      - name: Ensure CJS require works
+        run: node ./e2e/testCjs.cjs
+        working-directory: 'packages/shared'
+
+  test-frontend-2:
+    name: Test Frontend
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn lint:ci
+        working-directory: 'packages/frontend-2'
+
+  test-objectsender:
+    name: Test Object Sender
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn test:ci
+        working-directory: 'packages/objectsender'
+      # TODO: (codecov) store artifact
+
+  test-ui-components:
+    name: Test UI Components
+    runs-on: blacksmith
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint everything
+        run: yarn test:ci
+        working-directory: 'packages/objectsender'
+
   docker-build-server:
     runs-on: blacksmith
     name: Docker build server
@@ -31,115 +140,6 @@ jobs:
           push: false
           tags: speckle/speckle-server:test
           file: ./packages/server/Dockerfile
-
-  # test-viewer:
-  #   name: Test Viewer
-  #   runs-on: blacksmith
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: useblacksmith/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #         cache: yarn
-  #     - name: Mount NPM Cache
-  #       uses: useblacksmith/stickydisk@v1
-  #       with:
-  #         key: ${{ github.repository }}-npm-cache
-  #         path: ~/.npm
-  #     - name: Mount node_modules
-  #       uses: useblacksmith/stickydisk@v1
-  #       with:
-  #         key: ${{ github.repository }}-node-modules
-  #         path: ./node_modules
-  #     - name: Lint viewer
-  #       run: yarn lint:ci
-  #       working-directory: 'packages/viewer'
-  #     - name: Run tests
-  #       run: yarn test
-  #       working-directory: 'packages/viewer'
-  #     - name: Lint viewer-sandbox
-  #       run: yarn lint:ci
-  #       working-directory: 'packages/viewer-sandbox'
-  #     - name: Build viewer-sandbox
-  #       run: yarn build
-  #       working-directory: 'packages/viewer-sandbox'
-
-  # test-shared:
-  #   name: Test Shared
-  #   runs-on: blacksmith
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: useblacksmith/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #         cache: yarn
-  #     - name: Install dependencies
-  #       run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-  #     - name: Lint
-  #       run: yarn lint:ci
-  #       working-directory: 'packages/shared'
-  #     # TODO: (codecov)
-  #     - name: Build
-  #       run: yarn build
-  #       working-directory: 'packages/shared'
-  #     - name: Ensure ESM import works
-  #       run: node ./e2e/testEsm.mjs
-  #       working-directory: 'packages/shared'
-  #     - name: Ensure CJS require works
-  #       run: node ./e2e/testCjs.cjs
-  #       working-directory: 'packages/shared'
-
-  # test-frontend-2:
-  #   name: Test Frontend
-  #   runs-on: blacksmith
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: useblacksmith/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #         cache: yarn
-  #     - name: Install dependencies
-  #       run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-  #     - name: Build public packages
-  #       run: yarn build:public
-  #     - name: Lint everything
-  #       run: yarn lint:ci
-  #       working-directory: 'packages/frontend-2'
-
-  # test-objectsender:
-  #   name: Test Object Sender
-  #   runs-on: blacksmith
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: useblacksmith/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #         cache: yarn
-  #     - name: Install dependencies
-  #       run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-  #     - name: Build public packages
-  #       run: yarn build:public
-  #     - name: Lint everything
-  #       run: yarn test:ci
-  #       working-directory: 'packages/objectsender'
-  #     # TODO: (codecov) store artifact
-
-  # test-ui-components:
-  #   name: Test UI Components
-  #   runs-on: blacksmith
-  #   steps:
-  #     - uses: actions/checkout@v4.2.2
-  #     - uses: useblacksmith/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #         cache: yarn
-  #     - name: Install dependencies
-  #       run: PUPPETEER_SKIP_DOWNLOAD=true yarn --immutable # we need PLAYWRIGHT
-  #     - name: Build public packages
-  #       run: yarn build:public
-  #     - name: Lint everything
-  #       run: yarn test:ci
-  #       working-directory: 'packages/objectsender'
 # Builds
 
 # get_version: # maybe there is a github action / param / or we do not even need it
