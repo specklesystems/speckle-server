@@ -52,6 +52,7 @@ import {
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
+  WorkspaceCreationState as DbWorkspaceCreationState,
   WorkspaceDomains,
   Workspaces,
   WorkspaceSeats
@@ -149,9 +150,30 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async ({ workspaceIds, userId }) => {
+  async ({ workspaceIds, userId, search, completed }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
     if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+
+    if (search) {
+      q.andWhere((builder) => {
+        builder
+          .where('name', 'ILIKE', `%${search}%`)
+          .orWhere('slug', 'ILIKE', `%${search}%`)
+      })
+    }
+
+    if (completed !== undefined) {
+      q.leftJoin(
+        DbWorkspaceCreationState.name,
+        Workspaces.col.id,
+        DbWorkspaceCreationState.col.workspaceId
+      ).andWhere((builder) => {
+        builder
+          .where({ [DbWorkspaceCreationState.col.completed]: completed })
+          .orWhere({ [DbWorkspaceCreationState.col.completed]: null })
+      })
+    }
+
     const results = await q
     return results
   }

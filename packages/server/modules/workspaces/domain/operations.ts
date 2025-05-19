@@ -65,6 +65,8 @@ export type GetWorkspaceBySlugOrId = (args: {
 export type GetWorkspaces = (args: {
   workspaceIds?: string[]
   userId?: string
+  search?: string
+  completed?: boolean
 }) => Promise<WorkspaceWithOptionalRole[]>
 
 export type GetAllWorkspaces = (args: {
