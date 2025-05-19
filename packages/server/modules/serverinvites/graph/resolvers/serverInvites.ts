@@ -52,7 +52,7 @@ import {
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
 import {
-  ProjectInviteResourceType,
+  ServerInviteLimit,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
 import {
@@ -109,6 +109,35 @@ const buildCollectAndValidateResourceTargets = () =>
     getStream
   })
 
+const buildFinalizeProjectInvite = () =>
+  finalizeResourceInviteFactory({
+    findInvite: findInviteFactory({ db }),
+    validateInvite: validateProjectInviteBeforeFinalizationFactory({
+      getProject: getStream
+    }),
+    processInvite: processFinalizedProjectInviteFactory({
+      getProject: getStream,
+      addProjectRole: addOrUpdateStreamCollaborator
+    }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    emitEvent: (...args) => getEventBus().emit(...args),
+    findEmail: findEmailFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail: findEmailFactory({ db }),
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
+    getUser,
+    getServerInfo
+  })
+
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
     findUserByTarget: findUserByTargetFactory({ db }),
@@ -123,7 +152,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         payload
       }),
     getUser,
-    getServerInfo
+    getServerInfo,
+    finalizeInvite: buildFinalizeProjectInvite()
   })
 
 export = {
@@ -263,9 +293,9 @@ export = {
       const { input: paramsArray } = args
 
       const inviteCount = paramsArray.length
-      if (inviteCount > 10 && context.role !== Roles.Server.Admin) {
+      if (inviteCount > ServerInviteLimit && context.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
+          `Maximum ${ServerInviteLimit} invites can be sent at once by non admins`
         )
       }
       const logger = context.log.child({
@@ -374,33 +404,7 @@ export = {
         streamId: projectId //legacy
       })
       const useProjectInvite = useProjectInviteAndNotifyFactory({
-        finalizeInvite: finalizeResourceInviteFactory({
-          findInvite: findInviteFactory({ db }),
-          validateInvite: validateProjectInviteBeforeFinalizationFactory({
-            getProject: getStream
-          }),
-          processInvite: processFinalizedProjectInviteFactory({
-            getProject: getStream,
-            addProjectRole: addOrUpdateStreamCollaborator
-          }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args),
-          findEmail: findEmailFactory({ db }),
-          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-            createUserEmail: createUserEmailFactory({ db }),
-            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-            findEmail: findEmailFactory({ db }),
-            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            }),
-            requestNewEmailVerification
-          }),
-          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-          getUser,
-          getServerInfo
-        })
+        finalizeInvite: buildFinalizeProjectInvite()
       })
 
       await withOperationLogging(
@@ -437,8 +441,6 @@ export = {
         async () =>
           await cancelInvite({
             inviteId,
-            resourceId: streamId,
-            resourceType: ProjectInviteResourceType,
             cancelerId: userId!,
             cancelerResourceAccessLimits: resourceAccessRules
           }),
@@ -554,9 +556,9 @@ export = {
       const { projectId } = args
 
       const inviteCount = args.input.length
-      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+      if (inviteCount > ServerInviteLimit && ctx.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
+          `Maximum ${ServerInviteLimit} invites can be sent at once by non admins`
         )
       }
 
@@ -616,33 +618,7 @@ export = {
     async use(_parent, args, ctx) {
       const logger = ctx.log
       const useProjectInvite = useProjectInviteAndNotifyFactory({
-        finalizeInvite: finalizeResourceInviteFactory({
-          findInvite: findInviteFactory({ db }),
-          validateInvite: validateProjectInviteBeforeFinalizationFactory({
-            getProject: getStream
-          }),
-          processInvite: processFinalizedProjectInviteFactory({
-            getProject: getStream,
-            addProjectRole: addOrUpdateStreamCollaborator
-          }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitEvent: (...args) => getEventBus().emit(...args),
-          findEmail: findEmailFactory({ db }),
-          validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-            createUserEmail: createUserEmailFactory({ db }),
-            ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-            findEmail: findEmailFactory({ db }),
-            updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-            }),
-            requestNewEmailVerification
-          }),
-          collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
-          getUser,
-          getServerInfo
-        })
+        finalizeInvite: buildFinalizeProjectInvite()
       })
 
       await withOperationLogging(
@@ -691,10 +667,8 @@ export = {
       await withOperationLogging(
         async () =>
           await cancelInvite({
-            resourceId: projectId,
             inviteId,
             cancelerId: ctx.userId!,
-            resourceType: ProjectInviteResourceType,
             cancelerResourceAccessLimits: ctx.resourceAccessRules
           }),
         {

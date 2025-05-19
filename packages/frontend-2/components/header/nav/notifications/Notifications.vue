@@ -10,7 +10,7 @@
           <div class="relative">
             <div
               v-if="!menuOpen && hasNotifications"
-              class="absolute -top-[4px] -right-[4px] size-2 bg-primary rounded-full"
+              class="absolute -top-[4px] -right-[4px] size-2 bg-danger rounded-full"
             />
 
             <BellIcon v-if="!menuOpen" class="w-5 h-5" />

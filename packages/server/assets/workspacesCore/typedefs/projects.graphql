@@ -16,3 +16,7 @@ extend type ProjectCollaborator {
   """
   workspaceRole: String
 }
+
+extend type PendingStreamCollaborator {
+  workspaceSlug: String
+}

@@ -5,6 +5,7 @@ import type {
 import type { Logger } from '@/observability/logging'
 import type { Queue, Job } from 'bull'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
+import { JobPayload } from '@speckle/shared/workers/previews'
 
 export const requestObjectPreviewFactory =
   ({
@@ -12,7 +13,7 @@ export const requestObjectPreviewFactory =
     queue
   }: {
     responseQueue: string
-    queue: Queue
+    queue: Queue<JobPayload>
   }): RequestObjectPreview =>
   async ({ jobId, token, url }) => {
     const payload = { jobId, token, url, responseQueue }

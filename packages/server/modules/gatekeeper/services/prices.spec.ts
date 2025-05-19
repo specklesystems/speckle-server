@@ -5,37 +5,12 @@ import {
 import { Currency } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlansNew,
-  WorkspaceGuestSeatType,
-  WorkspacePlanBillingIntervals
-} from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { expect } from 'chai'
 import { flatten } from 'lodash'
 import { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
-  [WorkspaceGuestSeatType]: {
-    productId: 'prod_guest',
-    monthly: { gbp: 'price_guest_monthly_gbp' },
-    yearly: { gbp: 'price_guest_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Starter]: {
-    productId: 'prod_starter',
-    monthly: { gbp: 'price_starter_monthly_gbp' },
-    yearly: { gbp: 'price_starter_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Plus]: {
-    productId: 'prod_plus',
-    monthly: { gbp: 'price_plus_monthly_gbp' },
-    yearly: { gbp: 'price_plus_yearly_gbp' }
-  },
-  [PaidWorkspacePlans.Business]: {
-    productId: 'prod_business',
-    monthly: { gbp: 'price_business_monthly_gbp' },
-    yearly: { gbp: 'price_business_yearly_gbp' }
-  },
   [PaidWorkspacePlans.Team]: {
     productId: 'prod_team',
     monthly: { gbp: 'price_team_monthly_gbp', usd: 'price_team_monthly_usd' },
@@ -71,7 +46,7 @@ const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
 }
 
 const fakeGetRecurringPrices = async () => {
-  const pricePairs = Object.values(PaidWorkspacePlansNew).map((plan) => {
+  const pricePairs = Object.values(PaidWorkspacePlans).map((plan) => {
     const { productId, monthly, yearly } = testProductAndPriceIds[plan]
     return [
       {
@@ -116,7 +91,7 @@ describe('prices @gatekeeper', () => {
       expect(result).to.be.ok
       for (const currency of Object.values(Currency)) {
         const newPlans = result[currency]
-        for (const newPaidPlan of Object.values(PaidWorkspacePlansNew)) {
+        for (const newPaidPlan of Object.values(PaidWorkspacePlans)) {
           const plan = newPlans[newPaidPlan]
           for (const interval of Object.values(WorkspacePlanBillingIntervals)) {
             const price = plan[interval]
