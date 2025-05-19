@@ -71,6 +71,7 @@ export default class SpeckleInstancedMesh extends Group {
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects: BatchObject[]
+  private _needsRTE: boolean
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
@@ -85,10 +86,15 @@ export default class SpeckleInstancedMesh extends Group {
     return this._batchObjects
   }
 
-  constructor(geometry: BufferGeometry) {
+  public get needsRTE(): boolean {
+    return this._needsRTE
+  }
+
+  constructor(geometry: BufferGeometry, RTE = false) {
     super()
     this.instanceGeometry = geometry
     this.userData.raycastChildren = false
+    this._needsRTE = RTE
   }
 
   public setBatchMaterial(material: Material) {
