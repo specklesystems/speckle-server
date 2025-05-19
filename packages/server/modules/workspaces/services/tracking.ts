@@ -170,7 +170,7 @@ export const updateAllWorkspacesTackingPropertiesFactory =
       getWorkspaceSeatCount: deps.getWorkspaceSeatCount
     })
 
-    const bultPropertiesAndPushThenToMixpanel = async (workspace: Workspace) => {
+    const buildPropertiesAndPushThenToMixpanel = async (workspace: Workspace) => {
       mixpanel.groups.set(
         WORKSPACE_TRACKING_ID_KEY,
         workspace.id,
@@ -178,14 +178,23 @@ export const updateAllWorkspacesTackingPropertiesFactory =
       )
     }
 
+    const MAX_ITERATIONS = 1_000_000
     let cursor = null
     let items = []
+    let iterationCount = 0
     do {
+      if (iterationCount++ >= MAX_ITERATIONS) {
+        console.error(
+          `Reached max iteration limit of ${MAX_ITERATIONS}. Exiting loop to prevent infinite execution.`
+        )
+        break
+      }
+
       const batchedWorkspaces = await deps.getAllWorkspaces({ cursor, limit: 25 })
       cursor = batchedWorkspaces.cursor
       items = batchedWorkspaces.items
 
-      await Promise.all(items.map(bultPropertiesAndPushThenToMixpanel))
+      await Promise.all(items.map(buildPropertiesAndPushThenToMixpanel))
     } while (cursor && items.length)
 
     logger.info('Finished full workspace tracking update')
