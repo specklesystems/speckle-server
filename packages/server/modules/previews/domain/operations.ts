@@ -1,8 +1,8 @@
 import type { ObjectPreview } from '@/modules/previews/domain/types'
 import type { Nullable, Optional, PartialBy } from '@speckle/shared'
 import type { Request, Response } from 'express'
-import type { PreviewResultPayload } from '@speckle/shared/dist/commonjs/previews/job.js'
 import type { Logger } from '@/observability/logging'
+import { PreviewResultPayload } from '@speckle/shared/workers/previews'
 
 export type GetObjectPreviewInfo = (params: {
   streamId: string

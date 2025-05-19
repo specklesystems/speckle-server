@@ -1,7 +1,7 @@
-import Bull, { type Job, type QueueOptions } from 'bull'
-import Redis, { type RedisOptions } from 'ioredis'
-import { isRedisReady } from '@/modules/shared/redis/redis'
+import { Queue, type Job } from 'bull'
 import type { EventEmitter } from 'stream'
+import { initializeQueue } from '@speckle/shared/queue'
+import { JobPayload, PreviewResultPayload } from '@speckle/shared/workers/previews'
 
 interface QueueEventEmitter extends EventEmitter {}
 
@@ -35,61 +35,35 @@ export const createRequestAndResponseQueues = async (params: {
   requestErrorHandler: (err: Error) => void
   requestFailedHandler: (job: Job, err: Error) => void
   requestActiveHandler: (job: Job) => void
-}) => {
+}): Promise<{
+  requestQueue: Queue<JobPayload>
+  responseQueue: Queue<PreviewResultPayload>
+}> => {
   const {
     redisUrl,
-    requestQueueName: jobQueueName,
+    requestQueueName,
     responseQueueName,
     requestErrorHandler,
-    requestFailedHandler,
-    requestActiveHandler
+    requestActiveHandler,
+    requestFailedHandler
   } = params
-  let client: Redis
-  let subscriber: Redis
 
-  const opts: QueueOptions = {
-    // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
-    createClient(type: string, redisOpts: RedisOptions) {
-      switch (type) {
-        case 'client':
-          if (!client) {
-            client = new Redis(redisUrl, redisOpts)
-          }
-          return client
-        case 'subscriber':
-          if (!subscriber) {
-            subscriber = new Redis(redisUrl, {
-              ...redisOpts,
-              maxRetriesPerRequest: null,
-              enableReadyCheck: false
-            })
-          }
-          return subscriber
-        case 'bclient':
-          return new Redis(redisUrl, {
-            ...redisOpts,
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false
-          })
-        default:
-          throw new Error('Unexpected connection type: ' + type)
-      }
-    }
-  }
+  const previewRequestQueue = await initializeQueue<JobPayload>({
+    queueName: requestQueueName,
+    redisUrl
+  })
 
-  // previews are requested on this queue
-  const requestQueue = new Bull(jobQueueName, opts)
-  await isRedisReady(requestQueue.client)
   addRequestQueueListeners({
-    requestQueue,
+    requestQueue: previewRequestQueue,
     requestErrorHandler,
     requestFailedHandler,
     requestActiveHandler
   })
 
-  // rendered previews are sent back on this queue
-  const responseQueue = new Bull(responseQueueName, opts)
+  const previewResponseQueue = await initializeQueue<PreviewResultPayload>({
+    queueName: responseQueueName,
+    redisUrl
+  })
 
-  await isRedisReady(responseQueue.client)
-  return { requestQueue, responseQueue }
+  return { requestQueue: previewRequestQueue, responseQueue: previewResponseQueue }
 }

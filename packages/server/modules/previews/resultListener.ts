@@ -177,6 +177,6 @@ export const consumePreviewResultFactory =
         break
 
       default:
-        throwUncoveredError(previewResult.status)
+        throwUncoveredError(previewResult)
     }
   }
