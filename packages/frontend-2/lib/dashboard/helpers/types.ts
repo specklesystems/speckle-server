@@ -19,7 +19,7 @@ export const enum ConnectorCategory {
 export type ConnectorItem = {
   title: string
   slug: string
-  image: string
+  images: string[]
   url?: string
   description: string
   categories?: ConnectorCategory[]

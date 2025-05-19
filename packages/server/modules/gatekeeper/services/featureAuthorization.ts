@@ -16,11 +16,9 @@ export const canWorkspaceAccessFeatureFactory =
     if (!workspacePlan) return false
     switch (workspacePlan.status) {
       case 'valid':
-      case 'trial':
       case 'paymentFailed':
       case 'cancelationScheduled':
         break
-      case 'expired':
       case 'canceled':
         return false
       default:

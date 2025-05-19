@@ -52,7 +52,7 @@ import {
   isCompressionEnabled,
   isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
-import * as ModulesSetup from '@/modules'
+import * as ModulesSetup from '@/modules/index'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 
 import { get, has, isString } from 'lodash'
@@ -402,7 +402,8 @@ const shouldUseFrontendProxy = () => isDevEnv()
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
   const frontendPort = process.env.FRONTEND_PORT || 8081
-  const { createProxyMiddleware } = await import('http-proxy-middleware')
+  const { createProxyMiddleware } =
+    require('http-proxy-middleware') as typeof import('http-proxy-middleware')
 
   // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
   // slowing everything down

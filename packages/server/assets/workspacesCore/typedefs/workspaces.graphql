@@ -141,7 +141,6 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
   leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
-  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
@@ -379,17 +378,17 @@ type LimitedWorkspace {
   """
   Workspace members visible to people with verified email domain
   """
-  team(cursor: String, limit: Int! = 25): DiscoverableWorkspaceCollaboratorCollection
+  team(cursor: String, limit: Int! = 25): LimitedWorkspaceCollaboratorCollection
 }
 
-type DiscoverableWorkspaceCollaboratorCollection {
+type LimitedWorkspaceCollaboratorCollection {
   totalCount: Int!
   cursor: String
-  items: [DiscoverableWorkspaceCollaborator!]!
+  items: [LimitedWorkspaceCollaborator!]!
 }
 
-type DiscoverableWorkspaceCollaborator {
-  avatar: String
+type LimitedWorkspaceCollaborator {
+  user: LimitedUser!
 }
 
 type WorkspaceDomain {

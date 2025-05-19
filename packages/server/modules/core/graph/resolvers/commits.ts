@@ -81,16 +81,16 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import {
-  Authz,
   getProjectLimitDate,
   isNonNullable,
   MaybeNullOrUndefined,
   Roles
 } from '@speckle/shared'
+import { PersonalProjectsLimits } from '@speckle/shared/authz'
 
 const { FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 const getPersonalProjectLimits = FF_FORCE_PERSONAL_PROJECTS_LIMITS_ENABLED
-  ? () => Promise.resolve(Authz.PersonalProjectsLimits)
+  ? () => Promise.resolve(PersonalProjectsLimits)
   : () => Promise.resolve(null)
 
 const getStreams = getStreamsFactory({ db })

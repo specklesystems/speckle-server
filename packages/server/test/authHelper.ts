@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -36,7 +37,7 @@ import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
+import { isArray, isNumber, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -120,7 +121,7 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   }
 
   if (!baseUser.email) {
-    setVal('email', `${kebabCase(baseUser.name)}@example.org`)
+    setVal('email', createRandomEmail().toLowerCase())
   }
 
   const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {

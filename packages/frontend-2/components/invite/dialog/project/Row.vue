@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="flex flex-col">
     <div class="flex flex-1 gap-x-3">
@@ -19,6 +17,7 @@
                 :show-label="showLabel"
                 label="Email"
                 :rules="[isEmailOrEmpty]"
+                @paste="handlePaste"
               />
               <FormTextInput
                 v-else
@@ -44,6 +43,10 @@
                 @focus="showSuggestions"
                 @click="showSuggestions"
                 @clear="handleClear"
+                @paste="handlePaste"
+                @keydown.down.prevent="navigateDown"
+                @keydown.up.prevent="navigateUp"
+                @keydown.esc.prevent="onEsc"
               />
               <Transition
                 v-if="isMounted"
@@ -66,19 +69,28 @@
                     </div>
                     <div
                       v-else-if="filteredSuggestions.length === 0"
-                      class="flex items-center justify-center p-4 text-foreground-2 text-body-xs"
+                      class="flex items-center justify-center p-4 text-foreground-2 text-body-xs leading-none"
                     >
                       No results
                     </div>
-                    <div
-                      v-for="(suggestion, i) in filteredSuggestions"
-                      :key="i"
-                      :class="[
-                        'block w-full text-left px-4 py-2 text-body-xs cursor-pointer hover:bg-background-2'
-                      ]"
-                      @click="selectSuggestion(suggestion.user)"
-                    >
-                      {{ suggestion.user.name }}
+                    <div v-else class="suggestions-container p-1 flex flex-col gap-y-1">
+                      <button
+                        v-for="(suggestion, i) in filteredSuggestions"
+                        :key="i"
+                        ref="suggestionRefs"
+                        type="button"
+                        class="block w-full text-left px-4 py-2 text-body-xs cursor-pointer hover:bg-foundation-2 focus:bg-foundation-2 focus:outline-none rounded-md"
+                        @click="selectSuggestion(suggestion.user)"
+                        @keydown.down.prevent="navigateDown"
+                        @keydown.up.prevent="navigateUp"
+                        @keydown.enter.prevent="
+                          selectSuggestion(filteredSuggestions[activeIndex]?.user)
+                        "
+                        @keydown.esc.prevent="onEsc"
+                        @focus="activeIndex = i"
+                      >
+                        {{ suggestion.user.name }}
+                      </button>
                     </div>
                   </div>
                 </Teleport>
@@ -92,7 +104,7 @@
             :name="`fields.${index}.projectRole`"
             class="w-40"
             mount-menu-on-body
-            show-label
+            :show-label="showLabel"
             :allow-unset="false"
             :hidden-items="[Roles.Stream.Owner]"
           />
@@ -121,6 +133,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
 import { isEmailOrUserId } from '~~/lib/invites/helpers/validation'
+import { parsePastedEmails } from '~~/lib/invites/helpers/helpers'
 
 type SelectedUser = {
   id: string
@@ -161,6 +174,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: InviteProjectItem): void
   (e: 'remove'): void
+  (e: 'add-multiple-emails', emails: string[]): void
 }>()
 
 const isMounted = useMounted()
@@ -169,7 +183,9 @@ const listboxButton = ref<HTMLDivElement | null>(null)
 const search = ref('')
 const input = ref('')
 const selectedUser = ref<SelectedUser | null>(null)
-const isMenuOpen = ref(false)
+const showDropdownState = ref(false)
+const activeIndex = ref(-1)
+const suggestionRefs = ref<HTMLButtonElement[]>([])
 
 const listboxButtonBounding = useElementBounding(listboxButton, {
   windowResize: true,
@@ -234,13 +250,24 @@ const userId = computed({
 })
 
 const showDropdown = computed(() => {
-  if (props.canInviteNewMembers) {
-    return filteredSuggestions.value.length > 0 && isMenuOpen.value
-  }
-  return (
-    (filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value) &&
-    isMenuOpen.value
-  )
+  const hasContent = props.canInviteNewMembers
+    ? filteredSuggestions.value.length > 0
+    : filteredSuggestions.value.length > 0 || isSearchLoading.value || search.value
+
+  return hasContent && showDropdownState.value
+})
+
+const listboxOptionsStyle = computed(() => {
+  const style: CSSProperties = {}
+  const top = listboxButtonBounding.top.value
+  const left = listboxButtonBounding.left.value
+  const width = listboxButtonBounding.width.value
+
+  style.top = `${top + (props.showLabel ? 61 : 33)}px`
+  style.left = `${left}px`
+  style.width = `${width}px`
+
+  return style
 })
 
 const handleInput = (value: string) => {
@@ -263,36 +290,94 @@ const handleClear = () => {
   })
 }
 
-const listboxOptionsStyle = computed(() => {
-  const style: CSSProperties = {}
-  const top = listboxButtonBounding.top.value
-  const left = listboxButtonBounding.left.value
-  const width = listboxButtonBounding.width.value
+const onEsc = () => {
+  showDropdownState.value = false
+  activeIndex.value = -1
+  handleClear()
+}
 
-  style.top = `${top + (props.showLabel ? 60 : 32)}px`
-  style.left = `${left}px`
-  style.width = `${width}px`
+const showSuggestions = () => {
+  showDropdownState.value = true
+  if (filteredSuggestions.value.length > 0) {
+    activeIndex.value = -1
+  }
+}
 
-  return style
-})
+const navigateDown = () => {
+  if (filteredSuggestions.value.length === 0) return
+
+  if (activeIndex.value >= filteredSuggestions.value.length - 1) {
+    activeIndex.value = 0
+  } else {
+    activeIndex.value++
+  }
+
+  focusActiveItem()
+}
+
+const navigateUp = () => {
+  if (filteredSuggestions.value.length === 0) return
+
+  if (activeIndex.value <= 0) {
+    activeIndex.value = filteredSuggestions.value.length - 1
+  } else {
+    activeIndex.value--
+  }
+
+  focusActiveItem()
+}
+
+const focusActiveItem = () => {
+  if (suggestionRefs.value && suggestionRefs.value[activeIndex.value]) {
+    suggestionRefs.value[activeIndex.value].focus()
+  }
+}
 
 const selectSuggestion = (user: SelectedUser) => {
   userId.value = user.id
   selectedUser.value = user
   search.value = ''
   input.value = user.name
-  isMenuOpen.value = false
+  showDropdownState.value = false
+  activeIndex.value = -1
 }
 
-const showSuggestions = () => {
-  isMenuOpen.value = true
+const handlePaste = (event: ClipboardEvent) => {
+  const pastedText = event.clipboardData?.getData('text')
+
+  if (pastedText && /[\s,;]/.test(pastedText)) {
+    event.preventDefault()
+
+    const validEmails = parsePastedEmails(pastedText)
+
+    if (validEmails.length > 0) {
+      input.value = validEmails[0]
+
+      if (props.isInWorkspace && props.canInviteNewMembers) {
+        handleInput(validEmails[0])
+      } else if (!props.isInWorkspace) {
+        email.value = validEmails[0]
+      }
+
+      validEmails.shift()
+
+      if (validEmails.length > 0) {
+        emit('add-multiple-emails', validEmails)
+      }
+    }
+  }
 }
+
+onMounted(() => {
+  input.value = props.modelValue.email
+})
 
 onClickOutside(
   menuEl,
   () => {
     search.value = ''
-    isMenuOpen.value = false
+    showDropdownState.value = false
+    activeIndex.value = -1
   },
   {
     ignore: [listboxButton]

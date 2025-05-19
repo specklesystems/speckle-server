@@ -11,6 +11,7 @@ export const workspaceFragment = gql`
     logo
     readOnly
     discoverabilityEnabled
+    role
   }
 `
 
@@ -37,6 +38,7 @@ export const workspaceProjectFragment = gql`
     name
     createdAt
     updatedAt
+    visibility
     team {
       id
       role
@@ -102,7 +104,9 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         description
         team {
           items {
-            avatar
+            user {
+              avatar
+            }
           }
           totalCount
           cursor
@@ -268,6 +272,7 @@ export const moveProjectToWorkspaceMutation = gql`
         moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
           id
           workspaceId
+          visibility
           team {
             id
             role
