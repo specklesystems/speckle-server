@@ -3,9 +3,34 @@ name: Build and Test PR
 on: pull_request
 
 jobs:
+  install-and-build:
+    name: Install and build
+    runs-on: blacksmith
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+      - name: Mount NPM Cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-npm-cache
+          path: ~/.npm
+      - name: Mount node_modules
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-node-modules
+          path: ./node_modules
+      - name: Install dependencies
+        run: sudo yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+
   test-viewer:
+    needs: install-and-build
     name: Test Viewer
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
@@ -13,10 +38,16 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-      - name: Install dependencies
-        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Build public packages
-        run: yarn build:public
+      - name: Mount NPM Cache
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-npm-cache
+          path: ~/.npm
+      - name: Mount node_modules
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: ${{ github.repository }}-node-modules
+          path: ./node_modules
       - name: Lint viewer
         run: yarn lint:ci
         working-directory: 'packages/viewer'
@@ -31,8 +62,9 @@ jobs:
         working-directory: 'packages/viewer-sandbox'
 
   test-shared:
+    needs: install-and-build
     name: Test Shared
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
@@ -57,8 +89,9 @@ jobs:
         working-directory: 'packages/shared'
 
   test-frontend-2:
+    needs: install-and-build
     name: Test Frontend
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
@@ -75,8 +108,9 @@ jobs:
         working-directory: 'packages/frontend-2'
 
   test-objectsender:
+    needs: install-and-build
     name: Test Object Sender
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
@@ -94,8 +128,9 @@ jobs:
       # TODO: (codecov) store artifact
 
   test-ui-components:
+    needs: install-and-build
     name: Test UI Components
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: blacksmith
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
