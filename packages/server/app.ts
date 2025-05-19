@@ -49,11 +49,11 @@ import {
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
   getMaximumRequestBodySizeMB,
-  isCompressionEnabled
+  isCompressionEnabled,
+  isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules/index'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
@@ -86,6 +86,7 @@ import {
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 import { TIME_MS } from '@speckle/shared'
 
 const GRAPHQL_PATH = '/graphql'
@@ -340,7 +341,7 @@ export async function init() {
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
+  app.use(createRateLimiterMiddleware({ rateLimiterEnabled: isRateLimiterEnabled() })) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())
