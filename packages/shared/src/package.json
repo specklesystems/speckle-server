@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es"
+    }
+  }
+}

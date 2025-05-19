@@ -1,4 +1,4 @@
-import { has } from 'lodash-es'
+import { has } from '#lodash'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
