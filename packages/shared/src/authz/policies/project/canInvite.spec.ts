@@ -10,7 +10,8 @@ const buildSUT = (overrides?: OverridesOf<typeof canInviteToProjectPolicy>) =>
   canInviteToProjectPolicy({
     getEnv: async () =>
       parseFeatureFlags({
-        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false',
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
       }),
     getServerRole: async () => Roles.Server.User,
     getProject: getProjectFake({

@@ -1,3 +1,4 @@
+import { has } from 'lodash-es'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
@@ -8,8 +9,17 @@ const isEnableAllFFsMode = () =>
 
 export const parseFeatureFlags = (
   input: // | Record<string, string | undefined>
-  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>
+  Partial<Record<keyof FeatureFlags, 'true' | 'false' | undefined>>,
+  options?: Partial<{
+    /**
+     * Whether to prevent inputs from being overriden by disable/enable all
+     * Default: true
+     */
+    forceInputs: boolean
+  }>
 ): FeatureFlags => {
+  const { forceInputs = true } = options || {}
+
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
   const res = parseEnv(input, {
@@ -86,6 +96,10 @@ export const parseFeatureFlags = (
   // Can be used to disable/enable all feature flags for testing purposes
   if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
     for (const key of Object.keys(res)) {
+      if (forceInputs && has(input, key)) {
+        continue // skip if we are forcing inputs
+      }
+
       ;(res as Record<string, boolean>)[key] = !isDisableAllFFsMode() // disable takes precedence
     }
   }
@@ -113,6 +127,6 @@ export type FeatureFlags = {
 
 export function getFeatureFlags(): FeatureFlags {
   //@ts-expect-error this way, the parse function typing is a lot better
-  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env)
+  if (!parsedFlags) parsedFlags = parseFeatureFlags(process.env, { forceInputs: false })
   return parsedFlags
 }

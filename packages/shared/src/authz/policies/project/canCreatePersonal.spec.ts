@@ -13,7 +13,8 @@ const buildSUT = (overrides?: OverridesOf<typeof canCreatePersonalProjectPolicy>
   canCreatePersonalProjectPolicy({
     getEnv: async () =>
       parseFeatureFlags({
-        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+        FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false',
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
       }),
     getServerRole: async () => 'server:user',
     ...(overrides || {})
@@ -29,7 +30,7 @@ describe('canCreatePersonalProject', () => {
     })
   })
 
-  it('returns error if workspaces module is enabled', async () => {
+  it('returns error if personal project limits enabled', async () => {
     const canCreateProject = buildSUT({
       getEnv: async () =>
         parseFeatureFlags({ FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'true' })

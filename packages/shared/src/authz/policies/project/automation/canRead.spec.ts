@@ -25,7 +25,10 @@ const buildCanReadAutomationPolicy = (
     }),
     getProjectRole: async () => Roles.Stream.Reviewer,
     getAdminOverrideEnabled: async () => false,
-    getEnv: async () => parseFeatureFlags({}),
+    getEnv: async () =>
+      parseFeatureFlags({
+        FF_WORKSPACES_MODULE_ENABLED: 'true'
+      }),
     getServerRole: async () => Roles.Server.Guest,
     getWorkspaceRole: async () => null,
     getWorkspace: async () => null,

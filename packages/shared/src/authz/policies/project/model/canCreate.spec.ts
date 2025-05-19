@@ -137,9 +137,12 @@ describe('canCreateModelPolicy returns a function, that', () => {
         return {} as Project
       },
       getEnv: async () =>
-        parseFeatureFlags({
-          FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
-        })
+        parseFeatureFlags(
+          {
+            FF_PERSONAL_PROJECTS_LIMITS_ENABLED: 'false'
+          },
+          { forceInputs: true }
+        )
     })(canCreateArgs())
 
     expect(result).toBeAuthOKResult()
