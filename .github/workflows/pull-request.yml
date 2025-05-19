@@ -3,23 +3,35 @@ name: Build and Test PR
 on: pull_request
 
 jobs:
-  get-version:
-    outputs:
-      IMAGE_VERSION_TAG: ${{ steps.step3.outputs.IMAGE_VERSION_TAG }}
-    name: Get version
-    runs-on: blacksmith
-    defaults:
-      run:
-        working-directory: ./.github/workflows/scripts
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - run: chmod +x ./get_version.sh ./common.sh
-      - run: ./get_version.sh
-      - run: echo "IMAGE_VERSION_TAG=${result}"
-      - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
+  # get-version:
+  #   outputs:
+  #     IMAGE_VERSION_TAG: ${{ steps.step3.outputs.IMAGE_VERSION_TAG }}
+  #   name: Get version
+  #   runs-on: blacksmith
+  #   defaults:
+  #     run:
+  #       working-directory: ./.github/workflows/scripts
+  #   steps:
+  #     - uses: actions/checkout@v4.2.2
+  #     - run: chmod +x ./get_version.sh ./common.sh
+  #     - run: ./get_version.sh
+  #     - run: echo "IMAGE_VERSION_TAG=${result}"
+  #     - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
-      #-  run: cat workspace/env-vars >> $BASH_EN
-      # - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
+  #-  run: cat workspace/env-vars >> $BASH_EN
+  # - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
+
+  docker-build-server:
+    runs-on: blacksmith
+    name: Docker build server
+    steps:
+      - name: Build and push
+        uses: useblacksmith/build-push-action@v1
+        with:
+          push: false
+          tags: speckle/speckle-server:test
+          file: ./packages/server/Dockerfile
+
   # test-viewer:
   #   name: Test Viewer
   #   runs-on: blacksmith
