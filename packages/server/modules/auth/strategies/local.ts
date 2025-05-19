@@ -1,15 +1,6 @@
-import {
-  sendRateLimitResponse,
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import type { ThrowIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import {
-  UserInputError,
-  PasswordTooShortError,
-  BlockedEmailDomainError
-} from '@/modules/core/errors/userinput'
+import { UserInputError } from '@/modules/core/errors/userinput'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
@@ -27,17 +18,22 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
+import {
+  resolveErrorInfo,
+  resolveStatusCode
+} from '@/modules/core/rest/defaultErrorHandler'
+import { addRateLimitHeadersToResponseFactory } from '@/modules/core/rest/ratelimiter'
 
 const localStrategyBuilderFactory =
   (deps: {
     validateUserPassword: ValidateUserPassword
     getUserByEmail: LegacyGetUserByEmail
     getServerInfo: GetServerInfo
-    getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
     createUser: CreateValidatedUser
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    throwIfRateLimited: ThrowIfRateLimited
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -100,13 +96,16 @@ const localStrategyBuilderFactory =
           if (!req.body.password) throw new UserInputError('Password missing')
 
           const user = req.body
+
           const ip = getIpFromRequest(req)
           if (ip) user.ip = ip
           const source = ip ? ip : 'unknown'
-          const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
-          if (isRateLimitBreached(rateLimitResult)) {
-            return sendRateLimitResponse(res, rateLimitResult)
-          }
+          await deps.throwIfRateLimited({
+            action: 'USER_CREATE',
+            source,
+            handleRateLimitBreachPriorToThrowing:
+              addRateLimitHeadersToResponseFactory(res)
+          })
 
           // 1. if the server is invite only you must have an invite
           if (serverInfo.inviteOnly && !req.session.token)
@@ -154,17 +153,7 @@ const localStrategyBuilderFactory =
           return next()
         } catch (err) {
           const e = ensureError(err, 'Unexpected issue occured while registering')
-          switch (e.constructor) {
-            case PasswordTooShortError:
-            case UserInputError:
-            case InviteNotFoundError:
-            case BlockedEmailDomainError:
-              req.log.info({ err }, 'Error while registering.')
-              return res.status(400).send({ err: e.message })
-            default:
-              req.log.error(err, 'Error while registering.')
-              return res.status(500).send({ err: e.message })
-          }
+          return res.status(resolveStatusCode(e)).json({ error: resolveErrorInfo(e) })
         }
       },
       finalizeAuthMiddleware

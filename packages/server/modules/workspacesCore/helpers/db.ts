@@ -9,7 +9,8 @@ export const Workspaces = buildTableHelper('workspaces', [
   'updatedAt',
   'logo',
   'domainBasedMembershipProtectionEnabled',
-  'discoverabilityEnabled'
+  'discoverabilityEnabled',
+  'isEmbedSpeckleBrandingHidden'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
@@ -27,6 +28,12 @@ export const WorkspaceDomains = buildTableHelper('workspace_domains', [
   'updatedAt',
   'createdByUserId',
   'verified'
+])
+
+export const WorkspaceCreationState = buildTableHelper('workspace_creation_state', [
+  'workspaceId',
+  'completed',
+  'state'
 ])
 
 export const WorkspaceJoinRequests = buildTableHelper('workspace_join_requests', [

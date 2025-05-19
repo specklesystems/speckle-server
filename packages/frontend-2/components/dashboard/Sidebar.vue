@@ -83,6 +83,14 @@
                   </LayoutSidebarMenuGroupItem>
                 </CalPopUp>
 
+                <div v-if="isWorkspacesEnabled" @click="openChat">
+                  <LayoutSidebarMenuGroupItem label="Give us feedback">
+                    <template #icon>
+                      <IconFeedback class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </div>
+
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
                     label="Tutorials"
@@ -105,14 +113,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div @click="openFeedbackDialog">
-                  <LayoutSidebarMenuGroupItem label="Give us feedback">
-                    <template #icon>
-                      <IconFeedback class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </div>
 
                 <NuxtLink
                   to="https://speckle.guide/"
@@ -143,8 +143,6 @@
         </LayoutSidebar>
       </div>
     </template>
-
-    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -170,10 +168,10 @@ const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-const showFeedbackDialog = ref(false)
 const showExplainerVideoDialog = ref(false)
 
 const projectsLink = computed(() => {
@@ -190,6 +188,11 @@ const showSidebar = computed(() => {
     : isLoggedIn.value
 })
 
+const openChat = () => {
+  $intercom.show()
+  isOpenMobile.value = false
+}
+
 const openExplainerVideoDialog = () => {
   showExplainerVideoDialog.value = true
   isOpenMobile.value = false
@@ -200,10 +203,5 @@ const openExplainerVideoDialog = () => {
 
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
-}
-
-const openFeedbackDialog = () => {
-  showFeedbackDialog.value = true
-  isOpenMobile.value = false
 }
 </script>

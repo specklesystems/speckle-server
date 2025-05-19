@@ -77,7 +77,7 @@ export const loggingPluginFactory: (deps: {
           graphql_query: query,
           graphql_variables: redactSensitiveVariables(variables),
           graphql_operation_name: actionName,
-          graphql_operation_title: op,
+          graphql_operation_title: op || 'un-named',
           userId
         })
 

@@ -163,7 +163,8 @@ export const createWorkspaceFactory =
       createdAt: new Date(),
       updatedAt: new Date(),
       domainBasedMembershipProtectionEnabled: false,
-      discoverabilityEnabled: false
+      discoverabilityEnabled: false,
+      isEmbedSpeckleBrandingHidden: false
     }
     await upsertWorkspace({ workspace })
 

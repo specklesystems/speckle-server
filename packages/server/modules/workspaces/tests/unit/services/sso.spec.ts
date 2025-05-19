@@ -383,6 +383,7 @@ describe('Workspace SSO services', () => {
               logo: null,
               domainBasedMembershipProtectionEnabled: false,
               discoverabilityEnabled: false,
+              isEmbedSpeckleBrandingHidden: false,
               createdAt: new Date(),
               updatedAt: new Date()
             }

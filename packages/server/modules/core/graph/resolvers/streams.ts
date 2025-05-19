@@ -3,10 +3,7 @@ import {
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   getPendingProjectCollaboratorsFactory,
   inviteUsersToProjectFactory
@@ -39,7 +36,6 @@ import {
 import { Nullable, Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 import {
   toProjectIdWhitelist,
@@ -81,7 +77,10 @@ import {
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -226,6 +225,9 @@ const favoriteStream = favoriteStreamFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
@@ -490,10 +492,10 @@ export = {
   },
   Mutation: {
     async streamCreate(_, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+      await throwIfRateLimited({
+        action: 'STREAM_CREATE',
+        source: context.userId!
+      })
 
       const { id } = await withOperationLogging(
         async () =>

@@ -1,6 +1,9 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
-import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import {
+  createRandomString,
+  createRandomEmail
+} from '@/modules/core/helpers/testHelpers'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -37,7 +40,7 @@ import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { isArray, isNumber, omit, times } from 'lodash'
+import { assign, isArray, isNumber, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -152,6 +155,17 @@ export type CreateTestUsersParams = {
    */
   serial?: boolean
 }
+
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
+  assign(
+    {
+      id: createRandomString(),
+      name: createRandomString(),
+      email: createRandomEmail(),
+      verified: true
+    },
+    overrides
+  )
 
 /**
  * Create multiple users for tests and update them to include their ID
