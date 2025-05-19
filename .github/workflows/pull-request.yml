@@ -3,34 +3,18 @@ name: Build and Test PR
 on: pull_request
 
 jobs:
-  install-and-build:
-    name: Install and build
-    runs-on: 8-core-ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 18
-          cache: yarn
-      - name: Install dependencies
-        run: yarn --immutable
-      - name: Build public packages
-        run: yarn build:public
-
   test-shared:
-    needs: install-and-build
     name: Test Shared
-    runs-on: 8-core-ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.4.0
+      - uses: useblacksmith/setup-node@v5
         with:
           node-version: 18
           cache: yarn
       - name: Install dependencies
-        run: yarn --immutable
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Lint
         run: yarn lint:ci
         working-directory: 'packages/shared'
@@ -46,19 +30,19 @@ jobs:
         working-directory: 'packages/shared'
 
   test-viewer:
-    needs: install-and-build
     name: Test Viewer
-    runs-on: 8-core-ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.4.0
+      - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 18
+          node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: yarn --immutable --immutable-cache
-      # load public dir
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
       - name: Lint viewer
         run: yarn lint:ci
         working-directory: 'packages/viewer'
@@ -72,19 +56,20 @@ jobs:
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
 
-  test-frontend:
-    needs: install-and-build
+  test-frontend-2:
     name: Test Frontend
-    runs-on: 8-core-ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2204
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.4.0
+      - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 18
+          node-version: 22
           cache: yarn
       - name: Install dependencies
-        run: yarn --immutable --immutable-cache
+        run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
       - name: Lint everything
         run: yarn lint:ci
         working-directory: 'packages/frontend-2'
