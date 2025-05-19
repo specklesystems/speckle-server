@@ -13,6 +13,7 @@ import {
   WorkspaceSsoSessionNoAccessError
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
+import { ProjectVisibility } from '../../../domain/projects/types.js'
 
 const buildCanReadAutomationPolicy = (
   overrides?: OverridesOf<typeof canReadAutomationPolicy>
@@ -20,9 +21,7 @@ const buildCanReadAutomationPolicy = (
   canReadAutomationPolicy({
     getProject: getProjectFake({
       id: 'project-id',
-      workspaceId: null,
-      isPublic: false,
-      isDiscoverable: false
+      workspaceId: null
     }),
     getProjectRole: async () => Roles.Stream.Reviewer,
     getAdminOverrideEnabled: async () => false,
@@ -125,8 +124,7 @@ describe('canReadAutomationPolicy', () => {
       getProject: getProjectFake({
         id: 'project-id',
         workspaceId: 'workspace-id',
-        isPublic: false,
-        isDiscoverable: false
+        visibility: ProjectVisibility.Workspace
       }),
       getWorkspace: getWorkspaceFake({
         id: 'workspace-id'

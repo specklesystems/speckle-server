@@ -15,8 +15,9 @@
         v-if="currentStep === WizardSteps.Details"
         :disable-slug-edit="!!workspaceId"
       />
-      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
+      <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
+      <WorkspaceWizardStepAddOns v-else-if="currentStep === WizardSteps.AddOns" />
       <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
     </template>
   </div>
@@ -79,13 +80,21 @@ onResult((result) => {
       id: props.workspaceId ?? (route.query.workspaceId as string)
     }
 
-    // If the users comes back from Stripe, we need to go to the last relevant step and show an error
+    // If the user comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
-      goToStep(
-        newState.plan === PaidWorkspacePlans.Pro
-          ? WizardSteps.Region
-          : WizardSteps.Pricing
-      )
+      if (
+        newState.plan === PaidWorkspacePlans.Pro ||
+        newState.plan === PaidWorkspacePlans.ProUnlimited
+      ) {
+        goToStep(WizardSteps.Region)
+      } else if (
+        newState.plan === PaidWorkspacePlans.Team ||
+        newState.plan === PaidWorkspacePlans.TeamUnlimited
+      ) {
+        goToStep(WizardSteps.AddOns)
+      } else {
+        goToStep(WizardSteps.Pricing)
+      }
 
       if (route.query.payment_status === 'canceled' && props.workspaceId) {
         showPaymentError.value = true

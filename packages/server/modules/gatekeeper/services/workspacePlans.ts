@@ -28,32 +28,11 @@ export const updateWorkspacePlanFactory =
     if (!workspace) throw new WorkspaceNotFoundError()
     const createdAt = new Date()
     switch (name) {
-      case 'starter':
-        switch (status) {
-          case 'trial':
-          case 'expired':
-          case 'valid':
-          case 'cancelationScheduled':
-          case 'canceled':
-          case 'paymentFailed':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
-            })
-            break
-          default:
-            throwUncoveredError(status)
-        }
-        break
-      case 'business':
-      case 'plus':
       case 'team':
       case 'teamUnlimited':
       case 'pro':
       case 'proUnlimited':
         switch (status) {
-          case 'trial':
-          case 'expired':
-            throw new InvalidWorkspacePlanStatus()
           case 'valid':
           case 'cancelationScheduled':
           case 'canceled':
@@ -70,9 +49,6 @@ export const updateWorkspacePlanFactory =
       case 'free':
       case 'academia':
       case 'unlimited':
-      case 'starterInvoiced':
-      case 'plusInvoiced':
-      case 'businessInvoiced':
       case 'teamUnlimitedInvoiced':
       case 'proUnlimitedInvoiced':
         switch (status) {
@@ -83,9 +59,7 @@ export const updateWorkspacePlanFactory =
             break
           case 'cancelationScheduled':
           case 'canceled':
-          case 'expired':
           case 'paymentFailed':
-          case 'trial':
             throw new InvalidWorkspacePlanStatus()
           default:
             throwUncoveredError(status)

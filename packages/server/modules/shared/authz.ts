@@ -32,7 +32,8 @@ import {
 } from '@/modules/shared/domain/authz/operations'
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
-import { moduleAuthLoaders } from '@/modules'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import { moduleAuthLoaders } from '@/modules/index'
 export { AuthContext, AuthParams }
 
 interface AuthFailedResult extends AuthResult {
@@ -267,20 +268,25 @@ export const allowForServerAdmins: AuthPipelineFunction = async ({
 
 export const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic
+    context.auth && context.stream?.visibility === ProjectRecordVisibility.Public
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments: AuthPipelineFunction =
   async ({ context, authResult }) =>
-    context.auth && context.stream?.isPublic && context.stream?.allowPublicComments
+    context.auth &&
+    context.stream?.visibility === ProjectRecordVisibility.Public &&
+    context.stream?.allowPublicComments
       ? authSuccess(context)
       : { context, authResult }
 
 export const allowAnonymousUsersOnPublicStreams: AuthPipelineFunction = async ({
   context,
   authResult
-}) => (context.stream?.isPublic ? authSuccess(context) : { context, authResult })
+}) =>
+  context.stream?.visibility === ProjectRecordVisibility.Public
+    ? authSuccess(context)
+    : { context, authResult }
 
 export const authPipelineCreator = (
   steps: AuthPipelineFunction[]
@@ -318,6 +324,7 @@ const validateStreamPolicyAccessFactory =
     const { context, params, authResult } = authData
 
     if (authHasFailed(authResult)) return { context, authResult }
+
     if (!params?.streamId)
       return authFailed(
         context,
@@ -347,41 +354,52 @@ const validateStreamPolicyAccessFactory =
     return authFailed(context, new ForbiddenError(result.error.message))
   }
 
-export const streamWritePermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.version.canCreate({
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
-export const streamCommentsWritePermissionsPipelineFactory =
-  (): AuthPipelineFunction[] => [
-    validateScope({ requiredScope: Scopes.Streams.Write }),
-    validateStreamPolicyAccessFactory({
-      policyInvoker: async ({ authData, policies }) =>
-        policies.project.comment.canCreate({
-          userId: authData.context.userId,
-          projectId: authData.params!.streamId!
-        })
-    }),
-    validateResourceAccess
-  ]
-
-export const streamReadPermissionsPipelineFactory = (): AuthPipelineFunction[] => [
+export const streamCommentsWritePermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
   validateScope({ requiredScope: Scopes.Streams.Write }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
   validateStreamPolicyAccessFactory({
+    ...deps,
+    policyInvoker: async ({ authData, policies }) =>
+      policies.project.comment.canCreate({
+        userId: authData.context.userId,
+        projectId: authData.params!.streamId!
+      })
+  })
+]
+
+export const streamReadPermissionsPipelineFactory = (deps: {
+  getStream: StreamGetter
+}): AuthPipelineFunction[] => [
+  validateScope({ requiredScope: Scopes.Streams.Read }),
+  validateResourceAccess,
+  validateRequiredStreamFactory(deps),
+  validateStreamPolicyAccessFactory({
+    ...deps,
     policyInvoker: async ({ authData, policies }) =>
       policies.project.canRead({
         userId: authData.context.userId,
         projectId: authData.params!.streamId!
       })
-  }),
-  validateResourceAccess
+  })
 ]
 
 export const throwForNotHavingServerRoleFactory =

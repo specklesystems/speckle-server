@@ -391,7 +391,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
         },
         getWorkspacePlan: async () => {
           return {
-            status: 'expired'
+            status: 'canceled'
           } as WorkspacePlan
         },
         getWorkspaceLimits: async () => {
@@ -428,7 +428,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -466,7 +466,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -507,7 +507,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -550,7 +550,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {
@@ -591,7 +591,7 @@ describe('canCreateWorkspaceProjectPolicy creates a function, that handles', () 
           return {} as Workspace
         },
         getWorkspaceSeat: async () => {
-          return 'viewer'
+          return 'editor'
         },
         getWorkspacePlan: async () => {
           return {

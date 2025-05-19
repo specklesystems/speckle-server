@@ -36,6 +36,7 @@ const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
   WizardSteps.Pricing,
+  WizardSteps.AddOns,
   WizardSteps.Region
 ] as const
 
@@ -89,10 +90,26 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    const shouldComplete =
-      wizardState.value.currentStepIndex === steps.length - 1 ||
-      (wizardState.value.currentStep === WizardSteps.Pricing &&
-        wizardState.value.state.plan !== PaidWorkspacePlans.Pro)
+    let shouldComplete = false
+
+    if (wizardState.value.currentStep === WizardSteps.Pricing) {
+      if (state.value.plan === WorkspacePlans.Free) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.AddOns) {
+      if (
+        state.value.plan === WorkspacePlans.Team ||
+        state.value.plan === WorkspacePlans.TeamUnlimited
+      ) {
+        shouldComplete = true
+      }
+    }
+
+    if (wizardState.value.currentStep === WizardSteps.Region) {
+      shouldComplete = true
+    }
 
     if (!shouldComplete) {
       wizardState.value.currentStepIndex++
@@ -196,7 +213,11 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key && state.plan === PaidWorkspacePlans.Pro) {
+    if (
+      state.region?.key &&
+      (state.plan === PaidWorkspacePlans.Pro ||
+        state.plan === PaidWorkspacePlans.ProUnlimited)
+    ) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key

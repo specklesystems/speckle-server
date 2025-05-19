@@ -1,6 +1,5 @@
 import {
   CheckoutSessionNotFoundError,
-  InvalidWorkspacePlanUpgradeError,
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
@@ -62,7 +61,7 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'paid',
             url: 'https://example.com',
             workspaceId: cryptoRandomString({ length: 10 }),
-            workspacePlan: 'business',
+            workspacePlan: PaidWorkspacePlans.Team,
             currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
@@ -98,7 +97,7 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'unpaid',
             url: 'https://example.com',
             workspaceId,
-            workspacePlan: 'business',
+            workspacePlan: PaidWorkspacePlans.Team,
             currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()
@@ -221,42 +220,6 @@ describe('checkout @gatekeeper', () => {
       )
       expect(err.name).to.be.equal(new NotFoundError().name)
     })
-    it('does not allow checkout from old workspace plans', async () => {
-      const workspaceId = cryptoRandomString({ length: 10 })
-      const err = await expectToThrow(() =>
-        startCheckoutSessionFactory({
-          getWorkspacePlan: async () => ({
-            name: 'plus',
-            status: 'valid',
-            createdAt: new Date(),
-            workspaceId
-          }),
-          getWorkspaceCheckoutSession: () => {
-            expect.fail()
-          },
-          countSeatsByTypeInWorkspace: () => {
-            expect.fail()
-          },
-          createCheckoutSession: () => {
-            expect.fail()
-          },
-          saveCheckoutSession: () => {
-            expect.fail()
-          },
-          deleteCheckoutSession: () => {
-            expect.fail()
-          }
-        })({
-          workspaceId,
-          billingInterval: 'monthly',
-          workspacePlan: 'pro',
-          workspaceSlug: cryptoRandomString({ length: 10 }),
-          isCreateFlow: false,
-          currency: 'usd'
-        })
-      )
-      expect(err.name).to.be.equal(new InvalidWorkspacePlanUpgradeError().name)
-    })
     it('does not allow checkout for paid workspace plans, that is in a valid state', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
@@ -346,7 +309,7 @@ describe('checkout @gatekeeper', () => {
             paymentStatus: 'unpaid',
             url: '',
             workspaceId,
-            workspacePlan: 'business',
+            workspacePlan: PaidWorkspacePlans.Team,
             currency: 'usd',
             createdAt: new Date(),
             updatedAt: new Date()

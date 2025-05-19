@@ -8,7 +8,8 @@ import {
   BatchDeleteProjectsDocument,
   CreateProjectDocument,
   GetProjectObjectDocument,
-  ProjectCreateInput
+  ProjectCreateInput,
+  ProjectVisibility
 } from '@/test/graphql/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import { times } from 'lodash'
@@ -54,6 +55,9 @@ describe('Projects', () => {
       expect(res.data?.projectMutations.create.id).to.be.ok
       expect(res.data?.projectMutations.create.name).to.equal(input.name)
       expect(res.data?.projectMutations.create.description).to.equal(input.description)
+      expect(res.data?.projectMutations.create.visibility).to.equal(
+        ProjectVisibility.Private // private by default
+      )
     })
 
     describe('after creation', () => {

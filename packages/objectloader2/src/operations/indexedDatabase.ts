@@ -1,7 +1,7 @@
 import BatchingQueue from '../helpers/batchingQueue.js'
 import Queue from '../helpers/queue.js'
 import { CustomLogger, Item } from '../types/types.js'
-import { isSafari, TIME_MS } from '@speckle/shared'
+import { isSafari, TIME } from '@speckle/shared'
 import { BaseDatabaseOptions } from './options.js'
 import { Cache } from './interfaces.js'
 import { Dexie, DexieOptions, Table } from 'dexie'
@@ -91,7 +91,7 @@ export default class IndexedDatabase implements Cache {
         this.#logger(
           'pausing reads (# in write queue: ' + this.#writeQueue?.count() + ')'
         )
-        await new Promise((resolve) => setTimeout(resolve, TIME_MS.second)) // Pause for 1 second, protects against out of memory
+        await new Promise((resolve) => setTimeout(resolve, TIME.second)) // Pause for 1 second, protects against out of memory
         continue
       }
       const batch = ids.slice(i, i + maxCacheReadSize)

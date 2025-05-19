@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <LayoutDialog
     v-model:open="isOpen"
@@ -7,9 +5,15 @@
     :buttons="dialogButtons"
     max-width="md"
   >
-    <template #header>Invite to project</template>
+    <template #header>
+      {{ isInWorkspace && !isAdmin ? 'Add to project' : 'Invite to project' }}
+    </template>
     <p v-if="isInWorkspace" class="text-foreground text-body-sm mb-3">
-      Search existing workspace members or invite entirely new.
+      {{
+        isAdmin
+          ? 'Search for existing workspace users or invite new users.'
+          : 'Search for existing workspace users.'
+      }}
     </p>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
@@ -25,37 +29,28 @@
             :is-in-workspace="isInWorkspace"
             @remove="removeInvite(index)"
             @update:model-value="(value: InviteProjectItem) => (item.value = value)"
+            @add-multiple-emails="addMultipleEmails"
           />
         </template>
         <div>
-          <div
-            :key="`add-user-${fields.length}`"
-            v-tippy="disableAddUserButton ? 'You can only invite 10 users at once' : ''"
-            class="inline-block"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="PlusIcon"
-              :disabled="disableAddUserButton"
-              @click="addInviteItem"
-            >
-              Add another user
-            </FormButton>
-          </div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            Add another user
+          </FormButton>
         </div>
       </div>
     </form>
     <p v-if="!isAdmin && isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      As a project owner you can only add existing workspace members to the project. Ask
-      a workspace admin if you need to invite new people to the workspace.
+      As a project owner you can only add existing workspace users to the project. Ask a
+      workspace admin if you need to invite new users to the workspace.
     </p>
     <p v-else-if="isInWorkspace" class="text-foreground-2 text-body-2xs py-3">
-      New people you invite will join as workspace guests on a free Viewer seat with
+      New users you invite will join as workspace guests on a free Viewer seat with
       access only to this project. Give them an Editor seat later if they need to
       contribute to this project beyond just viewing and commenting.
     </p>
   </LayoutDialog>
 </template>
+
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
@@ -102,7 +97,7 @@ const { handleSubmit } = useForm<InviteProjectForm>({
     fields: [
       {
         ...emptyInviteProjectItem,
-        projectRole: Roles.Stream.Contributor
+        projectRole: Roles.Stream.Reviewer
       }
     ]
   }
@@ -116,7 +111,6 @@ const {
 
 const isInWorkspace = computed(() => !!props.project.workspaceId)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
-const disableAddUserButton = computed(() => fields.value.length >= 10)
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -125,7 +119,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   },
 
   {
-    text: 'Invite',
+    text: isInWorkspace.value && !isAdmin.value ? 'Add' : 'Invite',
     props: {
       submit: true
     },
@@ -137,6 +131,22 @@ const addInviteItem = () => {
   pushInvite({
     ...emptyInviteProjectItem,
     project: { id: props.project.id, name: props.project.name }
+  })
+}
+
+const addMultipleEmails = (emails: string[]) => {
+  const existingEmails = fields.value.map((field) => field.value.email?.toLowerCase())
+  const newEmails = emails.filter(
+    (email) => !existingEmails.includes(email.toLowerCase())
+  )
+
+  newEmails.forEach((email) => {
+    pushInvite({
+      ...emptyInviteProjectItem,
+      project: { id: props.project.id, name: props.project.name },
+      email,
+      projectRole: Roles.Stream.Reviewer
+    })
   })
 }
 

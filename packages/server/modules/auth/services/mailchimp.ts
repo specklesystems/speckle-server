@@ -5,6 +5,8 @@ import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
+import { MailchimpResourceError } from '@/modules/auth/errors'
+import { ensureError } from '@speckle/shared'
 
 let mailchimpInitialized = false
 
@@ -45,25 +47,6 @@ export async function addToMailchimpAudience(user: UserRecord, listId: string) {
   })
 }
 
-export async function triggerMailchimpCustomerJourney(
-  user: UserRecord,
-  {
-    listId,
-    journeyId,
-    stepId
-  }: {
-    listId: string
-    journeyId: number
-    stepId: number
-  }
-) {
-  await addToMailchimpAudience(user, listId)
-  // @ts-expect-error the mailchimp api typing sucks
-  await mailchimp.customerJourneys.trigger(journeyId, stepId, {
-    email_address: user.email
-  })
-}
-
 export async function updateMailchimpMemberTags(
   user: UserRecord,
   listId: string,
@@ -75,9 +58,13 @@ export async function updateMailchimpMemberTags(
   // Check if user is already in audience (meaning they consented to marketing emails)
   try {
     await mailchimp.lists.getListMember(listId, subscriberHash)
-  } catch {
-    throw new Error(
-      `User ${user.email} not found in Mailchimp audience. They should have been added during registration.`
+  } catch (e) {
+    throw new MailchimpResourceError(
+      'User not found in Mailchimp audience. They should have been added during registration.',
+      {
+        info: { userEmailHash: subscriberHash },
+        cause: ensureError(e, 'Mailchimp API error')
+      }
     )
   }
 

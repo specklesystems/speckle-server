@@ -18,13 +18,14 @@ import {
 } from './objects/SpeckleRaycaster.js'
 import { ObjectLayers } from '../IViewer.js'
 import { World } from './World.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 export class Intersections {
   protected raycaster: SpeckleRaycaster
   private boxBuffer: Box3 = new Box3()
   private vec0Buffer: Vector4 = new Vector4()
   private vec1Buffer: Vector4 = new Vector4()
-  private boundsBuffer: Box3 = new Box3()
+  private boundsBuffer: Box3 | OBB
 
   public constructor() {
     this.raycaster = new SpeckleRaycaster()
@@ -80,7 +81,7 @@ export class Intersections {
     point: Vector2,
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
@@ -90,7 +91,7 @@ export class Intersections {
     point: Vector2,
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
@@ -101,7 +102,7 @@ export class Intersections {
     point: Vector2,
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly = false,
     tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
@@ -123,7 +124,7 @@ export class Intersections {
     ray: Ray,
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
@@ -133,7 +134,7 @@ export class Intersections {
     ray: Ray,
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly?: boolean,
     tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
@@ -144,7 +145,7 @@ export class Intersections {
     ray: Ray,
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
-    bounds?: Box3,
+    bounds?: Box3 | OBB,
     firstOnly = false,
     tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
@@ -181,7 +182,7 @@ export class Intersections {
   private intersectInternal<T extends ExtendedIntersection>(
     scene: Scene,
     nearest?: boolean,
-    bounds?: Box3
+    bounds?: Box3 | OBB
   ): T[] | null {
     let results: T[] | null = []
     const target = scene.getObjectByName('ContentGroup')
@@ -203,7 +204,7 @@ export class Intersections {
        *  points ever so slightly off the actual surface, so for very thin geometries it might
        *  fall outside of the bounds
        */
-      this.boundsBuffer.copy(World.expandBoxRelative(bounds))
+      this.boundsBuffer = World.expandBoxRelative(bounds)
 
       results = results.filter((result) => {
         return (

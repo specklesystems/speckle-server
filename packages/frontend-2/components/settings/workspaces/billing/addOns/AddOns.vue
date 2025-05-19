@@ -40,7 +40,7 @@
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
 import { formatPrice } from '~/lib/billing/helpers/plan'
-import { PaidWorkspacePlansNew, type MaybeNullOrUndefined } from '@speckle/shared'
+import { PaidWorkspacePlans, type MaybeNullOrUndefined } from '@speckle/shared'
 import { BillingInterval, Currency } from '~/lib/common/generated/gql/graphql'
 import { useActiveWorkspace } from '~/lib/workspaces/composables/activeWorkspace'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -101,15 +101,15 @@ const unlimitedAddOnButton = computed(() => ({
 }))
 
 const planToUpgrade = computed(() => {
-  return plan.value?.name === PaidWorkspacePlansNew.Team
-    ? PaidWorkspacePlansNew.TeamUnlimited
-    : PaidWorkspacePlansNew.ProUnlimited
+  return plan.value?.name === PaidWorkspacePlans.Team
+    ? PaidWorkspacePlans.TeamUnlimited
+    : PaidWorkspacePlans.ProUnlimited
 })
 
 const addonPrice = computed(() => {
   if (!plan.value) return null
   const addonPrice =
-    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlansNew]
+    addonPrices.value?.[currency.value]?.[plan.value.name as PaidWorkspacePlans]
   if (!addonPrice) return null
 
   return formatPrice({

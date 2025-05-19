@@ -23,31 +23,33 @@
 
       <section class="flex flex-col gap-y-4 md:gap-y-6">
         <SettingsSectionHeader title="Usage" subheading />
-        <SettingsWorkspacesBillingUsage
-          :slug="slug"
-          :is-workspace-admin="isWorkspaceAdmin"
-        />
+        <SettingsWorkspacesBillingUsage :slug="slug" />
       </section>
 
-      <ClientOnly>
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Upgrade your plan" subheading />
-          <PricingTable
-            :slug="slug"
-            :workspace-id="workspace?.id"
-            :role="workspace?.role as WorkspaceRoles"
-            :currency="workspace?.subscription?.currency"
-            :is-yearly-interval-selected="
-              workspace?.subscription?.billingInterval === BillingInterval.Yearly
-            "
-          />
-        </section>
+      <template v-if="showPricingInfo">
+        <ClientOnly>
+          <section class="flex flex-col gap-y-4 md:gap-y-6">
+            <SettingsSectionHeader title="Upgrade your plan" subheading />
+            <PricingTable
+              :slug="slug"
+              :workspace-id="workspace?.id"
+              :role="workspace?.role as WorkspaceRoles"
+              :currency="workspace?.subscription?.currency"
+              :is-yearly-interval-selected="
+                workspace?.subscription?.billingInterval === BillingInterval.Yearly
+              "
+            />
+          </section>
 
-        <section class="flex flex-col gap-y-4 md:gap-y-6">
-          <SettingsSectionHeader title="Add-ons" subheading />
-          <SettingsWorkspacesBillingAddOns :slug="slug" :workspace-id="workspace?.id" />
-        </section>
-      </ClientOnly>
+          <section class="flex flex-col gap-y-4 md:gap-y-6">
+            <SettingsSectionHeader title="Add-ons" subheading />
+            <SettingsWorkspacesBillingAddOns
+              :slug="slug"
+              :workspace-id="workspace?.id"
+            />
+          </section>
+        </ClientOnly>
+      </template>
     </div>
   </div>
 </template>
@@ -55,7 +57,11 @@
 <script lang="ts" setup>
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
-import { type WorkspaceRoles, Roles, workspaceReachedPlanLimit } from '@speckle/shared'
+import {
+  type WorkspaceRoles,
+  workspaceReachedPlanLimit,
+  isSelfServeAvailablePlan
+} from '@speckle/shared'
 import { useWorkspacePlan } from '~~/lib/workspaces/composables/plan'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -97,7 +103,6 @@ const { result: workspaceResult } = useQuery(
 )
 
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showBillingAlert = computed(
   () =>
     workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
@@ -111,4 +116,8 @@ const reachedPlanLimit = computed(() =>
     workspace.value?.plan?.usage?.modelCount
   )
 )
+const showPricingInfo = computed(() => {
+  if (!workspace.value?.plan?.name) return false
+  return isSelfServeAvailablePlan(workspace.value.plan.name)
+})
 </script>

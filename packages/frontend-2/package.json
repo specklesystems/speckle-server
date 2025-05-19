@@ -29,8 +29,8 @@
     "@datadog/browser-rum": "^5.11.0",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
-    "@jsonforms/core": "^3.3.0",
-    "@jsonforms/vue": "^3.3.0",
+    "@jsonforms/core": "^3.5.1",
+    "@jsonforms/vue": "^3.5.1",
     "@jsonforms/vue-vanilla": "^3.3.0",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",
@@ -85,7 +85,7 @@
     "ws": "^8.17.1"
   },
   "devDependencies": {
-    "@datadog/datadog-ci": "^2.37.0",
+    "@datadog/datadog-ci": "^3.5.0",
     "@eslint/config-inspector": "^0.4.10",
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/client-preset": "^4.6.4",

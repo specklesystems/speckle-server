@@ -6,7 +6,7 @@
 
 <script lang="ts" setup>
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
-import type { PaidWorkspacePlansNew } from '@speckle/shared'
+import type { PaidWorkspacePlans } from '@speckle/shared'
 import { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { formatPrice } from '~/lib/billing/helpers/plan'
 import { useWorkspaceAddonPrices } from '~/lib/billing/composables/prices'
@@ -16,7 +16,7 @@ type AddonIncludedSelect = 'yes' | 'no'
 
 const props = defineProps<{
   slug: string
-  plan: PaidWorkspacePlansNew
+  plan: PaidWorkspacePlans
   billingInterval: BillingInterval
   enableNoOption: boolean
 }>()

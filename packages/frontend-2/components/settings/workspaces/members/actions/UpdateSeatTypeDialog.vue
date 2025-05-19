@@ -1,8 +1,15 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    :buttons="dialogButtons"
+    @update:open="(v) => !v && emit('cancel')"
+  >
     <template #header>{{ title }}</template>
     <div class="flex flex-col mb-4">
-      <p class="text-body-sm mb-4">Confirm {{ user.user.name }}'s new seat.</p>
+      <p class="text-body-sm mb-4">
+        {{ text || `Confirm ${user.user.name}'s new seat.` }}
+      </p>
 
       <SeatTransitionCards
         :is-upgrading="isUpgrading"
@@ -32,20 +39,44 @@ import {
 import { useWorkspaceUpdateSeatType } from '~/lib/workspaces/composables/management'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import SeatTransitionCards from './SeatTransitionCards.vue'
-import type {
-  SettingsWorkspacesMembersActionsMenu_UserFragment,
-  SettingsWorkspacesMembersTableHeader_WorkspaceFragment
-} from '~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+
+const workspaceAvailableEditorSeatsQuery = graphql(`
+  query WorkspaceAvailableEditorSeats($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      id
+      seats {
+        editors {
+          available
+        }
+      }
+    }
+  }
+`)
+
+type UpgradeSeatTypeDialogUser = {
+  id: string
+  role: string
+  seatType?: WorkspaceSeatType | null
+  user: {
+    name: string
+  }
+}
 
 const props = defineProps<{
-  user: SettingsWorkspacesMembersActionsMenu_UserFragment
+  text?: string
+  hideNotifications?: boolean
+  user: UpgradeSeatTypeDialogUser
   workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
 }>()
 
 const emit = defineEmits<{
   (e: 'success'): void
+  (e: 'cancel'): void
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -53,7 +84,6 @@ const open = defineModel<boolean>('open', { required: true })
 const mixpanel = useMixpanel()
 const updateUserSeatType = useWorkspaceUpdateSeatType()
 const {
-  hasAvailableEditorSeats,
   editorSeatPriceFormatted,
   currentBillingCycleEnd,
   isPaidPlan,
@@ -61,6 +91,17 @@ const {
   intervalIsYearly,
   isUnlimitedPlan
 } = useWorkspacePlan(props.workspace?.slug || '')
+
+const { result: seatsResult, refetch: refetchSeats } = useQuery(
+  workspaceAvailableEditorSeatsQuery,
+  () => ({ slug: props.workspace?.slug || '' }),
+  () => ({ enabled: !!props.workspace?.slug })
+)
+
+const hasAvailableEditorSeats = computed(() => {
+  const editors = seatsResult.value?.workspaceBySlug?.seats?.editors
+  return editors?.available ? editors.available > 0 : false
+})
 
 const isLoading = ref(false)
 
@@ -97,11 +138,14 @@ const handleConfirm = async () => {
       ? SeatTypes.Editor
       : SeatTypes.Viewer
 
-    await updateUserSeatType({
-      userId: props.user.id,
-      seatType: newSeatType,
-      workspaceId: props.workspace.id
-    })
+    await updateUserSeatType(
+      {
+        userId: props.user.id,
+        seatType: newSeatType,
+        workspaceId: props.workspace.id
+      },
+      { hideNotifications: props.hideNotifications }
+    )
 
     if (!hasAvailableEditorSeats.value && isPaidPlan.value) {
       mixpanel.track('Workspace Seat Purchased', {
@@ -111,6 +155,8 @@ const handleConfirm = async () => {
         workspace_id: props.workspace.id
       })
     }
+
+    await refetchSeats()
 
     open.value = false
     emit('success')
@@ -123,7 +169,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'outline' },
-    onClick: () => (open.value = false)
+    onClick: () => {
+      open.value = false
+      emit('cancel')
+    }
   },
   {
     text: isUpgrading.value

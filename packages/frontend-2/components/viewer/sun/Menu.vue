@@ -104,9 +104,7 @@ const mp = useMixpanel()
 const { currentViewMode } = useViewModeUtilities()
 
 const isLightingSupported = computed(() => {
-  const supported =
-    currentViewMode.value === ViewMode.DEFAULT ||
-    currentViewMode.value === ViewMode.DEFAULT_EDGES
+  const supported = currentViewMode.value === ViewMode.DEFAULT
   return supported
 })
 

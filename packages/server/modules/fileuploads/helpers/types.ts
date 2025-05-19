@@ -11,6 +11,23 @@ export type FileUploadRecord = {
   id: string
   streamId: string
   branchName: string
+  modelId: Nullable<string>
+  userId: string
+  fileName: string
+  fileType: string
+  fileSize: Nullable<number>
+  uploadComplete: boolean
+  uploadDate: Date
+  convertedStatus: number | FileUploadConvertedStatus
+  convertedLastUpdate: Date
+  convertedMessage: Nullable<string>
+  convertedCommitId: Nullable<string>
+}
+
+export type FileUploadRecordV2 = {
+  id: string
+  projectId: string
+  modelId: Nullable<string>
   userId: string
   fileName: string
   fileType: string

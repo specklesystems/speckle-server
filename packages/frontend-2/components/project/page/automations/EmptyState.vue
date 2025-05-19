@@ -124,7 +124,7 @@ const emptyStateItems = computed(() => {
         "Let's chat! Find out how Automate can be customised to support and improve virtually any of your custom workflows.",
       buttons: [
         {
-          text: 'Book a demo',
+          text: 'Book an intro call',
           props: {
             to: 'https://calendar.app.google/kH2EzSSMQktJ6bTZ7',
             external: true

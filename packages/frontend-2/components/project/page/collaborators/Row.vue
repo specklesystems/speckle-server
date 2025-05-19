@@ -17,13 +17,12 @@
     <template v-if="!collaborator.inviteId">
       <ProjectPageTeamPermissionSelect
         v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
+        v-model="role"
         class="shrink-0"
-        :model-value="collaborator.role"
         :disabled="loading"
         :hide-owner="collaborator.serverRole === Roles.Server.Guest"
         :disabled-roles="disabledRoles"
         :disabled-item-tooltip="disabledRolesTooltip"
-        @update:model-value="emit('changeRole', collaborator, $event)"
       />
       <div v-else class="flex items-center justify-end">
         <span v-tippy="roleTooltip" class="shrink-0 text-body-2xs">
@@ -31,7 +30,7 @@
         </span>
       </div>
     </template>
-    <template v-else-if="canEdit">
+    <template v-else>
       <div class="flex items-end sm:items-center shrink-0 gap-3">
         <span class="shrink-0 text-body-2xs">
           {{ roleSelectItems[collaborator.role].title }}
@@ -55,6 +54,17 @@
       />
     </LayoutMenu>
 
+    <SettingsWorkspacesMembersActionsUpdateSeatTypeDialog
+      v-if="showUpgradeSeatDialog"
+      v-model:open="showUpgradeSeatDialog"
+      :user="userForDialog"
+      :workspace="workspace"
+      hide-notifications
+      :text="`To update ${userForDialog.user.name}'s project role they need to be on an Editor seat.`"
+      @success="onDialogSuccess"
+      @cancel="onDialogCancel"
+    />
+
     <InviteDialogCancelInvite
       v-model:open="showCancelInviteDialog"
       :email="collaborator.title"
@@ -66,12 +76,13 @@
 <script setup lang="ts">
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import type { Nullable, StreamRoles } from '@speckle/shared'
-import { Roles } from '@speckle/shared'
+import type { Nullable, StreamRoles, MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, SeatTypes } from '@speckle/shared'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 enum ActionTypes {
   Remove = 'remove'
@@ -89,63 +100,73 @@ const emit = defineEmits<{
 const props = defineProps<{
   canEdit: boolean
   collaborator: ProjectCollaboratorListItem
+  workspace?: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   loading: boolean
 }>()
 
 const { activeUser } = useActiveUser()
+const menuId = useId()
 
 const showActionsMenu = ref(false)
-const menuId = useId()
 const showCancelInviteDialog = ref(false)
+const showUpgradeSeatDialog = ref(false)
+const role = ref<StreamRoles>(props.collaborator.role as StreamRoles)
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: props.collaborator.inviteId ? 'Cancel invite' : 'Remove user',
+      title: props.collaborator.inviteId ? 'Cancel invite' : 'Remove from project',
       id: ActionTypes.Remove,
       disabled: props.loading
     }
   ]
 ])
 
-const roleTooltip = computed(() => {
-  if (!props.canEdit) {
-    return null
-  }
-
-  if (isYou.value) {
-    return "You can't change your own role"
-  }
-
-  return null
-})
-
-const isTargettingWorkspaceGuest = computed(
+const isYou = computed(() => props.collaborator.user?.id === activeUser.value?.id)
+const isPending = computed(() => !!props.collaborator.inviteId)
+const isWorkspaceGuest = computed(
   () => props.collaborator.workspaceRole === Roles.Workspace.Guest
+)
+const isWorkspaceAdmin = computed(
+  () => props.collaborator.workspaceRole === Roles.Workspace.Admin
+)
+
+const userForDialog = computed(() => ({
+  id: props.collaborator.id,
+  role: props.collaborator.role,
+  seatType: props.collaborator.seatType,
+  user: {
+    name: props.collaborator.user?.name || ''
+  }
+}))
+
+const roleTooltip = computed(() =>
+  isYou.value && !props.canEdit ? "You can't change your own role" : null
 )
 
 const badgeText = computed(() => {
-  if (props.collaborator.inviteId) {
+  if (isPending.value) {
     return 'Pending'
   }
-  if (props.collaborator.workspaceRole === Roles.Workspace.Guest) {
+  if (isWorkspaceGuest.value) {
     return 'Guest'
   }
 
   return null
 })
 
-const isYou = computed(() => props.collaborator.user?.id === activeUser.value?.id)
 const disabledRoles = computed(() => {
-  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+  if (isWorkspaceAdmin.value) {
     return [Roles.Stream.Contributor, Roles.Stream.Reviewer]
   }
 
   if (props.collaborator.seatType === 'viewer') {
-    return [Roles.Stream.Owner, Roles.Stream.Contributor]
+    if (isPending.value || !props.canEdit) {
+      return [Roles.Stream.Owner, Roles.Stream.Contributor]
+    }
   }
 
-  if (isTargettingWorkspaceGuest.value) {
+  if (isWorkspaceGuest.value) {
     return [Roles.Stream.Owner]
   }
 
@@ -153,15 +174,17 @@ const disabledRoles = computed(() => {
 })
 
 const disabledRolesTooltip = computed(() => {
-  if (props.collaborator.workspaceRole === Roles.Workspace.Admin) {
+  if (isWorkspaceAdmin.value) {
     return "Admin roles can't be changed"
   }
 
   if (props.collaborator.seatType === 'viewer') {
-    return 'Users with a viewer seat cannot be project owners or contributors'
+    if (isPending.value || !props.canEdit) {
+      return 'Users with a viewer seat cannot be project owners or contributors'
+    }
   }
 
-  if (isTargettingWorkspaceGuest.value) {
+  if (isWorkspaceGuest.value) {
     return 'Workspace guests cannot be project owners'
   }
 
@@ -185,9 +208,36 @@ const onActionChosen = (
   }
 }
 
+const onRoleChange = (newRole: StreamRoles) => {
+  if (
+    props.collaborator.seatType === SeatTypes.Viewer &&
+    newRole !== Roles.Stream.Reviewer
+  ) {
+    showUpgradeSeatDialog.value = true
+    return
+  }
+  emit('changeRole', props.collaborator, newRole)
+}
+
+const onDialogSuccess = () => {
+  showUpgradeSeatDialog.value = false
+  emit('changeRole', props.collaborator, role.value)
+}
+
+const onDialogCancel = () => {
+  role.value = props.collaborator.role as StreamRoles
+  showUpgradeSeatDialog.value = false
+}
+
 const cancelInvite = () => {
   if (props.collaborator.inviteId) {
     emit('cancelInvite', props.collaborator.inviteId)
   }
 }
+
+watch(role, (newRole: StreamRoles) => {
+  if (newRole !== props.collaborator.role) {
+    onRoleChange(newRole)
+  }
+})
 </script>
