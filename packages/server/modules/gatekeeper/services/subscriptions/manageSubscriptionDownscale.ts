@@ -5,6 +5,7 @@ import {
   GetWorkspaceSubscriptions,
   ReconcileSubscriptionData,
   UpsertWorkspaceSubscription,
+  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
@@ -59,7 +60,7 @@ export const downscaleWorkspaceSubscriptionFactory =
 
     const editorsCount = await countSeatsByTypeInWorkspace({
       workspaceId,
-      type: 'editor'
+      type: WorkspaceSeatType.Editor
     })
 
     const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)

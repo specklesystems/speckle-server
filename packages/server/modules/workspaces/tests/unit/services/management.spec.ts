@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -654,7 +655,7 @@ const buildUpdateWorkspaceRoleAndTestContext = (
     },
     ensureValidWorkspaceRoleSeat: async () => {
       return {
-        type: 'editor',
+        type: WorkspaceSeatType.Editor,
         workspaceId: 'test',
         userId: 'test',
         createdAt: new Date(),

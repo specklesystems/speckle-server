@@ -1491,16 +1491,6 @@
               "type": "string",
               "description": "Audience id for the onboarding list",
               "default": ""
-            },
-            "onboardingJourneyId": {
-              "type": "string",
-              "description": "Id of the onboarding journey",
-              "default": ""
-            },
-            "onboardingStepId": {
-              "type": "string",
-              "description": "Id of the onboarding journey step we trigger",
-              "default": ""
             }
           }
         },

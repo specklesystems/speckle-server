@@ -84,12 +84,6 @@ export class WorkspaceNotJoinableError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspaceJoinNotAllowedError extends BaseError {
-  static defaultMessage = 'You do not have permissions to join this workspace'
-  static code = 'WORKSPACE_JOIN_NOT_ALLOWED'
-  static statusCode = 403
-}
-
 export class WorkspaceUnverifiedDomainError extends BaseError {
   static defaultMessage = 'Cannot add unverified domain to workspace'
   static code = 'WORKSPACE_UNVERIFIED_DOMAIN_ERROR'

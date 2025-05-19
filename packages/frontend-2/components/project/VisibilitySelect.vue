@@ -57,23 +57,23 @@ const buttonId = useId()
 const items = computed(() => ({
   [SupportedProjectVisibility.Public]: {
     id: SupportedProjectVisibility.Public,
-    description: 'Anyone with the link can access',
+    description: 'Anyone with the link can view',
     title: 'Public'
-  },
-  [SupportedProjectVisibility.Private]: {
-    id: SupportedProjectVisibility.Private,
-    description: 'Only collaborators can access',
-    title: 'Private'
   },
   ...(props.workspaceId
     ? {
         [SupportedProjectVisibility.Workspace]: {
           id: SupportedProjectVisibility.Workspace,
-          description: 'Only workspace members can access',
+          description: 'All workspace members can view',
           title: 'Workspace'
         }
       }
-    : {})
+    : {}),
+  [SupportedProjectVisibility.Private]: {
+    id: SupportedProjectVisibility.Private,
+    description: 'Only for project members and admins',
+    title: 'Private'
+  }
 }))
 
 const selectedValue = computed({

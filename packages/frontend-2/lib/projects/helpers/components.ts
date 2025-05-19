@@ -69,7 +69,8 @@ export const accessSelectItems: Record<AccessSelectItems, SelectableAccessSelect
     [AccessSelectItems.NoAccess]: {
       id: AccessSelectItems.NoAccess,
       title: 'No access',
-      description: 'Only admins and invited project members can access the project'
+      description:
+        'Workspace members can only access the project if they are added as project members, because the project is set to Private.'
     }
   }
 
