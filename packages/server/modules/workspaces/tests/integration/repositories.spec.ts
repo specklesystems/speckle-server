@@ -92,6 +92,23 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 
 describe('Workspace repositories', () => {
   describe('getWorkspaceFactory creates a function, that', () => {
+    const testUserA = buildBasicTestUser()
+    const workspaceA1 = buildBasicTestWorkspace({ name: 'My House Workspace' })
+    const workspaceA2 = buildBasicTestWorkspace({ name: 'My Garage Workspace' })
+
+    before(async () => {
+      const testUserB = buildBasicTestUser()
+      await createTestUsers([testUserA, testUserB])
+
+      const workspaceB = buildBasicTestWorkspace()
+      await createTestWorkspace(workspaceB, testUserB)
+
+      await createTestWorkspace(workspaceA1, testUserA, {
+        addCreationState: { completed: true, state: {} }
+      })
+      await createTestWorkspace(workspaceA2, testUserA)
+    })
+
     it('returns null if the workspace is not found', async () => {
       const workspace = await getWorkspace({
         workspaceId: cryptoRandomString({ length: 10 })
@@ -102,46 +119,20 @@ describe('Workspace repositories', () => {
 
     describe('getWorkspaces filters', () => {
       it('is able to select them by name', async () => {
-        const testUserA = buildBasicTestUser()
-        const testUserB = buildBasicTestUser()
-        await createTestUsers([testUserA, testUserB])
-        const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
-        const myGarageWorkspace = buildBasicTestWorkspace({
-          name: 'My Garage Workspace'
-        })
-        const workspaceB = buildBasicTestWorkspace()
-        await createTestWorkspace(workspaceB, testUserB)
-
-        await createTestWorkspace(myHouseWorkspace, testUserA)
-        await createTestWorkspace(myGarageWorkspace, testUserA)
-
         const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceIds: [myHouseWorkspace.id],
+          workspaceIds: [workspaceA1.id],
           search: 'house'
         })
 
         expect(workspaces).to.have.lengthOf(1)
-        expect(workspaces[0].id).to.eq(myHouseWorkspace.id)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
       })
 
       it('is able to filter them out by name', async () => {
-        const testUserA = buildBasicTestUser()
-        const testUserB = buildBasicTestUser()
-        await createTestUsers([testUserA, testUserB])
-        const myHouseWorkspace = buildBasicTestWorkspace({ name: 'My House Workspace' })
-        const myGarageWorkspace = buildBasicTestWorkspace({
-          name: 'My Garage Workspace'
-        })
-        const workspaceB = buildBasicTestWorkspace()
-        await createTestWorkspace(workspaceB, testUserB)
-
-        await createTestWorkspace(myHouseWorkspace, testUserA)
-        await createTestWorkspace(myGarageWorkspace, testUserA)
-
         const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceIds: [myHouseWorkspace.id],
+          workspaceIds: [workspaceA1.id],
           search: 'park'
         })
 
@@ -149,42 +140,20 @@ describe('Workspace repositories', () => {
       })
 
       it('is able to filer them by completed status', async () => {
-        const testUserA = buildBasicTestUser()
-        const testUserB = buildBasicTestUser()
-        await createTestUsers([testUserA, testUserB])
-
-        const workspaceB = buildBasicTestWorkspace()
-        await createTestWorkspace(workspaceB, testUserB)
-        const nonCompleteWorkspace = buildBasicTestWorkspace()
-        await createTestWorkspace(nonCompleteWorkspace, testUserA, {
-          addCreationState: { completed: true, state: {} }
-        })
-
         const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceIds: [nonCompleteWorkspace.id],
+          workspaceIds: [workspaceA1.id],
           completed: true
         })
 
         expect(workspaces).to.have.lengthOf(1)
-        expect(workspaces[0].id).to.eq(nonCompleteWorkspace.id)
+        expect(workspaces[0].id).to.eq(workspaceA1.id)
       })
 
       it('is able to filer them out by completed status', async () => {
-        const testUserA = buildBasicTestUser()
-        const testUserB = buildBasicTestUser()
-        await createTestUsers([testUserA, testUserB])
-
-        const workspaceB = buildBasicTestWorkspace()
-        await createTestWorkspace(workspaceB, testUserB)
-        const nonCompleteWorkspace = buildBasicTestWorkspace()
-        await createTestWorkspace(nonCompleteWorkspace, testUserA, {
-          addCreationState: { completed: true, state: {} }
-        })
-
         const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceIds: [nonCompleteWorkspace.id],
+          workspaceIds: [workspaceA1.id],
           completed: false
         })
 
@@ -192,23 +161,14 @@ describe('Workspace repositories', () => {
       })
 
       it('does not filter when there is no workspace_completed entry as safety mechanism', async () => {
-        const testUserA = buildBasicTestUser()
-        const testUserB = buildBasicTestUser()
-        await createTestUsers([testUserA, testUserB])
-
-        const workspaceB = buildBasicTestWorkspace()
-        await createTestWorkspace(workspaceB, testUserB)
-        const nonCompleteWorkspace = buildBasicTestWorkspace()
-        await createTestWorkspace(nonCompleteWorkspace, testUserA)
-
         const workspaces = await getWorkspaces({
           userId: testUserA.id,
-          workspaceIds: [nonCompleteWorkspace.id],
+          workspaceIds: [workspaceA2.id],
           completed: false
         })
 
         expect(workspaces).to.have.lengthOf(1)
-        expect(workspaces[0].id).to.eq(nonCompleteWorkspace.id)
+        expect(workspaces[0].id).to.eq(workspaceA2.id)
       })
     })
   })

@@ -1,7 +1,6 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import {
-  buildTestObject,
   createRandomString,
   createRandomEmail
 } from '@/modules/core/helpers/testHelpers'
@@ -41,7 +40,7 @@ import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { isArray, isNumber, omit, times } from 'lodash'
+import { assign, isArray, isNumber, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -157,8 +156,8 @@ export type CreateTestUsersParams = {
   serial?: boolean
 }
 
-export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>) =>
-  buildTestObject(
+export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTestUser =>
+  assign(
     {
       id: createRandomString(),
       name: createRandomString(),

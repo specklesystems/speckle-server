@@ -700,13 +700,26 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('query activeUser.workspaces', () => {
-      beforeEach(async () => {
+      const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
+
+      before(async () => {
         await truncateTables([Workspaces.name])
+
+        await createTestUser(testUser)
+
+        await createTestWorkspace(buildBasicTestWorkspace(), testUser)
+        await createTestWorkspace(
+          buildBasicTestWorkspace({
+            name: 'A loooooooooong name'
+          }),
+          testUser
+        )
+        await createTestWorkspace(buildBasicTestWorkspace(), testUser, {
+          addCreationState: { completed: false, state: {} }
+        })
       })
 
       it('should return all workspaces for a user', async () => {
-        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
-        await createTestUser(testUser)
         const testApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
             auth: true,
@@ -717,23 +730,13 @@ describe('Workspaces GQL CRUD', () => {
           })
         })
 
-        const workspace1 = buildBasicTestWorkspace()
-        const workspace2 = buildBasicTestWorkspace()
-        const workspace3 = buildBasicTestWorkspace()
-
-        await createTestWorkspace(workspace1, testUser)
-        await createTestWorkspace(workspace2, testUser)
-        await createTestWorkspace(workspace3, testUser)
-
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
-        // TODO: this test depends on the previous tests
+
         expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(3)
       })
 
       it('omits non complete workspaces on request', async () => {
-        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
-        await createTestUser(testUser)
         const testApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
             auth: true,
@@ -742,16 +745,6 @@ describe('Workspaces GQL CRUD', () => {
             role: testUser.role,
             scopes: AllScopes
           })
-        })
-
-        const workspace1 = buildBasicTestWorkspace()
-        const workspace2 = buildBasicTestWorkspace()
-        const nonCompleteWorkspace3 = buildBasicTestWorkspace()
-
-        await createTestWorkspace(workspace1, testUser)
-        await createTestWorkspace(workspace2, testUser)
-        await createTestWorkspace(nonCompleteWorkspace3, testUser, {
-          addCreationState: { completed: false, state: {} }
         })
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
@@ -765,8 +758,6 @@ describe('Workspaces GQL CRUD', () => {
       })
 
       it('filters by name workspaces on request', async () => {
-        const testUser = buildBasicTestUser({ role: Roles.Server.Admin })
-        await createTestUser(testUser)
         const testApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
             auth: true,
@@ -775,16 +766,6 @@ describe('Workspaces GQL CRUD', () => {
             role: testUser.role,
             scopes: AllScopes
           })
-        })
-
-        const workspace1 = buildBasicTestWorkspace({ name: 'Workspace A1' })
-        const workspace2 = buildBasicTestWorkspace({ name: 'A loooooooooong name' })
-        const nonCompleteWorkspace3 = buildBasicTestWorkspace({ name: 'Workspace C3' })
-
-        await createTestWorkspace(workspace1, testUser)
-        await createTestWorkspace(workspace2, testUser)
-        await createTestWorkspace(nonCompleteWorkspace3, testUser, {
-          addCreationState: { completed: false, state: {} }
         })
 
         const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {
@@ -1292,10 +1273,6 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
-      beforeEach(async () => {
-        await truncateTables([Workspaces.name])
-      })
-
       describe('leave', () => {
         it('allows the active user to leave a workspace', async () => {
           const name = cryptoRandomString({ length: 6 })

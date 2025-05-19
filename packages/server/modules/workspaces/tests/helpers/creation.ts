@@ -108,7 +108,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -128,7 +128,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { buildTestObject, createRandomString } from '@/modules/core/helpers/testHelpers'
+import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -346,8 +346,10 @@ export const createTestWorkspace = async (
   }
 }
 
-export const buildBasicTestWorkspace = (overrides?: Partial<BasicTestWorkspace>) =>
-  buildTestObject(
+export const buildBasicTestWorkspace = (
+  overrides?: Partial<BasicTestWorkspace>
+): BasicTestWorkspace =>
+  assign(
     {
       id: createRandomString(),
       name: createRandomString(),
