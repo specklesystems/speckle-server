@@ -5,7 +5,7 @@ on: pull_request
 jobs:
   get-version:
     outputs:
-      IMAGE_VERSION_TAG: ${{ steps.step3.outputs.IMAGE_VERSION_TAG }}
+      IMAGE_VERSION_TAG: ${{ steps.step6.outputs.IMAGE_VERSION_TAG }}
     name: Get version
     runs-on: blacksmith
     defaults:
